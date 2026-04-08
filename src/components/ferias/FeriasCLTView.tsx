@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { format, differenceInDays, addDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Calendar, Plus, Check, X, Eye } from "lucide-react";
+import { Calendar, Plus, Check, X, Eye, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
