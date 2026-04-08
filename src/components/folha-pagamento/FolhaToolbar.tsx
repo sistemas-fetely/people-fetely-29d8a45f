@@ -17,8 +17,11 @@ interface Props {
   onCriar: (competencia: string) => void;
   onCalcular: () => void;
   onFechar: () => void;
+  onExportExcel: () => void;
+  onExportPDF: () => void;
   isCalculating: boolean;
   canManage: boolean;
+  hasHolerites: boolean;
 }
 
 const STATUS_BADGE: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
