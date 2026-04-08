@@ -222,6 +222,7 @@ export interface EditarHoleriteInput {
   descontoPlanoSaude: number;
   outrosProventos: number;
   outrosDescontos: number;
+  params?: ParametrosFolha;
 }
 
 export function useEditarHolerite() {

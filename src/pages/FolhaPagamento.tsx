@@ -8,6 +8,7 @@ import {
   useFecharCompetencia,
   type HoleriteComColaborador,
 } from "@/hooks/useFolhaPagamento";
+import { useParametrosFolha } from "@/hooks/useParametrosFolha";
 import { FolhaKPIs } from "@/components/folha-pagamento/FolhaKPIs";
 import { FolhaToolbar } from "@/components/folha-pagamento/FolhaToolbar";
 import { HoleriteTable } from "@/components/folha-pagamento/HoleriteTable";
