@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { format, differenceInDays, addDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Calendar, Plus, Check, X, Eye } from "lucide-react";
@@ -42,6 +43,7 @@ interface Props {
 }
 
 export function FeriasCLTView({ canManage }: Props) {
+  const navigate = useNavigate();
   const { data: periodos = [], isLoading } = useFeriasPeriodos();
   const criarPeriodoMut = useCriarPeriodo();
   const criarProgMut = useCriarProgramacao();
@@ -233,7 +235,10 @@ export function FeriasCLTView({ canManage }: Props) {
                       )}
                     </TableCell>
                     {canManage && (
-                      <TableCell className="text-right">
+                      <TableCell className="text-right space-x-1">
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigate(`/ferias/colaborador/${p.colaborador_id}`)}>
+                          <Eye className="h-4 w-4" />
+                        </Button>
                         <Button variant="outline" size="sm" onClick={() => { setSelectedPeriodo(p); setShowNovaProg(true); }}>
                           <Plus className="h-3.5 w-3.5 mr-1" /> Programar
                         </Button>
