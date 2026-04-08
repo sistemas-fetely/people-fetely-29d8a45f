@@ -21,16 +21,18 @@ import { StepDocumentos } from "@/components/colaborador-clt/StepDocumentos";
 import { StepDadosProfissionais } from "@/components/colaborador-clt/StepDadosProfissionais";
 import { StepDadosBancarios } from "@/components/colaborador-clt/StepDadosBancarios";
 import { StepDependentes } from "@/components/colaborador-clt/StepDependentes";
+import { StepDadosEmpresa } from "@/components/colaborador-clt/StepDadosEmpresa";
 
 import type {
   DadosPessoaisForm,
   DocumentosForm,
   DadosProfissionaisForm,
   DadosBancariosForm,
+  DadosEmpresaForm,
   DependentesForm,
 } from "@/lib/validations/colaborador-clt";
 
-type AllFormData = DadosPessoaisForm & DocumentosForm & DadosProfissionaisForm & DadosBancariosForm & DependentesForm;
+type AllFormData = DadosPessoaisForm & DocumentosForm & DadosProfissionaisForm & DadosBancariosForm & DadosEmpresaForm & DependentesForm;
 
 type Departamento = { id: string; departamento: string; percentual_rateio: number };
 type Dependente = Tables<"dependentes">;
