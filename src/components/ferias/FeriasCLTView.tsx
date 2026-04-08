@@ -18,9 +18,10 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import {
-  useFeriasPeriodos, useCriarPeriodo, useCriarProgramacao, useAtualizarStatusProgramacao,
+  useFeriasPeriodos, useCriarPeriodo, useCriarProgramacao, useAtualizarStatusProgramacao, useEditarProgramacao,
   type PeriodoComColaborador,
 } from "@/hooks/useFerias";
+import type { Tables } from "@/integrations/supabase/types";
 
 const STATUS_PERIODO: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
   em_aberto: { label: "Em Aberto", variant: "outline" },
