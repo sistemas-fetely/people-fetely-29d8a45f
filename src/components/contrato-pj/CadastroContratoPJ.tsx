@@ -85,7 +85,7 @@ export function CadastroContratoPJ() {
   const goNext = async () => {
     const valid = await validateCurrentStep();
     if (!valid) return;
-    setCurrentStep((s) => Math.min(s + 1, 6));
+    setCurrentStep((s) => Math.min(s + 1, 7));
   };
 
   const goBack = () => setCurrentStep((s) => Math.max(s - 1, 1));
