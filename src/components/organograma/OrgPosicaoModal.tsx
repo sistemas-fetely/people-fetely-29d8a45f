@@ -6,9 +6,10 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCreatePosicao, useUpdatePosicao, useDeletePosicao } from "@/hooks/useOrgMutations";
+import { useParametros } from "@/hooks/useParametros";
 import type { PosicaoNode } from "@/types/organograma";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Trash2 } from "lucide-react";
+import { Trash2, Loader2 } from "lucide-react";
 
 interface Props {
   open: boolean;
