@@ -86,7 +86,7 @@ export default function Colaboradores() {
   };
 
   const allDepartamentos = Array.from(
-    new Set(colaboradores.flatMap((c) => (c.departamentos_rateio || []).map((d) => d.departamento)).concat(colaboradores.map((c) => c.departamento)).filter(Boolean))
+    new Set(colaboradores.map((c) => c.departamento).filter(Boolean))
   ).sort();
 
   const filtered = colaboradores.filter((c) => {
@@ -95,8 +95,7 @@ export default function Colaboradores() {
       c.cargo.toLowerCase().includes(search.toLowerCase()) ||
       c.departamento.toLowerCase().includes(search.toLowerCase());
     const matchStatus = filterStatus === "todos" || c.status === filterStatus;
-    const matchDept = filterDept === "todos" || c.departamento === filterDept ||
-      (c.departamentos_rateio || []).some((d) => d.departamento === filterDept);
+    const matchDept = filterDept === "todos" || c.departamento === filterDept;
     return matchSearch && matchStatus && matchDept;
   });
 
