@@ -261,6 +261,13 @@ export default function NotasFiscais() {
 function NotaFiscalFormDialog({ open, onClose, nota, contratos, onSaved }: {
   open: boolean; onClose: () => void; nota: NotaComContrato | null; contratos: ContratoPJOption[]; onSaved: () => void;
 }) {
+  const { data: statusParams } = useParametros("status_nota_fiscal");
+  const statusMap = useMemo(() => {
+    if (statusParams && statusParams.length > 0) {
+      return Object.fromEntries(statusParams.map((p) => [p.valor, p.label]));
+    }
+    return defaultStatusMap;
+  }, [statusParams]);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
     contrato_id: nota?.contrato_id || "",
