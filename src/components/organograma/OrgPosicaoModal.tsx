@@ -33,6 +33,8 @@ export function OrgPosicaoModal({ open, onClose, editNode, allNodes }: Props) {
   const createMutation = useCreatePosicao();
   const updateMutation = useUpdatePosicao();
   const deleteMutation = useDeletePosicao();
+  const { data: cargosParam, isLoading: loadingCargos } = useParametros("cargo");
+  const { data: deptParam, isLoading: loadingDepts } = useParametros("departamento");
 
   const [form, setForm] = useState({
     titulo_cargo: "",
