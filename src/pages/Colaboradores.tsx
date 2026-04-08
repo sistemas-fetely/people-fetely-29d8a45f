@@ -108,8 +108,16 @@ export default function Colaboradores() {
     return matchSearch && matchStatus && matchDept;
   });
 
-  const totalAtivos = colaboradores.filter((c) => c.status !== "desligado").length;
+  const ativos = colaboradores.filter((c) => c.status !== "desligado");
+  const totalAtivos = ativos.length;
   const totalInativos = colaboradores.filter((c) => c.status === "desligado").length;
+
+  const ENCARGOS_RATE = 0.08 + 0.20; // FGTS 8% + INSS Patronal 20%
+  const totalSalarios = ativos.reduce((s, c) => s + (c.salario_base || 0), 0);
+  const totalEncargos = totalSalarios * ENCARGOS_RATE;
+  const totalCustoMensal = totalSalarios + totalEncargos;
+
+  const fmtBRL = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
   const initials = (name: string) =>
     name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
