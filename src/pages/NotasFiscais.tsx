@@ -3,8 +3,9 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useParametros } from "@/hooks/useParametros";
 import {
   FileText, Search, MoreHorizontal, Eye, Edit, Trash2, Plus, Loader2,
+  Calendar, Filter, TrendingUp, Clock, CheckCircle2, AlertTriangle, DollarSign,
 } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -29,6 +30,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format, parseISO, startOfMonth, endOfMonth, subMonths, startOfYear, endOfYear, startOfQuarter, endOfQuarter, isWithinInterval } from "date-fns";
+import { ptBR as dateFnsPtBR } from "date-fns/locale";
 
 const periodOptions: { value: string; label: string }[] = [
   { value: "todos", label: "Todo Período" },
@@ -164,13 +166,6 @@ export default function NotasFiscais() {
     const matchPeriodo = !range || isWithinInterval(parseISO(n.data_emissao), { start: range.start, end: range.end });
     return matchSearch && matchStatus && matchContrato && matchPeriodo;
   });
-
-  const totalPendentes = notas.filter((n) => ["pendente", "aprovada", "enviada_pagamento"].includes(n.status)).length;
-  const totalPagas = notas.filter((n) => n.status === "paga").length;
-  const totalValor = notas.reduce((acc, n) => acc + Number(n.valor), 0);
-  const totalValorPago = notas.filter((n) => n.status === "paga").reduce((acc, n) => acc + Number(n.valor), 0);
-  const totalValorPendente = notas.filter((n) => ["pendente", "aprovada", "enviada_pagamento"].includes(n.status)).reduce((acc, n) => acc + Number(n.valor), 0);
-
   const handleDelete = async () => {
     if (!deleteTarget) return;
     const { error } = await supabase.from("notas_fiscais_pj").delete().eq("id", deleteTarget.id);
@@ -178,6 +173,30 @@ export default function NotasFiscais() {
     else { toast.success("Nota fiscal excluída"); fetchData(); }
     setDeleteTarget(null);
   };
+
+  // Fixed: Mês Atual stats
+  const now = new Date();
+  const mesAtualRange = { start: startOfMonth(now), end: endOfMonth(now) };
+  const notasMesAtual = notas.filter((n) => {
+    try { return isWithinInterval(parseISO(n.data_emissao), mesAtualRange); } catch { return false; }
+  });
+  const mesAtualTotal = notasMesAtual.length;
+  const mesAtualValor = notasMesAtual.reduce((acc, n) => acc + Number(n.valor), 0);
+  const mesAtualPagas = notasMesAtual.filter((n) => n.status === "paga").reduce((acc, n) => acc + Number(n.valor), 0);
+  const mesAtualPendente = notasMesAtual.filter((n) => ["pendente", "aprovada", "enviada_pagamento"].includes(n.status)).reduce((acc, n) => acc + Number(n.valor), 0);
+  const nomeMesAtual = format(now, "MMMM yyyy", { locale: dateFnsPtBR });
+
+  // Dynamic: filtered stats
+  const filteredTotal = filtered.length;
+  const filteredValor = filtered.reduce((acc, n) => acc + Number(n.valor), 0);
+  const filteredPagas = filtered.filter((n) => n.status === "paga").length;
+  const filteredPendentes = filtered.filter((n) => ["pendente", "aprovada", "enviada_pagamento"].includes(n.status)).length;
+  const filteredValorPago = filtered.filter((n) => n.status === "paga").reduce((acc, n) => acc + Number(n.valor), 0);
+  const filteredValorPendente = filtered.filter((n) => ["pendente", "aprovada", "enviada_pagamento"].includes(n.status)).reduce((acc, n) => acc + Number(n.valor), 0);
+
+  const fmtBRL = (v: number) => v.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
+
+  const hasActiveFilter = filterStatus !== "todos" || filterContrato !== "todos" || filterPeriodo !== "todos" || search.trim() !== "";
 
   return (
     <div className="space-y-6">
@@ -191,25 +210,124 @@ export default function NotasFiscais() {
         </Button>
       </div>
 
-      {/* Stats */}
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-4">
-        <Card className="card-shadow"><CardContent className="p-4 flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary"><FileText className="h-5 w-5" /></div>
-          <div><p className="text-2xl font-bold">{notas.length}</p><p className="text-xs text-muted-foreground">Total NFs</p></div>
-        </CardContent></Card>
-        <Card className="card-shadow"><CardContent className="p-4 flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-warning/10 text-warning"><FileText className="h-5 w-5" /></div>
-          <div><p className="text-2xl font-bold">{totalPendentes}</p><p className="text-xs text-muted-foreground">Pendentes</p></div>
-        </CardContent></Card>
-        <Card className="card-shadow"><CardContent className="p-4 flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-success/10 text-success"><FileText className="h-5 w-5" /></div>
-          <div><p className="text-2xl font-bold">R$ {totalValorPago.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p><p className="text-xs text-muted-foreground">Total Pago</p></div>
-        </CardContent></Card>
-        <Card className="card-shadow"><CardContent className="p-4 flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-destructive/10 text-destructive"><FileText className="h-5 w-5" /></div>
-          <div><p className="text-2xl font-bold">R$ {totalValorPendente.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p><p className="text-xs text-muted-foreground">A Pagar</p></div>
-        </CardContent></Card>
+      {/* Mês Atual - Fixed Cards */}
+      <div>
+        <div className="flex items-center gap-2 mb-3">
+          <Calendar className="h-4 w-4 text-primary" />
+          <h2 className="text-sm font-semibold text-primary uppercase tracking-wide capitalize">{nomeMesAtual}</h2>
+        </div>
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+          <Card className="border-l-4 border-l-primary bg-gradient-to-br from-primary/5 to-transparent">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Total NFs</p>
+                  <p className="text-2xl font-bold mt-1">{mesAtualTotal}</p>
+                </div>
+                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                  <FileText className="h-5 w-5 text-primary" />
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">R$ {fmtBRL(mesAtualValor)} total</p>
+            </CardContent>
+          </Card>
+          <Card className="border-l-4 border-l-emerald-500 bg-gradient-to-br from-emerald-500/5 to-transparent">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Total Pago</p>
+                  <p className="text-2xl font-bold mt-1 text-emerald-600">R$ {fmtBRL(mesAtualPagas)}</p>
+                </div>
+                <div className="h-10 w-10 rounded-full bg-emerald-500/10 flex items-center justify-center">
+                  <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="border-l-4 border-l-amber-500 bg-gradient-to-br from-amber-500/5 to-transparent">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">A Pagar</p>
+                  <p className="text-2xl font-bold mt-1 text-amber-600">R$ {fmtBRL(mesAtualPendente)}</p>
+                </div>
+                <div className="h-10 w-10 rounded-full bg-amber-500/10 flex items-center justify-center">
+                  <Clock className="h-5 w-5 text-amber-500" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="border-l-4 border-l-red-500 bg-gradient-to-br from-red-500/5 to-transparent">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Vencidas</p>
+                  <p className="text-2xl font-bold mt-1 text-red-600">{notasMesAtual.filter((n) => n.status === "vencida").length}</p>
+                </div>
+                <div className="h-10 w-10 rounded-full bg-red-500/10 flex items-center justify-center">
+                  <AlertTriangle className="h-5 w-5 text-red-500" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
+
+      {/* Filtered Cards */}
+      {hasActiveFilter && (
+        <div>
+          <div className="flex items-center gap-2 mb-3">
+            <Filter className="h-4 w-4 text-muted-foreground" />
+            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Resultado dos Filtros</h2>
+          </div>
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+            <Card className="bg-muted/30 border-dashed">
+              <CardContent className="p-4 flex items-center gap-3">
+                <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <FileText className="h-4 w-4 text-primary" />
+                </div>
+                <div>
+                  <p className="text-xl font-bold">{filteredTotal}</p>
+                  <p className="text-xs text-muted-foreground">Notas encontradas</p>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="bg-muted/30 border-dashed">
+              <CardContent className="p-4 flex items-center gap-3">
+                <div className="h-9 w-9 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                  <DollarSign className="h-4 w-4 text-emerald-500" />
+                </div>
+                <div>
+                  <p className="text-xl font-bold">R$ {fmtBRL(filteredValor)}</p>
+                  <p className="text-xs text-muted-foreground">Valor total</p>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="bg-muted/30 border-dashed">
+              <CardContent className="p-4 flex items-center gap-3">
+                <div className="h-9 w-9 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                </div>
+                <div>
+                  <p className="text-xl font-bold">{filteredPagas}</p>
+                  <p className="text-xs text-muted-foreground">Pagas — R$ {fmtBRL(filteredValorPago)}</p>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="bg-muted/30 border-dashed">
+              <CardContent className="p-4 flex items-center gap-3">
+                <div className="h-9 w-9 rounded-lg bg-amber-500/10 flex items-center justify-center">
+                  <Clock className="h-4 w-4 text-amber-500" />
+                </div>
+                <div>
+                  <p className="text-xl font-bold">{filteredPendentes}</p>
+                  <p className="text-xs text-muted-foreground">Pendentes — R$ {fmtBRL(filteredValorPendente)}</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      )}
 
       {/* Filters + Table */}
       <Card className="card-shadow">
