@@ -20,6 +20,7 @@ export default function FolhaPagamento() {
   const canManage = hasAnyRole(["super_admin", "gestor_rh", "financeiro"]);
 
   const { data: competencias = [] } = useCompetencias();
+  const { data: parametrosFolha } = useParametrosFolha();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const { data: holerites = [] } = useHolerites(selectedId);
   const [drawerHolerite, setDrawerHolerite] = useState<HoleriteComColaborador | null>(null);
