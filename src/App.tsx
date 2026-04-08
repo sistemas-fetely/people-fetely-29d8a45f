@@ -8,6 +8,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AppLayout } from "@/components/AppLayout";
 import Dashboard from "@/pages/Dashboard";
 import Colaboradores from "@/pages/Colaboradores";
+import ColaboradorDetalhe from "@/pages/ColaboradorDetalhe";
 import { CadastroColaboradorCLTWrapper } from "@/components/colaborador-clt/CadastroColaboradorCLT";
 import PlaceholderPage from "@/pages/PlaceholderPage";
 import Login from "@/pages/Login";
