@@ -86,7 +86,7 @@ export default function PagamentosPJ() {
     const contratoMap = new Map((cps || []).map((c) => [c.id, c]));
     const mapped: PagamentoComContrato[] = (pags || []).map((p: any) => {
       const c = contratoMap.get(p.contrato_id);
-      return { ...p, contrato_nome: c ? (c.nome_fantasia || c.razao_social) : "—" };
+      return { ...p, contrato_nome: c ? (c.nome_fantasia || c.razao_social) : "—", nf_numero: p.notas_fiscais_pj?.numero || null };
     });
     setPagamentos(mapped);
     setContratos((cps || []).map((c) => ({ id: c.id, label: c.nome_fantasia || c.razao_social })));
