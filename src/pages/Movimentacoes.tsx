@@ -314,7 +314,18 @@ export default function Movimentacoes() {
             {(tipo === "promocao" || tipo === "alteracao_cargo") && (
               <div>
                 <Label>Novo Cargo</Label>
-                <Input value={cargoNovo} onChange={(e) => setCargoNovo(e.target.value)} placeholder="Novo cargo" />
+                {loadingCargos ? (
+                  <div className="flex items-center h-10"><Loader2 className="h-4 w-4 animate-spin" /></div>
+                ) : (
+                  <Select value={cargoNovo} onValueChange={setCargoNovo}>
+                    <SelectTrigger><SelectValue placeholder="Selecione o cargo" /></SelectTrigger>
+                    <SelectContent>
+                      {cargos.map((c) => (
+                        <SelectItem key={c.id} value={c.label}>{c.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
               </div>
             )}
 
