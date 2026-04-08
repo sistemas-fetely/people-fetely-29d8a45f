@@ -124,7 +124,7 @@ function ContratoPJForm({
     if (!form.cnpj.trim()) { toast.error("CNPJ é obrigatório"); return; }
     if (!form.razao_social.trim()) { toast.error("Razão Social é obrigatória"); return; }
     if (!form.contato_nome.trim()) { toast.error("Nome do contato é obrigatório"); return; }
-    if (!form.tipo_servico) { toast.error("Tipo de serviço é obrigatório"); return; }
+    if (!form.tipo_servico) { toast.error("Cargo é obrigatório"); return; }
     if (!form.departamento) { toast.error("Departamento é obrigatório"); return; }
     if (!form.valor_mensal) { toast.error("Valor mensal é obrigatório"); return; }
     if (!form.data_inicio) { toast.error("Data de início é obrigatória"); return; }
