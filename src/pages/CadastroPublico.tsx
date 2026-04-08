@@ -698,7 +698,9 @@ export default function CadastroPublico() {
     const methods = isClt ? cltMethods : pjMethods;
     let fieldsToValidate: string[] = [];
     if (isClt) {
-      if (step === 0) fieldsToValidate = ["nome_completo", "cpf", "data_nascimento"];
+      if (step === 0) fieldsToValidate = ["nome_completo", "cpf", "rg", "orgao_emissor", "data_nascimento", "genero", "estado_civil", "nacionalidade", "etnia", "cep", "logradouro", "numero", "bairro", "cidade", "uf", "telefone", "email_pessoal", "contato_emergencia_nome", "contato_emergencia_telefone"];
+      if (step === 1) fieldsToValidate = ["pis_pasep", "ctps_numero", "ctps_serie", "ctps_uf"];
+      if (step === 2) fieldsToValidate = ["banco_codigo", "banco_nome", "agencia", "conta", "chave_pix"];
     } else {
       if (step === 0) fieldsToValidate = ["contato_nome", "contato_telefone", "contato_email", "cpf", "rg", "orgao_emissor", "data_nascimento", "genero", "estado_civil", "nacionalidade", "etnia", "cep", "logradouro", "numero", "bairro", "cidade", "uf", "telefone", "email_pessoal", "contato_emergencia_nome", "contato_emergencia_telefone"];
       if (step === 1) fieldsToValidate = ["cnpj", "razao_social", "nome_fantasia"];

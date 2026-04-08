@@ -26,7 +26,7 @@ interface StepUploadDocumentosProps {
 }
 
 const CLT_DOCUMENTS: DocumentSlot[] = [
-  { key: "rg_cnh_frente", label: "RG ou CNH (Frente)" },
+  { key: "rg_cnh_frente", label: "RG ou CNH (Frente)", required: true },
   { key: "rg_cnh_verso", label: "RG ou CNH (Verso)" },
 ];
 
