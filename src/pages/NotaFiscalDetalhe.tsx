@@ -172,9 +172,18 @@ export default function NotaFiscalDetalhe() {
             </p>
           </div>
         </div>
-        <Button variant="outline" className="gap-2" onClick={() => navigate(`/notas-fiscais?edit=${nota.id}`)}>
-          <Edit className="h-4 w-4" /> Editar
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            className="gap-2"
+            onClick={() => toast.info("Funcionalidade de envio de e-mail será implementada em breve.")}
+          >
+            <Mail className="h-4 w-4" /> Enviar por E-mail
+          </Button>
+          <Button variant="outline" className="gap-2" onClick={() => navigate(`/notas-fiscais?edit=${nota.id}`)}>
+            <Edit className="h-4 w-4" /> Editar
+          </Button>
+        </div>
       </div>
 
       {/* Summary Cards */}
