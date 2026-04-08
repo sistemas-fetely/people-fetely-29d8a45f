@@ -108,7 +108,7 @@ export default function NotasFiscais() {
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("todos");
   const [filterContrato, setFilterContrato] = useState("todos");
-  const [filterPeriodo, setFilterPeriodo] = useState("mes_atual");
+  const [filterPeriodo, setFilterPeriodo] = useState("todos");
   const [formOpen, setFormOpen] = useState(false);
   const [editNota, setEditNota] = useState<NotaComContrato | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<NotaComContrato | null>(null);
