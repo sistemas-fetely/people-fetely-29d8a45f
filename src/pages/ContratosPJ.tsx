@@ -382,11 +382,12 @@ function ContratoPJForm({
 
 export default function ContratosPJ() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [contratos, setContratos] = useState<ContratoPJ[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("todos");
-  const [formOpen, setFormOpen] = useState(false);
+  const [formOpen, setFormOpen] = useState(searchParams.get("novo") === "true");
   const [editContrato, setEditContrato] = useState<ContratoPJ | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<ContratoPJ | null>(null);
   const [deleting, setDeleting] = useState(false);
