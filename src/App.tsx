@@ -31,6 +31,7 @@ import Beneficios from "@/pages/Beneficios";
 import Movimentacoes from "@/pages/Movimentacoes";
 import CadastroPublico from "@/pages/CadastroPublico";
 import ConvitesCadastro from "@/pages/ConvitesCadastro";
+import Unsubscribe from "@/pages/Unsubscribe";
 
 const queryClient = new QueryClient();
 
@@ -48,6 +49,7 @@ const App = () => (
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/sem-permissao" element={<SemPermissao />} />
             <Route path="/cadastro/:token" element={<CadastroPublico />} />
+            <Route path="/unsubscribe" element={<Unsubscribe />} />
 
             {/* Protected routes */}
             <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>

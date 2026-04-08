@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   Plus, Loader2, Copy, Trash2, MoreHorizontal, Send, Clock, CheckCircle2,
-  XCircle, Search, RefreshCw, ExternalLink, Eye,
+  XCircle, Search, RefreshCw, ExternalLink, Eye, Mail,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -121,10 +121,34 @@ export default function ConvitesCadastro() {
 
   const publicBaseUrl = "https://people-fetely.lovable.app";
 
+  const getLink = (token: string) => `${publicBaseUrl}/cadastro/${token}`;
+
   const copyLink = (token: string) => {
-    const url = `${publicBaseUrl}/cadastro/${token}`;
-    navigator.clipboard.writeText(url);
+    navigator.clipboard.writeText(getLink(token));
     toast.success("Link copiado para a área de transferência!");
+  };
+
+  const sendEmail = async (convite: Convite) => {
+    try {
+      const { error } = await supabase.functions.invoke("send-transactional-email", {
+        body: {
+          templateName: "convite-cadastro",
+          recipientEmail: convite.email,
+          idempotencyKey: `convite-${convite.id}`,
+          templateData: {
+            nome: convite.nome,
+            tipo: convite.tipo,
+            cargo: convite.cargo || undefined,
+            departamento: convite.departamento || undefined,
+            link: getLink(convite.token),
+          },
+        },
+      });
+      if (error) throw error;
+      toast.success(`E-mail enviado para ${convite.email}!`);
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao enviar e-mail");
+    }
   };
 
   const filtered = convites.filter((c) => {
@@ -233,6 +257,7 @@ export default function ConvitesCadastro() {
                             <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               <DropdownMenuItem onClick={() => copyLink(c.token)} className="gap-2"><Copy className="h-4 w-4" /> Copiar Link</DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => sendEmail(c)} className="gap-2"><Mail className="h-4 w-4" /> Enviar E-mail</DropdownMenuItem>
                               <DropdownMenuItem onClick={() => window.open(`${publicBaseUrl}/cadastro/${c.token}`, '_blank')} className="gap-2"><ExternalLink className="h-4 w-4" /> Abrir Link</DropdownMenuItem>
                               {c.status === "preenchido" && (
                                 <DropdownMenuItem onClick={() => setViewTarget(c)} className="gap-2"><Eye className="h-4 w-4" /> Ver Dados</DropdownMenuItem>
