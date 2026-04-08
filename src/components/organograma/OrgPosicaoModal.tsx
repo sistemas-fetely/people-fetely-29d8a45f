@@ -160,15 +160,16 @@ export function OrgPosicaoModal({ open, onClose, editNode, allNodes }: Props) {
           <div className="grid grid-cols-2 gap-4">
             <div className="grid gap-1.5">
               <Label>Departamento *</Label>
-              <Input
-                value={form.departamento}
-                onChange={(e) => setForm({ ...form, departamento: e.target.value })}
-                placeholder="Ex: Comercial"
-                list="dept-list"
-              />
-              <datalist id="dept-list">
-                {departamentos.map(d => <option key={d} value={d} />)}
-              </datalist>
+              {loadingDepts ? <Loader2 className="h-4 w-4 animate-spin mt-2" /> : (
+                <Select value={form.departamento} onValueChange={(v) => setForm({ ...form, departamento: v })}>
+                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent>
+                    {(deptParam || []).map((d) => (
+                      <SelectItem key={d.id} value={d.label}>{d.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
             </div>
 
             <div className="grid gap-1.5">
