@@ -118,8 +118,17 @@ export function OrgPosicaoModal({ open, onClose, editNode, allNodes }: Props) {
 
         <div className="grid gap-4 py-2">
           <div className="grid gap-1.5">
-            <Label>Título do Cargo *</Label>
-            <Input value={form.titulo_cargo} onChange={(e) => setForm({ ...form, titulo_cargo: e.target.value })} placeholder="Ex: Gerente de Vendas" />
+            <Label>Cargo *</Label>
+            {loadingCargos ? <Loader2 className="h-4 w-4 animate-spin mt-2" /> : (
+              <Select value={form.titulo_cargo} onValueChange={(v) => setForm({ ...form, titulo_cargo: v })}>
+                <SelectTrigger><SelectValue placeholder="Selecione o cargo" /></SelectTrigger>
+                <SelectContent>
+                  {(cargosParam || []).map((c) => (
+                    <SelectItem key={c.id} value={c.label}>{c.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-4">
