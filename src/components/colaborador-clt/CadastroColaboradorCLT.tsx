@@ -44,10 +44,6 @@ type AllFormData = DadosPessoaisForm & DocumentosForm & DadosProfissionaisForm &
 
 export function CadastroColaboradorCLT() {
   const [currentStep, setCurrentStep] = useState(1);
-  const [uploadedFiles, setUploadedFiles] = useState<import("./StepUploadDocumentosCLT").UploadedFile[]>(
-    (initialData?.documentos_upload as any) || []
-  );
-  const uploadFolderRef = useRef(initialData?.upload_folder || crypto.randomUUID());
   const [saving, setSaving] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
@@ -55,6 +51,11 @@ export function CadastroColaboradorCLT() {
 
   const conviteId = (location.state as any)?.conviteId || null;
   const initialData = (location.state as any)?.initialData || null;
+
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>(
+    () => (initialData?.documentos_upload as any) || []
+  );
+  const uploadFolderRef = useRef(initialData?.upload_folder || crypto.randomUUID());
 
   const methods = useForm<AllFormData>({
     mode: "onBlur",
