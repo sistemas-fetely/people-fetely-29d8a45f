@@ -613,6 +613,78 @@ export type Database = {
         }
         Relationships: []
       }
+      convites_cadastro: {
+        Row: {
+          cargo: string | null
+          colaborador_id: string | null
+          contrato_pj_id: string | null
+          created_at: string
+          criado_por: string | null
+          dados_preenchidos: Json | null
+          departamento: string | null
+          email: string
+          expira_em: string
+          id: string
+          nome: string
+          preenchido_em: string | null
+          status: string
+          tipo: string
+          token: string
+          updated_at: string
+        }
+        Insert: {
+          cargo?: string | null
+          colaborador_id?: string | null
+          contrato_pj_id?: string | null
+          created_at?: string
+          criado_por?: string | null
+          dados_preenchidos?: Json | null
+          departamento?: string | null
+          email: string
+          expira_em?: string
+          id?: string
+          nome: string
+          preenchido_em?: string | null
+          status?: string
+          tipo: string
+          token?: string
+          updated_at?: string
+        }
+        Update: {
+          cargo?: string | null
+          colaborador_id?: string | null
+          contrato_pj_id?: string | null
+          created_at?: string
+          criado_por?: string | null
+          dados_preenchidos?: Json | null
+          departamento?: string | null
+          email?: string
+          expira_em?: string
+          id?: string
+          nome?: string
+          preenchido_em?: string | null
+          status?: string
+          tipo?: string
+          token?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "convites_cadastro_colaborador_id_fkey"
+            columns: ["colaborador_id"]
+            isOneToOne: false
+            referencedRelation: "colaboradores_clt"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "convites_cadastro_contrato_pj_id_fkey"
+            columns: ["contrato_pj_id"]
+            isOneToOne: false
+            referencedRelation: "contratos_pj"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dependentes: {
         Row: {
           colaborador_id: string
@@ -1166,6 +1238,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      notificacoes_rh: {
+        Row: {
+          created_at: string
+          id: string
+          lida: boolean
+          link: string | null
+          mensagem: string | null
+          tipo: string
+          titulo: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          lida?: boolean
+          link?: string | null
+          mensagem?: string | null
+          tipo: string
+          titulo: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          lida?: boolean
+          link?: string | null
+          mensagem?: string | null
+          tipo?: string
+          titulo?: string
+          user_id?: string | null
+        }
+        Relationships: []
       }
       pagamentos_pj: {
         Row: {
