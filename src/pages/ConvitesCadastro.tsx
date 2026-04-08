@@ -140,7 +140,7 @@ export default function ConvitesCadastro() {
         body: {
           templateName: "convite-cadastro",
           recipientEmail: convite.email,
-          idempotencyKey: `convite-${convite.id}`,
+          idempotencyKey: `convite-${convite.id}-${Date.now()}`,
           templateData: {
             nome: convite.nome,
             tipo: convite.tipo,
@@ -151,6 +151,17 @@ export default function ConvitesCadastro() {
         },
       });
       if (error) throw error;
+
+      // Update status to email_enviado
+      await supabase
+        .from("convites_cadastro")
+        .update({ status: "email_enviado" })
+        .eq("id", convite.id);
+
+      setConvites((prev) =>
+        prev.map((c) => (c.id === convite.id ? { ...c, status: "email_enviado" } : c))
+      );
+
       toast.success(`E-mail enviado para ${convite.email}!`);
     } catch (err: any) {
       toast.error(err.message || "Erro ao enviar e-mail");
