@@ -57,7 +57,7 @@ export default function FolhaPagamento() {
         selectedId={selectedId}
         onSelect={setSelectedId}
         onCriar={(comp) => criarMut.mutate(comp)}
-        onCalcular={() => selectedId && calcularMut.mutate(selectedId)}
+        onCalcular={() => selectedId && calcularMut.mutate({ competenciaId: selectedId, params: parametrosFolha })}
         onFechar={() => selectedId && fecharMut.mutate(selectedId)}
         onExportExcel={handleExportExcel}
         onExportPDF={handleExportPDF}
