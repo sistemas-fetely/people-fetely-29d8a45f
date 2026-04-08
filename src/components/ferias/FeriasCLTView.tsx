@@ -265,6 +265,11 @@ export function FeriasCLTView({ canManage, isAdmin }: Props) {
                                     <X className="h-3 w-3 text-red-600" />
                                   </Button>
                                 )}
+                                {isAdmin && (
+                                  <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => excluirProgMut.mutate(pr.id)}>
+                                    <Trash2 className="h-3 w-3 text-destructive" />
+                                  </Button>
+                                )}
                               </div>
                             );
                           })}
