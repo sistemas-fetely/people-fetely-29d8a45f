@@ -6,9 +6,10 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCreatePosicao, useUpdatePosicao, useDeletePosicao } from "@/hooks/useOrgMutations";
+import { useParametros } from "@/hooks/useParametros";
 import type { PosicaoNode } from "@/types/organograma";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Trash2 } from "lucide-react";
+import { Trash2, Loader2 } from "lucide-react";
 
 interface Props {
   open: boolean;
@@ -32,6 +33,8 @@ export function OrgPosicaoModal({ open, onClose, editNode, allNodes }: Props) {
   const createMutation = useCreatePosicao();
   const updateMutation = useUpdatePosicao();
   const deleteMutation = useDeletePosicao();
+  const { data: cargosParam, isLoading: loadingCargos } = useParametros("cargo");
+  const { data: deptParam, isLoading: loadingDepts } = useParametros("departamento");
 
   const [form, setForm] = useState({
     titulo_cargo: "",
@@ -73,7 +76,6 @@ export function OrgPosicaoModal({ open, onClose, editNode, allNodes }: Props) {
     }
   }, [editNode, open]);
 
-  const departamentos = [...new Set(allNodes.map(n => n.departamento))].sort();
   const parentOptions = allNodes.filter(n => !editNode || n.id !== editNode.id);
 
   const handleSubmit = () => {
@@ -115,8 +117,17 @@ export function OrgPosicaoModal({ open, onClose, editNode, allNodes }: Props) {
 
         <div className="grid gap-4 py-2">
           <div className="grid gap-1.5">
-            <Label>Título do Cargo *</Label>
-            <Input value={form.titulo_cargo} onChange={(e) => setForm({ ...form, titulo_cargo: e.target.value })} placeholder="Ex: Gerente de Vendas" />
+            <Label>Cargo *</Label>
+            {loadingCargos ? <Loader2 className="h-4 w-4 animate-spin mt-2" /> : (
+              <Select value={form.titulo_cargo} onValueChange={(v) => setForm({ ...form, titulo_cargo: v })}>
+                <SelectTrigger><SelectValue placeholder="Selecione o cargo" /></SelectTrigger>
+                <SelectContent>
+                  {(cargosParam || []).map((c) => (
+                    <SelectItem key={c.id} value={c.label}>{c.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -148,15 +159,16 @@ export function OrgPosicaoModal({ open, onClose, editNode, allNodes }: Props) {
           <div className="grid grid-cols-2 gap-4">
             <div className="grid gap-1.5">
               <Label>Departamento *</Label>
-              <Input
-                value={form.departamento}
-                onChange={(e) => setForm({ ...form, departamento: e.target.value })}
-                placeholder="Ex: Comercial"
-                list="dept-list"
-              />
-              <datalist id="dept-list">
-                {departamentos.map(d => <option key={d} value={d} />)}
-              </datalist>
+              {loadingDepts ? <Loader2 className="h-4 w-4 animate-spin mt-2" /> : (
+                <Select value={form.departamento} onValueChange={(v) => setForm({ ...form, departamento: v })}>
+                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent>
+                    {(deptParam || []).map((d) => (
+                      <SelectItem key={d.id} value={d.label}>{d.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
             </div>
 
             <div className="grid gap-1.5">
