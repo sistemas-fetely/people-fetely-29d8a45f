@@ -26,7 +26,6 @@ export default function FolhaPagamento() {
   const calcularMut = useCalcularFolha();
   const fecharMut = useFecharCompetencia();
 
-  // Auto-select first competência
   useEffect(() => {
     if (!selectedId && competencias.length > 0) {
       setSelectedId(competencias[0].id);
@@ -34,6 +33,7 @@ export default function FolhaPagamento() {
   }, [competencias, selectedId]);
 
   const selected = competencias.find((c) => c.id === selectedId) ?? null;
+  const canEditHolerite = canManage && selected?.status !== "fechada";
 
   return (
     <div className="space-y-6">
@@ -64,6 +64,8 @@ export default function FolhaPagamento() {
         holerite={drawerHolerite}
         open={!!drawerHolerite}
         onClose={() => setDrawerHolerite(null)}
+        competenciaId={selectedId}
+        canEdit={canEditHolerite}
       />
     </div>
   );

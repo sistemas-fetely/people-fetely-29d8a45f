@@ -194,3 +194,94 @@ export function useFecharCompetencia() {
     onError: () => toast.error("Erro ao fechar competência"),
   });
 }
+
+export interface EditarHoleriteInput {
+  holeriteId: string;
+  competenciaId: string;
+  colaboradorId: string;
+  salarioBase: number;
+  horasExtras50Qtd: number;
+  horasExtras100Qtd: number;
+  faltasDias: number;
+  jornadaMensal: number;
+  numDependentes: number;
+  descontoVT: boolean;
+  descontoVR: number;
+  descontoPlanoSaude: number;
+  outrosProventos: number;
+  outrosDescontos: number;
+}
+
+export function useEditarHolerite() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: EditarHoleriteInput) => {
+      const dados: DadosCalculo = {
+        salarioBase: input.salarioBase,
+        horasExtras50Qtd: input.horasExtras50Qtd,
+        horasExtras100Qtd: input.horasExtras100Qtd,
+        faltasDias: input.faltasDias,
+        jornadaMensal: input.jornadaMensal,
+        numDependentes: input.numDependentes,
+        descontoVT: input.descontoVT,
+        descontoVR: input.descontoVR,
+        descontoPlanoSaude: input.descontoPlanoSaude,
+        outrosProventos: input.outrosProventos,
+        outrosDescontos: input.outrosDescontos,
+      };
+      const calc = calcularFolha(dados);
+
+      const { error } = await supabase
+        .from("holerites")
+        .update({
+          salario_base: calc.salarioBase,
+          horas_extras_50: calc.horasExtras50,
+          horas_extras_100: calc.horasExtras100,
+          adicional_noturno: calc.adicionalNoturno,
+          outros_proventos: calc.outrosProventos,
+          inss: calc.inss,
+          irrf: calc.irrf,
+          vt_desconto: calc.vtDesconto,
+          vr_desconto: calc.vrDesconto,
+          plano_saude: calc.planoSaude,
+          faltas_desconto: calc.faltasDesconto,
+          outros_descontos: calc.outrosDescontos,
+          fgts: calc.fgts,
+          inss_patronal: calc.inssPatronal,
+          total_proventos: calc.totalProventos,
+          total_descontos: calc.totalDescontos,
+          salario_liquido: calc.salarioLiquido,
+          total_encargos: calc.totalEncargos,
+          horas_extras_50_qtd: calc.horasExtras50Qtd,
+          horas_extras_100_qtd: calc.horasExtras100Qtd,
+          faltas_dias: calc.faltasDias,
+        })
+        .eq("id", input.holeriteId);
+      if (error) throw error;
+
+      // Recalcular totais da competência
+      const { data: allH } = await supabase
+        .from("holerites")
+        .select("total_proventos, salario_liquido, total_encargos")
+        .eq("competencia_id", input.competenciaId);
+
+      if (allH) {
+        const totalBruto = allH.reduce((s, h) => s + (h.total_proventos ?? 0), 0);
+        const totalLiquido = allH.reduce((s, h) => s + (h.salario_liquido ?? 0), 0);
+        const totalEncargos = allH.reduce((s, h) => s + (h.total_encargos ?? 0), 0);
+        await supabase
+          .from("folha_competencias")
+          .update({ total_bruto: totalBruto, total_liquido: totalLiquido, total_encargos: totalEncargos })
+          .eq("id", input.competenciaId);
+      }
+
+      return calc;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["holerites"] });
+      qc.invalidateQueries({ queryKey: ["folha_competencias"] });
+      toast.success("Holerite atualizado e recalculado");
+    },
+    onError: () => toast.error("Erro ao atualizar holerite"),
+  });
+}
