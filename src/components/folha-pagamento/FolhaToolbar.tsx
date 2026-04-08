@@ -31,7 +31,7 @@ const STATUS_BADGE: Record<string, { label: string; variant: "default" | "second
 };
 
 export function FolhaToolbar({
-  competencias, selectedId, onSelect, onCriar, onCalcular, onFechar, isCalculating, canManage,
+  competencias, selectedId, onSelect, onCriar, onCalcular, onFechar, onExportExcel, onExportPDF, isCalculating, canManage, hasHolerites,
 }: Props) {
   const [showNew, setShowNew] = useState(false);
   const [novaComp, setNovaComp] = useState("");
