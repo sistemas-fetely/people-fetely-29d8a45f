@@ -302,24 +302,34 @@ export default function NotaFiscalDetalhe() {
                 const isPast = currentIndex > idx;
                 const isFuture = currentIndex < idx;
                 const isNext = idx === currentIndex + 1;
+
+                // Per-status color sets
+                const colorMap: Record<string, { activeBg: string; activeFg: string; pastBg: string; pastFg: string; dot: string }> = {
+                  pendente:           { activeBg: "bg-amber-500",   activeFg: "text-white",      pastBg: "bg-amber-100",  pastFg: "text-amber-700",  dot: "bg-amber-600" },
+                  aprovada:           { activeBg: "bg-blue-500",    activeFg: "text-white",      pastBg: "bg-blue-100",   pastFg: "text-blue-700",   dot: "bg-blue-600" },
+                  enviada_pagamento:  { activeBg: "bg-violet-500",  activeFg: "text-white",      pastBg: "bg-violet-100", pastFg: "text-violet-700", dot: "bg-violet-600" },
+                  paga:               { activeBg: "bg-emerald-500", activeFg: "text-white",      pastBg: "bg-emerald-100",pastFg: "text-emerald-700",dot: "bg-emerald-600" },
+                };
+                const colors = colorMap[status] || colorMap.pendente;
+
                 return (
                   <div key={status} className="flex items-center flex-1 last:flex-initial">
                     <button
                       disabled={changingStatus || isPast || isActive}
                       onClick={() => (isNext || isFuture) ? setPendingStatus(status) : undefined}
                       className={`
-                        relative flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all w-full
-                        ${isActive ? "bg-primary text-primary-foreground shadow-md" : ""}
-                        ${isPast ? "bg-primary/10 text-primary" : ""}
-                        ${isFuture && isNext ? "bg-muted hover:bg-primary/10 hover:text-primary cursor-pointer border-2 border-dashed border-primary/30" : ""}
+                        relative flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all w-full min-w-[140px] justify-center
+                        ${isActive ? `${colors.activeBg} ${colors.activeFg} shadow-md` : ""}
+                        ${isPast ? `${colors.pastBg} ${colors.pastFg}` : ""}
+                        ${isFuture && isNext ? "bg-muted hover:bg-muted/80 cursor-pointer border-2 border-dashed border-muted-foreground/30 text-muted-foreground" : ""}
                         ${isFuture && !isNext ? "bg-muted text-muted-foreground hover:bg-muted/80 cursor-pointer" : ""}
                         ${isPast || isActive ? "cursor-default" : ""}
                       `}
                     >
                       <span className={`
                         flex h-6 w-6 items-center justify-center rounded-full text-xs shrink-0
-                        ${isActive ? "bg-primary-foreground/20 text-primary-foreground" : ""}
-                        ${isPast ? "bg-primary text-primary-foreground" : ""}
+                        ${isActive ? `${colors.activeFg} bg-white/20` : ""}
+                        ${isPast ? `${colors.dot} text-white` : ""}
                         ${isFuture ? "bg-muted-foreground/20 text-muted-foreground" : ""}
                       `}>
                         {isPast ? <CheckCircle2 className="h-4 w-4" /> : idx + 1}
