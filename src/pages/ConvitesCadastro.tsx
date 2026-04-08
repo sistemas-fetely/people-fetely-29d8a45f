@@ -60,6 +60,7 @@ interface Convite {
 }
 
 export default function ConvitesCadastro() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [convites, setConvites] = useState<Convite[]>([]);
   const [loading, setLoading] = useState(true);
