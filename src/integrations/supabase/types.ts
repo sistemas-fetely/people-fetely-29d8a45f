@@ -177,6 +177,7 @@ export type Database = {
           ctps_serie: string | null
           ctps_uf: string | null
           data_admissao: string
+          data_desligamento: string | null
           data_integracao: string | null
           data_nascimento: string
           departamento: string
@@ -239,6 +240,7 @@ export type Database = {
           ctps_serie?: string | null
           ctps_uf?: string | null
           data_admissao: string
+          data_desligamento?: string | null
           data_integracao?: string | null
           data_nascimento: string
           departamento: string
@@ -301,6 +303,7 @@ export type Database = {
           ctps_serie?: string | null
           ctps_uf?: string | null
           data_admissao?: string
+          data_desligamento?: string | null
           data_integracao?: string | null
           data_nascimento?: string
           departamento?: string

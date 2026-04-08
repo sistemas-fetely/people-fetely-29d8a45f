@@ -1,0 +1,1 @@
+ALTER TABLE public.colaboradores_clt ADD COLUMN data_desligamento date DEFAULT NULL;
