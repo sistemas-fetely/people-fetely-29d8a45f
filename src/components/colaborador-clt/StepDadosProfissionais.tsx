@@ -60,6 +60,10 @@ export function StepDadosProfissionais() {
           {errors.data_admissao && <p className="text-xs text-destructive mt-1">{errors.data_admissao.message}</p>}
         </div>
         <div>
+          <Label htmlFor="data_desligamento">Data de Desligamento</Label>
+          <Input id="data_desligamento" type="date" {...register("data_desligamento" as any)} />
+        </div>
+        <div>
           <Label>Tipo de Contrato</Label>
           {loadingTipos ? (
             <div className="flex items-center h-10"><Loader2 className="h-4 w-4 animate-spin" /></div>
