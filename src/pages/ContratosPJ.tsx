@@ -399,6 +399,14 @@ export default function ContratosPJ() {
       .order("razao_social");
     setContratos((data as ContratoPJ[]) || []);
     setLoading(false);
+
+    // Handle edit param from detail page
+    const editId = searchParams.get("edit");
+    if (editId && data) {
+      const target = (data as ContratoPJ[]).find((c) => c.id === editId);
+      if (target) { setEditContrato(target); setFormOpen(true); }
+      setSearchParams({}, { replace: true });
+    }
   };
 
   useEffect(() => { fetchContratos(); }, []);
