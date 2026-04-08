@@ -132,6 +132,38 @@ export function useEditarProgramacao() {
   });
 }
 
+export function useExcluirProgramacao() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("ferias_programacoes").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["ferias_periodos"] });
+      qc.invalidateQueries({ queryKey: ["ferias_periodos_colaborador"] });
+      toast.success("Programação excluída");
+    },
+    onError: () => toast.error("Erro ao excluir programação"),
+  });
+}
+
+export function useExcluirPeriodo() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("ferias_periodos").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["ferias_periodos"] });
+      qc.invalidateQueries({ queryKey: ["ferias_periodos_colaborador"] });
+      toast.success("Período excluído");
+    },
+    onError: () => toast.error("Erro ao excluir período"),
+  });
+}
+
 // ---- PJ ----
 export function useFeriasPeriodosPJ() {
   return useQuery({
