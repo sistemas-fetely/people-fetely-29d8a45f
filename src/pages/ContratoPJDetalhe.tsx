@@ -9,6 +9,7 @@ import {
   CreditCard, Plus, MoreHorizontal, Trash2, DollarSign,
 } from "lucide-react";
 import { CustoResumoCard } from "@/components/CustoResumoCard";
+import { HistoricoCustosChart } from "@/components/HistoricoCustosChart";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -498,7 +499,10 @@ export default function ContratoPJDetalhe() {
           </TabsContent>
 
           <TabsContent value="custos">
-            <CustoResumoCard tipo="pj" salarioBase={Number(contrato.valor_mensal)} />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <CustoResumoCard tipo="pj" salarioBase={Number(contrato.valor_mensal)} />
+              <HistoricoCustosChart tipo="pj" entityId={id!} />
+            </div>
           </TabsContent>
         </Tabs>
 
