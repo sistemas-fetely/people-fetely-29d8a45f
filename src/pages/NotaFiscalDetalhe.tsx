@@ -162,6 +162,16 @@ export default function NotaFiscalDetalhe() {
   const currentIndex = statusPipeline.indexOf(nota.status);
   const isTerminal = terminalStatuses.includes(nota.status);
 
+  // Map NF status to payment status
+  const nfToPagamentoStatus = (nfStatus: string): string => {
+    switch (nfStatus) {
+      case "paga": return "pago";
+      case "cancelada": return "cancelado";
+      case "vencida": return "cancelado";
+      default: return "pendente";
+    }
+  };
+
   const handleStatusChange = async (newStatus: string) => {
     if (!nota) return;
     setChangingStatus(true);
@@ -192,6 +202,16 @@ export default function NotaFiscalDetalhe() {
           toast.error("Status alterado, mas erro ao criar pagamento: " + pagError.message);
         } else {
           toast.success("Pagamento PJ criado automaticamente!");
+        }
+      } else {
+        // Sync payment status with NF status
+        const pagStatus = nfToPagamentoStatus(newStatus);
+        const { error: syncError } = await supabase
+          .from("pagamentos_pj")
+          .update({ status: pagStatus } as any)
+          .eq("nota_fiscal_id", nota.id);
+        if (syncError) {
+          console.error("Erro ao sincronizar status do pagamento:", syncError.message);
         }
       }
 
