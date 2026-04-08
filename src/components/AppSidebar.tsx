@@ -1,7 +1,7 @@
 import {
   LayoutDashboard, Users, FileText, Calendar, ClipboardList, Award,
   GraduationCap, Building2, GitBranch, BarChart3, Settings, UserCircle,
-  Briefcase, LogOut,
+  Briefcase, LogOut, ArrowUpDown,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { cn } from "@/lib/utils";
@@ -30,6 +30,7 @@ const mainItems = [
   { title: "Pessoas", url: "/pessoas", icon: Users, roles: [] as AppRole[] },
   { title: "Organograma", url: "/organograma", icon: GitBranch, roles: [] as AppRole[] },
   { title: "Férias", url: "/ferias", icon: Calendar, roles: [] as AppRole[] },
+  { title: "Movimentações", url: "/movimentacoes", icon: ArrowUpDown, roles: [] as AppRole[] },
 ];
 
 const cltItems = [

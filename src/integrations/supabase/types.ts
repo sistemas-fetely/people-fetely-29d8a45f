@@ -924,6 +924,81 @@ export type Database = {
           },
         ]
       }
+      movimentacoes: {
+        Row: {
+          cargo_anterior: string | null
+          cargo_novo: string | null
+          colaborador_id: string | null
+          contrato_pj_id: string | null
+          created_at: string
+          created_by: string | null
+          data_efetivacao: string
+          departamento_anterior: string | null
+          departamento_novo: string | null
+          id: string
+          motivo: string | null
+          observacoes: string | null
+          salario_anterior: number | null
+          salario_novo: number | null
+          status: string
+          tipo: string
+          updated_at: string
+        }
+        Insert: {
+          cargo_anterior?: string | null
+          cargo_novo?: string | null
+          colaborador_id?: string | null
+          contrato_pj_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_efetivacao: string
+          departamento_anterior?: string | null
+          departamento_novo?: string | null
+          id?: string
+          motivo?: string | null
+          observacoes?: string | null
+          salario_anterior?: number | null
+          salario_novo?: number | null
+          status?: string
+          tipo: string
+          updated_at?: string
+        }
+        Update: {
+          cargo_anterior?: string | null
+          cargo_novo?: string | null
+          colaborador_id?: string | null
+          contrato_pj_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_efetivacao?: string
+          departamento_anterior?: string | null
+          departamento_novo?: string | null
+          id?: string
+          motivo?: string | null
+          observacoes?: string | null
+          salario_anterior?: number | null
+          salario_novo?: number | null
+          status?: string
+          tipo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "movimentacoes_colaborador_id_fkey"
+            columns: ["colaborador_id"]
+            isOneToOne: false
+            referencedRelation: "colaboradores_clt"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "movimentacoes_contrato_pj_id_fkey"
+            columns: ["contrato_pj_id"]
+            isOneToOne: false
+            referencedRelation: "contratos_pj"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notas_fiscais_pj: {
         Row: {
           arquivo_url: string | null

@@ -27,6 +27,7 @@ import FolhaPagamento from "@/pages/FolhaPagamento";
 import Ferias from "@/pages/Ferias";
 import FeriasColaborador from "@/pages/FeriasColaborador";
 import Beneficios from "@/pages/Beneficios";
+import Movimentacoes from "@/pages/Movimentacoes";
 
 const queryClient = new QueryClient();
 
@@ -56,6 +57,7 @@ const App = () => (
               } />
               <Route path="/colaboradores/:id" element={<ColaboradorDetalhe />} />
               <Route path="/organograma" element={<Organograma />} />
+              <Route path="/movimentacoes" element={<Movimentacoes />} />
 
               {/* CLT - Gestor RH, Super Admin, Financeiro */}
               <Route path="/folha-pagamento" element={
