@@ -273,7 +273,18 @@ export default function ConviteDetalhe() {
   const hasDados = Object.keys(formData).length > 0;
   const expired = convite.status === "pendente" && new Date(convite.expira_em) <= new Date();
   const displayStatus = expired ? "expirado" : convite.status;
-  const canExport = hasDados && !convite.colaborador_id && !convite.contrato_pj_id && convite.status !== "cadastrado";
+  const isCadastrado = convite.status === "cadastrado";
+  const canExport = hasDados && !convite.colaborador_id && !convite.contrato_pj_id && !isCadastrado;
+  const canEdit = !isCadastrado;
+
+  const statusLabels: Record<string, string> = {
+    pendente: "Pendente",
+    email_enviado: "Email Enviado",
+    preenchido: "Preenchido",
+    cadastrado: "Cadastrado com Sucesso",
+    expirado: "Expirado",
+    cancelado: "Cancelado",
+  };
 
   return (
     <div className="space-y-6">
