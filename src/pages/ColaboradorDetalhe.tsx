@@ -602,3 +602,90 @@ function InfoField({ label, value }: { label: string; value: string | null | und
     </div>
   );
 }
+
+const TIPO_LABEL: Record<string, string> = {
+  promocao: "Promoção",
+  transferencia: "Transferência",
+  alteracao_salarial: "Alteração Salarial",
+  alteracao_cargo: "Alteração de Cargo",
+  mudanca_departamento: "Mudança de Departamento",
+};
+
+const STATUS_STYLES: Record<string, string> = {
+  pendente: "bg-warning/10 text-warning border-0",
+  aprovada: "bg-info/10 text-info border-0",
+  efetivada: "bg-emerald-500/10 text-emerald-600 border-0",
+  cancelada: "bg-destructive/10 text-destructive border-0",
+};
+
+function HistoricoMovimentacoes({ colaboradorId }: { colaboradorId: string }) {
+  const { data: movs = [], isLoading } = useQuery({
+    queryKey: ["movimentacoes_colaborador", colaboradorId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("movimentacoes")
+        .select("*")
+        .eq("colaborador_id", colaboradorId)
+        .order("data_efetivacao", { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  const fmt = (v: number | null) =>
+    v != null ? `R$ ${v.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}` : "—";
+
+  if (isLoading) {
+    return (
+      <Card><CardContent className="py-8 text-center text-muted-foreground text-sm">Carregando...</CardContent></Card>
+    );
+  }
+
+  if (movs.length === 0) {
+    return (
+      <Card><CardContent className="py-8 text-center text-muted-foreground text-sm">Nenhuma movimentação registrada.</CardContent></Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardContent className="pt-6 space-y-4">
+        {movs.map((m) => (
+          <div key={m.id} className="border rounded-lg p-4 space-y-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Badge variant="outline" className="text-xs">{TIPO_LABEL[m.tipo] || m.tipo}</Badge>
+                <Badge variant="outline" className={STATUS_STYLES[m.status] || ""}>{m.status}</Badge>
+              </div>
+              <span className="text-xs text-muted-foreground">
+                {new Date(m.data_efetivacao + "T00:00:00").toLocaleDateString("pt-BR")}
+              </span>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+              {(m.cargo_anterior || m.cargo_novo) && (
+                <div>
+                  <p className="text-xs text-muted-foreground">Cargo</p>
+                  <p>{m.cargo_anterior || "—"} → <span className="font-medium">{m.cargo_novo || "—"}</span></p>
+                </div>
+              )}
+              {(m.departamento_anterior || m.departamento_novo) && (
+                <div>
+                  <p className="text-xs text-muted-foreground">Departamento</p>
+                  <p>{m.departamento_anterior || "—"} → <span className="font-medium">{m.departamento_novo || "—"}</span></p>
+                </div>
+              )}
+              {(m.salario_anterior != null || m.salario_novo != null) && (
+                <div>
+                  <p className="text-xs text-muted-foreground">Salário</p>
+                  <p>{fmt(m.salario_anterior)} → <span className="font-medium">{fmt(m.salario_novo)}</span></p>
+                </div>
+              )}
+            </div>
+            {m.motivo && <p className="text-xs text-muted-foreground"><strong>Motivo:</strong> {m.motivo}</p>}
+            {m.observacoes && <p className="text-xs text-muted-foreground"><strong>Obs:</strong> {m.observacoes}</p>}
+          </div>
+        ))}
+      </CardContent>
+    </Card>
+  );
+}
