@@ -23,9 +23,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 import { toast } from "sonner";
 
-type ColaboradorWithDepts = Tables<"colaboradores_clt"> & {
-  departamentos_rateio?: { departamento: string; percentual_rateio: number }[];
-};
+type ColaboradorRow = Tables<"colaboradores_clt">;
 import { format, parseISO } from "date-fns";
 
 const statusMap: Record<string, string> = {
@@ -49,25 +47,19 @@ export default function Colaboradores() {
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("todos");
   const [filterDept, setFilterDept] = useState("todos");
-  const [colaboradores, setColaboradores] = useState<ColaboradorWithDepts[]>([]);
+  const [colaboradores, setColaboradores] = useState<ColaboradorRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [deleteTarget, setDeleteTarget] = useState<ColaboradorWithDepts | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<ColaboradorRow | null>(null);
   const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     async function fetchData() {
-      const [{ data: cols }, { data: depts }] = await Promise.all([
-        supabase.from("colaboradores_clt").select("*").order("nome_completo"),
-        supabase.from("colaborador_departamentos").select("colaborador_id, departamento, percentual_rateio"),
-      ]);
+      const { data: cols } = await supabase
+        .from("colaboradores_clt")
+        .select("*")
+        .order("nome_completo");
       if (cols) {
-        const deptsMap = new Map<string, { departamento: string; percentual_rateio: number }[]>();
-        (depts || []).forEach((d) => {
-          const arr = deptsMap.get(d.colaborador_id) || [];
-          arr.push({ departamento: d.departamento, percentual_rateio: d.percentual_rateio });
-          deptsMap.set(d.colaborador_id, arr);
-        });
-        setColaboradores(cols.map((c) => ({ ...c, departamentos_rateio: deptsMap.get(c.id) || [] })));
+        setColaboradores(cols);
       }
       setLoading(false);
     }
@@ -94,7 +86,7 @@ export default function Colaboradores() {
   };
 
   const allDepartamentos = Array.from(
-    new Set(colaboradores.flatMap((c) => (c.departamentos_rateio || []).map((d) => d.departamento)).concat(colaboradores.map((c) => c.departamento)).filter(Boolean))
+    new Set(colaboradores.map((c) => c.departamento).filter(Boolean))
   ).sort();
 
   const filtered = colaboradores.filter((c) => {
@@ -103,8 +95,7 @@ export default function Colaboradores() {
       c.cargo.toLowerCase().includes(search.toLowerCase()) ||
       c.departamento.toLowerCase().includes(search.toLowerCase());
     const matchStatus = filterStatus === "todos" || c.status === filterStatus;
-    const matchDept = filterDept === "todos" || c.departamento === filterDept ||
-      (c.departamentos_rateio || []).some((d) => d.departamento === filterDept);
+    const matchDept = filterDept === "todos" || c.departamento === filterDept;
     return matchSearch && matchStatus && matchDept;
   });
 
@@ -266,17 +257,7 @@ export default function Colaboradores() {
                       </TableCell>
                       <TableCell className="text-sm">{c.cargo}</TableCell>
                       <TableCell className="text-sm hidden md:table-cell">
-                        {c.departamentos_rateio && c.departamentos_rateio.length > 0 ? (
-                          <div className="flex flex-wrap gap-1">
-                            {c.departamentos_rateio.map((d, i) => (
-                              <Badge key={i} variant="outline" className="bg-muted text-xs font-normal">
-                                {d.departamento} ({d.percentual_rateio}%)
-                              </Badge>
-                            ))}
-                          </div>
-                        ) : (
-                          c.departamento
-                        )}
+                        {c.departamento}
                       </TableCell>
                       <TableCell>
                         <Badge variant="outline" className="bg-primary/10 text-primary border-0 capitalize">

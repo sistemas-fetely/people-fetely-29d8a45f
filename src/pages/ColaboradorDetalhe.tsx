@@ -135,9 +135,7 @@ export default function ColaboradorDetalhe() {
           incluir_irrf: d.incluir_irrf || false,
           incluir_plano_saude: d.incluir_plano_saude || false,
         })),
-        departamentos_rateio: (depts || []).length > 0
-          ? depts!.map((d) => ({ departamento: d.departamento, percentual_rateio: d.percentual_rateio }))
-          : [{ departamento: col.departamento, percentual_rateio: 100 }],
+        departamento: col.departamento,
         acessos_sistemas: (acessos || []).map((a) => ({
           sistema: a.sistema,
           tem_acesso: a.tem_acesso,
@@ -164,35 +162,20 @@ export default function ColaboradorDetalhe() {
     if (!id) return;
     setSaving(true);
     try {
-      const { dependentes: formDeps, departamentos_rateio, acessos_sistemas: formAcessos, equipamentos: formEquip, salario_base, jornada_semanal, ...rest } = data;
+      const { dependentes: formDeps, acessos_sistemas: formAcessos, equipamentos: formEquip, salario_base, jornada_semanal, ...rest } = data;
       const cleaned = Object.fromEntries(
         Object.entries(rest).map(([k, v]) => [k, v === "" ? null : v])
       );
-      const primaryDept = departamentos_rateio?.[0]?.departamento || "";
 
       const { error } = await supabase
         .from("colaboradores_clt")
         .update({
           ...cleaned,
-          departamento: primaryDept,
           salario_base: Number(salario_base),
           jornada_semanal: Number(jornada_semanal) || 44,
         } as any)
         .eq("id", id);
       if (error) throw error;
-
-      // Replace departamentos
-      await supabase.from("colaborador_departamentos").delete().eq("colaborador_id", id);
-      if (departamentos_rateio && departamentos_rateio.length > 0) {
-        const { error: dErr } = await supabase.from("colaborador_departamentos").insert(
-          departamentos_rateio.map((d) => ({
-            colaborador_id: id,
-            departamento: d.departamento,
-            percentual_rateio: Number(d.percentual_rateio),
-          }))
-        );
-        if (dErr) throw dErr;
-      }
 
       // Replace dependentes
       await supabase.from("dependentes").delete().eq("colaborador_id", id);

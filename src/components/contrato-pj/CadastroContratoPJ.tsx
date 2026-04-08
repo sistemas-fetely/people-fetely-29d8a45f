@@ -49,8 +49,8 @@ export function CadastroContratoPJ() {
       renovacao_automatica: false,
       status: "rascunho",
       tipo_conta: "corrente",
+      departamento: "",
       dependentes: [],
-      departamentos_rateio: [{ departamento: "", percentual_rateio: 100 }],
       acessos_sistemas: [],
       equipamentos: [],
     },
@@ -83,13 +83,11 @@ export function CadastroContratoPJ() {
     try {
       const {
         dependentes,
-        departamentos_rateio,
         acessos_sistemas,
         equipamentos,
         email_corporativo,
         ramal,
         data_integracao,
-        // Document fields not in contratos_pj table
         titulo_eleitor,
         zona_eleitoral,
         secao_eleitoral,
@@ -100,9 +98,6 @@ export function CadastroContratoPJ() {
         valor_mensal,
         ...contratoData
       } = data;
-
-      // Use first department as primary
-      const primaryDept = departamentos_rateio?.[0]?.departamento || "";
 
       const { data: inserted, error } = await supabase
         .from("contratos_pj")
@@ -117,7 +112,7 @@ export function CadastroContratoPJ() {
           contato_email: contratoData.contato_email || null,
           objeto: contratoData.objeto || null,
           tipo_servico: contratoData.tipo_servico,
-          departamento: primaryDept,
+          departamento: contratoData.departamento,
           valor_mensal: Number(valor_mensal),
           forma_pagamento: contratoData.forma_pagamento,
           dia_vencimento: Number(contratoData.dia_vencimento) || 10,

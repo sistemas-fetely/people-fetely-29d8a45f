@@ -54,8 +54,8 @@ export function CadastroColaboradorCLT() {
       tipo_contrato: "indeterminado",
       jornada_semanal: 44,
       tipo_conta: "corrente",
+      departamento: "",
       dependentes: [],
-      departamentos_rateio: [{ departamento: "", percentual_rateio: 100 }],
       acessos_sistemas: [],
       equipamentos: [],
     },
@@ -86,21 +86,16 @@ export function CadastroColaboradorCLT() {
   const onSubmit = async (data: AllFormData) => {
     setSaving(true);
     try {
-      const { dependentes, departamentos_rateio, acessos_sistemas, equipamentos, salario_base, jornada_semanal, ...colaboradorData } = data;
+      const { dependentes, acessos_sistemas, equipamentos, salario_base, jornada_semanal, ...colaboradorData } = data;
 
-      // Convert empty strings to null for optional fields (especially dates)
       const cleaned = Object.fromEntries(
         Object.entries(colaboradorData).map(([k, v]) => [k, v === "" ? null : v])
       );
-
-      // Use first department as primary
-      const primaryDept = departamentos_rateio?.[0]?.departamento || "";
 
       const { data: inserted, error } = await supabase
         .from("colaboradores_clt")
         .insert({
           ...cleaned,
-          departamento: primaryDept,
           salario_base: Number(salario_base),
           jornada_semanal: Number(jornada_semanal) || 44,
           created_by: user?.id,
@@ -109,18 +104,6 @@ export function CadastroColaboradorCLT() {
         .single();
 
       if (error) throw error;
-
-      // Insert department allocations
-      if (departamentos_rateio && departamentos_rateio.length > 0) {
-        const depsToInsert = departamentos_rateio.map((d) => ({
-          colaborador_id: inserted.id,
-          departamento: d.departamento,
-          percentual_rateio: Number(d.percentual_rateio),
-        }));
-
-        const { error: deptError } = await supabase.from("colaborador_departamentos").insert(depsToInsert);
-        if (deptError) throw deptError;
-      }
 
       // Insert system access records
       if (acessos_sistemas && acessos_sistemas.length > 0) {
