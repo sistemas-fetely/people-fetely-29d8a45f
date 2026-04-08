@@ -9,7 +9,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -18,22 +17,62 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
-import { Plus, Pencil, Trash2, Loader2, Monitor, Package, Settings2, FileText } from "lucide-react";
+import {
+  Plus, Pencil, Trash2, Loader2, Monitor, Package, Settings2, FileText,
+  Users, Briefcase, LayoutDashboard,
+} from "lucide-react";
 import type { Parametro } from "@/hooks/useParametros";
 
-const CATEGORIAS = [
-  { value: "departamento", label: "Departamentos", icon: Monitor, description: "Departamentos da empresa para rateio de custos" },
-  { value: "cargo", label: "Cargos", icon: Package, description: "Cargos disponíveis para colaboradores" },
-  { value: "tipo_contrato", label: "Tipos de Contrato", icon: Settings2, description: "Modalidades de contrato CLT conforme legislação" },
-  { value: "jornada", label: "Jornadas", icon: Settings2, description: "Jornadas de trabalho e escalas" },
-  { value: "local_trabalho", label: "Locais de Trabalho", icon: Monitor, description: "Locais de trabalho disponíveis para colaboradores" },
-  { value: "tipo_servico", label: "Tipos de Serviço PJ", icon: Package, description: "Tipos de serviço para contratos PJ" },
-  { value: "forma_pagamento", label: "Formas de Pagamento", icon: Settings2, description: "Formas de pagamento para prestadores PJ" },
-  { value: "status_nota_fiscal", label: "Status Nota Fiscal", icon: FileText, description: "Status possíveis para notas fiscais PJ" },
-  { value: "sistema", label: "Sistemas", icon: Monitor, description: "Sistemas de acesso para colaboradores" },
-  { value: "tipo_equipamento", label: "Tipos de Equipamento", icon: Package, description: "Tipos de equipamentos disponíveis" },
-  { value: "estado_equipamento", label: "Estados de Equipamento", icon: Settings2, description: "Condições dos equipamentos" },
+interface CategoriaConfig {
+  value: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  description: string;
+}
+
+interface ModuloConfig {
+  key: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  categorias: CategoriaConfig[];
+}
+
+const MODULOS: ModuloConfig[] = [
+  {
+    key: "geral",
+    label: "Geral",
+    icon: LayoutDashboard,
+    categorias: [
+      { value: "departamento", label: "Departamentos", icon: Monitor, description: "Departamentos da empresa para rateio de custos" },
+      { value: "local_trabalho", label: "Locais de Trabalho", icon: Monitor, description: "Locais de trabalho disponíveis para colaboradores" },
+      { value: "sistema", label: "Sistemas", icon: Monitor, description: "Sistemas de acesso para colaboradores" },
+    ],
+  },
+  {
+    key: "clt",
+    label: "CLT",
+    icon: Users,
+    categorias: [
+      { value: "cargo", label: "Cargos", icon: Package, description: "Cargos disponíveis para colaboradores" },
+      { value: "tipo_contrato", label: "Tipos de Contrato", icon: Settings2, description: "Modalidades de contrato CLT conforme legislação" },
+      { value: "jornada", label: "Jornadas", icon: Settings2, description: "Jornadas de trabalho e escalas" },
+      { value: "tipo_equipamento", label: "Tipos de Equipamento", icon: Package, description: "Tipos de equipamentos disponíveis" },
+      { value: "estado_equipamento", label: "Estados de Equipamento", icon: Settings2, description: "Condições dos equipamentos" },
+    ],
+  },
+  {
+    key: "pj",
+    label: "PJ",
+    icon: Briefcase,
+    categorias: [
+      { value: "tipo_servico", label: "Tipos de Serviço PJ", icon: Package, description: "Tipos de serviço para contratos PJ" },
+      { value: "forma_pagamento", label: "Formas de Pagamento", icon: Settings2, description: "Formas de pagamento para prestadores PJ" },
+      { value: "status_nota_fiscal", label: "Status Nota Fiscal", icon: FileText, description: "Status possíveis para notas fiscais PJ" },
+    ],
+  },
 ];
+
+const ALL_CATEGORIAS = MODULOS.flatMap((m) => m.categorias);
 
 function ParametroForm({
   open, onClose, parametro, categoria,
@@ -115,6 +154,94 @@ function ParametroForm({
   );
 }
 
+function CategoriaCard({
+  cat,
+  items,
+  onNew,
+  onEdit,
+  onDelete,
+  onToggle,
+}: {
+  cat: CategoriaConfig;
+  items: Parametro[];
+  onNew: () => void;
+  onEdit: (p: Parametro) => void;
+  onDelete: (p: Parametro) => void;
+  onToggle: (p: Parametro) => void;
+}) {
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <div className="flex items-center gap-3">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
+            <cat.icon className="h-4 w-4 text-primary" />
+          </div>
+          <div>
+            <CardTitle className="text-base">{cat.label}</CardTitle>
+            <p className="text-xs text-muted-foreground">{cat.description}</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <Badge variant="secondary" className="text-xs">{items.length}</Badge>
+          <Button onClick={onNew} className="gap-2" size="sm">
+            <Plus className="h-4 w-4" /> Adicionar
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent>
+        {items.length === 0 ? (
+          <p className="text-sm text-muted-foreground text-center py-6">
+            Nenhum parâmetro cadastrado nesta categoria.
+          </p>
+        ) : (
+          <div className="space-y-1.5">
+            {items.map((param) => (
+              <div
+                key={param.id}
+                className="flex items-center justify-between border rounded-lg p-3 hover:bg-muted/50 transition-colors"
+              >
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <Switch
+                    checked={param.ativo}
+                    onCheckedChange={() => onToggle(param)}
+                  />
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-sm">{param.label}</span>
+                      <Badge variant="outline" className="text-[10px] font-mono">
+                        {param.valor}
+                      </Badge>
+                      {!param.ativo && (
+                        <Badge variant="secondary" className="text-[10px]">Inativo</Badge>
+                      )}
+                    </div>
+                    {param.descricao && (
+                      <p className="text-xs text-muted-foreground truncate">{param.descricao}</p>
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center gap-1 ml-2">
+                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEdit(param)}>
+                    <Pencil className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-destructive hover:text-destructive"
+                    onClick={() => onDelete(param)}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function Parametros() {
   const { data: allParams, isLoading } = useAllParametros();
   const queryClient = useQueryClient();
@@ -156,17 +283,15 @@ export default function Parametros() {
     setFormOpen(true);
   };
 
-  const grouped = CATEGORIAS.map((cat) => ({
-    ...cat,
-    items: (allParams || []).filter((p) => p.categoria === cat.value),
-  }));
+  const getItemsForCategoria = (catValue: string) =>
+    (allParams || []).filter((p) => p.categoria === catValue);
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Parâmetros do Sistema</h1>
         <p className="text-muted-foreground text-sm mt-1">
-          Gerencie as opções disponíveis nas listas de cadastro
+          Gerencie as opções disponíveis nas listas de cadastro, organizadas por módulo
         </p>
       </div>
 
@@ -175,79 +300,39 @@ export default function Parametros() {
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
       ) : (
-        <Tabs defaultValue="sistema">
-          <TabsList>
-            {CATEGORIAS.map((cat) => (
-              <TabsTrigger key={cat.value} value={cat.value} className="gap-2">
-                <cat.icon className="h-4 w-4" />
-                {cat.label}
+        <Tabs defaultValue="geral">
+          <TabsList className="h-auto flex-wrap">
+            {MODULOS.map((modulo) => (
+              <TabsTrigger key={modulo.key} value={modulo.key} className="gap-2 px-4 py-2">
+                <modulo.icon className="h-4 w-4" />
+                {modulo.label}
+                <Badge variant="secondary" className="text-[10px] ml-1">
+                  {modulo.categorias.reduce(
+                    (acc, cat) => acc + getItemsForCategoria(cat.value).length,
+                    0
+                  )}
+                </Badge>
               </TabsTrigger>
             ))}
           </TabsList>
 
-          {grouped.map((cat) => (
-            <TabsContent key={cat.value} value={cat.value}>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <div>
-                    <CardTitle className="text-lg">{cat.label}</CardTitle>
-                    <p className="text-sm text-muted-foreground">{cat.description}</p>
-                  </div>
-                  <Button onClick={() => openNew(cat.value)} className="gap-2" size="sm">
-                    <Plus className="h-4 w-4" /> Adicionar
-                  </Button>
-                </CardHeader>
-                <CardContent>
-                  {cat.items.length === 0 ? (
-                    <p className="text-sm text-muted-foreground text-center py-8">
-                      Nenhum parâmetro cadastrado nesta categoria.
-                    </p>
-                  ) : (
-                    <div className="space-y-2">
-                      {cat.items.map((param) => (
-                        <div
-                          key={param.id}
-                          className="flex items-center justify-between border rounded-lg p-3 hover:bg-muted/50 transition-colors"
-                        >
-                          <div className="flex items-center gap-3 flex-1 min-w-0">
-                            <Switch
-                              checked={param.ativo}
-                              onCheckedChange={() => handleToggleAtivo(param)}
-                            />
-                            <div className="min-w-0">
-                              <div className="flex items-center gap-2">
-                                <span className="font-medium text-sm">{param.label}</span>
-                                <Badge variant="outline" className="text-[10px] font-mono">
-                                  {param.valor}
-                                </Badge>
-                                {!param.ativo && (
-                                  <Badge variant="secondary" className="text-[10px]">Inativo</Badge>
-                                )}
-                              </div>
-                              {param.descricao && (
-                                <p className="text-xs text-muted-foreground truncate">{param.descricao}</p>
-                              )}
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-1 ml-2">
-                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(param)}>
-                              <Pencil className="h-3.5 w-3.5" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-destructive hover:text-destructive"
-                              onClick={() => setDeleteTarget(param)}
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+          {MODULOS.map((modulo) => (
+            <TabsContent key={modulo.key} value={modulo.key} className="space-y-4 mt-4">
+              <div className="flex items-center gap-2 mb-2">
+                <modulo.icon className="h-5 w-5 text-primary" />
+                <h2 className="text-lg font-semibold">Módulo {modulo.label}</h2>
+              </div>
+              {modulo.categorias.map((cat) => (
+                <CategoriaCard
+                  key={cat.value}
+                  cat={cat}
+                  items={getItemsForCategoria(cat.value)}
+                  onNew={() => openNew(cat.value)}
+                  onEdit={openEdit}
+                  onDelete={setDeleteTarget}
+                  onToggle={handleToggleAtivo}
+                />
+              ))}
             </TabsContent>
           ))}
         </Tabs>
