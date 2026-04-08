@@ -508,6 +508,10 @@ export default function ColaboradorDetalhe() {
               )}
             </CardContent></Card>
           </TabsContent>
+
+          <TabsContent value="movimentacoes">
+            <HistoricoMovimentacoes colaboradorId={id!} />
+          </TabsContent>
         </Tabs>
 
         <AlertDialog open={statusDialogOpen} onOpenChange={setStatusDialogOpen}>
