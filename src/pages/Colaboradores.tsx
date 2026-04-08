@@ -43,18 +43,27 @@ export default function Colaboradores() {
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("todos");
-  const [colaboradores, setColaboradores] = useState<Tables<"colaboradores_clt">[]>([]);
+  const [colaboradores, setColaboradores] = useState<ColaboradorWithDepts[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supabase
-      .from("colaboradores_clt")
-      .select("*")
-      .order("nome_completo")
-      .then(({ data }) => {
-        if (data) setColaboradores(data);
-        setLoading(false);
-      });
+    async function fetchData() {
+      const [{ data: cols }, { data: depts }] = await Promise.all([
+        supabase.from("colaboradores_clt").select("*").order("nome_completo"),
+        supabase.from("colaborador_departamentos").select("colaborador_id, departamento, percentual_rateio"),
+      ]);
+      if (cols) {
+        const deptsMap = new Map<string, { departamento: string; percentual_rateio: number }[]>();
+        (depts || []).forEach((d) => {
+          const arr = deptsMap.get(d.colaborador_id) || [];
+          arr.push({ departamento: d.departamento, percentual_rateio: d.percentual_rateio });
+          deptsMap.set(d.colaborador_id, arr);
+        });
+        setColaboradores(cols.map((c) => ({ ...c, departamentos_rateio: deptsMap.get(c.id) || [] })));
+      }
+      setLoading(false);
+    }
+    fetchData();
   }, []);
 
   const filtered = colaboradores.filter((c) => {
