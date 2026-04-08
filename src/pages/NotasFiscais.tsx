@@ -298,14 +298,15 @@ function NotaFiscalFormDialog({ open, onClose, nota, contratos, onSaved }: {
       toast.error("Preencha os campos obrigatórios"); return;
     }
     setSaving(true);
+    const normalizedStatus = form.status === "enviada_p_pagamento" ? "enviada_pagamento" : form.status;
     const payload = {
       contrato_id: form.contrato_id, numero: form.numero.trim(), serie: form.serie.trim() || null,
       valor: Number(form.valor), data_emissao: form.data_emissao,
       data_vencimento: form.data_vencimento || null, competencia: form.competencia.trim(),
-      descricao: form.descricao.trim() || null, status: form.status, observacoes: form.observacoes.trim() || null,
+      descricao: form.descricao.trim() || null, status: normalizedStatus, observacoes: form.observacoes.trim() || null,
     };
-    const previousStatus = nota?.status;
-    const isChangingToEnviada = form.status === "enviada_pagamento" && previousStatus !== "enviada_pagamento";
+    const previousStatus = nota?.status === "enviada_p_pagamento" ? "enviada_pagamento" : nota?.status;
+    const isChangingToEnviada = normalizedStatus === "enviada_pagamento" && previousStatus !== "enviada_pagamento";
     try {
       let notaId = nota?.id;
       if (nota) {
@@ -319,29 +320,41 @@ function NotaFiscalFormDialog({ open, onClose, nota, contratos, onSaved }: {
         toast.success("Nota fiscal cadastrada!");
       }
 
-      // Auto-create payment when status changes to "enviada_pagamento"
-      if (isChangingToEnviada && notaId) {
-        // Fetch contract to get forma_pagamento
-        const { data: contrato } = await supabase
-          .from("contratos_pj")
-          .select("forma_pagamento")
-          .eq("id", form.contrato_id)
-          .single();
+      if (notaId) {
+        const { data: existingPagamento, error: existingPagamentoError } = await supabase
+          .from("pagamentos_pj")
+          .select("id")
+          .eq("nota_fiscal_id", notaId)
+          .limit(1)
+          .maybeSingle();
+        if (existingPagamentoError) throw existingPagamentoError;
 
-        const pagPayload = {
-          contrato_id: form.contrato_id,
-          nota_fiscal_id: notaId,
-          valor: Number(form.valor),
-          competencia: form.competencia.trim(),
-          data_prevista: form.data_vencimento || form.data_emissao,
-          forma_pagamento: contrato?.forma_pagamento || "transferencia",
-          status: "pendente",
-          observacoes: `Pagamento gerado automaticamente a partir da NF ${form.numero.trim()}`,
-        };
-        const { error: pagError } = await supabase.from("pagamentos_pj").insert(pagPayload as any);
-        if (pagError) {
-          toast.error("NF salva, mas erro ao criar pagamento: " + pagError.message);
-        } else {
+        if (existingPagamento) {
+          const { error: syncError } = await supabase
+            .from("pagamentos_pj")
+            .update({ status: normalizedStatus } as any)
+            .eq("nota_fiscal_id", notaId);
+          if (syncError) throw syncError;
+        } else if (isChangingToEnviada) {
+          const { data: contrato, error: contratoError } = await supabase
+            .from("contratos_pj")
+            .select("forma_pagamento")
+            .eq("id", form.contrato_id)
+            .single();
+          if (contratoError) throw contratoError;
+
+          const pagPayload = {
+            contrato_id: form.contrato_id,
+            nota_fiscal_id: notaId,
+            valor: Number(form.valor),
+            competencia: form.competencia.trim(),
+            data_prevista: form.data_vencimento || form.data_emissao,
+            forma_pagamento: contrato?.forma_pagamento || "transferencia",
+            status: normalizedStatus,
+            observacoes: `Pagamento gerado automaticamente a partir da NF ${form.numero.trim()}`,
+          };
+          const { error: pagError } = await supabase.from("pagamentos_pj").insert(pagPayload as any);
+          if (pagError) throw pagError;
           toast.success("Pagamento PJ criado automaticamente!");
         }
       }

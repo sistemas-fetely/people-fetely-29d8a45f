@@ -67,12 +67,24 @@ interface PagamentoPJ {
 }
 
 const statusPagMap: Record<string, string> = {
-  pendente: "Pendente", pago: "Pago", cancelado: "Cancelado",
+  pendente: "Pendente",
+  aprovada: "Aprovada",
+  enviada_pagamento: "Enviada para Pagamento",
+  paga: "Paga",
+  pago: "Pago",
+  cancelada: "Cancelada",
+  cancelado: "Cancelado",
+  vencida: "Vencida",
 };
 const statusPagStyles: Record<string, string> = {
   pendente: "bg-warning/10 text-warning border-0",
+  aprovada: "bg-info/10 text-info border-0",
+  enviada_pagamento: "bg-primary/10 text-primary border-0",
+  paga: "bg-success/10 text-success border-0",
   pago: "bg-success/10 text-success border-0",
+  cancelada: "bg-destructive/10 text-destructive border-0",
   cancelado: "bg-destructive/10 text-destructive border-0",
+  vencida: "bg-destructive/10 text-destructive border-0",
 };
 
 function InfoItem({ label, value, icon: Icon }: { label: string; value: React.ReactNode; icon?: React.ComponentType<{ className?: string }> }) {
@@ -171,16 +183,37 @@ export default function NotaFiscalDetalhe() {
     if (!nota) return;
     setChangingStatus(true);
     try {
-      const { error } = await supabase.from("notas_fiscais_pj").update({ status: newStatus } as any).eq("id", nota.id);
+      const normalizedNewStatus = newStatus === "enviada_p_pagamento" ? "enviada_pagamento" : newStatus;
+      const previousNotaStatus = nota.status === "enviada_p_pagamento" ? "enviada_pagamento" : nota.status;
+
+      const { error } = await supabase
+        .from("notas_fiscais_pj")
+        .update({ status: normalizedNewStatus } as any)
+        .eq("id", nota.id);
       if (error) throw error;
 
-      // Auto-create payment when changing to enviada_pagamento
-      if (newStatus === "enviada_pagamento" && nota.status !== "enviada_pagamento") {
-        const { data: contratoData } = await supabase
+      const { data: existingPagamento, error: existingPagamentoError } = await supabase
+        .from("pagamentos_pj")
+        .select("id")
+        .eq("nota_fiscal_id", nota.id)
+        .limit(1)
+        .maybeSingle();
+      if (existingPagamentoError) throw existingPagamentoError;
+
+      if (existingPagamento) {
+        const pagStatus = nfToPagamentoStatus(normalizedNewStatus);
+        const { error: syncError } = await supabase
+          .from("pagamentos_pj")
+          .update({ status: pagStatus } as any)
+          .eq("nota_fiscal_id", nota.id);
+        if (syncError) throw syncError;
+      } else if (normalizedNewStatus === "enviada_pagamento" && previousNotaStatus !== "enviada_pagamento") {
+        const { data: contratoData, error: contratoError } = await supabase
           .from("contratos_pj")
           .select("forma_pagamento")
           .eq("id", nota.contrato_id)
           .single();
+        if (contratoError) throw contratoError;
 
         const pagPayload = {
           contrato_id: nota.contrato_id,
@@ -189,32 +222,23 @@ export default function NotaFiscalDetalhe() {
           competencia: nota.competencia,
           data_prevista: nota.data_vencimento || nota.data_emissao,
           forma_pagamento: contratoData?.forma_pagamento || "transferencia",
-          status: "pendente",
+          status: normalizedNewStatus,
           observacoes: `Pagamento gerado automaticamente a partir da NF ${nota.numero}`,
         };
         const { error: pagError } = await supabase.from("pagamentos_pj").insert(pagPayload as any);
-        if (pagError) {
-          toast.error("Status alterado, mas erro ao criar pagamento: " + pagError.message);
-        } else {
-          toast.success("Pagamento PJ criado automaticamente!");
-        }
-      } else {
-        // Sync payment status with NF status
-        const pagStatus = nfToPagamentoStatus(newStatus);
-        const { error: syncError } = await supabase
-          .from("pagamentos_pj")
-          .update({ status: pagStatus } as any)
-          .eq("nota_fiscal_id", nota.id);
-        if (syncError) {
-          console.error("Erro ao sincronizar status do pagamento:", syncError.message);
-        }
+        if (pagError) throw pagError;
+        toast.success("Pagamento PJ criado automaticamente!");
       }
 
-      setNota({ ...nota, status: newStatus });
-      toast.success(`Status alterado para ${statusMap[newStatus] || newStatus}`);
+      setNota({ ...nota, status: normalizedNewStatus });
+      toast.success(`Status alterado para ${statusMap[normalizedNewStatus] || normalizedNewStatus}`);
 
-      // Refresh pagamentos
-      const { data: pagData } = await supabase.from("pagamentos_pj").select("*").eq("nota_fiscal_id", nota.id).order("created_at", { ascending: false });
+      const { data: pagData, error: pagDataError } = await supabase
+        .from("pagamentos_pj")
+        .select("*")
+        .eq("nota_fiscal_id", nota.id)
+        .order("created_at", { ascending: false });
+      if (pagDataError) throw pagDataError;
       if (pagData) setPagamentos(pagData as PagamentoPJ[]);
     } catch (err: any) {
       toast.error(err.message);

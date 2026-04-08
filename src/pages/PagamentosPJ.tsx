@@ -103,10 +103,13 @@ export default function PagamentosPJ() {
     return matchSearch && matchStatus && matchContrato;
   });
 
-  const totalPendentes = pagamentos.filter((p) => p.status === "pendente").length;
-  const totalPagos = pagamentos.filter((p) => p.status === "pago").length;
-  const totalValorPago = pagamentos.filter((p) => p.status === "pago").reduce((acc, p) => acc + Number(p.valor), 0);
-  const totalValorPendente = pagamentos.filter((p) => p.status === "pendente").reduce((acc, p) => acc + Number(p.valor), 0);
+  const pendingStatuses = ["pendente", "aprovada", "enviada_pagamento"];
+  const paidStatuses = ["paga", "pago"];
+
+  const totalPendentes = pagamentos.filter((p) => pendingStatuses.includes(p.status)).length;
+  const totalPagos = pagamentos.filter((p) => paidStatuses.includes(p.status)).length;
+  const totalValorPago = pagamentos.filter((p) => paidStatuses.includes(p.status)).reduce((acc, p) => acc + Number(p.valor), 0);
+  const totalValorPendente = pagamentos.filter((p) => pendingStatuses.includes(p.status)).reduce((acc, p) => acc + Number(p.valor), 0);
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
