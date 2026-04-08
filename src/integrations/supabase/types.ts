@@ -1092,6 +1092,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      gerar_periodos_ferias_pendentes: { Args: never; Returns: undefined }
       get_organograma_tree: {
         Args: never
         Returns: {
