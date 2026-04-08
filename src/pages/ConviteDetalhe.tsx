@@ -30,6 +30,8 @@ interface Convite {
   created_at: string;
   preenchido_em: string | null;
   dados_preenchidos: Record<string, any> | null;
+  colaborador_id: string | null;
+  contrato_pj_id: string | null;
 }
 
 export default function ConviteDetalhe() {
