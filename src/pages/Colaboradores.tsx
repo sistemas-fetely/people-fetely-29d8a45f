@@ -17,6 +17,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
+
+type ColaboradorWithDepts = Tables<"colaboradores_clt"> & {
+  departamentos_rateio?: { departamento: string; percentual_rateio: number }[];
+};
 import { format, parseISO } from "date-fns";
 
 const statusMap: Record<string, string> = {
@@ -39,18 +43,27 @@ export default function Colaboradores() {
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("todos");
-  const [colaboradores, setColaboradores] = useState<Tables<"colaboradores_clt">[]>([]);
+  const [colaboradores, setColaboradores] = useState<ColaboradorWithDepts[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supabase
-      .from("colaboradores_clt")
-      .select("*")
-      .order("nome_completo")
-      .then(({ data }) => {
-        if (data) setColaboradores(data);
-        setLoading(false);
-      });
+    async function fetchData() {
+      const [{ data: cols }, { data: depts }] = await Promise.all([
+        supabase.from("colaboradores_clt").select("*").order("nome_completo"),
+        supabase.from("colaborador_departamentos").select("colaborador_id, departamento, percentual_rateio"),
+      ]);
+      if (cols) {
+        const deptsMap = new Map<string, { departamento: string; percentual_rateio: number }[]>();
+        (depts || []).forEach((d) => {
+          const arr = deptsMap.get(d.colaborador_id) || [];
+          arr.push({ departamento: d.departamento, percentual_rateio: d.percentual_rateio });
+          deptsMap.set(d.colaborador_id, arr);
+        });
+        setColaboradores(cols.map((c) => ({ ...c, departamentos_rateio: deptsMap.get(c.id) || [] })));
+      }
+      setLoading(false);
+    }
+    fetchData();
   }, []);
 
   const filtered = colaboradores.filter((c) => {
@@ -186,7 +199,19 @@ export default function Colaboradores() {
                         </div>
                       </TableCell>
                       <TableCell className="text-sm">{c.cargo}</TableCell>
-                      <TableCell className="text-sm hidden md:table-cell">{c.departamento}</TableCell>
+                      <TableCell className="text-sm hidden md:table-cell">
+                        {c.departamentos_rateio && c.departamentos_rateio.length > 0 ? (
+                          <div className="flex flex-wrap gap-1">
+                            {c.departamentos_rateio.map((d, i) => (
+                              <Badge key={i} variant="outline" className="bg-muted text-xs font-normal">
+                                {d.departamento} ({d.percentual_rateio}%)
+                              </Badge>
+                            ))}
+                          </div>
+                        ) : (
+                          c.departamento
+                        )}
+                      </TableCell>
                       <TableCell>
                         <Badge variant="outline" className="bg-primary/10 text-primary border-0 capitalize">
                           {c.tipo_contrato}
