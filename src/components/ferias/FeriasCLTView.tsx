@@ -247,6 +247,11 @@ export function FeriasCLTView({ canManage }: Props) {
                               <div key={pr.id} className="flex items-center gap-1.5 text-xs">
                                 <Badge variant={pst.variant} className="text-[10px] px-1.5">{pst.label}</Badge>
                                 <span>{format(new Date(pr.data_inicio), "dd/MM")} - {format(new Date(pr.data_fim), "dd/MM")} ({pr.dias}d)</span>
+                                {canManage && (pr.status === "programada" || pr.status === "aprovada") && (
+                                  <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => openEditProg(pr)}>
+                                    <Pencil className="h-3 w-3" />
+                                  </Button>
+                                )}
                                 {canManage && pr.status === "programada" && (
                                   <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => atualizarStatusMut.mutate({ id: pr.id, status: "aprovada" })}>
                                     <Check className="h-3 w-3 text-green-600" />
