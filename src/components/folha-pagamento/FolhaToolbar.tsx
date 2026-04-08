@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { format, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Plus, Calculator, Lock, FileSpreadsheet } from "lucide-react";
+import { Plus, Calculator, Lock, FileSpreadsheet, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
@@ -17,8 +17,11 @@ interface Props {
   onCriar: (competencia: string) => void;
   onCalcular: () => void;
   onFechar: () => void;
+  onExportExcel: () => void;
+  onExportPDF: () => void;
   isCalculating: boolean;
   canManage: boolean;
+  hasHolerites: boolean;
 }
 
 const STATUS_BADGE: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
@@ -28,7 +31,7 @@ const STATUS_BADGE: Record<string, { label: string; variant: "default" | "second
 };
 
 export function FolhaToolbar({
-  competencias, selectedId, onSelect, onCriar, onCalcular, onFechar, isCalculating, canManage,
+  competencias, selectedId, onSelect, onCriar, onCalcular, onFechar, onExportExcel, onExportPDF, isCalculating, canManage, hasHolerites,
 }: Props) {
   const [showNew, setShowNew] = useState(false);
   const [novaComp, setNovaComp] = useState("");
@@ -97,6 +100,17 @@ export function FolhaToolbar({
               </Button>
               <Button size="sm" onClick={onFechar}>
                 <Lock className="h-4 w-4 mr-1" /> Fechar Folha
+              </Button>
+            </>
+          )}
+
+          {hasHolerites && (
+            <>
+              <Button variant="outline" size="sm" onClick={onExportExcel}>
+                <FileSpreadsheet className="h-4 w-4 mr-1" /> Excel
+              </Button>
+              <Button variant="outline" size="sm" onClick={onExportPDF}>
+                <FileText className="h-4 w-4 mr-1" /> PDF
               </Button>
             </>
           )}
