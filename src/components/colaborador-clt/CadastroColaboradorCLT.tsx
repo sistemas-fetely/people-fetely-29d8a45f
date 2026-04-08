@@ -78,7 +78,7 @@ export function CadastroColaboradorCLT() {
   const goNext = async () => {
     const valid = await validateCurrentStep();
     if (!valid) return;
-    setCurrentStep((s) => Math.min(s + 1, 5));
+    setCurrentStep((s) => Math.min(s + 1, 6));
   };
 
   const goBack = () => setCurrentStep((s) => Math.max(s - 1, 1));
