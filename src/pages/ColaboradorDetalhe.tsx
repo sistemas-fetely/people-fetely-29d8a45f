@@ -286,9 +286,19 @@ export default function ColaboradorDetalhe() {
           <Button variant="ghost" onClick={() => navigate("/colaboradores")} className="gap-2">
             <ArrowLeft className="h-4 w-4" /> Voltar
           </Button>
-          <Button onClick={() => setEditing(true)} className="gap-2">
-            <Edit className="h-4 w-4" /> Editar
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant={isAtivo ? "outline" : "default"}
+              onClick={() => setStatusDialogOpen(true)}
+              className={`gap-2 ${isAtivo ? "text-destructive border-destructive hover:bg-destructive/10" : ""}`}
+            >
+              {isAtivo ? <UserX className="h-4 w-4" /> : <UserCheck className="h-4 w-4" />}
+              {isAtivo ? "Inativar" : "Reativar"}
+            </Button>
+            <Button onClick={() => setEditing(true)} className="gap-2">
+              <Edit className="h-4 w-4" /> Editar
+            </Button>
+          </div>
         </div>
 
         {/* Header card */}
