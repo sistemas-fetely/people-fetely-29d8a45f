@@ -31,6 +31,7 @@ import Beneficios from "@/pages/Beneficios";
 import Movimentacoes from "@/pages/Movimentacoes";
 import CadastroPublico from "@/pages/CadastroPublico";
 import ConvitesCadastro from "@/pages/ConvitesCadastro";
+import Unsubscribe from "@/pages/Unsubscribe";
 
 const queryClient = new QueryClient();
 
