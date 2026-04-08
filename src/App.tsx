@@ -79,6 +79,11 @@ const App = () => (
                   <NotasFiscais />
                 </ProtectedRoute>
               } />
+              <Route path="/notas-fiscais/:id" element={
+                <ProtectedRoute allowedRoles={["super_admin", "gestor_rh", "financeiro"]}>
+                  <NotaFiscalDetalhe />
+                </ProtectedRoute>
+              } />
               <Route path="/pagamentos-pj" element={
                 <ProtectedRoute allowedRoles={["super_admin", "gestor_rh", "financeiro"]}>
                   <PagamentosPJ />

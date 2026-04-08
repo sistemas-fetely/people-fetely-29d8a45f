@@ -202,7 +202,7 @@ export default function NotasFiscais() {
                 ) : filtered.length === 0 ? (
                   <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Nenhuma nota fiscal encontrada.</TableCell></TableRow>
                 ) : filtered.map((n) => (
-                  <TableRow key={n.id} className="hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => { setEditNota(n); setFormOpen(true); }}>
+                  <TableRow key={n.id} className="hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => navigate(`/notas-fiscais/${n.id}`)}>
                     <TableCell className="font-medium">{n.numero}{n.serie ? `/${n.serie}` : ""}</TableCell>
                     <TableCell className="text-sm">{n.contrato_nome}</TableCell>
                     <TableCell className="text-sm hidden md:table-cell">{n.competencia}</TableCell>
