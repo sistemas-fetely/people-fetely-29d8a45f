@@ -66,6 +66,11 @@ const App = () => (
                   <ContratosPJ />
                 </ProtectedRoute>
               } />
+              <Route path="/contratos-pj/:id" element={
+                <ProtectedRoute allowedRoles={["super_admin", "gestor_rh", "financeiro"]}>
+                  <ContratoPJDetalhe />
+                </ProtectedRoute>
+              } />
               <Route path="/notas-fiscais" element={
                 <ProtectedRoute allowedRoles={["super_admin", "gestor_rh", "financeiro"]}>
                   <PlaceholderPage title="Notas Fiscais" description="Workflow de aprovação e upload de NFs" />

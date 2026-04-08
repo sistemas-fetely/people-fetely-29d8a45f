@@ -116,7 +116,7 @@ export default function Pessoas() {
 
   const handleView = (p: PessoaUnificada) => {
     if (p.tipo === "CLT") navigate(`/colaboradores/${p.id}`);
-    else navigate(`/contratos-pj`);
+    else navigate(`/contratos-pj/${p.id}`);
   };
 
   return (

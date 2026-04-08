@@ -534,7 +534,7 @@ export default function ContratosPJ() {
                   </TableRow>
                 ) : (
                   filtered.map((c) => (
-                    <TableRow key={c.id} className="hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => setViewContrato(c)}>
+                    <TableRow key={c.id} className="hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => navigate(`/contratos-pj/${c.id}`)}>
                       <TableCell>
                         <div>
                           <p className="font-medium text-sm">{c.nome_fantasia || c.razao_social}</p>
