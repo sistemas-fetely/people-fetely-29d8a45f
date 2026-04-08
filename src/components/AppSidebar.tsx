@@ -46,6 +46,7 @@ const pjItems = [
 ];
 
 const rhItems = [
+  { title: "Convites Cadastro", url: "/convites-cadastro", icon: Send, roles: ["super_admin", "gestor_rh"] as AppRole[] },
   { title: "Recrutamento", url: "/recrutamento", icon: UserCircle, roles: ["super_admin", "gestor_rh"] as AppRole[] },
   { title: "Avaliações", url: "/avaliacoes", icon: Award, roles: [] as AppRole[] },
   { title: "Treinamentos", url: "/treinamentos", icon: GraduationCap, roles: [] as AppRole[] },

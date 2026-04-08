@@ -29,6 +29,8 @@ import Ferias from "@/pages/Ferias";
 import FeriasColaborador from "@/pages/FeriasColaborador";
 import Beneficios from "@/pages/Beneficios";
 import Movimentacoes from "@/pages/Movimentacoes";
+import CadastroPublico from "@/pages/CadastroPublico";
+import ConvitesCadastro from "@/pages/ConvitesCadastro";
 
 const queryClient = new QueryClient();
 
@@ -45,6 +47,7 @@ const App = () => (
             <Route path="/recuperar-senha" element={<RecuperarSenha />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/sem-permissao" element={<SemPermissao />} />
+            <Route path="/cadastro/:token" element={<CadastroPublico />} />
 
             {/* Protected routes */}
             <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
@@ -60,7 +63,7 @@ const App = () => (
               <Route path="/organograma" element={<Organograma />} />
               <Route path="/movimentacoes" element={<Movimentacoes />} />
 
-              {/* CLT - Gestor RH, Super Admin, Financeiro */}
+              {/* CLT */}
               <Route path="/folha-pagamento" element={
                 <ProtectedRoute allowedRoles={["super_admin", "gestor_rh", "financeiro"]}>
                   <FolhaPagamento />
@@ -99,6 +102,11 @@ const App = () => (
               } />
 
               {/* RH */}
+              <Route path="/convites-cadastro" element={
+                <ProtectedRoute allowedRoles={["super_admin", "gestor_rh"]}>
+                  <ConvitesCadastro />
+                </ProtectedRoute>
+              } />
               <Route path="/recrutamento" element={
                 <ProtectedRoute allowedRoles={["super_admin", "gestor_rh"]}>
                   <PlaceholderPage title="Recrutamento e Seleção" description="Kanban de vagas e candidatos" />
