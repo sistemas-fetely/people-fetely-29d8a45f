@@ -52,8 +52,17 @@ const statusStyles: Record<string, string> = {
 };
 
 export default function Colaboradores() {
+  const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [filterVinculo, setFilterVinculo] = useState("todos");
+  const [filterStatus, setFilterStatus] = useState("todos");
+  const [dbColaboradores, setDbColaboradores] = useState<Tables<"colaboradores_clt">[]>([]);
+
+  useEffect(() => {
+    supabase.from("colaboradores_clt").select("*").order("nome_completo").then(({ data }) => {
+      if (data) setDbColaboradores(data);
+    });
+  }, []);
   const [filterStatus, setFilterStatus] = useState("todos");
 
   const filtered = mockColaboradores.filter((c) => {
