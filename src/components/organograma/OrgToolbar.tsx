@@ -1,8 +1,9 @@
-import { Search, Filter, RotateCcw } from "lucide-react";
+import { Search, Filter, RotateCcw, Plus } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useAuth } from "@/contexts/AuthContext";
 import type { ViewMode, OrgFilters, PosicaoNode } from "@/types/organograma";
 
 interface Props {
@@ -11,6 +12,7 @@ interface Props {
   filters: OrgFilters;
   onFiltersChange: (f: OrgFilters) => void;
   allNodes: PosicaoNode[];
+  onCreatePosition?: () => void;
 }
 
 export function OrgToolbar({ viewMode, onViewModeChange, filters, onFiltersChange, allNodes }: Props) {
