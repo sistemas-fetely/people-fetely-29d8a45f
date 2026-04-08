@@ -78,7 +78,8 @@ export function useCriarCompetencia() {
 export function useCalcularFolha() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (competenciaId: string) => {
+    mutationFn: async ({ competenciaId, params }: { competenciaId: string; params?: ParametrosFolha }) => {
+      const parametros = params || PARAMETROS_PADRAO;
       // 1. Buscar todos colaboradores ativos
       const { data: colaboradores, error: colErr } = await supabase
         .from("colaboradores_clt")
