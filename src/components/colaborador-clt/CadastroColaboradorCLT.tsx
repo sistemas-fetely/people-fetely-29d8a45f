@@ -44,7 +44,6 @@ export function CadastroColaboradorCLT() {
   const { user } = useAuth();
 
   const methods = useForm<AllFormData>({
-    resolver: zodResolver(stepSchemas[currentStep - 1] as any),
     mode: "onBlur",
     defaultValues: {
       nacionalidade: "Brasileira",
@@ -55,8 +54,22 @@ export function CadastroColaboradorCLT() {
     },
   });
 
+  const validateCurrentStep = async () => {
+    const schema = stepSchemas[currentStep - 1];
+    const values = methods.getValues();
+    const result = schema.safeParse(values);
+    if (!result.success) {
+      result.error.errors.forEach((err) => {
+        const field = err.path.join(".") as any;
+        methods.setError(field, { type: "manual", message: err.message });
+      });
+      return false;
+    }
+    return true;
+  };
+
   const goNext = async () => {
-    const valid = await methods.trigger();
+    const valid = await validateCurrentStep();
     if (!valid) return;
     setCurrentStep((s) => Math.min(s + 1, 5));
   };
@@ -107,7 +120,7 @@ export function CadastroColaboradorCLT() {
   };
 
   const handleFinalSubmit = async () => {
-    const valid = await methods.trigger();
+    const valid = await validateCurrentStep();
     if (!valid) return;
     methods.handleSubmit(onSubmit)();
   };
