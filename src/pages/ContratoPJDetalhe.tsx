@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Edit, Building2, FileText, CreditCard, Plus, MoreHorizontal, Trash2, Eye } from "lucide-react";
+import { ArrowLeft, Edit, Building2, FileText, CreditCard, Plus, MoreHorizontal, Trash2, Eye, ArrowUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +18,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format, parseISO } from "date-fns";
 import { Loader2 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 
 const statusContratoMap: Record<string, string> = {
   rascunho: "Rascunho", ativo: "Ativo", suspenso: "Suspenso", encerrado: "Encerrado", renovado: "Renovado",
@@ -541,10 +542,11 @@ export default function ContratoPJDetalhe() {
 
       {/* Tabs */}
       <Tabs defaultValue="dados" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 max-w-md">
+        <TabsList className="grid w-full grid-cols-4 max-w-lg">
           <TabsTrigger value="dados" className="gap-2"><Building2 className="h-4 w-4" /> Dados</TabsTrigger>
           <TabsTrigger value="notas" className="gap-2"><FileText className="h-4 w-4" /> Notas Fiscais</TabsTrigger>
           <TabsTrigger value="pagamentos" className="gap-2"><CreditCard className="h-4 w-4" /> Pagamentos</TabsTrigger>
+          <TabsTrigger value="movimentacoes" className="gap-2"><ArrowUpDown className="h-4 w-4" /> Movimentações</TabsTrigger>
         </TabsList>
         <TabsContent value="dados" className="mt-6">
           <TabDados contrato={contrato} />
@@ -555,7 +557,88 @@ export default function ContratoPJDetalhe() {
         <TabsContent value="pagamentos" className="mt-6">
           <TabPagamentos contratoId={contrato.id} />
         </TabsContent>
+        <TabsContent value="movimentacoes" className="mt-6">
+          <TabMovimentacoesPJ contratoId={contrato.id} />
+        </TabsContent>
       </Tabs>
     </div>
+  );
+}
+
+// ─── Tab: Movimentações PJ ───
+const TIPO_MOV_LABEL: Record<string, string> = {
+  promocao: "Promoção", transferencia: "Transferência", alteracao_salarial: "Alteração Salarial",
+  alteracao_cargo: "Alteração de Cargo", mudanca_departamento: "Mudança de Departamento",
+};
+const STATUS_MOV_STYLES: Record<string, string> = {
+  pendente: "bg-warning/10 text-warning border-0", aprovada: "bg-info/10 text-info border-0",
+  efetivada: "bg-emerald-500/10 text-emerald-600 border-0", cancelada: "bg-destructive/10 text-destructive border-0",
+};
+
+function TabMovimentacoesPJ({ contratoId }: { contratoId: string }) {
+  const { data: movs = [], isLoading } = useQuery({
+    queryKey: ["movimentacoes_pj", contratoId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("movimentacoes")
+        .select("*")
+        .eq("contrato_pj_id", contratoId)
+        .order("data_efetivacao", { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  const fmt = (v: number | null) =>
+    v != null ? `R$ ${v.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}` : "—";
+
+  if (isLoading) {
+    return <Card><CardContent className="py-8 text-center text-muted-foreground text-sm">Carregando...</CardContent></Card>;
+  }
+
+  if (movs.length === 0) {
+    return <Card><CardContent className="py-8 text-center text-muted-foreground text-sm">Nenhuma movimentação registrada.</CardContent></Card>;
+  }
+
+  return (
+    <Card>
+      <CardContent className="pt-6 space-y-4">
+        {movs.map((m) => (
+          <div key={m.id} className="border rounded-lg p-4 space-y-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Badge variant="outline" className="text-xs">{TIPO_MOV_LABEL[m.tipo] || m.tipo}</Badge>
+                <Badge variant="outline" className={STATUS_MOV_STYLES[m.status] || ""}>{m.status}</Badge>
+              </div>
+              <span className="text-xs text-muted-foreground">
+                {new Date(m.data_efetivacao + "T00:00:00").toLocaleDateString("pt-BR")}
+              </span>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+              {(m.cargo_anterior || m.cargo_novo) && (
+                <div>
+                  <p className="text-xs text-muted-foreground">Serviço</p>
+                  <p>{m.cargo_anterior || "—"} → <span className="font-medium">{m.cargo_novo || "—"}</span></p>
+                </div>
+              )}
+              {(m.departamento_anterior || m.departamento_novo) && (
+                <div>
+                  <p className="text-xs text-muted-foreground">Departamento</p>
+                  <p>{m.departamento_anterior || "—"} → <span className="font-medium">{m.departamento_novo || "—"}</span></p>
+                </div>
+              )}
+              {(m.salario_anterior != null || m.salario_novo != null) && (
+                <div>
+                  <p className="text-xs text-muted-foreground">Valor Mensal</p>
+                  <p>{fmt(m.salario_anterior)} → <span className="font-medium">{fmt(m.salario_novo)}</span></p>
+                </div>
+              )}
+            </div>
+            {m.motivo && <p className="text-xs text-muted-foreground"><strong>Motivo:</strong> {m.motivo}</p>}
+            {m.observacoes && <p className="text-xs text-muted-foreground"><strong>Obs:</strong> {m.observacoes}</p>}
+          </div>
+        ))}
+      </CardContent>
+    </Card>
   );
 }
