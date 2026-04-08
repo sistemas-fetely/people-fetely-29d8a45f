@@ -190,6 +190,17 @@ export default function Colaboradores() {
                 <SelectItem value="desligado">Desligado</SelectItem>
               </SelectContent>
             </Select>
+            <Select value={filterDept} onValueChange={setFilterDept}>
+              <SelectTrigger className="w-full sm:w-48">
+                <SelectValue placeholder="Departamento" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos os departamentos</SelectItem>
+                {allDepartamentos.map((d) => (
+                  <SelectItem key={d} value={d}>{d}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="rounded-md border">
