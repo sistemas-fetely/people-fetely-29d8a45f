@@ -142,6 +142,32 @@ export default function Dashboard() {
 
         <Card className="card-shadow animate-fade-in">
           <CardHeader className="pb-2">
+            <CardTitle className="text-base">Admissões vs Desligamentos (12 meses)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {turnover.length > 0 ? (
+              <ResponsiveContainer width="100%" height={280}>
+                <LineChart data={turnover}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+                  <XAxis dataKey="label" tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" />
+                  <YAxis tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" allowDecimals={false} />
+                  <Tooltip contentStyle={{ borderRadius: 8, border: "1px solid hsl(var(--border))", background: "hsl(var(--card))" }} />
+                  <Line type="monotone" dataKey="admissoes" name="Admissões" stroke="hsl(var(--chart-2))" strokeWidth={2} dot={{ r: 4 }} />
+                  <Line type="monotone" dataKey="desligamentos" name="Desligamentos" stroke="hsl(var(--chart-5))" strokeWidth={2} dot={{ r: 4 }} />
+                </LineChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-[280px] text-muted-foreground text-sm">
+                Nenhum dado disponível
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
+
+          <CardHeader className="pb-2">
             <CardTitle className="text-base">Status dos Colaboradores</CardTitle>
           </CardHeader>
           <CardContent className="flex items-center justify-center">
