@@ -27,8 +27,6 @@ const roleLabels: Record<AppRole, string> = {
 const mainItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard, roles: [] as AppRole[] },
   { title: "Pessoas", url: "/pessoas", icon: Users, roles: [] as AppRole[] },
-  { title: "Notas Fiscais", url: "/notas-fiscais", icon: FileText, roles: ["super_admin", "gestor_rh", "financeiro"] as AppRole[] },
-  { title: "Pagamentos PJ", url: "/pagamentos-pj", icon: BarChart3, roles: ["super_admin", "gestor_rh", "financeiro"] as AppRole[] },
   { title: "Organograma", url: "/organograma", icon: GitBranch, roles: [] as AppRole[] },
 ];
 
@@ -42,6 +40,8 @@ const cltItems = [
 
 const pjItems = [
   { title: "Contratos PJ", url: "/contratos-pj", icon: Briefcase, roles: ["super_admin", "gestor_rh", "financeiro"] as AppRole[] },
+  { title: "Notas Fiscais", url: "/notas-fiscais", icon: FileText, roles: ["super_admin", "gestor_rh", "financeiro"] as AppRole[] },
+  { title: "Pagamentos PJ", url: "/pagamentos-pj", icon: BarChart3, roles: ["super_admin", "gestor_rh", "financeiro"] as AppRole[] },
 ];
 
 const rhItems = [
