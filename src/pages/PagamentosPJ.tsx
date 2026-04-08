@@ -57,6 +57,7 @@ interface PagamentoComContrato {
   observacoes: string | null;
   status: string;
   contrato_nome: string;
+  nf_numero: string | null;
 }
 
 interface ContratoPJOption {
