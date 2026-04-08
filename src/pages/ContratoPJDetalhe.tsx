@@ -1,31 +1,51 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Edit, Building2, FileText, CreditCard, Plus, MoreHorizontal, Trash2, Eye, ArrowUpDown, Monitor } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
+import { useForm, FormProvider } from "react-hook-form";
+import { toast } from "sonner";
+import { format, parseISO } from "date-fns";
+import {
+  ArrowLeft, Edit, Save, Loader2, X, User, FileText, Briefcase,
+  Building2, Users as UsersIcon, Monitor, UserCheck, UserX, ArrowUpDown,
+  CreditCard, Plus, MoreHorizontal, Trash2,
+} from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { format, parseISO } from "date-fns";
-import { Loader2 } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
+import type { Tables } from "@/integrations/supabase/types";
 
-const statusContratoMap: Record<string, string> = {
-  rascunho: "Rascunho", ativo: "Ativo", suspenso: "Suspenso", encerrado: "Encerrado", renovado: "Renovado",
+import { StepDadosPessoaisPJ } from "@/components/contrato-pj/StepDadosPessoaisPJ";
+import { StepDocumentosPJ } from "@/components/contrato-pj/StepDocumentosPJ";
+import { StepDadosProfissionaisPJ } from "@/components/contrato-pj/StepDadosProfissionaisPJ";
+import { StepDadosBancarios } from "@/components/colaborador-clt/StepDadosBancarios";
+import { StepDadosEmpresa } from "@/components/colaborador-clt/StepDadosEmpresa";
+import { StepDependentes } from "@/components/colaborador-clt/StepDependentes";
+
+import type { AllPJFormData } from "@/lib/validations/contrato-pj";
+
+const statusMap: Record<string, string> = {
+  rascunho: "Rascunho", ativo: "Ativo", suspenso: "Suspenso",
+  encerrado: "Encerrado", renovado: "Renovado",
 };
-const statusContratoStyles: Record<string, string> = {
-  rascunho: "bg-muted text-muted-foreground border-0", ativo: "bg-success/10 text-success border-0",
-  suspenso: "bg-warning/10 text-warning border-0", encerrado: "bg-destructive/10 text-destructive border-0",
+const statusStyles: Record<string, string> = {
+  rascunho: "bg-muted text-muted-foreground border-0",
+  ativo: "bg-success/10 text-success border-0",
+  suspenso: "bg-warning/10 text-warning border-0",
+  encerrado: "bg-destructive/10 text-destructive border-0",
   renovado: "bg-info/10 text-info border-0",
 };
 
@@ -35,519 +55,541 @@ const statusNFStyles: Record<string, string> = {
   enviada_pagamento: "bg-primary/10 text-primary border-0", paga: "bg-success/10 text-success border-0",
   cancelada: "bg-destructive/10 text-destructive border-0", vencida: "bg-destructive/10 text-destructive border-0",
 };
-
 const statusPagMap: Record<string, string> = { pendente: "Pendente", pago: "Pago", cancelado: "Cancelado" };
 const statusPagStyles: Record<string, string> = {
   pendente: "bg-warning/10 text-warning border-0", pago: "bg-success/10 text-success border-0",
   cancelado: "bg-destructive/10 text-destructive border-0",
 };
 
-interface ContratoPJ {
-  id: string; cnpj: string; razao_social: string; nome_fantasia: string | null;
-  inscricao_municipal: string | null; inscricao_estadual: string | null;
-  contato_nome: string; contato_telefone: string | null; contato_email: string | null;
-  objeto: string | null; tipo_servico: string; departamento: string;
-  valor_mensal: number; forma_pagamento: string; dia_vencimento: number | null;
-  data_inicio: string; data_fim: string | null; renovacao_automatica: boolean;
-  banco_nome: string | null; banco_codigo: string | null; agencia: string | null;
-  conta: string | null; tipo_conta: string | null; chave_pix: string | null;
-  status: string; observacoes: string | null;
-}
-
-interface NotaFiscal {
-  id: string; contrato_id: string; numero: string; serie: string | null;
-  valor: number; data_emissao: string; data_vencimento: string | null;
-  data_pagamento: string | null; competencia: string; descricao: string | null;
-  arquivo_url: string | null; status: string; observacoes: string | null;
-}
-
-interface PagamentoPJ {
-  id: string; contrato_id: string; nota_fiscal_id: string | null;
-  valor: number; data_pagamento: string | null; data_prevista: string;
-  competencia: string; forma_pagamento: string; comprovante_url: string | null;
-  observacoes: string | null; status: string;
-}
-
-interface AcessoSistema {
-  id: string; contrato_pj_id: string; sistema: string; tem_acesso: boolean;
-  usuario: string | null; observacoes: string | null; data_concessao: string | null;
-}
-
-interface Equipamento {
-  id: string; contrato_pj_id: string; tipo: string; marca: string | null;
-  modelo: string | null; numero_patrimonio: string | null; numero_serie: string | null;
-  data_entrega: string | null; data_devolucao: string | null; estado: string;
-  termo_responsabilidade_url: string | null; observacoes: string | null;
-}
-
-function InfoItem({ label, value }: { label: string; value: React.ReactNode }) {
-  if (!value) return null;
+function InfoField({ label, value }: { label: string; value: string | null | undefined | React.ReactNode }) {
   return (
     <div>
       <p className="text-xs text-muted-foreground">{label}</p>
-      <div className="text-sm font-medium">{value}</div>
+      <div className="text-sm font-medium">{value || "—"}</div>
     </div>
   );
 }
 
-// ─── Tab: Dados do Contrato ───
-function TabDados({ contrato }: { contrato: ContratoPJ }) {
-  return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader><CardTitle className="text-sm text-muted-foreground">DADOS DA EMPRESA</CardTitle></CardHeader>
-        <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <InfoItem label="CNPJ" value={contrato.cnpj} />
-          <InfoItem label="Razão Social" value={contrato.razao_social} />
-          <InfoItem label="Nome Fantasia" value={contrato.nome_fantasia} />
-          <InfoItem label="Inscrição Municipal" value={contrato.inscricao_municipal} />
-          <InfoItem label="Inscrição Estadual" value={contrato.inscricao_estadual} />
-        </CardContent>
-      </Card>
+export default function ContratoPJDetalhe() {
+  const { id } = useParams<{ id: string }>();
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [editing, setEditing] = useState(searchParams.get("edit") === "true");
+  const [saving, setSaving] = useState(false);
+  const [contrato, setContrato] = useState<Tables<"contratos_pj"> | null>(null);
+  const [acessosSistemas, setAcessosSistemas] = useState<Tables<"contrato_pj_acessos_sistemas">[]>([]);
+  const [equipamentos, setEquipamentos] = useState<Tables<"contrato_pj_equipamentos">[]>([]);
+  const [statusDialogOpen, setStatusDialogOpen] = useState(false);
+  const [togglingStatus, setTogglingStatus] = useState(false);
 
-      <Card>
-        <CardHeader><CardTitle className="text-sm text-muted-foreground">CONTATO</CardTitle></CardHeader>
-        <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <InfoItem label="Responsável" value={contrato.contato_nome} />
-          <InfoItem label="Telefone" value={contrato.contato_telefone} />
-          <InfoItem label="Email" value={contrato.contato_email} />
-        </CardContent>
-      </Card>
+  const methods = useForm<AllPJFormData>({ mode: "onBlur" });
 
-      <Card>
-        <CardHeader><CardTitle className="text-sm text-muted-foreground">CONTRATO</CardTitle></CardHeader>
-        <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <InfoItem label="Cargo" value={contrato.tipo_servico} />
-          <InfoItem label="Departamento" value={contrato.departamento} />
-          <InfoItem label="Valor Mensal" value={`R$ ${Number(contrato.valor_mensal).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`} />
-          <InfoItem label="Forma de Pagamento" value={contrato.forma_pagamento} />
-          <InfoItem label="Dia Vencimento" value={contrato.dia_vencimento} />
-          <InfoItem label="Status" value={<Badge variant="outline" className={statusContratoStyles[contrato.status] || ""}>{statusContratoMap[contrato.status] || contrato.status}</Badge>} />
-        </CardContent>
-      </Card>
+  const isAtivo = contrato?.status === "ativo" || contrato?.status === "rascunho";
 
-      <Card>
-        <CardHeader><CardTitle className="text-sm text-muted-foreground">VIGÊNCIA</CardTitle></CardHeader>
-        <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <InfoItem label="Início" value={format(parseISO(contrato.data_inicio), "dd/MM/yyyy")} />
-          <InfoItem label="Fim" value={contrato.data_fim ? format(parseISO(contrato.data_fim), "dd/MM/yyyy") : "Indeterminado"} />
-          <InfoItem label="Renovação Automática" value={contrato.renovacao_automatica ? "Sim" : "Não"} />
-        </CardContent>
-      </Card>
+  const handleToggleStatus = async () => {
+    if (!id || !contrato) return;
+    setTogglingStatus(true);
+    const newStatus = isAtivo ? "encerrado" : "ativo";
+    const updateData: any = { status: newStatus };
+    if (newStatus === "encerrado") {
+      updateData.data_fim = new Date().toISOString().slice(0, 10);
+    }
+    const { error } = await supabase.from("contratos_pj").update(updateData).eq("id", id);
+    if (error) {
+      toast.error(error.message);
+    } else {
+      setContrato({ ...contrato, status: newStatus });
+      toast.success(newStatus === "encerrado" ? "Contrato encerrado" : "Contrato reativado");
+    }
+    setTogglingStatus(false);
+    setStatusDialogOpen(false);
+  };
 
-      {(contrato.banco_nome || contrato.chave_pix) && (
-        <Card>
-          <CardHeader><CardTitle className="text-sm text-muted-foreground">DADOS BANCÁRIOS</CardTitle></CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <InfoItem label="Banco" value={contrato.banco_nome && `${contrato.banco_nome}${contrato.banco_codigo ? ` (${contrato.banco_codigo})` : ""}`} />
-            <InfoItem label="Agência" value={contrato.agencia} />
-            <InfoItem label="Conta" value={contrato.conta && `${contrato.conta}${contrato.tipo_conta ? ` (${contrato.tipo_conta})` : ""}`} />
-            <InfoItem label="Chave PIX" value={contrato.chave_pix} />
+  useEffect(() => {
+    if (!id) return;
+    async function load() {
+      const [{ data: ct }, { data: acessos }, { data: equips }] = await Promise.all([
+        supabase.from("contratos_pj").select("*").eq("id", id).maybeSingle(),
+        supabase.from("contrato_pj_acessos_sistemas").select("*").eq("contrato_pj_id", id),
+        supabase.from("contrato_pj_equipamentos").select("*").eq("contrato_pj_id", id),
+      ]);
+      if (!ct) {
+        toast.error("Contrato não encontrado");
+        navigate("/contratos-pj");
+        return;
+      }
+      setContrato(ct);
+      setAcessosSistemas(acessos || []);
+      setEquipamentos(equips || []);
+      methods.reset({
+        contato_nome: ct.contato_nome,
+        contato_telefone: ct.contato_telefone || "",
+        contato_email: ct.contato_email || "",
+        cnpj: ct.cnpj,
+        razao_social: ct.razao_social,
+        nome_fantasia: ct.nome_fantasia || "",
+        inscricao_municipal: ct.inscricao_municipal || "",
+        inscricao_estadual: ct.inscricao_estadual || "",
+        contrato_assinado: (ct as any).contrato_assinado || false,
+        objeto: ct.objeto || "",
+        observacoes: ct.observacoes || "",
+        titulo_eleitor: "",
+        zona_eleitoral: "",
+        secao_eleitoral: "",
+        cnh_numero: "",
+        cnh_categoria: "",
+        cnh_validade: "",
+        certificado_reservista: "",
+        tipo_servico: ct.tipo_servico,
+        departamento: ct.departamento,
+        data_inicio: ct.data_inicio,
+        data_fim: ct.data_fim || "",
+        valor_mensal: ct.valor_mensal,
+        forma_pagamento: ct.forma_pagamento,
+        dia_vencimento: ct.dia_vencimento || 10,
+        renovacao_automatica: ct.renovacao_automatica,
+        status: ct.status,
+        banco_nome: ct.banco_nome || "",
+        banco_codigo: ct.banco_codigo || "",
+        agencia: ct.agencia || "",
+        conta: ct.conta || "",
+        tipo_conta: ct.tipo_conta || "corrente",
+        chave_pix: ct.chave_pix || "",
+        email_corporativo: "",
+        ramal: "",
+        data_integracao: "",
+        acessos_sistemas: (acessos || []).map((a) => ({
+          sistema: a.sistema,
+          tem_acesso: a.tem_acesso,
+          usuario: a.usuario || "",
+          observacoes: a.observacoes || "",
+        })),
+        equipamentos: (equips || []).map((e) => ({
+          tipo: e.tipo,
+          marca: e.marca || "",
+          modelo: e.modelo || "",
+          numero_patrimonio: e.numero_patrimonio || "",
+          numero_serie: e.numero_serie || "",
+          data_entrega: e.data_entrega || "",
+          estado: e.estado || "novo",
+          observacoes: e.observacoes || "",
+        })),
+        dependentes: [],
+      } as any);
+      setLoading(false);
+    }
+    load();
+  }, [id]);
+
+  const onSave = async (data: AllPJFormData) => {
+    if (!id) return;
+    setSaving(true);
+    try {
+      const {
+        dependentes, acessos_sistemas: formAcessos, equipamentos: formEquip,
+        email_corporativo, ramal, data_integracao,
+        titulo_eleitor, zona_eleitoral, secao_eleitoral,
+        cnh_numero, cnh_categoria, cnh_validade, certificado_reservista,
+        valor_mensal,
+        ...rest
+      } = data;
+
+      const { error } = await supabase
+        .from("contratos_pj")
+        .update({
+          contato_nome: rest.contato_nome,
+          contato_telefone: rest.contato_telefone || null,
+          contato_email: rest.contato_email || null,
+          cnpj: rest.cnpj,
+          razao_social: rest.razao_social,
+          nome_fantasia: rest.nome_fantasia || null,
+          inscricao_municipal: rest.inscricao_municipal || null,
+          inscricao_estadual: rest.inscricao_estadual || null,
+          contrato_assinado: rest.contrato_assinado,
+          objeto: rest.objeto || null,
+          observacoes: rest.observacoes || null,
+          tipo_servico: rest.tipo_servico,
+          departamento: rest.departamento,
+          data_inicio: rest.data_inicio,
+          data_fim: rest.data_fim || null,
+          valor_mensal: Number(valor_mensal),
+          forma_pagamento: rest.forma_pagamento,
+          dia_vencimento: Number(rest.dia_vencimento) || 10,
+          renovacao_automatica: rest.renovacao_automatica,
+          status: rest.status,
+          banco_nome: rest.banco_nome || null,
+          banco_codigo: rest.banco_codigo || null,
+          agencia: rest.agencia || null,
+          conta: rest.conta || null,
+          tipo_conta: rest.tipo_conta || null,
+          chave_pix: rest.chave_pix || null,
+        } as any)
+        .eq("id", id);
+      if (error) throw error;
+
+      // Replace acessos_sistemas
+      await supabase.from("contrato_pj_acessos_sistemas").delete().eq("contrato_pj_id", id);
+      if (formAcessos && formAcessos.length > 0) {
+        const acessosToInsert = formAcessos
+          .filter((a: any) => a.tem_acesso && a.sistema)
+          .map((a: any) => ({
+            contrato_pj_id: id,
+            sistema: a.sistema,
+            tem_acesso: true,
+            usuario: a.usuario || null,
+            observacoes: a.observacoes || null,
+            data_concessao: new Date().toISOString().split("T")[0],
+          }));
+        if (acessosToInsert.length > 0) {
+          const { error: aErr } = await supabase.from("contrato_pj_acessos_sistemas").insert(acessosToInsert);
+          if (aErr) throw aErr;
+        }
+      }
+
+      // Replace equipamentos
+      await supabase.from("contrato_pj_equipamentos").delete().eq("contrato_pj_id", id);
+      if (formEquip && formEquip.length > 0) {
+        const equipToInsert = formEquip
+          .filter((e: any) => e.tipo)
+          .map((e: any) => ({
+            contrato_pj_id: id,
+            tipo: e.tipo,
+            marca: e.marca || null,
+            modelo: e.modelo || null,
+            numero_patrimonio: e.numero_patrimonio || null,
+            numero_serie: e.numero_serie || null,
+            data_entrega: e.data_entrega || null,
+            estado: e.estado || "novo",
+            observacoes: e.observacoes || null,
+          }));
+        if (equipToInsert.length > 0) {
+          const { error: eErr } = await supabase.from("contrato_pj_equipamentos").insert(equipToInsert);
+          if (eErr) throw eErr;
+        }
+      }
+
+      toast.success("Contrato atualizado com sucesso!");
+      setEditing(false);
+      // Reload
+      const { data: updated } = await supabase.from("contratos_pj").select("*").eq("id", id).maybeSingle();
+      if (updated) setContrato(updated);
+      const { data: newAcessos } = await supabase.from("contrato_pj_acessos_sistemas").select("*").eq("contrato_pj_id", id);
+      setAcessosSistemas(newAcessos || []);
+      const { data: newEquips } = await supabase.from("contrato_pj_equipamentos").select("*").eq("contrato_pj_id", id);
+      setEquipamentos(newEquips || []);
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || "Erro ao atualizar contrato");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!contrato) return null;
+
+  const initials = contrato.contato_nome
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+
+  // VIEW MODE
+  if (!editing) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <Button variant="ghost" onClick={() => navigate("/contratos-pj")} className="gap-2">
+            <ArrowLeft className="h-4 w-4" /> Voltar
+          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant={isAtivo ? "outline" : "default"}
+              onClick={() => setStatusDialogOpen(true)}
+              className={`gap-2 ${isAtivo ? "text-destructive border-destructive hover:bg-destructive/10" : ""}`}
+            >
+              {isAtivo ? <UserX className="h-4 w-4" /> : <UserCheck className="h-4 w-4" />}
+              {isAtivo ? "Encerrar" : "Reativar"}
+            </Button>
+            <Button onClick={() => setEditing(true)} className="gap-2">
+              <Edit className="h-4 w-4" /> Editar
+            </Button>
+          </div>
+        </div>
+
+        {/* Header card */}
+        <Card className="card-shadow">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-4">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-xl font-bold text-primary">
+                {initials}
+              </div>
+              <div className="flex-1">
+                <h1 className="text-2xl font-bold">{contrato.contato_nome}</h1>
+                <p className="text-muted-foreground">{contrato.tipo_servico} · {contrato.razao_social}</p>
+                <div className="flex flex-wrap items-center gap-2 mt-2">
+                  <Badge variant="outline" className={statusStyles[contrato.status] || ""}>
+                    {statusMap[contrato.status] || contrato.status}
+                  </Badge>
+                  <Badge variant="outline" className="bg-primary/10 text-primary border-0">
+                    PJ
+                  </Badge>
+                  <Badge variant="outline" className="bg-muted text-xs">
+                    {contrato.departamento}
+                  </Badge>
+                </div>
+              </div>
+            </div>
           </CardContent>
         </Card>
-      )}
-    </div>
-  );
-}
 
-// ─── Tab: Documentos (Contrato de Trabalho) ───
-function TabDocumentos({ contrato }: { contrato: ContratoPJ }) {
-  return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader><CardTitle className="text-sm text-muted-foreground">CONTRATO DE TRABALHO</CardTitle></CardHeader>
-        <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <InfoItem label="Tipo de Serviço" value={contrato.tipo_servico} />
-          <InfoItem label="Departamento" value={contrato.departamento} />
-          <InfoItem label="Valor Mensal" value={`R$ ${Number(contrato.valor_mensal).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`} />
-          <InfoItem label="Forma de Pagamento" value={contrato.forma_pagamento} />
-          <InfoItem label="Dia Vencimento" value={contrato.dia_vencimento} />
-          <InfoItem label="Status" value={<Badge variant="outline" className={statusContratoStyles[contrato.status] || ""}>{statusContratoMap[contrato.status] || contrato.status}</Badge>} />
-        </CardContent>
-      </Card>
+        <Tabs defaultValue="pessoais">
+          <TabsList className="w-full justify-start">
+            <TabsTrigger value="pessoais" className="gap-1"><User className="h-3.5 w-3.5" /> Dados Pessoais</TabsTrigger>
+            <TabsTrigger value="documentos" className="gap-1"><FileText className="h-3.5 w-3.5" /> Documentos</TabsTrigger>
+            <TabsTrigger value="profissionais" className="gap-1"><Briefcase className="h-3.5 w-3.5" /> Profissionais</TabsTrigger>
+            <TabsTrigger value="bancarios" className="gap-1"><Building2 className="h-3.5 w-3.5" /> Bancários</TabsTrigger>
+            <TabsTrigger value="empresa" className="gap-1"><Monitor className="h-3.5 w-3.5" /> Empresa</TabsTrigger>
+            <TabsTrigger value="dependentes" className="gap-1"><UsersIcon className="h-3.5 w-3.5" /> Dependentes</TabsTrigger>
+            <TabsTrigger value="notas" className="gap-1"><FileText className="h-3.5 w-3.5" /> Notas Fiscais</TabsTrigger>
+            <TabsTrigger value="pagamentos" className="gap-1"><CreditCard className="h-3.5 w-3.5" /> Pagamentos</TabsTrigger>
+            <TabsTrigger value="movimentacoes" className="gap-1"><ArrowUpDown className="h-3.5 w-3.5" /> Movimentações</TabsTrigger>
+          </TabsList>
 
-      <Card>
-        <CardHeader><CardTitle className="text-sm text-muted-foreground">VIGÊNCIA DO CONTRATO</CardTitle></CardHeader>
-        <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <InfoItem label="Data de Início" value={format(parseISO(contrato.data_inicio), "dd/MM/yyyy")} />
-          <InfoItem label="Data de Término" value={contrato.data_fim ? format(parseISO(contrato.data_fim), "dd/MM/yyyy") : "Indeterminado"} />
-          <InfoItem label="Renovação Automática" value={contrato.renovacao_automatica ? "Sim" : "Não"} />
-        </CardContent>
-      </Card>
+          <TabsContent value="pessoais">
+            <Card><CardContent className="pt-6">
+              <h3 className="font-semibold mb-4 text-sm text-muted-foreground">DADOS DO RESPONSÁVEL</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                <InfoField label="Nome Completo" value={contrato.contato_nome} />
+                <InfoField label="Telefone" value={contrato.contato_telefone} />
+                <InfoField label="Email" value={contrato.contato_email} />
+              </div>
+              <h3 className="font-semibold mb-4 text-sm text-muted-foreground">DADOS DA EMPRESA</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <InfoField label="CNPJ" value={contrato.cnpj} />
+                <InfoField label="Razão Social" value={contrato.razao_social} />
+                <InfoField label="Nome Fantasia" value={contrato.nome_fantasia} />
+                <InfoField label="Inscrição Municipal" value={contrato.inscricao_municipal} />
+                <InfoField label="Inscrição Estadual" value={contrato.inscricao_estadual} />
+              </div>
+            </CardContent></Card>
+          </TabsContent>
 
-      <Card>
-        <CardHeader><CardTitle className="text-sm text-muted-foreground">OBJETO E OBSERVAÇÕES</CardTitle></CardHeader>
-        <CardContent className="space-y-4">
-          <InfoItem label="Objeto do Contrato" value={contrato.objeto || "Não informado"} />
-          <InfoItem label="Observações" value={contrato.observacoes || "Nenhuma observação"} />
-        </CardContent>
-      </Card>
+          <TabsContent value="documentos">
+            <Card><CardContent className="pt-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <InfoField label="Contrato Assinado" value={
+                  <Badge variant="outline" className={(contrato as any).contrato_assinado ? "bg-success/10 text-success border-0" : "bg-warning/10 text-warning border-0"}>
+                    {(contrato as any).contrato_assinado ? "Sim" : "Não"}
+                  </Badge>
+                } />
+                <InfoField label="Objeto do Contrato" value={contrato.objeto} />
+                <InfoField label="Observações" value={contrato.observacoes} />
+              </div>
+            </CardContent></Card>
+          </TabsContent>
 
-      <Card>
-        <CardHeader><CardTitle className="text-sm text-muted-foreground">DADOS DA EMPRESA CONTRATADA</CardTitle></CardHeader>
-        <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <InfoItem label="CNPJ" value={contrato.cnpj} />
-          <InfoItem label="Razão Social" value={contrato.razao_social} />
-          <InfoItem label="Nome Fantasia" value={contrato.nome_fantasia} />
-          <InfoItem label="Inscrição Municipal" value={contrato.inscricao_municipal} />
-          <InfoItem label="Inscrição Estadual" value={contrato.inscricao_estadual} />
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
+          <TabsContent value="profissionais">
+            <Card><CardContent className="pt-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <InfoField label="Cargo / Tipo de Serviço" value={contrato.tipo_servico} />
+                <InfoField label="Departamento" value={contrato.departamento} />
+                <InfoField label="Valor Mensal" value={`R$ ${Number(contrato.valor_mensal).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`} />
+                <InfoField label="Forma de Pagamento" value={contrato.forma_pagamento} />
+                <InfoField label="Dia do Vencimento" value={contrato.dia_vencimento?.toString()} />
+                <InfoField label="Data de Início" value={format(parseISO(contrato.data_inicio), "dd/MM/yyyy")} />
+                <InfoField label="Data de Fim" value={contrato.data_fim ? format(parseISO(contrato.data_fim), "dd/MM/yyyy") : "Indeterminado"} />
+                <InfoField label="Renovação Automática" value={contrato.renovacao_automatica ? "Sim" : "Não"} />
+                <InfoField label="Status" value={
+                  <Badge variant="outline" className={statusStyles[contrato.status] || ""}>
+                    {statusMap[contrato.status] || contrato.status}
+                  </Badge>
+                } />
+              </div>
+            </CardContent></Card>
+          </TabsContent>
 
-// ─── Tab: Empresa (Acessos + Equipamentos) ───
-function TabEmpresa({ contratoId, contrato }: { contratoId: string; contrato: ContratoPJ }) {
-  const [acessos, setAcessos] = useState<AcessoSistema[]>([]);
-  const [equipamentos, setEquipamentos] = useState<Equipamento[]>([]);
-  const [loading, setLoading] = useState(true);
+          <TabsContent value="bancarios">
+            <Card><CardContent className="pt-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <InfoField label="Banco" value={contrato.banco_nome} />
+                <InfoField label="Código Banco" value={contrato.banco_codigo} />
+                <InfoField label="Agência" value={contrato.agencia} />
+                <InfoField label="Conta" value={contrato.conta} />
+                <InfoField label="Tipo de Conta" value={contrato.tipo_conta} />
+                <InfoField label="Chave PIX" value={contrato.chave_pix} />
+              </div>
+            </CardContent></Card>
+          </TabsContent>
 
-  // Acesso form
-  const [acessoFormOpen, setAcessoFormOpen] = useState(false);
-  const [editAcesso, setEditAcesso] = useState<AcessoSistema | null>(null);
-  const [deleteAcesso, setDeleteAcesso] = useState<AcessoSistema | null>(null);
-
-  // Equipamento form
-  const [equipFormOpen, setEquipFormOpen] = useState(false);
-  const [editEquip, setEditEquip] = useState<Equipamento | null>(null);
-  const [deleteEquip, setDeleteEquip] = useState<Equipamento | null>(null);
-
-  const fetchData = async () => {
-    const [{ data: a }, { data: e }] = await Promise.all([
-      supabase.from("contrato_pj_acessos_sistemas").select("*").eq("contrato_pj_id", contratoId),
-      supabase.from("contrato_pj_equipamentos").select("*").eq("contrato_pj_id", contratoId),
-    ]);
-    setAcessos((a as AcessoSistema[]) || []);
-    setEquipamentos((e as Equipamento[]) || []);
-    setLoading(false);
-  };
-
-  useEffect(() => { fetchData(); }, [contratoId]);
-
-  const handleDeleteAcesso = async () => {
-    if (!deleteAcesso) return;
-    const { error } = await supabase.from("contrato_pj_acessos_sistemas").delete().eq("id", deleteAcesso.id);
-    if (error) toast.error(error.message);
-    else { toast.success("Acesso removido"); fetchData(); }
-    setDeleteAcesso(null);
-  };
-
-  const handleDeleteEquip = async () => {
-    if (!deleteEquip) return;
-    const { error } = await supabase.from("contrato_pj_equipamentos").delete().eq("id", deleteEquip.id);
-    if (error) toast.error(error.message);
-    else { toast.success("Equipamento removido"); fetchData(); }
-    setDeleteEquip(null);
-  };
-
-  if (loading) return <Card><CardContent className="py-8 text-center text-muted-foreground text-sm">Carregando...</CardContent></Card>;
-
-  return (
-    <div className="space-y-6">
-      {/* Contact info */}
-      <Card>
-        <CardHeader><CardTitle className="text-sm text-muted-foreground">INFORMAÇÕES DE CONTATO CORPORATIVO</CardTitle></CardHeader>
-        <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <InfoItem label="Responsável" value={contrato.contato_nome} />
-          <InfoItem label="Email" value={contrato.contato_email} />
-          <InfoItem label="Telefone" value={contrato.contato_telefone} />
-        </CardContent>
-      </Card>
-
-      {/* Acessos a Sistemas */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-sm text-muted-foreground">🔐 ACESSO AOS SISTEMAS</CardTitle>
-          <Button size="sm" variant="outline" className="gap-1" onClick={() => { setEditAcesso(null); setAcessoFormOpen(true); }}>
-            <Plus className="h-3.5 w-3.5" /> Adicionar
-          </Button>
-        </CardHeader>
-        <CardContent>
-          {acessos.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-4">Nenhum acesso cadastrado.</p>
-          ) : (
-            <div className="space-y-2">
-              {acessos.map((a) => (
-                <div key={a.id} className="border rounded-lg p-3 flex items-center justify-between">
-                  <div>
-                    <p className="font-medium text-sm">{a.sistema}</p>
-                    {a.usuario && <p className="text-xs text-muted-foreground">Usuário: {a.usuario}</p>}
-                    {a.observacoes && <p className="text-xs text-muted-foreground">{a.observacoes}</p>}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant={a.tem_acesso ? "default" : "secondary"} className="text-xs">
-                      {a.tem_acesso ? "Ativo" : "Sem acesso"}
-                    </Badge>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7"><MoreHorizontal className="h-3.5 w-3.5" /></Button></DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => { setEditAcesso(a); setAcessoFormOpen(true); }}><Edit className="mr-2 h-4 w-4" /> Editar</DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive" onClick={() => setDeleteAcesso(a)}><Trash2 className="mr-2 h-4 w-4" /> Excluir</DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
+          <TabsContent value="empresa">
+            <Card><CardContent className="pt-6">
+              <h3 className="font-semibold mb-3">🔐 Acesso aos Sistemas</h3>
+              {acessosSistemas.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">Nenhum acesso cadastrado.</p>
+              ) : (
+                <div className="space-y-2 mb-6">
+                  {acessosSistemas.map((a) => (
+                    <div key={a.id} className="border rounded-lg p-3 flex items-center justify-between">
+                      <div>
+                        <p className="font-medium text-sm">{a.sistema}</p>
+                        {a.usuario && <p className="text-xs text-muted-foreground">Usuário: {a.usuario}</p>}
+                        {a.observacoes && <p className="text-xs text-muted-foreground">{a.observacoes}</p>}
+                      </div>
+                      <Badge variant={a.tem_acesso ? "default" : "secondary"} className="text-xs">
+                        {a.tem_acesso ? "Ativo" : "Sem acesso"}
+                      </Badge>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+              )}
 
-      {/* Equipamentos */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-sm text-muted-foreground">💻 EQUIPAMENTOS</CardTitle>
-          <Button size="sm" variant="outline" className="gap-1" onClick={() => { setEditEquip(null); setEquipFormOpen(true); }}>
-            <Plus className="h-3.5 w-3.5" /> Adicionar
-          </Button>
-        </CardHeader>
-        <CardContent>
-          {equipamentos.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-4">Nenhum equipamento cadastrado.</p>
-          ) : (
-            <div className="space-y-2">
-              {equipamentos.map((e) => (
-                <div key={e.id} className="border rounded-lg p-3">
-                  <div className="flex items-center justify-between mb-2">
-                    <p className="font-medium text-sm">{e.tipo}{e.marca ? ` — ${e.marca}` : ""}{e.modelo ? ` ${e.modelo}` : ""}</p>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7"><MoreHorizontal className="h-3.5 w-3.5" /></Button></DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => { setEditEquip(e); setEquipFormOpen(true); }}><Edit className="mr-2 h-4 w-4" /> Editar</DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive" onClick={() => setDeleteEquip(e)}><Trash2 className="mr-2 h-4 w-4" /> Excluir</DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <InfoItem label="Nº Patrimônio" value={e.numero_patrimonio} />
-                    <InfoItem label="Nº Série" value={e.numero_serie} />
-                    <InfoItem label="Estado" value={e.estado} />
-                    <InfoItem label="Data Entrega" value={e.data_entrega ? format(parseISO(e.data_entrega), "dd/MM/yyyy") : null} />
-                    <InfoItem label="Data Devolução" value={e.data_devolucao ? format(parseISO(e.data_devolucao), "dd/MM/yyyy") : null} />
-                  </div>
-                  {e.observacoes && <p className="text-xs text-muted-foreground mt-2">{e.observacoes}</p>}
+              <h3 className="font-semibold mb-3">💻 Equipamentos</h3>
+              {equipamentos.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">Nenhum equipamento cadastrado.</p>
+              ) : (
+                <div className="space-y-2">
+                  {equipamentos.map((e) => (
+                    <div key={e.id} className="border rounded-lg p-3">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <InfoField label="Tipo" value={e.tipo} />
+                        <InfoField label="Marca / Modelo" value={[e.marca, e.modelo].filter(Boolean).join(" ") || null} />
+                        <InfoField label="Nº Patrimônio" value={e.numero_patrimonio} />
+                        <InfoField label="Nº Série" value={e.numero_serie} />
+                        <InfoField label="Estado" value={e.estado} />
+                        <InfoField label="Data Entrega" value={e.data_entrega ? format(parseISO(e.data_entrega), "dd/MM/yyyy") : ""} />
+                      </div>
+                      {e.observacoes && <p className="text-xs text-muted-foreground mt-2">{e.observacoes}</p>}
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+              )}
+            </CardContent></Card>
+          </TabsContent>
 
-      {/* Acesso Form Dialog */}
-      {acessoFormOpen && (
-        <AcessoSistemaForm
-          open={acessoFormOpen}
-          onClose={() => setAcessoFormOpen(false)}
-          acesso={editAcesso}
-          contratoId={contratoId}
-          onSaved={fetchData}
-        />
-      )}
+          <TabsContent value="dependentes">
+            <Card><CardContent className="pt-6">
+              <p className="text-muted-foreground text-sm text-center py-8">Nenhum dependente cadastrado.</p>
+            </CardContent></Card>
+          </TabsContent>
 
-      {/* Equipamento Form Dialog */}
-      {equipFormOpen && (
-        <EquipamentoForm
-          open={equipFormOpen}
-          onClose={() => setEquipFormOpen(false)}
-          equipamento={editEquip}
-          contratoId={contratoId}
-          onSaved={fetchData}
-        />
-      )}
+          <TabsContent value="notas">
+            <TabNotasFiscais contratoId={id!} />
+          </TabsContent>
 
-      {/* Delete Acesso Confirm */}
-      <AlertDialog open={!!deleteAcesso} onOpenChange={(o) => !o && setDeleteAcesso(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
-            <AlertDialogDescription>Excluir o acesso ao sistema <strong>{deleteAcesso?.sistema}</strong>?</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteAcesso} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Excluir</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+          <TabsContent value="pagamentos">
+            <TabPagamentos contratoId={id!} />
+          </TabsContent>
 
-      {/* Delete Equipamento Confirm */}
-      <AlertDialog open={!!deleteEquip} onOpenChange={(o) => !o && setDeleteEquip(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
-            <AlertDialogDescription>Excluir este equipamento?</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteEquip} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Excluir</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </div>
-  );
-}
+          <TabsContent value="movimentacoes">
+            <HistoricoMovimentacoes contratoId={id!} />
+          </TabsContent>
+        </Tabs>
 
-function AcessoSistemaForm({ open, onClose, acesso, contratoId, onSaved }: {
-  open: boolean; onClose: () => void; acesso: AcessoSistema | null; contratoId: string; onSaved: () => void;
-}) {
-  const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState({
-    sistema: acesso?.sistema || "",
-    tem_acesso: acesso?.tem_acesso ?? true,
-    usuario: acesso?.usuario || "",
-    observacoes: acesso?.observacoes || "",
-    data_concessao: acesso?.data_concessao || new Date().toISOString().slice(0, 10),
-  });
-  const set = (k: string, v: any) => setForm((f) => ({ ...f, [k]: v }));
+        <AlertDialog open={statusDialogOpen} onOpenChange={setStatusDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>{isAtivo ? "Encerrar contrato?" : "Reativar contrato?"}</AlertDialogTitle>
+              <AlertDialogDescription>
+                {isAtivo
+                  ? `O contrato de "${contrato.contato_nome}" será marcado como encerrado. Você poderá reativá-lo depois.`
+                  : `O contrato de "${contrato.contato_nome}" será reativado com status "Ativo".`}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleToggleStatus}
+                disabled={togglingStatus}
+                className={isAtivo ? "bg-destructive text-destructive-foreground hover:bg-destructive/90" : ""}
+              >
+                {togglingStatus ? <Loader2 className="h-4 w-4 animate-spin" /> : isAtivo ? "Encerrar" : "Reativar"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
+    );
+  }
 
-  const handleSave = async () => {
-    if (!form.sistema.trim()) { toast.error("Informe o sistema"); return; }
-    setSaving(true);
-    const payload = {
-      contrato_pj_id: contratoId,
-      sistema: form.sistema.trim(),
-      tem_acesso: form.tem_acesso,
-      usuario: form.usuario.trim() || null,
-      observacoes: form.observacoes.trim() || null,
-      data_concessao: form.data_concessao || null,
-    };
-    try {
-      if (acesso) {
-        const { error } = await supabase.from("contrato_pj_acessos_sistemas").update(payload as any).eq("id", acesso.id);
-        if (error) throw error;
-        toast.success("Acesso atualizado!");
-      } else {
-        const { error } = await supabase.from("contrato_pj_acessos_sistemas").insert(payload as any);
-        if (error) throw error;
-        toast.success("Acesso cadastrado!");
-      }
-      onSaved(); onClose();
-    } catch (err: any) { toast.error(err.message); } finally { setSaving(false); }
-  };
-
+  // EDIT MODE — reuse wizard step components
   return (
-    <Dialog open={open} onOpenChange={() => onClose()}>
-      <DialogContent className="max-w-md">
-        <DialogHeader><DialogTitle>{acesso ? "Editar Acesso" : "Novo Acesso a Sistema"}</DialogTitle></DialogHeader>
-        <div className="space-y-4 py-2">
-          <div><Label>Sistema *</Label><Input value={form.sistema} onChange={(e) => set("sistema", e.target.value)} placeholder="Ex: ERP, CRM, Email..." /></div>
-          <div><Label>Usuário</Label><Input value={form.usuario} onChange={(e) => set("usuario", e.target.value)} /></div>
-          <div><Label>Data Concessão</Label><Input type="date" value={form.data_concessao} onChange={(e) => set("data_concessao", e.target.value)} /></div>
-          <div className="flex items-center gap-2">
-            <input type="checkbox" checked={form.tem_acesso} onChange={(e) => set("tem_acesso", e.target.checked)} id="tem_acesso" className="rounded" />
-            <Label htmlFor="tem_acesso">Acesso ativo</Label>
-          </div>
-          <div><Label>Observações</Label><Textarea value={form.observacoes} onChange={(e) => set("observacoes", e.target.value)} rows={2} /></div>
+    <FormProvider {...methods}>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <Button variant="ghost" onClick={() => setEditing(false)} className="gap-2">
+            <X className="h-4 w-4" /> Cancelar Edição
+          </Button>
+          <Button
+            onClick={() => methods.handleSubmit(onSave)()}
+            disabled={saving}
+            className="gap-2"
+          >
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+            Salvar Alterações
+          </Button>
         </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Cancelar</Button>
-          <Button onClick={handleSave} disabled={saving}>{saving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}Salvar</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+
+        <h1 className="text-2xl font-bold tracking-tight">Editar: {contrato.contato_nome}</h1>
+
+        <Tabs defaultValue="pessoais">
+          <TabsList className="w-full justify-start">
+            <TabsTrigger value="pessoais">Dados Pessoais</TabsTrigger>
+            <TabsTrigger value="documentos">Documentos</TabsTrigger>
+            <TabsTrigger value="profissionais">Profissionais</TabsTrigger>
+            <TabsTrigger value="bancarios">Bancários</TabsTrigger>
+            <TabsTrigger value="empresa">Empresa</TabsTrigger>
+            <TabsTrigger value="dependentes">Dependentes</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="pessoais">
+            <Card><CardContent className="pt-6"><StepDadosPessoaisPJ /></CardContent></Card>
+          </TabsContent>
+          <TabsContent value="documentos">
+            <Card><CardContent className="pt-6"><StepDocumentosPJ /></CardContent></Card>
+          </TabsContent>
+          <TabsContent value="profissionais">
+            <Card><CardContent className="pt-6"><StepDadosProfissionaisPJ /></CardContent></Card>
+          </TabsContent>
+          <TabsContent value="bancarios">
+            <Card><CardContent className="pt-6"><StepDadosBancarios /></CardContent></Card>
+          </TabsContent>
+          <TabsContent value="empresa">
+            <Card><CardContent className="pt-6"><StepDadosEmpresa /></CardContent></Card>
+          </TabsContent>
+          <TabsContent value="dependentes">
+            <Card><CardContent className="pt-6"><StepDependentes /></CardContent></Card>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </FormProvider>
   );
 }
 
-function EquipamentoForm({ open, onClose, equipamento, contratoId, onSaved }: {
-  open: boolean; onClose: () => void; equipamento: Equipamento | null; contratoId: string; onSaved: () => void;
-}) {
-  const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState({
-    tipo: equipamento?.tipo || "",
-    marca: equipamento?.marca || "",
-    modelo: equipamento?.modelo || "",
-    numero_patrimonio: equipamento?.numero_patrimonio || "",
-    numero_serie: equipamento?.numero_serie || "",
-    data_entrega: equipamento?.data_entrega || "",
-    data_devolucao: equipamento?.data_devolucao || "",
-    estado: equipamento?.estado || "novo",
-    observacoes: equipamento?.observacoes || "",
-  });
-  const set = (k: string, v: string) => setForm((f) => ({ ...f, [k]: v }));
-
-  const handleSave = async () => {
-    if (!form.tipo.trim()) { toast.error("Informe o tipo do equipamento"); return; }
-    setSaving(true);
-    const payload = {
-      contrato_pj_id: contratoId,
-      tipo: form.tipo.trim(),
-      marca: form.marca.trim() || null,
-      modelo: form.modelo.trim() || null,
-      numero_patrimonio: form.numero_patrimonio.trim() || null,
-      numero_serie: form.numero_serie.trim() || null,
-      data_entrega: form.data_entrega || null,
-      data_devolucao: form.data_devolucao || null,
-      estado: form.estado,
-      observacoes: form.observacoes.trim() || null,
-    };
-    try {
-      if (equipamento) {
-        const { error } = await supabase.from("contrato_pj_equipamentos").update(payload as any).eq("id", equipamento.id);
-        if (error) throw error;
-        toast.success("Equipamento atualizado!");
-      } else {
-        const { error } = await supabase.from("contrato_pj_equipamentos").insert(payload as any);
-        if (error) throw error;
-        toast.success("Equipamento cadastrado!");
-      }
-      onSaved(); onClose();
-    } catch (err: any) { toast.error(err.message); } finally { setSaving(false); }
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={() => onClose()}>
-      <DialogContent className="max-w-lg">
-        <DialogHeader><DialogTitle>{equipamento ? "Editar Equipamento" : "Novo Equipamento"}</DialogTitle></DialogHeader>
-        <div className="grid grid-cols-2 gap-4 py-2">
-          <div><Label>Tipo *</Label><Input value={form.tipo} onChange={(e) => set("tipo", e.target.value)} placeholder="Ex: Notebook, Monitor..." /></div>
-          <div><Label>Marca</Label><Input value={form.marca} onChange={(e) => set("marca", e.target.value)} /></div>
-          <div><Label>Modelo</Label><Input value={form.modelo} onChange={(e) => set("modelo", e.target.value)} /></div>
-          <div><Label>Nº Patrimônio</Label><Input value={form.numero_patrimonio} onChange={(e) => set("numero_patrimonio", e.target.value)} /></div>
-          <div><Label>Nº Série</Label><Input value={form.numero_serie} onChange={(e) => set("numero_serie", e.target.value)} /></div>
-          <div>
-            <Label>Estado</Label>
-            <Select value={form.estado} onValueChange={(v) => set("estado", v)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="novo">Novo</SelectItem>
-                <SelectItem value="bom">Bom</SelectItem>
-                <SelectItem value="regular">Regular</SelectItem>
-                <SelectItem value="desgastado">Desgastado</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div><Label>Data Entrega</Label><Input type="date" value={form.data_entrega} onChange={(e) => set("data_entrega", e.target.value)} /></div>
-          <div><Label>Data Devolução</Label><Input type="date" value={form.data_devolucao} onChange={(e) => set("data_devolucao", e.target.value)} /></div>
-          <div className="col-span-2"><Label>Observações</Label><Textarea value={form.observacoes} onChange={(e) => set("observacoes", e.target.value)} rows={2} /></div>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Cancelar</Button>
-          <Button onClick={handleSave} disabled={saving}>{saving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}Salvar</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-// ─── Tab: Notas Fiscais ───
+// ─── Notas Fiscais Tab ───
 function TabNotasFiscais({ contratoId }: { contratoId: string }) {
   const navigate = useNavigate();
-  const [notas, setNotas] = useState<NotaFiscal[]>([]);
+  const [notas, setNotas] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [formOpen, setFormOpen] = useState(false);
-  const [editNota, setEditNota] = useState<NotaFiscal | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<NotaFiscal | null>(null);
+  const [editNota, setEditNota] = useState<any | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<any | null>(null);
 
   const fetchNotas = async () => {
-    const { data } = await supabase
-      .from("notas_fiscais_pj")
-      .select("*")
-      .eq("contrato_id", contratoId)
-      .order("data_emissao", { ascending: false });
-    setNotas((data as NotaFiscal[]) || []);
+    const { data } = await supabase.from("notas_fiscais_pj").select("*").eq("contrato_id", contratoId).order("data_emissao", { ascending: false });
+    setNotas(data || []);
     setLoading(false);
   };
-
   useEffect(() => { fetchNotas(); }, [contratoId]);
 
   const handleDelete = async () => {
@@ -566,47 +608,44 @@ function TabNotasFiscais({ contratoId }: { contratoId: string }) {
           <Plus className="h-4 w-4" /> Nova NF
         </Button>
       </div>
-
-      <Card>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-muted/50">
-                <TableHead className="font-semibold">Número</TableHead>
-                <TableHead className="font-semibold">Competência</TableHead>
-                <TableHead className="font-semibold">Emissão</TableHead>
-                <TableHead className="font-semibold">Valor</TableHead>
-                <TableHead className="font-semibold">Status</TableHead>
-                <TableHead className="w-10" />
+      <Card><CardContent className="p-0">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-muted/50">
+              <TableHead className="font-semibold">Número</TableHead>
+              <TableHead className="font-semibold">Competência</TableHead>
+              <TableHead className="font-semibold">Emissão</TableHead>
+              <TableHead className="font-semibold">Valor</TableHead>
+              <TableHead className="font-semibold">Status</TableHead>
+              <TableHead className="w-10" />
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {loading ? (
+              <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Carregando...</TableCell></TableRow>
+            ) : notas.length === 0 ? (
+              <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Nenhuma nota fiscal cadastrada.</TableCell></TableRow>
+            ) : notas.map((n) => (
+              <TableRow key={n.id} className="cursor-pointer hover:bg-muted/30" onClick={() => navigate(`/notas-fiscais/${n.id}`)}>
+                <TableCell className="font-medium">{n.numero}{n.serie ? `/${n.serie}` : ""}</TableCell>
+                <TableCell>{n.competencia}</TableCell>
+                <TableCell>{format(parseISO(n.data_emissao), "dd/MM/yyyy")}</TableCell>
+                <TableCell>R$ {Number(n.valor).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</TableCell>
+                <TableCell><Badge variant="outline" className={statusNFStyles[n.status] || ""}>{statusNFMap[n.status] || n.status}</Badge></TableCell>
+                <TableCell>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => e.stopPropagation()}><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => { setEditNota(n); setFormOpen(true); }}><Edit className="mr-2 h-4 w-4" /> Editar</DropdownMenuItem>
+                      <DropdownMenuItem className="text-destructive" onClick={() => setDeleteTarget(n)}><Trash2 className="mr-2 h-4 w-4" /> Excluir</DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading ? (
-                <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Carregando...</TableCell></TableRow>
-              ) : notas.length === 0 ? (
-                <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Nenhuma nota fiscal cadastrada.</TableCell></TableRow>
-              ) : notas.map((n) => (
-                <TableRow key={n.id} className="cursor-pointer hover:bg-muted/30" onClick={() => navigate(`/notas-fiscais/${n.id}`)}>
-                  <TableCell className="font-medium">{n.numero}{n.serie ? `/${n.serie}` : ""}</TableCell>
-                  <TableCell>{n.competencia}</TableCell>
-                  <TableCell>{format(parseISO(n.data_emissao), "dd/MM/yyyy")}</TableCell>
-                  <TableCell>R$ {Number(n.valor).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</TableCell>
-                  <TableCell><Badge variant="outline" className={statusNFStyles[n.status] || ""}>{statusNFMap[n.status] || n.status}</Badge></TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => e.stopPropagation()}><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => { setEditNota(n); setFormOpen(true); }}><Edit className="mr-2 h-4 w-4" /> Editar</DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive" onClick={() => setDeleteTarget(n)}><Trash2 className="mr-2 h-4 w-4" /> Excluir</DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+            ))}
+          </TableBody>
+        </Table>
+      </CardContent></Card>
 
       {formOpen && <NotaFiscalForm open={formOpen} onClose={() => setFormOpen(false)} nota={editNota} contratoId={contratoId} onSaved={fetchNotas} />}
 
@@ -627,7 +666,7 @@ function TabNotasFiscais({ contratoId }: { contratoId: string }) {
 }
 
 function NotaFiscalForm({ open, onClose, nota, contratoId, onSaved }: {
-  open: boolean; onClose: () => void; nota: NotaFiscal | null; contratoId: string; onSaved: () => void;
+  open: boolean; onClose: () => void; nota: any | null; contratoId: string; onSaved: () => void;
 }) {
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
@@ -695,24 +734,19 @@ function NotaFiscalForm({ open, onClose, nota, contratoId, onSaved }: {
   );
 }
 
-// ─── Tab: Pagamentos ───
+// ─── Pagamentos Tab ───
 function TabPagamentos({ contratoId }: { contratoId: string }) {
-  const [pagamentos, setPagamentos] = useState<PagamentoPJ[]>([]);
+  const [pagamentos, setPagamentos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [formOpen, setFormOpen] = useState(false);
-  const [editPag, setEditPag] = useState<PagamentoPJ | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<PagamentoPJ | null>(null);
+  const [editPag, setEditPag] = useState<any | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<any | null>(null);
 
   const fetchPagamentos = async () => {
-    const { data } = await supabase
-      .from("pagamentos_pj")
-      .select("*")
-      .eq("contrato_id", contratoId)
-      .order("data_prevista", { ascending: false });
-    setPagamentos((data as PagamentoPJ[]) || []);
+    const { data } = await supabase.from("pagamentos_pj").select("*").eq("contrato_id", contratoId).order("data_prevista", { ascending: false });
+    setPagamentos(data || []);
     setLoading(false);
   };
-
   useEffect(() => { fetchPagamentos(); }, [contratoId]);
 
   const handleDelete = async () => {
@@ -731,49 +765,46 @@ function TabPagamentos({ contratoId }: { contratoId: string }) {
           <Plus className="h-4 w-4" /> Novo Pagamento
         </Button>
       </div>
-
-      <Card>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-muted/50">
-                <TableHead className="font-semibold">Competência</TableHead>
-                <TableHead className="font-semibold">Data Prevista</TableHead>
-                <TableHead className="font-semibold">Data Pagamento</TableHead>
-                <TableHead className="font-semibold">Valor</TableHead>
-                <TableHead className="font-semibold">Forma</TableHead>
-                <TableHead className="font-semibold">Status</TableHead>
-                <TableHead className="w-10" />
+      <Card><CardContent className="p-0">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-muted/50">
+              <TableHead className="font-semibold">Competência</TableHead>
+              <TableHead className="font-semibold">Data Prevista</TableHead>
+              <TableHead className="font-semibold">Data Pagamento</TableHead>
+              <TableHead className="font-semibold">Valor</TableHead>
+              <TableHead className="font-semibold">Forma</TableHead>
+              <TableHead className="font-semibold">Status</TableHead>
+              <TableHead className="w-10" />
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {loading ? (
+              <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Carregando...</TableCell></TableRow>
+            ) : pagamentos.length === 0 ? (
+              <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Nenhum pagamento cadastrado.</TableCell></TableRow>
+            ) : pagamentos.map((p) => (
+              <TableRow key={p.id}>
+                <TableCell className="font-medium">{p.competencia}</TableCell>
+                <TableCell>{format(parseISO(p.data_prevista), "dd/MM/yyyy")}</TableCell>
+                <TableCell>{p.data_pagamento ? format(parseISO(p.data_pagamento), "dd/MM/yyyy") : "—"}</TableCell>
+                <TableCell>R$ {Number(p.valor).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</TableCell>
+                <TableCell className="text-sm">{p.forma_pagamento}</TableCell>
+                <TableCell><Badge variant="outline" className={statusPagStyles[p.status] || ""}>{statusPagMap[p.status] || p.status}</Badge></TableCell>
+                <TableCell>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => { setEditPag(p); setFormOpen(true); }}><Edit className="mr-2 h-4 w-4" /> Editar</DropdownMenuItem>
+                      <DropdownMenuItem className="text-destructive" onClick={() => setDeleteTarget(p)}><Trash2 className="mr-2 h-4 w-4" /> Excluir</DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading ? (
-                <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Carregando...</TableCell></TableRow>
-              ) : pagamentos.length === 0 ? (
-                <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Nenhum pagamento cadastrado.</TableCell></TableRow>
-              ) : pagamentos.map((p) => (
-                <TableRow key={p.id}>
-                  <TableCell className="font-medium">{p.competencia}</TableCell>
-                  <TableCell>{format(parseISO(p.data_prevista), "dd/MM/yyyy")}</TableCell>
-                  <TableCell>{p.data_pagamento ? format(parseISO(p.data_pagamento), "dd/MM/yyyy") : "—"}</TableCell>
-                  <TableCell>R$ {Number(p.valor).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</TableCell>
-                  <TableCell className="text-sm">{p.forma_pagamento}</TableCell>
-                  <TableCell><Badge variant="outline" className={statusPagStyles[p.status] || ""}>{statusPagMap[p.status] || p.status}</Badge></TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => { setEditPag(p); setFormOpen(true); }}><Edit className="mr-2 h-4 w-4" /> Editar</DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive" onClick={() => setDeleteTarget(p)}><Trash2 className="mr-2 h-4 w-4" /> Excluir</DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+            ))}
+          </TableBody>
+        </Table>
+      </CardContent></Card>
 
       {formOpen && <PagamentoForm open={formOpen} onClose={() => setFormOpen(false)} pagamento={editPag} contratoId={contratoId} onSaved={fetchPagamentos} />}
 
@@ -794,7 +825,7 @@ function TabPagamentos({ contratoId }: { contratoId: string }) {
 }
 
 function PagamentoForm({ open, onClose, pagamento, contratoId, onSaved }: {
-  open: boolean; onClose: () => void; pagamento: PagamentoPJ | null; contratoId: string; onSaved: () => void;
+  open: boolean; onClose: () => void; pagamento: any | null; contratoId: string; onSaved: () => void;
 }) {
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
@@ -870,91 +901,7 @@ function PagamentoForm({ open, onClose, pagamento, contratoId, onSaved }: {
   );
 }
 
-// ─── Main Page ───
-export default function ContratoPJDetalhe() {
-  const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
-  const [contrato, setContrato] = useState<ContratoPJ | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    async function fetch() {
-      if (!id) return;
-      const { data, error } = await supabase.from("contratos_pj").select("*").eq("id", id).single();
-      if (error || !data) { toast.error("Contrato não encontrado"); navigate("/contratos-pj"); return; }
-      setContrato(data as ContratoPJ);
-      setLoading(false);
-    }
-    fetch();
-  }, [id]);
-
-  if (loading) return (
-    <div className="flex items-center justify-center py-20">
-      <Loader2 className="h-8 w-8 animate-spin text-primary" />
-    </div>
-  );
-
-  if (!contrato) return null;
-
-  return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/contratos-pj")}>
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold tracking-tight">
-                {contrato.nome_fantasia || contrato.razao_social}
-              </h1>
-              <Badge variant="outline" className={statusContratoStyles[contrato.status] || ""}>
-                {statusContratoMap[contrato.status] || contrato.status}
-              </Badge>
-            </div>
-            <p className="text-muted-foreground text-sm mt-1">{contrato.cnpj} · {contrato.tipo_servico} · {contrato.departamento}</p>
-          </div>
-        </div>
-        <Button variant="outline" className="gap-2" onClick={() => navigate(`/contratos-pj?edit=${contrato.id}`)}>
-          <Edit className="h-4 w-4" /> Editar Contrato
-        </Button>
-      </div>
-
-      {/* Tabs */}
-      <Tabs defaultValue="dados" className="w-full">
-        <TabsList className="w-full justify-start">
-          <TabsTrigger value="dados" className="gap-2"><Building2 className="h-4 w-4" /> Dados</TabsTrigger>
-          <TabsTrigger value="documentos" className="gap-2"><FileText className="h-4 w-4" /> Documentos</TabsTrigger>
-          <TabsTrigger value="empresa" className="gap-2"><Monitor className="h-4 w-4" /> Empresa</TabsTrigger>
-          <TabsTrigger value="notas" className="gap-2"><FileText className="h-4 w-4" /> Notas Fiscais</TabsTrigger>
-          <TabsTrigger value="pagamentos" className="gap-2"><CreditCard className="h-4 w-4" /> Pagamentos</TabsTrigger>
-          <TabsTrigger value="movimentacoes" className="gap-2"><ArrowUpDown className="h-4 w-4" /> Movimentações</TabsTrigger>
-        </TabsList>
-        <TabsContent value="dados" className="mt-6">
-          <TabDados contrato={contrato} />
-        </TabsContent>
-        <TabsContent value="documentos" className="mt-6">
-          <TabDocumentos contrato={contrato} />
-        </TabsContent>
-        <TabsContent value="empresa" className="mt-6">
-          <TabEmpresa contratoId={contrato.id} contrato={contrato} />
-        </TabsContent>
-        <TabsContent value="notas" className="mt-6">
-          <TabNotasFiscais contratoId={contrato.id} />
-        </TabsContent>
-        <TabsContent value="pagamentos" className="mt-6">
-          <TabPagamentos contratoId={contrato.id} />
-        </TabsContent>
-        <TabsContent value="movimentacoes" className="mt-6">
-          <TabMovimentacoesPJ contratoId={contrato.id} />
-        </TabsContent>
-      </Tabs>
-    </div>
-  );
-}
-
-// ─── Tab: Movimentações PJ ───
+// ─── Movimentações Tab ───
 const TIPO_MOV_LABEL: Record<string, string> = {
   promocao: "Promoção", transferencia: "Transferência", alteracao_salarial: "Alteração Salarial",
   alteracao_cargo: "Alteração de Cargo", mudanca_departamento: "Mudança de Departamento",
@@ -964,7 +911,7 @@ const STATUS_MOV_STYLES: Record<string, string> = {
   efetivada: "bg-emerald-500/10 text-emerald-600 border-0", cancelada: "bg-destructive/10 text-destructive border-0",
 };
 
-function TabMovimentacoesPJ({ contratoId }: { contratoId: string }) {
+function HistoricoMovimentacoes({ contratoId }: { contratoId: string }) {
   const { data: movs = [], isLoading } = useQuery({
     queryKey: ["movimentacoes_pj", contratoId],
     queryFn: async () => {
