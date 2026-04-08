@@ -54,18 +54,12 @@ export default function Colaboradores() {
 
   useEffect(() => {
     async function fetchData() {
-      const [{ data: cols }, { data: depts }] = await Promise.all([
-        supabase.from("colaboradores_clt").select("*").order("nome_completo"),
-        supabase.from("colaborador_departamentos").select("colaborador_id, departamento, percentual_rateio"),
-      ]);
+      const { data: cols } = await supabase
+        .from("colaboradores_clt")
+        .select("*")
+        .order("nome_completo");
       if (cols) {
-        const deptsMap = new Map<string, { departamento: string; percentual_rateio: number }[]>();
-        (depts || []).forEach((d) => {
-          const arr = deptsMap.get(d.colaborador_id) || [];
-          arr.push({ departamento: d.departamento, percentual_rateio: d.percentual_rateio });
-          deptsMap.set(d.colaborador_id, arr);
-        });
-        setColaboradores(cols.map((c) => ({ ...c, departamentos_rateio: deptsMap.get(c.id) || [] })));
+        setColaboradores(cols);
       }
       setLoading(false);
     }
