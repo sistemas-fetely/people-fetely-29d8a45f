@@ -166,6 +166,13 @@ export default function NotasFiscais() {
     const matchPeriodo = !range || isWithinInterval(parseISO(n.data_emissao), { start: range.start, end: range.end });
     return matchSearch && matchStatus && matchContrato && matchPeriodo;
   });
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    const { error } = await supabase.from("notas_fiscais_pj").delete().eq("id", deleteTarget.id);
+    if (error) toast.error(error.message);
+    else { toast.success("Nota fiscal excluída"); fetchData(); }
+    setDeleteTarget(null);
+  };
 
   // Fixed: Mês Atual stats
   const now = new Date();
