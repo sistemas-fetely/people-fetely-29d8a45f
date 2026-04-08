@@ -500,7 +500,6 @@ export function useDashboardData() {
     aniversariantes: aniversariantesQuery.data ?? [],
     statusClt: statusQuery.data ?? {},
     turnover: turnoverQuery.data ?? [],
-    folha: folhaComparativoQuery.data ?? { atual: null, anterior: null },
     folha: folhaComparativoQuery.data ?? { atual: null, anterior: null, anterior2: null },
     nfPendentes: nfQuery.data ?? 0,
     pagPjPendentes: pagPjQuery.data ?? 0,
