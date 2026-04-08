@@ -3,7 +3,15 @@ import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { format, parseISO } from "date-fns";
+import { format, parseISO, isValid } from "date-fns";
+
+function safeFormatDate(dateStr: string | null | undefined, fmt = "dd/MM/yyyy"): string {
+  if (!dateStr) return "";
+  try {
+    const d = parseISO(dateStr);
+    return isValid(d) ? format(d, fmt) : dateStr;
+  } catch { return dateStr || ""; }
+}
 import {
   ArrowLeft, Edit, Save, Loader2, X, User, FileText, Briefcase,
   Building2, Users as UsersIcon, Monitor, UserCheck, UserX, ArrowUpDown,
