@@ -194,12 +194,27 @@ export function OrgBranchView({ colaboradorId, contratoPjId }: Props) {
         </CardContent>
       </Card>
 
-      {/* Right: Connected people list */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2">
-            <Crown className="h-4 w-4" /> Pessoas Conectadas
-          </CardTitle>
+      {/* Right: Stats + Connected people list */}
+      <div className="flex flex-col gap-4">
+        <Card>
+          <CardContent className="pt-6 pb-4">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                <ArrowDown className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{current.subordinados_totais}</p>
+                <p className="text-xs text-muted-foreground">Colaboradores abaixo na hierarquia</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Crown className="h-4 w-4" /> Pessoas Conectadas
+            </CardTitle>
         </CardHeader>
         <CardContent>
           {connectedPeople.length === 0 ? (
@@ -229,7 +244,8 @@ export function OrgBranchView({ colaboradorId, contratoPjId }: Props) {
             </div>
           )}
         </CardContent>
-      </Card>
+        </Card>
+      </div>
     </div>
   );
 }
