@@ -93,13 +93,19 @@ export default function Colaboradores() {
     }
   };
 
+  const allDepartamentos = Array.from(
+    new Set(colaboradores.flatMap((c) => (c.departamentos_rateio || []).map((d) => d.departamento)).concat(colaboradores.map((c) => c.departamento)).filter(Boolean))
+  ).sort();
+
   const filtered = colaboradores.filter((c) => {
     const matchSearch =
       c.nome_completo.toLowerCase().includes(search.toLowerCase()) ||
       c.cargo.toLowerCase().includes(search.toLowerCase()) ||
       c.departamento.toLowerCase().includes(search.toLowerCase());
     const matchStatus = filterStatus === "todos" || c.status === filterStatus;
-    return matchSearch && matchStatus;
+    const matchDept = filterDept === "todos" || c.departamento === filterDept ||
+      (c.departamentos_rateio || []).some((d) => d.departamento === filterDept);
+    return matchSearch && matchStatus && matchDept;
   });
 
   const totalAtivos = colaboradores.filter((c) => c.status !== "desligado").length;
