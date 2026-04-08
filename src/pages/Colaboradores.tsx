@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Users, Plus, Search, MoreHorizontal, Eye, Edit, Trash2,
@@ -22,6 +22,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 import { toast } from "sonner";
+import { useParametrosFolha } from "@/hooks/useParametrosFolha";
 
 type ColaboradorRow = Tables<"colaboradores_clt">;
 import { format, parseISO } from "date-fns";
@@ -103,7 +104,8 @@ export default function Colaboradores() {
   const totalAtivos = ativos.length;
   const totalInativos = colaboradores.filter((c) => c.status === "desligado").length;
 
-  const ENCARGOS_RATE = 0.08 + 0.20; // FGTS 8% + INSS Patronal 20%
+  const { data: parametrosFolha } = useParametrosFolha();
+  const ENCARGOS_RATE = (parametrosFolha?.aliquotaFGTS ?? 0.08) + (parametrosFolha?.aliquotaINSSPatronal ?? 0.20);
   const totalSalarios = ativos.reduce((s, c) => s + (c.salario_base || 0), 0);
   const totalEncargos = totalSalarios * ENCARGOS_RATE;
   const totalCustoMensal = totalSalarios + totalEncargos;

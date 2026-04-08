@@ -8,6 +8,7 @@ import {
   useFecharCompetencia,
   type HoleriteComColaborador,
 } from "@/hooks/useFolhaPagamento";
+import { useParametrosFolha } from "@/hooks/useParametrosFolha";
 import { FolhaKPIs } from "@/components/folha-pagamento/FolhaKPIs";
 import { FolhaToolbar } from "@/components/folha-pagamento/FolhaToolbar";
 import { HoleriteTable } from "@/components/folha-pagamento/HoleriteTable";
@@ -19,6 +20,7 @@ export default function FolhaPagamento() {
   const canManage = hasAnyRole(["super_admin", "gestor_rh", "financeiro"]);
 
   const { data: competencias = [] } = useCompetencias();
+  const { data: parametrosFolha } = useParametrosFolha();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const { data: holerites = [] } = useHolerites(selectedId);
   const [drawerHolerite, setDrawerHolerite] = useState<HoleriteComColaborador | null>(null);
@@ -55,7 +57,7 @@ export default function FolhaPagamento() {
         selectedId={selectedId}
         onSelect={setSelectedId}
         onCriar={(comp) => criarMut.mutate(comp)}
-        onCalcular={() => selectedId && calcularMut.mutate(selectedId)}
+        onCalcular={() => selectedId && calcularMut.mutate({ competenciaId: selectedId, params: parametrosFolha })}
         onFechar={() => selectedId && fecharMut.mutate(selectedId)}
         onExportExcel={handleExportExcel}
         onExportPDF={handleExportPDF}

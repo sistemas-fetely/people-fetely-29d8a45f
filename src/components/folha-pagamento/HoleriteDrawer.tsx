@@ -8,6 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { Pencil, Save, X } from "lucide-react";
 import { calcularFolha, type DadosCalculo } from "@/lib/calculo-folha";
 import { useEditarHolerite, type HoleriteComColaborador } from "@/hooks/useFolhaPagamento";
+import { useParametrosFolha } from "@/hooks/useParametrosFolha";
 
 const fmt = (v: number | null) =>
   (v ?? 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -63,6 +64,7 @@ function NumField({ label, value, onChange, min = 0, step = "1" }: {
 export function HoleriteDrawer({ holerite, open, onClose, competenciaId, canEdit }: Props) {
   const [editing, setEditing] = useState(false);
   const editMut = useEditarHolerite();
+  const { data: parametrosFolha } = useParametrosFolha();
   const [form, setForm] = useState<EditForm>({
     horasExtras50Qtd: 0, horasExtras100Qtd: 0, faltasDias: 0,
     descontoVT: true, descontoVR: 0, descontoPlanoSaude: 0,
@@ -102,8 +104,8 @@ export function HoleriteDrawer({ holerite, open, onClose, competenciaId, canEdit
       outrosProventos: form.outrosProventos,
       outrosDescontos: form.outrosDescontos,
     };
-    return calcularFolha(dados);
-  }, [editing, form, holerite]);
+    return calcularFolha(dados, parametrosFolha);
+  }, [editing, form, holerite, parametrosFolha]);
 
   if (!holerite) return null;
   const h = holerite;
@@ -125,6 +127,7 @@ export function HoleriteDrawer({ holerite, open, onClose, competenciaId, canEdit
       descontoPlanoSaude: form.descontoPlanoSaude,
       outrosProventos: form.outrosProventos,
       outrosDescontos: form.outrosDescontos,
+      params: parametrosFolha,
     }, {
       onSuccess: () => {
         setEditing(false);
@@ -257,8 +260,8 @@ export function HoleriteDrawer({ holerite, open, onClose, competenciaId, canEdit
           {/* Encargos */}
           <div>
             <h4 className="text-sm font-semibold mb-2">Encargos Patronais</h4>
-            <Linha label="FGTS (8%)" valor={d.fgts} tipo="neutro" />
-            <Linha label="INSS Patronal (20%)" valor={d.inss_patronal} tipo="neutro" />
+            <Linha label={`FGTS (${((parametrosFolha?.aliquotaFGTS ?? 0.08) * 100).toFixed(0)}%)`} valor={d.fgts} tipo="neutro" />
+            <Linha label={`INSS Patronal (${((parametrosFolha?.aliquotaINSSPatronal ?? 0.20) * 100).toFixed(0)}%)`} valor={d.inss_patronal} tipo="neutro" />
             <Separator />
             <div className="flex justify-between font-semibold text-sm py-1">
               <span>Total Encargos</span>

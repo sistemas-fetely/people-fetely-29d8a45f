@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { calcularFolha, type DadosCalculo } from "@/lib/calculo-folha";
+import { calcularFolha, type DadosCalculo, type ParametrosFolha, PARAMETROS_PADRAO } from "@/lib/calculo-folha";
 import { toast } from "sonner";
 import type { Tables } from "@/integrations/supabase/types";
 
@@ -78,7 +78,8 @@ export function useCriarCompetencia() {
 export function useCalcularFolha() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (competenciaId: string) => {
+    mutationFn: async ({ competenciaId, params }: { competenciaId: string; params?: ParametrosFolha }) => {
+      const parametros = params || PARAMETROS_PADRAO;
       // 1. Buscar todos colaboradores ativos
       const { data: colaboradores, error: colErr } = await supabase
         .from("colaboradores_clt")
@@ -115,7 +116,7 @@ export function useCalcularFolha() {
           outrosProventos: 0,
           outrosDescontos: 0,
         };
-        const calc = calcularFolha(dados);
+        const calc = calcularFolha(dados, parametros);
         return {
           competencia_id: competenciaId,
           colaborador_id: col.id,
@@ -221,6 +222,7 @@ export interface EditarHoleriteInput {
   descontoPlanoSaude: number;
   outrosProventos: number;
   outrosDescontos: number;
+  params?: ParametrosFolha;
 }
 
 export function useEditarHolerite() {
@@ -240,7 +242,7 @@ export function useEditarHolerite() {
         outrosProventos: input.outrosProventos,
         outrosDescontos: input.outrosDescontos,
       };
-      const calc = calcularFolha(dados);
+      const calc = calcularFolha(dados, input.params);
 
       const { error } = await supabase
         .from("holerites")
