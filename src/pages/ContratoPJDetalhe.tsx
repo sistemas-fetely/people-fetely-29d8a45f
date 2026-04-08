@@ -802,7 +802,7 @@ function TabPagamentos({ contratoId }: { contratoId: string }) {
               <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">Nenhum pagamento cadastrado.</TableCell></TableRow>
             ) : pagamentos.map((p) => (
               <TableRow key={p.id}>
-                <TableCell className="font-medium">{p.competencia}</TableCell>
+                <TableCell className="font-medium">{formatCompetencia(p.competencia)}</TableCell>
                 <TableCell className="text-sm">{p.notas_fiscais_pj?.numero || "—"}</TableCell>
                 <TableCell>{format(parseISO(p.data_prevista), "dd/MM/yyyy")}</TableCell>
                 <TableCell>{p.data_pagamento ? format(parseISO(p.data_pagamento), "dd/MM/yyyy") : "—"}</TableCell>

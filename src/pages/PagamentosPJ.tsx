@@ -206,7 +206,7 @@ export default function PagamentosPJ() {
                   <TableRow key={p.id} className="hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => p.nota_fiscal_id ? navigate(`/notas-fiscais/${p.nota_fiscal_id}`) : navigate(`/contratos-pj/${p.contrato_id}`)}>
                     <TableCell className="font-medium text-sm">{p.contrato_nome}</TableCell>
                     <TableCell className="text-sm hidden md:table-cell">{p.nf_numero || "—"}</TableCell>
-                    <TableCell className="text-sm hidden md:table-cell">{p.competencia}</TableCell>
+                    <TableCell className="text-sm hidden md:table-cell">{formatCompetencia(p.competencia)}</TableCell>
                     <TableCell className="text-sm">{format(parseISO(p.data_prevista), "dd/MM/yyyy")}</TableCell>
                     <TableCell className="text-sm hidden md:table-cell">{p.data_pagamento ? format(parseISO(p.data_pagamento), "dd/MM/yyyy") : "—"}</TableCell>
                     <TableCell>R$ {Number(p.valor).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</TableCell>
