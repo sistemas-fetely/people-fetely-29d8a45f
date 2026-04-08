@@ -18,8 +18,8 @@ interface Props {
 export function OrgToolbar({ viewMode, onViewModeChange, filters, onFiltersChange, allNodes, onCreatePosition }: Props) {
   const { hasAnyRole } = useAuth();
   const canManage = hasAnyRole(["super_admin", "gestor_rh"]);
-  const departamentos = [...new Set(allNodes.map(n => n.departamento))].sort();
-  const filiais = [...new Set(allNodes.map(n => n.filial).filter(Boolean))].sort();
+  const departamentos = [...new Set(allNodes.map(n => n.departamento).filter(Boolean).filter(d => d.trim() !== ""))].sort();
+  const filiais = [...new Set(allNodes.map(n => n.filial).filter(Boolean).filter(f => (f as string).trim() !== ""))].sort();
 
   const resetFilters = () => onFiltersChange({ search: "", departamento: "todos", filial: "todos", vinculo: "todos", status: "todos", nivel: "todos" });
 
