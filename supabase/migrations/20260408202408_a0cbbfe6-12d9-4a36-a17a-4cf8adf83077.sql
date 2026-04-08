@@ -1,0 +1,1 @@
+UPDATE colaboradores_clt SET data_nascimento = '2000-08-18' WHERE id = '8a7dfe01-8e0b-4710-abd5-d184414958e7' AND data_nascimento = '20000-08-18';
