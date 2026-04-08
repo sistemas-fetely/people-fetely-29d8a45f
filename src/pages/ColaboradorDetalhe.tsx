@@ -70,10 +70,12 @@ export default function ColaboradorDetalhe() {
   useEffect(() => {
     if (!id) return;
     async function load() {
-      const [{ data: col }, { data: deps }, { data: depts }] = await Promise.all([
+      const [{ data: col }, { data: deps }, { data: depts }, { data: acessos }, { data: equips }] = await Promise.all([
         supabase.from("colaboradores_clt").select("*").eq("id", id).maybeSingle(),
         supabase.from("dependentes").select("*").eq("colaborador_id", id),
         supabase.from("colaborador_departamentos").select("*").eq("colaborador_id", id),
+        supabase.from("colaborador_acessos_sistemas").select("*").eq("colaborador_id", id),
+        supabase.from("colaborador_equipamentos").select("*").eq("colaborador_id", id),
       ]);
       if (!col) {
         toast.error("Colaborador não encontrado");
