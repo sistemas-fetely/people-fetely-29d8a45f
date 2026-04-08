@@ -85,7 +85,7 @@ function ContratoPJForm({
   contrato: ContratoPJ | null;
   onSaved: () => void;
 }) {
-  const { data: tiposServico, isLoading: loadingTipos } = useParametros("tipo_servico");
+  const { data: cargos, isLoading: loadingCargos } = useParametros("cargo");
   const { data: formasPagamento, isLoading: loadingFormas } = useParametros("forma_pagamento");
   const { data: departamentos, isLoading: loadingDepts } = useParametros("departamento");
 
