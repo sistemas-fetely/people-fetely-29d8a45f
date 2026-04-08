@@ -330,7 +330,7 @@ export default function ColaboradorDetalhe() {
             <TabsTrigger value="empresa" className="gap-1"><Monitor className="h-3.5 w-3.5" /> Empresa</TabsTrigger>
             <TabsTrigger value="dependentes" className="gap-1"><UsersIcon className="h-3.5 w-3.5" /> Dependentes</TabsTrigger>
             <TabsTrigger value="movimentacoes" className="gap-1"><ArrowUpDown className="h-3.5 w-3.5" /> Movimentações</TabsTrigger>
-          </TabsList>
+            <TabsTrigger value="custos" className="gap-1"><DollarSign className="h-3.5 w-3.5" /> Custos</TabsTrigger>
 
           <TabsContent value="pessoais">
             <Card><CardContent className="pt-6">
