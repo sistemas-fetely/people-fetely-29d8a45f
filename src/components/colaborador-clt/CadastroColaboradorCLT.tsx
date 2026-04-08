@@ -74,6 +74,7 @@ export function CadastroColaboradorCLT() {
 
   const validateCurrentStep = async () => {
     const schema = stepSchemas[currentStep - 1];
+    if (!schema) return true; // Upload step has no schema
     const values = methods.getValues();
     const result = schema.safeParse(values);
     if (!result.success) {
