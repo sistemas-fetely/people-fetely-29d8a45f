@@ -233,6 +233,12 @@ export default function NotasFiscais() {
                 {Object.entries(statusMap).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
               </SelectContent>
             </Select>
+            <Select value={filterPeriodo} onValueChange={setFilterPeriodo}>
+              <SelectTrigger className="w-full sm:w-48"><SelectValue placeholder="Período" /></SelectTrigger>
+              <SelectContent>
+                {periodOptions.map((p) => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="rounded-md border">
