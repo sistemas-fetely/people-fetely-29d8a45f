@@ -119,8 +119,10 @@ export default function ConvitesCadastro() {
     setDeleteTarget(null);
   };
 
+  const publicBaseUrl = "https://people-fetely.lovable.app";
+
   const copyLink = (token: string) => {
-    const url = `${window.location.origin}/cadastro/${token}`;
+    const url = `${publicBaseUrl}/cadastro/${token}`;
     navigator.clipboard.writeText(url);
     toast.success("Link copiado para a área de transferência!");
   };
@@ -231,7 +233,7 @@ export default function ConvitesCadastro() {
                             <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               <DropdownMenuItem onClick={() => copyLink(c.token)} className="gap-2"><Copy className="h-4 w-4" /> Copiar Link</DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => window.open(`${window.location.origin}/cadastro/${c.token}`, '_blank')} className="gap-2"><ExternalLink className="h-4 w-4" /> Abrir Link</DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => window.open(`${publicBaseUrl}/cadastro/${c.token}`, '_blank')} className="gap-2"><ExternalLink className="h-4 w-4" /> Abrir Link</DropdownMenuItem>
                               {c.status === "preenchido" && (
                                 <DropdownMenuItem onClick={() => setViewTarget(c)} className="gap-2"><Eye className="h-4 w-4" /> Ver Dados</DropdownMenuItem>
                               )}
