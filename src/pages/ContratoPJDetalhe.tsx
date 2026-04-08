@@ -617,7 +617,7 @@ function TabMovimentacoesPJ({ contratoId }: { contratoId: string }) {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
               {(m.cargo_anterior || m.cargo_novo) && (
                 <div>
-                  <p className="text-xs text-muted-foreground">Serviço</p>
+                  <p className="text-xs text-muted-foreground">Cargo</p>
                   <p>{m.cargo_anterior || "—"} → <span className="font-medium">{m.cargo_novo || "—"}</span></p>
                 </div>
               )}
