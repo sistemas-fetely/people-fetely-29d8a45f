@@ -383,6 +383,53 @@ export function FeriasCLTView({ canManage }: Props) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Dialog Editar Programação */}
+      <Dialog open={showEditProg} onOpenChange={setShowEditProg}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader><DialogTitle>Editar Programação</DialogTitle></DialogHeader>
+          <div className="space-y-3 py-2">
+            <div className="space-y-1">
+              <Label>Data Início</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className={cn("w-full justify-start", !progDataInicio && "text-muted-foreground")}>
+                    <Calendar className="mr-2 h-4 w-4" />
+                    {progDataInicio ? format(progDataInicio, "dd/MM/yyyy") : "Selecione"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <CalendarComp mode="single" selected={progDataInicio} onSelect={setProgDataInicio} className="p-3 pointer-events-auto" />
+                </PopoverContent>
+              </Popover>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label>Dias</Label>
+                <Input type="number" value={progDias} onChange={(e) => setProgDias(Number(e.target.value))} min={5} />
+              </div>
+              <div className="space-y-1">
+                <Label>Tipo</Label>
+                <Select value={progTipo} onValueChange={setProgTipo}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="gozo">Gozo</SelectItem>
+                    <SelectItem value="abono_pecuniario">Abono Pecuniário</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="space-y-1">
+              <Label>Observações</Label>
+              <Textarea value={progObs} onChange={(e) => setProgObs(e.target.value)} rows={2} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowEditProg(false)}>Cancelar</Button>
+            <Button onClick={handleEditProg} disabled={!progDataInicio || progDias < 1}>Salvar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
