@@ -291,6 +291,12 @@ export default function Colaboradores() {
                       <TableCell className="text-sm text-muted-foreground hidden lg:table-cell">
                         {format(parseISO(c.data_admissao), "dd/MM/yyyy")}
                       </TableCell>
+                      <TableCell className="text-sm font-mono text-right hidden lg:table-cell">
+                        {fmtBRL(c.salario_base)}
+                      </TableCell>
+                      <TableCell className="text-sm font-mono text-right hidden xl:table-cell">
+                        {fmtBRL(c.salario_base * (1 + ENCARGOS_RATE))}
+                      </TableCell>
                       <TableCell>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
