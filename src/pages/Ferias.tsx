@@ -7,6 +7,7 @@ import { FeriasPJView } from "@/components/ferias/FeriasPJView";
 export default function Ferias() {
   const { hasAnyRole } = useAuth();
   const canManage = hasAnyRole(["super_admin", "gestor_rh", "financeiro"]);
+  const isAdmin = hasAnyRole(["super_admin"]);
 
   return (
     <div className="space-y-6">
@@ -26,11 +27,11 @@ export default function Ferias() {
         </TabsList>
 
         <TabsContent value="clt">
-          <FeriasCLTView canManage={canManage} />
+          <FeriasCLTView canManage={canManage} isAdmin={isAdmin} />
         </TabsContent>
 
         <TabsContent value="pj">
-          <FeriasPJView canManage={canManage} />
+          <FeriasPJView canManage={canManage} isAdmin={isAdmin} />
         </TabsContent>
       </Tabs>
     </div>
