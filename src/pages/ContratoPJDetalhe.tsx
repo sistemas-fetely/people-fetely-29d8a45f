@@ -148,6 +148,7 @@ function TabDados({ contrato }: { contrato: ContratoPJ }) {
 
 // ─── Tab: Notas Fiscais ───
 function TabNotasFiscais({ contratoId }: { contratoId: string }) {
+  const navigate = useNavigate();
   const [notas, setNotas] = useState<NotaFiscal[]>([]);
   const [loading, setLoading] = useState(true);
   const [formOpen, setFormOpen] = useState(false);
