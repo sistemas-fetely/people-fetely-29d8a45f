@@ -6,7 +6,8 @@ import { toast } from "sonner";
 import { format, parseISO } from "date-fns";
 import {
   ArrowLeft, Edit, Save, Loader2, X, User, FileText, Briefcase,
-  Building2, Users as UsersIcon, Monitor, UserCheck, UserX,
+  Building2, Users as UsersIcon, Monitor, UserCheck, UserX, ArrowUpDown,
+  TrendingUp, ArrowRightLeft, DollarSign,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
