@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useParametros } from "@/hooks/useParametros";
 import {
@@ -28,7 +28,32 @@ import {
 } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { format, parseISO } from "date-fns";
+import { format, parseISO, startOfMonth, endOfMonth, subMonths, startOfYear, endOfYear, startOfQuarter, endOfQuarter, isWithinInterval } from "date-fns";
+
+const periodOptions: { value: string; label: string }[] = [
+  { value: "todos", label: "Todo Período" },
+  { value: "mes_atual", label: "Mês Atual" },
+  { value: "mes_anterior", label: "Mês Anterior" },
+  { value: "trimestre_atual", label: "Trimestre Atual" },
+  { value: "ano_atual", label: "Ano Atual" },
+  { value: "ultimos_3_meses", label: "Últimos 3 Meses" },
+  { value: "ultimos_6_meses", label: "Últimos 6 Meses" },
+  { value: "ultimos_12_meses", label: "Últimos 12 Meses" },
+];
+
+function getPeriodRange(period: string): { start: Date; end: Date } | null {
+  const now = new Date();
+  switch (period) {
+    case "mes_atual": return { start: startOfMonth(now), end: endOfMonth(now) };
+    case "mes_anterior": { const prev = subMonths(now, 1); return { start: startOfMonth(prev), end: endOfMonth(prev) }; }
+    case "trimestre_atual": return { start: startOfQuarter(now), end: endOfQuarter(now) };
+    case "ano_atual": return { start: startOfYear(now), end: endOfYear(now) };
+    case "ultimos_3_meses": return { start: startOfMonth(subMonths(now, 2)), end: endOfMonth(now) };
+    case "ultimos_6_meses": return { start: startOfMonth(subMonths(now, 5)), end: endOfMonth(now) };
+    case "ultimos_12_meses": return { start: startOfMonth(subMonths(now, 11)), end: endOfMonth(now) };
+    default: return null;
+  }
+}
 
 const defaultStatusMap: Record<string, string> = {
   pendente: "Pendente", aprovada: "Aprovada", enviada_pagamento: "Enviada para Pagamento", paga: "Paga", cancelada: "Cancelada", vencida: "Vencida",
@@ -83,6 +108,7 @@ export default function NotasFiscais() {
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("todos");
   const [filterContrato, setFilterContrato] = useState("todos");
+  const [filterPeriodo, setFilterPeriodo] = useState("mes_atual");
   const [formOpen, setFormOpen] = useState(false);
   const [editNota, setEditNota] = useState<NotaComContrato | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<NotaComContrato | null>(null);
@@ -134,7 +160,9 @@ export default function NotasFiscais() {
       n.competencia.includes(search);
     const matchStatus = filterStatus === "todos" || n.status === filterStatus;
     const matchContrato = filterContrato === "todos" || n.contrato_id === filterContrato;
-    return matchSearch && matchStatus && matchContrato;
+    const range = getPeriodRange(filterPeriodo);
+    const matchPeriodo = !range || isWithinInterval(parseISO(n.data_emissao), { start: range.start, end: range.end });
+    return matchSearch && matchStatus && matchContrato && matchPeriodo;
   });
 
   const totalPendentes = notas.filter((n) => ["pendente", "aprovada", "enviada_pagamento"].includes(n.status)).length;
@@ -203,6 +231,12 @@ export default function NotasFiscais() {
               <SelectContent>
                 <SelectItem value="todos">Todos</SelectItem>
                 {Object.entries(statusMap).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Select value={filterPeriodo} onValueChange={setFilterPeriodo}>
+              <SelectTrigger className="w-full sm:w-48"><SelectValue placeholder="Período" /></SelectTrigger>
+              <SelectContent>
+                {periodOptions.map((p) => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
