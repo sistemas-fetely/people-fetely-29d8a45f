@@ -3,8 +3,22 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { DadosPessoaisPJForm } from "@/lib/validations/contrato-pj";
 
+function formatCNPJ(value: string): string {
+  const digits = value.replace(/\D/g, "").slice(0, 14);
+  return digits
+    .replace(/^(\d{2})(\d)/, "$1.$2")
+    .replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3")
+    .replace(/\.(\d{3})(\d)/, ".$1/$2")
+    .replace(/(\d{4})(\d)/, "$1-$2");
+}
+
 export function StepDadosPessoaisPJ() {
-  const { register, formState: { errors } } = useFormContext<DadosPessoaisPJForm>();
+  const { register, formState: { errors }, setValue, watch } = useFormContext<DadosPessoaisPJForm>();
+
+  const handleCNPJChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatCNPJ(e.target.value);
+    setValue("cnpj", formatted, { shouldValidate: true });
+  };
 
   return (
     <div className="space-y-6">
@@ -33,7 +47,13 @@ export function StepDadosPessoaisPJ() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <div>
             <Label htmlFor="cnpj">CNPJ *</Label>
-            <Input id="cnpj" {...register("cnpj")} placeholder="00.000.000/0000-00" />
+            <Input
+              id="cnpj"
+              value={watch("cnpj") || ""}
+              onChange={handleCNPJChange}
+              placeholder="00.000.000/0000-00"
+              maxLength={18}
+            />
             {errors.cnpj && <p className="text-xs text-destructive mt-1">{errors.cnpj.message}</p>}
           </div>
           <div className="md:col-span-2">
