@@ -1,7 +1,23 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
+function getMonthRange(offset: number) {
+  const now = new Date();
+  const d = new Date(now.getFullYear(), now.getMonth() + offset, 1);
+  const start = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+  const end = new Date(d.getFullYear(), d.getMonth() + 1, 0);
+  return {
+    competencia: start,
+    startDate: `${start}-01`,
+    endDate: end.toISOString().slice(0, 10),
+    label: d.toLocaleDateString("pt-BR", { month: "long", year: "numeric" }),
+  };
+}
+
 export function useDashboardData() {
+  const mesAtualRange = getMonthRange(0);
+  const mesAnteriorRange = getMonthRange(-1);
+
   // Total CLT ativos
   const cltQuery = useQuery({
     queryKey: ["dashboard_clt"],
@@ -15,7 +31,6 @@ export function useDashboardData() {
         .from("colaboradores_clt")
         .select("*", { count: "exact", head: true });
 
-      // Experiência: admitidos nos últimos 90 dias
       const d90 = new Date();
       d90.setDate(d90.getDate() - 90);
       const { count: experiencia } = await supabase
@@ -37,7 +52,6 @@ export function useDashboardData() {
         .select("*", { count: "exact", head: true })
         .eq("status", "ativo");
 
-      // Contratos vencendo nos próximos 30 dias
       const d30 = new Date();
       d30.setDate(d30.getDate() + 30);
       const { count: vencendo } = await supabase
@@ -195,17 +209,120 @@ export function useDashboardData() {
     },
   });
 
-  // Folha de pagamento última competência
-  const folhaQuery = useQuery({
-    queryKey: ["dashboard_folha"],
+  // Folha atual e anterior (comparativo)
+  const folhaComparativoQuery = useQuery({
+    queryKey: ["dashboard_folha_comparativo"],
     queryFn: async () => {
       const { data } = await supabase
         .from("folha_competencias")
-        .select("competencia, status, total_bruto, total_liquido, total_colaboradores")
+        .select("competencia, status, total_bruto, total_liquido, total_encargos, total_colaboradores")
         .order("competencia", { ascending: false })
-        .limit(1)
-        .single();
-      return data;
+        .limit(2);
+
+      const rows = data || [];
+      const atual = rows[0] || null;
+      const anterior = rows[1] || null;
+      return { atual, anterior };
+    },
+  });
+
+  // Custo PJ mês atual vs anterior
+  const custoPjComparativoQuery = useQuery({
+    queryKey: ["dashboard_custo_pj_comparativo"],
+    queryFn: async () => {
+      const { data: pagAtual } = await supabase
+        .from("pagamentos_pj")
+        .select("valor, status")
+        .gte("data_prevista", mesAtualRange.startDate)
+        .lte("data_prevista", mesAtualRange.endDate);
+
+      const { data: pagAnterior } = await supabase
+        .from("pagamentos_pj")
+        .select("valor, status")
+        .gte("data_prevista", mesAnteriorRange.startDate)
+        .lte("data_prevista", mesAnteriorRange.endDate);
+
+      const totalAtual = (pagAtual || []).reduce((s, p) => s + Number(p.valor), 0);
+      const totalAnterior = (pagAnterior || []).reduce((s, p) => s + Number(p.valor), 0);
+      const pagosAtual = (pagAtual || []).filter((p) => ["paga", "pago"].includes(p.status)).reduce((s, p) => s + Number(p.valor), 0);
+      const pendentesAtual = (pagAtual || []).filter((p) => ["pendente", "aprovada", "enviada_pagamento"].includes(p.status)).reduce((s, p) => s + Number(p.valor), 0);
+
+      return { totalAtual, totalAnterior, pagosAtual, pendentesAtual };
+    },
+  });
+
+  // Custo total por mês (últimos 6 meses) para gráfico de evolução
+  const custoEvolucaoQuery = useQuery({
+    queryKey: ["dashboard_custo_evolucao"],
+    queryFn: async () => {
+      const { data: folhas } = await supabase
+        .from("folha_competencias")
+        .select("competencia, total_bruto, total_encargos")
+        .order("competencia", { ascending: true })
+        .limit(6);
+
+      const now = new Date();
+      const months: { label: string; key: string; clt: number; pj: number; total: number }[] = [];
+      for (let i = 5; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+        const label = d.toLocaleDateString("pt-BR", { month: "short" }).replace(".", "");
+        months.push({ key, label: label.charAt(0).toUpperCase() + label.slice(1), clt: 0, pj: 0, total: 0 });
+      }
+
+      // Map folha data
+      (folhas || []).forEach((f) => {
+        const m = months.find((mo) => mo.key === f.competencia);
+        if (m) m.clt = Number(f.total_bruto || 0) + Number(f.total_encargos || 0);
+      });
+
+      // Get PJ payments per month
+      const startKey = months[0]?.key || "";
+      if (startKey) {
+        const { data: pags } = await supabase
+          .from("pagamentos_pj")
+          .select("valor, data_prevista")
+          .gte("data_prevista", `${startKey}-01`);
+
+        (pags || []).forEach((p) => {
+          const key = p.data_prevista.slice(0, 7);
+          const m = months.find((mo) => mo.key === key);
+          if (m) m.pj += Number(p.valor);
+        });
+      }
+
+      months.forEach((m) => { m.total = m.clt + m.pj; });
+      return months;
+    },
+  });
+
+  // Custo por departamento (CLT salários + PJ valores mensais)
+  const custoDeptQuery = useQuery({
+    queryKey: ["dashboard_custo_departamento"],
+    queryFn: async () => {
+      const { data: cltData } = await supabase
+        .from("colaboradores_clt")
+        .select("departamento, salario_base")
+        .eq("status", "ativo");
+
+      const { data: pjData } = await supabase
+        .from("contratos_pj")
+        .select("departamento, valor_mensal")
+        .eq("status", "ativo");
+
+      const deptMap: Record<string, { clt: number; pj: number }> = {};
+      (cltData || []).forEach((c) => {
+        deptMap[c.departamento] = deptMap[c.departamento] || { clt: 0, pj: 0 };
+        deptMap[c.departamento].clt += Number(c.salario_base);
+      });
+      (pjData || []).forEach((c) => {
+        deptMap[c.departamento] = deptMap[c.departamento] || { clt: 0, pj: 0 };
+        deptMap[c.departamento].pj += Number(c.valor_mensal);
+      });
+
+      return Object.entries(deptMap)
+        .map(([dept, costs]) => ({ dept, clt: costs.clt, pj: costs.pj, total: costs.clt + costs.pj }))
+        .sort((a, b) => b.total - a.total);
     },
   });
 
@@ -249,8 +366,6 @@ export function useDashboardData() {
       (data || []).forEach((c) => {
         const admissao = new Date(c.data_admissao + "T00:00:00");
         const diffDias = Math.floor((today.getTime() - admissao.getTime()) / (1000 * 60 * 60 * 24));
-
-        // Alerta se está entre 35-45 dias (próximo do marco de 45) ou 80-90 dias (próximo do marco de 90)
         if (diffDias >= 35 && diffDias <= 45) {
           alertas.push({ nome: c.nome_completo, diasRestantes: 45 - diffDias, marco: 45, depto: c.departamento });
         } else if (diffDias >= 80 && diffDias <= 90) {
@@ -287,7 +402,7 @@ export function useDashboardData() {
     },
   });
 
-  // Aniversários de empresa (marcos de 1, 5, 10, 15, 20, 25, 30 anos) no mês atual
+  // Aniversários de empresa
   const anivEmpresaQuery = useQuery({
     queryKey: ["dashboard_aniv_empresa"],
     queryFn: async () => {
@@ -358,6 +473,22 @@ export function useDashboardData() {
     },
   });
 
+  // Salário médio CLT
+  const salarioMedioQuery = useQuery({
+    queryKey: ["dashboard_salario_medio"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("colaboradores_clt")
+        .select("salario_base")
+        .eq("status", "ativo");
+
+      const salarios = (data || []).map((c) => Number(c.salario_base));
+      if (salarios.length === 0) return { medio: 0, total: 0, count: 0 };
+      const total = salarios.reduce((a, b) => a + b, 0);
+      return { medio: total / salarios.length, total, count: salarios.length };
+    },
+  });
+
   const isLoading = cltQuery.isLoading || pjQuery.isLoading || headcountQuery.isLoading;
 
   return {
@@ -368,7 +499,7 @@ export function useDashboardData() {
     aniversariantes: aniversariantesQuery.data ?? [],
     statusClt: statusQuery.data ?? {},
     turnover: turnoverQuery.data ?? [],
-    folha: folhaQuery.data ?? null,
+    folha: folhaComparativoQuery.data ?? { atual: null, anterior: null },
     nfPendentes: nfQuery.data ?? 0,
     pagPjPendentes: pagPjQuery.data ?? 0,
     experienciaVencendo: experienciaQuery.data ?? [],
@@ -376,6 +507,12 @@ export function useDashboardData() {
     aniversariosEmpresa: anivEmpresaQuery.data ?? [],
     semBeneficio: semBeneficioQuery.data ?? [],
     contratosPendentes: contratosPendentesQuery.data ?? [],
+    custoPj: custoPjComparativoQuery.data ?? { totalAtual: 0, totalAnterior: 0, pagosAtual: 0, pendentesAtual: 0 },
+    custoEvolucao: custoEvolucaoQuery.data ?? [],
+    custoDept: custoDeptQuery.data ?? [],
+    salarioMedio: salarioMedioQuery.data ?? { medio: 0, total: 0, count: 0 },
+    mesAtualLabel: mesAtualRange.label,
+    mesAnteriorLabel: mesAnteriorRange.label,
     isLoading,
   };
 }
