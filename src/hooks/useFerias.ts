@@ -1,0 +1,127 @@
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import type { Tables, TablesInsert } from "@/integrations/supabase/types";
+
+type FeriasPeriodo = Tables<"ferias_periodos">;
+type FeriasProgramacao = Tables<"ferias_programacoes">;
+type FeriasPJ = Tables<"ferias_pj">;
+
+export interface PeriodoComColaborador extends FeriasPeriodo {
+  colaborador?: {
+    nome_completo: string;
+    cargo: string;
+    departamento: string;
+    data_admissao: string;
+  };
+  programacoes?: FeriasProgramacao[];
+}
+
+export interface FeriasPJComContrato extends FeriasPJ {
+  contrato?: {
+    contato_nome: string;
+    nome_fantasia: string | null;
+    razao_social: string;
+    departamento: string;
+  };
+}
+
+// ---- CLT ----
+export function useFeriasPeriodos() {
+  return useQuery({
+    queryKey: ["ferias_periodos"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("ferias_periodos")
+        .select("*, colaboradores_clt!inner(nome_completo, cargo, departamento, data_admissao), ferias_programacoes(*)")
+        .order("periodo_fim", { ascending: false });
+      if (error) throw error;
+      return (data || []).map((p: any) => ({
+        ...p,
+        colaborador: p.colaboradores_clt,
+        programacoes: p.ferias_programacoes || [],
+      })) as PeriodoComColaborador[];
+    },
+  });
+}
+
+export function useCriarPeriodo() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: TablesInsert<"ferias_periodos">) => {
+      const { data, error } = await supabase.from("ferias_periodos").insert(input).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["ferias_periodos"] }); toast.success("Período aquisitivo criado"); },
+    onError: () => toast.error("Erro ao criar período"),
+  });
+}
+
+export function useCriarProgramacao() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: TablesInsert<"ferias_programacoes">) => {
+      const { data, error } = await supabase.from("ferias_programacoes").insert(input).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["ferias_periodos"] }); toast.success("Férias programadas"); },
+    onError: () => toast.error("Erro ao programar férias"),
+  });
+}
+
+export function useAtualizarStatusProgramacao() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+      const { error } = await supabase.from("ferias_programacoes").update({ status }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["ferias_periodos"] }); toast.success("Status atualizado"); },
+    onError: () => toast.error("Erro ao atualizar status"),
+  });
+}
+
+// ---- PJ ----
+export function useFeriasPJ() {
+  return useQuery({
+    queryKey: ["ferias_pj"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("ferias_pj")
+        .select("*, contratos_pj!inner(contato_nome, nome_fantasia, razao_social, departamento)")
+        .order("data_inicio", { ascending: false });
+      if (error) throw error;
+      return (data || []).map((f: any) => ({
+        ...f,
+        contrato: f.contratos_pj,
+      })) as FeriasPJComContrato[];
+    },
+  });
+}
+
+export function useCriarFeriasPJ() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: TablesInsert<"ferias_pj">) => {
+      const { data, error } = await supabase.from("ferias_pj").insert(input).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["ferias_pj"] }); toast.success("Recesso PJ registrado"); },
+    onError: () => toast.error("Erro ao registrar recesso"),
+  });
+}
+
+export function useAtualizarStatusFeriasPJ() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+      const { error } = await supabase.from("ferias_pj").update({ status }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["ferias_pj"] }); toast.success("Status atualizado"); },
+    onError: () => toast.error("Erro ao atualizar status"),
+  });
+}
