@@ -257,17 +257,7 @@ export default function Colaboradores() {
                       </TableCell>
                       <TableCell className="text-sm">{c.cargo}</TableCell>
                       <TableCell className="text-sm hidden md:table-cell">
-                        {c.departamentos_rateio && c.departamentos_rateio.length > 0 ? (
-                          <div className="flex flex-wrap gap-1">
-                            {c.departamentos_rateio.map((d, i) => (
-                              <Badge key={i} variant="outline" className="bg-muted text-xs font-normal">
-                                {d.departamento} ({d.percentual_rateio}%)
-                              </Badge>
-                            ))}
-                          </div>
-                        ) : (
-                          c.departamento
-                        )}
+                        {c.departamento}
                       </TableCell>
                       <TableCell>
                         <Badge variant="outline" className="bg-primary/10 text-primary border-0 capitalize">
