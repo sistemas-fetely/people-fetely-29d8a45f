@@ -447,11 +447,7 @@ export default function CadastroPublico() {
   useEffect(() => {
     if (!token) { setError("Token inválido"); setLoading(false); return; }
     const fetchConvite = async () => {
-      const { data, error: err } = await supabase
-        .from("convites_cadastro")
-        .select("*")
-        .eq("token", token)
-        .single();
+      const { data, error: err } = await supabase.rpc("get_convite_by_token", { _token: token });
 
       if (err || !data) { setError("Convite não encontrado"); setLoading(false); return; }
 
