@@ -140,7 +140,7 @@ export function useAtualizarStatusMovimentacao() {
           if (Object.keys(updates).length > 0) {
             const { error: updErr } = await supabase
               .from("contratos_pj")
-              .update(updates)
+              .update(updates as any)
               .eq("id", mov.contrato_pj_id);
             if (updErr) throw updErr;
           }
