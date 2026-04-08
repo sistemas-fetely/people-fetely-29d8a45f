@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format, parseISO } from "date-fns";
 import {
-  ArrowLeft, Edit, Save, Loader2, X, User, FileText, Building2, CreditCard, Users, UserPlus,
+  ArrowLeft, Edit, Save, Loader2, X, User, FileText, Building2, CreditCard, Users, UserPlus, Mail,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
