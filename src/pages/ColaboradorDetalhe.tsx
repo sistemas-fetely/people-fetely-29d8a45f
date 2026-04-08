@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { format, parseISO } from "date-fns";
 import {
   ArrowLeft, Edit, Save, Loader2, X, User, FileText, Briefcase,
-  Building2, Users as UsersIcon,
+  Building2, Users as UsersIcon, Monitor,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -21,16 +21,18 @@ import { StepDocumentos } from "@/components/colaborador-clt/StepDocumentos";
 import { StepDadosProfissionais } from "@/components/colaborador-clt/StepDadosProfissionais";
 import { StepDadosBancarios } from "@/components/colaborador-clt/StepDadosBancarios";
 import { StepDependentes } from "@/components/colaborador-clt/StepDependentes";
+import { StepDadosEmpresa } from "@/components/colaborador-clt/StepDadosEmpresa";
 
 import type {
   DadosPessoaisForm,
   DocumentosForm,
   DadosProfissionaisForm,
   DadosBancariosForm,
+  DadosEmpresaForm,
   DependentesForm,
 } from "@/lib/validations/colaborador-clt";
 
-type AllFormData = DadosPessoaisForm & DocumentosForm & DadosProfissionaisForm & DadosBancariosForm & DependentesForm;
+type AllFormData = DadosPessoaisForm & DocumentosForm & DadosProfissionaisForm & DadosBancariosForm & DadosEmpresaForm & DependentesForm;
 
 type Departamento = { id: string; departamento: string; percentual_rateio: number };
 type Dependente = Tables<"dependentes">;
@@ -234,6 +236,7 @@ export default function ColaboradorDetalhe() {
             <TabsTrigger value="documentos" className="gap-1"><FileText className="h-3.5 w-3.5" /> Documentos</TabsTrigger>
             <TabsTrigger value="profissionais" className="gap-1"><Briefcase className="h-3.5 w-3.5" /> Profissionais</TabsTrigger>
             <TabsTrigger value="bancarios" className="gap-1"><Building2 className="h-3.5 w-3.5" /> Bancários</TabsTrigger>
+            <TabsTrigger value="empresa" className="gap-1"><Monitor className="h-3.5 w-3.5" /> Empresa</TabsTrigger>
             <TabsTrigger value="dependentes" className="gap-1"><UsersIcon className="h-3.5 w-3.5" /> Dependentes</TabsTrigger>
           </TabsList>
 
@@ -323,6 +326,18 @@ export default function ColaboradorDetalhe() {
             </CardContent></Card>
           </TabsContent>
 
+          <TabsContent value="empresa">
+            <Card><CardContent className="pt-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                <InfoField label="Email Corporativo" value={(colaborador as any).email_corporativo} />
+                <InfoField label="Ramal" value={(colaborador as any).ramal} />
+                <InfoField label="Data de Integração" value={(colaborador as any).data_integracao ? format(parseISO((colaborador as any).data_integracao), "dd/MM/yyyy") : ""} />
+              </div>
+              <h3 className="font-semibold mb-3">Acesso aos Sistemas</h3>
+              <p className="text-xs text-muted-foreground mb-4">Dados carregados na edição do colaborador.</p>
+            </CardContent></Card>
+          </TabsContent>
+
           <TabsContent value="dependentes">
             <Card><CardContent className="pt-6">
               {dependentes.length === 0 ? (
@@ -376,6 +391,7 @@ export default function ColaboradorDetalhe() {
             <TabsTrigger value="documentos">Documentos</TabsTrigger>
             <TabsTrigger value="profissionais">Profissionais</TabsTrigger>
             <TabsTrigger value="bancarios">Bancários</TabsTrigger>
+            <TabsTrigger value="empresa">Empresa</TabsTrigger>
             <TabsTrigger value="dependentes">Dependentes</TabsTrigger>
           </TabsList>
 
@@ -390,6 +406,9 @@ export default function ColaboradorDetalhe() {
           </TabsContent>
           <TabsContent value="bancarios">
             <Card><CardContent className="pt-6"><StepDadosBancarios /></CardContent></Card>
+          </TabsContent>
+          <TabsContent value="empresa">
+            <Card><CardContent className="pt-6"><StepDadosEmpresa /></CardContent></Card>
           </TabsContent>
           <TabsContent value="dependentes">
             <Card><CardContent className="pt-6"><StepDependentes /></CardContent></Card>

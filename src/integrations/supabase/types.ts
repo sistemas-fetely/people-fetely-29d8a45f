@@ -14,6 +14,50 @@ export type Database = {
   }
   public: {
     Tables: {
+      colaborador_acessos_sistemas: {
+        Row: {
+          colaborador_id: string
+          created_at: string
+          data_concessao: string | null
+          id: string
+          observacoes: string | null
+          sistema: string
+          tem_acesso: boolean
+          updated_at: string
+          usuario: string | null
+        }
+        Insert: {
+          colaborador_id: string
+          created_at?: string
+          data_concessao?: string | null
+          id?: string
+          observacoes?: string | null
+          sistema: string
+          tem_acesso?: boolean
+          updated_at?: string
+          usuario?: string | null
+        }
+        Update: {
+          colaborador_id?: string
+          created_at?: string
+          data_concessao?: string | null
+          id?: string
+          observacoes?: string | null
+          sistema?: string
+          tem_acesso?: boolean
+          updated_at?: string
+          usuario?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "colaborador_acessos_sistemas_colaborador_id_fkey"
+            columns: ["colaborador_id"]
+            isOneToOne: false
+            referencedRelation: "colaboradores_clt"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       colaborador_departamentos: {
         Row: {
           colaborador_id: string
@@ -49,6 +93,65 @@ export type Database = {
           },
         ]
       }
+      colaborador_equipamentos: {
+        Row: {
+          colaborador_id: string
+          created_at: string
+          data_devolucao: string | null
+          data_entrega: string | null
+          estado: string
+          id: string
+          marca: string | null
+          modelo: string | null
+          numero_patrimonio: string | null
+          numero_serie: string | null
+          observacoes: string | null
+          termo_responsabilidade_url: string | null
+          tipo: string
+          updated_at: string
+        }
+        Insert: {
+          colaborador_id: string
+          created_at?: string
+          data_devolucao?: string | null
+          data_entrega?: string | null
+          estado?: string
+          id?: string
+          marca?: string | null
+          modelo?: string | null
+          numero_patrimonio?: string | null
+          numero_serie?: string | null
+          observacoes?: string | null
+          termo_responsabilidade_url?: string | null
+          tipo: string
+          updated_at?: string
+        }
+        Update: {
+          colaborador_id?: string
+          created_at?: string
+          data_devolucao?: string | null
+          data_entrega?: string | null
+          estado?: string
+          id?: string
+          marca?: string | null
+          modelo?: string | null
+          numero_patrimonio?: string | null
+          numero_serie?: string | null
+          observacoes?: string | null
+          termo_responsabilidade_url?: string | null
+          tipo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "colaborador_equipamentos_colaborador_id_fkey"
+            columns: ["colaborador_id"]
+            isOneToOne: false
+            referencedRelation: "colaboradores_clt"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       colaboradores_clt: {
         Row: {
           agencia: string | null
@@ -74,8 +177,10 @@ export type Database = {
           ctps_serie: string | null
           ctps_uf: string | null
           data_admissao: string
+          data_integracao: string | null
           data_nascimento: string
           departamento: string
+          email_corporativo: string | null
           email_pessoal: string | null
           estado_civil: string | null
           etnia: string | null
@@ -96,6 +201,7 @@ export type Database = {
           observacoes: string | null
           orgao_emissor: string | null
           pis_pasep: string | null
+          ramal: string | null
           rg: string | null
           salario_base: number
           secao_eleitoral: string | null
@@ -133,8 +239,10 @@ export type Database = {
           ctps_serie?: string | null
           ctps_uf?: string | null
           data_admissao: string
+          data_integracao?: string | null
           data_nascimento: string
           departamento: string
+          email_corporativo?: string | null
           email_pessoal?: string | null
           estado_civil?: string | null
           etnia?: string | null
@@ -155,6 +263,7 @@ export type Database = {
           observacoes?: string | null
           orgao_emissor?: string | null
           pis_pasep?: string | null
+          ramal?: string | null
           rg?: string | null
           salario_base: number
           secao_eleitoral?: string | null
@@ -192,8 +301,10 @@ export type Database = {
           ctps_serie?: string | null
           ctps_uf?: string | null
           data_admissao?: string
+          data_integracao?: string | null
           data_nascimento?: string
           departamento?: string
+          email_corporativo?: string | null
           email_pessoal?: string | null
           estado_civil?: string | null
           etnia?: string | null
@@ -214,6 +325,7 @@ export type Database = {
           observacoes?: string | null
           orgao_emissor?: string | null
           pis_pasep?: string | null
+          ramal?: string | null
           rg?: string | null
           salario_base?: number
           secao_eleitoral?: string | null

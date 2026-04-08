@@ -83,9 +83,38 @@ export const dependentesSchema = z.object({
   dependentes: z.array(dependenteSchema).default([]),
 });
 
+export const acessoSistemaSchema = z.object({
+  sistema: z.string().min(1),
+  tem_acesso: z.boolean().default(false),
+  usuario: z.string().optional().or(z.literal("")),
+  observacoes: z.string().optional().or(z.literal("")),
+});
+
+export const equipamentoSchema = z.object({
+  tipo: z.string().min(1, "Tipo do equipamento é obrigatório"),
+  marca: z.string().optional().or(z.literal("")),
+  modelo: z.string().optional().or(z.literal("")),
+  numero_patrimonio: z.string().optional().or(z.literal("")),
+  numero_serie: z.string().optional().or(z.literal("")),
+  data_entrega: z.string().optional().or(z.literal("")),
+  estado: z.string().default("novo"),
+  observacoes: z.string().optional().or(z.literal("")),
+});
+
+export const dadosEmpresaSchema = z.object({
+  email_corporativo: z.string().email("Email corporativo inválido").optional().or(z.literal("")),
+  ramal: z.string().optional().or(z.literal("")),
+  data_integracao: z.string().optional().or(z.literal("")),
+  acessos_sistemas: z.array(acessoSistemaSchema).default([]),
+  equipamentos: z.array(equipamentoSchema).default([]),
+});
+
 export type DadosPessoaisForm = z.infer<typeof dadosPessoaisSchema>;
 export type DocumentosForm = z.infer<typeof documentosSchema>;
 export type DadosProfissionaisForm = z.infer<typeof dadosProfissionaisSchema>;
 export type DadosBancariosForm = z.infer<typeof dadosBancariosSchema>;
 export type DependenteForm = z.infer<typeof dependenteSchema>;
 export type DependentesForm = z.infer<typeof dependentesSchema>;
+export type AcessoSistemaForm = z.infer<typeof acessoSistemaSchema>;
+export type EquipamentoForm = z.infer<typeof equipamentoSchema>;
+export type DadosEmpresaForm = z.infer<typeof dadosEmpresaSchema>;

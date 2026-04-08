@@ -14,16 +14,19 @@ import { StepDocumentos } from "./StepDocumentos";
 import { StepDadosProfissionais } from "./StepDadosProfissionais";
 import { StepDadosBancarios } from "./StepDadosBancarios";
 import { StepDependentes } from "./StepDependentes";
+import { StepDadosEmpresa } from "./StepDadosEmpresa";
 import {
   dadosPessoaisSchema,
   documentosSchema,
   dadosProfissionaisSchema,
   dadosBancariosSchema,
+  dadosEmpresaSchema,
   dependentesSchema,
   type DadosPessoaisForm,
   type DocumentosForm,
   type DadosProfissionaisForm,
   type DadosBancariosForm,
+  type DadosEmpresaForm,
   type DependentesForm,
 } from "@/lib/validations/colaborador-clt";
 
@@ -32,10 +35,11 @@ const stepSchemas = [
   documentosSchema,
   dadosProfissionaisSchema,
   dadosBancariosSchema,
+  dadosEmpresaSchema,
   dependentesSchema,
 ];
 
-type AllFormData = DadosPessoaisForm & DocumentosForm & DadosProfissionaisForm & DadosBancariosForm & DependentesForm;
+type AllFormData = DadosPessoaisForm & DocumentosForm & DadosProfissionaisForm & DadosBancariosForm & DadosEmpresaForm & DependentesForm;
 
 export function CadastroColaboradorCLT() {
   const [currentStep, setCurrentStep] = useState(1);
@@ -52,6 +56,8 @@ export function CadastroColaboradorCLT() {
       tipo_conta: "corrente",
       dependentes: [],
       departamentos_rateio: [{ departamento: "", percentual_rateio: 100 }],
+      acessos_sistemas: [],
+      equipamentos: [],
     },
   });
 
@@ -72,7 +78,7 @@ export function CadastroColaboradorCLT() {
   const goNext = async () => {
     const valid = await validateCurrentStep();
     if (!valid) return;
-    setCurrentStep((s) => Math.min(s + 1, 5));
+    setCurrentStep((s) => Math.min(s + 1, 6));
   };
 
   const goBack = () => setCurrentStep((s) => Math.max(s - 1, 1));
@@ -80,7 +86,7 @@ export function CadastroColaboradorCLT() {
   const onSubmit = async (data: AllFormData) => {
     setSaving(true);
     try {
-      const { dependentes, departamentos_rateio, salario_base, jornada_semanal, ...colaboradorData } = data;
+      const { dependentes, departamentos_rateio, acessos_sistemas, equipamentos, salario_base, jornada_semanal, ...colaboradorData } = data;
 
       // Convert empty strings to null for optional fields (especially dates)
       const cleaned = Object.fromEntries(
@@ -114,6 +120,41 @@ export function CadastroColaboradorCLT() {
 
         const { error: deptError } = await supabase.from("colaborador_departamentos").insert(depsToInsert);
         if (deptError) throw deptError;
+      }
+
+      // Insert system access records
+      if (acessos_sistemas && acessos_sistemas.length > 0) {
+        const acessosToInsert = acessos_sistemas
+          .filter((a) => a.tem_acesso)
+          .map((a) => ({
+            colaborador_id: inserted.id,
+            sistema: a.sistema,
+            tem_acesso: true,
+            usuario: a.usuario || null,
+            observacoes: a.observacoes || null,
+            data_concessao: new Date().toISOString().split("T")[0],
+          }));
+        if (acessosToInsert.length > 0) {
+          const { error: aErr } = await supabase.from("colaborador_acessos_sistemas").insert(acessosToInsert);
+          if (aErr) throw aErr;
+        }
+      }
+
+      // Insert equipment records
+      if (equipamentos && equipamentos.length > 0) {
+        const equipToInsert = equipamentos.map((e) => ({
+          colaborador_id: inserted.id,
+          tipo: e.tipo,
+          marca: e.marca || null,
+          modelo: e.modelo || null,
+          numero_patrimonio: e.numero_patrimonio || null,
+          numero_serie: e.numero_serie || null,
+          data_entrega: e.data_entrega || null,
+          estado: e.estado || "novo",
+          observacoes: e.observacoes || null,
+        }));
+        const { error: eErr } = await supabase.from("colaborador_equipamentos").insert(equipToInsert);
+        if (eErr) throw eErr;
       }
 
       // Insert dependents
@@ -164,14 +205,15 @@ export function CadastroColaboradorCLT() {
             {currentStep === 2 && <StepDocumentos />}
             {currentStep === 3 && <StepDadosProfissionais />}
             {currentStep === 4 && <StepDadosBancarios />}
-            {currentStep === 5 && <StepDependentes />}
+            {currentStep === 5 && <StepDadosEmpresa />}
+            {currentStep === 6 && <StepDependentes />}
           </CardContent>
           <CardFooter className="flex justify-between border-t pt-6">
             <Button type="button" variant="outline" onClick={currentStep === 1 ? () => navigate("/colaboradores") : goBack} className="gap-2">
               <ArrowLeft className="h-4 w-4" />
               {currentStep === 1 ? "Cancelar" : "Voltar"}
             </Button>
-            {currentStep < 5 ? (
+            {currentStep < 6 ? (
               <Button type="button" onClick={goNext} className="gap-2">
                 Próximo
                 <ArrowRight className="h-4 w-4" />

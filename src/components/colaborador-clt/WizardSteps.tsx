@@ -6,7 +6,8 @@ const steps = [
   { label: "Documentos", number: 2 },
   { label: "Profissional", number: 3 },
   { label: "Bancário", number: 4 },
-  { label: "Dependentes", number: 5 },
+  { label: "Empresa", number: 5 },
+  { label: "Dependentes", number: 6 },
 ];
 
 interface WizardStepsProps {
