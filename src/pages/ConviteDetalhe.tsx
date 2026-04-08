@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format, parseISO } from "date-fns";
 import {
-  ArrowLeft, Edit, Save, Loader2, X, User, FileText, Building2, CreditCard, Users, UserPlus,
+  ArrowLeft, Edit, Save, Loader2, X, User, FileText, Building2, CreditCard, Users, UserPlus, Mail,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -42,6 +42,7 @@ export default function ConviteDetalhe() {
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [sendingEmail, setSendingEmail] = useState(false);
   const [formData, setFormData] = useState<Record<string, any>>({});
 
   useEffect(() => {
@@ -85,6 +86,32 @@ export default function ConviteDetalhe() {
 
   const updateField = (key: string, value: any) => {
     setFormData((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const handleResendEmail = async () => {
+    if (!convite) return;
+    setSendingEmail(true);
+    try {
+      const { error } = await supabase.functions.invoke("send-transactional-email", {
+        body: {
+          templateName: "cadastro-recebido",
+          recipientEmail: convite.email,
+          idempotencyKey: `cadastro-recebido-resend-${convite.id}-${Date.now()}`,
+          templateData: {
+            nome: convite.nome,
+            tipo: convite.tipo,
+            cargo: convite.cargo || "",
+            departamento: convite.departamento || "",
+          },
+        },
+      });
+      if (error) throw error;
+      toast.success("Email de confirmação reenviado para " + convite.email);
+    } catch (err: any) {
+      toast.error("Erro ao reenviar email: " + err.message);
+    } finally {
+      setSendingEmail(false);
+    }
   };
 
   const handleExportToCadastro = async () => {
@@ -246,6 +273,10 @@ export default function ConviteDetalhe() {
           ) : (
             hasDados && (
               <>
+                <Button variant="outline" size="sm" onClick={handleResendEmail} disabled={sendingEmail}>
+                  {sendingEmail ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Mail className="h-4 w-4 mr-2" />}
+                  Reenviar Email
+                </Button>
                 <Button variant="outline" onClick={() => setEditing(true)}>
                   <Edit className="h-4 w-4 mr-2" /> Editar Dados
                 </Button>
