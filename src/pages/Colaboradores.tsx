@@ -186,7 +186,7 @@ export default function Colaboradores() {
                   </TableRow>
                 ) : (
                   filtered.map((c) => (
-                    <TableRow key={c.id} className="hover:bg-muted/30 transition-colors">
+                    <TableRow key={c.id} className="hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => navigate(`/colaboradores/${c.id}`)}>
                       <TableCell>
                         <div className="flex items-center gap-3">
                           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
