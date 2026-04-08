@@ -81,9 +81,15 @@ export default function ColaboradorDetalhe() {
     if (!id || !colaborador) return;
     setTogglingStatus(true);
     const newStatus = isAtivo ? "desligado" : "ativo";
+    const updateData: any = { status: newStatus };
+    if (newStatus === "desligado") {
+      updateData.data_desligamento = new Date().toISOString().slice(0, 10);
+    } else {
+      updateData.data_desligamento = null;
+    }
     const { error } = await supabase
       .from("colaboradores_clt")
-      .update({ status: newStatus } as any)
+      .update(updateData)
       .eq("id", id);
     if (error) {
       toast.error(error.message);
@@ -391,6 +397,7 @@ export default function ColaboradorDetalhe() {
                 <InfoField label="Matrícula" value={colaborador.matricula} />
                 <InfoField label="Cargo" value={colaborador.cargo} />
                 <InfoField label="Data de Admissão" value={format(parseISO(colaborador.data_admissao), "dd/MM/yyyy")} />
+                <InfoField label="Data de Desligamento" value={(colaborador as any).data_desligamento ? format(parseISO((colaborador as any).data_desligamento), "dd/MM/yyyy") : "—"} />
                 <InfoField label="Tipo de Contrato" value={colaborador.tipo_contrato} />
                 <InfoField label="Salário Base" value={`R$ ${Number(colaborador.salario_base).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`} />
                 <InfoField label="Jornada Semanal" value={colaborador.jornada_semanal ? `${colaborador.jornada_semanal}h` : ""} />

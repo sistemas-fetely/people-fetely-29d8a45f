@@ -154,6 +154,47 @@ export function useDashboardData() {
     },
   });
 
+  // Admissões vs Desligamentos (últimos 12 meses)
+  const turnoverQuery = useQuery({
+    queryKey: ["dashboard_turnover"],
+    queryFn: async () => {
+      const now = new Date();
+      const months: { key: string; label: string; admissoes: number; desligamentos: number }[] = [];
+      for (let i = 11; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+        const label = d.toLocaleDateString("pt-BR", { month: "short" }).replace(".", "");
+        months.push({ key, label: label.charAt(0).toUpperCase() + label.slice(1), admissoes: 0, desligamentos: 0 });
+      }
+
+      const startDate = `${months[0].key}-01`;
+      const { data: admData } = await supabase
+        .from("colaboradores_clt")
+        .select("data_admissao")
+        .gte("data_admissao", startDate);
+
+      const { data: desData } = await supabase
+        .from("colaboradores_clt")
+        .select("data_desligamento")
+        .not("data_desligamento", "is", null)
+        .gte("data_desligamento", startDate);
+
+      (admData || []).forEach((c) => {
+        const key = c.data_admissao.slice(0, 7);
+        const m = months.find((mo) => mo.key === key);
+        if (m) m.admissoes++;
+      });
+
+      (desData || []).forEach((c: any) => {
+        const key = c.data_desligamento.slice(0, 7);
+        const m = months.find((mo) => mo.key === key);
+        if (m) m.desligamentos++;
+      });
+
+      return months;
+    },
+  });
+
   // Folha de pagamento última competência
   const folhaQuery = useQuery({
     queryKey: ["dashboard_folha"],
@@ -201,6 +242,7 @@ export function useDashboardData() {
     ferias: feriasQuery.data ?? { emGozo: 0, programadas: 0, periodoVencido: 0 },
     aniversariantes: aniversariantesQuery.data ?? [],
     statusClt: statusQuery.data ?? {},
+    turnover: turnoverQuery.data ?? [],
     folha: folhaQuery.data ?? null,
     nfPendentes: nfQuery.data ?? 0,
     pagPjPendentes: pagPjQuery.data ?? 0,
