@@ -239,17 +239,12 @@ export default function ConvitesCadastro() {
                     const expired = c.status === "pendente" && new Date(c.expira_em) <= now;
                     const displayStatus = expired ? "expirado" : c.status;
                     return (
-                      <TableRow key={c.id}>
-                        <TableCell className="font-medium">
-                          <a
-                            href={getLink(c.token)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-primary hover:underline cursor-pointer"
-                          >
-                            {c.nome}
-                          </a>
-                        </TableCell>
+                      <TableRow
+                        key={c.id}
+                        className="cursor-pointer hover:bg-muted/50"
+                        onClick={() => window.open(getLink(c.token), '_blank')}
+                      >
+                        <TableCell className="font-medium text-primary">{c.nome}</TableCell>
                         <TableCell className="text-sm">{c.email}</TableCell>
                         <TableCell><Badge variant="outline" className="text-xs">{c.tipo.toUpperCase()}</Badge></TableCell>
                         <TableCell className="text-sm">{c.cargo || "—"}</TableCell>
@@ -261,13 +256,13 @@ export default function ConvitesCadastro() {
                         </TableCell>
                         <TableCell className="text-sm">{format(parseISO(c.created_at), "dd/MM/yyyy")}</TableCell>
                         <TableCell className="text-sm">{format(parseISO(c.expira_em), "dd/MM/yyyy HH:mm")}</TableCell>
-                        <TableCell>
+                        <TableCell onClick={(e) => e.stopPropagation()}>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               <DropdownMenuItem onClick={() => copyLink(c.token)} className="gap-2"><Copy className="h-4 w-4" /> Copiar Link</DropdownMenuItem>
                               <DropdownMenuItem onClick={() => sendEmail(c)} className="gap-2"><Mail className="h-4 w-4" /> Enviar E-mail</DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => window.open(`${publicBaseUrl}/cadastro/${c.token}`, '_blank')} className="gap-2"><ExternalLink className="h-4 w-4" /> Abrir Link</DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => window.open(getLink(c.token), '_blank')} className="gap-2"><ExternalLink className="h-4 w-4" /> Abrir Link</DropdownMenuItem>
                               {c.status === "preenchido" && (
                                 <DropdownMenuItem onClick={() => setViewTarget(c)} className="gap-2"><Eye className="h-4 w-4" /> Ver Dados</DropdownMenuItem>
                               )}

@@ -417,6 +417,7 @@ interface ConviteData {
   status: string;
   expira_em: string;
   criado_por: string | null;
+  dados_preenchidos: Record<string, any> | null;
 }
 
 const CLT_STEPS = ["Dados Pessoais", "Documentos", "Dados Bancários", "Dependentes"];
@@ -453,18 +454,35 @@ export default function CadastroPublico() {
 
       const conviteData = data as unknown as ConviteData;
 
-      if (conviteData.status === "preenchido") { setError("Este formulário já foi preenchido."); setLoading(false); return; }
       if (conviteData.status === "cancelado") { setError("Este convite foi cancelado."); setLoading(false); return; }
-      if (new Date(conviteData.expira_em) < new Date()) { setError("Este convite expirou."); setLoading(false); return; }
+      if (new Date(conviteData.expira_em) < new Date() && conviteData.status !== "preenchido") { setError("Este convite expirou."); setLoading(false); return; }
 
       setConvite(conviteData);
 
-      if (conviteData.tipo === "clt") {
-        cltMethods.setValue("nome_completo", conviteData.nome);
-        cltMethods.setValue("email_pessoal", conviteData.email);
+      // Pre-fill with previously saved data if available, otherwise use invite defaults
+      if (conviteData.dados_preenchidos && conviteData.status === "preenchido") {
+        const saved = conviteData.dados_preenchidos as Record<string, any>;
+        if (conviteData.tipo === "clt") {
+          Object.entries(saved).forEach(([key, value]) => {
+            if (key === "dependentes" && Array.isArray(value)) {
+              cltMethods.setValue("dependentes", value);
+            } else {
+              cltMethods.setValue(key as any, value);
+            }
+          });
+        } else {
+          Object.entries(saved).forEach(([key, value]) => {
+            pjMethods.setValue(key as any, value);
+          });
+        }
       } else {
-        pjMethods.setValue("contato_nome", conviteData.nome);
-        pjMethods.setValue("contato_email", conviteData.email);
+        if (conviteData.tipo === "clt") {
+          cltMethods.setValue("nome_completo", conviteData.nome);
+          cltMethods.setValue("email_pessoal", conviteData.email);
+        } else {
+          pjMethods.setValue("contato_nome", conviteData.nome);
+          pjMethods.setValue("contato_email", conviteData.email);
+        }
       }
       setLoading(false);
     };
