@@ -27,6 +27,7 @@ import FolhaPagamento from "@/pages/FolhaPagamento";
 import Ferias from "@/pages/Ferias";
 import FeriasColaborador from "@/pages/FeriasColaborador";
 import Beneficios from "@/pages/Beneficios";
+import Movimentacoes from "@/pages/Movimentacoes";
 
 const queryClient = new QueryClient();
 
