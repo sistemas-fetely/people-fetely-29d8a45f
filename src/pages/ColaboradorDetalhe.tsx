@@ -108,7 +108,7 @@ export default function ColaboradorDetalhe() {
     if (!id) return;
     setSaving(true);
     try {
-      const { dependentes: formDeps, departamentos_rateio, salario_base, jornada_semanal, ...rest } = data;
+      const { dependentes: formDeps, departamentos_rateio, acessos_sistemas: formAcessos, equipamentos: formEquip, salario_base, jornada_semanal, ...rest } = data;
       const cleaned = Object.fromEntries(
         Object.entries(rest).map(([k, v]) => [k, v === "" ? null : v])
       );
