@@ -495,6 +495,131 @@ export type Database = {
           },
         ]
       }
+      notas_fiscais_pj: {
+        Row: {
+          arquivo_url: string | null
+          competencia: string
+          contrato_id: string
+          created_at: string
+          data_emissao: string
+          data_pagamento: string | null
+          data_vencimento: string | null
+          descricao: string | null
+          id: string
+          numero: string
+          observacoes: string | null
+          serie: string | null
+          status: string
+          updated_at: string
+          valor: number
+        }
+        Insert: {
+          arquivo_url?: string | null
+          competencia: string
+          contrato_id: string
+          created_at?: string
+          data_emissao: string
+          data_pagamento?: string | null
+          data_vencimento?: string | null
+          descricao?: string | null
+          id?: string
+          numero: string
+          observacoes?: string | null
+          serie?: string | null
+          status?: string
+          updated_at?: string
+          valor: number
+        }
+        Update: {
+          arquivo_url?: string | null
+          competencia?: string
+          contrato_id?: string
+          created_at?: string
+          data_emissao?: string
+          data_pagamento?: string | null
+          data_vencimento?: string | null
+          descricao?: string | null
+          id?: string
+          numero?: string
+          observacoes?: string | null
+          serie?: string | null
+          status?: string
+          updated_at?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notas_fiscais_pj_contrato_id_fkey"
+            columns: ["contrato_id"]
+            isOneToOne: false
+            referencedRelation: "contratos_pj"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pagamentos_pj: {
+        Row: {
+          competencia: string
+          comprovante_url: string | null
+          contrato_id: string
+          created_at: string
+          data_pagamento: string | null
+          data_prevista: string
+          forma_pagamento: string
+          id: string
+          nota_fiscal_id: string | null
+          observacoes: string | null
+          status: string
+          updated_at: string
+          valor: number
+        }
+        Insert: {
+          competencia: string
+          comprovante_url?: string | null
+          contrato_id: string
+          created_at?: string
+          data_pagamento?: string | null
+          data_prevista: string
+          forma_pagamento?: string
+          id?: string
+          nota_fiscal_id?: string | null
+          observacoes?: string | null
+          status?: string
+          updated_at?: string
+          valor: number
+        }
+        Update: {
+          competencia?: string
+          comprovante_url?: string | null
+          contrato_id?: string
+          created_at?: string
+          data_pagamento?: string | null
+          data_prevista?: string
+          forma_pagamento?: string
+          id?: string
+          nota_fiscal_id?: string | null
+          observacoes?: string | null
+          status?: string
+          updated_at?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pagamentos_pj_contrato_id_fkey"
+            columns: ["contrato_id"]
+            isOneToOne: false
+            referencedRelation: "contratos_pj"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pagamentos_pj_nota_fiscal_id_fkey"
+            columns: ["nota_fiscal_id"]
+            isOneToOne: false
+            referencedRelation: "notas_fiscais_pj"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       parametros: {
         Row: {
           ativo: boolean
