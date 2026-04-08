@@ -18,6 +18,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format, parseISO } from "date-fns";
 import { Loader2 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 
 const statusContratoMap: Record<string, string> = {
   rascunho: "Rascunho", ativo: "Ativo", suspenso: "Suspenso", encerrado: "Encerrado", renovado: "Renovado",
