@@ -451,7 +451,7 @@ export default function ContratosPJ() {
           <h1 className="text-2xl font-bold tracking-tight">Contratos PJ</h1>
           <p className="text-muted-foreground text-sm mt-1">Gestão de contratos de prestadores de serviço</p>
         </div>
-        <Button className="gap-2" onClick={openNew}>
+        <Button className="gap-2" onClick={() => navigate("/contratos-pj/novo")}>
           <Plus className="h-4 w-4" /> Novo Contrato
         </Button>
       </div>
