@@ -656,6 +656,79 @@ export type Database = {
         }
         Relationships: []
       }
+      posicoes: {
+        Row: {
+          area: string | null
+          centro_custo: string | null
+          colaborador_id: string | null
+          contrato_pj_id: string | null
+          created_at: string
+          departamento: string
+          filial: string | null
+          id: string
+          id_pai: string | null
+          nivel_hierarquico: number
+          salario_previsto: number | null
+          status: string
+          titulo_cargo: string
+          updated_at: string
+        }
+        Insert: {
+          area?: string | null
+          centro_custo?: string | null
+          colaborador_id?: string | null
+          contrato_pj_id?: string | null
+          created_at?: string
+          departamento: string
+          filial?: string | null
+          id?: string
+          id_pai?: string | null
+          nivel_hierarquico?: number
+          salario_previsto?: number | null
+          status?: string
+          titulo_cargo: string
+          updated_at?: string
+        }
+        Update: {
+          area?: string | null
+          centro_custo?: string | null
+          colaborador_id?: string | null
+          contrato_pj_id?: string | null
+          created_at?: string
+          departamento?: string
+          filial?: string | null
+          id?: string
+          id_pai?: string | null
+          nivel_hierarquico?: number
+          salario_previsto?: number | null
+          status?: string
+          titulo_cargo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "posicoes_colaborador_id_fkey"
+            columns: ["colaborador_id"]
+            isOneToOne: false
+            referencedRelation: "colaboradores_clt"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "posicoes_contrato_pj_id_fkey"
+            columns: ["contrato_pj_id"]
+            isOneToOne: false
+            referencedRelation: "contratos_pj"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "posicoes_id_pai_fkey"
+            columns: ["id_pai"]
+            isOneToOne: false
+            referencedRelation: "posicoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -715,6 +788,27 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_organograma_tree: {
+        Args: never
+        Returns: {
+          area: string
+          centro_custo: string
+          colaborador_id: string
+          contrato_pj_id: string
+          created_at: string
+          departamento: string
+          depth: number
+          filial: string
+          id: string
+          id_pai: string
+          nivel_hierarquico: number
+          path: string[]
+          salario_previsto: number
+          status: string
+          titulo_cargo: string
+          updated_at: string
+        }[]
+      }
       get_user_roles: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"][]
