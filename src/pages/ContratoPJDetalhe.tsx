@@ -512,6 +512,10 @@ export default function ContratoPJDetalhe() {
               <HistoricoCustosChart tipo="pj" entityId={id!} />
             </div>
           </TabsContent>
+
+          <TabsContent value="organograma">
+            <OrgBranchView contratoPjId={id} />
+          </TabsContent>
         </Tabs>
 
         <AlertDialog open={statusDialogOpen} onOpenChange={setStatusDialogOpen}>

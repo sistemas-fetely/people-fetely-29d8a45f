@@ -500,6 +500,10 @@ export default function ColaboradorDetalhe() {
               <HistoricoCustosChart tipo="clt" entityId={id!} />
             </div>
           </TabsContent>
+
+          <TabsContent value="organograma">
+            <OrgBranchView colaboradorId={id} />
+          </TabsContent>
         </Tabs>
 
         <AlertDialog open={statusDialogOpen} onOpenChange={setStatusDialogOpen}>
