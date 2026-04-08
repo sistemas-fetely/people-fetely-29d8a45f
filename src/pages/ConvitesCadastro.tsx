@@ -240,7 +240,16 @@ export default function ConvitesCadastro() {
                     const displayStatus = expired ? "expirado" : c.status;
                     return (
                       <TableRow key={c.id}>
-                        <TableCell className="font-medium">{c.nome}</TableCell>
+                        <TableCell className="font-medium">
+                          <a
+                            href={getLink(c.token)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-primary hover:underline cursor-pointer"
+                          >
+                            {c.nome}
+                          </a>
+                        </TableCell>
                         <TableCell className="text-sm">{c.email}</TableCell>
                         <TableCell><Badge variant="outline" className="text-xs">{c.tipo.toUpperCase()}</Badge></TableCell>
                         <TableCell className="text-sm">{c.cargo || "—"}</TableCell>
