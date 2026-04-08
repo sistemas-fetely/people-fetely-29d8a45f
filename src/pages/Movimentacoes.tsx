@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { ArrowUpDown, Plus, Search, TrendingUp, ArrowRightLeft, DollarSign, Building2, Trash2 } from "lucide-react";
+import { ArrowUpDown, Plus, Search, TrendingUp, ArrowRightLeft, DollarSign, Building2, Trash2, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { StatCard } from "@/components/StatCard";
 import { useAuth } from "@/contexts/AuthContext";
+import { useParametros } from "@/hooks/useParametros";
 import {
   useMovimentacoes, useColaboradoresAtivos, useContratosPJAtivos,
   useCriarMovimentacao, useAtualizarStatusMovimentacao, useExcluirMovimentacao,
@@ -41,6 +42,8 @@ export default function Movimentacoes() {
   const { data: movimentacoes = [], isLoading } = useMovimentacoes();
   const { data: colaboradores = [] } = useColaboradoresAtivos();
   const { data: contratosPJ = [] } = useContratosPJAtivos();
+  const { data: cargos = [], isLoading: loadingCargos } = useParametros("cargo");
+  const { data: departamentos = [], isLoading: loadingDeptos } = useParametros("departamento");
   const criarMut = useCriarMovimentacao();
   const statusMut = useAtualizarStatusMovimentacao();
   const excluirMut = useExcluirMovimentacao();
@@ -311,14 +314,36 @@ export default function Movimentacoes() {
             {(tipo === "promocao" || tipo === "alteracao_cargo") && (
               <div>
                 <Label>Novo Cargo</Label>
-                <Input value={cargoNovo} onChange={(e) => setCargoNovo(e.target.value)} placeholder="Novo cargo" />
+                {loadingCargos ? (
+                  <div className="flex items-center h-10"><Loader2 className="h-4 w-4 animate-spin" /></div>
+                ) : (
+                  <Select value={cargoNovo} onValueChange={setCargoNovo}>
+                    <SelectTrigger><SelectValue placeholder="Selecione o cargo" /></SelectTrigger>
+                    <SelectContent>
+                      {cargos.map((c) => (
+                        <SelectItem key={c.id} value={c.label}>{c.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
               </div>
             )}
 
             {(tipo === "transferencia" || tipo === "mudanca_departamento" || tipo === "promocao") && (
               <div>
                 <Label>Novo Departamento</Label>
-                <Input value={deptoNovo} onChange={(e) => setDeptoNovo(e.target.value)} placeholder="Novo departamento" />
+                {loadingDeptos ? (
+                  <div className="flex items-center h-10"><Loader2 className="h-4 w-4 animate-spin" /></div>
+                ) : (
+                  <Select value={deptoNovo} onValueChange={setDeptoNovo}>
+                    <SelectTrigger><SelectValue placeholder="Selecione o departamento" /></SelectTrigger>
+                    <SelectContent>
+                      {departamentos.map((d) => (
+                        <SelectItem key={d.id} value={d.label}>{d.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
               </div>
             )}
 
