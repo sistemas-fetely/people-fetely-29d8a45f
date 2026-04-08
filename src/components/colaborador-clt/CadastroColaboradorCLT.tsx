@@ -161,8 +161,16 @@ export function CadastroColaboradorCLT() {
         if (depError) throw depError;
       }
 
+      // Update convite status if created from invitation
+      if (conviteId) {
+        await supabase
+          .from("convites_cadastro")
+          .update({ colaborador_id: inserted.id, status: "cadastrado" })
+          .eq("id", conviteId);
+      }
+
       toast.success("Colaborador cadastrado com sucesso!");
-      navigate("/colaboradores");
+      navigate(`/colaboradores/${inserted.id}`);
     } catch (err: any) {
       console.error(err);
       toast.error(err.message || "Erro ao cadastrar colaborador");
