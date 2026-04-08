@@ -392,12 +392,51 @@ export default function ColaboradorDetalhe() {
           <TabsContent value="empresa">
             <Card><CardContent className="pt-6">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-                <InfoField label="Email Corporativo" value={(colaborador as any).email_corporativo} />
-                <InfoField label="Ramal" value={(colaborador as any).ramal} />
-                <InfoField label="Data de Integração" value={(colaborador as any).data_integracao ? format(parseISO((colaborador as any).data_integracao), "dd/MM/yyyy") : ""} />
+                <InfoField label="Email Corporativo" value={colaborador.email_corporativo} />
+                <InfoField label="Ramal" value={colaborador.ramal} />
+                <InfoField label="Data de Integração" value={colaborador.data_integracao ? format(parseISO(colaborador.data_integracao), "dd/MM/yyyy") : ""} />
               </div>
-              <h3 className="font-semibold mb-3">Acesso aos Sistemas</h3>
-              <p className="text-xs text-muted-foreground mb-4">Dados carregados na edição do colaborador.</p>
+
+              <h3 className="font-semibold mb-3">🔐 Acesso aos Sistemas</h3>
+              {acessosSistemas.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">Nenhum acesso cadastrado.</p>
+              ) : (
+                <div className="space-y-2 mb-6">
+                  {acessosSistemas.map((a) => (
+                    <div key={a.id} className="border rounded-lg p-3 flex items-center justify-between">
+                      <div>
+                        <p className="font-medium text-sm">{a.sistema}</p>
+                        {a.usuario && <p className="text-xs text-muted-foreground">Usuário: {a.usuario}</p>}
+                        {a.observacoes && <p className="text-xs text-muted-foreground">{a.observacoes}</p>}
+                      </div>
+                      <Badge variant={a.tem_acesso ? "default" : "secondary"} className="text-xs">
+                        {a.tem_acesso ? "Ativo" : "Sem acesso"}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <h3 className="font-semibold mb-3">💻 Equipamentos</h3>
+              {equipamentos.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">Nenhum equipamento cadastrado.</p>
+              ) : (
+                <div className="space-y-2">
+                  {equipamentos.map((e) => (
+                    <div key={e.id} className="border rounded-lg p-3">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <InfoField label="Tipo" value={e.tipo} />
+                        <InfoField label="Marca / Modelo" value={[e.marca, e.modelo].filter(Boolean).join(" ") || null} />
+                        <InfoField label="Nº Patrimônio" value={e.numero_patrimonio} />
+                        <InfoField label="Nº Série" value={e.numero_serie} />
+                        <InfoField label="Estado" value={e.estado} />
+                        <InfoField label="Data Entrega" value={e.data_entrega ? format(parseISO(e.data_entrega), "dd/MM/yyyy") : ""} />
+                      </div>
+                      {e.observacoes && <p className="text-xs text-muted-foreground mt-2">{e.observacoes}</p>}
+                    </div>
+                  ))}
+                </div>
+              )}
             </CardContent></Card>
           </TabsContent>
 
