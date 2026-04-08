@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { FileText, Download, Eye, Loader2, Image as ImageIcon } from "lucide-react";
+import { FileText, Download, Eye, Loader2, Image as ImageIcon, Upload, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -9,6 +10,7 @@ interface StorageFile {
   name: string;
   url: string;
   isImage: boolean;
+  folder: string;
 }
 
 const LABEL_MAP: Record<string, string> = {
@@ -35,66 +37,138 @@ interface DocumentosAnexadosProps {
 export function DocumentosAnexados({ colaboradorId, contratoPjId }: DocumentosAnexadosProps) {
   const [files, setFiles] = useState<StorageFile[]>([]);
   const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewTitle, setPreviewTitle] = useState("");
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  useEffect(() => {
-    async function loadFiles() {
-      setLoading(true);
-      try {
-        // Find the convite linked to this colaborador/contrato to get the token
-        let query = supabase.from("convites_cadastro").select("token");
-        if (colaboradorId) {
-          query = query.eq("colaborador_id", colaboradorId);
-        } else if (contratoPjId) {
-          query = query.eq("contrato_pj_id", contratoPjId);
-        } else {
-          setLoading(false);
-          return;
-        }
+  const directFolder = colaboradorId
+    ? `clt-${colaboradorId}`
+    : contratoPjId
+    ? `pj-${contratoPjId}`
+    : null;
 
-        const { data: convites } = await query;
-        
-        if (!convites || convites.length === 0) {
-          // Also try finding by checking dados_preenchidos for uploaded files
-          // Try listing files directly if we have the ID
-          setLoading(false);
-          return;
-        }
+  const loadFiles = async () => {
+    setLoading(true);
+    try {
+      const allFiles: StorageFile[] = [];
 
-        const allFiles: StorageFile[] = [];
+      // 1) Files from convite (pre-cadastro uploads)
+      let query = supabase.from("convites_cadastro").select("token");
+      if (colaboradorId) query = query.eq("colaborador_id", colaboradorId);
+      else if (contratoPjId) query = query.eq("contrato_pj_id", contratoPjId);
 
-        for (const convite of convites) {
-          const { data: storageFiles } = await supabase.storage
-            .from("documentos-cadastro")
-            .list(convite.token, { limit: 50 });
+      const { data: convites } = await query;
 
-          if (storageFiles) {
-            for (const sf of storageFiles) {
-              if (sf.name === ".emptyFolderPlaceholder") continue;
-              const { data: urlData } = supabase.storage
-                .from("documentos-cadastro")
-                .getPublicUrl(`${convite.token}/${sf.name}`);
+      for (const convite of convites || []) {
+        const { data: storageFiles } = await supabase.storage
+          .from("documentos-cadastro")
+          .list(convite.token, { limit: 50 });
 
-              allFiles.push({
-                name: sf.name,
-                url: urlData.publicUrl,
-                isImage: isImageFile(sf.name),
-              });
-            }
+        if (storageFiles) {
+          for (const sf of storageFiles) {
+            if (sf.name === ".emptyFolderPlaceholder") continue;
+            const { data: urlData } = supabase.storage
+              .from("documentos-cadastro")
+              .getPublicUrl(`${convite.token}/${sf.name}`);
+            allFiles.push({
+              name: sf.name,
+              url: urlData.publicUrl,
+              isImage: isImageFile(sf.name),
+              folder: convite.token,
+            });
           }
         }
-
-        setFiles(allFiles);
-      } catch (err) {
-        console.error("Erro ao carregar documentos:", err);
-      } finally {
-        setLoading(false);
       }
-    }
 
+      // 2) Files uploaded directly by HR
+      if (directFolder) {
+        const { data: directFiles } = await supabase.storage
+          .from("documentos-cadastro")
+          .list(directFolder, { limit: 50 });
+
+        if (directFiles) {
+          for (const sf of directFiles) {
+            if (sf.name === ".emptyFolderPlaceholder") continue;
+            const { data: urlData } = supabase.storage
+              .from("documentos-cadastro")
+              .getPublicUrl(`${directFolder}/${sf.name}`);
+            allFiles.push({
+              name: sf.name,
+              url: urlData.publicUrl,
+              isImage: isImageFile(sf.name),
+              folder: directFolder,
+            });
+          }
+        }
+      }
+
+      setFiles(allFiles);
+    } catch (err) {
+      console.error("Erro ao carregar documentos:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     loadFiles();
   }, [colaboradorId, contratoPjId]);
+
+  const handleUpload = async (file: File) => {
+    if (!directFolder) return;
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("Arquivo muito grande. Máximo 10MB.");
+      return;
+    }
+    const allowedTypes = [
+      "image/jpeg", "image/png", "image/webp", "application/pdf",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error("Formato não suportado. Use JPG, PNG, WebP, PDF ou DOC/DOCX.");
+      return;
+    }
+
+    setUploading(true);
+    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+    const filePath = `${directFolder}/${safeName}`;
+
+    const { error } = await supabase.storage
+      .from("documentos-cadastro")
+      .upload(filePath, file, { upsert: true });
+
+    if (error) {
+      toast.error("Erro ao enviar: " + error.message);
+      setUploading(false);
+      return;
+    }
+
+    const { data: urlData } = supabase.storage
+      .from("documentos-cadastro")
+      .getPublicUrl(filePath);
+
+    setFiles((prev) => [
+      ...prev,
+      { name: safeName, url: urlData.publicUrl, isImage: isImageFile(safeName), folder: directFolder },
+    ]);
+    toast.success("Documento enviado com sucesso!");
+    setUploading(false);
+  };
+
+  const handleDelete = async (file: StorageFile) => {
+    const filePath = `${file.folder}/${file.name}`;
+    const { error } = await supabase.storage
+      .from("documentos-cadastro")
+      .remove([filePath]);
+    if (error) {
+      toast.error("Erro ao excluir: " + error.message);
+      return;
+    }
+    setFiles((prev) => prev.filter((f) => !(f.name === file.name && f.folder === file.folder)));
+    toast.success("Documento removido.");
+  };
 
   if (loading) {
     return (
@@ -105,57 +179,68 @@ export function DocumentosAnexados({ colaboradorId, contratoPjId }: DocumentosAn
     );
   }
 
-  if (files.length === 0) {
-    return (
-      <p className="text-sm text-muted-foreground py-2">
-        Nenhum documento anexado encontrado.
-      </p>
-    );
-  }
-
   return (
     <>
-      <div className="space-y-3">
-        {files.map((file) => (
-          <Card key={file.name} className="border-muted">
-            <CardContent className="p-3 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                {file.isImage ? (
-                  <ImageIcon className="h-5 w-5 text-primary shrink-0" />
-                ) : (
-                  <FileText className="h-5 w-5 text-primary shrink-0" />
-                )}
-                <span className="text-sm font-medium">{friendlyName(file.name)}</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={() => {
-                    setPreviewTitle(friendlyName(file.name));
-                    setPreviewUrl(file.url);
-                  }}
-                  title="Visualizar"
-                >
-                  <Eye className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  asChild
-                  title="Download"
-                >
-                  <a href={file.url} target="_blank" rel="noopener noreferrer" download>
-                    <Download className="h-4 w-4" />
-                  </a>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+      <div className="flex items-center gap-3 mb-4">
+        <Button
+          variant="outline"
+          size="sm"
+          className="gap-2"
+          disabled={uploading}
+          onClick={() => fileInputRef.current?.click()}
+        >
+          {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+          Enviar Documento
+        </Button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp,application/pdf,.doc,.docx"
+          className="hidden"
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (f) handleUpload(f);
+            e.target.value = "";
+          }}
+        />
+        <span className="text-xs text-muted-foreground">JPG, PNG, WebP, PDF ou DOC (máx. 10MB)</span>
       </div>
+
+      {files.length === 0 ? (
+        <p className="text-sm text-muted-foreground py-2">Nenhum documento anexado encontrado.</p>
+      ) : (
+        <div className="space-y-3">
+          {files.map((file) => (
+            <Card key={`${file.folder}/${file.name}`} className="border-muted">
+              <CardContent className="p-3 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  {file.isImage ? (
+                    <ImageIcon className="h-5 w-5 text-primary shrink-0" />
+                  ) : (
+                    <FileText className="h-5 w-5 text-primary shrink-0" />
+                  )}
+                  <span className="text-sm font-medium">{friendlyName(file.name)}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Button variant="ghost" size="icon" className="h-8 w-8" title="Visualizar"
+                    onClick={() => { setPreviewTitle(friendlyName(file.name)); setPreviewUrl(file.url); }}>
+                    <Eye className="h-4 w-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon" className="h-8 w-8" asChild title="Download">
+                    <a href={file.url} target="_blank" rel="noopener noreferrer" download>
+                      <Download className="h-4 w-4" />
+                    </a>
+                  </Button>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive"
+                    onClick={() => handleDelete(file)} title="Excluir">
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
 
       <Dialog open={!!previewUrl} onOpenChange={(o) => !o && setPreviewUrl(null)}>
         <DialogContent className="max-w-3xl max-h-[85vh]">
@@ -167,11 +252,7 @@ export function DocumentosAnexados({ colaboradorId, contratoPjId }: DocumentosAn
               previewUrl.match(/\.pdf$/i) ? (
                 <iframe src={previewUrl} className="w-full h-[65vh] border rounded" />
               ) : (
-                <img
-                  src={previewUrl}
-                  alt={previewTitle}
-                  className="max-w-full max-h-[65vh] object-contain rounded"
-                />
+                <img src={previewUrl} alt={previewTitle} className="max-w-full max-h-[65vh] object-contain rounded" />
               )
             )}
           </div>
