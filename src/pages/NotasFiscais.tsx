@@ -216,15 +216,17 @@ export default function NotasFiscais() {
                   <TableHead className="font-semibold hidden md:table-cell">Competência</TableHead>
                   <TableHead className="font-semibold hidden md:table-cell">Emissão</TableHead>
                   <TableHead className="font-semibold">Valor</TableHead>
+                  <TableHead className="font-semibold hidden lg:table-cell">Vencimento</TableHead>
+                  <TableHead className="font-semibold hidden lg:table-cell">Forma Pgto</TableHead>
                   <TableHead className="font-semibold">Status</TableHead>
                   <TableHead className="w-10" />
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {loading ? (
-                  <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground"><Loader2 className="h-5 w-5 animate-spin mx-auto" /></TableCell></TableRow>
+                  <TableRow><TableCell colSpan={9} className="text-center py-8 text-muted-foreground"><Loader2 className="h-5 w-5 animate-spin mx-auto" /></TableCell></TableRow>
                 ) : filtered.length === 0 ? (
-                  <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Nenhuma nota fiscal encontrada.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={9} className="text-center py-8 text-muted-foreground">Nenhuma nota fiscal encontrada.</TableCell></TableRow>
                 ) : filtered.map((n) => (
                   <TableRow key={n.id} className="hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => navigate(`/notas-fiscais/${n.id}`)}>
                     <TableCell className="font-medium">{n.numero}{n.serie ? `/${n.serie}` : ""}</TableCell>
@@ -232,6 +234,8 @@ export default function NotasFiscais() {
                     <TableCell className="text-sm hidden md:table-cell">{n.competencia}</TableCell>
                     <TableCell className="text-sm hidden md:table-cell">{format(parseISO(n.data_emissao), "dd/MM/yyyy")}</TableCell>
                     <TableCell>R$ {Number(n.valor).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</TableCell>
+                    <TableCell className="text-sm hidden lg:table-cell">{n.data_vencimento ? format(parseISO(n.data_vencimento), "dd/MM/yyyy") : "—"}</TableCell>
+                    <TableCell className="text-sm hidden lg:table-cell capitalize">{n.pagamento_forma || "—"}</TableCell>
                     <TableCell><Badge variant="outline" className={statusStyles[n.status] || ""}>{statusMap[n.status] || n.status}</Badge></TableCell>
                     <TableCell>
                       <DropdownMenu>
