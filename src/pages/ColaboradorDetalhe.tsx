@@ -70,8 +70,30 @@ export default function ColaboradorDetalhe() {
   const [dependentes, setDependentes] = useState<Dependente[]>([]);
   const [acessosSistemas, setAcessosSistemas] = useState<Tables<"colaborador_acessos_sistemas">[]>([]);
   const [equipamentos, setEquipamentos] = useState<Tables<"colaborador_equipamentos">[]>([]);
+  const [statusDialogOpen, setStatusDialogOpen] = useState(false);
+  const [togglingStatus, setTogglingStatus] = useState(false);
 
   const methods = useForm<AllFormData>({ mode: "onBlur" });
+
+  const isAtivo = colaborador?.status === "ativo" || colaborador?.status === "experiencia";
+
+  const handleToggleStatus = async () => {
+    if (!id || !colaborador) return;
+    setTogglingStatus(true);
+    const newStatus = isAtivo ? "desligado" : "ativo";
+    const { error } = await supabase
+      .from("colaboradores_clt")
+      .update({ status: newStatus } as any)
+      .eq("id", id);
+    if (error) {
+      toast.error(error.message);
+    } else {
+      setColaborador({ ...colaborador, status: newStatus });
+      toast.success(newStatus === "desligado" ? "Colaborador inativado" : "Colaborador reativado");
+    }
+    setTogglingStatus(false);
+    setStatusDialogOpen(false);
+  };
 
   useEffect(() => {
     if (!id) return;
