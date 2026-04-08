@@ -41,7 +41,7 @@ const cltItems = [
 ];
 
 const pjItems = [
-  { title: "Contratos PJ", url: "/contratos-pj", icon: Briefcase, roles: ["super_admin", "gestor_rh", "financeiro"] as AppRole[] },
+  { title: "Colaboradores PJ", url: "/contratos-pj", icon: Briefcase, roles: ["super_admin", "gestor_rh", "financeiro"] as AppRole[] },
   { title: "Notas Fiscais", url: "/notas-fiscais", icon: FileText, roles: ["super_admin", "gestor_rh", "financeiro"] as AppRole[] },
 ];
 
