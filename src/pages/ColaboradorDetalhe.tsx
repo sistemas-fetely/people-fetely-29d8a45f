@@ -6,12 +6,16 @@ import { toast } from "sonner";
 import { format, parseISO } from "date-fns";
 import {
   ArrowLeft, Edit, Save, Loader2, X, User, FileText, Briefcase,
-  Building2, Users as UsersIcon, Monitor,
+  Building2, Users as UsersIcon, Monitor, UserCheck, UserX,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import type { Tables } from "@/integrations/supabase/types";
@@ -66,8 +70,30 @@ export default function ColaboradorDetalhe() {
   const [dependentes, setDependentes] = useState<Dependente[]>([]);
   const [acessosSistemas, setAcessosSistemas] = useState<Tables<"colaborador_acessos_sistemas">[]>([]);
   const [equipamentos, setEquipamentos] = useState<Tables<"colaborador_equipamentos">[]>([]);
+  const [statusDialogOpen, setStatusDialogOpen] = useState(false);
+  const [togglingStatus, setTogglingStatus] = useState(false);
 
   const methods = useForm<AllFormData>({ mode: "onBlur" });
+
+  const isAtivo = colaborador?.status === "ativo" || colaborador?.status === "experiencia";
+
+  const handleToggleStatus = async () => {
+    if (!id || !colaborador) return;
+    setTogglingStatus(true);
+    const newStatus = isAtivo ? "desligado" : "ativo";
+    const { error } = await supabase
+      .from("colaboradores_clt")
+      .update({ status: newStatus } as any)
+      .eq("id", id);
+    if (error) {
+      toast.error(error.message);
+    } else {
+      setColaborador({ ...colaborador, status: newStatus });
+      toast.success(newStatus === "desligado" ? "Colaborador inativado" : "Colaborador reativado");
+    }
+    setTogglingStatus(false);
+    setStatusDialogOpen(false);
+  };
 
   useEffect(() => {
     if (!id) return;
@@ -260,9 +286,19 @@ export default function ColaboradorDetalhe() {
           <Button variant="ghost" onClick={() => navigate("/colaboradores")} className="gap-2">
             <ArrowLeft className="h-4 w-4" /> Voltar
           </Button>
-          <Button onClick={() => setEditing(true)} className="gap-2">
-            <Edit className="h-4 w-4" /> Editar
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant={isAtivo ? "outline" : "default"}
+              onClick={() => setStatusDialogOpen(true)}
+              className={`gap-2 ${isAtivo ? "text-destructive border-destructive hover:bg-destructive/10" : ""}`}
+            >
+              {isAtivo ? <UserX className="h-4 w-4" /> : <UserCheck className="h-4 w-4" />}
+              {isAtivo ? "Inativar" : "Reativar"}
+            </Button>
+            <Button onClick={() => setEditing(true)} className="gap-2">
+              <Edit className="h-4 w-4" /> Editar
+            </Button>
+          </div>
         </div>
 
         {/* Header card */}
@@ -463,6 +499,29 @@ export default function ColaboradorDetalhe() {
             </CardContent></Card>
           </TabsContent>
         </Tabs>
+
+        <AlertDialog open={statusDialogOpen} onOpenChange={setStatusDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>{isAtivo ? "Inativar colaborador?" : "Reativar colaborador?"}</AlertDialogTitle>
+              <AlertDialogDescription>
+                {isAtivo
+                  ? `O colaborador "${colaborador.nome_completo}" será marcado como desligado. Você poderá reativá-lo depois.`
+                  : `O colaborador "${colaborador.nome_completo}" será reativado com status "Ativo".`}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleToggleStatus}
+                disabled={togglingStatus}
+                className={isAtivo ? "bg-destructive text-destructive-foreground hover:bg-destructive/90" : ""}
+              >
+                {togglingStatus ? <Loader2 className="h-4 w-4 animate-spin" /> : isAtivo ? "Inativar" : "Reativar"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     );
   }
