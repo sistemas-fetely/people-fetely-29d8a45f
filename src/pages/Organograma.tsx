@@ -7,6 +7,8 @@ import { OrgVisualView } from "@/components/organograma/OrgVisualView";
 import { OrgSyntheticView } from "@/components/organograma/OrgSyntheticView";
 import { OrgAnalyticView } from "@/components/organograma/OrgAnalyticView";
 import { OrgNodeDrawer } from "@/components/organograma/OrgNodeDrawer";
+import { OrgPosicaoModal } from "@/components/organograma/OrgPosicaoModal";
+import { OrgMoveConfirmDialog } from "@/components/organograma/OrgMoveConfirmDialog";
 import type { ViewMode, OrgFilters, PosicaoNode } from "@/types/organograma";
 
 function filterTree(nodes: PosicaoNode[], filters: OrgFilters): PosicaoNode[] {
@@ -58,6 +60,15 @@ export default function Organograma() {
   const [selectedNode, setSelectedNode] = useState<PosicaoNode | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
+  // Modal state
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editNode, setEditNode] = useState<PosicaoNode | null>(null);
+
+  // Move confirm dialog state
+  const [moveDialogOpen, setMoveDialogOpen] = useState(false);
+  const [movedNode, setMovedNode] = useState<PosicaoNode | null>(null);
+  const [moveTarget, setMoveTarget] = useState<PosicaoNode | null>(null);
+
   const setViewMode = (v: ViewMode) => {
     setSearchParams(prev => { prev.set("view", v); return prev; });
   };
@@ -66,6 +77,28 @@ export default function Organograma() {
     setSelectedNode(node);
     setDrawerOpen(true);
   }, []);
+
+  const handleCreatePosition = () => {
+    setEditNode(null);
+    setModalOpen(true);
+  };
+
+  const handleEditPosition = useCallback((node: PosicaoNode) => {
+    setEditNode(node);
+    setModalOpen(true);
+    setDrawerOpen(false);
+  }, []);
+
+  const handleMoveRequest = useCallback((movedId: string, newParentId: string) => {
+    if (!data) return;
+    const moved = data.flat.find(n => n.id === movedId);
+    const target = data.flat.find(n => n.id === newParentId);
+    if (moved && target && moved.id_pai !== target.id) {
+      setMovedNode(moved);
+      setMoveTarget(target);
+      setMoveDialogOpen(true);
+    }
+  }, [data]);
 
   const filteredTree = useMemo(() => {
     if (!data) return [];
@@ -94,10 +127,16 @@ export default function Organograma() {
         filters={filters}
         onFiltersChange={setFilters}
         allNodes={data?.flat || []}
+        onCreatePosition={handleCreatePosition}
       />
 
       {viewMode === "visual" && (
-        <OrgVisualView tree={filteredTree} filters={filters} onNodeClick={handleNodeClick} />
+        <OrgVisualView
+          tree={filteredTree}
+          filters={filters}
+          onNodeClick={handleNodeClick}
+          onMoveRequest={handleMoveRequest}
+        />
       )}
       {viewMode === "sintetico" && (
         <OrgSyntheticView tree={filteredTree} flat={filteredFlat} filters={filters} onNodeClick={handleNodeClick} />
@@ -110,6 +149,22 @@ export default function Organograma() {
         node={selectedNode}
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
+        allNodes={data?.flat || []}
+        onEditPosition={handleEditPosition}
+      />
+
+      <OrgPosicaoModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        editNode={editNode}
+        allNodes={data?.flat || []}
+      />
+
+      <OrgMoveConfirmDialog
+        open={moveDialogOpen}
+        onClose={() => setMoveDialogOpen(false)}
+        movedNode={movedNode}
+        newParent={moveTarget}
         allNodes={data?.flat || []}
       />
     </div>
