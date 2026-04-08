@@ -171,8 +171,9 @@ export default function ConviteDetalhe() {
 
         await supabase
           .from("convites_cadastro")
-          .update({ colaborador_id: colaborador.id, status: "preenchido" })
+          .update({ colaborador_id: colaborador.id, status: "cadastrado" })
           .eq("id", convite.id);
+        setConvite({ ...convite, colaborador_id: colaborador.id, status: "cadastrado" });
 
         toast.success("Colaborador CLT criado com sucesso!");
         navigate(`/colaboradores/${colaborador.id}`);
@@ -208,8 +209,9 @@ export default function ConviteDetalhe() {
 
         await supabase
           .from("convites_cadastro")
-          .update({ contrato_pj_id: contrato.id, status: "preenchido" })
+          .update({ contrato_pj_id: contrato.id, status: "cadastrado" })
           .eq("id", convite.id);
+        setConvite({ ...convite, contrato_pj_id: contrato.id, status: "cadastrado" });
 
         toast.success("Contrato PJ criado com sucesso!");
         navigate(`/contratos-pj/${contrato.id}`);
@@ -235,7 +237,7 @@ export default function ConviteDetalhe() {
   const hasDados = Object.keys(formData).length > 0;
   const expired = convite.status === "pendente" && new Date(convite.expira_em) <= new Date();
   const displayStatus = expired ? "expirado" : convite.status;
-  const canExport = hasDados && !convite.colaborador_id && !convite.contrato_pj_id;
+  const canExport = hasDados && !convite.colaborador_id && !convite.contrato_pj_id && convite.status !== "cadastrado";
 
   return (
     <div className="space-y-6">
