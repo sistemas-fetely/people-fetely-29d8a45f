@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { format, differenceInDays, addDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Calendar, Plus, Check, X, Eye } from "lucide-react";
+import { Calendar, Plus, Check, X, Eye, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -18,9 +18,10 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import {
-  useFeriasPeriodos, useCriarPeriodo, useCriarProgramacao, useAtualizarStatusProgramacao,
+  useFeriasPeriodos, useCriarPeriodo, useCriarProgramacao, useAtualizarStatusProgramacao, useEditarProgramacao,
   type PeriodoComColaborador,
 } from "@/hooks/useFerias";
+import type { Tables } from "@/integrations/supabase/types";
 
 const STATUS_PERIODO: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
   em_aberto: { label: "Em Aberto", variant: "outline" },
@@ -48,10 +49,13 @@ export function FeriasCLTView({ canManage }: Props) {
   const criarPeriodoMut = useCriarPeriodo();
   const criarProgMut = useCriarProgramacao();
   const atualizarStatusMut = useAtualizarStatusProgramacao();
+  const editarProgMut = useEditarProgramacao();
 
   const [showNovoPeriodo, setShowNovoPeriodo] = useState(false);
   const [showNovaProg, setShowNovaProg] = useState(false);
+  const [showEditProg, setShowEditProg] = useState(false);
   const [selectedPeriodo, setSelectedPeriodo] = useState<PeriodoComColaborador | null>(null);
+  const [editingProg, setEditingProg] = useState<Tables<"ferias_programacoes"> | null>(null);
   const [busca, setBusca] = useState("");
 
   // Form state - novo período
@@ -124,6 +128,33 @@ export function FeriasCLTView({ canManage }: Props) {
         setProgDataInicio(undefined);
         setProgDias(30);
         setProgObs("");
+      },
+    });
+  };
+
+  const openEditProg = (pr: Tables<"ferias_programacoes">) => {
+    setEditingProg(pr);
+    setProgDataInicio(new Date(pr.data_inicio));
+    setProgDias(pr.dias);
+    setProgTipo(pr.tipo);
+    setProgObs(pr.observacoes || "");
+    setShowEditProg(true);
+  };
+
+  const handleEditProg = () => {
+    if (!editingProg || !progDataInicio) return;
+    const dataFim = addDays(progDataInicio, progDias - 1);
+    editarProgMut.mutate({
+      id: editingProg.id,
+      data_inicio: format(progDataInicio, "yyyy-MM-dd"),
+      data_fim: format(dataFim, "yyyy-MM-dd"),
+      dias: progDias,
+      tipo: progTipo,
+      observacoes: progObs || null,
+    }, {
+      onSuccess: () => {
+        setShowEditProg(false);
+        setEditingProg(null);
       },
     });
   };
@@ -216,6 +247,11 @@ export function FeriasCLTView({ canManage }: Props) {
                               <div key={pr.id} className="flex items-center gap-1.5 text-xs">
                                 <Badge variant={pst.variant} className="text-[10px] px-1.5">{pst.label}</Badge>
                                 <span>{format(new Date(pr.data_inicio), "dd/MM")} - {format(new Date(pr.data_fim), "dd/MM")} ({pr.dias}d)</span>
+                                {canManage && (pr.status === "programada" || pr.status === "aprovada") && (
+                                  <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => openEditProg(pr)}>
+                                    <Pencil className="h-3 w-3" />
+                                  </Button>
+                                )}
                                 {canManage && pr.status === "programada" && (
                                   <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => atualizarStatusMut.mutate({ id: pr.id, status: "aprovada" })}>
                                     <Check className="h-3 w-3 text-green-600" />
@@ -344,6 +380,53 @@ export function FeriasCLTView({ canManage }: Props) {
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowNovaProg(false)}>Cancelar</Button>
             <Button onClick={handleCriarProg} disabled={!progDataInicio || progDias < 1}>Programar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog Editar Programação */}
+      <Dialog open={showEditProg} onOpenChange={setShowEditProg}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader><DialogTitle>Editar Programação</DialogTitle></DialogHeader>
+          <div className="space-y-3 py-2">
+            <div className="space-y-1">
+              <Label>Data Início</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className={cn("w-full justify-start", !progDataInicio && "text-muted-foreground")}>
+                    <Calendar className="mr-2 h-4 w-4" />
+                    {progDataInicio ? format(progDataInicio, "dd/MM/yyyy") : "Selecione"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <CalendarComp mode="single" selected={progDataInicio} onSelect={setProgDataInicio} className="p-3 pointer-events-auto" />
+                </PopoverContent>
+              </Popover>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label>Dias</Label>
+                <Input type="number" value={progDias} onChange={(e) => setProgDias(Number(e.target.value))} min={5} />
+              </div>
+              <div className="space-y-1">
+                <Label>Tipo</Label>
+                <Select value={progTipo} onValueChange={setProgTipo}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="gozo">Gozo</SelectItem>
+                    <SelectItem value="abono_pecuniario">Abono Pecuniário</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="space-y-1">
+              <Label>Observações</Label>
+              <Textarea value={progObs} onChange={(e) => setProgObs(e.target.value)} rows={2} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowEditProg(false)}>Cancelar</Button>
+            <Button onClick={handleEditProg} disabled={!progDataInicio || progDias < 1}>Salvar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -548,6 +548,59 @@ export type Database = {
           },
         ]
       }
+      ferias_periodos_pj: {
+        Row: {
+          contrato_id: string
+          created_at: string
+          dias_direito: number
+          dias_gozados: number
+          dias_vendidos: number
+          id: string
+          observacoes: string | null
+          periodo_fim: string
+          periodo_inicio: string
+          saldo: number | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          contrato_id: string
+          created_at?: string
+          dias_direito?: number
+          dias_gozados?: number
+          dias_vendidos?: number
+          id?: string
+          observacoes?: string | null
+          periodo_fim: string
+          periodo_inicio: string
+          saldo?: number | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          contrato_id?: string
+          created_at?: string
+          dias_direito?: number
+          dias_gozados?: number
+          dias_vendidos?: number
+          id?: string
+          observacoes?: string | null
+          periodo_fim?: string
+          periodo_inicio?: string
+          saldo?: number | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ferias_periodos_pj_contrato_id_fkey"
+            columns: ["contrato_id"]
+            isOneToOne: false
+            referencedRelation: "contratos_pj"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ferias_pj: {
         Row: {
           contrato_id: string
@@ -557,6 +610,7 @@ export type Database = {
           dias: number
           id: string
           observacoes: string | null
+          periodo_pj_id: string | null
           status: string
           tipo: string
           updated_at: string
@@ -569,6 +623,7 @@ export type Database = {
           dias: number
           id?: string
           observacoes?: string | null
+          periodo_pj_id?: string | null
           status?: string
           tipo?: string
           updated_at?: string
@@ -581,6 +636,7 @@ export type Database = {
           dias?: number
           id?: string
           observacoes?: string | null
+          periodo_pj_id?: string | null
           status?: string
           tipo?: string
           updated_at?: string
@@ -591,6 +647,13 @@ export type Database = {
             columns: ["contrato_id"]
             isOneToOne: false
             referencedRelation: "contratos_pj"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ferias_pj_periodo_pj_id_fkey"
+            columns: ["periodo_pj_id"]
+            isOneToOne: false
+            referencedRelation: "ferias_periodos_pj"
             referencedColumns: ["id"]
           },
         ]
