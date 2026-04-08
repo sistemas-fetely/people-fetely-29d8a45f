@@ -80,12 +80,16 @@ export function CadastroColaboradorCLT() {
   const onSubmit = async (data: AllFormData) => {
     setSaving(true);
     try {
-      const { dependentes, salario_base, jornada_semanal, ...colaboradorData } = data;
+      const { dependentes, departamentos_rateio, salario_base, jornada_semanal, ...colaboradorData } = data;
+
+      // Use first department as primary
+      const primaryDept = departamentos_rateio?.[0]?.departamento || "";
 
       const { data: inserted, error } = await supabase
         .from("colaboradores_clt")
         .insert({
           ...colaboradorData,
+          departamento: primaryDept,
           salario_base: Number(salario_base),
           jornada_semanal: Number(jornada_semanal) || 44,
           created_by: user?.id,
@@ -95,6 +99,19 @@ export function CadastroColaboradorCLT() {
 
       if (error) throw error;
 
+      // Insert department allocations
+      if (departamentos_rateio && departamentos_rateio.length > 0) {
+        const depsToInsert = departamentos_rateio.map((d) => ({
+          colaborador_id: inserted.id,
+          departamento: d.departamento,
+          percentual_rateio: Number(d.percentual_rateio),
+        }));
+
+        const { error: deptError } = await supabase.from("colaborador_departamentos").insert(depsToInsert);
+        if (deptError) throw deptError;
+      }
+
+      // Insert dependents
       if (dependentes && dependentes.length > 0) {
         const depsToInsert = dependentes.map((d) => ({
           colaborador_id: inserted.id,
