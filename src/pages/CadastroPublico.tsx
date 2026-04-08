@@ -567,7 +567,7 @@ interface ConviteData {
 }
 
 const CLT_STEPS = ["Dados Pessoais", "Documentos", "Dados Bancários", "Dependentes", "Upload de Documentos"];
-const PJ_STEPS = ["Dados Pessoais", "Dados da Empresa", "Dados Bancários", "Upload de Documentos"];
+const PJ_STEPS = ["Dados Pessoais", "Dados da Empresa", "Documentos", "Dados Bancários", "Upload de Documentos"];
 
 export default function CadastroPublico() {
   const { token } = useParams<{ token: string }>();
