@@ -298,7 +298,7 @@ export default function ConviteDetalhe() {
             <div className="flex items-center gap-3 flex-wrap">
               <h1 className="text-2xl font-bold">{convite.nome}</h1>
               <Badge variant="outline" className={statusStyles[displayStatus] || ""}>
-                {displayStatus.charAt(0).toUpperCase() + displayStatus.slice(1)}
+                {statusLabels[displayStatus] || displayStatus.charAt(0).toUpperCase() + displayStatus.slice(1)}
               </Badge>
               <Badge variant="outline" className="text-xs">{convite.tipo.toUpperCase()}</Badge>
             </div>
