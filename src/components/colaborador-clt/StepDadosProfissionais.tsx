@@ -3,13 +3,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Loader2 } from "lucide-react";
+import { useParametros } from "@/hooks/useParametros";
 import type { DadosProfissionaisForm } from "@/lib/validations/colaborador-clt";
-
-const departamentos = ["TI", "RH", "Comercial", "Financeiro", "Marketing", "Operações", "Jurídico", "Administrativo"];
 
 export function StepDadosProfissionais() {
   const { register, setValue, watch, control, formState: { errors } } = useFormContext<DadosProfissionaisForm>();
+
+  const { data: departamentos, isLoading: loadingDepts } = useParametros("departamento");
+  const { data: cargos, isLoading: loadingCargos } = useParametros("cargo");
+  const { data: tiposContrato, isLoading: loadingTipos } = useParametros("tipo_contrato");
+  const { data: jornadas, isLoading: loadingJornadas } = useParametros("jornada");
 
   const { fields, append, remove } = useFieldArray({
     control,
@@ -35,7 +39,18 @@ export function StepDadosProfissionais() {
         </div>
         <div>
           <Label htmlFor="cargo">Cargo *</Label>
-          <Input id="cargo" {...register("cargo")} placeholder="Ex: Desenvolvedor Senior" />
+          {loadingCargos ? (
+            <div className="flex items-center h-10"><Loader2 className="h-4 w-4 animate-spin" /></div>
+          ) : (
+            <Select value={watch("cargo") || ""} onValueChange={(v) => setValue("cargo", v)}>
+              <SelectTrigger><SelectValue placeholder="Selecione o cargo" /></SelectTrigger>
+              <SelectContent>
+                {(cargos || []).map((c) => (
+                  <SelectItem key={c.id} value={c.label}>{c.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
           {errors.cargo && <p className="text-xs text-destructive mt-1">{errors.cargo.message}</p>}
         </div>
         <div>
@@ -45,16 +60,23 @@ export function StepDadosProfissionais() {
         </div>
         <div>
           <Label>Tipo de Contrato</Label>
-          <Select value={watch("tipo_contrato") || "indeterminado"} onValueChange={(v) => setValue("tipo_contrato", v)}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="indeterminado">Prazo Indeterminado</SelectItem>
-              <SelectItem value="determinado">Prazo Determinado</SelectItem>
-              <SelectItem value="experiencia">Experiência</SelectItem>
-              <SelectItem value="intermitente">Intermitente</SelectItem>
-              <SelectItem value="temporario">Temporário</SelectItem>
-            </SelectContent>
-          </Select>
+          {loadingTipos ? (
+            <div className="flex items-center h-10"><Loader2 className="h-4 w-4 animate-spin" /></div>
+          ) : (
+            <Select value={watch("tipo_contrato") || "indeterminado"} onValueChange={(v) => setValue("tipo_contrato", v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {(tiposContrato || []).map((t) => (
+                  <SelectItem key={t.id} value={t.valor}>
+                    <div>
+                      <span>{t.label}</span>
+                      {t.descricao && <span className="text-muted-foreground ml-2 text-xs">— {t.descricao}</span>}
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         </div>
         <div>
           <Label htmlFor="salario_base">Salário Base (R$) *</Label>
@@ -62,8 +84,24 @@ export function StepDadosProfissionais() {
           {errors.salario_base && <p className="text-xs text-destructive mt-1">{errors.salario_base.message}</p>}
         </div>
         <div>
-          <Label htmlFor="jornada_semanal">Jornada Semanal (h)</Label>
-          <Input id="jornada_semanal" type="number" {...register("jornada_semanal")} defaultValue={44} />
+          <Label>Jornada Semanal</Label>
+          {loadingJornadas ? (
+            <div className="flex items-center h-10"><Loader2 className="h-4 w-4 animate-spin" /></div>
+          ) : (
+            <Select value={watch("jornada_semanal")?.toString() || "44"} onValueChange={(v) => setValue("jornada_semanal", Number(v) || 44)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {(jornadas || []).map((j) => (
+                  <SelectItem key={j.id} value={j.valor}>
+                    <div>
+                      <span>{j.label}</span>
+                      {j.descricao && <span className="text-muted-foreground ml-2 text-xs">— {j.descricao}</span>}
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         </div>
         <div>
           <Label htmlFor="horario_trabalho">Horário de Trabalho</Label>
@@ -104,15 +142,21 @@ export function StepDadosProfissionais() {
             <div key={field.id} className="flex items-end gap-3 p-3 rounded-lg bg-muted/30 border">
               <div className="flex-1">
                 <Label>Departamento *</Label>
-                <Select
-                  value={watch(`departamentos_rateio.${index}.departamento`) || ""}
-                  onValueChange={(v) => setValue(`departamentos_rateio.${index}.departamento`, v)}
-                >
-                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                  <SelectContent>
-                    {departamentos.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+                {loadingDepts ? (
+                  <div className="flex items-center h-10"><Loader2 className="h-4 w-4 animate-spin" /></div>
+                ) : (
+                  <Select
+                    value={watch(`departamentos_rateio.${index}.departamento`) || ""}
+                    onValueChange={(v) => setValue(`departamentos_rateio.${index}.departamento`, v)}
+                  >
+                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectContent>
+                      {(departamentos || []).map((d) => (
+                        <SelectItem key={d.id} value={d.label}>{d.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
                 {(errors as any).departamentos_rateio?.[index]?.departamento && (
                   <p className="text-xs text-destructive mt-1">
                     {(errors as any).departamentos_rateio[index].departamento.message}
