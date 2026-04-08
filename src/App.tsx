@@ -52,7 +52,7 @@ const App = () => (
                 </ProtectedRoute>
               } />
               <Route path="/colaboradores/:id" element={<ColaboradorDetalhe />} />
-              <Route path="/organograma" element={<PlaceholderPage title="Organograma" description="Visualização hierárquica da empresa" />} />
+              <Route path="/organograma" element={<Organograma />} />
 
               {/* CLT - Gestor RH, Super Admin, Financeiro */}
               <Route path="/folha-pagamento" element={
