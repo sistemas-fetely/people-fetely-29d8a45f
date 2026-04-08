@@ -162,14 +162,9 @@ export default function NotaFiscalDetalhe() {
   const currentIndex = statusPipeline.indexOf(nota.status);
   const isTerminal = terminalStatuses.includes(nota.status);
 
-  // Map NF status to payment status
+  // Map NF status to payment status — keep same status
   const nfToPagamentoStatus = (nfStatus: string): string => {
-    switch (nfStatus) {
-      case "paga": return "pago";
-      case "cancelada": return "cancelado";
-      case "vencida": return "cancelado";
-      default: return "pendente";
-    }
+    return nfStatus;
   };
 
   const handleStatusChange = async (newStatus: string) => {
