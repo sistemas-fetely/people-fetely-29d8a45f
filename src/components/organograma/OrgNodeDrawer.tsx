@@ -76,6 +76,11 @@ export function OrgNodeDrawer({ node, open, onClose, allNodes, onEditPosition }:
             {node.status === "previsto" && <Badge variant="outline" className="border-dashed border-green-400 text-green-700">🔵 Previsto</Badge>}
             {statusBadge(node.status_pessoal)}
           </div>
+          {canManage && onEditPosition && (
+            <Button variant="outline" size="sm" onClick={() => onEditPosition(node)}>
+              <Pencil className="h-3.5 w-3.5 mr-1" /> Editar Posição
+            </Button>
+          )}
         </div>
 
         <Tabs defaultValue="perfil" className="mt-2">
