@@ -30,7 +30,7 @@ const STATUS_COLORS: Record<string, string> = {
 export default function Dashboard() {
   const {
     clt, pj, headcount, ferias, aniversariantes,
-    statusClt, folha, nfPendentes, pagPjPendentes, isLoading,
+    statusClt, turnover, folha, nfPendentes, pagPjPendentes, isLoading,
   } = useDashboardData();
 
   const statusData = Object.entries(statusClt).map(([status, value]) => ({
