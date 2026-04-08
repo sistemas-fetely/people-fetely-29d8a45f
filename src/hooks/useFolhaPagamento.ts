@@ -242,7 +242,7 @@ export function useEditarHolerite() {
         outrosProventos: input.outrosProventos,
         outrosDescontos: input.outrosDescontos,
       };
-      const calc = calcularFolha(dados);
+      const calc = calcularFolha(dados, input.params);
 
       const { error } = await supabase
         .from("holerites")
