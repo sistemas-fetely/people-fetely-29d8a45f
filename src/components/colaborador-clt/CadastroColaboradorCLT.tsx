@@ -210,7 +210,7 @@ export function CadastroColaboradorCLT() {
             {currentStep === 5 && <StepDadosEmpresa />}
             {currentStep === 6 && <StepDependentes />}
             {currentStep === 7 && (
-              <StepUploadDocumentosCLT
+              <StepUploadDocumentos
                 tipo="clt"
                 folderKey={uploadFolderRef.current}
                 uploadedFiles={uploadedFiles}
