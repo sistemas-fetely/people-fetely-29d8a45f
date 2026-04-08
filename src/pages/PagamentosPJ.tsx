@@ -29,6 +29,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format, parseISO } from "date-fns";
 
+const formatCompetencia = (c: string) => {
+  if (/^\d{4}-\d{2}$/.test(c)) return format(parseISO(`${c}-01`), "MM/yyyy");
+  if (/^\d{6}$/.test(c)) return `${c.slice(0, 2)}/${c.slice(2)}`;
+  return c;
+};
+
 const statusMap: Record<string, string> = {
   pendente: "Pendente", aprovada: "Aprovada", enviada_pagamento: "Enviada para Pagamento",
   paga: "Paga", pago: "Pago", cancelada: "Cancelada", cancelado: "Cancelado", vencida: "Vencida",

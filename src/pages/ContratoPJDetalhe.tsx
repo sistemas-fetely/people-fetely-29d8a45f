@@ -39,6 +39,12 @@ import { StepDependentes } from "@/components/colaborador-clt/StepDependentes";
 
 import type { AllPJFormData } from "@/lib/validations/contrato-pj";
 
+const formatCompetencia = (c: string) => {
+  if (/^\d{4}-\d{2}$/.test(c)) return format(parseISO(`${c}-01`), "MM/yyyy");
+  if (/^\d{6}$/.test(c)) return `${c.slice(0, 2)}/${c.slice(2)}`;
+  return c;
+};
+
 const statusMap: Record<string, string> = {
   rascunho: "Rascunho", ativo: "Ativo", suspenso: "Suspenso",
   encerrado: "Encerrado", renovado: "Renovado",
