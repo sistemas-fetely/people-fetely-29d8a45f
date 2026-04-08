@@ -80,6 +80,27 @@ const pjPessoaisSchema = z.object({
   contato_nome: z.string().min(3, "Nome deve ter pelo menos 3 caracteres"),
   contato_telefone: z.string().optional().or(z.literal("")),
   contato_email: z.string().email("Email inválido").optional().or(z.literal("")),
+  cpf: z.string().optional().or(z.literal("")),
+  rg: z.string().optional().or(z.literal("")),
+  orgao_emissor: z.string().optional().or(z.literal("")),
+  data_nascimento: z.string().optional().or(z.literal("")),
+  genero: z.string().optional().or(z.literal("")),
+  estado_civil: z.string().optional().or(z.literal("")),
+  nacionalidade: z.string().default("Brasileira"),
+  etnia: z.string().optional().or(z.literal("")),
+  nome_mae: z.string().optional().or(z.literal("")),
+  nome_pai: z.string().optional().or(z.literal("")),
+  cep: z.string().optional().or(z.literal("")),
+  logradouro: z.string().optional().or(z.literal("")),
+  numero: z.string().optional().or(z.literal("")),
+  complemento: z.string().optional().or(z.literal("")),
+  bairro: z.string().optional().or(z.literal("")),
+  cidade: z.string().optional().or(z.literal("")),
+  uf: z.string().optional().or(z.literal("")),
+  telefone: z.string().optional().or(z.literal("")),
+  email_pessoal: z.string().email("Email inválido").optional().or(z.literal("")),
+  contato_emergencia_nome: z.string().optional().or(z.literal("")),
+  contato_emergencia_telefone: z.string().optional().or(z.literal("")),
   cnpj: z.string().min(14, "CNPJ é obrigatório"),
   razao_social: z.string().min(2, "Razão Social é obrigatória"),
   nome_fantasia: z.string().optional().or(z.literal("")),
@@ -378,6 +399,23 @@ function StepDependentesCLT() {
 
 function StepPessoaisPJ() {
   const { register, formState: { errors }, setValue, watch } = useFormContext<PjFormData>();
+  const [loadingCep, setLoadingCep] = useState(false);
+
+  const handleCepSearch = async () => {
+    const cep = watch("cep");
+    if (!cep) return;
+    setLoadingCep(true);
+    const data = await fetchCep(cep);
+    if (data) {
+      setValue("logradouro", data.logradouro);
+      setValue("bairro", data.bairro);
+      setValue("cidade", data.localidade);
+      setValue("uf", data.uf);
+      if (data.complemento) setValue("complemento", data.complemento);
+    }
+    setLoadingCep(false);
+  };
+
   const formatCNPJ = (value: string) => {
     const digits = value.replace(/\D/g, "").slice(0, 14);
     return digits.replace(/^(\d{2})(\d)/, "$1.$2").replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3").replace(/\.(\d{3})(\d)/, ".$1/$2").replace(/(\d{4})(\d)/, "$1-$2");
@@ -388,10 +426,102 @@ function StepPessoaisPJ() {
         <h3 className="text-lg font-semibold mb-4">Dados do Responsável</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="md:col-span-2"><Label>Nome Completo *</Label><Input {...register("contato_nome")} />{errors.contato_nome && <p className="text-xs text-destructive mt-1">{errors.contato_nome.message}</p>}</div>
-          <div><Label>Telefone</Label><Input {...register("contato_telefone")} placeholder="(00) 00000-0000" /></div>
-          <div><Label>Email</Label><Input type="email" {...register("contato_email")} />{errors.contato_email && <p className="text-xs text-destructive mt-1">{errors.contato_email.message}</p>}</div>
+          <div><Label>CPF</Label><Input {...register("cpf")} placeholder="000.000.000-00" /></div>
+          <div><Label>RG</Label><Input {...register("rg")} /></div>
+          <div><Label>Órgão Emissor</Label><Input {...register("orgao_emissor")} /></div>
+          <div><Label>Data de Nascimento</Label><Input type="date" {...register("data_nascimento")} /></div>
+          <div>
+            <Label>Gênero</Label>
+            <Select value={watch("genero") || ""} onValueChange={(v) => setValue("genero", v)}>
+              <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="masculino">Masculino</SelectItem>
+                <SelectItem value="feminino">Feminino</SelectItem>
+                <SelectItem value="nao_binario">Não-binário</SelectItem>
+                <SelectItem value="prefiro_nao_informar">Prefiro não informar</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label>Estado Civil</Label>
+            <Select value={watch("estado_civil") || ""} onValueChange={(v) => setValue("estado_civil", v)}>
+              <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="solteiro">Solteiro(a)</SelectItem>
+                <SelectItem value="casado">Casado(a)</SelectItem>
+                <SelectItem value="divorciado">Divorciado(a)</SelectItem>
+                <SelectItem value="viuvo">Viúvo(a)</SelectItem>
+                <SelectItem value="uniao_estavel">União Estável</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div><Label>Nacionalidade</Label><Input {...register("nacionalidade")} /></div>
+          <div>
+            <Label>Etnia</Label>
+            <Select value={watch("etnia") || ""} onValueChange={(v) => setValue("etnia", v)}>
+              <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="branca">Branca</SelectItem>
+                <SelectItem value="preta">Preta</SelectItem>
+                <SelectItem value="parda">Parda</SelectItem>
+                <SelectItem value="amarela">Amarela</SelectItem>
+                <SelectItem value="indigena">Indígena</SelectItem>
+                <SelectItem value="prefiro_nao_informar">Prefiro não informar</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div><Label>Nome da Mãe</Label><Input {...register("nome_mae")} /></div>
+          <div><Label>Nome do Pai</Label><Input {...register("nome_pai")} /></div>
         </div>
       </div>
+      <div>
+        <h3 className="text-lg font-semibold mb-4">Endereço</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <Label>CEP</Label>
+            <div className="flex gap-2">
+              <Input {...register("cep")} placeholder="00000-000" />
+              <Button type="button" variant="outline" size="icon" onClick={handleCepSearch} disabled={loadingCep}>
+                {loadingCep ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+              </Button>
+            </div>
+          </div>
+          <div><Label>Logradouro</Label><Input {...register("logradouro")} /></div>
+          <div><Label>Número</Label><Input {...register("numero")} /></div>
+          <div><Label>Complemento</Label><Input {...register("complemento")} /></div>
+          <div><Label>Bairro</Label><Input {...register("bairro")} /></div>
+          <div><Label>Cidade</Label><Input {...register("cidade")} /></div>
+          <div>
+            <Label>UF</Label>
+            <Select value={watch("uf") || ""} onValueChange={(v) => setValue("uf", v)}>
+              <SelectTrigger><SelectValue placeholder="UF" /></SelectTrigger>
+              <SelectContent>{UF_LIST.map(uf => <SelectItem key={uf} value={uf}>{uf}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+        </div>
+      </div>
+      <div>
+        <h3 className="text-lg font-semibold mb-4">Contato</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div><Label>Telefone</Label><Input {...register("contato_telefone")} placeholder="(00) 00000-0000" /></div>
+          <div><Label>Email</Label><Input type="email" {...register("contato_email")} />{errors.contato_email && <p className="text-xs text-destructive mt-1">{errors.contato_email.message}</p>}</div>
+          <div><Label>Email Pessoal</Label><Input type="email" {...register("email_pessoal")} /></div>
+          <div><Label>Contato Emergência</Label><Input {...register("contato_emergencia_nome")} placeholder="Nome" /></div>
+          <div><Label>Telefone Emergência</Label><Input {...register("contato_emergencia_telefone")} placeholder="(00) 00000-0000" /></div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function StepEmpresaPJ() {
+  const { register, formState: { errors }, setValue, watch } = useFormContext<PjFormData>();
+  const formatCNPJ = (value: string) => {
+    const digits = value.replace(/\D/g, "").slice(0, 14);
+    return digits.replace(/^(\d{2})(\d)/, "$1.$2").replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3").replace(/\.(\d{3})(\d)/, ".$1/$2").replace(/(\d{4})(\d)/, "$1-$2");
+  };
+  return (
+    <div className="space-y-6">
       <div>
         <h3 className="text-lg font-semibold mb-4">Dados da Empresa</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -404,6 +534,10 @@ function StepPessoaisPJ() {
       </div>
     </div>
   );
+}
+
+function StepPessoaisPJPublic() {
+  return <StepPessoaisPJ />;
 }
 
 interface ConviteData {
@@ -421,7 +555,7 @@ interface ConviteData {
 }
 
 const CLT_STEPS = ["Dados Pessoais", "Documentos", "Dados Bancários", "Dependentes"];
-const PJ_STEPS = ["Dados da Empresa", "Dados Bancários"];
+const PJ_STEPS = ["Dados Pessoais", "Dados da Empresa", "Dados Bancários"];
 
 export default function CadastroPublico() {
   const { token } = useParams<{ token: string }>();
@@ -442,7 +576,7 @@ export default function CadastroPublico() {
 
   const pjMethods = useForm<PjFormData>({
     resolver: zodResolver(pjSchema),
-    defaultValues: { tipo_conta: "corrente" },
+    defaultValues: { tipo_conta: "corrente", nacionalidade: "Brasileira" },
   });
 
   useEffect(() => {
@@ -495,7 +629,8 @@ export default function CadastroPublico() {
     if (isClt) {
       if (step === 0) fieldsToValidate = ["nome_completo", "cpf", "data_nascimento"];
     } else {
-      if (step === 0) fieldsToValidate = ["contato_nome", "cnpj", "razao_social"];
+      if (step === 0) fieldsToValidate = ["contato_nome"];
+      if (step === 1) fieldsToValidate = ["cnpj", "razao_social"];
     }
 
     if (fieldsToValidate.length > 0) {
@@ -610,8 +745,9 @@ export default function CadastroPublico() {
                   </>
                 ) : (
                   <>
-                    {step === 0 && <StepPessoaisPJ />}
-                    {step === 1 && <StepBancarios />}
+                    {step === 0 && <StepPessoaisPJPublic />}
+                    {step === 1 && <StepEmpresaPJ />}
+                    {step === 2 && <StepBancarios />}
                   </>
                 )}
               </CardContent>

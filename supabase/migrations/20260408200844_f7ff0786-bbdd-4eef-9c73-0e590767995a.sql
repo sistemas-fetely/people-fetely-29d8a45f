@@ -1,0 +1,23 @@
+-- Add personal data columns to contratos_pj (matching colaboradores_clt personal fields)
+ALTER TABLE public.contratos_pj
+  ADD COLUMN IF NOT EXISTS cpf text,
+  ADD COLUMN IF NOT EXISTS rg text,
+  ADD COLUMN IF NOT EXISTS orgao_emissor text,
+  ADD COLUMN IF NOT EXISTS data_nascimento date,
+  ADD COLUMN IF NOT EXISTS genero text,
+  ADD COLUMN IF NOT EXISTS estado_civil text,
+  ADD COLUMN IF NOT EXISTS nacionalidade text DEFAULT 'Brasileira',
+  ADD COLUMN IF NOT EXISTS etnia text,
+  ADD COLUMN IF NOT EXISTS nome_mae text,
+  ADD COLUMN IF NOT EXISTS nome_pai text,
+  ADD COLUMN IF NOT EXISTS cep text,
+  ADD COLUMN IF NOT EXISTS logradouro text,
+  ADD COLUMN IF NOT EXISTS numero text,
+  ADD COLUMN IF NOT EXISTS complemento text,
+  ADD COLUMN IF NOT EXISTS bairro text,
+  ADD COLUMN IF NOT EXISTS cidade text,
+  ADD COLUMN IF NOT EXISTS uf text,
+  ADD COLUMN IF NOT EXISTS telefone text,
+  ADD COLUMN IF NOT EXISTS email_pessoal text,
+  ADD COLUMN IF NOT EXISTS contato_emergencia_nome text,
+  ADD COLUMN IF NOT EXISTS contato_emergencia_telefone text;

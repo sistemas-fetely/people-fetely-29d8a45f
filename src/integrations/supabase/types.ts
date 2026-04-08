@@ -517,97 +517,160 @@ export type Database = {
       contratos_pj: {
         Row: {
           agencia: string | null
+          bairro: string | null
           banco_codigo: string | null
           banco_nome: string | null
+          cep: string | null
           chave_pix: string | null
+          cidade: string | null
           cnpj: string
+          complemento: string | null
           conta: string | null
           contato_email: string | null
+          contato_emergencia_nome: string | null
+          contato_emergencia_telefone: string | null
           contato_nome: string
           contato_telefone: string | null
           contrato_assinado: boolean
+          cpf: string | null
           created_at: string
           created_by: string | null
           data_fim: string | null
           data_inicio: string
+          data_nascimento: string | null
           departamento: string
           dia_vencimento: number | null
+          email_pessoal: string | null
+          estado_civil: string | null
+          etnia: string | null
           forma_pagamento: string
+          genero: string | null
           id: string
           inscricao_estadual: string | null
           inscricao_municipal: string | null
+          logradouro: string | null
+          nacionalidade: string | null
           nome_fantasia: string | null
+          nome_mae: string | null
+          nome_pai: string | null
+          numero: string | null
           objeto: string | null
           observacoes: string | null
+          orgao_emissor: string | null
           razao_social: string
           renovacao_automatica: boolean
+          rg: string | null
           status: string
+          telefone: string | null
           tipo_conta: string | null
           tipo_servico: string
+          uf: string | null
           updated_at: string
           valor_mensal: number
         }
         Insert: {
           agencia?: string | null
+          bairro?: string | null
           banco_codigo?: string | null
           banco_nome?: string | null
+          cep?: string | null
           chave_pix?: string | null
+          cidade?: string | null
           cnpj: string
+          complemento?: string | null
           conta?: string | null
           contato_email?: string | null
+          contato_emergencia_nome?: string | null
+          contato_emergencia_telefone?: string | null
           contato_nome: string
           contato_telefone?: string | null
           contrato_assinado?: boolean
+          cpf?: string | null
           created_at?: string
           created_by?: string | null
           data_fim?: string | null
           data_inicio: string
+          data_nascimento?: string | null
           departamento: string
           dia_vencimento?: number | null
+          email_pessoal?: string | null
+          estado_civil?: string | null
+          etnia?: string | null
           forma_pagamento?: string
+          genero?: string | null
           id?: string
           inscricao_estadual?: string | null
           inscricao_municipal?: string | null
+          logradouro?: string | null
+          nacionalidade?: string | null
           nome_fantasia?: string | null
+          nome_mae?: string | null
+          nome_pai?: string | null
+          numero?: string | null
           objeto?: string | null
           observacoes?: string | null
+          orgao_emissor?: string | null
           razao_social: string
           renovacao_automatica?: boolean
+          rg?: string | null
           status?: string
+          telefone?: string | null
           tipo_conta?: string | null
           tipo_servico: string
+          uf?: string | null
           updated_at?: string
           valor_mensal: number
         }
         Update: {
           agencia?: string | null
+          bairro?: string | null
           banco_codigo?: string | null
           banco_nome?: string | null
+          cep?: string | null
           chave_pix?: string | null
+          cidade?: string | null
           cnpj?: string
+          complemento?: string | null
           conta?: string | null
           contato_email?: string | null
+          contato_emergencia_nome?: string | null
+          contato_emergencia_telefone?: string | null
           contato_nome?: string
           contato_telefone?: string | null
           contrato_assinado?: boolean
+          cpf?: string | null
           created_at?: string
           created_by?: string | null
           data_fim?: string | null
           data_inicio?: string
+          data_nascimento?: string | null
           departamento?: string
           dia_vencimento?: number | null
+          email_pessoal?: string | null
+          estado_civil?: string | null
+          etnia?: string | null
           forma_pagamento?: string
+          genero?: string | null
           id?: string
           inscricao_estadual?: string | null
           inscricao_municipal?: string | null
+          logradouro?: string | null
+          nacionalidade?: string | null
           nome_fantasia?: string | null
+          nome_mae?: string | null
+          nome_pai?: string | null
+          numero?: string | null
           objeto?: string | null
           observacoes?: string | null
+          orgao_emissor?: string | null
           razao_social?: string
           renovacao_automatica?: boolean
+          rg?: string | null
           status?: string
+          telefone?: string | null
           tipo_conta?: string | null
           tipo_servico?: string
+          uf?: string | null
           updated_at?: string
           valor_mensal?: number
         }
