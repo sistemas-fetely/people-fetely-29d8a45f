@@ -21,6 +21,7 @@ import NotFound from "@/pages/NotFound";
 import Parametros from "@/pages/Parametros";
 import ContratosPJ from "@/pages/ContratosPJ";
 import ContratoPJDetalhe from "@/pages/ContratoPJDetalhe";
+import { CadastroContratoPJ } from "@/components/contrato-pj/CadastroContratoPJ";
 import NotasFiscais from "@/pages/NotasFiscais";
 import NotaFiscalDetalhe from "@/pages/NotaFiscalDetalhe";
 import FolhaPagamento from "@/pages/FolhaPagamento";
