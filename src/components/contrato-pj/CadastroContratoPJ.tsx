@@ -112,7 +112,7 @@ export function CadastroContratoPJ() {
           contato_email: contratoData.contato_email || null,
           objeto: contratoData.objeto || null,
           tipo_servico: contratoData.tipo_servico,
-          departamento: primaryDept,
+          departamento: contratoData.departamento,
           valor_mensal: Number(valor_mensal),
           forma_pagamento: contratoData.forma_pagamento,
           dia_vencimento: Number(contratoData.dia_vencimento) || 10,
