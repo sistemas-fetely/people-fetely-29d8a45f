@@ -39,6 +39,7 @@ import { StepDadosProfissionais } from "@/components/colaborador-clt/StepDadosPr
 import { StepDadosBancarios } from "@/components/colaborador-clt/StepDadosBancarios";
 import { StepDependentes } from "@/components/colaborador-clt/StepDependentes";
 import { StepDadosEmpresa } from "@/components/colaborador-clt/StepDadosEmpresa";
+import { DocumentosAnexados } from "@/components/DocumentosAnexados";
 
 import type {
   DadosPessoaisForm,
@@ -386,6 +387,10 @@ export default function ColaboradorDetalhe() {
                 <InfoField label="CNH Categoria" value={colaborador.cnh_categoria} />
                 <InfoField label="CNH Validade" value={colaborador.cnh_validade ? safeFormatDate(colaborador.cnh_validade) : ""} />
                 <InfoField label="Certificado Reservista" value={colaborador.certificado_reservista} />
+              </div>
+              <div className="mt-6 pt-4 border-t">
+                <h3 className="font-semibold mb-3 text-sm text-muted-foreground uppercase">Documentos Anexados</h3>
+                <DocumentosAnexados colaboradorId={id} />
               </div>
             </CardContent></Card>
           </TabsContent>

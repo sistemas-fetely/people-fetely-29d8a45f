@@ -37,6 +37,7 @@ import { StepDadosProfissionaisPJ } from "@/components/contrato-pj/StepDadosProf
 import { StepDadosBancarios } from "@/components/colaborador-clt/StepDadosBancarios";
 import { StepDadosEmpresa } from "@/components/colaborador-clt/StepDadosEmpresa";
 import { StepDependentes } from "@/components/colaborador-clt/StepDependentes";
+import { DocumentosAnexados } from "@/components/DocumentosAnexados";
 
 import type { AllPJFormData } from "@/lib/validations/contrato-pj";
 
@@ -406,6 +407,10 @@ export default function ContratoPJDetalhe() {
                 } />
                 <InfoField label="Objeto do Contrato" value={contrato.objeto} />
                 <InfoField label="Observações" value={contrato.observacoes} />
+              </div>
+              <div className="mt-6 pt-4 border-t">
+                <h3 className="font-semibold mb-3 text-sm text-muted-foreground uppercase">Documentos Anexados</h3>
+                <DocumentosAnexados contratoPjId={id} />
               </div>
             </CardContent></Card>
           </TabsContent>
