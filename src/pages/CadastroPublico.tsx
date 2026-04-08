@@ -446,12 +446,12 @@ function StepPessoaisPJ() {
         <h3 className="text-lg font-semibold mb-4">Dados do Responsável</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="md:col-span-2"><Label>Nome Completo *</Label><Input {...register("contato_nome")} />{errors.contato_nome && <p className="text-xs text-destructive mt-1">{errors.contato_nome.message}</p>}</div>
-          <div><Label>CPF</Label><Input {...register("cpf")} placeholder="000.000.000-00" /></div>
-          <div><Label>RG</Label><Input {...register("rg")} /></div>
-          <div><Label>Órgão Emissor</Label><Input {...register("orgao_emissor")} /></div>
-          <div><Label>Data de Nascimento</Label><Input type="date" {...register("data_nascimento")} /></div>
+          <div><Label>CPF *</Label><Input {...register("cpf")} placeholder="000.000.000-00" />{errors.cpf && <p className="text-xs text-destructive mt-1">{errors.cpf.message}</p>}</div>
+          <div><Label>RG *</Label><Input {...register("rg")} />{errors.rg && <p className="text-xs text-destructive mt-1">{errors.rg.message}</p>}</div>
+          <div><Label>Órgão Emissor *</Label><Input {...register("orgao_emissor")} />{errors.orgao_emissor && <p className="text-xs text-destructive mt-1">{errors.orgao_emissor.message}</p>}</div>
+          <div><Label>Data de Nascimento *</Label><Input type="date" {...register("data_nascimento")} />{errors.data_nascimento && <p className="text-xs text-destructive mt-1">{errors.data_nascimento.message}</p>}</div>
           <div>
-            <Label>Gênero</Label>
+            <Label>Gênero *</Label>
             <Select value={watch("genero") || ""} onValueChange={(v) => setValue("genero", v)}>
               <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
               <SelectContent>
@@ -461,9 +461,10 @@ function StepPessoaisPJ() {
                 <SelectItem value="prefiro_nao_informar">Prefiro não informar</SelectItem>
               </SelectContent>
             </Select>
+            {errors.genero && <p className="text-xs text-destructive mt-1">{errors.genero.message}</p>}
           </div>
           <div>
-            <Label>Estado Civil</Label>
+            <Label>Estado Civil *</Label>
             <Select value={watch("estado_civil") || ""} onValueChange={(v) => setValue("estado_civil", v)}>
               <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
               <SelectContent>
@@ -474,10 +475,11 @@ function StepPessoaisPJ() {
                 <SelectItem value="uniao_estavel">União Estável</SelectItem>
               </SelectContent>
             </Select>
+            {errors.estado_civil && <p className="text-xs text-destructive mt-1">{errors.estado_civil.message}</p>}
           </div>
-          <div><Label>Nacionalidade</Label><Input {...register("nacionalidade")} /></div>
+          <div><Label>Nacionalidade *</Label><Input {...register("nacionalidade")} />{errors.nacionalidade && <p className="text-xs text-destructive mt-1">{errors.nacionalidade.message}</p>}</div>
           <div>
-            <Label>Etnia</Label>
+            <Label>Etnia *</Label>
             <Select value={watch("etnia") || ""} onValueChange={(v) => setValue("etnia", v)}>
               <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
               <SelectContent>
@@ -489,6 +491,7 @@ function StepPessoaisPJ() {
                 <SelectItem value="prefiro_nao_informar">Prefiro não informar</SelectItem>
               </SelectContent>
             </Select>
+            {errors.etnia && <p className="text-xs text-destructive mt-1">{errors.etnia.message}</p>}
           </div>
           <div><Label>Nome da Mãe</Label><Input {...register("nome_mae")} /></div>
           <div><Label>Nome do Pai</Label><Input {...register("nome_pai")} /></div>
@@ -498,37 +501,39 @@ function StepPessoaisPJ() {
         <h3 className="text-lg font-semibold mb-4">Endereço</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <Label>CEP</Label>
+            <Label>CEP *</Label>
             <div className="flex gap-2">
               <Input {...register("cep")} placeholder="00000-000" />
               <Button type="button" variant="outline" size="icon" onClick={handleCepSearch} disabled={loadingCep}>
                 {loadingCep ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
               </Button>
             </div>
+            {errors.cep && <p className="text-xs text-destructive mt-1">{errors.cep.message}</p>}
           </div>
-          <div><Label>Logradouro</Label><Input {...register("logradouro")} /></div>
-          <div><Label>Número</Label><Input {...register("numero")} /></div>
+          <div><Label>Logradouro *</Label><Input {...register("logradouro")} />{errors.logradouro && <p className="text-xs text-destructive mt-1">{errors.logradouro.message}</p>}</div>
+          <div><Label>Número *</Label><Input {...register("numero")} />{errors.numero && <p className="text-xs text-destructive mt-1">{errors.numero.message}</p>}</div>
           <div><Label>Complemento</Label><Input {...register("complemento")} /></div>
-          <div><Label>Bairro</Label><Input {...register("bairro")} /></div>
-          <div><Label>Cidade</Label><Input {...register("cidade")} /></div>
+          <div><Label>Bairro *</Label><Input {...register("bairro")} />{errors.bairro && <p className="text-xs text-destructive mt-1">{errors.bairro.message}</p>}</div>
+          <div><Label>Cidade *</Label><Input {...register("cidade")} />{errors.cidade && <p className="text-xs text-destructive mt-1">{errors.cidade.message}</p>}</div>
           <div>
-            <Label>UF</Label>
+            <Label>UF *</Label>
             <Select value={watch("uf") || ""} onValueChange={(v) => setValue("uf", v)}>
               <SelectTrigger><SelectValue placeholder="UF" /></SelectTrigger>
               <SelectContent>{UF_LIST.map(uf => <SelectItem key={uf} value={uf}>{uf}</SelectItem>)}</SelectContent>
             </Select>
+            {errors.uf && <p className="text-xs text-destructive mt-1">{errors.uf.message}</p>}
           </div>
         </div>
       </div>
       <div>
         <h3 className="text-lg font-semibold mb-4">Contato</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div><Label>Telefone</Label><Input {...register("contato_telefone")} placeholder="(00) 00000-0000" /></div>
-          <div><Label>Email</Label><Input type="email" {...register("contato_email")} />{errors.contato_email && <p className="text-xs text-destructive mt-1">{errors.contato_email.message}</p>}</div>
-          <div><Label>Email Pessoal</Label><Input type="email" {...register("email_pessoal")} /></div>
-          <div><Label>Telefone Pessoal</Label><Input {...register("telefone")} placeholder="(00) 00000-0000" /></div>
-          <div><Label>Contato Emergência</Label><Input {...register("contato_emergencia_nome")} placeholder="Nome" /></div>
-          <div><Label>Telefone Emergência</Label><Input {...register("contato_emergencia_telefone")} placeholder="(00) 00000-0000" /></div>
+          <div><Label>Telefone *</Label><Input {...register("contato_telefone")} placeholder="(00) 00000-0000" />{errors.contato_telefone && <p className="text-xs text-destructive mt-1">{errors.contato_telefone.message}</p>}</div>
+          <div><Label>Email *</Label><Input type="email" {...register("contato_email")} />{errors.contato_email && <p className="text-xs text-destructive mt-1">{errors.contato_email.message}</p>}</div>
+          <div><Label>Email Pessoal *</Label><Input type="email" {...register("email_pessoal")} />{errors.email_pessoal && <p className="text-xs text-destructive mt-1">{errors.email_pessoal.message}</p>}</div>
+          <div><Label>Telefone Pessoal *</Label><Input {...register("telefone")} placeholder="(00) 00000-0000" />{errors.telefone && <p className="text-xs text-destructive mt-1">{errors.telefone.message}</p>}</div>
+          <div><Label>Contato Emergência *</Label><Input {...register("contato_emergencia_nome")} placeholder="Nome" />{errors.contato_emergencia_nome && <p className="text-xs text-destructive mt-1">{errors.contato_emergencia_nome.message}</p>}</div>
+          <div><Label>Telefone Emergência *</Label><Input {...register("contato_emergencia_telefone")} placeholder="(00) 00000-0000" />{errors.contato_emergencia_telefone && <p className="text-xs text-destructive mt-1">{errors.contato_emergencia_telefone.message}</p>}</div>
         </div>
       </div>
     </div>
