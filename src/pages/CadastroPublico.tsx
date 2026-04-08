@@ -56,12 +56,12 @@ const documentosPublicoSchema = z.object({
 });
 
 const bancariosPublicoSchema = z.object({
-  banco_nome: z.string().optional().or(z.literal("")),
-  banco_codigo: z.string().optional().or(z.literal("")),
-  agencia: z.string().optional().or(z.literal("")),
-  conta: z.string().optional().or(z.literal("")),
+  banco_nome: z.string().min(1, "Banco é obrigatório"),
+  banco_codigo: z.string().min(1, "Código do banco é obrigatório"),
+  agencia: z.string().min(1, "Agência é obrigatória"),
+  conta: z.string().min(1, "Conta é obrigatória"),
   tipo_conta: z.string().default("corrente"),
-  chave_pix: z.string().optional().or(z.literal("")),
+  chave_pix: z.string().min(1, "Chave PIX é obrigatória"),
 });
 
 const dependentePublicoSchema = z.object({
