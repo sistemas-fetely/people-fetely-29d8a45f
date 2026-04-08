@@ -97,21 +97,32 @@ export default function ConviteDetalhe() {
     try {
       const { error } = await supabase.functions.invoke("send-transactional-email", {
         body: {
-          templateName: "cadastro-recebido",
+          templateName: "convite-cadastro",
           recipientEmail: convite.email,
-          idempotencyKey: `cadastro-recebido-resend-${convite.id}-${Date.now()}`,
+          idempotencyKey: `convite-resend-${convite.id}-${Date.now()}`,
           templateData: {
             nome: convite.nome,
             tipo: convite.tipo,
             cargo: convite.cargo || "",
             departamento: convite.departamento || "",
+            link: `${window.location.origin}/cadastro/${convite.token}`,
           },
         },
       });
       if (error) throw error;
-      toast.success("Email de confirmação reenviado para " + convite.email);
+
+      // Update status to email_enviado if still pendente
+      if (convite.status === "pendente") {
+        await supabase
+          .from("convites_cadastro")
+          .update({ status: "email_enviado" })
+          .eq("id", convite.id);
+        setConvite({ ...convite, status: "email_enviado" });
+      }
+
+      toast.success("Email enviado para " + convite.email);
     } catch (err: any) {
-      toast.error("Erro ao reenviar email: " + err.message);
+      toast.error("Erro ao enviar email: " + err.message);
     } finally {
       setSendingEmail(false);
     }
