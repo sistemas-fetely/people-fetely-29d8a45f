@@ -28,7 +28,32 @@ import {
 } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { format, parseISO } from "date-fns";
+import { format, parseISO, startOfMonth, endOfMonth, subMonths, startOfYear, endOfYear, startOfQuarter, endOfQuarter, isWithinInterval } from "date-fns";
+
+const periodOptions: { value: string; label: string }[] = [
+  { value: "todos", label: "Todo Período" },
+  { value: "mes_atual", label: "Mês Atual" },
+  { value: "mes_anterior", label: "Mês Anterior" },
+  { value: "trimestre_atual", label: "Trimestre Atual" },
+  { value: "ano_atual", label: "Ano Atual" },
+  { value: "ultimos_3_meses", label: "Últimos 3 Meses" },
+  { value: "ultimos_6_meses", label: "Últimos 6 Meses" },
+  { value: "ultimos_12_meses", label: "Últimos 12 Meses" },
+];
+
+function getPeriodRange(period: string): { start: Date; end: Date } | null {
+  const now = new Date();
+  switch (period) {
+    case "mes_atual": return { start: startOfMonth(now), end: endOfMonth(now) };
+    case "mes_anterior": { const prev = subMonths(now, 1); return { start: startOfMonth(prev), end: endOfMonth(prev) }; }
+    case "trimestre_atual": return { start: startOfQuarter(now), end: endOfQuarter(now) };
+    case "ano_atual": return { start: startOfYear(now), end: endOfYear(now) };
+    case "ultimos_3_meses": return { start: startOfMonth(subMonths(now, 2)), end: endOfMonth(now) };
+    case "ultimos_6_meses": return { start: startOfMonth(subMonths(now, 5)), end: endOfMonth(now) };
+    case "ultimos_12_meses": return { start: startOfMonth(subMonths(now, 11)), end: endOfMonth(now) };
+    default: return null;
+  }
+}
 
 const defaultStatusMap: Record<string, string> = {
   pendente: "Pendente", aprovada: "Aprovada", enviada_pagamento: "Enviada para Pagamento", paga: "Paga", cancelada: "Cancelada", vencida: "Vencida",
