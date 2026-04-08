@@ -101,7 +101,8 @@ export default function Colaboradores() {
     return matchSearch && matchStatus;
   });
 
-  const totalAtivos = colaboradores.filter((c) => c.status === "ativo").length;
+  const totalAtivos = colaboradores.filter((c) => c.status !== "desligado").length;
+  const totalInativos = colaboradores.filter((c) => c.status === "desligado").length;
 
   const initials = (name: string) =>
     name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
@@ -146,12 +147,12 @@ export default function Colaboradores() {
         </Card>
         <Card className="card-shadow">
           <CardContent className="p-4 flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-info/10 text-info">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-destructive/10 text-destructive">
               <Briefcase className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-2xl font-bold">{colaboradores.length - totalAtivos}</p>
-              <p className="text-xs text-muted-foreground">Outros</p>
+              <p className="text-2xl font-bold">{totalInativos}</p>
+              <p className="text-xs text-muted-foreground">Inativos</p>
             </div>
           </CardContent>
         </Card>
