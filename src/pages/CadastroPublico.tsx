@@ -566,6 +566,7 @@ export default function CadastroPublico() {
   const [step, setStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [uploadedFiles, setUploadedFiles] = useState<{ key: string; name: string; url: string }[]>([]);
 
   const isClt = convite?.tipo === "clt";
   const steps = isClt ? CLT_STEPS : PJ_STEPS;
