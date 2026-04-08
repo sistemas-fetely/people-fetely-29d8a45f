@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { format, addDays } from "date-fns";
-import { Calendar, Plus, Check, X, Eye, Pencil } from "lucide-react";
+import { Calendar, Plus, Check, X, Eye, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
