@@ -603,6 +603,85 @@ export default function ContratosPJ() {
         />
       )}
 
+      {/* View Detail Dialog */}
+      <Dialog open={!!viewContrato} onOpenChange={(open) => !open && setViewContrato(null)}>
+        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{viewContrato?.nome_fantasia || viewContrato?.razao_social}</DialogTitle>
+          </DialogHeader>
+          {viewContrato && (
+            <div className="space-y-6 py-2">
+              <div>
+                <h3 className="text-sm font-semibold text-muted-foreground mb-3">DADOS DA EMPRESA</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div><p className="text-xs text-muted-foreground">CNPJ</p><p className="text-sm font-medium">{viewContrato.cnpj}</p></div>
+                  <div><p className="text-xs text-muted-foreground">Razão Social</p><p className="text-sm font-medium">{viewContrato.razao_social}</p></div>
+                  {viewContrato.nome_fantasia && <div><p className="text-xs text-muted-foreground">Nome Fantasia</p><p className="text-sm font-medium">{viewContrato.nome_fantasia}</p></div>}
+                  {viewContrato.inscricao_municipal && <div><p className="text-xs text-muted-foreground">Inscrição Municipal</p><p className="text-sm font-medium">{viewContrato.inscricao_municipal}</p></div>}
+                  {viewContrato.inscricao_estadual && <div><p className="text-xs text-muted-foreground">Inscrição Estadual</p><p className="text-sm font-medium">{viewContrato.inscricao_estadual}</p></div>}
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-sm font-semibold text-muted-foreground mb-3">CONTATO</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div><p className="text-xs text-muted-foreground">Responsável</p><p className="text-sm font-medium">{viewContrato.contato_nome}</p></div>
+                  {viewContrato.contato_telefone && <div><p className="text-xs text-muted-foreground">Telefone</p><p className="text-sm font-medium">{viewContrato.contato_telefone}</p></div>}
+                  {viewContrato.contato_email && <div><p className="text-xs text-muted-foreground">Email</p><p className="text-sm font-medium">{viewContrato.contato_email}</p></div>}
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-sm font-semibold text-muted-foreground mb-3">CONTRATO</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div><p className="text-xs text-muted-foreground">Tipo de Serviço</p><p className="text-sm font-medium">{viewContrato.tipo_servico}</p></div>
+                  <div><p className="text-xs text-muted-foreground">Departamento</p><p className="text-sm font-medium">{viewContrato.departamento}</p></div>
+                  <div><p className="text-xs text-muted-foreground">Valor Mensal</p><p className="text-sm font-medium">R$ {Number(viewContrato.valor_mensal).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p></div>
+                  <div><p className="text-xs text-muted-foreground">Forma de Pagamento</p><p className="text-sm font-medium">{viewContrato.forma_pagamento}</p></div>
+                  <div><p className="text-xs text-muted-foreground">Dia Vencimento</p><p className="text-sm font-medium">{viewContrato.dia_vencimento}</p></div>
+                  <div><p className="text-xs text-muted-foreground">Status</p><Badge variant="outline" className={statusStyles[viewContrato.status] || ""}>{statusMap[viewContrato.status] || viewContrato.status}</Badge></div>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-sm font-semibold text-muted-foreground mb-3">VIGÊNCIA</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div><p className="text-xs text-muted-foreground">Início</p><p className="text-sm font-medium">{format(parseISO(viewContrato.data_inicio), "dd/MM/yyyy")}</p></div>
+                  <div><p className="text-xs text-muted-foreground">Fim</p><p className="text-sm font-medium">{viewContrato.data_fim ? format(parseISO(viewContrato.data_fim), "dd/MM/yyyy") : "Indeterminado"}</p></div>
+                  <div><p className="text-xs text-muted-foreground">Renovação Automática</p><p className="text-sm font-medium">{viewContrato.renovacao_automatica ? "Sim" : "Não"}</p></div>
+                </div>
+              </div>
+
+              {(viewContrato.banco_nome || viewContrato.chave_pix) && (
+                <div>
+                  <h3 className="text-sm font-semibold text-muted-foreground mb-3">DADOS BANCÁRIOS</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    {viewContrato.banco_nome && <div><p className="text-xs text-muted-foreground">Banco</p><p className="text-sm font-medium">{viewContrato.banco_nome} {viewContrato.banco_codigo && `(${viewContrato.banco_codigo})`}</p></div>}
+                    {viewContrato.agencia && <div><p className="text-xs text-muted-foreground">Agência</p><p className="text-sm font-medium">{viewContrato.agencia}</p></div>}
+                    {viewContrato.conta && <div><p className="text-xs text-muted-foreground">Conta</p><p className="text-sm font-medium">{viewContrato.conta} ({viewContrato.tipo_conta})</p></div>}
+                    {viewContrato.chave_pix && <div><p className="text-xs text-muted-foreground">Chave PIX</p><p className="text-sm font-medium">{viewContrato.chave_pix}</p></div>}
+                  </div>
+                </div>
+              )}
+
+              {(viewContrato.objeto || viewContrato.observacoes) && (
+                <div>
+                  <h3 className="text-sm font-semibold text-muted-foreground mb-3">DETALHES</h3>
+                  {viewContrato.objeto && <div className="mb-2"><p className="text-xs text-muted-foreground">Objeto do Contrato</p><p className="text-sm">{viewContrato.objeto}</p></div>}
+                  {viewContrato.observacoes && <div><p className="text-xs text-muted-foreground">Observações</p><p className="text-sm">{viewContrato.observacoes}</p></div>}
+                </div>
+              )}
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setViewContrato(null)}>Fechar</Button>
+            <Button onClick={() => { if (viewContrato) { openEdit(viewContrato); setViewContrato(null); } }}>
+              <Edit className="mr-2 h-4 w-4" /> Editar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
