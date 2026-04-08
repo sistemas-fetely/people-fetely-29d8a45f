@@ -7,8 +7,9 @@ import { format, parseISO } from "date-fns";
 import {
   ArrowLeft, Edit, Save, Loader2, X, User, FileText, Briefcase,
   Building2, Users as UsersIcon, Monitor, UserCheck, UserX, ArrowUpDown,
-  TrendingUp, ArrowRightLeft, DollarSign,
+  TrendingUp, ArrowRightLeft, DollarSign, Network,
 } from "lucide-react";
+import { OrgBranchView } from "@/components/organograma/OrgBranchView";
 import { CustoResumoCard } from "@/components/CustoResumoCard";
 import { HistoricoCustosChart } from "@/components/HistoricoCustosChart";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -332,6 +333,7 @@ export default function ColaboradorDetalhe() {
             <TabsTrigger value="dependentes" className="gap-1"><UsersIcon className="h-3.5 w-3.5" /> Dependentes</TabsTrigger>
             <TabsTrigger value="movimentacoes" className="gap-1"><ArrowUpDown className="h-3.5 w-3.5" /> Movimentações</TabsTrigger>
             <TabsTrigger value="custos" className="gap-1"><DollarSign className="h-3.5 w-3.5" /> Custos</TabsTrigger>
+            <TabsTrigger value="organograma" className="gap-1"><Network className="h-3.5 w-3.5" /> Organograma</TabsTrigger>
           </TabsList>
 
           <TabsContent value="pessoais">
@@ -497,6 +499,10 @@ export default function ColaboradorDetalhe() {
               />
               <HistoricoCustosChart tipo="clt" entityId={id!} />
             </div>
+          </TabsContent>
+
+          <TabsContent value="organograma">
+            <OrgBranchView colaboradorId={id} />
           </TabsContent>
         </Tabs>
 
