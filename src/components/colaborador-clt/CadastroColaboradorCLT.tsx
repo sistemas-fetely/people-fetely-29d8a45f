@@ -213,7 +213,7 @@ export function CadastroColaboradorCLT() {
               <ArrowLeft className="h-4 w-4" />
               {currentStep === 1 ? "Cancelar" : "Voltar"}
             </Button>
-            {currentStep < 5 ? (
+            {currentStep < 6 ? (
               <Button type="button" onClick={goNext} className="gap-2">
                 Próximo
                 <ArrowRight className="h-4 w-4" />
