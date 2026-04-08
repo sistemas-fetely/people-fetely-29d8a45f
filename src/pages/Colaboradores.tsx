@@ -48,6 +48,7 @@ export default function Colaboradores() {
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("todos");
+  const [filterDept, setFilterDept] = useState("todos");
   const [colaboradores, setColaboradores] = useState<ColaboradorWithDepts[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleteTarget, setDeleteTarget] = useState<ColaboradorWithDepts | null>(null);
@@ -92,13 +93,19 @@ export default function Colaboradores() {
     }
   };
 
+  const allDepartamentos = Array.from(
+    new Set(colaboradores.flatMap((c) => (c.departamentos_rateio || []).map((d) => d.departamento)).concat(colaboradores.map((c) => c.departamento)).filter(Boolean))
+  ).sort();
+
   const filtered = colaboradores.filter((c) => {
     const matchSearch =
       c.nome_completo.toLowerCase().includes(search.toLowerCase()) ||
       c.cargo.toLowerCase().includes(search.toLowerCase()) ||
       c.departamento.toLowerCase().includes(search.toLowerCase());
     const matchStatus = filterStatus === "todos" || c.status === filterStatus;
-    return matchSearch && matchStatus;
+    const matchDept = filterDept === "todos" || c.departamento === filterDept ||
+      (c.departamentos_rateio || []).some((d) => d.departamento === filterDept);
+    return matchSearch && matchStatus && matchDept;
   });
 
   const totalAtivos = colaboradores.filter((c) => c.status !== "desligado").length;
@@ -181,6 +188,17 @@ export default function Colaboradores() {
                 <SelectItem value="afastado">Afastado</SelectItem>
                 <SelectItem value="experiencia">Experiência</SelectItem>
                 <SelectItem value="desligado">Desligado</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={filterDept} onValueChange={setFilterDept}>
+              <SelectTrigger className="w-full sm:w-48">
+                <SelectValue placeholder="Departamento" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos os departamentos</SelectItem>
+                {allDepartamentos.map((d) => (
+                  <SelectItem key={d} value={d}>{d}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
