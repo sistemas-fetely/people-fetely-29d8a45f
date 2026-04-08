@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format, parseISO } from "date-fns";
 import {
-  ArrowLeft, Edit, Save, Loader2, X, User, FileText, Building2, CreditCard, Users, UserPlus, Mail,
+  ArrowLeft, Edit, Save, Loader2, X, User, FileText, Building2, CreditCard, Users, UserPlus, Mail, Briefcase, Building,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -16,6 +16,9 @@ import { ConviteDocumentosCLT } from "@/components/convite-detalhe/ConviteDocume
 import { ConviteDadosBancarios } from "@/components/convite-detalhe/ConviteDadosBancarios";
 import { ConviteDependentes } from "@/components/convite-detalhe/ConviteDependentes";
 import { ConviteDadosEmpresaPJ } from "@/components/convite-detalhe/ConviteDadosEmpresaPJ";
+import { ConviteDadosProfissionaisCLT } from "@/components/convite-detalhe/ConviteDadosProfissionaisCLT";
+import { ConviteDadosEmpresaCLT } from "@/components/convite-detalhe/ConviteDadosEmpresaCLT";
+import { ConviteDadosProfissionaisPJ } from "@/components/convite-detalhe/ConviteDadosProfissionaisPJ";
 
 interface Convite {
   id: string;
