@@ -179,12 +179,14 @@ function StepPessoaisCLT() {
             {errors.cpf && <p className="text-xs text-destructive mt-1">{errors.cpf.message}</p>}
           </div>
           <div>
-            <Label htmlFor="rg">RG</Label>
+            <Label htmlFor="rg">RG *</Label>
             <Input id="rg" {...register("rg")} />
+            {errors.rg && <p className="text-xs text-destructive mt-1">{errors.rg.message}</p>}
           </div>
           <div>
-            <Label htmlFor="orgao_emissor">Órgão Emissor</Label>
+            <Label htmlFor="orgao_emissor">Órgão Emissor *</Label>
             <Input id="orgao_emissor" {...register("orgao_emissor")} />
+            {errors.orgao_emissor && <p className="text-xs text-destructive mt-1">{errors.orgao_emissor.message}</p>}
           </div>
           <div>
             <Label htmlFor="data_nascimento">Data de Nascimento *</Label>
@@ -192,7 +194,7 @@ function StepPessoaisCLT() {
             {errors.data_nascimento && <p className="text-xs text-destructive mt-1">{errors.data_nascimento.message}</p>}
           </div>
           <div>
-            <Label>Gênero</Label>
+            <Label>Gênero *</Label>
             <Select value={watch("genero") || ""} onValueChange={(v) => setValue("genero", v)}>
               <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
               <SelectContent>
@@ -202,9 +204,10 @@ function StepPessoaisCLT() {
                 <SelectItem value="prefiro_nao_informar">Prefiro não informar</SelectItem>
               </SelectContent>
             </Select>
+            {errors.genero && <p className="text-xs text-destructive mt-1">{errors.genero.message}</p>}
           </div>
           <div>
-            <Label>Estado Civil</Label>
+            <Label>Estado Civil *</Label>
             <Select value={watch("estado_civil") || ""} onValueChange={(v) => setValue("estado_civil", v)}>
               <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
               <SelectContent>
@@ -215,13 +218,15 @@ function StepPessoaisCLT() {
                 <SelectItem value="uniao_estavel">União Estável</SelectItem>
               </SelectContent>
             </Select>
+            {errors.estado_civil && <p className="text-xs text-destructive mt-1">{errors.estado_civil.message}</p>}
           </div>
           <div>
-            <Label htmlFor="nacionalidade">Nacionalidade</Label>
+            <Label htmlFor="nacionalidade">Nacionalidade *</Label>
             <Input id="nacionalidade" {...register("nacionalidade")} />
+            {errors.nacionalidade && <p className="text-xs text-destructive mt-1">{errors.nacionalidade.message}</p>}
           </div>
           <div>
-            <Label>Etnia</Label>
+            <Label>Etnia *</Label>
             <Select value={watch("etnia") || ""} onValueChange={(v) => setValue("etnia", v)}>
               <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
               <SelectContent>
@@ -233,6 +238,7 @@ function StepPessoaisCLT() {
                 <SelectItem value="prefiro_nao_informar">Prefiro não informar</SelectItem>
               </SelectContent>
             </Select>
+            {errors.etnia && <p className="text-xs text-destructive mt-1">{errors.etnia.message}</p>}
           </div>
           <div><Label htmlFor="nome_mae">Nome da Mãe</Label><Input id="nome_mae" {...register("nome_mae")} /></div>
           <div><Label htmlFor="nome_pai">Nome do Pai</Label><Input id="nome_pai" {...register("nome_pai")} /></div>
@@ -243,25 +249,27 @@ function StepPessoaisCLT() {
         <h3 className="text-lg font-semibold mb-4">Endereço</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <Label htmlFor="cep">CEP</Label>
+            <Label htmlFor="cep">CEP *</Label>
             <div className="flex gap-2">
               <Input id="cep" {...register("cep")} placeholder="00000-000" />
               <Button type="button" variant="outline" size="icon" onClick={handleCepSearch} disabled={loadingCep}>
                 {loadingCep ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
               </Button>
             </div>
+            {errors.cep && <p className="text-xs text-destructive mt-1">{errors.cep.message}</p>}
           </div>
-          <div><Label htmlFor="logradouro">Logradouro</Label><Input id="logradouro" {...register("logradouro")} /></div>
-          <div><Label htmlFor="numero">Número</Label><Input id="numero" {...register("numero")} /></div>
+          <div><Label htmlFor="logradouro">Logradouro *</Label><Input id="logradouro" {...register("logradouro")} />{errors.logradouro && <p className="text-xs text-destructive mt-1">{errors.logradouro.message}</p>}</div>
+          <div><Label htmlFor="numero">Número *</Label><Input id="numero" {...register("numero")} />{errors.numero && <p className="text-xs text-destructive mt-1">{errors.numero.message}</p>}</div>
           <div><Label htmlFor="complemento">Complemento</Label><Input id="complemento" {...register("complemento")} /></div>
-          <div><Label htmlFor="bairro">Bairro</Label><Input id="bairro" {...register("bairro")} /></div>
-          <div><Label htmlFor="cidade">Cidade</Label><Input id="cidade" {...register("cidade")} /></div>
+          <div><Label htmlFor="bairro">Bairro *</Label><Input id="bairro" {...register("bairro")} />{errors.bairro && <p className="text-xs text-destructive mt-1">{errors.bairro.message}</p>}</div>
+          <div><Label htmlFor="cidade">Cidade *</Label><Input id="cidade" {...register("cidade")} />{errors.cidade && <p className="text-xs text-destructive mt-1">{errors.cidade.message}</p>}</div>
           <div>
-            <Label>UF</Label>
+            <Label>UF *</Label>
             <Select value={watch("uf") || ""} onValueChange={(v) => setValue("uf", v)}>
               <SelectTrigger><SelectValue placeholder="UF" /></SelectTrigger>
               <SelectContent>{UF_LIST.map(uf => <SelectItem key={uf} value={uf}>{uf}</SelectItem>)}</SelectContent>
             </Select>
+            {errors.uf && <p className="text-xs text-destructive mt-1">{errors.uf.message}</p>}
           </div>
         </div>
       </div>
@@ -269,10 +277,10 @@ function StepPessoaisCLT() {
       <div>
         <h3 className="text-lg font-semibold mb-4">Contato</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div><Label htmlFor="telefone">Telefone</Label><Input id="telefone" {...register("telefone")} placeholder="(00) 00000-0000" /></div>
-          <div><Label htmlFor="email_pessoal">Email Pessoal</Label><Input id="email_pessoal" type="email" {...register("email_pessoal")} /></div>
-          <div><Label htmlFor="contato_emergencia_nome">Contato de Emergência</Label><Input id="contato_emergencia_nome" {...register("contato_emergencia_nome")} /></div>
-          <div><Label htmlFor="contato_emergencia_telefone">Telefone Emergência</Label><Input id="contato_emergencia_telefone" {...register("contato_emergencia_telefone")} /></div>
+          <div><Label htmlFor="telefone">Telefone *</Label><Input id="telefone" {...register("telefone")} placeholder="(00) 00000-0000" />{errors.telefone && <p className="text-xs text-destructive mt-1">{errors.telefone.message}</p>}</div>
+          <div><Label htmlFor="email_pessoal">Email Pessoal *</Label><Input id="email_pessoal" type="email" {...register("email_pessoal")} />{errors.email_pessoal && <p className="text-xs text-destructive mt-1">{errors.email_pessoal.message}</p>}</div>
+          <div><Label htmlFor="contato_emergencia_nome">Contato de Emergência *</Label><Input id="contato_emergencia_nome" {...register("contato_emergencia_nome")} />{errors.contato_emergencia_nome && <p className="text-xs text-destructive mt-1">{errors.contato_emergencia_nome.message}</p>}</div>
+          <div><Label htmlFor="contato_emergencia_telefone">Telefone Emergência *</Label><Input id="contato_emergencia_telefone" {...register("contato_emergencia_telefone")} />{errors.contato_emergencia_telefone && <p className="text-xs text-destructive mt-1">{errors.contato_emergencia_telefone.message}</p>}</div>
         </div>
       </div>
     </div>
