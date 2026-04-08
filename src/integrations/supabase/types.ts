@@ -14,6 +14,41 @@ export type Database = {
   }
   public: {
     Tables: {
+      colaborador_departamentos: {
+        Row: {
+          colaborador_id: string
+          created_at: string
+          departamento: string
+          id: string
+          percentual_rateio: number
+          updated_at: string
+        }
+        Insert: {
+          colaborador_id: string
+          created_at?: string
+          departamento: string
+          id?: string
+          percentual_rateio?: number
+          updated_at?: string
+        }
+        Update: {
+          colaborador_id?: string
+          created_at?: string
+          departamento?: string
+          id?: string
+          percentual_rateio?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "colaborador_departamentos_colaborador_id_fkey"
+            columns: ["colaborador_id"]
+            isOneToOne: false
+            referencedRelation: "colaboradores_clt"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       colaboradores_clt: {
         Row: {
           agencia: string | null

@@ -1,13 +1,29 @@
-import { useFormContext } from "react-hook-form";
+import { useFormContext, useFieldArray } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Plus, Trash2 } from "lucide-react";
 import type { DadosProfissionaisForm } from "@/lib/validations/colaborador-clt";
 
 const departamentos = ["TI", "RH", "Comercial", "Financeiro", "Marketing", "Operações", "Jurídico", "Administrativo"];
 
 export function StepDadosProfissionais() {
-  const { register, setValue, watch, formState: { errors } } = useFormContext<DadosProfissionaisForm>();
+  const { register, setValue, watch, control, formState: { errors } } = useFormContext<DadosProfissionaisForm>();
+
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: "departamentos_rateio",
+  });
+
+  const totalPercentual = (watch("departamentos_rateio") || []).reduce(
+    (sum, d) => sum + (Number(d.percentual_rateio) || 0), 0
+  );
+
+  const addDepartamento = () => {
+    const remaining = 100 - totalPercentual;
+    append({ departamento: "", percentual_rateio: remaining > 0 ? remaining : 0 });
+  };
 
   return (
     <div className="space-y-6">
@@ -21,16 +37,6 @@ export function StepDadosProfissionais() {
           <Label htmlFor="cargo">Cargo *</Label>
           <Input id="cargo" {...register("cargo")} placeholder="Ex: Desenvolvedor Senior" />
           {errors.cargo && <p className="text-xs text-destructive mt-1">{errors.cargo.message}</p>}
-        </div>
-        <div>
-          <Label>Departamento *</Label>
-          <Select value={watch("departamento") || ""} onValueChange={(v) => setValue("departamento", v)}>
-            <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-            <SelectContent>
-              {departamentos.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          {errors.departamento && <p className="text-xs text-destructive mt-1">{errors.departamento.message}</p>}
         </div>
         <div>
           <Label htmlFor="data_admissao">Data de Admissão *</Label>
@@ -67,6 +73,84 @@ export function StepDadosProfissionais() {
           <Label htmlFor="local_trabalho">Local de Trabalho</Label>
           <Input id="local_trabalho" {...register("local_trabalho")} placeholder="Escritório sede / Remoto" />
         </div>
+      </div>
+
+      {/* Multi-department with cost allocation */}
+      <div className="border-t pt-6">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h3 className="text-lg font-semibold">Departamentos e Rateio</h3>
+            <p className="text-sm text-muted-foreground">
+              Associe o colaborador a um ou mais departamentos com percentual de rateio de custos
+            </p>
+          </div>
+          <Button type="button" variant="outline" size="sm" onClick={addDepartamento} className="gap-2">
+            <Plus className="h-4 w-4" /> Adicionar Departamento
+          </Button>
+        </div>
+
+        {(errors as any).departamentos_rateio?.message && (
+          <p className="text-xs text-destructive mb-3">{(errors as any).departamentos_rateio.message}</p>
+        )}
+
+        {fields.length === 0 && (
+          <p className="text-sm text-muted-foreground text-center py-4 border rounded-md border-dashed">
+            Nenhum departamento adicionado. Clique em "Adicionar Departamento" acima.
+          </p>
+        )}
+
+        <div className="space-y-3">
+          {fields.map((field, index) => (
+            <div key={field.id} className="flex items-end gap-3 p-3 rounded-lg bg-muted/30 border">
+              <div className="flex-1">
+                <Label>Departamento *</Label>
+                <Select
+                  value={watch(`departamentos_rateio.${index}.departamento`) || ""}
+                  onValueChange={(v) => setValue(`departamentos_rateio.${index}.departamento`, v)}
+                >
+                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent>
+                    {departamentos.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                {(errors as any).departamentos_rateio?.[index]?.departamento && (
+                  <p className="text-xs text-destructive mt-1">
+                    {(errors as any).departamentos_rateio[index].departamento.message}
+                  </p>
+                )}
+              </div>
+              <div className="w-32">
+                <Label>Rateio (%)</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  max="100"
+                  {...register(`departamentos_rateio.${index}.percentual_rateio`, { valueAsNumber: true })}
+                />
+                {(errors as any).departamentos_rateio?.[index]?.percentual_rateio && (
+                  <p className="text-xs text-destructive mt-1">
+                    {(errors as any).departamentos_rateio[index].percentual_rateio.message}
+                  </p>
+                )}
+              </div>
+              <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)} className="text-destructive h-10 w-10">
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          ))}
+        </div>
+
+        {fields.length > 0 && (
+          <div className={`flex justify-end mt-3 text-sm font-medium ${
+            Math.abs(totalPercentual - 100) < 0.01 ? "text-success" : "text-warning"
+          }`}>
+            Total: {totalPercentual.toFixed(2)}%
+            {Math.abs(totalPercentual - 100) >= 0.01 && (
+              <span className="ml-2 text-xs text-muted-foreground">(deve somar 100%)</span>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

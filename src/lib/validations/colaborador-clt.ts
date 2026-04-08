@@ -43,16 +43,22 @@ export const documentosSchema = z.object({
   certificado_reservista: z.string().optional().or(z.literal("")),
 });
 
+export const departamentoRateioSchema = z.object({
+  departamento: z.string().min(1, "Departamento é obrigatório"),
+  percentual_rateio: z.coerce.number().min(0.01, "Percentual deve ser maior que 0").max(100, "Máximo 100%"),
+});
+
 export const dadosProfissionaisSchema = z.object({
   matricula: z.string().optional().or(z.literal("")),
   cargo: z.string().min(2, "Cargo é obrigatório"),
-  departamento: z.string().min(2, "Departamento é obrigatório"),
+  departamento: z.string().optional().or(z.literal("")),
   data_admissao: z.string().min(1, "Data de admissão é obrigatória"),
   tipo_contrato: z.string().default("indeterminado"),
   salario_base: z.coerce.number().positive("Salário deve ser positivo"),
   jornada_semanal: z.coerce.number().min(1).max(44).default(44),
   horario_trabalho: z.string().optional().or(z.literal("")),
   local_trabalho: z.string().optional().or(z.literal("")),
+  departamentos_rateio: z.array(departamentoRateioSchema).min(1, "Adicione pelo menos um departamento"),
 });
 
 export const dadosBancariosSchema = z.object({
