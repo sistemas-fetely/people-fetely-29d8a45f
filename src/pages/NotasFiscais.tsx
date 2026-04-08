@@ -137,9 +137,11 @@ export default function NotasFiscais() {
     return matchSearch && matchStatus && matchContrato;
   });
 
-  const totalPendentes = notas.filter((n) => n.status === "pendente").length;
+  const totalPendentes = notas.filter((n) => ["pendente", "aprovada", "enviada_pagamento"].includes(n.status)).length;
   const totalPagas = notas.filter((n) => n.status === "paga").length;
   const totalValor = notas.reduce((acc, n) => acc + Number(n.valor), 0);
+  const totalValorPago = notas.filter((n) => n.status === "paga").reduce((acc, n) => acc + Number(n.valor), 0);
+  const totalValorPendente = notas.filter((n) => ["pendente", "aprovada", "enviada_pagamento"].includes(n.status)).reduce((acc, n) => acc + Number(n.valor), 0);
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
