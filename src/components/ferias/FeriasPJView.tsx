@@ -269,6 +269,11 @@ export function FeriasPJView({ canManage, isAdmin }: Props) {
                         <Button variant="outline" size="sm" onClick={() => { setSelectedPeriodo(p); setShowNovaProg(true); }}>
                           <Plus className="h-3.5 w-3.5 mr-1" /> Programar
                         </Button>
+                        {isAdmin && (
+                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => excluirPeriodoMut.mutate(p.id)}>
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        )}
                       </TableCell>
                     )}
                   </TableRow>
