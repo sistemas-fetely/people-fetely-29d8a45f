@@ -552,6 +552,42 @@ function StepPessoaisPJPublic() {
   return <StepPessoaisPJ />;
 }
 
+function StepDocumentosPJPublic() {
+  const { register, setValue, watch } = useFormContext<PjFormData>();
+  return (
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-lg font-semibold mb-4">Título de Eleitor</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div><Label>Número</Label><Input {...register("titulo_eleitor")} /></div>
+          <div><Label>Zona</Label><Input {...register("zona_eleitoral")} /></div>
+          <div><Label>Seção</Label><Input {...register("secao_eleitoral")} /></div>
+        </div>
+      </div>
+      <div>
+        <h3 className="text-lg font-semibold mb-4">CNH</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div><Label>Número</Label><Input {...register("cnh_numero")} /></div>
+          <div>
+            <Label>Categoria</Label>
+            <Select value={watch("cnh_categoria") || ""} onValueChange={(v) => setValue("cnh_categoria", v)}>
+              <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+              <SelectContent>{["A","B","AB","C","D","E"].map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <div><Label>Validade</Label><Input type="date" {...register("cnh_validade")} /></div>
+        </div>
+      </div>
+      <div>
+        <h3 className="text-lg font-semibold mb-4">Certificado de Reservista</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div><Label>Número</Label><Input {...register("certificado_reservista")} /></div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 interface ConviteData {
   id: string;
   token: string;

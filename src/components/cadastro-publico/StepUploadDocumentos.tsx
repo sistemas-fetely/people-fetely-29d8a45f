@@ -26,15 +26,15 @@ interface StepUploadDocumentosProps {
 }
 
 const CLT_DOCUMENTS: DocumentSlot[] = [
-  { key: "rg_cnh_frente", label: "RG ou CNH (Frente)", required: true },
-  { key: "rg_cnh_verso", label: "RG ou CNH (Verso)", required: true },
+  { key: "rg_cnh_frente", label: "RG ou CNH (Frente)" },
+  { key: "rg_cnh_verso", label: "RG ou CNH (Verso)" },
 ];
 
 const PJ_DOCUMENTS: DocumentSlot[] = [
-  { key: "rg_cnh_frente", label: "RG ou CNH (Frente)", required: true },
-  { key: "rg_cnh_verso", label: "RG ou CNH (Verso)", required: true },
-  { key: "contrato_social", label: "Contrato Social da Empresa", required: true },
-  { key: "cartao_cnpj", label: "Cartão CNPJ", required: true },
+  { key: "rg_cnh_frente", label: "RG ou CNH (Frente)" },
+  { key: "rg_cnh_verso", label: "RG ou CNH (Verso)" },
+  { key: "contrato_social", label: "Contrato Social da Empresa" },
+  { key: "cartao_cnpj", label: "Cartão CNPJ" },
 ];
 
 export default function StepUploadDocumentos({ tipo, token, uploadedFiles, onFilesChange }: StepUploadDocumentosProps) {
