@@ -14,6 +14,244 @@ export type Database = {
   }
   public: {
     Tables: {
+      colaboradores_clt: {
+        Row: {
+          agencia: string | null
+          bairro: string | null
+          banco_codigo: string | null
+          banco_nome: string | null
+          cargo: string
+          cep: string | null
+          certificado_reservista: string | null
+          chave_pix: string | null
+          cidade: string | null
+          cnh_categoria: string | null
+          cnh_numero: string | null
+          cnh_validade: string | null
+          complemento: string | null
+          conta: string | null
+          contato_emergencia_nome: string | null
+          contato_emergencia_telefone: string | null
+          cpf: string
+          created_at: string
+          created_by: string | null
+          ctps_numero: string | null
+          ctps_serie: string | null
+          ctps_uf: string | null
+          data_admissao: string
+          data_nascimento: string
+          departamento: string
+          email_pessoal: string | null
+          estado_civil: string | null
+          etnia: string | null
+          foto_url: string | null
+          genero: string | null
+          gestor_direto_id: string | null
+          horario_trabalho: string | null
+          id: string
+          jornada_semanal: number | null
+          local_trabalho: string | null
+          logradouro: string | null
+          matricula: string | null
+          nacionalidade: string | null
+          nome_completo: string
+          nome_mae: string | null
+          nome_pai: string | null
+          numero: string | null
+          observacoes: string | null
+          orgao_emissor: string | null
+          pis_pasep: string | null
+          rg: string | null
+          salario_base: number
+          secao_eleitoral: string | null
+          status: string
+          telefone: string | null
+          tipo_conta: string | null
+          tipo_contrato: string
+          titulo_eleitor: string | null
+          uf: string | null
+          updated_at: string
+          user_id: string | null
+          zona_eleitoral: string | null
+        }
+        Insert: {
+          agencia?: string | null
+          bairro?: string | null
+          banco_codigo?: string | null
+          banco_nome?: string | null
+          cargo: string
+          cep?: string | null
+          certificado_reservista?: string | null
+          chave_pix?: string | null
+          cidade?: string | null
+          cnh_categoria?: string | null
+          cnh_numero?: string | null
+          cnh_validade?: string | null
+          complemento?: string | null
+          conta?: string | null
+          contato_emergencia_nome?: string | null
+          contato_emergencia_telefone?: string | null
+          cpf: string
+          created_at?: string
+          created_by?: string | null
+          ctps_numero?: string | null
+          ctps_serie?: string | null
+          ctps_uf?: string | null
+          data_admissao: string
+          data_nascimento: string
+          departamento: string
+          email_pessoal?: string | null
+          estado_civil?: string | null
+          etnia?: string | null
+          foto_url?: string | null
+          genero?: string | null
+          gestor_direto_id?: string | null
+          horario_trabalho?: string | null
+          id?: string
+          jornada_semanal?: number | null
+          local_trabalho?: string | null
+          logradouro?: string | null
+          matricula?: string | null
+          nacionalidade?: string | null
+          nome_completo: string
+          nome_mae?: string | null
+          nome_pai?: string | null
+          numero?: string | null
+          observacoes?: string | null
+          orgao_emissor?: string | null
+          pis_pasep?: string | null
+          rg?: string | null
+          salario_base: number
+          secao_eleitoral?: string | null
+          status?: string
+          telefone?: string | null
+          tipo_conta?: string | null
+          tipo_contrato?: string
+          titulo_eleitor?: string | null
+          uf?: string | null
+          updated_at?: string
+          user_id?: string | null
+          zona_eleitoral?: string | null
+        }
+        Update: {
+          agencia?: string | null
+          bairro?: string | null
+          banco_codigo?: string | null
+          banco_nome?: string | null
+          cargo?: string
+          cep?: string | null
+          certificado_reservista?: string | null
+          chave_pix?: string | null
+          cidade?: string | null
+          cnh_categoria?: string | null
+          cnh_numero?: string | null
+          cnh_validade?: string | null
+          complemento?: string | null
+          conta?: string | null
+          contato_emergencia_nome?: string | null
+          contato_emergencia_telefone?: string | null
+          cpf?: string
+          created_at?: string
+          created_by?: string | null
+          ctps_numero?: string | null
+          ctps_serie?: string | null
+          ctps_uf?: string | null
+          data_admissao?: string
+          data_nascimento?: string
+          departamento?: string
+          email_pessoal?: string | null
+          estado_civil?: string | null
+          etnia?: string | null
+          foto_url?: string | null
+          genero?: string | null
+          gestor_direto_id?: string | null
+          horario_trabalho?: string | null
+          id?: string
+          jornada_semanal?: number | null
+          local_trabalho?: string | null
+          logradouro?: string | null
+          matricula?: string | null
+          nacionalidade?: string | null
+          nome_completo?: string
+          nome_mae?: string | null
+          nome_pai?: string | null
+          numero?: string | null
+          observacoes?: string | null
+          orgao_emissor?: string | null
+          pis_pasep?: string | null
+          rg?: string | null
+          salario_base?: number
+          secao_eleitoral?: string | null
+          status?: string
+          telefone?: string | null
+          tipo_conta?: string | null
+          tipo_contrato?: string
+          titulo_eleitor?: string | null
+          uf?: string | null
+          updated_at?: string
+          user_id?: string | null
+          zona_eleitoral?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "colaboradores_clt_gestor_direto_id_fkey"
+            columns: ["gestor_direto_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dependentes: {
+        Row: {
+          colaborador_id: string
+          cpf: string | null
+          created_at: string
+          data_nascimento: string
+          documento_url: string | null
+          id: string
+          incluir_irrf: boolean | null
+          incluir_plano_saude: boolean | null
+          nome_completo: string
+          parentesco: string
+          updated_at: string
+        }
+        Insert: {
+          colaborador_id: string
+          cpf?: string | null
+          created_at?: string
+          data_nascimento: string
+          documento_url?: string | null
+          id?: string
+          incluir_irrf?: boolean | null
+          incluir_plano_saude?: boolean | null
+          nome_completo: string
+          parentesco: string
+          updated_at?: string
+        }
+        Update: {
+          colaborador_id?: string
+          cpf?: string | null
+          created_at?: string
+          data_nascimento?: string
+          documento_url?: string | null
+          id?: string
+          incluir_irrf?: boolean | null
+          incluir_plano_saude?: boolean | null
+          nome_completo?: string
+          parentesco?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dependentes_colaborador_id_fkey"
+            columns: ["colaborador_id"]
+            isOneToOne: false
+            referencedRelation: "colaboradores_clt"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null

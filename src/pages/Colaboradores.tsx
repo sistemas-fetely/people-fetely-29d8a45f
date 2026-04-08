@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Users, Plus, Search, Filter, MoreHorizontal, Eye, Edit, Trash2,
   Download, Upload, UserCheck, Briefcase,
@@ -15,6 +16,8 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { supabase } from "@/integrations/supabase/client";
+import type { Tables } from "@/integrations/supabase/types";
 
 interface Colaborador {
   id: string;
@@ -49,9 +52,17 @@ const statusStyles: Record<string, string> = {
 };
 
 export default function Colaboradores() {
+  const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [filterVinculo, setFilterVinculo] = useState("todos");
   const [filterStatus, setFilterStatus] = useState("todos");
+  const [dbColaboradores, setDbColaboradores] = useState<Tables<"colaboradores_clt">[]>([]);
+
+  useEffect(() => {
+    supabase.from("colaboradores_clt").select("*").order("nome_completo").then(({ data }) => {
+      if (data) setDbColaboradores(data);
+    });
+  }, []);
 
   const filtered = mockColaboradores.filter((c) => {
     const matchSearch = c.nome.toLowerCase().includes(search.toLowerCase()) ||
@@ -72,7 +83,7 @@ export default function Colaboradores() {
           <h1 className="text-2xl font-bold tracking-tight">Colaboradores</h1>
           <p className="text-muted-foreground text-sm mt-1">Gerenciamento de colaboradores CLT e PJ</p>
         </div>
-        <Button className="gap-2">
+        <Button className="gap-2" onClick={() => navigate("/colaboradores/novo")}>
           <Plus className="h-4 w-4" />
           Novo Colaborador
         </Button>

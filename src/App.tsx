@@ -8,6 +8,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AppLayout } from "@/components/AppLayout";
 import Dashboard from "@/pages/Dashboard";
 import Colaboradores from "@/pages/Colaboradores";
+import { CadastroColaboradorCLTWrapper } from "@/components/colaborador-clt/CadastroColaboradorCLT";
 import PlaceholderPage from "@/pages/PlaceholderPage";
 import Login from "@/pages/Login";
 import RecuperarSenha from "@/pages/RecuperarSenha";
@@ -35,6 +36,11 @@ const App = () => (
             <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
               <Route path="/" element={<Dashboard />} />
               <Route path="/colaboradores" element={<Colaboradores />} />
+              <Route path="/colaboradores/novo" element={
+                <ProtectedRoute allowedRoles={["super_admin", "gestor_rh"]}>
+                  <CadastroColaboradorCLTWrapper />
+                </ProtectedRoute>
+              } />
               <Route path="/organograma" element={<PlaceholderPage title="Organograma" description="Visualização hierárquica da empresa" />} />
 
               {/* CLT - Gestor RH, Super Admin, Financeiro */}
