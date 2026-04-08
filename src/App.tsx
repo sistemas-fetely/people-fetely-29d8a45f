@@ -84,11 +84,6 @@ const App = () => (
                   <NotaFiscalDetalhe />
                 </ProtectedRoute>
               } />
-              <Route path="/pagamentos-pj" element={
-                <ProtectedRoute allowedRoles={["super_admin", "gestor_rh", "financeiro"]}>
-                  <PagamentosPJ />
-                </ProtectedRoute>
-              } />
 
               {/* RH */}
               <Route path="/recrutamento" element={
