@@ -132,6 +132,33 @@ export function FeriasCLTView({ canManage }: Props) {
     });
   };
 
+  const openEditProg = (pr: Tables<"ferias_programacoes">) => {
+    setEditingProg(pr);
+    setProgDataInicio(new Date(pr.data_inicio));
+    setProgDias(pr.dias);
+    setProgTipo(pr.tipo);
+    setProgObs(pr.observacoes || "");
+    setShowEditProg(true);
+  };
+
+  const handleEditProg = () => {
+    if (!editingProg || !progDataInicio) return;
+    const dataFim = addDays(progDataInicio, progDias - 1);
+    editarProgMut.mutate({
+      id: editingProg.id,
+      data_inicio: format(progDataInicio, "yyyy-MM-dd"),
+      data_fim: format(dataFim, "yyyy-MM-dd"),
+      dias: progDias,
+      tipo: progTipo,
+      observacoes: progObs || null,
+    }, {
+      onSuccess: () => {
+        setShowEditProg(false);
+        setEditingProg(null);
+      },
+    });
+  };
+
   return (
     <div className="space-y-4">
       {/* KPIs */}
