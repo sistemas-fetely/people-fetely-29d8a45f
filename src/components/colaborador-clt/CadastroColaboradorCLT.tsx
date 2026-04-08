@@ -56,6 +56,8 @@ export function CadastroColaboradorCLT() {
       tipo_conta: "corrente",
       dependentes: [],
       departamentos_rateio: [{ departamento: "", percentual_rateio: 100 }],
+      acessos_sistemas: [],
+      equipamentos: [],
     },
   });
 
