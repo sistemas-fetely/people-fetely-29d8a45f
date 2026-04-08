@@ -642,7 +642,7 @@ export default function ContratosPJ() {
               <div>
                 <h3 className="text-sm font-semibold text-muted-foreground mb-3">CONTRATO</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  <div><p className="text-xs text-muted-foreground">Tipo de Serviço</p><p className="text-sm font-medium">{viewContrato.tipo_servico}</p></div>
+                  <div><p className="text-xs text-muted-foreground">Cargo</p><p className="text-sm font-medium">{viewContrato.tipo_servico}</p></div>
                   <div><p className="text-xs text-muted-foreground">Departamento</p><p className="text-sm font-medium">{viewContrato.departamento}</p></div>
                   <div><p className="text-xs text-muted-foreground">Valor Mensal</p><p className="text-sm font-medium">R$ {Number(viewContrato.valor_mensal).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p></div>
                   <div><p className="text-xs text-muted-foreground">Forma de Pagamento</p><p className="text-sm font-medium">{viewContrato.forma_pagamento}</p></div>

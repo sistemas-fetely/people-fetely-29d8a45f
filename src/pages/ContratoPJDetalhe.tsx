@@ -105,7 +105,7 @@ function TabDados({ contrato }: { contrato: ContratoPJ }) {
       <Card>
         <CardHeader><CardTitle className="text-sm text-muted-foreground">CONTRATO</CardTitle></CardHeader>
         <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <InfoItem label="Tipo de Serviço" value={contrato.tipo_servico} />
+          <InfoItem label="Cargo" value={contrato.tipo_servico} />
           <InfoItem label="Departamento" value={contrato.departamento} />
           <InfoItem label="Valor Mensal" value={`R$ ${Number(contrato.valor_mensal).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`} />
           <InfoItem label="Forma de Pagamento" value={contrato.forma_pagamento} />
