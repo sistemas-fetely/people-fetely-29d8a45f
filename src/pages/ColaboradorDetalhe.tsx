@@ -155,6 +155,47 @@ export default function ColaboradorDetalhe() {
         if (depErr) throw depErr;
       }
 
+      // Replace acessos_sistemas
+      await supabase.from("colaborador_acessos_sistemas").delete().eq("colaborador_id", id);
+      if (formAcessos && formAcessos.length > 0) {
+        const acessosToInsert = formAcessos
+          .filter((a: any) => a.tem_acesso && a.sistema)
+          .map((a: any) => ({
+            colaborador_id: id,
+            sistema: a.sistema,
+            tem_acesso: true,
+            usuario: a.usuario || null,
+            observacoes: a.observacoes || null,
+            data_concessao: new Date().toISOString().split("T")[0],
+          }));
+        if (acessosToInsert.length > 0) {
+          const { error: aErr } = await supabase.from("colaborador_acessos_sistemas").insert(acessosToInsert);
+          if (aErr) throw aErr;
+        }
+      }
+
+      // Replace equipamentos
+      await supabase.from("colaborador_equipamentos").delete().eq("colaborador_id", id);
+      if (formEquip && formEquip.length > 0) {
+        const equipToInsert = formEquip
+          .filter((e: any) => e.tipo)
+          .map((e: any) => ({
+            colaborador_id: id,
+            tipo: e.tipo,
+            marca: e.marca || null,
+            modelo: e.modelo || null,
+            numero_patrimonio: e.numero_patrimonio || null,
+            numero_serie: e.numero_serie || null,
+            data_entrega: e.data_entrega || null,
+            estado: e.estado || "novo",
+            observacoes: e.observacoes || null,
+          }));
+        if (equipToInsert.length > 0) {
+          const { error: eErr } = await supabase.from("colaborador_equipamentos").insert(equipToInsert);
+          if (eErr) throw eErr;
+        }
+      }
+
       toast.success("Colaborador atualizado com sucesso!");
       setEditing(false);
       // Reload data
