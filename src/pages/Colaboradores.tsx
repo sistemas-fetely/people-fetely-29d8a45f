@@ -231,8 +231,10 @@ export default function Colaboradores() {
                   <TableHead className="font-semibold hidden md:table-cell">Departamento</TableHead>
                   <TableHead className="font-semibold">Contrato</TableHead>
                   <TableHead className="font-semibold">Status</TableHead>
-                  <TableHead className="font-semibold hidden lg:table-cell">Admissão</TableHead>
-                  <TableHead className="w-10" />
+                   <TableHead className="font-semibold hidden lg:table-cell">Admissão</TableHead>
+                   <TableHead className="font-semibold hidden lg:table-cell text-right">Salário</TableHead>
+                   <TableHead className="font-semibold hidden xl:table-cell text-right">Sal. + Encargos</TableHead>
+                   <TableHead className="w-10" />
                 </TableRow>
               </TableHeader>
               <TableBody>
