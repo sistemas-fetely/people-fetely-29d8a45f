@@ -15,8 +15,13 @@ import {
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
+import { toast } from "sonner";
 
 type ColaboradorWithDepts = Tables<"colaboradores_clt"> & {
   departamentos_rateio?: { departamento: string; percentual_rateio: number }[];
@@ -45,6 +50,8 @@ export default function Colaboradores() {
   const [filterStatus, setFilterStatus] = useState("todos");
   const [colaboradores, setColaboradores] = useState<ColaboradorWithDepts[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deleteTarget, setDeleteTarget] = useState<ColaboradorWithDepts | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     async function fetchData() {
@@ -65,6 +72,25 @@ export default function Colaboradores() {
     }
     fetchData();
   }, []);
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      // Delete related records first, then the collaborator
+      await supabase.from("colaborador_departamentos").delete().eq("colaborador_id", deleteTarget.id);
+      await supabase.from("dependentes").delete().eq("colaborador_id", deleteTarget.id);
+      const { error } = await supabase.from("colaboradores_clt").delete().eq("id", deleteTarget.id);
+      if (error) throw error;
+      setColaboradores((prev) => prev.filter((c) => c.id !== deleteTarget.id));
+      toast.success(`${deleteTarget.nome_completo} foi excluído com sucesso.`);
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao excluir colaborador");
+    } finally {
+      setDeleting(false);
+      setDeleteTarget(null);
+    }
+  };
 
   const filtered = colaboradores.filter((c) => {
     const matchSearch =
@@ -235,7 +261,7 @@ export default function Colaboradores() {
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem onClick={() => navigate(`/colaboradores/${c.id}`)}><Eye className="mr-2 h-4 w-4" /> Visualizar</DropdownMenuItem>
                             <DropdownMenuItem onClick={() => navigate(`/colaboradores/${c.id}?edit=true`)}><Edit className="mr-2 h-4 w-4" /> Editar</DropdownMenuItem>
-                            <DropdownMenuItem className="text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Excluir</DropdownMenuItem>
+                            <DropdownMenuItem className="text-destructive" onClick={(e) => { e.stopPropagation(); setDeleteTarget(c); }}><Trash2 className="mr-2 h-4 w-4" /> Excluir</DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>
@@ -252,6 +278,28 @@ export default function Colaboradores() {
           </div>
         </CardContent>
       </Card>
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir <strong>{deleteTarget?.nome_completo}</strong>?
+              Esta ação não pode ser desfeita. Todos os dados do colaborador, departamentos e dependentes serão removidos permanentemente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? "Excluindo..." : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
