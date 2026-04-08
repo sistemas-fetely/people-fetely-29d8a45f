@@ -42,9 +42,10 @@ const STATUS_PROG: Record<string, { label: string; variant: "default" | "seconda
 
 interface Props {
   canManage: boolean;
+  isAdmin: boolean;
 }
 
-export function FeriasCLTView({ canManage }: Props) {
+export function FeriasCLTView({ canManage, isAdmin }: Props) {
   const navigate = useNavigate();
   const { data: periodos = [], isLoading } = useFeriasPeriodos();
   const criarPeriodoMut = useCriarPeriodo();
