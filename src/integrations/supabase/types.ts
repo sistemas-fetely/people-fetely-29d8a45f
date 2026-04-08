@@ -399,6 +399,42 @@ export type Database = {
           },
         ]
       }
+      parametros: {
+        Row: {
+          ativo: boolean
+          categoria: string
+          created_at: string
+          descricao: string | null
+          id: string
+          label: string
+          ordem: number
+          updated_at: string
+          valor: string
+        }
+        Insert: {
+          ativo?: boolean
+          categoria: string
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          label: string
+          ordem?: number
+          updated_at?: string
+          valor: string
+        }
+        Update: {
+          ativo?: boolean
+          categoria?: string
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          label?: string
+          ordem?: number
+          updated_at?: string
+          valor?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
