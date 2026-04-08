@@ -20,6 +20,8 @@ import NotFound from "@/pages/NotFound";
 import Parametros from "@/pages/Parametros";
 import ContratosPJ from "@/pages/ContratosPJ";
 import ContratoPJDetalhe from "@/pages/ContratoPJDetalhe";
+import NotasFiscais from "@/pages/NotasFiscais";
+import PagamentosPJ from "@/pages/PagamentosPJ";
 
 const queryClient = new QueryClient();
 
