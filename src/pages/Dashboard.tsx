@@ -32,6 +32,7 @@ export default function Dashboard() {
     clt, pj, headcount, ferias, aniversariantes,
     statusClt, turnover, folha, nfPendentes, pagPjPendentes,
     experienciaVencendo, docsVencendo, aniversariosEmpresa, semBeneficio,
+    contratosPendentes,
     isLoading,
   } = useDashboardData();
 
