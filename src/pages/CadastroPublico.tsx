@@ -751,12 +751,14 @@ export default function CadastroPublico() {
                     {step === 1 && <StepDocumentosCLT />}
                     {step === 2 && <StepBancarios />}
                     {step === 3 && <StepDependentesCLT />}
+                    {step === 4 && <StepUploadDocumentos tipo="clt" token={convite?.token || ""} uploadedFiles={uploadedFiles} onFilesChange={setUploadedFiles} />}
                   </>
                 ) : (
                   <>
                     {step === 0 && <StepPessoaisPJPublic />}
                     {step === 1 && <StepEmpresaPJ />}
                     {step === 2 && <StepBancarios />}
+                    {step === 3 && <StepUploadDocumentos tipo="pj" token={convite?.token || ""} uploadedFiles={uploadedFiles} onFilesChange={setUploadedFiles} />}
                   </>
                 )}
               </CardContent>
