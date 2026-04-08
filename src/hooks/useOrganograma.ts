@@ -6,13 +6,20 @@ function buildTree(posicoes: PosicaoRaw[], colaboradores: ColaboradorVinculado[]
   const colabMap = new Map(colaboradores.map(c => [c.id, c]));
   const contratoMap = new Map(contratos.map(c => [c.id, c]));
 
+  // Track which colaboradores/contratos are already linked to a position
+  const linkedColabIds = new Set<string>();
+  const linkedContratoIds = new Set<string>();
+
   const nodeMap = new Map<string, PosicaoNode>();
   const roots: PosicaoNode[] = [];
 
-  // Create all nodes
+  // Create nodes from positions
   for (const p of posicoes) {
     const colab = p.colaborador_id ? colabMap.get(p.colaborador_id) : null;
     const contrato = p.contrato_pj_id ? contratoMap.get(p.contrato_pj_id) : null;
+
+    if (colab && p.colaborador_id) linkedColabIds.add(p.colaborador_id);
+    if (contrato && p.contrato_pj_id) linkedContratoIds.add(p.contrato_pj_id);
 
     const node: PosicaoNode = {
       ...p,
@@ -27,6 +34,78 @@ function buildTree(posicoes: PosicaoRaw[], colaboradores: ColaboradorVinculado[]
       status_pessoal: colab ? colab.status : contrato ? contrato.status : null,
     };
     nodeMap.set(p.id, node);
+  }
+
+  // Create virtual nodes for unlinked colaboradores CLT (active)
+  for (const c of colaboradores) {
+    if (linkedColabIds.has(c.id)) continue;
+    if (c.status === "desligado") continue;
+
+    const virtualId = `virtual-clt-${c.id}`;
+    const node: PosicaoNode = {
+      id: virtualId,
+      titulo_cargo: c.cargo,
+      nivel_hierarquico: 1,
+      departamento: c.departamento,
+      area: null,
+      filial: null,
+      status: "ocupado",
+      id_pai: null,
+      colaborador_id: c.id,
+      contrato_pj_id: null,
+      salario_previsto: c.salario_base,
+      centro_custo: null,
+      created_at: "",
+      updated_at: "",
+      depth: 0,
+      path: [virtualId],
+      colaborador: c,
+      contrato_pj: null,
+      children: [],
+      subordinados_diretos: 0,
+      subordinados_totais: 0,
+      nome_display: c.nome_completo,
+      foto_url: c.foto_url,
+      vinculo: "CLT",
+      status_pessoal: c.status,
+    };
+    nodeMap.set(virtualId, node);
+  }
+
+  // Create virtual nodes for unlinked contratos PJ (active)
+  for (const cp of contratos) {
+    if (linkedContratoIds.has(cp.id)) continue;
+    if (cp.status === "encerrado" || cp.status === "cancelado") continue;
+
+    const virtualId = `virtual-pj-${cp.id}`;
+    const node: PosicaoNode = {
+      id: virtualId,
+      titulo_cargo: cp.razao_social ? `PJ - ${cp.contato_nome}` : cp.contato_nome,
+      nivel_hierarquico: 1,
+      departamento: "",
+      area: null,
+      filial: null,
+      status: "ocupado",
+      id_pai: null,
+      colaborador_id: null,
+      contrato_pj_id: cp.id,
+      salario_previsto: cp.valor_mensal,
+      centro_custo: null,
+      created_at: "",
+      updated_at: "",
+      depth: 0,
+      path: [virtualId],
+      colaborador: null,
+      contrato_pj: cp,
+      children: [],
+      subordinados_diretos: 0,
+      subordinados_totais: 0,
+      nome_display: cp.nome_fantasia || cp.contato_nome,
+      foto_url: null,
+      vinculo: "PJ",
+      status_pessoal: cp.status,
+    };
+    nodeMap.set(virtualId, node);
   }
 
   // Build tree
