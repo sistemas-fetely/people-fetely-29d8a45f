@@ -94,6 +94,8 @@ export default function NotaFiscalDetalhe() {
   const [contrato, setContrato] = useState<ContratoPJ | null>(null);
   const [pagamentos, setPagamentos] = useState<PagamentoPJ[]>([]);
   const [loading, setLoading] = useState(true);
+  const [pendingStatus, setPendingStatus] = useState<string | null>(null);
+  const [changingStatus, setChangingStatus] = useState(false);
 
   const { data: statusParams } = useParametros("status_nota_fiscal");
   const statusMap = useMemo(() => {
