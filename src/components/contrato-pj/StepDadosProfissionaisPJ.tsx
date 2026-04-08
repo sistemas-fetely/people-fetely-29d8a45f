@@ -1,10 +1,9 @@
-import { useFormContext, useFieldArray } from "react-hook-form";
+import { useFormContext } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Trash2, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useParametros } from "@/hooks/useParametros";
 import type { DadosProfissionaisPJForm } from "@/lib/validations/contrato-pj";
 
@@ -17,25 +16,11 @@ const statusMap: Record<string, string> = {
 };
 
 export function StepDadosProfissionaisPJ() {
-  const { register, setValue, watch, control, formState: { errors } } = useFormContext<DadosProfissionaisPJForm>();
+  const { register, setValue, watch, formState: { errors } } = useFormContext<DadosProfissionaisPJForm>();
 
   const { data: departamentos, isLoading: loadingDepts } = useParametros("departamento");
   const { data: cargos, isLoading: loadingCargos } = useParametros("cargo");
   const { data: formasPagamento, isLoading: loadingFormas } = useParametros("forma_pagamento");
-
-  const { fields, append, remove } = useFieldArray({
-    control,
-    name: "departamentos_rateio",
-  });
-
-  const totalPercentual = (watch("departamentos_rateio") || []).reduce(
-    (sum, d) => sum + (Number(d.percentual_rateio) || 0), 0
-  );
-
-  const addDepartamento = () => {
-    const remaining = 100 - totalPercentual;
-    append({ departamento: "", percentual_rateio: remaining > 0 ? remaining : 0 });
-  };
 
   return (
     <div className="space-y-6">
@@ -56,6 +41,22 @@ export function StepDadosProfissionaisPJ() {
             </Select>
           )}
           {errors.tipo_servico && <p className="text-xs text-destructive mt-1">{errors.tipo_servico.message}</p>}
+        </div>
+        <div>
+          <Label>Departamento *</Label>
+          {loadingDepts ? (
+            <div className="flex items-center h-10"><Loader2 className="h-4 w-4 animate-spin" /></div>
+          ) : (
+            <Select value={watch("departamento") || ""} onValueChange={(v) => setValue("departamento", v)}>
+              <SelectTrigger><SelectValue placeholder="Selecione o departamento" /></SelectTrigger>
+              <SelectContent>
+                {(departamentos || []).map((d) => (
+                  <SelectItem key={d.id} value={d.label}>{d.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+          {errors.departamento && <p className="text-xs text-destructive mt-1">{errors.departamento.message}</p>}
         </div>
         <div>
           <Label>Valor Mensal (R$) *</Label>
@@ -105,80 +106,6 @@ export function StepDadosProfissionaisPJ() {
           <Switch checked={watch("renovacao_automatica")} onCheckedChange={(v) => setValue("renovacao_automatica", v)} />
           <Label className="cursor-pointer">Renovação automática</Label>
         </div>
-      </div>
-
-      {/* Multi-department with cost allocation */}
-      <div className="border-t pt-6">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h3 className="text-lg font-semibold">Departamentos e Rateio</h3>
-            <p className="text-sm text-muted-foreground">
-              Associe o prestador a um ou mais departamentos com percentual de rateio de custos
-            </p>
-          </div>
-          <Button type="button" variant="outline" size="sm" onClick={addDepartamento} className="gap-2">
-            <Plus className="h-4 w-4" /> Adicionar Departamento
-          </Button>
-        </div>
-
-        {(errors as any).departamentos_rateio?.message && (
-          <p className="text-xs text-destructive mb-3">{(errors as any).departamentos_rateio.message}</p>
-        )}
-
-        {fields.length === 0 && (
-          <p className="text-sm text-muted-foreground text-center py-4 border rounded-md border-dashed">
-            Nenhum departamento adicionado. Clique em "Adicionar Departamento" acima.
-          </p>
-        )}
-
-        <div className="space-y-3">
-          {fields.map((field, index) => (
-            <div key={field.id} className="flex items-end gap-3 p-3 rounded-lg bg-muted/30 border">
-              <div className="flex-1">
-                <Label>Departamento *</Label>
-                {loadingDepts ? (
-                  <div className="flex items-center h-10"><Loader2 className="h-4 w-4 animate-spin" /></div>
-                ) : (
-                  <Select
-                    value={watch(`departamentos_rateio.${index}.departamento`) || ""}
-                    onValueChange={(v) => setValue(`departamentos_rateio.${index}.departamento`, v)}
-                  >
-                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                    <SelectContent>
-                      {(departamentos || []).map((d) => (
-                        <SelectItem key={d.id} value={d.label}>{d.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              </div>
-              <div className="w-32">
-                <Label>Rateio (%)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  max="100"
-                  {...register(`departamentos_rateio.${index}.percentual_rateio`, { valueAsNumber: true })}
-                />
-              </div>
-              <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)} className="text-destructive h-10 w-10">
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </div>
-          ))}
-        </div>
-
-        {fields.length > 0 && (
-          <div className={`flex justify-end mt-3 text-sm font-medium ${
-            Math.abs(totalPercentual - 100) < 0.01 ? "text-success" : "text-warning"
-          }`}>
-            Total: {totalPercentual.toFixed(2)}%
-            {Math.abs(totalPercentual - 100) >= 0.01 && (
-              <span className="ml-2 text-xs text-muted-foreground">(deve somar 100%)</span>
-            )}
-          </div>
-        )}
       </div>
     </div>
   );

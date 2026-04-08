@@ -41,7 +41,7 @@ export const documentosPJSchema = z.object({
 // Step 3: Dados Profissionais (adaptado PJ)
 export const dadosProfissionaisPJSchema = z.object({
   tipo_servico: z.string().min(2, "Cargo é obrigatório"),
-  departamento: z.string().optional().or(z.literal("")),
+  departamento: z.string().min(1, "Departamento é obrigatório"),
   data_inicio: z.string().min(1, "Data de início é obrigatória"),
   data_fim: z.string().optional().or(z.literal("")),
   valor_mensal: z.coerce.number().positive("Valor mensal deve ser positivo"),
@@ -49,7 +49,6 @@ export const dadosProfissionaisPJSchema = z.object({
   dia_vencimento: z.coerce.number().min(1).max(31).default(10),
   renovacao_automatica: z.boolean().default(false),
   status: z.string().default("rascunho"),
-  departamentos_rateio: z.array(departamentoRateioSchema).min(1, "Adicione pelo menos um departamento"),
 });
 
 // Step 4: Dados Bancários (reusa do CLT)
