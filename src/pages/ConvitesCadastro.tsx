@@ -153,10 +153,14 @@ export default function ConvitesCadastro() {
       if (error) throw error;
 
       // Update status to email_enviado
-      await supabase
+      const { error: updateError } = await supabase
         .from("convites_cadastro")
         .update({ status: "email_enviado" })
         .eq("id", convite.id);
+      
+      if (updateError) {
+        console.error("Erro ao atualizar status do convite:", updateError);
+      }
 
       setConvites((prev) =>
         prev.map((c) => (c.id === convite.id ? { ...c, status: "email_enviado" } : c))

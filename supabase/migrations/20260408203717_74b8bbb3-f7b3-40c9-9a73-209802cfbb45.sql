@@ -1,0 +1,2 @@
+ALTER TABLE public.convites_cadastro DROP CONSTRAINT convites_cadastro_status_check;
+ALTER TABLE public.convites_cadastro ADD CONSTRAINT convites_cadastro_status_check CHECK (status = ANY (ARRAY['pendente'::text, 'email_enviado'::text, 'preenchido'::text, 'cadastrado'::text, 'expirado'::text, 'cancelado'::text]));
