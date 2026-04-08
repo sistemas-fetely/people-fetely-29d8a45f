@@ -12,6 +12,7 @@ import Pessoas from "@/pages/Pessoas";
 import ColaboradorDetalhe from "@/pages/ColaboradorDetalhe";
 import { CadastroColaboradorCLTWrapper } from "@/components/colaborador-clt/CadastroColaboradorCLT";
 import PlaceholderPage from "@/pages/PlaceholderPage";
+import Organograma from "@/pages/Organograma";
 import Login from "@/pages/Login";
 import RecuperarSenha from "@/pages/RecuperarSenha";
 import ResetPassword from "@/pages/ResetPassword";
