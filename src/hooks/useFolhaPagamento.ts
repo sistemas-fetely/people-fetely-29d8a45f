@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { calcularFolha, type DadosCalculo } from "@/lib/calculo-folha";
+import { calcularFolha, type DadosCalculo, type ParametrosFolha, PARAMETROS_PADRAO } from "@/lib/calculo-folha";
 import { toast } from "sonner";
 import type { Tables } from "@/integrations/supabase/types";
 
