@@ -51,6 +51,7 @@ const rhItems = [
 ];
 
 const adminItems = [
+  { title: "Parâmetros", url: "/parametros", icon: Settings, roles: ["super_admin", "gestor_rh"] as AppRole[] },
   { title: "Configurações", url: "/configuracoes", icon: Settings, roles: ["super_admin"] as AppRole[] },
 ];
 

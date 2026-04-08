@@ -16,6 +16,7 @@ import RecuperarSenha from "@/pages/RecuperarSenha";
 import ResetPassword from "@/pages/ResetPassword";
 import SemPermissao from "@/pages/SemPermissao";
 import NotFound from "@/pages/NotFound";
+import Parametros from "@/pages/Parametros";
 
 const queryClient = new QueryClient();
 
@@ -87,6 +88,11 @@ const App = () => (
               } />
 
               {/* Admin */}
+              <Route path="/parametros" element={
+                <ProtectedRoute allowedRoles={["super_admin", "gestor_rh"]}>
+                  <Parametros />
+                </ProtectedRoute>
+              } />
               <Route path="/configuracoes" element={
                 <ProtectedRoute allowedRoles={["super_admin"]}>
                   <PlaceholderPage title="Configurações" description="Parâmetros do sistema e permissões" />
