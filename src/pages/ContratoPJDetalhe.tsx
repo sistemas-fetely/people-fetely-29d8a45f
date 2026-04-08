@@ -791,12 +791,13 @@ function TabPagamentos({ contratoId }: { contratoId: string }) {
           </TableHeader>
           <TableBody>
             {loading ? (
-              <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Carregando...</TableCell></TableRow>
+              <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">Carregando...</TableCell></TableRow>
             ) : pagamentos.length === 0 ? (
-              <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Nenhum pagamento cadastrado.</TableCell></TableRow>
+              <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">Nenhum pagamento cadastrado.</TableCell></TableRow>
             ) : pagamentos.map((p) => (
               <TableRow key={p.id}>
                 <TableCell className="font-medium">{p.competencia}</TableCell>
+                <TableCell className="text-sm">{p.notas_fiscais_pj?.numero || "—"}</TableCell>
                 <TableCell>{format(parseISO(p.data_prevista), "dd/MM/yyyy")}</TableCell>
                 <TableCell>{p.data_pagamento ? format(parseISO(p.data_pagamento), "dd/MM/yyyy") : "—"}</TableCell>
                 <TableCell>R$ {Number(p.valor).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</TableCell>
