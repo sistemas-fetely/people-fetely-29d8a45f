@@ -26,11 +26,12 @@ const roleLabels: Record<AppRole, string> = {
 
 const mainItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard, roles: [] as AppRole[] },
-  { title: "Colaboradores", url: "/colaboradores", icon: Users, roles: [] as AppRole[] },
+  { title: "Pessoas", url: "/pessoas", icon: Users, roles: [] as AppRole[] },
   { title: "Organograma", url: "/organograma", icon: GitBranch, roles: [] as AppRole[] },
 ];
 
 const cltItems = [
+  { title: "Colaboradores CLT", url: "/colaboradores", icon: Users, roles: [] as AppRole[] },
   { title: "Folha de Pagamento", url: "/folha-pagamento", icon: FileText, roles: ["super_admin", "gestor_rh", "financeiro"] as AppRole[] },
   { title: "Férias", url: "/ferias", icon: Calendar, roles: [] as AppRole[] },
   { title: "Ponto", url: "/ponto", icon: ClipboardList, roles: [] as AppRole[] },
