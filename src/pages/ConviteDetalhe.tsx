@@ -171,8 +171,9 @@ export default function ConviteDetalhe() {
 
         await supabase
           .from("convites_cadastro")
-          .update({ colaborador_id: colaborador.id, status: "preenchido" })
+          .update({ colaborador_id: colaborador.id, status: "cadastrado" })
           .eq("id", convite.id);
+        setConvite({ ...convite, colaborador_id: colaborador.id, status: "cadastrado" });
 
         toast.success("Colaborador CLT criado com sucesso!");
         navigate(`/colaboradores/${colaborador.id}`);
