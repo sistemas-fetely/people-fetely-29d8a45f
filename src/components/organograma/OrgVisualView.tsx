@@ -1,7 +1,7 @@
-import { useCallback, useMemo, useState, useEffect } from "react";
+import { useCallback, useMemo, useEffect } from "react";
 import {
   ReactFlow, Background, Controls, MiniMap, useNodesState, useEdgesState,
-  type Node, type Edge, type NodeProps, Handle, Position,
+  type Node, type Edge, type NodeProps, Handle, Position, type Connection,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -27,7 +27,6 @@ function getBorderColor(node: PosicaoNode) {
   return "#2563EB";
 }
 
-// Store click handler in a module-level ref to avoid passing functions through ReactFlow data
 let globalClickHandler: ((n: PosicaoNode) => void) | null = null;
 
 function OrgCard({ data }: NodeProps) {
@@ -143,10 +142,10 @@ interface Props {
   tree: PosicaoNode[];
   filters: OrgFilters;
   onNodeClick: (n: PosicaoNode) => void;
+  onMoveRequest?: (movedId: string, newParentId: string) => void;
 }
 
-export function OrgVisualView({ tree, filters, onNodeClick }: Props) {
-  // Set global click handler
+export function OrgVisualView({ tree, filters, onNodeClick, onMoveRequest }: Props) {
   globalClickHandler = onNodeClick;
 
   const { nodes: layoutNodes, edges: layoutEdges } = useMemo(() => layoutTree(tree), [tree]);
@@ -160,6 +159,13 @@ export function OrgVisualView({ tree, filters, onNodeClick }: Props) {
     setEdges(e);
   }, [tree, setNodes, setEdges]);
 
+  const onConnect = useCallback((connection: Connection) => {
+    if (connection.source && connection.target && onMoveRequest) {
+      // source = new parent, target = child being moved
+      onMoveRequest(connection.target, connection.source);
+    }
+  }, [onMoveRequest]);
+
   return (
     <div className="h-[calc(100vh-220px)] rounded-lg border bg-card">
       <ReactFlow
@@ -167,6 +173,7 @@ export function OrgVisualView({ tree, filters, onNodeClick }: Props) {
         edges={edges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
+        onConnect={onConnect}
         nodeTypes={nodeTypes}
         fitView
         fitViewOptions={{ padding: 0.2 }}

@@ -1,8 +1,9 @@
-import { Search, Filter, RotateCcw } from "lucide-react";
+import { Search, Filter, RotateCcw, Plus } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useAuth } from "@/contexts/AuthContext";
 import type { ViewMode, OrgFilters, PosicaoNode } from "@/types/organograma";
 
 interface Props {
@@ -11,9 +12,12 @@ interface Props {
   filters: OrgFilters;
   onFiltersChange: (f: OrgFilters) => void;
   allNodes: PosicaoNode[];
+  onCreatePosition?: () => void;
 }
 
-export function OrgToolbar({ viewMode, onViewModeChange, filters, onFiltersChange, allNodes }: Props) {
+export function OrgToolbar({ viewMode, onViewModeChange, filters, onFiltersChange, allNodes, onCreatePosition }: Props) {
+  const { hasAnyRole } = useAuth();
+  const canManage = hasAnyRole(["super_admin", "gestor_rh"]);
   const departamentos = [...new Set(allNodes.map(n => n.departamento))].sort();
   const filiais = [...new Set(allNodes.map(n => n.filial).filter(Boolean))].sort();
 
@@ -28,13 +32,20 @@ export function OrgToolbar({ viewMode, onViewModeChange, filters, onFiltersChang
           <h1 className="text-2xl font-bold text-foreground">Organograma</h1>
           <p className="text-sm text-muted-foreground">Estrutura organizacional da empresa</p>
         </div>
-        <Tabs value={viewMode} onValueChange={(v) => onViewModeChange(v as ViewMode)}>
-          <TabsList>
-            <TabsTrigger value="visual">🌳 Visual</TabsTrigger>
-            <TabsTrigger value="sintetico">📋 Sintético</TabsTrigger>
-            <TabsTrigger value="analitico">📊 Analítico</TabsTrigger>
-          </TabsList>
-        </Tabs>
+        <div className="flex items-center gap-2">
+          {canManage && onCreatePosition && (
+            <Button size="sm" onClick={onCreatePosition} className="h-9">
+              <Plus className="h-3.5 w-3.5 mr-1" /> Nova Posição
+            </Button>
+          )}
+          <Tabs value={viewMode} onValueChange={(v) => onViewModeChange(v as ViewMode)}>
+            <TabsList>
+              <TabsTrigger value="visual">🌳 Visual</TabsTrigger>
+              <TabsTrigger value="sintetico">📋 Sintético</TabsTrigger>
+              <TabsTrigger value="analitico">📊 Analítico</TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
       </div>
 
       <div className="flex items-center gap-2 flex-wrap">

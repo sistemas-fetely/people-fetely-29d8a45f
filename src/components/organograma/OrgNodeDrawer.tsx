@@ -3,7 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Calendar, Mail, Phone, Users, Briefcase, DollarSign } from "lucide-react";
+import { Calendar, Mail, Phone, Users, Briefcase, DollarSign, Pencil } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { differenceInMonths } from "date-fns";
@@ -14,6 +14,7 @@ interface Props {
   open: boolean;
   onClose: () => void;
   allNodes: PosicaoNode[];
+  onEditPosition?: (node: PosicaoNode) => void;
 }
 
 function getInitials(name: string) {
@@ -41,10 +42,11 @@ function statusBadge(status: string | null) {
 
 const fmtBRL = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
-export function OrgNodeDrawer({ node, open, onClose, allNodes }: Props) {
+export function OrgNodeDrawer({ node, open, onClose, allNodes, onEditPosition }: Props) {
   const { hasAnyRole } = useAuth();
   const navigate = useNavigate();
   const canSeeSalary = hasAnyRole(["super_admin", "gestor_rh", "financeiro"]);
+  const canManage = hasAnyRole(["super_admin", "gestor_rh"]);
 
   if (!node) return null;
 
@@ -74,6 +76,11 @@ export function OrgNodeDrawer({ node, open, onClose, allNodes }: Props) {
             {node.status === "previsto" && <Badge variant="outline" className="border-dashed border-green-400 text-green-700">🔵 Previsto</Badge>}
             {statusBadge(node.status_pessoal)}
           </div>
+          {canManage && onEditPosition && (
+            <Button variant="outline" size="sm" onClick={() => onEditPosition(node)}>
+              <Pencil className="h-3.5 w-3.5 mr-1" /> Editar Posição
+            </Button>
+          )}
         </div>
 
         <Tabs defaultValue="perfil" className="mt-2">
