@@ -104,7 +104,8 @@ export default function Colaboradores() {
   const totalAtivos = ativos.length;
   const totalInativos = colaboradores.filter((c) => c.status === "desligado").length;
 
-  const ENCARGOS_RATE = 0.08 + 0.20; // FGTS 8% + INSS Patronal 20%
+  const { data: parametrosFolha } = useParametrosFolha();
+  const ENCARGOS_RATE = (parametrosFolha?.aliquotaFGTS ?? 0.08) + (parametrosFolha?.aliquotaINSSPatronal ?? 0.20);
   const totalSalarios = ativos.reduce((s, c) => s + (c.salario_base || 0), 0);
   const totalEncargos = totalSalarios * ENCARGOS_RATE;
   const totalCustoMensal = totalSalarios + totalEncargos;
