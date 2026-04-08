@@ -166,7 +166,7 @@ export default function Dashboard() {
       </div>
 
       <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
-
+        <Card className="card-shadow animate-fade-in">
           <CardHeader className="pb-2">
             <CardTitle className="text-base">Status dos Colaboradores</CardTitle>
           </CardHeader>
