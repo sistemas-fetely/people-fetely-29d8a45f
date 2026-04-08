@@ -39,6 +39,12 @@ import { StepDependentes } from "@/components/colaborador-clt/StepDependentes";
 
 import type { AllPJFormData } from "@/lib/validations/contrato-pj";
 
+const formatCompetencia = (c: string) => {
+  if (/^\d{4}-\d{2}$/.test(c)) return format(parseISO(`${c}-01`), "MM/yyyy");
+  if (/^\d{6}$/.test(c)) return `${c.slice(0, 2)}/${c.slice(2)}`;
+  return c;
+};
+
 const statusMap: Record<string, string> = {
   rascunho: "Rascunho", ativo: "Ativo", suspenso: "Suspenso",
   encerrado: "Encerrado", renovado: "Renovado",
@@ -796,7 +802,7 @@ function TabPagamentos({ contratoId }: { contratoId: string }) {
               <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">Nenhum pagamento cadastrado.</TableCell></TableRow>
             ) : pagamentos.map((p) => (
               <TableRow key={p.id}>
-                <TableCell className="font-medium">{p.competencia}</TableCell>
+                <TableCell className="font-medium">{formatCompetencia(p.competencia)}</TableCell>
                 <TableCell className="text-sm">{p.notas_fiscais_pj?.numero || "—"}</TableCell>
                 <TableCell>{format(parseISO(p.data_prevista), "dd/MM/yyyy")}</TableCell>
                 <TableCell>{p.data_pagamento ? format(parseISO(p.data_pagamento), "dd/MM/yyyy") : "—"}</TableCell>
@@ -879,7 +885,7 @@ function PagamentoForm({ open, onClose, pagamento, contratoId, onSaved }: {
         <DialogHeader><DialogTitle>{pagamento ? "Editar Pagamento" : "Novo Pagamento"}</DialogTitle></DialogHeader>
         <div className="grid grid-cols-2 gap-4 py-2">
           <div><Label>Valor (R$) *</Label><Input type="number" step="0.01" value={form.valor} onChange={(e) => set("valor", e.target.value)} /></div>
-          <div><Label>Competência *</Label><Input value={form.competencia} onChange={(e) => set("competencia", e.target.value)} placeholder="MM/AAAA" /></div>
+          <div><Label>Competência *</Label><Input type="month" value={form.competencia} onChange={(e) => set("competencia", e.target.value)} /></div>
           <div><Label>Data Prevista *</Label><Input type="date" value={form.data_prevista} onChange={(e) => set("data_prevista", e.target.value)} /></div>
           <div><Label>Data Pagamento</Label><Input type="date" value={form.data_pagamento} onChange={(e) => set("data_pagamento", e.target.value)} /></div>
           <div>

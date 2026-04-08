@@ -29,6 +29,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format, parseISO } from "date-fns";
 
+const formatCompetencia = (c: string) => {
+  if (/^\d{4}-\d{2}$/.test(c)) return format(parseISO(`${c}-01`), "MM/yyyy");
+  if (/^\d{6}$/.test(c)) return `${c.slice(0, 2)}/${c.slice(2)}`;
+  return c;
+};
+
 const statusMap: Record<string, string> = {
   pendente: "Pendente", aprovada: "Aprovada", enviada_pagamento: "Enviada para Pagamento",
   paga: "Paga", pago: "Pago", cancelada: "Cancelada", cancelado: "Cancelado", vencida: "Vencida",
@@ -200,7 +206,7 @@ export default function PagamentosPJ() {
                   <TableRow key={p.id} className="hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => p.nota_fiscal_id ? navigate(`/notas-fiscais/${p.nota_fiscal_id}`) : navigate(`/contratos-pj/${p.contrato_id}`)}>
                     <TableCell className="font-medium text-sm">{p.contrato_nome}</TableCell>
                     <TableCell className="text-sm hidden md:table-cell">{p.nf_numero || "—"}</TableCell>
-                    <TableCell className="text-sm hidden md:table-cell">{p.competencia}</TableCell>
+                    <TableCell className="text-sm hidden md:table-cell">{formatCompetencia(p.competencia)}</TableCell>
                     <TableCell className="text-sm">{format(parseISO(p.data_prevista), "dd/MM/yyyy")}</TableCell>
                     <TableCell className="text-sm hidden md:table-cell">{p.data_pagamento ? format(parseISO(p.data_pagamento), "dd/MM/yyyy") : "—"}</TableCell>
                     <TableCell>R$ {Number(p.valor).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</TableCell>
@@ -302,7 +308,7 @@ function PagamentoFormDialog({ open, onClose, pagamento, contratos, onSaved }: {
             </Select>
           </div>
           <div><Label>Valor (R$) *</Label><Input type="number" step="0.01" value={form.valor} onChange={(e) => set("valor", e.target.value)} /></div>
-          <div><Label>Competência *</Label><Input value={form.competencia} onChange={(e) => set("competencia", e.target.value)} placeholder="MM/AAAA" /></div>
+          <div><Label>Competência *</Label><Input type="month" value={form.competencia} onChange={(e) => set("competencia", e.target.value)} /></div>
           <div><Label>Data Prevista *</Label><Input type="date" value={form.data_prevista} onChange={(e) => set("data_prevista", e.target.value)} /></div>
           <div><Label>Data Pagamento</Label><Input type="date" value={form.data_pagamento} onChange={(e) => set("data_pagamento", e.target.value)} /></div>
           <div>
