@@ -233,6 +233,113 @@ export function useDashboardData() {
     },
   });
 
+  // Experiência vencendo (45/90 dias)
+  const experienciaQuery = useQuery({
+    queryKey: ["dashboard_experiencia_vencendo"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("colaboradores_clt")
+        .select("nome_completo, data_admissao, tipo_contrato, departamento")
+        .eq("status", "ativo")
+        .in("tipo_contrato", ["experiencia", "indeterminado"]);
+
+      const today = new Date();
+      const alertas: { nome: string; diasRestantes: number; marco: number; depto: string }[] = [];
+
+      (data || []).forEach((c) => {
+        const admissao = new Date(c.data_admissao + "T00:00:00");
+        const diffDias = Math.floor((today.getTime() - admissao.getTime()) / (1000 * 60 * 60 * 24));
+
+        // Alerta se está entre 35-45 dias (próximo do marco de 45) ou 80-90 dias (próximo do marco de 90)
+        if (diffDias >= 35 && diffDias <= 45) {
+          alertas.push({ nome: c.nome_completo, diasRestantes: 45 - diffDias, marco: 45, depto: c.departamento });
+        } else if (diffDias >= 80 && diffDias <= 90) {
+          alertas.push({ nome: c.nome_completo, diasRestantes: 90 - diffDias, marco: 90, depto: c.departamento });
+        }
+      });
+
+      return alertas;
+    },
+  });
+
+  // Documentos vencendo (CNH)
+  const docsVencendoQuery = useQuery({
+    queryKey: ["dashboard_docs_vencendo"],
+    queryFn: async () => {
+      const d30 = new Date();
+      d30.setDate(d30.getDate() + 30);
+      const today = new Date().toISOString().slice(0, 10);
+
+      const { data } = await supabase
+        .from("colaboradores_clt")
+        .select("nome_completo, cnh_validade, departamento")
+        .eq("status", "ativo")
+        .not("cnh_validade", "is", null)
+        .lte("cnh_validade", d30.toISOString().slice(0, 10));
+
+      return (data || []).map((c) => ({
+        nome: c.nome_completo,
+        documento: "CNH",
+        validade: c.cnh_validade!,
+        vencido: c.cnh_validade! < today,
+        depto: c.departamento,
+      }));
+    },
+  });
+
+  // Aniversários de empresa (marcos de 1, 5, 10, 15, 20, 25, 30 anos) no mês atual
+  const anivEmpresaQuery = useQuery({
+    queryKey: ["dashboard_aniv_empresa"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("colaboradores_clt")
+        .select("nome_completo, data_admissao, departamento")
+        .eq("status", "ativo");
+
+      const now = new Date();
+      const mesAtual = now.getMonth();
+      const anoAtual = now.getFullYear();
+      const marcos = [1, 5, 10, 15, 20, 25, 30];
+
+      return (data || [])
+        .map((c) => {
+          const admissao = new Date(c.data_admissao + "T00:00:00");
+          if (admissao.getMonth() !== mesAtual) return null;
+          const anos = anoAtual - admissao.getFullYear();
+          if (!marcos.includes(anos)) return null;
+          return {
+            nome: c.nome_completo,
+            anos,
+            data: admissao.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }),
+            depto: c.departamento,
+          };
+        })
+        .filter(Boolean) as { nome: string; anos: number; data: string; depto: string }[];
+    },
+  });
+
+  // Colaboradores ativos sem benefícios
+  const semBeneficioQuery = useQuery({
+    queryKey: ["dashboard_sem_beneficio"],
+    queryFn: async () => {
+      const { data: colaboradores } = await supabase
+        .from("colaboradores_clt")
+        .select("id, nome_completo, departamento")
+        .eq("status", "ativo");
+
+      const { data: beneficios } = await supabase
+        .from("beneficios_colaborador")
+        .select("colaborador_id")
+        .eq("status", "ativo");
+
+      const comBeneficio = new Set((beneficios || []).map((b) => b.colaborador_id));
+
+      return (colaboradores || [])
+        .filter((c) => !comBeneficio.has(c.id))
+        .map((c) => ({ nome: c.nome_completo, depto: c.departamento }));
+    },
+  });
+
   const isLoading = cltQuery.isLoading || pjQuery.isLoading || headcountQuery.isLoading;
 
   return {
@@ -246,6 +353,10 @@ export function useDashboardData() {
     folha: folhaQuery.data ?? null,
     nfPendentes: nfQuery.data ?? 0,
     pagPjPendentes: pagPjQuery.data ?? 0,
+    experienciaVencendo: experienciaQuery.data ?? [],
+    docsVencendo: docsVencendoQuery.data ?? [],
+    aniversariosEmpresa: anivEmpresaQuery.data ?? [],
+    semBeneficio: semBeneficioQuery.data ?? [],
     isLoading,
   };
 }
