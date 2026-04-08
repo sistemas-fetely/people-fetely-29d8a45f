@@ -107,6 +107,19 @@ export default function NotasFiscais() {
 
   useEffect(() => { fetchData(); }, []);
 
+  // Handle ?edit=<id> query param from detail page
+  useEffect(() => {
+    const editId = searchParams.get("edit");
+    if (editId && notas.length > 0) {
+      const found = notas.find((n) => n.id === editId);
+      if (found) {
+        setEditNota(found);
+        setFormOpen(true);
+        setSearchParams({}, { replace: true });
+      }
+    }
+  }, [notas, searchParams]);
+
   const filtered = notas.filter((n) => {
     const matchSearch =
       n.numero.toLowerCase().includes(search.toLowerCase()) ||
