@@ -18,6 +18,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import {
   useFeriasPeriodosPJ, useCriarPeriodoPJ, useCriarFeriasPJ, useAtualizarStatusFeriasPJ, useEditarFeriasPJ,
+  useExcluirFeriasPJ, useExcluirPeriodoPJ,
   type PeriodoPJComContrato,
 } from "@/hooks/useFerias";
 import type { Tables } from "@/integrations/supabase/types";
