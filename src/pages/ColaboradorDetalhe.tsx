@@ -350,7 +350,7 @@ export default function ColaboradorDetalhe() {
                 <InfoField label="CPF" value={colaborador.cpf} />
                 <InfoField label="RG" value={colaborador.rg} />
                 <InfoField label="Órgão Emissor" value={colaborador.orgao_emissor} />
-                <InfoField label="Data de Nascimento" value={colaborador.data_nascimento ? format(parseISO(colaborador.data_nascimento), "dd/MM/yyyy") : ""} />
+                <InfoField label="Data de Nascimento" value={colaborador.data_nascimento ? safeFormatDate(colaborador.data_nascimento) : ""} />
                 <InfoField label="Gênero" value={colaborador.genero} />
                 <InfoField label="Estado Civil" value={colaborador.estado_civil} />
                 <InfoField label="Nacionalidade" value={colaborador.nacionalidade} />
@@ -384,7 +384,7 @@ export default function ColaboradorDetalhe() {
                 <InfoField label="Seção Eleitoral" value={colaborador.secao_eleitoral} />
                 <InfoField label="CNH Número" value={colaborador.cnh_numero} />
                 <InfoField label="CNH Categoria" value={colaborador.cnh_categoria} />
-                <InfoField label="CNH Validade" value={colaborador.cnh_validade ? format(parseISO(colaborador.cnh_validade), "dd/MM/yyyy") : ""} />
+                <InfoField label="CNH Validade" value={colaborador.cnh_validade ? safeFormatDate(colaborador.cnh_validade) : ""} />
                 <InfoField label="Certificado Reservista" value={colaborador.certificado_reservista} />
               </div>
             </CardContent></Card>
@@ -395,7 +395,7 @@ export default function ColaboradorDetalhe() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <InfoField label="Matrícula" value={colaborador.matricula} />
                 <InfoField label="Cargo" value={colaborador.cargo} />
-                <InfoField label="Data de Admissão" value={format(parseISO(colaborador.data_admissao), "dd/MM/yyyy")} />
+                <InfoField label="Data de Admissão" value={safeFormatDate(colaborador.data_admissao)} />
                 <InfoField label="Data de Desligamento" value={(colaborador as any).data_desligamento ? format(parseISO((colaborador as any).data_desligamento), "dd/MM/yyyy") : "—"} />
                 <InfoField label="Tipo de Contrato" value={colaborador.tipo_contrato} />
                 <InfoField label="Salário Base" value={`R$ ${Number(colaborador.salario_base).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`} />
@@ -425,7 +425,7 @@ export default function ColaboradorDetalhe() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
                 <InfoField label="Email Corporativo" value={colaborador.email_corporativo} />
                 <InfoField label="Ramal" value={colaborador.ramal} />
-                <InfoField label="Data de Integração" value={colaborador.data_integracao ? format(parseISO(colaborador.data_integracao), "dd/MM/yyyy") : ""} />
+                <InfoField label="Data de Integração" value={colaborador.data_integracao ? safeFormatDate(colaborador.data_integracao) : ""} />
               </div>
 
               <h3 className="font-semibold mb-3">🔐 Acesso aos Sistemas</h3>
@@ -461,7 +461,7 @@ export default function ColaboradorDetalhe() {
                         <InfoField label="Nº Patrimônio" value={e.numero_patrimonio} />
                         <InfoField label="Nº Série" value={e.numero_serie} />
                         <InfoField label="Estado" value={e.estado} />
-                        <InfoField label="Data Entrega" value={e.data_entrega ? format(parseISO(e.data_entrega), "dd/MM/yyyy") : ""} />
+                        <InfoField label="Data Entrega" value={e.data_entrega ? safeFormatDate(e.data_entrega) : ""} />
                       </div>
                       {e.observacoes && <p className="text-xs text-muted-foreground mt-2">{e.observacoes}</p>}
                     </div>
@@ -482,7 +482,7 @@ export default function ColaboradorDetalhe() {
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                         <InfoField label="Nome" value={d.nome_completo} />
                         <InfoField label="CPF" value={d.cpf} />
-                        <InfoField label="Nascimento" value={format(parseISO(d.data_nascimento), "dd/MM/yyyy")} />
+                        <InfoField label="Nascimento" value={safeFormatDate(d.data_nascimento)} />
                         <InfoField label="Parentesco" value={d.parentesco} />
                         <InfoField label="IRRF" value={d.incluir_irrf ? "Sim" : "Não"} />
                         <InfoField label="Plano de Saúde" value={d.incluir_plano_saude ? "Sim" : "Não"} />
