@@ -73,6 +73,25 @@ export default function Colaboradores() {
     fetchData();
   }, []);
 
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      // Delete related records first, then the collaborator
+      await supabase.from("colaborador_departamentos").delete().eq("colaborador_id", deleteTarget.id);
+      await supabase.from("dependentes").delete().eq("colaborador_id", deleteTarget.id);
+      const { error } = await supabase.from("colaboradores_clt").delete().eq("id", deleteTarget.id);
+      if (error) throw error;
+      setColaboradores((prev) => prev.filter((c) => c.id !== deleteTarget.id));
+      toast.success(`${deleteTarget.nome_completo} foi excluído com sucesso.`);
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao excluir colaborador");
+    } finally {
+      setDeleting(false);
+      setDeleteTarget(null);
+    }
+  };
+
   const filtered = colaboradores.filter((c) => {
     const matchSearch =
       c.nome_completo.toLowerCase().includes(search.toLowerCase()) ||
