@@ -200,7 +200,7 @@ export default function Dashboard() {
           valorAnterior={custoTotalCltAnterior}
           icon={Users}
           invertColor
-          subtitle={folhaAtual ? `${folhaAtual.total_colaboradores || 0} colaboradores` : `${salarioMedio.count} colaboradores`}
+          subtitle={`${folhaAtualBrutoEncargos > 0 ? (folhaAtual?.total_colaboradores || salarioMedio.count) : salarioMedio.count} colaboradores${folhaAtualBrutoEncargos === 0 ? " (estimativa)" : ""}`}
         />
         <FinancialKpiCard
           title="Custo PJ Mensal"
