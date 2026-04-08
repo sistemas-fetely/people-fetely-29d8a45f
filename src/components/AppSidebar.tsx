@@ -52,7 +52,9 @@ const rhItems = [
 ];
 
 const adminItems = [
-  { title: "Parâmetros", url: "/parametros", icon: Settings, roles: ["super_admin", "gestor_rh"] as AppRole[] },
+  { title: "Parâmetros Gerais", url: "/parametros?modulo=geral", icon: Settings, roles: ["super_admin", "gestor_rh"] as AppRole[] },
+  { title: "Parâmetros CLT", url: "/parametros?modulo=clt", icon: Settings, roles: ["super_admin", "gestor_rh"] as AppRole[] },
+  { title: "Parâmetros PJ", url: "/parametros?modulo=pj", icon: Settings, roles: ["super_admin", "gestor_rh"] as AppRole[] },
   { title: "Configurações", url: "/configuracoes", icon: Settings, roles: ["super_admin"] as AppRole[] },
 ];
 
