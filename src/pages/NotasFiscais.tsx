@@ -175,11 +175,11 @@ export default function NotasFiscais() {
         </CardContent></Card>
         <Card className="card-shadow"><CardContent className="p-4 flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-success/10 text-success"><FileText className="h-5 w-5" /></div>
-          <div><p className="text-2xl font-bold">{totalPagas}</p><p className="text-xs text-muted-foreground">Pagas</p></div>
+          <div><p className="text-2xl font-bold">R$ {totalValorPago.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p><p className="text-xs text-muted-foreground">Total Pago</p></div>
         </CardContent></Card>
         <Card className="card-shadow"><CardContent className="p-4 flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-info/10 text-info"><FileText className="h-5 w-5" /></div>
-          <div><p className="text-2xl font-bold">R$ {totalValor.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p><p className="text-xs text-muted-foreground">Valor Total</p></div>
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-destructive/10 text-destructive"><FileText className="h-5 w-5" /></div>
+          <div><p className="text-2xl font-bold">R$ {totalValorPendente.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p><p className="text-xs text-muted-foreground">A Pagar</p></div>
         </CardContent></Card>
       </div>
 
