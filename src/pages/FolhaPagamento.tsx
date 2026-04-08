@@ -12,6 +12,7 @@ import { FolhaKPIs } from "@/components/folha-pagamento/FolhaKPIs";
 import { FolhaToolbar } from "@/components/folha-pagamento/FolhaToolbar";
 import { HoleriteTable } from "@/components/folha-pagamento/HoleriteTable";
 import { HoleriteDrawer } from "@/components/folha-pagamento/HoleriteDrawer";
+import { exportarExcel, exportarPDF } from "@/lib/exportar-folha";
 
 export default function FolhaPagamento() {
   const { hasAnyRole } = useAuth();
@@ -35,6 +36,13 @@ export default function FolhaPagamento() {
   const selected = competencias.find((c) => c.id === selectedId) ?? null;
   const canEditHolerite = canManage && selected?.status !== "fechada";
 
+  const handleExportExcel = () => {
+    if (selected && holerites.length > 0) exportarExcel(holerites, selected);
+  };
+  const handleExportPDF = () => {
+    if (selected && holerites.length > 0) exportarPDF(holerites, selected);
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -49,8 +57,11 @@ export default function FolhaPagamento() {
         onCriar={(comp) => criarMut.mutate(comp)}
         onCalcular={() => selectedId && calcularMut.mutate(selectedId)}
         onFechar={() => selectedId && fecharMut.mutate(selectedId)}
+        onExportExcel={handleExportExcel}
+        onExportPDF={handleExportPDF}
         isCalculating={calcularMut.isPending}
         canManage={canManage}
+        hasHolerites={holerites.length > 0}
       />
 
       <FolhaKPIs competencia={selected} />
