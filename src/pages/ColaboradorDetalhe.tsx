@@ -499,6 +499,29 @@ export default function ColaboradorDetalhe() {
             </CardContent></Card>
           </TabsContent>
         </Tabs>
+
+        <AlertDialog open={statusDialogOpen} onOpenChange={setStatusDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>{isAtivo ? "Inativar colaborador?" : "Reativar colaborador?"}</AlertDialogTitle>
+              <AlertDialogDescription>
+                {isAtivo
+                  ? `O colaborador "${colaborador.nome_completo}" será marcado como desligado. Você poderá reativá-lo depois.`
+                  : `O colaborador "${colaborador.nome_completo}" será reativado com status "Ativo".`}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleToggleStatus}
+                disabled={togglingStatus}
+                className={isAtivo ? "bg-destructive text-destructive-foreground hover:bg-destructive/90" : ""}
+              >
+                {togglingStatus ? <Loader2 className="h-4 w-4 animate-spin" /> : isAtivo ? "Inativar" : "Reativar"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     );
   }
