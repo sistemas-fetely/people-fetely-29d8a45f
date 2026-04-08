@@ -14,6 +14,65 @@ export type Database = {
   }
   public: {
     Tables: {
+      beneficios_colaborador: {
+        Row: {
+          colaborador_id: string
+          created_at: string
+          data_fim: string | null
+          data_inicio: string
+          descricao: string | null
+          id: string
+          numero_cartao: string | null
+          observacoes: string | null
+          operadora: string | null
+          status: string
+          tipo: string
+          updated_at: string
+          valor_desconto: number
+          valor_empresa: number
+        }
+        Insert: {
+          colaborador_id: string
+          created_at?: string
+          data_fim?: string | null
+          data_inicio?: string
+          descricao?: string | null
+          id?: string
+          numero_cartao?: string | null
+          observacoes?: string | null
+          operadora?: string | null
+          status?: string
+          tipo: string
+          updated_at?: string
+          valor_desconto?: number
+          valor_empresa?: number
+        }
+        Update: {
+          colaborador_id?: string
+          created_at?: string
+          data_fim?: string | null
+          data_inicio?: string
+          descricao?: string | null
+          id?: string
+          numero_cartao?: string | null
+          observacoes?: string | null
+          operadora?: string | null
+          status?: string
+          tipo?: string
+          updated_at?: string
+          valor_desconto?: number
+          valor_empresa?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "beneficios_colaborador_colaborador_id_fkey"
+            columns: ["colaborador_id"]
+            isOneToOne: false
+            referencedRelation: "colaboradores_clt"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       colaborador_acessos_sistemas: {
         Row: {
           colaborador_id: string
