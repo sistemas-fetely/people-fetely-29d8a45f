@@ -121,10 +121,34 @@ export default function ConvitesCadastro() {
 
   const publicBaseUrl = "https://people-fetely.lovable.app";
 
+  const getLink = (token: string) => `${publicBaseUrl}/cadastro/${token}`;
+
   const copyLink = (token: string) => {
-    const url = `${publicBaseUrl}/cadastro/${token}`;
-    navigator.clipboard.writeText(url);
+    navigator.clipboard.writeText(getLink(token));
     toast.success("Link copiado para a área de transferência!");
+  };
+
+  const sendEmail = async (convite: Convite) => {
+    try {
+      const { error } = await supabase.functions.invoke("send-transactional-email", {
+        body: {
+          templateName: "convite-cadastro",
+          recipientEmail: convite.email,
+          idempotencyKey: `convite-${convite.id}`,
+          templateData: {
+            nome: convite.nome,
+            tipo: convite.tipo,
+            cargo: convite.cargo || undefined,
+            departamento: convite.departamento || undefined,
+            link: getLink(convite.token),
+          },
+        },
+      });
+      if (error) throw error;
+      toast.success(`E-mail enviado para ${convite.email}!`);
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao enviar e-mail");
+    }
   };
 
   const filtered = convites.filter((c) => {
