@@ -77,6 +77,16 @@ const cltSchema = dadosPessoaisPublicoSchema.merge(documentosPublicoSchema).merg
   dependentes: z.array(dependentePublicoSchema).default([]),
 });
 
+const pjDocumentosSchema = z.object({
+  titulo_eleitor: z.string().optional().or(z.literal("")),
+  zona_eleitoral: z.string().optional().or(z.literal("")),
+  secao_eleitoral: z.string().optional().or(z.literal("")),
+  cnh_numero: z.string().optional().or(z.literal("")),
+  cnh_categoria: z.string().optional().or(z.literal("")),
+  cnh_validade: z.string().optional().or(z.literal("")),
+  certificado_reservista: z.string().optional().or(z.literal("")),
+});
+
 const pjPessoaisSchema = z.object({
   contato_nome: z.string().min(3, "Nome deve ter pelo menos 3 caracteres"),
   contato_telefone: z.string().optional().or(z.literal("")),
@@ -109,7 +119,7 @@ const pjPessoaisSchema = z.object({
   inscricao_estadual: z.string().optional().or(z.literal("")),
 });
 
-const pjSchema = pjPessoaisSchema.merge(bancariosPublicoSchema);
+const pjSchema = pjPessoaisSchema.merge(pjDocumentosSchema).merge(bancariosPublicoSchema);
 
 type CltFormData = z.infer<typeof cltSchema>;
 type PjFormData = z.infer<typeof pjSchema>;
@@ -542,6 +552,42 @@ function StepPessoaisPJPublic() {
   return <StepPessoaisPJ />;
 }
 
+function StepDocumentosPJPublic() {
+  const { register, setValue, watch } = useFormContext<PjFormData>();
+  return (
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-lg font-semibold mb-4">Título de Eleitor</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div><Label>Número</Label><Input {...register("titulo_eleitor")} /></div>
+          <div><Label>Zona</Label><Input {...register("zona_eleitoral")} /></div>
+          <div><Label>Seção</Label><Input {...register("secao_eleitoral")} /></div>
+        </div>
+      </div>
+      <div>
+        <h3 className="text-lg font-semibold mb-4">CNH</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div><Label>Número</Label><Input {...register("cnh_numero")} /></div>
+          <div>
+            <Label>Categoria</Label>
+            <Select value={watch("cnh_categoria") || ""} onValueChange={(v) => setValue("cnh_categoria", v)}>
+              <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+              <SelectContent>{["A","B","AB","C","D","E"].map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <div><Label>Validade</Label><Input type="date" {...register("cnh_validade")} /></div>
+        </div>
+      </div>
+      <div>
+        <h3 className="text-lg font-semibold mb-4">Certificado de Reservista</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div><Label>Número</Label><Input {...register("certificado_reservista")} /></div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 interface ConviteData {
   id: string;
   token: string;
@@ -557,7 +603,7 @@ interface ConviteData {
 }
 
 const CLT_STEPS = ["Dados Pessoais", "Documentos", "Dados Bancários", "Dependentes", "Upload de Documentos"];
-const PJ_STEPS = ["Dados Pessoais", "Dados da Empresa", "Dados Bancários", "Upload de Documentos"];
+const PJ_STEPS = ["Dados Pessoais", "Dados da Empresa", "Documentos", "Dados Bancários", "Upload de Documentos"];
 
 export default function CadastroPublico() {
   const { token } = useParams<{ token: string }>();
@@ -758,8 +804,9 @@ export default function CadastroPublico() {
                   <>
                     {step === 0 && <StepPessoaisPJPublic />}
                     {step === 1 && <StepEmpresaPJ />}
-                    {step === 2 && <StepBancarios />}
-                    {step === 3 && <StepUploadDocumentos tipo="pj" token={convite?.token || ""} uploadedFiles={uploadedFiles} onFilesChange={setUploadedFiles} />}
+                    {step === 2 && <StepDocumentosPJPublic />}
+                    {step === 3 && <StepBancarios />}
+                    {step === 4 && <StepUploadDocumentos tipo="pj" token={convite?.token || ""} uploadedFiles={uploadedFiles} onFilesChange={setUploadedFiles} />}
                   </>
                 )}
               </CardContent>
