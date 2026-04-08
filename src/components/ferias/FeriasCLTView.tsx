@@ -19,6 +19,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import {
   useFeriasPeriodos, useCriarPeriodo, useCriarProgramacao, useAtualizarStatusProgramacao, useEditarProgramacao,
+  useExcluirProgramacao, useExcluirPeriodo,
   type PeriodoComColaborador,
 } from "@/hooks/useFerias";
 import type { Tables } from "@/integrations/supabase/types";
