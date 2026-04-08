@@ -48,6 +48,7 @@ export default function Colaboradores() {
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("todos");
+  const [filterDept, setFilterDept] = useState("todos");
   const [colaboradores, setColaboradores] = useState<ColaboradorWithDepts[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleteTarget, setDeleteTarget] = useState<ColaboradorWithDepts | null>(null);
