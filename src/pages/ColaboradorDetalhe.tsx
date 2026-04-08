@@ -390,18 +390,7 @@ export default function ColaboradorDetalhe() {
                 <InfoField label="Horário de Trabalho" value={colaborador.horario_trabalho} />
                 <InfoField label="Local de Trabalho" value={colaborador.local_trabalho} />
               </div>
-              {departamentos.length > 0 && (
-                <div className="mt-6">
-                  <h3 className="font-semibold mb-3">Departamentos e Rateio</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {departamentos.map((d, i) => (
-                      <Badge key={i} variant="outline" className="bg-muted px-3 py-1.5 text-sm">
-                        {d.departamento} — {d.percentual_rateio}%
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              )}
+              <InfoField label="Departamento" value={colaborador.departamento} />
             </CardContent></Card>
           </TabsContent>
 
