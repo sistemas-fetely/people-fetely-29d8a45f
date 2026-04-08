@@ -43,6 +43,10 @@ type AllFormData = DadosPessoaisForm & DocumentosForm & DadosProfissionaisForm &
 
 export function CadastroColaboradorCLT() {
   const [currentStep, setCurrentStep] = useState(1);
+  const [uploadedFiles, setUploadedFiles] = useState<import("./StepUploadDocumentosCLT").UploadedFile[]>(
+    (initialData?.documentos_upload as any) || []
+  );
+  const uploadFolderRef = useRef(initialData?.upload_folder || crypto.randomUUID());
   const [saving, setSaving] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
