@@ -57,6 +57,7 @@ interface PagamentoComContrato {
   observacoes: string | null;
   status: string;
   contrato_nome: string;
+  nf_numero: string | null;
 }
 
 interface ContratoPJOption {
@@ -78,14 +79,14 @@ export default function PagamentosPJ() {
 
   const fetchData = async () => {
     const [{ data: pags }, { data: cps }] = await Promise.all([
-      supabase.from("pagamentos_pj").select("*").order("data_prevista", { ascending: false }),
+      supabase.from("pagamentos_pj").select("*, notas_fiscais_pj(numero)").order("data_prevista", { ascending: false }),
       supabase.from("contratos_pj").select("id, razao_social, nome_fantasia").order("razao_social"),
     ]);
 
     const contratoMap = new Map((cps || []).map((c) => [c.id, c]));
     const mapped: PagamentoComContrato[] = (pags || []).map((p: any) => {
       const c = contratoMap.get(p.contrato_id);
-      return { ...p, contrato_nome: c ? (c.nome_fantasia || c.razao_social) : "—" };
+      return { ...p, contrato_nome: c ? (c.nome_fantasia || c.razao_social) : "—", nf_numero: p.notas_fiscais_pj?.numero || null };
     });
     setPagamentos(mapped);
     setContratos((cps || []).map((c) => ({ id: c.id, label: c.nome_fantasia || c.razao_social })));
@@ -180,6 +181,7 @@ export default function PagamentosPJ() {
               <TableHeader>
                 <TableRow className="bg-muted/50">
                   <TableHead className="font-semibold">Contrato</TableHead>
+                  <TableHead className="font-semibold hidden md:table-cell">Nº NF</TableHead>
                   <TableHead className="font-semibold hidden md:table-cell">Competência</TableHead>
                   <TableHead className="font-semibold">Data Prevista</TableHead>
                   <TableHead className="font-semibold hidden md:table-cell">Data Pgto</TableHead>
@@ -191,12 +193,13 @@ export default function PagamentosPJ() {
               </TableHeader>
               <TableBody>
                 {loading ? (
-                  <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground"><Loader2 className="h-5 w-5 animate-spin mx-auto" /></TableCell></TableRow>
+                  <TableRow><TableCell colSpan={9} className="text-center py-8 text-muted-foreground"><Loader2 className="h-5 w-5 animate-spin mx-auto" /></TableCell></TableRow>
                 ) : filtered.length === 0 ? (
-                  <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">Nenhum pagamento encontrado.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={9} className="text-center py-8 text-muted-foreground">Nenhum pagamento encontrado.</TableCell></TableRow>
                 ) : filtered.map((p) => (
                   <TableRow key={p.id} className="hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => p.nota_fiscal_id ? navigate(`/notas-fiscais/${p.nota_fiscal_id}`) : navigate(`/contratos-pj/${p.contrato_id}`)}>
                     <TableCell className="font-medium text-sm">{p.contrato_nome}</TableCell>
+                    <TableCell className="text-sm hidden md:table-cell">{p.nf_numero || "—"}</TableCell>
                     <TableCell className="text-sm hidden md:table-cell">{p.competencia}</TableCell>
                     <TableCell className="text-sm">{format(parseISO(p.data_prevista), "dd/MM/yyyy")}</TableCell>
                     <TableCell className="text-sm hidden md:table-cell">{p.data_pagamento ? format(parseISO(p.data_pagamento), "dd/MM/yyyy") : "—"}</TableCell>
