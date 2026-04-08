@@ -65,6 +65,42 @@ export default function Dashboard() {
   if (pagPjPendentes > 0) alertas.push({ titulo: `${pagPjPendentes} pagamento(s) PJ pendente(s)`, detalhe: "Aguardando pagamento", prioridade: "media" });
   if (folha && folha.status === "aberta") alertas.push({ titulo: `Folha ${folha.competencia} em aberto`, detalhe: "Fechar folha", prioridade: "media" });
 
+  // Experiência vencendo
+  experienciaVencendo.forEach((e) => {
+    alertas.push({
+      titulo: `${e.nome} — experiência ${e.marco} dias`,
+      detalhe: e.diasRestantes > 0 ? `${e.diasRestantes} dia(s) restante(s) · ${e.depto}` : `Vence hoje · ${e.depto}`,
+      prioridade: "alta",
+    });
+  });
+
+  // Documentos vencendo
+  docsVencendo.forEach((d) => {
+    alertas.push({
+      titulo: `${d.documento} de ${d.nome} ${d.vencido ? "vencida" : "vencendo"}`,
+      detalhe: `Validade: ${new Date(d.validade + "T00:00:00").toLocaleDateString("pt-BR")} · ${d.depto}`,
+      prioridade: d.vencido ? "alta" : "media",
+    });
+  });
+
+  // Aniversários de empresa
+  aniversariosEmpresa.forEach((a) => {
+    alertas.push({
+      titulo: `${a.nome} completa ${a.anos} ano(s) de empresa`,
+      detalhe: `${a.data} · ${a.depto}`,
+      prioridade: "baixa",
+    });
+  });
+
+  // Colaboradores sem benefícios
+  if (semBeneficio.length > 0) {
+    alertas.push({
+      titulo: `${semBeneficio.length} colaborador(es) sem benefícios`,
+      detalhe: semBeneficio.slice(0, 3).map((s) => s.nome).join(", ") + (semBeneficio.length > 3 ? "..." : ""),
+      prioridade: "media",
+    });
+  }
+
   const prioridadeStyles: Record<string, string> = {
     alta: "bg-destructive/10 text-destructive border-0",
     media: "bg-warning/10 text-warning border-0",
