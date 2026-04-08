@@ -122,6 +122,41 @@ export function CadastroColaboradorCLT() {
         if (deptError) throw deptError;
       }
 
+      // Insert system access records
+      if (acessos_sistemas && acessos_sistemas.length > 0) {
+        const acessosToInsert = acessos_sistemas
+          .filter((a) => a.tem_acesso)
+          .map((a) => ({
+            colaborador_id: inserted.id,
+            sistema: a.sistema,
+            tem_acesso: true,
+            usuario: a.usuario || null,
+            observacoes: a.observacoes || null,
+            data_concessao: new Date().toISOString().split("T")[0],
+          }));
+        if (acessosToInsert.length > 0) {
+          const { error: aErr } = await supabase.from("colaborador_acessos_sistemas").insert(acessosToInsert);
+          if (aErr) throw aErr;
+        }
+      }
+
+      // Insert equipment records
+      if (equipamentos && equipamentos.length > 0) {
+        const equipToInsert = equipamentos.map((e) => ({
+          colaborador_id: inserted.id,
+          tipo: e.tipo,
+          marca: e.marca || null,
+          modelo: e.modelo || null,
+          numero_patrimonio: e.numero_patrimonio || null,
+          numero_serie: e.numero_serie || null,
+          data_entrega: e.data_entrega || null,
+          estado: e.estado || "novo",
+          observacoes: e.observacoes || null,
+        }));
+        const { error: eErr } = await supabase.from("colaborador_equipamentos").insert(equipToInsert);
+        if (eErr) throw eErr;
+      }
+
       // Insert dependents
       if (dependentes && dependentes.length > 0) {
         const depsToInsert = dependentes.map((d) => ({
