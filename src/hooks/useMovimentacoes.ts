@@ -111,9 +111,46 @@ export function useAtualizarStatusMovimentacao() {
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
       const { error } = await supabase.from("movimentacoes").update({ status } as any).eq("id", id);
       if (error) throw error;
+
+      // Ao efetivar, atualizar dados na tabela de origem
+      if (status === "efetivada") {
+        const { data: mov } = await supabase
+          .from("movimentacoes")
+          .select("*")
+          .eq("id", id)
+          .single();
+
+        if (mov?.colaborador_id) {
+          const updates: Record<string, any> = {};
+          if (mov.cargo_novo) updates.cargo = mov.cargo_novo;
+          if (mov.departamento_novo) updates.departamento = mov.departamento_novo;
+          if (mov.salario_novo != null) updates.salario_base = mov.salario_novo;
+          if (Object.keys(updates).length > 0) {
+            const { error: updErr } = await supabase
+              .from("colaboradores_clt")
+              .update(updates as any)
+              .eq("id", mov.colaborador_id);
+            if (updErr) throw updErr;
+          }
+        } else if (mov?.contrato_pj_id) {
+          const updates: Record<string, any> = {};
+          if (mov.cargo_novo) updates.tipo_servico = mov.cargo_novo;
+          if (mov.departamento_novo) updates.departamento = mov.departamento_novo;
+          if (mov.salario_novo != null) updates.valor_mensal = mov.salario_novo;
+          if (Object.keys(updates).length > 0) {
+            const { error: updErr } = await supabase
+              .from("contratos_pj")
+              .update(updates as any)
+              .eq("id", mov.contrato_pj_id);
+            if (updErr) throw updErr;
+          }
+        }
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["movimentacoes"] });
+      qc.invalidateQueries({ queryKey: ["colaboradores_ativos_mov"] });
+      qc.invalidateQueries({ queryKey: ["contratos_pj_ativos_mov"] });
       toast.success("Status atualizado");
     },
     onError: (e: any) => toast.error(e.message),
