@@ -104,8 +104,8 @@ export function HoleriteDrawer({ holerite, open, onClose, competenciaId, canEdit
       outrosProventos: form.outrosProventos,
       outrosDescontos: form.outrosDescontos,
     };
-    return calcularFolha(dados);
-  }, [editing, form, holerite]);
+    return calcularFolha(dados, parametrosFolha);
+  }, [editing, form, holerite, parametrosFolha]);
 
   if (!holerite) return null;
   const h = holerite;
