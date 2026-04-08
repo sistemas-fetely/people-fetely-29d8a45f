@@ -406,6 +406,9 @@ export default function ColaboradorDetalhe() {
           <TabsContent value="bancarios">
             <Card><CardContent className="pt-6"><StepDadosBancarios /></CardContent></Card>
           </TabsContent>
+          <TabsContent value="empresa">
+            <Card><CardContent className="pt-6"><StepDadosEmpresa /></CardContent></Card>
+          </TabsContent>
           <TabsContent value="dependentes">
             <Card><CardContent className="pt-6"><StepDependentes /></CardContent></Card>
           </TabsContent>
