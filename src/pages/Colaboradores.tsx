@@ -47,9 +47,9 @@ export default function Colaboradores() {
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("todos");
   const [filterDept, setFilterDept] = useState("todos");
-  const [colaboradores, setColaboradores] = useState<ColaboradorWithDepts[]>([]);
+  const [colaboradores, setColaboradores] = useState<ColaboradorRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [deleteTarget, setDeleteTarget] = useState<ColaboradorWithDepts | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<ColaboradorRow | null>(null);
   const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
