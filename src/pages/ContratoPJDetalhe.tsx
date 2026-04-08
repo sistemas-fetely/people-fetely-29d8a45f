@@ -6,8 +6,9 @@ import { format, parseISO } from "date-fns";
 import {
   ArrowLeft, Edit, Save, Loader2, X, User, FileText, Briefcase,
   Building2, Users as UsersIcon, Monitor, UserCheck, UserX, ArrowUpDown,
-  CreditCard, Plus, MoreHorizontal, Trash2, DollarSign,
+  CreditCard, Plus, MoreHorizontal, Trash2, DollarSign, Network,
 } from "lucide-react";
+import { OrgBranchView } from "@/components/organograma/OrgBranchView";
 import { CustoResumoCard } from "@/components/CustoResumoCard";
 import { HistoricoCustosChart } from "@/components/HistoricoCustosChart";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
