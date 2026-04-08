@@ -1,11 +1,15 @@
 import { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Edit, FileText, Building2, Calendar, DollarSign, Hash, Clock, ExternalLink, Mail, Send } from "lucide-react";
+import { ArrowLeft, Edit, FileText, Building2, Calendar, DollarSign, Hash, Clock, ExternalLink, Mail, Send, CheckCircle2, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Loader2 } from "lucide-react";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format, parseISO } from "date-fns";
@@ -90,6 +94,8 @@ export default function NotaFiscalDetalhe() {
   const [contrato, setContrato] = useState<ContratoPJ | null>(null);
   const [pagamentos, setPagamentos] = useState<PagamentoPJ[]>([]);
   const [loading, setLoading] = useState(true);
+  const [pendingStatus, setPendingStatus] = useState<string | null>(null);
+  const [changingStatus, setChangingStatus] = useState(false);
 
   const { data: statusParams } = useParametros("status_nota_fiscal");
   const statusMap = useMemo(() => {
@@ -150,6 +156,59 @@ export default function NotaFiscalDetalhe() {
   const formatDate = (d: string | null) => d ? format(parseISO(d), "dd/MM/yyyy") : "—";
   const formatCurrency = (v: number) => `R$ ${Number(v).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
 
+  // Ordered status pipeline for visual stepper
+  const statusPipeline = ["pendente", "aprovada", "enviada_pagamento", "paga"];
+  const terminalStatuses = ["cancelada", "vencida"];
+  const currentIndex = statusPipeline.indexOf(nota.status);
+  const isTerminal = terminalStatuses.includes(nota.status);
+
+  const handleStatusChange = async (newStatus: string) => {
+    if (!nota) return;
+    setChangingStatus(true);
+    try {
+      const { error } = await supabase.from("notas_fiscais_pj").update({ status: newStatus } as any).eq("id", nota.id);
+      if (error) throw error;
+
+      // Auto-create payment when changing to enviada_pagamento
+      if (newStatus === "enviada_pagamento" && nota.status !== "enviada_pagamento") {
+        const { data: contratoData } = await supabase
+          .from("contratos_pj")
+          .select("forma_pagamento")
+          .eq("id", nota.contrato_id)
+          .single();
+
+        const pagPayload = {
+          contrato_id: nota.contrato_id,
+          nota_fiscal_id: nota.id,
+          valor: Number(nota.valor),
+          competencia: nota.competencia,
+          data_prevista: nota.data_vencimento || nota.data_emissao,
+          forma_pagamento: contratoData?.forma_pagamento || "transferencia",
+          status: "pendente",
+          observacoes: `Pagamento gerado automaticamente a partir da NF ${nota.numero}`,
+        };
+        const { error: pagError } = await supabase.from("pagamentos_pj").insert(pagPayload as any);
+        if (pagError) {
+          toast.error("Status alterado, mas erro ao criar pagamento: " + pagError.message);
+        } else {
+          toast.success("Pagamento PJ criado automaticamente!");
+        }
+      }
+
+      setNota({ ...nota, status: newStatus });
+      toast.success(`Status alterado para ${statusMap[newStatus] || newStatus}`);
+
+      // Refresh pagamentos
+      const { data: pagData } = await supabase.from("pagamentos_pj").select("*").eq("nota_fiscal_id", nota.id).order("created_at", { ascending: false });
+      if (pagData) setPagamentos(pagData as PagamentoPJ[]);
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setChangingStatus(false);
+      setPendingStatus(null);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -185,6 +244,117 @@ export default function NotaFiscalDetalhe() {
           </Button>
         </div>
       </div>
+
+      {/* Status Pipeline */}
+      <Card>
+        <CardContent className="pt-6 pb-6">
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-sm font-medium text-muted-foreground">Fluxo de Status</p>
+            {isTerminal && (
+              <Badge variant="outline" className={statusStyles[nota.status] || ""}>
+                {statusMap[nota.status] || nota.status}
+              </Badge>
+            )}
+          </div>
+          {!isTerminal ? (
+            <div className="flex items-center gap-0">
+              {statusPipeline.map((status, idx) => {
+                const isActive = nota.status === status;
+                const isPast = currentIndex > idx;
+                const isFuture = currentIndex < idx;
+                const isNext = idx === currentIndex + 1;
+                return (
+                  <div key={status} className="flex items-center flex-1 last:flex-initial">
+                    <button
+                      disabled={changingStatus || isPast || isActive}
+                      onClick={() => (isNext || isFuture) ? setPendingStatus(status) : undefined}
+                      className={`
+                        relative flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all w-full
+                        ${isActive ? "bg-primary text-primary-foreground shadow-md" : ""}
+                        ${isPast ? "bg-primary/10 text-primary" : ""}
+                        ${isFuture && isNext ? "bg-muted hover:bg-primary/10 hover:text-primary cursor-pointer border-2 border-dashed border-primary/30" : ""}
+                        ${isFuture && !isNext ? "bg-muted text-muted-foreground hover:bg-muted/80 cursor-pointer" : ""}
+                        ${isPast || isActive ? "cursor-default" : ""}
+                      `}
+                    >
+                      <span className={`
+                        flex h-6 w-6 items-center justify-center rounded-full text-xs shrink-0
+                        ${isActive ? "bg-primary-foreground/20 text-primary-foreground" : ""}
+                        ${isPast ? "bg-primary text-primary-foreground" : ""}
+                        ${isFuture ? "bg-muted-foreground/20 text-muted-foreground" : ""}
+                      `}>
+                        {isPast ? <CheckCircle2 className="h-4 w-4" /> : idx + 1}
+                      </span>
+                      <span className="truncate">{statusMap[status] || status}</span>
+                    </button>
+                    {idx < statusPipeline.length - 1 && (
+                      <ChevronRight className={`h-5 w-5 shrink-0 mx-1 ${isPast ? "text-primary" : "text-muted-foreground/40"}`} />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="flex items-center gap-3">
+              <p className="text-sm text-muted-foreground">
+                Esta nota fiscal está com status final. Para retomar o fluxo, use o botão Editar.
+              </p>
+            </div>
+          )}
+          {!isTerminal && (
+            <div className="flex items-center gap-2 mt-3 pt-3 border-t">
+              <p className="text-xs text-muted-foreground">Ações rápidas:</p>
+              {terminalStatuses.map((ts) => (
+                <Button
+                  key={ts}
+                  variant="outline"
+                  size="sm"
+                  className={`text-xs ${statusStyles[ts] || ""}`}
+                  disabled={changingStatus}
+                  onClick={() => setPendingStatus(ts)}
+                >
+                  {statusMap[ts] || ts}
+                </Button>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Status Change Confirmation */}
+      <AlertDialog open={!!pendingStatus} onOpenChange={(o) => !o && setPendingStatus(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar Mudança de Status</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div>
+                <p>
+                  Alterar o status da NF <strong>{nota.numero}</strong> de{" "}
+                  <Badge variant="outline" className={`mx-1 ${statusStyles[nota.status] || ""}`}>
+                    {statusMap[nota.status] || nota.status}
+                  </Badge>{" "}
+                  para{" "}
+                  <Badge variant="outline" className={`mx-1 ${statusStyles[pendingStatus || ""] || ""}`}>
+                    {statusMap[pendingStatus || ""] || pendingStatus}
+                  </Badge>?
+                </p>
+                {pendingStatus === "enviada_pagamento" && (
+                  <p className="mt-2 text-sm font-medium text-primary">
+                    ⚡ Um lançamento de pagamento será criado automaticamente.
+                  </p>
+                )}
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={changingStatus}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction disabled={changingStatus} onClick={() => pendingStatus && handleStatusChange(pendingStatus)}>
+              {changingStatus ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              Confirmar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
