@@ -349,6 +349,102 @@ export type Database = {
           },
         ]
       }
+      contratos_pj: {
+        Row: {
+          agencia: string | null
+          banco_codigo: string | null
+          banco_nome: string | null
+          chave_pix: string | null
+          cnpj: string
+          conta: string | null
+          contato_email: string | null
+          contato_nome: string
+          contato_telefone: string | null
+          created_at: string
+          created_by: string | null
+          data_fim: string | null
+          data_inicio: string
+          departamento: string
+          dia_vencimento: number | null
+          forma_pagamento: string
+          id: string
+          inscricao_estadual: string | null
+          inscricao_municipal: string | null
+          nome_fantasia: string | null
+          objeto: string | null
+          observacoes: string | null
+          razao_social: string
+          renovacao_automatica: boolean
+          status: string
+          tipo_conta: string | null
+          tipo_servico: string
+          updated_at: string
+          valor_mensal: number
+        }
+        Insert: {
+          agencia?: string | null
+          banco_codigo?: string | null
+          banco_nome?: string | null
+          chave_pix?: string | null
+          cnpj: string
+          conta?: string | null
+          contato_email?: string | null
+          contato_nome: string
+          contato_telefone?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_fim?: string | null
+          data_inicio: string
+          departamento: string
+          dia_vencimento?: number | null
+          forma_pagamento?: string
+          id?: string
+          inscricao_estadual?: string | null
+          inscricao_municipal?: string | null
+          nome_fantasia?: string | null
+          objeto?: string | null
+          observacoes?: string | null
+          razao_social: string
+          renovacao_automatica?: boolean
+          status?: string
+          tipo_conta?: string | null
+          tipo_servico: string
+          updated_at?: string
+          valor_mensal: number
+        }
+        Update: {
+          agencia?: string | null
+          banco_codigo?: string | null
+          banco_nome?: string | null
+          chave_pix?: string | null
+          cnpj?: string
+          conta?: string | null
+          contato_email?: string | null
+          contato_nome?: string
+          contato_telefone?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_fim?: string | null
+          data_inicio?: string
+          departamento?: string
+          dia_vencimento?: number | null
+          forma_pagamento?: string
+          id?: string
+          inscricao_estadual?: string | null
+          inscricao_municipal?: string | null
+          nome_fantasia?: string | null
+          objeto?: string | null
+          observacoes?: string | null
+          razao_social?: string
+          renovacao_automatica?: boolean
+          status?: string
+          tipo_conta?: string | null
+          tipo_servico?: string
+          updated_at?: string
+          valor_mensal?: number
+        }
+        Relationships: []
+      }
       dependentes: {
         Row: {
           colaborador_id: string

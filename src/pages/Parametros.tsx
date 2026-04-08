@@ -27,6 +27,8 @@ const CATEGORIAS = [
   { value: "tipo_contrato", label: "Tipos de Contrato", icon: Settings2, description: "Modalidades de contrato CLT conforme legislação" },
   { value: "jornada", label: "Jornadas", icon: Settings2, description: "Jornadas de trabalho e escalas" },
   { value: "local_trabalho", label: "Locais de Trabalho", icon: Monitor, description: "Locais de trabalho disponíveis para colaboradores" },
+  { value: "tipo_servico", label: "Tipos de Serviço PJ", icon: Package, description: "Tipos de serviço para contratos PJ" },
+  { value: "forma_pagamento", label: "Formas de Pagamento", icon: Settings2, description: "Formas de pagamento para prestadores PJ" },
   { value: "sistema", label: "Sistemas", icon: Monitor, description: "Sistemas de acesso para colaboradores" },
   { value: "tipo_equipamento", label: "Tipos de Equipamento", icon: Package, description: "Tipos de equipamentos disponíveis" },
   { value: "estado_equipamento", label: "Estados de Equipamento", icon: Settings2, description: "Condições dos equipamentos" },

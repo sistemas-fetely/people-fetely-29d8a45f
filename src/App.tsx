@@ -17,6 +17,7 @@ import ResetPassword from "@/pages/ResetPassword";
 import SemPermissao from "@/pages/SemPermissao";
 import NotFound from "@/pages/NotFound";
 import Parametros from "@/pages/Parametros";
+import ContratosPJ from "@/pages/ContratosPJ";
 
 const queryClient = new QueryClient();
 
@@ -59,7 +60,7 @@ const App = () => (
               {/* PJ */}
               <Route path="/contratos-pj" element={
                 <ProtectedRoute allowedRoles={["super_admin", "gestor_rh", "financeiro"]}>
-                  <PlaceholderPage title="Contratos PJ" description="Gestão de contratos de prestadores" />
+                  <ContratosPJ />
                 </ProtectedRoute>
               } />
               <Route path="/notas-fiscais" element={
