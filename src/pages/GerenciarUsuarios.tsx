@@ -689,6 +689,69 @@ export default function GerenciarUsuarios() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Dialog for manual linking */}
+      <Dialog open={linkDialogOpen} onOpenChange={setLinkDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Vincular Cadastro</DialogTitle>
+            <DialogDescription>
+              Vincular o usuário <strong>{linkUser?.name}</strong> a um registro de colaborador CLT ou contrato PJ existente.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label>Colaborador CLT</Label>
+              <Select value={linkColaboradorId} onValueChange={setLinkColaboradorId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Nenhum (não vincular CLT)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Nenhum</SelectItem>
+                  {unlinkedCLT.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.nome_completo} — {c.cargo}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Contrato PJ</Label>
+              <Select value={linkContratoPjId} onValueChange={setLinkContratoPjId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Nenhum (não vincular PJ)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Nenhum</SelectItem>
+                  {unlinkedPJ.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.contato_nome} — {c.razao_social}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setLinkDialogOpen(false)}>Cancelar</Button>
+            <Button
+              onClick={() => {
+                if (linkUser) {
+                  linkRecord.mutate({
+                    user_id: linkUser.userId,
+                    colaborador_id: linkColaboradorId && linkColaboradorId !== "none" ? linkColaboradorId : undefined,
+                    contrato_pj_id: linkContratoPjId && linkContratoPjId !== "none" ? linkContratoPjId : undefined,
+                  });
+                }
+              }}
+              disabled={linkRecord.isPending || (!linkColaboradorId && !linkContratoPjId) || (linkColaboradorId === "none" && linkContratoPjId === "none")}
+            >
+              {linkRecord.isPending ? "Vinculando..." : "Vincular"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
