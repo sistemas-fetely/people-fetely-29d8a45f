@@ -249,9 +249,12 @@ export default function Colaboradores() {
                     <TableRow key={c.id} className="hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => navigate(`/colaboradores/${c.id}`)}>
                       <TableCell>
                         <div className="flex items-center gap-3">
-                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
-                            {initials(c.nome_completo)}
-                          </div>
+                          <Avatar className="h-8 w-8">
+                            <AvatarImage src={c.foto_url || undefined} alt={c.nome_completo} className="object-cover" />
+                            <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
+                              {initials(c.nome_completo)}
+                            </AvatarFallback>
+                          </Avatar>
                           <div>
                             <p className="font-medium text-sm">{c.nome_completo}</p>
                             <p className="text-xs text-muted-foreground md:hidden">{c.departamento}</p>
