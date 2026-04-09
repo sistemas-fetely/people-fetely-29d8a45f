@@ -58,6 +58,7 @@ const adminItems = [
   { title: "Parâmetros CLT", url: "/parametros?modulo=clt", icon: Settings, roles: ["super_admin", "gestor_rh"] as AppRole[] },
   { title: "Parâmetros PJ", url: "/parametros?modulo=pj", icon: Settings, roles: ["super_admin", "gestor_rh"] as AppRole[] },
   { title: "Configurações", url: "/configuracoes", icon: Settings, roles: ["super_admin"] as AppRole[] },
+  { title: "Gerenciar Usuários", url: "/gerenciar-usuarios", icon: UserCheck, roles: ["super_admin"] as AppRole[] },
 ];
 
 interface MenuItem {
