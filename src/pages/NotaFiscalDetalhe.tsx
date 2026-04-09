@@ -348,14 +348,16 @@ export default function NotaFiscalDetalhe() {
                 return (
                   <div key={status} className="flex items-center flex-1 last:flex-initial">
                     <button
-                      disabled={changingStatus || isPast || isActive}
-                      onClick={() => (isNext || isFuture) ? setPendingStatus(status) : undefined}
+                      disabled={changingStatus || isPast || isActive || !canApprove}
+                      onClick={() => canApprove && (isNext || isFuture) ? setPendingStatus(status) : undefined}
                       className={`
                         relative flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all w-full min-w-[140px] justify-center
                         ${isActive ? `${colors.activeBg} ${colors.activeFg} shadow-md` : ""}
                         ${isPast ? `${colors.pastBg} ${colors.pastFg}` : ""}
-                        ${isFuture && isNext ? "bg-muted hover:bg-muted/80 cursor-pointer border-2 border-dashed border-muted-foreground/30 text-muted-foreground" : ""}
-                        ${isFuture && !isNext ? "bg-muted text-muted-foreground hover:bg-muted/80 cursor-pointer" : ""}
+                        ${isFuture && isNext && canApprove ? "bg-muted hover:bg-muted/80 cursor-pointer border-2 border-dashed border-muted-foreground/30 text-muted-foreground" : ""}
+                        ${isFuture && isNext && !canApprove ? "bg-muted text-muted-foreground opacity-50 cursor-not-allowed" : ""}
+                        ${isFuture && !isNext && canApprove ? "bg-muted text-muted-foreground hover:bg-muted/80 cursor-pointer" : ""}
+                        ${isFuture && !isNext && !canApprove ? "bg-muted text-muted-foreground opacity-50 cursor-not-allowed" : ""}
                         ${isPast || isActive ? "cursor-default" : ""}
                       `}
                     >
@@ -383,7 +385,7 @@ export default function NotaFiscalDetalhe() {
               </p>
             </div>
           )}
-          {!isTerminal && (
+          {!isTerminal && canApprove && (
             <div className="flex items-center gap-2 mt-3 pt-3 border-t">
               <p className="text-xs text-muted-foreground">Ações rápidas:</p>
               {terminalStatuses.map((ts) => (
