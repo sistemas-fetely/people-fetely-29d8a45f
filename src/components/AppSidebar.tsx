@@ -53,6 +53,7 @@ const cltItems: MenuItem[] = [
 const pjItems: MenuItem[] = [
   { title: "Colaboradores PJ", url: "/contratos-pj", icon: Briefcase, permModule: "contratos_pj" },
   { title: "Notas Fiscais", url: "/notas-fiscais", icon: FileText, permModule: "notas_fiscais" },
+  { title: "Pagamentos PJ", url: "/pagamentos-pj", icon: CreditCard, permModule: "pagamentos_pj" },
 ];
 
 const rhItems: MenuItem[] = [
