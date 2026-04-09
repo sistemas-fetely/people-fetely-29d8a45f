@@ -257,9 +257,12 @@ export default function Pessoas() {
                     <TableRow key={`${p.tipo}-${p.id}`} className="hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => handleView(p)}>
                       <TableCell>
                         <div className="flex items-center gap-3">
-                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
-                            {initials(p.nome)}
-                          </div>
+                          <Avatar className="h-8 w-8">
+                            <AvatarImage src={p.foto_url || undefined} alt={p.nome} className="object-cover" />
+                            <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
+                              {initials(p.nome)}
+                            </AvatarFallback>
+                          </Avatar>
                           <span className="font-medium text-sm">{p.nome}</span>
                         </div>
                       </TableCell>
