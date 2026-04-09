@@ -108,7 +108,11 @@ export function usePermissions() {
     enabled: !!user?.id,
   });
 
+  const isSuperAdmin = userRoles.includes("super_admin" as any);
+
   const hasPermission = (module: string, permission: string): boolean => {
+    // Super Admin bypasses all permission checks
+    if (isSuperAdmin) return true;
     if (!userRoles.length || !allPermissions.length) return false;
     return allPermissions.some(
       (p) =>
