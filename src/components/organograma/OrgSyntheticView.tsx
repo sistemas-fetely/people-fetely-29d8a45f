@@ -41,9 +41,7 @@ function TreeRow({ node, expanded, toggleExpand, onNodeClick, canSeeSalary, show
   const isExpanded = expanded.has(node.id);
   const hasChildren = node.children.length > 0;
   const indent = node.depth * 24;
-  const avatarUrl = node.nome_display
-    ? `https://ui-avatars.com/api/?name=${encodeURIComponent(node.nome_display)}&background=random&size=32`
-    : null;
+  const avatarUrl = node.foto_url || null;
 
   return (
     <>

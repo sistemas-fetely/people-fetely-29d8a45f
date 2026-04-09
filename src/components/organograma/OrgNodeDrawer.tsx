@@ -285,7 +285,7 @@ function InfoRow({ icon, label, value }: { icon?: React.ReactNode; label: string
 }
 
 function MiniCard({ node }: { node: PosicaoNode }) {
-  const avatarUrl = node.nome_display ? `https://ui-avatars.com/api/?name=${encodeURIComponent(node.nome_display)}&background=random&size=32` : null;
+  const avatarUrl = node.foto_url || null;
   return (
     <div className="flex items-center gap-2 p-2 rounded-md border hover:bg-accent/50 cursor-pointer transition-colors">
       <Avatar className="h-7 w-7">

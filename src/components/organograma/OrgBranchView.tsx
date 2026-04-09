@@ -222,7 +222,7 @@ export function OrgBranchView({ colaboradorId, contratoPjId }: Props) {
               {connectedPeople.map(({ node, role }) => (
                 <div key={node.id} className={`flex items-center gap-3 p-3 rounded-lg border ${role === "Líder Direto" ? "border-primary bg-primary/5" : "border-border"}`}>
                   <Avatar className={`h-9 w-9 shrink-0 border-2 ${getBorderColor(node)}`}>
-                    <AvatarImage src={`https://ui-avatars.com/api/?name=${encodeURIComponent(node.nome_display)}&background=random&size=64`} />
+                    <AvatarImage src={node.foto_url || undefined} className="object-cover" />
                     <AvatarFallback className="text-xs">{getInitials(node.nome_display)}</AvatarFallback>
                   </Avatar>
                   <div className="min-w-0 flex-1">

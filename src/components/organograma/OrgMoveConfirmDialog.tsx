@@ -19,9 +19,7 @@ function getInitials(name: string) {
 }
 
 function NodePreview({ node }: { node: PosicaoNode }) {
-  const avatarUrl = node.nome_display
-    ? `https://ui-avatars.com/api/?name=${encodeURIComponent(node.nome_display)}&background=random&size=64`
-    : null;
+  const avatarUrl = node.foto_url || null;
 
   return (
     <div className="flex items-center gap-2 p-3 rounded-lg border bg-accent/30">
