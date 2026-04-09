@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useRef, useState, ReactNode } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -22,41 +22,73 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
+  const currentUserIdRef = useRef<string | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [roles, setRoles] = useState<AppRole[]>([]);
   const [profile, setProfile] = useState<AuthContextType["profile"]>(null);
   const [loading, setLoading] = useState(true);
 
+  const resetUserState = () => {
+    currentUserIdRef.current = null;
+    setRoles([]);
+    setProfile(null);
+    setLoading(false);
+  };
+
   const fetchUserData = async (userId: string) => {
+    currentUserIdRef.current = userId;
+    setLoading(true);
+
     const [rolesRes, profileRes] = await Promise.all([
       supabase.rpc("get_user_roles", { _user_id: userId }),
-      supabase.from("profiles").select("full_name, avatar_url, department, position, approved").eq("user_id", userId).single(),
+      supabase
+        .from("profiles")
+        .select("full_name, avatar_url, department, position, approved")
+        .eq("user_id", userId)
+        .single(),
     ]);
-    if (rolesRes.data) setRoles(rolesRes.data as AppRole[]);
-    if (profileRes.data) setProfile(profileRes.data);
+
+    if (currentUserIdRef.current !== userId) return;
+
+    if (rolesRes.error) {
+      console.error("Erro ao carregar perfis de acesso", rolesRes.error);
+      setRoles([]);
+    } else {
+      setRoles((rolesRes.data ?? []) as AppRole[]);
+    }
+
+    if (profileRes.error) {
+      console.error("Erro ao carregar perfil do usuário", profileRes.error);
+      setProfile(null);
+    } else {
+      setProfile(profileRes.data);
+    }
+
+    setLoading(false);
   };
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        setTimeout(() => fetchUserData(session.user.id), 0);
-      } else {
-        setRoles([]);
-        setProfile(null);
+    const applySession = (nextSession: Session | null) => {
+      setSession(nextSession);
+      setUser(nextSession?.user ?? null);
+
+      if (nextSession?.user) {
+        void fetchUserData(nextSession.user.id);
+        return;
       }
-      setLoading(false);
+
+      resetUserState();
+    };
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      applySession(nextSession);
     });
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchUserData(session.user.id);
-      }
-      setLoading(false);
+    void supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
+      applySession(initialSession);
     });
 
     return () => subscription.unsubscribe();
@@ -64,16 +96,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = async () => {
     await supabase.auth.signOut();
-    setRoles([]);
-    setProfile(null);
-    navigate("/login");
+    resetUserState();
+    navigate("/login", { replace: true });
   };
 
   const hasRole = (role: AppRole) => roles.includes(role);
   const hasAnyRole = (r: AppRole[]) => r.some((role) => roles.includes(role));
 
   return (
-    <AuthContext.Provider value={{ session, user, roles, profile, loading, approved: profile?.approved ?? false, signOut, hasRole, hasAnyRole }}>
+    <AuthContext.Provider
+      value={{
+        session,
+        user,
+        roles,
+        profile,
+        loading,
+        approved: profile?.approved ?? false,
+        signOut,
+        hasRole,
+        hasAnyRole,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
