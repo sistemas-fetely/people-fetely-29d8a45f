@@ -712,11 +712,42 @@ export default function NotaFiscalDetalhe() {
         </Card>
       )}
 
-      {/* Arquivo da NF */}
-      <ArquivoNFCard
-        nota={nota}
-        onArquivoUpdated={(url) => setNota({ ...nota, arquivo_url: url })}
-      />
+      {/* Arquivo da NF + Preview lado a lado */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <ArquivoNFCard
+          nota={nota}
+          onArquivoUpdated={(url) => setNota({ ...nota, arquivo_url: url })}
+        />
+        {nota.arquivo_url && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <Eye className="h-4 w-4 text-primary" />
+                Visualização
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="border rounded-lg overflow-hidden bg-muted/30">
+                {nota.arquivo_url.match(/\.pdf$/i) ? (
+                  <iframe
+                    src={nota.arquivo_url}
+                    className="w-full h-[400px] border-0"
+                    title={`NF ${nota.numero}`}
+                  />
+                ) : (
+                  <div className="flex items-center justify-center p-4">
+                    <img
+                      src={nota.arquivo_url}
+                      alt={`NF ${nota.numero}`}
+                      className="max-w-full max-h-[380px] object-contain rounded"
+                    />
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
 
       {/* Histórico */}
       <Card>
