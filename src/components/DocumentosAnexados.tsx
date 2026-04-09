@@ -173,6 +173,22 @@ export function DocumentosAnexados({ colaboradorId, contratoPjId, currentFotoUrl
     toast.success("Documento removido.");
   };
 
+  const handleSetAsPhoto = async (file: StorageFile) => {
+    setSettingPhoto(file.url);
+    try {
+      if (colaboradorId) {
+        const { error } = await supabase.from("colaboradores_clt").update({ foto_url: file.url }).eq("id", colaboradorId);
+        if (error) throw error;
+      }
+      onFotoUpdated?.(file.url);
+      toast.success("Foto de perfil atualizada!");
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao definir foto");
+    } finally {
+      setSettingPhoto(null);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center gap-2 py-4 text-muted-foreground">
