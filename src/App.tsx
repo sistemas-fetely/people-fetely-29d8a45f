@@ -35,6 +35,7 @@ import CadastroPublico from "@/pages/CadastroPublico";
 import ConvitesCadastro from "@/pages/ConvitesCadastro";
 import ConviteDetalhe from "@/pages/ConviteDetalhe";
 import Unsubscribe from "@/pages/Unsubscribe";
+import ConfigurarPerfis from "@/pages/ConfigurarPerfis";
 
 const queryClient = new QueryClient();
 
