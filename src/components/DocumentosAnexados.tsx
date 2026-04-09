@@ -241,6 +241,23 @@ export function DocumentosAnexados({ colaboradorId, contratoPjId, currentFotoUrl
                   <span className="text-sm font-medium">{friendlyName(file.name)}</span>
                 </div>
                 <div className="flex items-center gap-1">
+                  {file.isImage && onFotoUpdated && (
+                    <Button
+                      variant={currentFotoUrl === file.url ? "secondary" : "outline"}
+                      size="sm"
+                      className="gap-1.5 text-xs h-8"
+                      disabled={settingPhoto === file.url}
+                      onClick={() => handleSetAsPhoto(file)}
+                      title="Definir como foto de perfil"
+                    >
+                      {settingPhoto === file.url ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <UserCircle className="h-3.5 w-3.5" />
+                      )}
+                      {currentFotoUrl === file.url ? "Foto definida" : "Usar como foto"}
+                    </Button>
+                  )}
                   <Button variant="ghost" size="icon" className="h-8 w-8" title="Visualizar"
                     onClick={() => { setPreviewTitle(friendlyName(file.name)); setPreviewUrl(file.url); }}>
                     <Eye className="h-4 w-4" />
