@@ -416,11 +416,24 @@ export default function ContratosPJ() {
   const handleDelete = async () => {
     if (!deleteTarget) return;
     setDeleting(true);
-    const { error } = await supabase.from("contratos_pj").delete().eq("id", deleteTarget.id);
-    if (error) toast.error(error.message);
-    else {
+    try {
+      const id = deleteTarget.id;
+      // Delete dependent records first (foreign key constraints)
+      await supabase.from("contrato_pj_acessos_sistemas").delete().eq("contrato_pj_id", id);
+      await supabase.from("contrato_pj_equipamentos").delete().eq("contrato_pj_id", id);
+      await supabase.from("ferias_pj").delete().eq("contrato_id", id);
+      await supabase.from("ferias_periodos_pj").delete().eq("contrato_id", id);
+      await supabase.from("pagamentos_pj").delete().eq("contrato_id", id);
+      await supabase.from("notas_fiscais_pj").delete().eq("contrato_id", id);
+      await supabase.from("movimentacoes").delete().eq("contrato_pj_id", id);
+      await supabase.from("posicoes").update({ contrato_pj_id: null, status: "vaga_aberta" }).eq("contrato_pj_id", id);
+
+      const { error } = await supabase.from("contratos_pj").delete().eq("id", id);
+      if (error) throw error;
       toast.success("Contrato excluído");
-      setContratos((prev) => prev.filter((c) => c.id !== deleteTarget.id));
+      setContratos((prev) => prev.filter((c) => c.id !== id));
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao excluir contrato");
     }
     setDeleting(false);
     setDeleteTarget(null);
