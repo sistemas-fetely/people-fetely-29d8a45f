@@ -28,7 +28,8 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
     return <Navigate to="/login" replace />;
   }
 
-  if (!approved) {
+  const isSuperAdmin = roles.includes("super_admin");
+  if (!approved && !isSuperAdmin) {
     return <Navigate to="/aguardando-aprovacao" replace />;
   }
 
