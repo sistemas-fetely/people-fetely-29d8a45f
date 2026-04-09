@@ -887,12 +887,14 @@ function ArquivoNFCard({ nota, onArquivoUpdated, canEdit = true }: { nota: NotaF
                   <Download className="h-4 w-4" />
                 </a>
               </Button>
-              <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={handleRemove} title="Remover">
-                <Trash2 className="h-4 w-4" />
-              </Button>
+              {canEdit && (
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={handleRemove} title="Remover">
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              )}
             </div>
           </div>
-        ) : (
+        ) : canEdit ? (
           <div className="flex flex-col items-center justify-center border-2 border-dashed rounded-lg p-8 text-center">
             <Upload className="h-8 w-8 text-muted-foreground mb-2" />
             <p className="text-sm text-muted-foreground mb-3">Nenhum arquivo anexado</p>
@@ -906,6 +908,11 @@ function ArquivoNFCard({ nota, onArquivoUpdated, canEdit = true }: { nota: NotaF
               Enviar Nota Fiscal
             </Button>
             <p className="text-xs text-muted-foreground mt-2">PDF, JPG, PNG ou WebP (máx. 10MB)</p>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center border-2 border-dashed rounded-lg p-8 text-center">
+            <Upload className="h-8 w-8 text-muted-foreground mb-2" />
+            <p className="text-sm text-muted-foreground">Nenhum arquivo anexado</p>
           </div>
         )}
         <input
