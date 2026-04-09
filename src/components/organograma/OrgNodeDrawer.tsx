@@ -246,7 +246,7 @@ export function OrgNodeDrawer({ node, open, onClose, allNodes, onEditPosition }:
                   >
                     <Avatar className="h-8 w-8 shrink-0">
                       {n.nome_display && (
-                        <AvatarImage src={`https://ui-avatars.com/api/?name=${encodeURIComponent(n.nome_display)}&background=random&size=32`} />
+                        <AvatarImage src={n.foto_url || undefined} className="object-cover" />
                       )}
                       <AvatarFallback className="text-[10px]">{n.nome_display ? getInitials(n.nome_display) : "?"}</AvatarFallback>
                     </Avatar>
