@@ -386,6 +386,10 @@ function ContratoPJForm({
 export default function ContratosPJ() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { hasPermission } = usePermissions();
+  const canCreate = hasPermission("contratos_pj", "create");
+  const canEdit = hasPermission("contratos_pj", "edit");
+  const canDelete = hasPermission("contratos_pj", "delete");
   const [contratos, setContratos] = useState<ContratoPJ[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -467,9 +471,11 @@ export default function ContratosPJ() {
           <h1 className="text-2xl font-bold tracking-tight">Contratos PJ</h1>
           <p className="text-muted-foreground text-sm mt-1">Gestão de contratos de prestadores de serviço</p>
         </div>
-        <Button className="gap-2" onClick={() => navigate("/contratos-pj/novo")}>
-          <Plus className="h-4 w-4" /> Novo Contrato
-        </Button>
+        {canCreate && (
+          <Button className="gap-2" onClick={() => navigate("/contratos-pj/novo")}>
+            <Plus className="h-4 w-4" /> Novo Contrato
+          </Button>
+        )}
       </div>
 
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
@@ -603,12 +609,16 @@ export default function ContratosPJ() {
                             <DropdownMenuItem onClick={() => setViewContrato(c)}>
                               <Eye className="mr-2 h-4 w-4" /> Visualizar
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => openEdit(c)}>
-                              <Edit className="mr-2 h-4 w-4" /> Editar
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="text-destructive" onClick={() => setDeleteTarget(c)}>
-                              <Trash2 className="mr-2 h-4 w-4" /> Excluir
-                            </DropdownMenuItem>
+                            {canEdit && (
+                              <DropdownMenuItem onClick={() => openEdit(c)}>
+                                <Edit className="mr-2 h-4 w-4" /> Editar
+                              </DropdownMenuItem>
+                            )}
+                            {canDelete && (
+                              <DropdownMenuItem className="text-destructive" onClick={() => setDeleteTarget(c)}>
+                                <Trash2 className="mr-2 h-4 w-4" /> Excluir
+                              </DropdownMenuItem>
+                            )}
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>
@@ -707,9 +717,11 @@ export default function ContratosPJ() {
           )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setViewContrato(null)}>Fechar</Button>
-            <Button onClick={() => { if (viewContrato) { openEdit(viewContrato); setViewContrato(null); } }}>
-              <Edit className="mr-2 h-4 w-4" /> Editar
-            </Button>
+            {canEdit && (
+              <Button onClick={() => { if (viewContrato) { openEdit(viewContrato); setViewContrato(null); } }}>
+                <Edit className="mr-2 h-4 w-4" /> Editar
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
