@@ -48,7 +48,6 @@ const CATEGORIAS_CLT: CategoriaConfig[] = [
 const CATEGORIAS_PJ: CategoriaConfig[] = [
   { value: "tipo_servico", label: "Tipos de Serviço PJ", icon: Package, description: "Tipos de serviço para contratos PJ" },
   { value: "forma_pagamento", label: "Formas de Pagamento", icon: Settings2, description: "Formas de pagamento para prestadores PJ" },
-  { value: "status_nota_fiscal", label: "Status Nota Fiscal", icon: FileText, description: "Status possíveis para notas fiscais PJ" },
 ];
 
 const MODULO_MAP: Record<string, { title: string; categorias: CategoriaConfig[] }> = {
