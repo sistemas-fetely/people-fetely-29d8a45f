@@ -41,7 +41,7 @@ const NFPagamentoEmail = ({ nomeColaborador, nomeFantasia, numeroNF, valor, data
           <strong>Prestador:</strong> {nomeColaborador || '—'}
         </Text>
         <Text style={text}>
-          Solicitamos que o pagamento seja efetuado conforme os dados acima até a data de vencimento indicada.
+          Após o pagamento, favor enviar o comprovante para rh.corp@fetelycorp.com.br
         </Text>
         <Text style={text}>
           Em caso de dúvidas, entre em contato com o departamento financeiro.

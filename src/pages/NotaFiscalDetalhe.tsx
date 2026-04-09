@@ -457,7 +457,7 @@ export default function NotaFiscalDetalhe() {
                   <p><strong>Data de Vencimento:</strong> {formatDate(nota.data_vencimento)}</p>
                   <p><strong>Prestador:</strong> {contrato?.contato_nome || '—'}</p>
                 </div>
-                <p>Solicitamos que o pagamento seja efetuado conforme os dados acima até a data de vencimento indicada.</p>
+                <p>Após o pagamento, favor enviar o comprovante para rh.corp@fetelycorp.com.br</p>
               </div>
             </div>
           </div>
