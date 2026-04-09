@@ -102,12 +102,21 @@ function InfoItem({ label, value, icon: Icon }: { label: string; value: React.Re
   );
 }
 
+interface EmailLog {
+  id: string;
+  created_at: string;
+  status: string;
+  recipient_email: string;
+  message_id: string | null;
+}
+
 export default function NotaFiscalDetalhe() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [nota, setNota] = useState<NotaFiscal | null>(null);
   const [contrato, setContrato] = useState<ContratoPJ | null>(null);
   const [pagamentos, setPagamentos] = useState<PagamentoPJ[]>([]);
+  const [emailLogs, setEmailLogs] = useState<EmailLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [pendingStatus, setPendingStatus] = useState<string | null>(null);
   const [changingStatus, setChangingStatus] = useState(false);
