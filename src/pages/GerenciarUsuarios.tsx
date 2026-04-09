@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -61,8 +62,9 @@ export default function GerenciarUsuarios() {
   const [rolesDialogOpen, setRolesDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<{ userId: string; name: string } | null>(null);
   const [selectedRoles, setSelectedRoles] = useState<AppRole[]>([]);
+  const [selectedColabTipo, setSelectedColabTipo] = useState<string>("");
   const [showPassword, setShowPassword] = useState(false);
-  const [newUser, setNewUser] = useState({ email: "", password: "", full_name: "", roles: ["colaborador"] as string[] });
+  const [newUser, setNewUser] = useState({ email: "", password: "", full_name: "", roles: ["colaborador"] as string[], colaborador_tipo: "" });
   const [deleteConfirm, setDeleteConfirm] = useState<{ userId: string; name: string } | null>(null);
 
   const { data: profiles = [], isLoading } = useQuery({
@@ -96,7 +98,7 @@ export default function GerenciarUsuarios() {
 
   const createUser = useMutation({
     mutationFn: async () => {
-      await callManageUser("create", newUser);
+      await callManageUser("create", { ...newUser, colaborador_tipo: newUser.colaborador_tipo || null });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-profiles"] });
@@ -104,7 +106,7 @@ export default function GerenciarUsuarios() {
       queryClient.invalidateQueries({ queryKey: ["admin-auth-users"] });
       toast.success("Usuário criado com sucesso!");
       setCreateOpen(false);
-      setNewUser({ email: "", password: "", full_name: "", roles: ["colaborador"] });
+      setNewUser({ email: "", password: "", full_name: "", roles: ["colaborador"], colaborador_tipo: "" });
     },
     onError: (err: Error) => toast.error(err.message || "Erro ao criar usuário"),
   });
@@ -122,11 +124,12 @@ export default function GerenciarUsuarios() {
   });
 
   const updateRoles = useMutation({
-    mutationFn: async ({ user_id, roles }: { user_id: string; roles: AppRole[] }) => {
-      await callManageUser("update_roles", { user_id, roles });
+    mutationFn: async ({ user_id, roles, colaborador_tipo }: { user_id: string; roles: AppRole[]; colaborador_tipo?: string | null }) => {
+      await callManageUser("update_roles", { user_id, roles, colaborador_tipo });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-user-roles"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-profiles"] });
       toast.success("Perfis atualizados com sucesso!");
       setRolesDialogOpen(false);
     },
@@ -156,6 +159,8 @@ export default function GerenciarUsuarios() {
   const openRolesDialog = (userId: string, name: string) => {
     setSelectedUser({ userId, name });
     setSelectedRoles(getUserRoles(userId));
+    const profile = profiles.find((p) => p.user_id === userId);
+    setSelectedColabTipo((profile as any)?.colaborador_tipo || "");
     setRolesDialogOpen(true);
   };
 
@@ -260,6 +265,21 @@ export default function GerenciarUsuarios() {
                   ))}
                 </div>
               </div>
+              <div className="space-y-2">
+                <Label>Tipo de Colaborador</Label>
+                <Select value={newUser.colaborador_tipo} onValueChange={(v) => setNewUser({ ...newUser, colaborador_tipo: v })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Automático (detectar pelo cadastro)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="auto">Automático</SelectItem>
+                    <SelectItem value="clt">CLT</SelectItem>
+                    <SelectItem value="pj">PJ</SelectItem>
+                    <SelectItem value="ambos">Ambos (CLT + PJ)</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">Define quais módulos o usuário terá acesso</p>
+              </div>
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setCreateOpen(false)}>Cancelar</Button>
@@ -329,6 +349,7 @@ export default function GerenciarUsuarios() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Nome</TableHead>
+                    <TableHead>Tipo</TableHead>
                     <TableHead>Perfis</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Último acesso</TableHead>
@@ -349,6 +370,15 @@ export default function GerenciarUsuarios() {
                             <p className="font-medium">{profile.full_name || "—"}</p>
                             <p className="text-xs text-muted-foreground">{authUser?.email || ""}</p>
                           </div>
+                        </TableCell>
+                        <TableCell>
+                          {(() => {
+                            const tipo = (profile as any).colaborador_tipo;
+                            if (tipo === "clt") return <Badge variant="outline" className="text-xs border-blue-300 text-blue-700">CLT</Badge>;
+                            if (tipo === "pj") return <Badge variant="outline" className="text-xs border-emerald-300 text-emerald-700">PJ</Badge>;
+                            if (tipo === "ambos") return <div className="flex gap-1"><Badge variant="outline" className="text-xs border-blue-300 text-blue-700">CLT</Badge><Badge variant="outline" className="text-xs border-emerald-300 text-emerald-700">PJ</Badge></div>;
+                            return <span className="text-xs text-muted-foreground">Auto</span>;
+                          })()}
                         </TableCell>
                         <TableCell>
                           <div className="flex flex-wrap gap-1">
@@ -438,7 +468,7 @@ export default function GerenciarUsuarios() {
                   })}
                   {profiles.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                      <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
                         Nenhum usuário encontrado
                       </TableCell>
                     </TableRow>
@@ -525,12 +555,27 @@ export default function GerenciarUsuarios() {
               </label>
             ))}
           </div>
+          <div className="space-y-2 pt-2">
+            <Label className="text-sm font-medium">Tipo de Colaborador</Label>
+            <Select value={selectedColabTipo || "auto"} onValueChange={(v) => setSelectedColabTipo(v === "auto" ? "" : v)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="auto">Automático (detectar pelo cadastro)</SelectItem>
+                <SelectItem value="clt">CLT</SelectItem>
+                <SelectItem value="pj">PJ</SelectItem>
+                <SelectItem value="ambos">Ambos (CLT + PJ)</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">Define quais módulos o usuário terá acesso</p>
+          </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setRolesDialogOpen(false)}>Cancelar</Button>
             <Button
               onClick={() => {
                 if (selectedUser) {
-                  updateRoles.mutate({ user_id: selectedUser.userId, roles: selectedRoles });
+                  updateRoles.mutate({ user_id: selectedUser.userId, roles: selectedRoles, colaborador_tipo: selectedColabTipo || null });
                 }
               }}
               disabled={updateRoles.isPending}
