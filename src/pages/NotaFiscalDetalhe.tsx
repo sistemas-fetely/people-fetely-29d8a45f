@@ -300,16 +300,20 @@ export default function NotaFiscalDetalhe() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            className="gap-2"
-            onClick={() => setEmailDialogOpen(true)}
-          >
-            <Mail className="h-4 w-4" /> Enviar por E-mail
-          </Button>
-          <Button variant="outline" className="gap-2" onClick={() => navigate(`/notas-fiscais?edit=${nota.id}`)}>
-            <Edit className="h-4 w-4" /> Editar
-          </Button>
+          {canSendEmail && (
+            <Button
+              variant="outline"
+              className="gap-2"
+              onClick={() => setEmailDialogOpen(true)}
+            >
+              <Mail className="h-4 w-4" /> Enviar por E-mail
+            </Button>
+          )}
+          {canEdit && (
+            <Button variant="outline" className="gap-2" onClick={() => navigate(`/notas-fiscais?edit=${nota.id}`)}>
+              <Edit className="h-4 w-4" /> Editar
+            </Button>
+          )}
         </div>
       </div>
 
