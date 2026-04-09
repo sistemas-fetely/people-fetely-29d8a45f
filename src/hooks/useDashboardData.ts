@@ -487,6 +487,25 @@ export function useDashboardData() {
     },
   });
 
+  // Convites preenchidos pendentes de cadastro
+  const convitesPreenchidosQuery = useQuery({
+    queryKey: ["dashboard_convites_preenchidos"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("convites_cadastro")
+        .select("id, nome, tipo, cargo, departamento")
+        .eq("status", "preenchido");
+
+      return (data || []).map((c) => ({
+        id: c.id,
+        nome: c.nome,
+        tipo: c.tipo,
+        cargo: c.cargo,
+        depto: c.departamento,
+      }));
+    },
+  });
+
   // Salário médio CLT
   const salarioMedioQuery = useQuery({
     queryKey: ["dashboard_salario_medio"],
