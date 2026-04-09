@@ -8,6 +8,7 @@ import { NavLink } from "@/components/NavLink";
 import { cn } from "@/lib/utils";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePermissions } from "@/hooks/usePermissions";
 import { Badge } from "@/components/ui/badge";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent,
@@ -26,61 +27,62 @@ const roleLabels: Record<AppRole, string> = {
   financeiro: "Financeiro",
 };
 
-const mainItems = [
-  { title: "Dashboard", url: "/", icon: LayoutDashboard, roles: [] as AppRole[] },
-  { title: "Pessoas", url: "/pessoas", icon: Users, roles: [] as AppRole[] },
-  { title: "Organograma", url: "/organograma", icon: GitBranch, roles: [] as AppRole[] },
-  { title: "Férias", url: "/ferias", icon: Calendar, roles: [] as AppRole[] },
-  { title: "Movimentações", url: "/movimentacoes", icon: ArrowUpDown, roles: [] as AppRole[] },
-];
-
-const cltItems = [
-  { title: "Colaboradores CLT", url: "/colaboradores", icon: Users, roles: [] as AppRole[] },
-  { title: "Folha de Pagamento", url: "/folha-pagamento", icon: FileText, roles: ["super_admin", "gestor_rh", "financeiro"] as AppRole[] },
-  { title: "Ponto", url: "/ponto", icon: ClipboardList, roles: [] as AppRole[] },
-  { title: "Benefícios", url: "/beneficios", icon: Award, roles: [] as AppRole[] },
-];
-
-const pjItems = [
-  { title: "Colaboradores PJ", url: "/contratos-pj", icon: Briefcase, roles: ["super_admin", "gestor_rh", "financeiro"] as AppRole[] },
-  { title: "Notas Fiscais", url: "/notas-fiscais", icon: FileText, roles: ["super_admin", "gestor_rh", "financeiro"] as AppRole[] },
-];
-
-const rhItems = [
-  { title: "Convites Cadastro", url: "/convites-cadastro", icon: Send, roles: ["super_admin", "gestor_rh"] as AppRole[] },
-  { title: "Recrutamento", url: "/recrutamento", icon: UserCircle, roles: ["super_admin", "gestor_rh"] as AppRole[] },
-  { title: "Avaliações", url: "/avaliacoes", icon: Award, roles: [] as AppRole[] },
-  { title: "Treinamentos", url: "/treinamentos", icon: GraduationCap, roles: [] as AppRole[] },
-  { title: "Relatórios", url: "/relatorios", icon: BarChart3, roles: ["super_admin", "gestor_rh", "financeiro"] as AppRole[] },
-];
-
-const adminItems = [
-  { title: "Parâmetros Gerais", url: "/parametros?modulo=geral", icon: Settings, roles: ["super_admin", "gestor_rh"] as AppRole[] },
-  { title: "Parâmetros CLT", url: "/parametros?modulo=clt", icon: Settings, roles: ["super_admin", "gestor_rh"] as AppRole[] },
-  { title: "Parâmetros PJ", url: "/parametros?modulo=pj", icon: Settings, roles: ["super_admin", "gestor_rh"] as AppRole[] },
-  { title: "Configurações", url: "/configuracoes", icon: Settings, roles: ["super_admin"] as AppRole[] },
-  { title: "Gerenciar Usuários", url: "/gerenciar-usuarios", icon: UserCheck, roles: ["super_admin"] as AppRole[] },
-];
-
+// Each item maps to a permission module for filtering
 interface MenuItem {
   title: string;
   url: string;
   icon: React.ComponentType<{ className?: string }>;
-  roles: AppRole[];
+  permModule?: string; // permission module key — if absent, always visible
 }
+
+const mainItems: MenuItem[] = [
+  { title: "Dashboard", url: "/", icon: LayoutDashboard, permModule: "dashboard" },
+  { title: "Pessoas", url: "/pessoas", icon: Users, permModule: "colaboradores" },
+  { title: "Organograma", url: "/organograma", icon: GitBranch, permModule: "organograma" },
+  { title: "Férias", url: "/ferias", icon: Calendar, permModule: "ferias" },
+  { title: "Movimentações", url: "/movimentacoes", icon: ArrowUpDown, permModule: "movimentacoes" },
+];
+
+const cltItems: MenuItem[] = [
+  { title: "Colaboradores CLT", url: "/colaboradores", icon: Users, permModule: "colaboradores" },
+  { title: "Folha de Pagamento", url: "/folha-pagamento", icon: FileText, permModule: "folha_pagamento" },
+  { title: "Ponto", url: "/ponto", icon: ClipboardList },
+  { title: "Benefícios", url: "/beneficios", icon: Award, permModule: "beneficios" },
+];
+
+const pjItems: MenuItem[] = [
+  { title: "Colaboradores PJ", url: "/contratos-pj", icon: Briefcase, permModule: "contratos_pj" },
+  { title: "Notas Fiscais", url: "/notas-fiscais", icon: FileText, permModule: "notas_fiscais" },
+];
+
+const rhItems: MenuItem[] = [
+  { title: "Convites Cadastro", url: "/convites-cadastro", icon: Send, permModule: "convites" },
+  { title: "Recrutamento", url: "/recrutamento", icon: UserCircle },
+  { title: "Avaliações", url: "/avaliacoes", icon: Award },
+  { title: "Treinamentos", url: "/treinamentos", icon: GraduationCap },
+  { title: "Relatórios", url: "/relatorios", icon: BarChart3 },
+];
+
+const adminItems: MenuItem[] = [
+  { title: "Parâmetros Gerais", url: "/parametros?modulo=geral", icon: Settings, permModule: "parametros" },
+  { title: "Parâmetros CLT", url: "/parametros?modulo=clt", icon: Settings, permModule: "parametros" },
+  { title: "Parâmetros PJ", url: "/parametros?modulo=pj", icon: Settings, permModule: "parametros" },
+  { title: "Configurações", url: "/configuracoes", icon: Settings, permModule: "usuarios" },
+  { title: "Gerenciar Usuários", url: "/gerenciar-usuarios", icon: UserCheck, permModule: "usuarios" },
+];
 
 interface MenuGroupProps {
   label: string;
   items: MenuItem[];
   collapsed: boolean;
-  userRoles: AppRole[];
+  canViewModule: (mod: string) => boolean;
 }
 
-function MenuGroup({ label, items, collapsed, userRoles }: MenuGroupProps) {
+function MenuGroup({ label, items, collapsed, canViewModule }: MenuGroupProps) {
   const location = useLocation();
   const visibleItems = items.filter((item) => {
-    if (item.roles.length === 0) return true;
-    return item.roles.some((r) => userRoles.includes(r));
+    if (!item.permModule) return true;
+    return canViewModule(item.permModule);
   });
 
   if (visibleItems.length === 0) return null;
@@ -128,6 +130,7 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const { user, roles, profile, signOut } = useAuth();
+  const { canView } = usePermissions();
 
   const initials = profile?.full_name
     ? profile.full_name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()
@@ -150,11 +153,11 @@ export function AppSidebar() {
         </div>
       </SidebarHeader>
       <SidebarContent className="px-2">
-        <MenuGroup label="Principal" items={mainItems} collapsed={collapsed} userRoles={roles} />
-        <MenuGroup label="CLT" items={cltItems} collapsed={collapsed} userRoles={roles} />
-        <MenuGroup label="PJ" items={pjItems} collapsed={collapsed} userRoles={roles} />
-        <MenuGroup label="RH" items={rhItems} collapsed={collapsed} userRoles={roles} />
-        <MenuGroup label="Admin" items={adminItems} collapsed={collapsed} userRoles={roles} />
+        <MenuGroup label="Principal" items={mainItems} collapsed={collapsed} canViewModule={canView} />
+        <MenuGroup label="CLT" items={cltItems} collapsed={collapsed} canViewModule={canView} />
+        <MenuGroup label="PJ" items={pjItems} collapsed={collapsed} canViewModule={canView} />
+        <MenuGroup label="RH" items={rhItems} collapsed={collapsed} canViewModule={canView} />
+        <MenuGroup label="Admin" items={adminItems} collapsed={collapsed} canViewModule={canView} />
       </SidebarContent>
       <SidebarFooter className="p-4">
         {!collapsed && (
