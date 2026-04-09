@@ -91,11 +91,25 @@ export function usePermissions() {
     enabled: !!user?.id,
   });
 
-  // Detect user's tipo based on tables (cached)
+  // Detect user's tipo: prioritize profiles.colaborador_tipo, fallback to table detection
   const { data: userTipos = [] } = useQuery({
     queryKey: ["user-colaborador-tipo", user?.id],
     queryFn: async () => {
       if (!user?.id) return [];
+
+      // Priority 1: check profiles.colaborador_tipo
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("colaborador_tipo")
+        .eq("user_id", user.id)
+        .single();
+
+      const tipo = profileData?.colaborador_tipo;
+      if (tipo === "clt") return ["clt"];
+      if (tipo === "pj") return ["pj"];
+      if (tipo === "ambos") return ["clt", "pj"];
+
+      // Priority 2: auto-detect from tables
       const results: string[] = [];
       const [cltRes, pjRes] = await Promise.all([
         supabase.from("colaboradores_clt").select("id").eq("user_id", user.id).limit(1),
