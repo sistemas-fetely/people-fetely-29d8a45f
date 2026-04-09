@@ -75,6 +75,7 @@ interface ContratoPJ {
   status: string;
   observacoes: string | null;
   created_at: string;
+  foto_url: string | null;
 }
 
 function ContratoPJForm({
