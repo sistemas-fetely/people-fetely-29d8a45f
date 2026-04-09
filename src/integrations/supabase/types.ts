@@ -73,6 +73,65 @@ export type Database = {
           },
         ]
       }
+      beneficios_pj: {
+        Row: {
+          contrato_id: string
+          created_at: string
+          data_fim: string | null
+          data_inicio: string
+          descricao: string | null
+          id: string
+          numero_cartao: string | null
+          observacoes: string | null
+          operadora: string | null
+          status: string
+          tipo: string
+          updated_at: string
+          valor_desconto: number
+          valor_empresa: number
+        }
+        Insert: {
+          contrato_id: string
+          created_at?: string
+          data_fim?: string | null
+          data_inicio?: string
+          descricao?: string | null
+          id?: string
+          numero_cartao?: string | null
+          observacoes?: string | null
+          operadora?: string | null
+          status?: string
+          tipo: string
+          updated_at?: string
+          valor_desconto?: number
+          valor_empresa?: number
+        }
+        Update: {
+          contrato_id?: string
+          created_at?: string
+          data_fim?: string | null
+          data_inicio?: string
+          descricao?: string | null
+          id?: string
+          numero_cartao?: string | null
+          observacoes?: string | null
+          operadora?: string | null
+          status?: string
+          tipo?: string
+          updated_at?: string
+          valor_desconto?: number
+          valor_empresa?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "beneficios_pj_contrato_id_fkey"
+            columns: ["contrato_id"]
+            isOneToOne: false
+            referencedRelation: "contratos_pj"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       colaborador_acessos_sistemas: {
         Row: {
           colaborador_id: string
