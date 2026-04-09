@@ -62,8 +62,9 @@ export default function GerenciarUsuarios() {
   const [rolesDialogOpen, setRolesDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<{ userId: string; name: string } | null>(null);
   const [selectedRoles, setSelectedRoles] = useState<AppRole[]>([]);
+  const [selectedColabTipo, setSelectedColabTipo] = useState<string>("");
   const [showPassword, setShowPassword] = useState(false);
-  const [newUser, setNewUser] = useState({ email: "", password: "", full_name: "", roles: ["colaborador"] as string[] });
+  const [newUser, setNewUser] = useState({ email: "", password: "", full_name: "", roles: ["colaborador"] as string[], colaborador_tipo: "" });
   const [deleteConfirm, setDeleteConfirm] = useState<{ userId: string; name: string } | null>(null);
 
   const { data: profiles = [], isLoading } = useQuery({
