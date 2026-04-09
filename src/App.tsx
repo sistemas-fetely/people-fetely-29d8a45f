@@ -142,6 +142,11 @@ const App = () => (
                   <PlaceholderPage title="Configurações" description="Parâmetros do sistema e permissões" />
                 </ProtectedRoute>
               } />
+              <Route path="/gerenciar-usuarios" element={
+                <ProtectedRoute allowedRoles={["super_admin"]}>
+                  <GerenciarUsuarios />
+                </ProtectedRoute>
+              } />
             </Route>
 
             <Route path="*" element={<NotFound />} />
