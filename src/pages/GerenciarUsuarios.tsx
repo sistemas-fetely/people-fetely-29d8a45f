@@ -131,6 +131,20 @@ export default function GerenciarUsuarios() {
     onError: () => toast.error("Erro ao atualizar perfis"),
   });
 
+  const deleteUser = useMutation({
+    mutationFn: async (user_id: string) => {
+      await callManageUser("delete_user", { user_id });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-profiles"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-user-roles"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-auth-users"] });
+      toast.success("Usuário deletado com sucesso!");
+      setDeleteConfirm(null);
+    },
+    onError: (err: Error) => toast.error(err.message || "Erro ao deletar usuário"),
+  });
+
   const getUserRoles = (userId: string) =>
     allRoles.filter((r) => r.user_id === userId).map((r) => r.role);
 
