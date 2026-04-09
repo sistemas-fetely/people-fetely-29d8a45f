@@ -111,6 +111,9 @@ export default function NotaFiscalDetalhe() {
   const [loading, setLoading] = useState(true);
   const [pendingStatus, setPendingStatus] = useState<string | null>(null);
   const [changingStatus, setChangingStatus] = useState(false);
+  const [emailDialogOpen, setEmailDialogOpen] = useState(false);
+  const [emailTo, setEmailTo] = useState("flavio@fsime.com.br");
+  const [sendingEmail, setSendingEmail] = useState(false);
 
   const { data: statusParams } = useParametros("status_nota_fiscal");
   const statusMap = useMemo(() => {
