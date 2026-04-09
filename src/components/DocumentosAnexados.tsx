@@ -40,6 +40,7 @@ export function DocumentosAnexados({ colaboradorId, contratoPjId, currentFotoUrl
   const [files, setFiles] = useState<StorageFile[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [settingPhoto, setSettingPhoto] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewTitle, setPreviewTitle] = useState("");
   const fileInputRef = useRef<HTMLInputElement | null>(null);
