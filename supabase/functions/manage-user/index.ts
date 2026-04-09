@@ -160,6 +160,26 @@ Deno.serve(async (req) => {
 
       await adminClient.from("profiles").update({ approved: true }).eq("user_id", user_id);
 
+      // Send approval email
+      try {
+        const { data: { user: targetUser } } = await adminClient.auth.admin.getUserById(user_id);
+        const { data: profile } = await adminClient.from("profiles").select("full_name").eq("user_id", user_id).single();
+
+        if (targetUser?.email) {
+          await adminClient.functions.invoke("send-transactional-email", {
+            body: {
+              templateName: "cadastro-aprovado",
+              recipientEmail: targetUser.email,
+              idempotencyKey: `cadastro-aprovado-${user_id}`,
+              templateData: { nome: profile?.full_name || "" },
+            },
+          });
+        }
+      } catch (emailErr) {
+        console.error("Erro ao enviar email de aprovação:", emailErr);
+        // Don't fail the approval if email fails
+      }
+
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
