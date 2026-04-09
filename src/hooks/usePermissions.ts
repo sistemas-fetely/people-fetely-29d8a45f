@@ -50,6 +50,7 @@ const CRUD_PERMISSIONS = [
 
 const SPECIAL_PERMISSIONS = [
   { key: "enviar_email", label: "Enviar por Email", module: "notas_fiscais" },
+  { key: "aprovar", label: "Aprovar/Alterar Status", module: "notas_fiscais" },
   { key: "aprovar", label: "Aprovar", module: "ferias" },
   { key: "fechar", label: "Fechar Competência", module: "folha_pagamento" },
   { key: "exportar", label: "Exportar", module: "folha_pagamento" },

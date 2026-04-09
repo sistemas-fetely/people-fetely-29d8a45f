@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useParametros } from "@/hooks/useParametros";
+import { usePermissions } from "@/hooks/usePermissions";
 import {
   FileText, Search, MoreHorizontal, Eye, Edit, Trash2, Plus, Loader2,
   Calendar, Filter, TrendingUp, Clock, CheckCircle2, AlertTriangle, DollarSign,
