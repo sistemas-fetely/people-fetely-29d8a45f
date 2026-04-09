@@ -160,12 +160,38 @@ Deno.serve(async (req) => {
 
       await adminClient.from("profiles").update({ approved: true }).eq("user_id", user_id);
 
-      // Send approval email
+      // Auto-link user to CLT/PJ record via convites_cadastro
       try {
         const { data: { user: targetUser } } = await adminClient.auth.admin.getUserById(user_id);
-        const { data: profile } = await adminClient.from("profiles").select("full_name").eq("user_id", user_id).single();
+        const { data: profile } = await adminClient.from("profiles").select("full_name, colaborador_tipo").eq("user_id", user_id).single();
 
         if (targetUser?.email) {
+          // Find invite by email that has a linked record
+          const { data: convite } = await adminClient
+            .from("convites_cadastro")
+            .select("colaborador_id, contrato_pj_id, tipo")
+            .eq("email", targetUser.email)
+            .in("status", ["preenchido", "aprovado"])
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+          if (convite?.colaborador_id) {
+            await adminClient.from("colaboradores_clt").update({ user_id }).eq("id", convite.colaborador_id);
+            // Set colaborador_tipo if not already set
+            if (!profile?.colaborador_tipo) {
+              await adminClient.from("profiles").update({ colaborador_tipo: "clt" }).eq("user_id", user_id);
+            }
+          }
+          if (convite?.contrato_pj_id) {
+            await adminClient.from("contratos_pj").update({ user_id }).eq("id", convite.contrato_pj_id);
+            if (!profile?.colaborador_tipo) {
+              const tipo = convite.colaborador_id ? "ambos" : "pj";
+              await adminClient.from("profiles").update({ colaborador_tipo: tipo }).eq("user_id", user_id);
+            }
+          }
+
+          // Send approval email
           await adminClient.functions.invoke("send-transactional-email", {
             body: {
               templateName: "cadastro-aprovado",
@@ -175,9 +201,29 @@ Deno.serve(async (req) => {
             },
           });
         }
-      } catch (emailErr) {
-        console.error("Erro ao enviar email de aprovação:", emailErr);
-        // Don't fail the approval if email fails
+      } catch (linkErr) {
+        console.error("Erro ao vincular/enviar email:", linkErr);
+      }
+
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (action === "link_record") {
+      const { user_id, colaborador_id, contrato_pj_id } = body;
+      if (!user_id) {
+        return new Response(JSON.stringify({ error: "user_id é obrigatório" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      if (colaborador_id) {
+        await adminClient.from("colaboradores_clt").update({ user_id }).eq("id", colaborador_id);
+      }
+      if (contrato_pj_id) {
+        await adminClient.from("contratos_pj").update({ user_id }).eq("id", contrato_pj_id);
       }
 
       return new Response(JSON.stringify({ success: true }), {

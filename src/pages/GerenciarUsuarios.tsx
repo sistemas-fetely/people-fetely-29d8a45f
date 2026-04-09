@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import {
   CheckCircle2, XCircle, UserCheck, UserX, Users, UserPlus,
-  Shield, ShieldCheck, ShieldAlert, Eye, EyeOff, Pencil, Trash2, Settings2,
+  Shield, ShieldCheck, ShieldAlert, Eye, EyeOff, Pencil, Trash2, Settings2, Link2,
 } from "lucide-react";
 import { toast } from "sonner";
 import type { Database } from "@/integrations/supabase/types";
@@ -66,6 +66,10 @@ export default function GerenciarUsuarios() {
   const [showPassword, setShowPassword] = useState(false);
   const [newUser, setNewUser] = useState({ email: "", password: "", full_name: "", roles: ["colaborador"] as string[], colaborador_tipo: "" });
   const [deleteConfirm, setDeleteConfirm] = useState<{ userId: string; name: string } | null>(null);
+  const [linkDialogOpen, setLinkDialogOpen] = useState(false);
+  const [linkUser, setLinkUser] = useState<{ userId: string; name: string } | null>(null);
+  const [linkColaboradorId, setLinkColaboradorId] = useState("");
+  const [linkContratoPjId, setLinkContratoPjId] = useState("");
 
   const { data: profiles = [], isLoading } = useQuery({
     queryKey: ["admin-profiles"],
@@ -93,6 +97,32 @@ export default function GerenciarUsuarios() {
     queryFn: async () => {
       const result = await callManageUser("list_users", {});
       return result.users || [];
+    },
+  });
+
+  const { data: unlinkedCLT = [] } = useQuery({
+    queryKey: ["unlinked-clt"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("colaboradores_clt")
+        .select("id, nome_completo, cargo")
+        .is("user_id", null)
+        .eq("status", "ativo");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: unlinkedPJ = [] } = useQuery({
+    queryKey: ["unlinked-pj"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("contratos_pj")
+        .select("id, contato_nome, razao_social")
+        .is("user_id", null)
+        .eq("status", "ativo");
+      if (error) throw error;
+      return data;
     },
   });
 
@@ -160,6 +190,22 @@ export default function GerenciarUsuarios() {
       setDeleteConfirm(null);
     },
     onError: (err: Error) => toast.error(err.message || "Erro ao deletar usuário"),
+  });
+
+  const linkRecord = useMutation({
+    mutationFn: async ({ user_id, colaborador_id, contrato_pj_id }: { user_id: string; colaborador_id?: string; contrato_pj_id?: string }) => {
+      await callManageUser("link_record", { user_id, colaborador_id, contrato_pj_id });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["unlinked-clt"] });
+      queryClient.invalidateQueries({ queryKey: ["unlinked-pj"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-profiles"] });
+      toast.success("Vínculo realizado com sucesso!");
+      setLinkDialogOpen(false);
+      setLinkColaboradorId("");
+      setLinkContratoPjId("");
+    },
+    onError: () => toast.error("Erro ao vincular registro"),
   });
 
   const getUserRoles = (userId: string) =>
@@ -441,6 +487,20 @@ export default function GerenciarUsuarios() {
                               <Pencil className="h-3.5 w-3.5" />
                               Perfis
                             </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="gap-1"
+                              onClick={() => {
+                                setLinkUser({ userId: profile.user_id, name: profile.full_name || "Usuário" });
+                                setLinkColaboradorId("");
+                                setLinkContratoPjId("");
+                                setLinkDialogOpen(true);
+                              }}
+                            >
+                              <Link2 className="h-3.5 w-3.5" />
+                              Vincular
+                            </Button>
                             {isBanned ? (
                               <Button
                                 size="sm"
@@ -629,6 +689,69 @@ export default function GerenciarUsuarios() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Dialog for manual linking */}
+      <Dialog open={linkDialogOpen} onOpenChange={setLinkDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Vincular Cadastro</DialogTitle>
+            <DialogDescription>
+              Vincular o usuário <strong>{linkUser?.name}</strong> a um registro de colaborador CLT ou contrato PJ existente.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label>Colaborador CLT</Label>
+              <Select value={linkColaboradorId} onValueChange={setLinkColaboradorId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Nenhum (não vincular CLT)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Nenhum</SelectItem>
+                  {unlinkedCLT.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.nome_completo} — {c.cargo}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Contrato PJ</Label>
+              <Select value={linkContratoPjId} onValueChange={setLinkContratoPjId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Nenhum (não vincular PJ)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Nenhum</SelectItem>
+                  {unlinkedPJ.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.contato_nome} — {c.razao_social}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setLinkDialogOpen(false)}>Cancelar</Button>
+            <Button
+              onClick={() => {
+                if (linkUser) {
+                  linkRecord.mutate({
+                    user_id: linkUser.userId,
+                    colaborador_id: linkColaboradorId && linkColaboradorId !== "none" ? linkColaboradorId : undefined,
+                    contrato_pj_id: linkContratoPjId && linkContratoPjId !== "none" ? linkContratoPjId : undefined,
+                  });
+                }
+              }}
+              disabled={linkRecord.isPending || (!linkColaboradorId && !linkContratoPjId) || (linkColaboradorId === "none" && linkContratoPjId === "none")}
+            >
+              {linkRecord.isPending ? "Vinculando..." : "Vincular"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

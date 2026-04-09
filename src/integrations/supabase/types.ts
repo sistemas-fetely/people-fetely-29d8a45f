@@ -567,6 +567,7 @@ export type Database = {
           tipo_servico: string
           uf: string | null
           updated_at: string
+          user_id: string | null
           valor_mensal: number
         }
         Insert: {
@@ -621,6 +622,7 @@ export type Database = {
           tipo_servico: string
           uf?: string | null
           updated_at?: string
+          user_id?: string | null
           valor_mensal: number
         }
         Update: {
@@ -675,6 +677,7 @@ export type Database = {
           tipo_servico?: string
           uf?: string | null
           updated_at?: string
+          user_id?: string | null
           valor_mensal?: number
         }
         Relationships: []

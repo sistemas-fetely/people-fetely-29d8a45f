@@ -113,7 +113,7 @@ export function usePermissions() {
       const results: string[] = [];
       const [cltRes, pjRes] = await Promise.all([
         supabase.from("colaboradores_clt").select("id").eq("user_id", user.id).limit(1),
-        supabase.from("contratos_pj").select("id").eq("created_by", user.id).limit(1),
+        supabase.from("contratos_pj").select("id").eq("user_id", user.id).limit(1),
       ]);
       if (cltRes.data?.length) results.push("clt");
       if (pjRes.data?.length) results.push("pj");
