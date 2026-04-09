@@ -29,6 +29,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
+import { usePermissions } from "@/hooks/usePermissions";
 import type { Tables } from "@/integrations/supabase/types";
 
 import { StepDadosPessoaisPJ } from "@/components/contrato-pj/StepDadosPessoaisPJ";
