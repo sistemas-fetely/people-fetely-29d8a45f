@@ -73,6 +73,10 @@ interface ContratoPJOption {
 }
 
 export default function PagamentosPJ() {
+  const { hasPermission } = usePermissions();
+  const canCreate = hasPermission("pagamentos_pj", "create");
+  const canEdit = hasPermission("pagamentos_pj", "edit");
+  const canDelete = hasPermission("pagamentos_pj", "delete");
   const navigate = useNavigate();
   const [pagamentos, setPagamentos] = useState<PagamentoComContrato[]>([]);
   const [contratos, setContratos] = useState<ContratoPJOption[]>([]);
@@ -134,9 +138,11 @@ export default function PagamentosPJ() {
           <h1 className="text-2xl font-bold tracking-tight">Pagamentos PJ</h1>
           <p className="text-muted-foreground text-sm mt-1">Controle de pagamentos a prestadores de serviço</p>
         </div>
-        <Button className="gap-2" onClick={() => { setEditPag(null); setFormOpen(true); }}>
-          <Plus className="h-4 w-4" /> Novo Pagamento
-        </Button>
+        {canCreate && (
+          <Button className="gap-2" onClick={() => { setEditPag(null); setFormOpen(true); }}>
+            <Plus className="h-4 w-4" /> Novo Pagamento
+          </Button>
+        )}
       </div>
 
       {/* Stats */}
@@ -218,8 +224,12 @@ export default function PagamentosPJ() {
                         <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => e.stopPropagation()}><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={() => navigate(`/contratos-pj/${p.contrato_id}`)}><Eye className="mr-2 h-4 w-4" /> Ver Contrato</DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => { setEditPag(p); setFormOpen(true); }}><Edit className="mr-2 h-4 w-4" /> Editar</DropdownMenuItem>
-                          <DropdownMenuItem className="text-destructive" onClick={() => setDeleteTarget(p)}><Trash2 className="mr-2 h-4 w-4" /> Excluir</DropdownMenuItem>
+                          {canEdit && (
+                            <DropdownMenuItem onClick={() => { setEditPag(p); setFormOpen(true); }}><Edit className="mr-2 h-4 w-4" /> Editar</DropdownMenuItem>
+                          )}
+                          {canDelete && (
+                            <DropdownMenuItem className="text-destructive" onClick={() => setDeleteTarget(p)}><Trash2 className="mr-2 h-4 w-4" /> Excluir</DropdownMenuItem>
+                          )}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>

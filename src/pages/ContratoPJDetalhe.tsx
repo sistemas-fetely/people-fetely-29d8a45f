@@ -86,8 +86,10 @@ export default function ContratoPJDetalhe() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { hasPermission } = usePermissions();
+  const canEdit = hasPermission("contratos_pj", "edit");
   const [loading, setLoading] = useState(true);
-  const [editing, setEditing] = useState(searchParams.get("edit") === "true");
+  const [editing, setEditing] = useState(searchParams.get("edit") === "true" && canEdit);
   const [saving, setSaving] = useState(false);
   const [contrato, setContrato] = useState<Tables<"contratos_pj"> | null>(null);
   const [acessosSistemas, setAcessosSistemas] = useState<Tables<"contrato_pj_acessos_sistemas">[]>([]);
@@ -377,17 +379,21 @@ export default function ContratoPJDetalhe() {
             <ArrowLeft className="h-4 w-4" /> Voltar
           </Button>
           <div className="flex items-center gap-2">
-            <Button
-              variant={isAtivo ? "outline" : "default"}
-              onClick={() => setStatusDialogOpen(true)}
-              className={`gap-2 ${isAtivo ? "text-destructive border-destructive hover:bg-destructive/10" : ""}`}
-            >
-              {isAtivo ? <UserX className="h-4 w-4" /> : <UserCheck className="h-4 w-4" />}
-              {isAtivo ? "Encerrar" : "Reativar"}
-            </Button>
-            <Button onClick={() => setEditing(true)} className="gap-2">
-              <Edit className="h-4 w-4" /> Editar
-            </Button>
+            {canEdit && (
+              <>
+                <Button
+                  variant={isAtivo ? "outline" : "default"}
+                  onClick={() => setStatusDialogOpen(true)}
+                  className={`gap-2 ${isAtivo ? "text-destructive border-destructive hover:bg-destructive/10" : ""}`}
+                >
+                  {isAtivo ? <UserX className="h-4 w-4" /> : <UserCheck className="h-4 w-4" />}
+                  {isAtivo ? "Encerrar" : "Reativar"}
+                </Button>
+                <Button onClick={() => setEditing(true)} className="gap-2">
+                  <Edit className="h-4 w-4" /> Editar
+                </Button>
+              </>
+            )}
           </div>
         </div>
 
