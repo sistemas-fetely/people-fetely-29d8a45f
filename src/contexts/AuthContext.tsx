@@ -20,7 +20,8 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const navigate = useNavigate();
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const navigate = useNavigate();
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [roles, setRoles] = useState<AppRole[]>([]);
@@ -65,6 +66,7 @@ const navigate = useNavigate();
     await supabase.auth.signOut();
     setRoles([]);
     setProfile(null);
+    navigate("/login");
   };
 
   const hasRole = (role: AppRole) => roles.includes(role);
