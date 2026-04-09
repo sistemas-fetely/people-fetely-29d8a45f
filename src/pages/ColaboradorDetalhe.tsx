@@ -308,9 +308,13 @@ export default function ColaboradorDetalhe() {
         <Card className="card-shadow">
           <CardContent className="p-6">
             <div className="flex items-center gap-4">
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-xl font-bold text-primary">
-                {initials}
-              </div>
+              {colaborador.foto_url ? (
+                <img src={colaborador.foto_url} alt={colaborador.nome_completo} className="h-16 w-16 rounded-full object-cover" />
+              ) : (
+                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-xl font-bold text-primary">
+                  {initials}
+                </div>
+              )}
               <div className="flex-1">
                 <h1 className="text-2xl font-bold">{colaborador.nome_completo}</h1>
                 <p className="text-muted-foreground">{colaborador.cargo}</p>
