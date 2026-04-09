@@ -457,6 +457,13 @@ export default function NotaFiscalDetalhe() {
                   <p><strong>Data de Vencimento:</strong> {formatDate(nota.data_vencimento)}</p>
                   <p><strong>Prestador:</strong> {contrato?.contato_nome || '—'}</p>
                 </div>
+                {nota.arquivo_url && (
+                  <p className="text-center my-3">
+                    <a href={nota.arquivo_url} target="_blank" rel="noopener noreferrer" className="inline-block bg-primary text-primary-foreground px-4 py-2 rounded-md text-sm font-medium no-underline">
+                      📄 Baixar Nota Fiscal (PDF)
+                    </a>
+                  </p>
+                )}
                 <p>Após o pagamento, favor enviar o comprovante para rh.corp@fetelycorp.com.br</p>
               </div>
             </div>
