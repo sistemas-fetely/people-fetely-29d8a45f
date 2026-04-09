@@ -437,12 +437,41 @@ export default function ContratoPJDetalhe() {
 
           <TabsContent value="pessoais">
             <Card><CardContent className="pt-6">
-              <h3 className="font-semibold mb-4 text-sm text-muted-foreground">DADOS DO RESPONSÁVEL</h3>
+              <h3 className="font-semibold mb-4 text-sm text-muted-foreground">DADOS PESSOAIS DO PRESTADOR</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
                 <InfoField label="Nome Completo" value={contrato.contato_nome} />
-                <InfoField label="Telefone" value={contrato.contato_telefone} />
-                <InfoField label="Email" value={contrato.contato_email} />
+                <InfoField label="CPF" value={contrato.cpf} />
+                <InfoField label="RG" value={contrato.rg} />
+                <InfoField label="Órgão Emissor" value={contrato.orgao_emissor} />
+                <InfoField label="Data de Nascimento" value={contrato.data_nascimento ? format(parseISO(contrato.data_nascimento), "dd/MM/yyyy") : null} />
+                <InfoField label="Gênero" value={contrato.genero} />
+                <InfoField label="Estado Civil" value={contrato.estado_civil} />
+                <InfoField label="Nacionalidade" value={contrato.nacionalidade} />
+                <InfoField label="Etnia" value={contrato.etnia} />
+                <InfoField label="Nome da Mãe" value={contrato.nome_mae} />
+                <InfoField label="Nome do Pai" value={contrato.nome_pai} />
               </div>
+
+              <h3 className="font-semibold mb-4 text-sm text-muted-foreground">ENDEREÇO</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                <InfoField label="CEP" value={contrato.cep} />
+                <InfoField label="Logradouro" value={contrato.logradouro} />
+                <InfoField label="Número" value={contrato.numero} />
+                <InfoField label="Complemento" value={contrato.complemento} />
+                <InfoField label="Bairro" value={contrato.bairro} />
+                <InfoField label="Cidade" value={contrato.cidade} />
+                <InfoField label="UF" value={contrato.uf} />
+              </div>
+
+              <h3 className="font-semibold mb-4 text-sm text-muted-foreground">CONTATO</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                <InfoField label="Telefone" value={contrato.telefone || contrato.contato_telefone} />
+                <InfoField label="Email Pessoal" value={contrato.email_pessoal} />
+                <InfoField label="Email Comercial" value={contrato.contato_email} />
+                <InfoField label="Contato Emergência - Nome" value={contrato.contato_emergencia_nome} />
+                <InfoField label="Contato Emergência - Telefone" value={contrato.contato_emergencia_telefone} />
+              </div>
+
               <h3 className="font-semibold mb-4 text-sm text-muted-foreground">DADOS DA EMPRESA</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <InfoField label="CNPJ" value={contrato.cnpj} />
