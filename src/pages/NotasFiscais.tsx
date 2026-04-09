@@ -211,9 +211,11 @@ export default function NotasFiscais() {
           <h1 className="text-2xl font-bold tracking-tight">Notas Fiscais</h1>
           <p className="text-muted-foreground text-sm mt-1">Gestão de notas fiscais de todos os contratos PJ</p>
         </div>
-        <Button className="gap-2" onClick={() => { setEditNota(null); setFormOpen(true); }}>
-          <Plus className="h-4 w-4" /> Nova NF
-        </Button>
+        {canCreate && (
+          <Button className="gap-2" onClick={() => { setEditNota(null); setFormOpen(true); }}>
+            <Plus className="h-4 w-4" /> Nova NF
+          </Button>
+        )}
       </div>
 
       {/* Mês Atual - Fixed Cards */}
