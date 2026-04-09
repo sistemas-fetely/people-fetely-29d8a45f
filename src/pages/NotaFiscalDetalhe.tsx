@@ -1,6 +1,6 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Edit, FileText, Building2, Calendar, DollarSign, Hash, Clock, ExternalLink, Mail, Send, CheckCircle2, ChevronRight } from "lucide-react";
+import { ArrowLeft, Edit, FileText, Building2, Calendar, DollarSign, Hash, Clock, ExternalLink, Mail, Send, CheckCircle2, ChevronRight, Upload, Download, Eye, Trash2, Loader2 as Loader2Icon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -579,6 +579,12 @@ export default function NotaFiscalDetalhe() {
         </Card>
       )}
 
+      {/* Arquivo da NF */}
+      <ArquivoNFCard
+        nota={nota}
+        onArquivoUpdated={(url) => setNota({ ...nota, arquivo_url: url })}
+      />
+
       {/* Histórico */}
       <Card>
         <CardHeader>
@@ -623,6 +629,149 @@ export default function NotaFiscalDetalhe() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+function ArquivoNFCard({ nota, onArquivoUpdated }: { nota: NotaFiscal; onArquivoUpdated: (url: string | null) => void }) {
+  const [uploading, setUploading] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleUpload = async (file: File) => {
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("Arquivo muito grande. Máximo 10MB.");
+      return;
+    }
+    const allowed = ["application/pdf", "image/jpeg", "image/png", "image/webp"];
+    if (!allowed.includes(file.type)) {
+      toast.error("Formato não suportado. Use PDF, JPG, PNG ou WebP.");
+      return;
+    }
+    setUploading(true);
+    const ext = file.name.split(".").pop() || "pdf";
+    const filePath = `notas-fiscais/${nota.id}/nf-${nota.numero}.${ext}`;
+    const { error: uploadError } = await supabase.storage
+      .from("documentos-cadastro")
+      .upload(filePath, file, { upsert: true });
+    if (uploadError) {
+      toast.error("Erro ao enviar: " + uploadError.message);
+      setUploading(false);
+      return;
+    }
+    const { data: urlData } = supabase.storage
+      .from("documentos-cadastro")
+      .getPublicUrl(filePath);
+    const publicUrl = urlData.publicUrl;
+    const { error: updateError } = await supabase
+      .from("notas_fiscais_pj")
+      .update({ arquivo_url: publicUrl })
+      .eq("id", nota.id);
+    if (updateError) {
+      toast.error("Erro ao salvar URL: " + updateError.message);
+    } else {
+      onArquivoUpdated(publicUrl);
+      toast.success("Nota fiscal anexada com sucesso!");
+    }
+    setUploading(false);
+  };
+
+  const handleRemove = async () => {
+    const { error } = await supabase
+      .from("notas_fiscais_pj")
+      .update({ arquivo_url: null } as any)
+      .eq("id", nota.id);
+    if (error) {
+      toast.error("Erro ao remover: " + error.message);
+      return;
+    }
+    onArquivoUpdated(null);
+    toast.success("Arquivo removido.");
+  };
+
+  const isPdf = nota.arquivo_url?.match(/\.pdf$/i);
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base flex items-center gap-2">
+          <Upload className="h-4 w-4 text-primary" />
+          Arquivo da Nota Fiscal
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {nota.arquivo_url ? (
+          <div className="flex items-center justify-between border rounded-lg p-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                <FileText className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-sm font-medium">NF {nota.numero} - Arquivo anexado</p>
+                <p className="text-xs text-muted-foreground">{isPdf ? "PDF" : "Imagem"}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-1">
+              <Button variant="ghost" size="icon" className="h-8 w-8" title="Visualizar" onClick={() => setPreviewOpen(true)}>
+                <Eye className="h-4 w-4" />
+              </Button>
+              <Button variant="ghost" size="icon" className="h-8 w-8" asChild title="Download">
+                <a href={nota.arquivo_url} target="_blank" rel="noopener noreferrer" download>
+                  <Download className="h-4 w-4" />
+                </a>
+              </Button>
+              <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={handleRemove} title="Remover">
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center border-2 border-dashed rounded-lg p-8 text-center">
+            <Upload className="h-8 w-8 text-muted-foreground mb-2" />
+            <p className="text-sm text-muted-foreground mb-3">Nenhum arquivo anexado</p>
+            <Button
+              variant="outline"
+              className="gap-2"
+              disabled={uploading}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+              Enviar Nota Fiscal
+            </Button>
+            <p className="text-xs text-muted-foreground mt-2">PDF, JPG, PNG ou WebP (máx. 10MB)</p>
+          </div>
+        )}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="application/pdf,image/jpeg,image/png,image/webp"
+          className="hidden"
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (f) handleUpload(f);
+            e.target.value = "";
+          }}
+        />
+
+        {/* Preview Dialog */}
+        {previewOpen && nota.arquivo_url && (
+          <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center" onClick={() => setPreviewOpen(false)}>
+            <div className="bg-background rounded-lg max-w-3xl w-full max-h-[85vh] p-6 m-4" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold">NF {nota.numero}</h3>
+                <Button variant="ghost" size="sm" onClick={() => setPreviewOpen(false)}>Fechar</Button>
+              </div>
+              <div className="flex items-center justify-center overflow-auto max-h-[70vh]">
+                {isPdf ? (
+                  <iframe src={nota.arquivo_url} className="w-full h-[65vh] border rounded" />
+                ) : (
+                  <img src={nota.arquivo_url} alt={`NF ${nota.numero}`} className="max-w-full max-h-[65vh] object-contain rounded" />
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 
