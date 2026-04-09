@@ -60,96 +60,136 @@ const App = () => (
             <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
               <Route path="/" element={<Dashboard />} />
               <Route path="/pessoas" element={<Pessoas />} />
-              <Route path="/colaboradores" element={<Colaboradores />} />
+              <Route path="/colaboradores" element={
+                <ProtectedRoute permModule="colaboradores">
+                  <Colaboradores />
+                </ProtectedRoute>
+              } />
               <Route path="/colaboradores/novo" element={
-                <ProtectedRoute allowedRoles={["super_admin", "gestor_rh"]}>
+                <ProtectedRoute permModule="colaboradores" permAction="create">
                   <CadastroColaboradorCLTWrapper />
                 </ProtectedRoute>
               } />
-              <Route path="/colaboradores/:id" element={<ColaboradorDetalhe />} />
-              <Route path="/organograma" element={<Organograma />} />
-              <Route path="/movimentacoes" element={<Movimentacoes />} />
+              <Route path="/colaboradores/:id" element={
+                <ProtectedRoute permModule="colaboradores">
+                  <ColaboradorDetalhe />
+                </ProtectedRoute>
+              } />
+              <Route path="/organograma" element={
+                <ProtectedRoute permModule="organograma">
+                  <Organograma />
+                </ProtectedRoute>
+              } />
+              <Route path="/movimentacoes" element={
+                <ProtectedRoute permModule="movimentacoes">
+                  <Movimentacoes />
+                </ProtectedRoute>
+              } />
 
               {/* CLT */}
               <Route path="/folha-pagamento" element={
-                <ProtectedRoute allowedRoles={["super_admin", "gestor_rh", "financeiro"]}>
+                <ProtectedRoute permModule="folha_pagamento">
                   <FolhaPagamento />
                 </ProtectedRoute>
               } />
-              <Route path="/ferias" element={<Ferias />} />
-              <Route path="/ferias/colaborador/:id" element={<FeriasColaborador />} />
-              <Route path="/ponto" element={<PlaceholderPage title="Controle de Ponto" description="Apuração de horas e banco de horas" />} />
-              <Route path="/beneficios" element={<Beneficios />} />
+              <Route path="/ferias" element={
+                <ProtectedRoute permModule="ferias">
+                  <Ferias />
+                </ProtectedRoute>
+              } />
+              <Route path="/ferias/colaborador/:id" element={
+                <ProtectedRoute permModule="ferias">
+                  <FeriasColaborador />
+                </ProtectedRoute>
+              } />
+              <Route path="/ponto" element={
+                <ProtectedRoute permModule="folha_pagamento">
+                  <PlaceholderPage title="Controle de Ponto" description="Apuração de horas e banco de horas" />
+                </ProtectedRoute>
+              } />
+              <Route path="/beneficios" element={
+                <ProtectedRoute permModule="beneficios">
+                  <Beneficios />
+                </ProtectedRoute>
+              } />
 
               {/* PJ */}
               <Route path="/contratos-pj" element={
-                <ProtectedRoute allowedRoles={["super_admin", "gestor_rh", "financeiro"]}>
+                <ProtectedRoute permModule="contratos_pj">
                   <ContratosPJ />
                 </ProtectedRoute>
               } />
               <Route path="/contratos-pj/novo" element={
-                <ProtectedRoute allowedRoles={["super_admin", "gestor_rh"]}>
+                <ProtectedRoute permModule="contratos_pj" permAction="create">
                   <CadastroContratoPJ />
                 </ProtectedRoute>
               } />
               <Route path="/contratos-pj/:id" element={
-                <ProtectedRoute allowedRoles={["super_admin", "gestor_rh", "financeiro"]}>
+                <ProtectedRoute permModule="contratos_pj">
                   <ContratoPJDetalhe />
                 </ProtectedRoute>
               } />
               <Route path="/notas-fiscais" element={
-                <ProtectedRoute allowedRoles={["super_admin", "gestor_rh", "financeiro"]}>
+                <ProtectedRoute permModule="notas_fiscais">
                   <NotasFiscais />
                 </ProtectedRoute>
               } />
               <Route path="/notas-fiscais/:id" element={
-                <ProtectedRoute allowedRoles={["super_admin", "gestor_rh", "financeiro"]}>
+                <ProtectedRoute permModule="notas_fiscais">
                   <NotaFiscalDetalhe />
                 </ProtectedRoute>
               } />
 
               {/* RH */}
               <Route path="/convites-cadastro" element={
-                <ProtectedRoute allowedRoles={["super_admin", "gestor_rh"]}>
+                <ProtectedRoute permModule="convites">
                   <ConvitesCadastro />
                 </ProtectedRoute>
               } />
               <Route path="/convites-cadastro/:id" element={
-                <ProtectedRoute allowedRoles={["super_admin", "gestor_rh"]}>
+                <ProtectedRoute permModule="convites">
                   <ConviteDetalhe />
                 </ProtectedRoute>
               } />
               <Route path="/recrutamento" element={
-                <ProtectedRoute allowedRoles={["super_admin", "gestor_rh"]}>
+                <ProtectedRoute permModule="recrutamento">
                   <PlaceholderPage title="Recrutamento e Seleção" description="Kanban de vagas e candidatos" />
                 </ProtectedRoute>
               } />
-              <Route path="/avaliacoes" element={<PlaceholderPage title="Avaliações de Desempenho" description="Ciclos de avaliação e PDI" />} />
-              <Route path="/treinamentos" element={<PlaceholderPage title="Treinamentos" description="Controle de capacitação e certificados" />} />
+              <Route path="/avaliacoes" element={
+                <ProtectedRoute permModule="avaliacoes">
+                  <PlaceholderPage title="Avaliações de Desempenho" description="Ciclos de avaliação e PDI" />
+                </ProtectedRoute>
+              } />
+              <Route path="/treinamentos" element={
+                <ProtectedRoute permModule="treinamentos">
+                  <PlaceholderPage title="Treinamentos" description="Controle de capacitação e certificados" />
+                </ProtectedRoute>
+              } />
               <Route path="/relatorios" element={
-                <ProtectedRoute allowedRoles={["super_admin", "gestor_rh", "financeiro"]}>
+                <ProtectedRoute permModule="relatorios">
                   <PlaceholderPage title="Relatórios e BI" description="Relatórios gerenciais e exportação" />
                 </ProtectedRoute>
               } />
 
               {/* Admin */}
               <Route path="/parametros" element={
-                <ProtectedRoute allowedRoles={["super_admin", "gestor_rh"]}>
+                <ProtectedRoute permModule="parametros">
                   <Parametros />
                 </ProtectedRoute>
               } />
               <Route path="/configuracoes" element={
-                <ProtectedRoute allowedRoles={["super_admin"]}>
+                <ProtectedRoute permModule="usuarios">
                   <PlaceholderPage title="Configurações" description="Parâmetros do sistema e permissões" />
                 </ProtectedRoute>
               } />
               <Route path="/gerenciar-usuarios" element={
-                <ProtectedRoute allowedRoles={["super_admin"]}>
+                <ProtectedRoute permModule="usuarios">
                   <GerenciarUsuarios />
                 </ProtectedRoute>
               } />
               <Route path="/configurar-perfis" element={
-                <ProtectedRoute allowedRoles={["super_admin"]}>
+                <ProtectedRoute permModule="usuarios">
                   <ConfigurarPerfis />
                 </ProtectedRoute>
               } />
