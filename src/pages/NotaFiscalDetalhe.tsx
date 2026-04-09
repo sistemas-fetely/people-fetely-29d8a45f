@@ -165,6 +165,15 @@ export default function NotaFiscalDetalhe() {
         .order("created_at", { ascending: false });
       if (pagData) setPagamentos(pagData as PagamentoPJ[]);
 
+      // Fetch email logs for this nota fiscal
+      const { data: emailData } = await supabase
+        .from("email_send_log")
+        .select("id, created_at, status, recipient_email, message_id")
+        .eq("template_name", "nf-pagamento")
+        .containedBy("metadata", { nota_fiscal_id: id } as any)
+        .order("created_at", { ascending: true });
+      if (emailData) setEmailLogs(emailData as EmailLog[]);
+
       setLoading(false);
     };
     fetchData();
