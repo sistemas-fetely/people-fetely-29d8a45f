@@ -149,7 +149,7 @@ export function useOrganograma() {
       const [posRes, colabRes, contrRes] = await Promise.all([
         supabase.rpc("get_organograma_tree"),
         supabase.from("colaboradores_clt").select("id, nome_completo, foto_url, email_corporativo, telefone, data_admissao, salario_base, status, tipo_contrato, cargo, departamento"),
-        supabase.from("contratos_pj").select("id, contato_nome, nome_fantasia, razao_social, contato_email, contato_telefone, data_inicio, valor_mensal, status"),
+        supabase.from("contratos_pj").select("id, contato_nome, nome_fantasia, razao_social, contato_email, contato_telefone, data_inicio, valor_mensal, status, foto_url"),
       ]);
 
       if (posRes.error) throw posRes.error;
