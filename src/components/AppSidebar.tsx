@@ -40,6 +40,7 @@ const mainItems: MenuItem[] = [
   { title: "Pessoas", url: "/pessoas", icon: Users, permModule: "colaboradores" },
   { title: "Organograma", url: "/organograma", icon: GitBranch, permModule: "organograma" },
   { title: "Férias", url: "/ferias", icon: Calendar, permModule: "ferias" },
+  { title: "Benefícios", url: "/beneficios", icon: Award, permModule: "beneficios" },
   { title: "Movimentações", url: "/movimentacoes", icon: ArrowUpDown, permModule: "movimentacoes" },
 ];
 
@@ -47,7 +48,6 @@ const cltItems: MenuItem[] = [
   { title: "Colaboradores CLT", url: "/colaboradores", icon: Users, permModule: "colaboradores" },
   { title: "Folha de Pagamento", url: "/folha-pagamento", icon: FileText, permModule: "folha_pagamento" },
   { title: "Ponto", url: "/ponto", icon: ClipboardList, permModule: "folha_pagamento" },
-  { title: "Benefícios", url: "/beneficios", icon: Award, permModule: "beneficios" },
 ];
 
 const pjItems: MenuItem[] = [
