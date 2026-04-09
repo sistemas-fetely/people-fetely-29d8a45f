@@ -52,7 +52,7 @@ Deno.serve(async (req) => {
     const { action } = body;
 
     if (action === "create") {
-      const { email, password, full_name, roles } = body;
+      const { email, password, full_name, roles, colaborador_tipo } = body;
       if (!email || !password || !full_name) {
         return new Response(JSON.stringify({ error: "Email, senha e nome são obrigatórios" }), {
           status: 400,
@@ -74,12 +74,15 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Approve profile
-      await adminClient.from("profiles").update({ approved: true }).eq("user_id", newUser.user.id);
+      // Approve profile and set colaborador_tipo
+      const profileUpdate: Record<string, unknown> = { approved: true };
+      if (colaborador_tipo) {
+        profileUpdate.colaborador_tipo = colaborador_tipo;
+      }
+      await adminClient.from("profiles").update(profileUpdate).eq("user_id", newUser.user.id);
 
       // Set roles if provided
       if (roles && roles.length > 0) {
-        // Remove default role first
         await adminClient.from("user_roles").delete().eq("user_id", newUser.user.id);
         const roleInserts = roles.map((role: string) => ({
           user_id: newUser.user.id,
@@ -104,7 +107,7 @@ Deno.serve(async (req) => {
 
       if (ban) {
         const { error } = await adminClient.auth.admin.updateUserById(user_id, {
-          ban_duration: "876000h", // ~100 years
+          ban_duration: "876000h",
         });
         if (error) throw error;
         await adminClient.from("profiles").update({ approved: false }).eq("user_id", user_id);
@@ -122,7 +125,7 @@ Deno.serve(async (req) => {
     }
 
     if (action === "update_roles") {
-      const { user_id, roles } = body;
+      const { user_id, roles, colaborador_tipo } = body;
       if (!user_id || !roles) {
         return new Response(JSON.stringify({ error: "user_id e roles são obrigatórios" }), {
           status: 400,
@@ -134,6 +137,11 @@ Deno.serve(async (req) => {
       if (roles.length > 0) {
         const roleInserts = roles.map((role: string) => ({ user_id, role }));
         await adminClient.from("user_roles").insert(roleInserts);
+      }
+
+      // Update colaborador_tipo on profile
+      if (colaborador_tipo !== undefined) {
+        await adminClient.from("profiles").update({ colaborador_tipo: colaborador_tipo || null }).eq("user_id", user_id);
       }
 
       return new Response(JSON.stringify({ success: true }), {
@@ -150,7 +158,6 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Prevent self-deletion
       if (user_id === caller.id) {
         return new Response(JSON.stringify({ error: "Não é possível deletar seu próprio usuário" }), {
           status: 400,
@@ -158,7 +165,6 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Delete roles, profile, then auth user
       await adminClient.from("user_roles").delete().eq("user_id", user_id);
       await adminClient.from("profiles").delete().eq("user_id", user_id);
       const { error } = await adminClient.auth.admin.deleteUser(user_id);
