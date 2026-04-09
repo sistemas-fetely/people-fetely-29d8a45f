@@ -270,13 +270,13 @@ export function OrgAnalyticView({ flat, filters }: Props) {
               <div className="text-center">
                 <p className="text-xs text-muted-foreground">Custo CLT</p>
                 <p className="text-lg font-bold text-foreground">
-                  {fmtBRL(stats.byDept.reduce((s, d) => s + d.custo, 0) * (stats.cltCount / (stats.totalPessoas || 1)))}
+                  {fmtBRL(stats.custoClt)}
                 </p>
               </div>
               <div className="text-center">
                 <p className="text-xs text-muted-foreground">Custo PJ</p>
                 <p className="text-lg font-bold text-foreground">
-                  {fmtBRL(stats.byDept.reduce((s, d) => s + d.custo, 0) * (stats.pjCount / (stats.totalPessoas || 1)))}
+                  {fmtBRL(stats.custoPj)}
                 </p>
               </div>
             </div>
