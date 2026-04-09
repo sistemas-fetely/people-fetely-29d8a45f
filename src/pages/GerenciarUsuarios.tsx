@@ -1,10 +1,22 @@
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { CheckCircle2, XCircle, UserCheck, UserX, Users } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter,
+  DialogHeader, DialogTitle, DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  CheckCircle2, XCircle, UserCheck, UserX, Users, UserPlus,
+  Shield, ShieldCheck, ShieldAlert, Eye, EyeOff, Pencil,
+} from "lucide-react";
 import { toast } from "sonner";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -18,8 +30,33 @@ const ROLE_LABELS: Record<AppRole, string> = {
   financeiro: "Financeiro",
 };
 
+const ROLE_DESCRIPTIONS: Record<AppRole, string> = {
+  super_admin: "Acesso total ao sistema, incluindo gerenciamento de usuários e configurações",
+  gestor_rh: "Gestão de pessoas, folha de pagamento, benefícios e convites",
+  gestor_direto: "Visualização de colaboradores da equipe e aprovações",
+  colaborador: "Acesso ao próprio perfil, holerites e férias",
+  financeiro: "Gestão financeira, notas fiscais, pagamentos PJ e folha",
+};
+
+const ALL_ROLES: AppRole[] = ["super_admin", "gestor_rh", "gestor_direto", "colaborador", "financeiro"];
+
+async function callManageUser(action: string, payload: Record<string, unknown>) {
+  const { data, error } = await supabase.functions.invoke("manage-user", {
+    body: { action, ...payload },
+  });
+  if (error) throw new Error(error.message);
+  if (data?.error) throw new Error(data.error);
+  return data;
+}
+
 export default function GerenciarUsuarios() {
   const queryClient = useQueryClient();
+  const [createOpen, setCreateOpen] = useState(false);
+  const [rolesDialogOpen, setRolesDialogOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<{ userId: string; name: string } | null>(null);
+  const [selectedRoles, setSelectedRoles] = useState<AppRole[]>([]);
+  const [showPassword, setShowPassword] = useState(false);
+  const [newUser, setNewUser] = useState({ email: "", password: "", full_name: "", roles: ["colaborador"] as string[] });
 
   const { data: profiles = [], isLoading } = useQuery({
     queryKey: ["admin-profiles"],
@@ -42,26 +79,83 @@ export default function GerenciarUsuarios() {
     },
   });
 
-  const toggleApproval = useMutation({
-    mutationFn: async ({ userId, approved }: { userId: string; approved: boolean }) => {
-      const { error } = await supabase
-        .from("profiles")
-        .update({ approved })
-        .eq("user_id", userId);
-      if (error) throw error;
+  const { data: authUsers = [] } = useQuery({
+    queryKey: ["admin-auth-users"],
+    queryFn: async () => {
+      const result = await callManageUser("list_users", {});
+      return result.users || [];
     },
-    onSuccess: (_, { approved }) => {
-      queryClient.invalidateQueries({ queryKey: ["admin-profiles"] });
-      toast.success(approved ? "Usuário aprovado com sucesso!" : "Aprovação do usuário revogada.");
-    },
-    onError: () => toast.error("Erro ao atualizar aprovação"),
   });
 
-  const pendingCount = profiles.filter((p) => !p.approved).length;
-  const approvedCount = profiles.filter((p) => p.approved).length;
+  const createUser = useMutation({
+    mutationFn: async () => {
+      await callManageUser("create", newUser);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-profiles"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-user-roles"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-auth-users"] });
+      toast.success("Usuário criado com sucesso!");
+      setCreateOpen(false);
+      setNewUser({ email: "", password: "", full_name: "", roles: ["colaborador"] });
+    },
+    onError: (err: Error) => toast.error(err.message || "Erro ao criar usuário"),
+  });
+
+  const toggleBan = useMutation({
+    mutationFn: async ({ user_id, ban }: { user_id: string; ban: boolean }) => {
+      await callManageUser("toggle_ban", { user_id, ban });
+    },
+    onSuccess: (_, { ban }) => {
+      queryClient.invalidateQueries({ queryKey: ["admin-profiles"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-auth-users"] });
+      toast.success(ban ? "Usuário inativado com sucesso!" : "Usuário ativado com sucesso!");
+    },
+    onError: () => toast.error("Erro ao atualizar status do usuário"),
+  });
+
+  const updateRoles = useMutation({
+    mutationFn: async ({ user_id, roles }: { user_id: string; roles: AppRole[] }) => {
+      await callManageUser("update_roles", { user_id, roles });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-user-roles"] });
+      toast.success("Perfis atualizados com sucesso!");
+      setRolesDialogOpen(false);
+    },
+    onError: () => toast.error("Erro ao atualizar perfis"),
+  });
 
   const getUserRoles = (userId: string) =>
     allRoles.filter((r) => r.user_id === userId).map((r) => r.role);
+
+  const getAuthUser = (userId: string) =>
+    authUsers.find((u: { id: string }) => u.id === userId);
+
+  const openRolesDialog = (userId: string, name: string) => {
+    setSelectedUser({ userId, name });
+    setSelectedRoles(getUserRoles(userId));
+    setRolesDialogOpen(true);
+  };
+
+  const toggleRole = (role: AppRole) => {
+    setSelectedRoles((prev) =>
+      prev.includes(role) ? prev.filter((r) => r !== role) : [...prev, role]
+    );
+  };
+
+  const toggleNewUserRole = (role: string) => {
+    setNewUser((prev) => ({
+      ...prev,
+      roles: prev.roles.includes(role)
+        ? prev.roles.filter((r) => r !== role)
+        : [...prev.roles, role],
+    }));
+  };
+
+  const pendingCount = profiles.filter((p) => !p.approved).length;
+  const approvedCount = profiles.filter((p) => p.approved).length;
+  const bannedCount = authUsers.filter((u: { banned: boolean }) => u.banned).length;
 
   if (isLoading) {
     return (
@@ -73,18 +167,108 @@ export default function GerenciarUsuarios() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Gerenciar Usuários</h1>
-        <p className="text-sm text-muted-foreground">Aprovar e gerenciar acesso de usuários ao sistema</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">Gerenciar Usuários</h1>
+          <p className="text-sm text-muted-foreground">Cadastrar, ativar/inativar e gerenciar perfis de acesso</p>
+        </div>
+        <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+          <DialogTrigger asChild>
+            <Button className="gap-2">
+              <UserPlus className="h-4 w-4" />
+              Novo Usuário
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Cadastrar Novo Usuário</DialogTitle>
+              <DialogDescription>O usuário será criado já aprovado e com e-mail confirmado.</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-2">
+              <div className="space-y-2">
+                <Label>Nome Completo *</Label>
+                <Input
+                  value={newUser.full_name}
+                  onChange={(e) => setNewUser({ ...newUser, full_name: e.target.value })}
+                  placeholder="Nome do usuário"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>E-mail *</Label>
+                <Input
+                  type="email"
+                  value={newUser.email}
+                  onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+                  placeholder="email@empresa.com"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Senha *</Label>
+                <div className="relative">
+                  <Input
+                    type={showPassword ? "text" : "password"}
+                    value={newUser.password}
+                    onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
+                    placeholder="Mínimo 6 caracteres"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-0 top-0 h-full px-3"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </Button>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Perfis de Acesso</Label>
+                <div className="grid grid-cols-1 gap-2">
+                  {ALL_ROLES.map((role) => (
+                    <label key={role} className="flex items-center gap-2 rounded-md border p-2 cursor-pointer hover:bg-muted/50">
+                      <Checkbox
+                        checked={newUser.roles.includes(role)}
+                        onCheckedChange={() => toggleNewUserRole(role)}
+                      />
+                      <div>
+                        <span className="text-sm font-medium">{ROLE_LABELS[role]}</span>
+                        <p className="text-xs text-muted-foreground">{ROLE_DESCRIPTIONS[role]}</p>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setCreateOpen(false)}>Cancelar</Button>
+              <Button
+                onClick={() => createUser.mutate()}
+                disabled={!newUser.email || !newUser.password || !newUser.full_name || createUser.isPending}
+              >
+                {createUser.isPending ? "Criando..." : "Criar Usuário"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
         <Card className="border-l-[3px] border-l-blue-500">
           <CardContent className="p-3">
             <p className="text-xs text-muted-foreground uppercase">Total</p>
             <p className="text-2xl font-bold flex items-center gap-2">
               <Users className="h-5 w-5 text-blue-500" />
               {profiles.length}
+            </p>
+          </CardContent>
+        </Card>
+        <Card className="border-l-[3px] border-l-emerald-500">
+          <CardContent className="p-3">
+            <p className="text-xs text-muted-foreground uppercase">Ativos</p>
+            <p className="text-2xl font-bold flex items-center gap-2">
+              <UserCheck className="h-5 w-5 text-emerald-500" />
+              {approvedCount}
             </p>
           </CardContent>
         </Card>
@@ -97,101 +281,229 @@ export default function GerenciarUsuarios() {
             </p>
           </CardContent>
         </Card>
-        <Card className="border-l-[3px] border-l-emerald-500">
+        <Card className="border-l-[3px] border-l-red-500">
           <CardContent className="p-3">
-            <p className="text-xs text-muted-foreground uppercase">Aprovados</p>
+            <p className="text-xs text-muted-foreground uppercase">Inativos</p>
             <p className="text-2xl font-bold flex items-center gap-2">
-              <UserCheck className="h-5 w-5 text-emerald-500" />
-              {approvedCount}
+              <ShieldAlert className="h-5 w-5 text-red-500" />
+              {bannedCount}
             </p>
           </CardContent>
         </Card>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Usuários do Sistema</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nome</TableHead>
-                <TableHead>Perfis</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Criado em</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {profiles.map((profile) => {
-                const roles = getUserRoles(profile.user_id);
-                return (
-                  <TableRow key={profile.id}>
-                    <TableCell className="font-medium">
-                      {profile.full_name || "—"}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-wrap gap-1">
-                        {roles.map((role) => (
-                          <Badge key={role} variant="secondary" className="text-xs">
-                            {ROLE_LABELS[role] || role}
-                          </Badge>
-                        ))}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      {profile.approved ? (
-                        <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100">
-                          <CheckCircle2 className="h-3 w-3 mr-1" />
-                          Aprovado
-                        </Badge>
-                      ) : (
-                        <Badge variant="outline" className="border-amber-300 text-amber-700">
-                          <XCircle className="h-3 w-3 mr-1" />
-                          Pendente
-                        </Badge>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {new Date(profile.created_at).toLocaleDateString("pt-BR")}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {profile.approved ? (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="text-red-600 hover:text-red-700"
-                          onClick={() => toggleApproval.mutate({ userId: profile.user_id, approved: false })}
-                          disabled={toggleApproval.isPending}
-                        >
-                          Revogar
-                        </Button>
-                      ) : (
-                        <Button
-                          size="sm"
-                          onClick={() => toggleApproval.mutate({ userId: profile.user_id, approved: true })}
-                          disabled={toggleApproval.isPending}
-                        >
-                          <CheckCircle2 className="h-4 w-4 mr-1" />
-                          Aprovar
-                        </Button>
-                      )}
-                    </TableCell>
+      <Tabs defaultValue="usuarios">
+        <TabsList>
+          <TabsTrigger value="usuarios" className="gap-2"><Users className="h-4 w-4" /> Usuários</TabsTrigger>
+          <TabsTrigger value="perfis" className="gap-2"><Shield className="h-4 w-4" /> Perfis de Acesso</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="usuarios" className="mt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Usuários do Sistema</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nome</TableHead>
+                    <TableHead>Perfis</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Último acesso</TableHead>
+                    <TableHead>Criado em</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
-                );
-              })}
-              {profiles.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
-                    Nenhum usuário encontrado
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+                </TableHeader>
+                <TableBody>
+                  {profiles.map((profile) => {
+                    const roles = getUserRoles(profile.user_id);
+                    const authUser = getAuthUser(profile.user_id);
+                    const isBanned = authUser?.banned === true;
+
+                    return (
+                      <TableRow key={profile.id} className={isBanned ? "opacity-60" : ""}>
+                        <TableCell>
+                          <div>
+                            <p className="font-medium">{profile.full_name || "—"}</p>
+                            <p className="text-xs text-muted-foreground">{authUser?.email || ""}</p>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex flex-wrap gap-1">
+                            {roles.map((role) => (
+                              <Badge key={role} variant="secondary" className="text-xs">
+                                {ROLE_LABELS[role] || role}
+                              </Badge>
+                            ))}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          {isBanned ? (
+                            <Badge variant="outline" className="border-red-300 text-red-700">
+                              <XCircle className="h-3 w-3 mr-1" />
+                              Inativo
+                            </Badge>
+                          ) : profile.approved ? (
+                            <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100">
+                              <CheckCircle2 className="h-3 w-3 mr-1" />
+                              Ativo
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="border-amber-300 text-amber-700">
+                              <XCircle className="h-3 w-3 mr-1" />
+                              Pendente
+                            </Badge>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {authUser?.last_sign_in_at
+                            ? new Date(authUser.last_sign_in_at).toLocaleDateString("pt-BR", {
+                                day: "2-digit", month: "2-digit", year: "2-digit",
+                                hour: "2-digit", minute: "2-digit",
+                              })
+                            : "Nunca"}
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {new Date(profile.created_at).toLocaleDateString("pt-BR")}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="gap-1"
+                              onClick={() => openRolesDialog(profile.user_id, profile.full_name || "Usuário")}
+                            >
+                              <Pencil className="h-3.5 w-3.5" />
+                              Perfis
+                            </Button>
+                            {isBanned ? (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="text-emerald-600 hover:text-emerald-700 gap-1"
+                                onClick={() => toggleBan.mutate({ user_id: profile.user_id, ban: false })}
+                                disabled={toggleBan.isPending}
+                              >
+                                <CheckCircle2 className="h-3.5 w-3.5" />
+                                Ativar
+                              </Button>
+                            ) : (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="text-red-600 hover:text-red-700 gap-1"
+                                onClick={() => toggleBan.mutate({ user_id: profile.user_id, ban: true })}
+                                disabled={toggleBan.isPending}
+                              >
+                                <XCircle className="h-3.5 w-3.5" />
+                                Inativar
+                              </Button>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                  {profiles.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                        Nenhum usuário encontrado
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="perfis" className="mt-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {ALL_ROLES.map((role) => {
+              const usersWithRole = profiles.filter((p) =>
+                getUserRoles(p.user_id).includes(role)
+              );
+              return (
+                <Card key={role}>
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center gap-2">
+                      <ShieldCheck className="h-5 w-5 text-primary" />
+                      <CardTitle className="text-base">{ROLE_LABELS[role]}</CardTitle>
+                    </div>
+                    <p className="text-xs text-muted-foreground">{ROLE_DESCRIPTIONS[role]}</p>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      <p className="text-xs font-medium text-muted-foreground uppercase">
+                        {usersWithRole.length} usuário{usersWithRole.length !== 1 ? "s" : ""}
+                      </p>
+                      {usersWithRole.length > 0 ? (
+                        <div className="space-y-1.5 max-h-40 overflow-y-auto">
+                          {usersWithRole.map((p) => {
+                            const authUser = getAuthUser(p.user_id);
+                            return (
+                              <div key={p.id} className="flex items-center gap-2 text-sm rounded-md bg-muted/50 px-2 py-1.5">
+                                <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center text-xs font-medium text-primary">
+                                  {(p.full_name || "?")[0].toUpperCase()}
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <p className="truncate text-xs font-medium">{p.full_name || "—"}</p>
+                                  <p className="truncate text-[10px] text-muted-foreground">{authUser?.email || ""}</p>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-muted-foreground italic">Nenhum usuário com este perfil</p>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </TabsContent>
+      </Tabs>
+
+      {/* Dialog for editing user roles */}
+      <Dialog open={rolesDialogOpen} onOpenChange={setRolesDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Editar Perfis de Acesso</DialogTitle>
+            <DialogDescription>{selectedUser?.name}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2 py-2">
+            {ALL_ROLES.map((role) => (
+              <label key={role} className="flex items-center gap-2 rounded-md border p-3 cursor-pointer hover:bg-muted/50">
+                <Checkbox
+                  checked={selectedRoles.includes(role)}
+                  onCheckedChange={() => toggleRole(role)}
+                />
+                <div>
+                  <span className="text-sm font-medium">{ROLE_LABELS[role]}</span>
+                  <p className="text-xs text-muted-foreground">{ROLE_DESCRIPTIONS[role]}</p>
+                </div>
+              </label>
+            ))}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRolesDialogOpen(false)}>Cancelar</Button>
+            <Button
+              onClick={() => {
+                if (selectedUser) {
+                  updateRoles.mutate({ user_id: selectedUser.userId, roles: selectedRoles });
+                }
+              }}
+              disabled={updateRoles.isPending}
+            >
+              {updateRoles.isPending ? "Salvando..." : "Salvar Perfis"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
