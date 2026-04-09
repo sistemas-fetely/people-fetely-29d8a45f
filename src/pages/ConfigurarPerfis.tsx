@@ -285,6 +285,16 @@ export default function ConfigurarPerfis() {
               </div>
             </CardHeader>
             <CardContent>
+              {selectedRole === "colaborador" && (
+                <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800 dark:border-blue-800 dark:bg-blue-950/40 dark:text-blue-300 flex items-start gap-2">
+                  <Shield className="h-4 w-4 mt-0.5 shrink-0" />
+                  <div>
+                    <strong>Premissa básica:</strong> O colaborador só tem acesso às suas próprias informações.
+                    Todas as permissões de visualização abaixo se aplicam exclusivamente aos dados do próprio usuário,
+                    garantidas pelas regras de segurança do banco de dados (RLS).
+                  </div>
+                </div>
+              )}
               <div className="space-y-4">
                 {MODULES.map((mod) => {
                   const specialPerms = getModuleSpecialPerms(mod.key);
