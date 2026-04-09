@@ -727,6 +727,7 @@ export default function NotaFiscalDetalhe() {
       <ArquivoNFCard
         nota={nota}
         onArquivoUpdated={(url) => setNota({ ...nota, arquivo_url: url })}
+        canEdit={canEdit}
       />
 
       {/* Histórico */}
@@ -799,7 +800,7 @@ export default function NotaFiscalDetalhe() {
   );
 }
 
-function ArquivoNFCard({ nota, onArquivoUpdated }: { nota: NotaFiscal; onArquivoUpdated: (url: string | null) => void }) {
+function ArquivoNFCard({ nota, onArquivoUpdated, canEdit = true }: { nota: NotaFiscal; onArquivoUpdated: (url: string | null) => void; canEdit?: boolean }) {
   const [uploading, setUploading] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
