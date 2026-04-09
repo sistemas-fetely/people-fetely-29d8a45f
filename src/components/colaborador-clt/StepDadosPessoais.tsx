@@ -34,7 +34,13 @@ export function StepDadosPessoais() {
     <div className="space-y-6">
       <div>
         <h3 className="text-lg font-semibold mb-4">Informações Pessoais</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="flex flex-col md:flex-row gap-6 mb-4">
+          <FotoUpload
+            value={watch("foto_url")}
+            onChange={(url) => setValue("foto_url", url || "")}
+            folder="fotos-clt"
+          />
+          <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <div className="md:col-span-2 lg:col-span-3">
             <Label htmlFor="nome_completo">Nome Completo *</Label>
             <Input id="nome_completo" {...register("nome_completo")} placeholder="Nome completo do colaborador" />
