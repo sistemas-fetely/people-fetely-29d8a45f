@@ -410,7 +410,11 @@ export default function ContratoPJDetalhe() {
               </div>
               <div className="mt-6 pt-4 border-t">
                 <h3 className="font-semibold mb-3 text-sm text-muted-foreground uppercase">Documentos Anexados</h3>
-                <DocumentosAnexados contratoPjId={id} />
+                <DocumentosAnexados
+                  contratoPjId={id}
+                  currentFotoUrl={(contrato as any).foto_url}
+                  onFotoUpdated={(url) => setContrato(prev => prev ? { ...prev, foto_url: url } as any : prev)}
+                />
               </div>
             </CardContent></Card>
           </TabsContent>

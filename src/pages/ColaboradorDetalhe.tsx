@@ -390,7 +390,11 @@ export default function ColaboradorDetalhe() {
               </div>
               <div className="mt-6 pt-4 border-t">
                 <h3 className="font-semibold mb-3 text-sm text-muted-foreground uppercase">Documentos Anexados</h3>
-                <DocumentosAnexados colaboradorId={id} />
+                <DocumentosAnexados
+                  colaboradorId={id}
+                  currentFotoUrl={colaborador.foto_url}
+                  onFotoUpdated={(url) => setColaborador(prev => prev ? { ...prev, foto_url: url } : prev)}
+                />
               </div>
             </CardContent></Card>
           </TabsContent>
