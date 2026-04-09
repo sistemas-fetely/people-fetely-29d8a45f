@@ -31,6 +31,7 @@ import Ferias from "@/pages/Ferias";
 import FeriasColaborador from "@/pages/FeriasColaborador";
 import Beneficios from "@/pages/Beneficios";
 import Movimentacoes from "@/pages/Movimentacoes";
+import PagamentosPJ from "@/pages/PagamentosPJ";
 import CadastroPublico from "@/pages/CadastroPublico";
 import ConvitesCadastro from "@/pages/ConvitesCadastro";
 import ConviteDetalhe from "@/pages/ConviteDetalhe";
@@ -137,6 +138,11 @@ const App = () => (
               <Route path="/notas-fiscais/:id" element={
                 <ProtectedRoute permModule="notas_fiscais">
                   <NotaFiscalDetalhe />
+                </ProtectedRoute>
+              } />
+              <Route path="/pagamentos-pj" element={
+                <ProtectedRoute permModule="pagamentos_pj">
+                  <PagamentosPJ />
                 </ProtectedRoute>
               } />
 
