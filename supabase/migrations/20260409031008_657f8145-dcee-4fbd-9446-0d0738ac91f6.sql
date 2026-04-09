@@ -1,0 +1,1 @@
+ALTER TABLE public.contratos_pj ADD COLUMN IF NOT EXISTS foto_url text;

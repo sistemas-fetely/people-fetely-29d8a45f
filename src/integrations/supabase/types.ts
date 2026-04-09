@@ -544,6 +544,7 @@ export type Database = {
           estado_civil: string | null
           etnia: string | null
           forma_pagamento: string
+          foto_url: string | null
           genero: string | null
           id: string
           inscricao_estadual: string | null
@@ -597,6 +598,7 @@ export type Database = {
           estado_civil?: string | null
           etnia?: string | null
           forma_pagamento?: string
+          foto_url?: string | null
           genero?: string | null
           id?: string
           inscricao_estadual?: string | null
@@ -650,6 +652,7 @@ export type Database = {
           estado_civil?: string | null
           etnia?: string | null
           forma_pagamento?: string
+          foto_url?: string | null
           genero?: string | null
           id?: string
           inscricao_estadual?: string | null
