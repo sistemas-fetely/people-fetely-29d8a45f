@@ -30,6 +30,9 @@ export function OrgAnalyticView({ flat, filters }: Props) {
     const vagas = flat.filter(n => n.status === "vaga_aberta");
     const departamentos = [...new Set(flat.map(n => n.departamento))];
 
+    const getCusto = (n: PosicaoNode) =>
+      n.salario_previsto ?? n.colaborador?.salario_base ?? n.contrato_pj?.valor_mensal ?? 0;
+
     // Span of control
     const gestores = flat.filter(n => n.subordinados_diretos > 0);
     const avgSpan = gestores.length > 0
@@ -44,7 +47,7 @@ export function OrgAnalyticView({ flat, filters }: Props) {
         CLT: nodes.filter(n => n.vinculo === "CLT").length,
         PJ: nodes.filter(n => n.vinculo === "PJ").length,
         total: nodes.length,
-        custo: nodes.reduce((s, n) => s + (n.salario_previsto || 0), 0),
+        custo: nodes.reduce((s, n) => s + getCusto(n), 0),
       };
     }).sort((a, b) => b.total - a.total);
 
@@ -84,7 +87,9 @@ export function OrgAnalyticView({ flat, filters }: Props) {
       }))
       .sort((a, b) => b.span - a.span);
 
-    const custoTotal = flat.reduce((s, n) => s + (n.salario_previsto || 0), 0);
+    const custoTotal = flat.reduce((s, n) => s + getCusto(n), 0);
+    const custoClt = clt.reduce((s, n) => s + getCusto(n), 0);
+    const custoPj = pj.reduce((s, n) => s + getCusto(n), 0);
     const custoMedio = occupied.length > 0 ? custoTotal / occupied.length : 0;
 
       // Headcount evolution (simulated last 12 months based on current data)
@@ -118,6 +123,8 @@ export function OrgAnalyticView({ flat, filters }: Props) {
         treemapData,
         spanRanking,
         custoTotal,
+        custoClt,
+        custoPj,
         custoMedio,
         headcountData,
       };
@@ -264,13 +271,13 @@ export function OrgAnalyticView({ flat, filters }: Props) {
               <div className="text-center">
                 <p className="text-xs text-muted-foreground">Custo CLT</p>
                 <p className="text-lg font-bold text-foreground">
-                  {fmtBRL(stats.byDept.reduce((s, d) => s + d.custo, 0) * (stats.cltCount / (stats.totalPessoas || 1)))}
+                  {fmtBRL(stats.custoClt)}
                 </p>
               </div>
               <div className="text-center">
                 <p className="text-xs text-muted-foreground">Custo PJ</p>
                 <p className="text-lg font-bold text-foreground">
-                  {fmtBRL(stats.byDept.reduce((s, d) => s + d.custo, 0) * (stats.pjCount / (stats.totalPessoas || 1)))}
+                  {fmtBRL(stats.custoPj)}
                 </p>
               </div>
             </div>
