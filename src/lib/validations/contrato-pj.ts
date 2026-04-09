@@ -38,6 +38,7 @@ export const dadosPessoaisPJSchema = z.object({
   telefone: z.string().optional().or(z.literal("")),
   email_pessoal: z.string().email("Email inválido").optional().or(z.literal("")),
   contato_emergencia_nome: z.string().optional().or(z.literal("")),
+  foto_url: z.string().optional().or(z.literal("")),
   contato_emergencia_telefone: z.string().optional().or(z.literal("")),
   // Dados da empresa
   cnpj: z.string().min(14, "CNPJ é obrigatório"),
