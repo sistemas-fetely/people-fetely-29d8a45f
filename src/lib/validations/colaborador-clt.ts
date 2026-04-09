@@ -27,6 +27,7 @@ export const dadosPessoaisSchema = z.object({
   email_pessoal: z.string().email("Email inválido").optional().or(z.literal("")),
   contato_emergencia_nome: z.string().optional().or(z.literal("")),
   contato_emergencia_telefone: z.string().optional().or(z.literal("")),
+  foto_url: z.string().optional().or(z.literal("")),
 });
 
 export const documentosSchema = z.object({
