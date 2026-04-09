@@ -44,7 +44,7 @@ export function OrgAnalyticView({ flat, filters }: Props) {
         CLT: nodes.filter(n => n.vinculo === "CLT").length,
         PJ: nodes.filter(n => n.vinculo === "PJ").length,
         total: nodes.length,
-        custo: nodes.reduce((s, n) => s + (n.salario_previsto || 0), 0),
+        custo: nodes.reduce((s, n) => s + getCusto(n), 0),
       };
     }).sort((a, b) => b.total - a.total);
 
