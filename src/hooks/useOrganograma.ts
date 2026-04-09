@@ -101,7 +101,7 @@ function buildTree(posicoes: PosicaoRaw[], colaboradores: ColaboradorVinculado[]
       subordinados_diretos: 0,
       subordinados_totais: 0,
       nome_display: cp.nome_fantasia || cp.contato_nome,
-      foto_url: null,
+      foto_url: cp.foto_url || null,
       vinculo: "PJ",
       status_pessoal: cp.status,
     };

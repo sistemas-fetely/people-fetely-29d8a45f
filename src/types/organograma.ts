@@ -41,6 +41,7 @@ export interface ContratoPJVinculado {
   data_inicio: string;
   valor_mensal: number;
   status: string;
+  foto_url: string | null;
 }
 
 export interface PosicaoNode extends PosicaoRaw {
