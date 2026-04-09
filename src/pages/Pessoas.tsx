@@ -28,6 +28,7 @@ interface PessoaUnificada {
   status: string;
   data_inicio: string;
   valor: number | null;
+  foto_url: string | null;
 }
 
 const statusMap: Record<string, string> = {
