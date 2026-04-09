@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import {
   CheckCircle2, XCircle, UserCheck, UserX, Users, UserPlus,
-  Shield, ShieldCheck, ShieldAlert, Eye, EyeOff, Pencil, Trash2, Settings2,
+  Shield, ShieldCheck, ShieldAlert, Eye, EyeOff, Pencil, Trash2, Settings2, Link2,
 } from "lucide-react";
 import { toast } from "sonner";
 import type { Database } from "@/integrations/supabase/types";
@@ -66,6 +66,10 @@ export default function GerenciarUsuarios() {
   const [showPassword, setShowPassword] = useState(false);
   const [newUser, setNewUser] = useState({ email: "", password: "", full_name: "", roles: ["colaborador"] as string[], colaborador_tipo: "" });
   const [deleteConfirm, setDeleteConfirm] = useState<{ userId: string; name: string } | null>(null);
+  const [linkDialogOpen, setLinkDialogOpen] = useState(false);
+  const [linkUser, setLinkUser] = useState<{ userId: string; name: string } | null>(null);
+  const [linkColaboradorId, setLinkColaboradorId] = useState("");
+  const [linkContratoPjId, setLinkContratoPjId] = useState("");
 
   const { data: profiles = [], isLoading } = useQuery({
     queryKey: ["admin-profiles"],
