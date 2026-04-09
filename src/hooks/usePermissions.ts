@@ -7,6 +7,7 @@ export interface RolePermission {
   module: string;
   permission: string;
   granted: boolean;
+  colaborador_tipo: string;
 }
 
 const MODULES = [
@@ -55,7 +56,14 @@ const SPECIAL_PERMISSIONS = [
   { key: "enviar", label: "Enviar Convite", module: "convites" },
 ] as const;
 
-export { MODULES, MODULE_CATEGORIES, CRUD_PERMISSIONS, SPECIAL_PERMISSIONS };
+/** Returns the colaborador_tipo expected for a given module category */
+function getColaboradorTipoForCategory(category: string): string {
+  if (category === "clt") return "clt";
+  if (category === "pj") return "pj";
+  return "all";
+}
+
+export { MODULES, MODULE_CATEGORIES, CRUD_PERMISSIONS, SPECIAL_PERMISSIONS, getColaboradorTipoForCategory };
 
 export function usePermissions() {
   const { user } = useAuth();
@@ -76,9 +84,26 @@ export function usePermissions() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("role_permissions")
-        .select("role_name, module, permission, granted");
+        .select("role_name, module, permission, granted, colaborador_tipo");
       if (error) throw error;
       return data as RolePermission[];
+    },
+    enabled: !!user?.id,
+  });
+
+  // Detect user's tipo based on tables (cached)
+  const { data: userTipos = [] } = useQuery({
+    queryKey: ["user-colaborador-tipo", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      const results: string[] = [];
+      const [cltRes, pjRes] = await Promise.all([
+        supabase.from("colaboradores_clt").select("id").eq("user_id", user.id).limit(1),
+        supabase.from("contratos_pj").select("id").eq("created_by", user.id).limit(1),
+      ]);
+      if (cltRes.data?.length) results.push("clt");
+      if (pjRes.data?.length) results.push("pj");
+      return results;
     },
     enabled: !!user?.id,
   });
@@ -90,7 +115,8 @@ export function usePermissions() {
         userRoles.includes(p.role_name as any) &&
         p.module === module &&
         p.permission === permission &&
-        p.granted
+        p.granted &&
+        (p.colaborador_tipo === "all" || userTipos.includes(p.colaborador_tipo))
     );
   };
 
@@ -101,6 +127,7 @@ export function usePermissions() {
 
   return {
     userRoles,
+    userTipos,
     allPermissions,
     hasPermission,
     canView,

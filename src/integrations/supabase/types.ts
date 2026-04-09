@@ -1662,6 +1662,7 @@ export type Database = {
       }
       role_permissions: {
         Row: {
+          colaborador_tipo: string
           created_at: string
           granted: boolean
           id: string
@@ -1671,6 +1672,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          colaborador_tipo?: string
           created_at?: string
           granted?: boolean
           id?: string
@@ -1680,6 +1682,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          colaborador_tipo?: string
           created_at?: string
           granted?: boolean
           id?: string
@@ -1778,6 +1781,10 @@ export type Database = {
           titulo_cargo: string
           updated_at: string
         }[]
+      }
+      get_user_colaborador_tipo: {
+        Args: { _user_id: string }
+        Returns: string[]
       }
       get_user_roles: {
         Args: { _user_id: string }
