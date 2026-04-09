@@ -121,11 +121,16 @@ export default function ConfigurarPerfis() {
       for (const u of updates) {
         const { error } = await supabase
           .from("role_permissions")
-          .update({ granted: u.granted })
-          .eq("role_name", u.role_name)
-          .eq("module", u.module)
-          .eq("permission", u.permission)
-          .eq("colaborador_tipo", u.colaborador_tipo);
+          .upsert(
+            {
+              role_name: u.role_name,
+              module: u.module,
+              permission: u.permission,
+              colaborador_tipo: u.colaborador_tipo,
+              granted: u.granted,
+            },
+            { onConflict: "role_name,module,permission,colaborador_tipo" }
+          );
         if (error) throw error;
       }
     },
