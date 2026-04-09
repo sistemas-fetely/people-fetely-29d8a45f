@@ -145,6 +145,32 @@ export default function ContratoPJDetalhe() {
         contrato_assinado: (ct as any).contrato_assinado || false,
         objeto: ct.objeto || "",
         observacoes: ct.observacoes || "",
+        // Personal data fields
+        cpf: ct.cpf || "",
+        rg: ct.rg || "",
+        orgao_emissor: ct.orgao_emissor || "",
+        data_nascimento: ct.data_nascimento || "",
+        genero: ct.genero || "",
+        estado_civil: ct.estado_civil || "",
+        nacionalidade: ct.nacionalidade || "Brasileira",
+        etnia: ct.etnia || "",
+        nome_mae: ct.nome_mae || "",
+        nome_pai: ct.nome_pai || "",
+        foto_url: ct.foto_url || "",
+        // Address fields
+        cep: ct.cep || "",
+        logradouro: ct.logradouro || "",
+        numero: ct.numero || "",
+        complemento: ct.complemento || "",
+        bairro: ct.bairro || "",
+        cidade: ct.cidade || "",
+        uf: ct.uf || "",
+        // Contact fields
+        telefone: ct.telefone || "",
+        email_pessoal: ct.email_pessoal || "",
+        contato_emergencia_nome: ct.contato_emergencia_nome || "",
+        contato_emergencia_telefone: ct.contato_emergencia_telefone || "",
+        // Document fields (unused for PJ but required by form type)
         titulo_eleitor: "",
         zona_eleitoral: "",
         secao_eleitoral: "",
@@ -152,6 +178,7 @@ export default function ContratoPJDetalhe() {
         cnh_categoria: "",
         cnh_validade: "",
         certificado_reservista: "",
+        // Professional fields
         tipo_servico: ct.tipo_servico,
         departamento: ct.departamento,
         data_inicio: ct.data_inicio,
@@ -161,6 +188,7 @@ export default function ContratoPJDetalhe() {
         dia_vencimento: ct.dia_vencimento || 10,
         renovacao_automatica: ct.renovacao_automatica,
         status: ct.status,
+        // Banking fields
         banco_nome: ct.banco_nome || "",
         banco_codigo: ct.banco_codigo || "",
         agencia: ct.agencia || "",
@@ -235,6 +263,31 @@ export default function ContratoPJDetalhe() {
           conta: rest.conta || null,
           tipo_conta: rest.tipo_conta || null,
           chave_pix: rest.chave_pix || null,
+          // Personal data fields
+          cpf: rest.cpf || null,
+          rg: rest.rg || null,
+          orgao_emissor: rest.orgao_emissor || null,
+          data_nascimento: rest.data_nascimento || null,
+          genero: rest.genero || null,
+          estado_civil: rest.estado_civil || null,
+          nacionalidade: rest.nacionalidade || null,
+          etnia: rest.etnia || null,
+          nome_mae: rest.nome_mae || null,
+          nome_pai: rest.nome_pai || null,
+          foto_url: rest.foto_url || null,
+          // Address fields
+          cep: rest.cep || null,
+          logradouro: rest.logradouro || null,
+          numero: rest.numero || null,
+          complemento: rest.complemento || null,
+          bairro: rest.bairro || null,
+          cidade: rest.cidade || null,
+          uf: rest.uf || null,
+          // Contact fields
+          telefone: rest.telefone || null,
+          email_pessoal: rest.email_pessoal || null,
+          contato_emergencia_nome: rest.contato_emergencia_nome || null,
+          contato_emergencia_telefone: rest.contato_emergencia_telefone || null,
         } as any)
         .eq("id", id);
       if (error) throw error;
@@ -384,12 +437,41 @@ export default function ContratoPJDetalhe() {
 
           <TabsContent value="pessoais">
             <Card><CardContent className="pt-6">
-              <h3 className="font-semibold mb-4 text-sm text-muted-foreground">DADOS DO RESPONSÁVEL</h3>
+              <h3 className="font-semibold mb-4 text-sm text-muted-foreground">DADOS PESSOAIS DO PRESTADOR</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
                 <InfoField label="Nome Completo" value={contrato.contato_nome} />
-                <InfoField label="Telefone" value={contrato.contato_telefone} />
-                <InfoField label="Email" value={contrato.contato_email} />
+                <InfoField label="CPF" value={contrato.cpf} />
+                <InfoField label="RG" value={contrato.rg} />
+                <InfoField label="Órgão Emissor" value={contrato.orgao_emissor} />
+                <InfoField label="Data de Nascimento" value={contrato.data_nascimento ? format(parseISO(contrato.data_nascimento), "dd/MM/yyyy") : null} />
+                <InfoField label="Gênero" value={contrato.genero} />
+                <InfoField label="Estado Civil" value={contrato.estado_civil} />
+                <InfoField label="Nacionalidade" value={contrato.nacionalidade} />
+                <InfoField label="Etnia" value={contrato.etnia} />
+                <InfoField label="Nome da Mãe" value={contrato.nome_mae} />
+                <InfoField label="Nome do Pai" value={contrato.nome_pai} />
               </div>
+
+              <h3 className="font-semibold mb-4 text-sm text-muted-foreground">ENDEREÇO</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                <InfoField label="CEP" value={contrato.cep} />
+                <InfoField label="Logradouro" value={contrato.logradouro} />
+                <InfoField label="Número" value={contrato.numero} />
+                <InfoField label="Complemento" value={contrato.complemento} />
+                <InfoField label="Bairro" value={contrato.bairro} />
+                <InfoField label="Cidade" value={contrato.cidade} />
+                <InfoField label="UF" value={contrato.uf} />
+              </div>
+
+              <h3 className="font-semibold mb-4 text-sm text-muted-foreground">CONTATO</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                <InfoField label="Telefone" value={contrato.telefone || contrato.contato_telefone} />
+                <InfoField label="Email Pessoal" value={contrato.email_pessoal} />
+                <InfoField label="Email Comercial" value={contrato.contato_email} />
+                <InfoField label="Contato Emergência - Nome" value={contrato.contato_emergencia_nome} />
+                <InfoField label="Contato Emergência - Telefone" value={contrato.contato_emergencia_telefone} />
+              </div>
+
               <h3 className="font-semibold mb-4 text-sm text-muted-foreground">DADOS DA EMPRESA</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <InfoField label="CNPJ" value={contrato.cnpj} />
