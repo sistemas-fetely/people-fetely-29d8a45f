@@ -106,7 +106,7 @@ export default function GerenciarUsuarios() {
       queryClient.invalidateQueries({ queryKey: ["admin-auth-users"] });
       toast.success("Usuário criado com sucesso!");
       setCreateOpen(false);
-      setNewUser({ email: "", password: "", full_name: "", roles: ["colaborador"] });
+      setNewUser({ email: "", password: "", full_name: "", roles: ["colaborador"], colaborador_tipo: "" });
     },
     onError: (err: Error) => toast.error(err.message || "Erro ao criar usuário"),
   });
