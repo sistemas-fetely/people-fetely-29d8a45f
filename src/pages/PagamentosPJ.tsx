@@ -203,7 +203,7 @@ export default function PagamentosPJ() {
                 ) : filtered.length === 0 ? (
                   <TableRow><TableCell colSpan={9} className="text-center py-8 text-muted-foreground">Nenhum pagamento encontrado.</TableCell></TableRow>
                 ) : filtered.map((p) => (
-                  <TableRow key={p.id} className="hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => p.nota_fiscal_id ? navigate(`/notas-fiscais/${p.nota_fiscal_id}`) : navigate(`/contratos-pj/${p.contrato_id}`)}>
+                  <TableRow key={p.id} className="hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => navigate(`/pagamentos-pj/${p.contrato_id}`)}>
                     <TableCell className="font-medium text-sm">{p.contrato_nome}</TableCell>
                     <TableCell className="text-sm hidden md:table-cell">{p.nf_numero || "—"}</TableCell>
                     <TableCell className="text-sm hidden md:table-cell">{formatCompetencia(p.competencia)}</TableCell>

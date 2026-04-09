@@ -32,6 +32,7 @@ import FeriasColaborador from "@/pages/FeriasColaborador";
 import Beneficios from "@/pages/Beneficios";
 import Movimentacoes from "@/pages/Movimentacoes";
 import PagamentosPJ from "@/pages/PagamentosPJ";
+import PagamentoPJRelatorio from "@/pages/PagamentoPJRelatorio";
 import CadastroPublico from "@/pages/CadastroPublico";
 import ConvitesCadastro from "@/pages/ConvitesCadastro";
 import ConviteDetalhe from "@/pages/ConviteDetalhe";
@@ -143,6 +144,11 @@ const App = () => (
               <Route path="/pagamentos-pj" element={
                 <ProtectedRoute permModule="pagamentos_pj">
                   <PagamentosPJ />
+                </ProtectedRoute>
+              } />
+              <Route path="/pagamentos-pj/:contratoId" element={
+                <ProtectedRoute permModule="pagamentos_pj">
+                  <PagamentoPJRelatorio />
                 </ProtectedRoute>
               } />
 
