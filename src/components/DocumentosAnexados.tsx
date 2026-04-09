@@ -32,9 +32,11 @@ function isImageFile(name: string): boolean {
 interface DocumentosAnexadosProps {
   colaboradorId?: string;
   contratoPjId?: string;
+  currentFotoUrl?: string | null;
+  onFotoUpdated?: (url: string) => void;
 }
 
-export function DocumentosAnexados({ colaboradorId, contratoPjId }: DocumentosAnexadosProps) {
+export function DocumentosAnexados({ colaboradorId, contratoPjId, currentFotoUrl, onFotoUpdated }: DocumentosAnexadosProps) {
   const [files, setFiles] = useState<StorageFile[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
