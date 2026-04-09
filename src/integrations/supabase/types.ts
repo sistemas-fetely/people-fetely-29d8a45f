@@ -1628,6 +1628,7 @@ export type Database = {
         Row: {
           approved: boolean
           avatar_url: string | null
+          colaborador_tipo: string | null
           created_at: string
           department: string | null
           full_name: string | null
@@ -1639,6 +1640,7 @@ export type Database = {
         Insert: {
           approved?: boolean
           avatar_url?: string | null
+          colaborador_tipo?: string | null
           created_at?: string
           department?: string | null
           full_name?: string | null
@@ -1650,6 +1652,7 @@ export type Database = {
         Update: {
           approved?: boolean
           avatar_url?: string | null
+          colaborador_tipo?: string | null
           created_at?: string
           department?: string | null
           full_name?: string | null
