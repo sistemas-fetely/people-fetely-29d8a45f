@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { Search, Loader2 } from "lucide-react";
 import { fetchCep } from "@/lib/viacep";
+import { FotoUpload } from "@/components/FotoUpload";
 import type { DadosPessoaisForm } from "@/lib/validations/colaborador-clt";
 
 const UF_LIST = ["AC","AL","AM","AP","BA","CE","DF","ES","GO","MA","MG","MS","MT","PA","PB","PE","PI","PR","RJ","RN","RO","RR","RS","SC","SE","SP","TO"];

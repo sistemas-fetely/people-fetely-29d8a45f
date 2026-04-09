@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { Search, Loader2 } from "lucide-react";
 import { fetchCep } from "@/lib/viacep";
+import { FotoUpload } from "@/components/FotoUpload";
 import type { DadosPessoaisPJForm } from "@/lib/validations/contrato-pj";
 
 function formatCNPJ(value: string): string {
