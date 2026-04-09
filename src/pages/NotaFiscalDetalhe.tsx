@@ -490,6 +490,7 @@ export default function NotaFiscalDetalhe() {
                         numeroNF: nota.numero,
                         valor: formatCurrency(nota.valor),
                         dataVencimento: formatDate(nota.data_vencimento),
+                        arquivoUrl: nota.arquivo_url || '',
                       },
                     },
                   });
