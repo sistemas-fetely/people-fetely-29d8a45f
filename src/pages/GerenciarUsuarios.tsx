@@ -98,7 +98,7 @@ export default function GerenciarUsuarios() {
 
   const createUser = useMutation({
     mutationFn: async () => {
-      await callManageUser("create", newUser);
+      await callManageUser("create", { ...newUser, colaborador_tipo: newUser.colaborador_tipo || null });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-profiles"] });
