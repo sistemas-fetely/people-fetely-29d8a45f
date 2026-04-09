@@ -129,6 +129,7 @@ export default function GerenciarUsuarios() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-user-roles"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-profiles"] });
       toast.success("Perfis atualizados com sucesso!");
       setRolesDialogOpen(false);
     },
