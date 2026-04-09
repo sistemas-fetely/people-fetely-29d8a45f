@@ -61,6 +61,7 @@ export default function GerenciarUsuarios() {
   const [selectedRoles, setSelectedRoles] = useState<AppRole[]>([]);
   const [showPassword, setShowPassword] = useState(false);
   const [newUser, setNewUser] = useState({ email: "", password: "", full_name: "", roles: ["colaborador"] as string[] });
+  const [deleteConfirm, setDeleteConfirm] = useState<{ userId: string; name: string } | null>(null);
 
   const { data: profiles = [], isLoading } = useQuery({
     queryKey: ["admin-profiles"],
