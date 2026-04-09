@@ -26,11 +26,13 @@ interface StepUploadDocumentosProps {
 }
 
 const CLT_DOCUMENTS: DocumentSlot[] = [
+  { key: "foto_rosto", label: "Foto de Rosto (3x4)", required: true },
   { key: "rg_cnh_frente", label: "RG ou CNH (Frente)", required: true },
   { key: "rg_cnh_verso", label: "RG ou CNH (Verso)" },
 ];
 
 const PJ_DOCUMENTS: DocumentSlot[] = [
+  { key: "foto_rosto", label: "Foto de Rosto (3x4)", required: true },
   { key: "rg_cnh_frente", label: "RG ou CNH (Frente)", required: true },
   { key: "rg_cnh_verso", label: "RG ou CNH (Verso)" },
   { key: "contrato_social", label: "Contrato Social da Empresa", required: true },
