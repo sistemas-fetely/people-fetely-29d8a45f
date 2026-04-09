@@ -263,6 +263,31 @@ export default function ContratoPJDetalhe() {
           conta: rest.conta || null,
           tipo_conta: rest.tipo_conta || null,
           chave_pix: rest.chave_pix || null,
+          // Personal data fields
+          cpf: rest.cpf || null,
+          rg: rest.rg || null,
+          orgao_emissor: rest.orgao_emissor || null,
+          data_nascimento: rest.data_nascimento || null,
+          genero: rest.genero || null,
+          estado_civil: rest.estado_civil || null,
+          nacionalidade: rest.nacionalidade || null,
+          etnia: rest.etnia || null,
+          nome_mae: rest.nome_mae || null,
+          nome_pai: rest.nome_pai || null,
+          foto_url: rest.foto_url || null,
+          // Address fields
+          cep: rest.cep || null,
+          logradouro: rest.logradouro || null,
+          numero: rest.numero || null,
+          complemento: rest.complemento || null,
+          bairro: rest.bairro || null,
+          cidade: rest.cidade || null,
+          uf: rest.uf || null,
+          // Contact fields
+          telefone: rest.telefone || null,
+          email_pessoal: rest.email_pessoal || null,
+          contato_emergencia_nome: rest.contato_emergencia_nome || null,
+          contato_emergencia_telefone: rest.contato_emergencia_telefone || null,
         } as any)
         .eq("id", id);
       if (error) throw error;
