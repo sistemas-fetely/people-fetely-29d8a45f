@@ -124,8 +124,8 @@ export default function GerenciarUsuarios() {
   });
 
   const updateRoles = useMutation({
-    mutationFn: async ({ user_id, roles }: { user_id: string; roles: AppRole[] }) => {
-      await callManageUser("update_roles", { user_id, roles });
+    mutationFn: async ({ user_id, roles, colaborador_tipo }: { user_id: string; roles: AppRole[]; colaborador_tipo?: string | null }) => {
+      await callManageUser("update_roles", { user_id, roles, colaborador_tipo });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-user-roles"] });
