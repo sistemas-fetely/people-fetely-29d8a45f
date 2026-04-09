@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { FileText, Download, Eye, Loader2, Image as ImageIcon, Upload, Trash2 } from "lucide-react";
+import { FileText, Download, Eye, Loader2, Image as ImageIcon, Upload, Trash2, UserCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
