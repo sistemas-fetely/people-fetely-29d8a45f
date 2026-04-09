@@ -1,7 +1,8 @@
 import { useState, useRef } from "react";
+import { useFormContext } from "react-hook-form";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Upload, X, FileText, Loader2, CheckCircle2 } from "lucide-react";
+import { Upload, X, FileText, Loader2, CheckCircle2, UserCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
@@ -40,6 +41,8 @@ const PJ_DOCUMENTS: DocumentSlot[] = [
 export function StepUploadDocumentos({ tipo, folderKey, uploadedFiles, onFilesChange }: StepUploadDocumentosProps) {
   const [uploading, setUploading] = useState<string | null>(null);
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+  const { setValue, watch } = useFormContext();
+  const currentFotoUrl = watch("foto_url");
 
   const documents = tipo === "clt" ? CLT_DOCUMENTS : PJ_DOCUMENTS;
 
@@ -131,6 +134,21 @@ export function StepUploadDocumentos({ tipo, folderKey, uploadedFiles, onFilesCh
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
+                    {uploaded && uploaded.url && !uploaded.name.toLowerCase().endsWith(".pdf") && (
+                      <Button
+                        type="button"
+                        variant={currentFotoUrl === uploaded.url ? "secondary" : "outline"}
+                        size="sm"
+                        className="gap-1.5 text-xs"
+                        onClick={() => {
+                          setValue("foto_url", uploaded.url);
+                          toast.success("Foto de perfil atualizada!");
+                        }}
+                      >
+                        <UserCircle className="h-3.5 w-3.5" />
+                        {currentFotoUrl === uploaded.url ? "Foto definida" : "Usar como foto"}
+                      </Button>
+                    )}
                     {uploaded && (
                       <Button
                         type="button"
