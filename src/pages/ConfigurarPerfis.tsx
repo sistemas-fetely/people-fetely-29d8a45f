@@ -295,6 +295,16 @@ export default function ConfigurarPerfis() {
                   </div>
                 </div>
               )}
+              {selectedRole === "gestor_direto" && (
+                <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800 dark:border-blue-800 dark:bg-blue-950/40 dark:text-blue-300 flex items-start gap-2">
+                  <Shield className="h-4 w-4 mt-0.5 shrink-0" />
+                  <div>
+                    <strong>Premissa básica:</strong> O gestor direto tem acesso às suas próprias informações e às de todos os seus liderados conforme o organograma.
+                    As permissões de visualização abaixo se estendem à equipe sob sua gestão,
+                    garantidas pelas regras de segurança do banco de dados (RLS).
+                  </div>
+                </div>
+              )}
               <div className="space-y-4">
                 {MODULES.map((mod) => {
                   const specialPerms = getModuleSpecialPerms(mod.key);
