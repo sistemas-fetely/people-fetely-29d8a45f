@@ -450,13 +450,19 @@ export default function GerenciarUsuarios() {
         </TabsContent>
 
         <TabsContent value="perfis" className="mt-4">
+          <div className="flex justify-end mb-4">
+            <Button className="gap-2" onClick={() => navigate("/configurar-perfis")}>
+              <Settings2 className="h-4 w-4" />
+              Configurar Permissões dos Perfis
+            </Button>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {ALL_ROLES.map((role) => {
               const usersWithRole = profiles.filter((p) =>
                 getUserRoles(p.user_id).includes(role)
               );
               return (
-                <Card key={role}>
+                <Card key={role} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate("/configurar-perfis")}>
                   <CardHeader className="pb-3">
                     <div className="flex items-center gap-2">
                       <ShieldCheck className="h-5 w-5 text-primary" />
