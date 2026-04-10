@@ -150,7 +150,7 @@ export function BeneficiosCLTView({ canManage, isAdmin }: Props) {
           { label: "Benefícios Ativos", value: totalAtivos, color: "text-blue-600 bg-blue-50" },
           { label: "Colaboradores", value: colaboradoresComBeneficio, color: "text-green-600 bg-green-50" },
           { label: "Custo Empresa/mês", value: formatCurrency(custoEmpresa), color: "text-orange-600 bg-orange-50" },
-          { label: "Desconto Colab./mês", value: formatCurrency(descontoTotal), color: "text-red-600 bg-red-50" },
+          { label: "Desconto Colab./mês", value: formatCurrency(descontoTotal), color: "text-amber-600 bg-amber-50" },
         ].map((k) => (
           <Card key={k.label}>
             <CardContent className="flex items-center gap-3 p-3">
