@@ -212,7 +212,7 @@ export default function ConvitesCadastro() {
         <Card className="border-l-[3px] border-l-emerald-500">
           <CardContent className="p-3">
             <p className="text-xs text-muted-foreground uppercase">Preenchidos</p>
-            <p className="text-2xl font-bold text-emerald-600">{preenchidosCount}</p>
+            <p className="text-2xl font-bold text-success">{preenchidosCount}</p>
           </CardContent>
         </Card>
         <Card className="border-l-[3px] border-l-muted">
