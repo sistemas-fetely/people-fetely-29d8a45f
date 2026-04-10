@@ -206,7 +206,7 @@ export default function ConvitesCadastro() {
         <Card className="border-l-[3px] border-l-sky-500">
           <CardContent className="p-3">
             <p className="text-xs text-muted-foreground uppercase">Email Enviado</p>
-            <p className="text-2xl font-bold text-sky-600">{emailEnviadoCount}</p>
+            <p className="text-2xl font-bold text-info">{emailEnviadoCount}</p>
           </CardContent>
         </Card>
         <Card className="border-l-[3px] border-l-emerald-500">
