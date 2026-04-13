@@ -21,6 +21,7 @@ type AppRole = Database["public"]["Enums"]["app_role"];
 
 const roleLabels: Record<AppRole, string> = {
   super_admin: "Super Admin",
+  admin_rh: "Admin RH",
   gestor_rh: "Gestor RH",
   gestor_direto: "Gestor",
   colaborador: "Colaborador",
