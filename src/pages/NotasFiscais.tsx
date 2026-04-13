@@ -121,6 +121,7 @@ export default function NotasFiscais() {
   const [formOpen, setFormOpen] = useState(false);
   const [editNota, setEditNota] = useState<NotaComContrato | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<NotaComContrato | null>(null);
+  const [importOpen, setImportOpen] = useState(false);
 
   const fetchData = async () => {
     const [{ data: nfs }, { data: cps }, { data: pags }] = await Promise.all([
