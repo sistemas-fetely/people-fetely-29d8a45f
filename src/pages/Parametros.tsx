@@ -291,9 +291,9 @@ export default function Parametros() {
                                     <Badge variant="secondary" className="text-[10px]">Inativo</Badge>
                                   )}
                                   {isCargos && param.is_clevel && (
-                                    <Badge className="text-[10px] bg-orange-500/10 text-orange-700 dark:text-orange-400 border-orange-300 dark:border-orange-700">
+                                    <span className="bg-red-100 text-red-700 text-xs font-medium px-2 py-0.5 rounded-full">
                                       C-Level 🔒
-                                    </Badge>
+                                    </span>
                                   )}
                                 </div>
                                 {param.descricao && (
