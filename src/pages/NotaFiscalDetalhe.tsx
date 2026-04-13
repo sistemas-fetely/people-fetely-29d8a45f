@@ -195,6 +195,7 @@ export default function NotaFiscalDetalhe() {
   if (!nota) return null;
 
   const formatDate = (d: string | null) => d ? format(parseISO(d), "dd/MM/yyyy") : "—";
+  const formatCompetencia = (d: string | null) => d ? format(parseISO(d), "MM/yyyy") : "—";
   const formatCurrency = (v: number) => `R$ ${Number(v).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
 
   // Ordered status pipeline for visual stepper
