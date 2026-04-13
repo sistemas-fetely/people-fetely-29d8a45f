@@ -97,6 +97,7 @@ export default function ContratoPJDetalhe() {
   const [equipamentos, setEquipamentos] = useState<Tables<"contrato_pj_equipamentos">[]>([]);
   const [statusDialogOpen, setStatusDialogOpen] = useState(false);
   const [togglingStatus, setTogglingStatus] = useState(false);
+  const [gestorNome, setGestorNome] = useState<string | null>(null);
 
   const methods = useForm<AllPJFormData>({ mode: "onBlur" });
 
@@ -219,6 +220,11 @@ export default function ContratoPJDetalhe() {
       setContrato(ct);
       setAcessosSistemas(acessos || []);
       setEquipamentos(equips || []);
+      // Fetch gestor name
+      if (ct.gestor_direto_id) {
+        const { data: gp } = await supabase.from("profiles").select("full_name").eq("id", ct.gestor_direto_id).single();
+        setGestorNome(gp?.full_name || null);
+      }
       methods.reset({
         contato_nome: ct.contato_nome,
         contato_telefone: ct.contato_telefone || "",
@@ -274,6 +280,7 @@ export default function ContratoPJDetalhe() {
         dia_vencimento: ct.dia_vencimento || 10,
         renovacao_automatica: ct.renovacao_automatica,
         status: ct.status,
+        gestor_direto_id: ct.gestor_direto_id || "",
         // Banking fields
         banco_nome: ct.banco_nome || "",
         banco_codigo: ct.banco_codigo || "",
@@ -316,7 +323,7 @@ export default function ContratoPJDetalhe() {
         email_corporativo, ramal, data_integracao,
         titulo_eleitor, zona_eleitoral, secao_eleitoral,
         cnh_numero, cnh_categoria, cnh_validade, certificado_reservista,
-        valor_mensal,
+        valor_mensal, gestor_direto_id,
         ...rest
       } = data;
 
@@ -343,6 +350,7 @@ export default function ContratoPJDetalhe() {
           dia_vencimento: Number(rest.dia_vencimento) || 10,
           renovacao_automatica: rest.renovacao_automatica,
           status: rest.status,
+          gestor_direto_id: gestor_direto_id || null,
           banco_nome: rest.banco_nome || null,
           banco_codigo: rest.banco_codigo || null,
           agencia: rest.agencia || null,
@@ -606,6 +614,7 @@ export default function ContratoPJDetalhe() {
                 <InfoField label="Data de Início" value={format(parseISO(contrato.data_inicio), "dd/MM/yyyy")} />
                 <InfoField label="Data de Fim" value={contrato.data_fim ? format(parseISO(contrato.data_fim), "dd/MM/yyyy") : "Indeterminado"} />
                 <InfoField label="Renovação Automática" value={contrato.renovacao_automatica ? "Sim" : "Não"} />
+                <InfoField label="Gestor Direto / Líder" value={gestorNome} />
                 <InfoField label="Status" value={
                   <Badge variant="outline" className={statusStyles[contrato.status] || ""}>
                     {statusMap[contrato.status] || contrato.status}
