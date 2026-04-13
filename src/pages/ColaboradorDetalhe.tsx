@@ -124,6 +124,95 @@ export default function ColaboradorDetalhe() {
             },
           });
           toast.success("Acesso ao portal criado automaticamente");
+
+          // Calculate trial period dates
+          const dataInicio = colaborador.data_admissao ? new Date(colaborador.data_admissao) : new Date();
+          const fim1 = new Date(dataInicio);
+          fim1.setDate(fim1.getDate() + 45);
+          const fim2 = new Date(dataInicio);
+          fim2.setDate(fim2.getDate() + 90);
+          const fim1Str = fim1.toISOString().slice(0, 10);
+          const fim2Str = fim2.toISOString().slice(0, 10);
+
+          await supabase
+            .from("colaboradores_clt")
+            .update({
+              fim_periodo_experiencia_1: fim1Str,
+              fim_periodo_experiencia_2: fim2Str,
+            } as any)
+            .eq("id", id);
+
+          // Create scheduled alerts for trial periods
+          const alerta1Date = new Date(fim1);
+          alerta1Date.setDate(alerta1Date.getDate() - 15);
+          const alerta2Date = new Date(fim2);
+          alerta2Date.setDate(alerta2Date.getDate() - 5);
+
+          // Get HR users (criado_por or null for broadcast)
+          const alertas = [
+            {
+              tipo: "periodo_experiencia_1",
+              titulo: `Período de experiência: ${colaborador.nome_completo}`,
+              mensagem: `O 1º período de experiência (45 dias) de ${colaborador.nome_completo} encerra em ${fim1Str}. Avalie a continuidade.`,
+              link: `/colaboradores/${id}`,
+              data_alerta: alerta1Date.toISOString().slice(0, 10),
+              colaborador_id: id,
+              user_id: null,
+            },
+            {
+              tipo: "periodo_experiencia_2",
+              titulo: `⚠️ Fim da experiência: ${colaborador.nome_completo}`,
+              mensagem: `O 2º período de experiência (90 dias) de ${colaborador.nome_completo} encerra em ${fim2Str}. Decisão de efetivação necessária.`,
+              link: `/colaboradores/${id}`,
+              data_alerta: alerta2Date.toISOString().slice(0, 10),
+              colaborador_id: id,
+              user_id: null,
+            },
+          ];
+
+          // If there's a gestor_direto, also notify them
+          if (colaborador.gestor_direto_id) {
+            const { data: gestorProfile } = await supabase
+              .from("profiles")
+              .select("user_id")
+              .eq("id", colaborador.gestor_direto_id)
+              .single();
+
+            if (gestorProfile?.user_id) {
+              alertas.push(
+                {
+                  tipo: "periodo_experiencia_1",
+                  titulo: `Período de experiência: ${colaborador.nome_completo}`,
+                  mensagem: `O 1º período de experiência de ${colaborador.nome_completo} encerra em ${fim1Str}.`,
+                  link: `/colaboradores/${id}`,
+                  data_alerta: alerta1Date.toISOString().slice(0, 10),
+                  colaborador_id: id,
+                  user_id: gestorProfile.user_id,
+                },
+                {
+                  tipo: "periodo_experiencia_2",
+                  titulo: `⚠️ Fim da experiência: ${colaborador.nome_completo}`,
+                  mensagem: `O 2º período de experiência de ${colaborador.nome_completo} encerra em ${fim2Str}. Decisão necessária.`,
+                  link: `/colaboradores/${id}`,
+                  data_alerta: alerta2Date.toISOString().slice(0, 10),
+                  colaborador_id: id,
+                  user_id: gestorProfile.user_id,
+                }
+              );
+
+              // Notify leader about activation
+              await supabase.from("notificacoes_rh").insert({
+                tipo: "colaborador_ativado",
+                titulo: `Novo colaborador ativado no seu time`,
+                mensagem: `${colaborador.nome_completo} (${colaborador.cargo}) foi ativado. Data de início: ${colaborador.data_admissao}.`,
+                link: `/colaboradores/${id}`,
+                user_id: gestorProfile.user_id,
+              });
+            }
+          }
+
+          await supabase.from("alertas_agendados").insert(alertas as any);
+
         } else if (newStatus === "desligado" && colaborador.user_id) {
           await supabase.functions.invoke("create-portal-access", {
             body: { action: "revoke", user_id: colaborador.user_id },
