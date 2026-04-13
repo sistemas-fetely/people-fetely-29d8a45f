@@ -840,18 +840,36 @@ export default function ConvitesCadastro() {
               </div>
 
               {/* Section 3: Dados Sensíveis */}
-              {canSeeSensitive && (
-                <div className="rounded-lg border border-amber-200 bg-amber-50/50 dark:bg-amber-950/20 dark:border-amber-800 p-4 space-y-4">
-                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2"><Lock className="h-3.5 w-3.5" /> Dados Sensíveis</h3>
-                  <div>
-                    <Label className="flex items-center gap-2">
-                      {form.tipo === "clt" ? "Salário Base (R$)" : "Valor Mensal (R$)"}
-                      <span className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1"><Lock className="h-3 w-3" /> Dado sensível</span>
-                    </Label>
-                    <Input type="number" step="0.01" min="0" value={form.salario_previsto} onChange={(e) => setForm({ ...form, salario_previsto: e.target.value })} placeholder="0,00" />
-                  </div>
-                </div>
-              )}
+              {(() => {
+                const selectedCargoCLevel = isCargoClevel(form.cargo);
+                const showSalaryField = selectedCargoCLevel ? isSuperAdmin : canSeeSensitive;
+                return (
+                  <>
+                    {selectedCargoCLevel && !isSuperAdmin && form.cargo && (
+                      <p className="text-xs text-muted-foreground italic">
+                        Este é um cargo C-Level. O salário será definido pelo Super Admin.
+                      </p>
+                    )}
+                    {showSalaryField && (
+                      <div className="rounded-lg border border-amber-200 bg-amber-50/50 dark:bg-amber-950/20 dark:border-amber-800 p-4 space-y-4">
+                        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2"><Lock className="h-3.5 w-3.5" /> Dados Sensíveis</h3>
+                        <div>
+                          <Label className="flex items-center gap-2">
+                            {form.tipo === "clt" ? "Salário Base (R$)" : "Valor Mensal (R$)"}
+                            <span className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1"><Lock className="h-3 w-3" /> Dado sensível</span>
+                            {selectedCargoCLevel && (
+                              <Badge className="text-[10px] bg-orange-500/10 text-orange-700 dark:text-orange-400 border-orange-300 dark:border-orange-700 ml-1">
+                                C-Level 🔒
+                              </Badge>
+                            )}
+                          </Label>
+                          <Input type="number" step="0.01" min="0" value={form.salario_previsto} onChange={(e) => setForm({ ...form, salario_previsto: e.target.value })} placeholder="0,00" />
+                        </div>
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
 
               {/* Section 4: Configurações */}
               <div className="space-y-4">
