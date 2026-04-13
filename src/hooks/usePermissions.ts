@@ -124,6 +124,7 @@ export function usePermissions() {
   });
 
   const isSuperAdmin = userRoles.includes("super_admin" as any);
+  const isAdminRH = userRoles.includes("admin_rh" as any);
 
   const hasPermission = (module: string, permission: string): boolean => {
     // Super Admin bypasses all permission checks
@@ -137,6 +138,17 @@ export function usePermissions() {
         p.granted &&
         (p.colaborador_tipo === "all" || userTipos.includes(p.colaborador_tipo))
     );
+  };
+
+  /**
+   * Centralized salary visibility check.
+   * - C-Level positions: only super_admin can see salary.
+   * - Non C-Level: super_admin or admin_rh can see salary.
+   * NEVER duplicate this logic in components.
+   */
+  const canSeeSalary = (isCLevel: boolean = false): boolean => {
+    if (isCLevel) return isSuperAdmin;
+    return isSuperAdmin || isAdminRH;
   };
 
   const canView = (module: string) => hasPermission(module, "view");
@@ -153,6 +165,9 @@ export function usePermissions() {
     canCreate,
     canEdit,
     canDelete,
+    canSeeSalary,
+    isSuperAdmin,
+    isAdminRH,
     isLoading: !allPermissions.length && !!user?.id,
   };
 }

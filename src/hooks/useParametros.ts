@@ -9,6 +9,7 @@ export interface Parametro {
   descricao: string | null;
   ativo: boolean;
   ordem: number;
+  is_clevel: boolean;
 }
 
 export function useParametros(categoria: string) {
