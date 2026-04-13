@@ -1839,6 +1839,7 @@ export type Database = {
           created_at: string
           descricao: string | null
           id: string
+          is_clevel: boolean | null
           label: string
           ordem: number
           updated_at: string
@@ -1850,6 +1851,7 @@ export type Database = {
           created_at?: string
           descricao?: string | null
           id?: string
+          is_clevel?: boolean | null
           label: string
           ordem?: number
           updated_at?: string
@@ -1861,6 +1863,7 @@ export type Database = {
           created_at?: string
           descricao?: string | null
           id?: string
+          is_clevel?: boolean | null
           label?: string
           ordem?: number
           updated_at?: string
