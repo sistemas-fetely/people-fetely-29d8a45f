@@ -614,6 +614,7 @@ export default function ContratoPJDetalhe() {
                 <InfoField label="Data de Início" value={format(parseISO(contrato.data_inicio), "dd/MM/yyyy")} />
                 <InfoField label="Data de Fim" value={contrato.data_fim ? format(parseISO(contrato.data_fim), "dd/MM/yyyy") : "Indeterminado"} />
                 <InfoField label="Renovação Automática" value={contrato.renovacao_automatica ? "Sim" : "Não"} />
+                <InfoField label="Gestor Direto / Líder" value={gestorNome} />
                 <InfoField label="Status" value={
                   <Badge variant="outline" className={statusStyles[contrato.status] || ""}>
                     {statusMap[contrato.status] || contrato.status}
