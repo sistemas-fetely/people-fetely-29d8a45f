@@ -153,7 +153,7 @@ export default function Parametros() {
   const [formCategoria, setFormCategoria] = useState(CATEGORIAS[0]?.value || "");
   const [deleteTarget, setDeleteTarget] = useState<Parametro | null>(null);
   const [deleting, setDeleting] = useState(false);
-  const [clevelConfirm, setClevelConfirm] = useState<Parametro | null>(null);
+  const [clevelConfirm, setClevelConfirm] = useState<{ param: Parametro; enabling: boolean } | null>(null);
 
   const handleToggleAtivo = async (param: Parametro) => {
     const { error } = await supabase
