@@ -18,8 +18,9 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
-import { Plus, Pencil, Trash2, Loader2, Monitor, Package, Settings2, FileText } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, Monitor, Package, Settings2, FileText, ShieldCheck } from "lucide-react";
 import type { Parametro } from "@/hooks/useParametros";
+import GruposAcessoTab from "@/components/grupos-acesso/GruposAcessoTab";
 
 interface CategoriaConfig {
   value: string;
@@ -54,6 +55,7 @@ const MODULO_MAP: Record<string, { title: string; categorias: CategoriaConfig[] 
   geral: { title: "Parâmetros Gerais", categorias: CATEGORIAS_GERAL },
   clt: { title: "Parâmetros CLT", categorias: CATEGORIAS_CLT },
   pj: { title: "Parâmetros PJ", categorias: CATEGORIAS_PJ },
+  grupos_acesso: { title: "Grupos de Acesso", categorias: [] },
 };
 
 function ParametroForm({
