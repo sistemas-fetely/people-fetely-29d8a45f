@@ -129,6 +129,25 @@ export default function ContratoPJDetalhe() {
             },
           });
           toast.success("Acesso ao portal criado automaticamente");
+
+          // Notify leader about activation
+          if (contrato.gestor_direto_id) {
+            const { data: gestorProfile } = await supabase
+              .from("profiles")
+              .select("user_id")
+              .eq("id", contrato.gestor_direto_id)
+              .single();
+
+            if (gestorProfile?.user_id) {
+              await supabase.from("notificacoes_rh").insert({
+                tipo: "colaborador_ativado",
+                titulo: `Novo prestador PJ ativado no seu time`,
+                mensagem: `${contrato.contato_nome} (${contrato.tipo_servico}) foi ativado. Data de início: ${contrato.data_inicio}.`,
+                link: `/contratos-pj/${id}`,
+                user_id: gestorProfile.user_id,
+              });
+            }
+          }
         } else if (newStatus === "encerrado" && contrato.user_id) {
           await supabase.functions.invoke("create-portal-access", {
             body: { action: "revoke", user_id: contrato.user_id },
