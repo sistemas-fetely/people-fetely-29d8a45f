@@ -74,9 +74,17 @@ export default function ConvitesCadastro() {
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("todos");
   const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState({ nome: "", email: "", tipo: "clt", cargo: "", departamento: "" });
+  const [form, setForm] = useState({ nome: "", email: "", tipo: "clt", cargo: "", departamento: "", grupo_acesso_id: "" });
 
   const { data: departamentos } = useParametros("departamento");
+
+  // Fetch grupos de acesso
+  const [gruposAcesso, setGruposAcesso] = useState<any[]>([]);
+  useEffect(() => {
+    supabase.from("grupos_acesso").select("*").eq("ativo", true).order("nome").then(({ data }) => {
+      setGruposAcesso((data || []) as any[]);
+    });
+  }, []);
 
   const fetchConvites = async () => {
     const { data, error } = await supabase
@@ -103,6 +111,7 @@ export default function ConvitesCadastro() {
           cargo: form.cargo.trim() || null,
           departamento: form.departamento || null,
           criado_por: user?.id || null,
+          grupo_acesso_id: form.grupo_acesso_id || null,
         } as any)
         .select()
         .single();
