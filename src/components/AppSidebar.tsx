@@ -1,7 +1,7 @@
 import {
   LayoutDashboard, Users, FileText, Calendar, ClipboardList, Award,
   GraduationCap, GitBranch, BarChart3, Settings, UserCircle, CreditCard,
-  Briefcase, LogOut, ArrowUpDown, Send, UserCheck, ShieldCheck,
+  Briefcase, LogOut, ArrowUpDown, Send, UserCheck, ShieldCheck, ClipboardCheck,
 } from "lucide-react";
 import logoFetely from "@/assets/logo_fetely.jpg";
 import { NavLink } from "@/components/NavLink";
@@ -58,6 +58,7 @@ const pjItems: MenuItem[] = [
 
 const rhItems: MenuItem[] = [
   { title: "Convites Cadastro", url: "/convites-cadastro", icon: Send, permModule: "convites" },
+  { title: "Onboarding", url: "/onboarding", icon: ClipboardCheck, permModule: "convites" },
   { title: "Recrutamento", url: "/recrutamento", icon: UserCircle, permModule: "recrutamento" },
   { title: "Avaliações", url: "/avaliacoes", icon: Award, permModule: "avaliacoes" },
   { title: "Treinamentos", url: "/treinamentos", icon: GraduationCap, permModule: "treinamentos" },
