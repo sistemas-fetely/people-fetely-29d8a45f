@@ -60,7 +60,21 @@ export function StepDadosProfissionaisPJ() {
         </div>
         <div>
           <Label>Valor Mensal (R$) *</Label>
-          <Input type="number" step="0.01" {...register("valor_mensal")} placeholder="0,00" />
+          <Input
+            type="text"
+            inputMode="decimal"
+            value={
+              watch("valor_mensal") != null && watch("valor_mensal") !== ""
+                ? Number(watch("valor_mensal")).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                : ""
+            }
+            onChange={(e) => {
+              const raw = e.target.value.replace(/\./g, "").replace(",", ".");
+              const num = parseFloat(raw);
+              setValue("valor_mensal", isNaN(num) ? 0 : num);
+            }}
+            placeholder="0,00"
+          />
           {errors.valor_mensal && <p className="text-xs text-destructive mt-1">{errors.valor_mensal.message}</p>}
         </div>
         <div>
