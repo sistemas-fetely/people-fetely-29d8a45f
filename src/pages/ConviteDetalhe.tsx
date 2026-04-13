@@ -16,6 +16,7 @@ import { ConviteDocumentosCLT } from "@/components/convite-detalhe/ConviteDocume
 import { ConviteDadosBancarios } from "@/components/convite-detalhe/ConviteDadosBancarios";
 import { ConviteDependentes } from "@/components/convite-detalhe/ConviteDependentes";
 import { ConviteDadosEmpresaPJ } from "@/components/convite-detalhe/ConviteDadosEmpresaPJ";
+import { ConviteDadosPessoaisPJ } from "@/components/convite-detalhe/ConviteDadosPessoaisPJ";
 import { ConviteDadosProfissionaisCLT } from "@/components/convite-detalhe/ConviteDadosProfissionaisCLT";
 import { ConviteDadosEmpresaCLT } from "@/components/convite-detalhe/ConviteDadosEmpresaCLT";
 import { ConviteDadosProfissionaisPJ } from "@/components/convite-detalhe/ConviteDadosProfissionaisPJ";
@@ -356,7 +357,7 @@ export default function ConviteDetalhe() {
             <TabsTrigger value="anexos" className="gap-2"><Paperclip className="h-4 w-4" /> Anexos</TabsTrigger>
           </TabsList>
           <TabsContent value="pessoais">
-            <ConviteDadosEmpresaPJ dados={formData} editing={editing} updateField={updateField} />
+            <ConviteDadosPessoaisPJ dados={formData} editing={editing} updateField={updateField} />
           </TabsContent>
           <TabsContent value="empresa">
             <ConviteDadosEmpresaPJ dados={formData} editing={editing} updateField={updateField} />
