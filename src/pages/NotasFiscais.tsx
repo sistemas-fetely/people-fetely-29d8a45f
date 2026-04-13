@@ -452,6 +452,12 @@ export default function NotasFiscais() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      <ImportNFDialog
+        open={importOpen}
+        onClose={() => setImportOpen(false)}
+        contratos={contratos}
+        onSuccess={fetchData}
+      />
     </div>
   );
 }
