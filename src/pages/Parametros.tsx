@@ -165,13 +165,7 @@ export default function Parametros() {
   };
 
   const handleToggleCLevel = async (param: Parametro) => {
-    if (!param.is_clevel) {
-      // About to mark as C-Level — show confirmation first
-      setClevelConfirm(param);
-      return;
-    }
-    // Removing C-Level — do it directly
-    await doToggleCLevel(param);
+    setClevelConfirm({ param, enabling: !param.is_clevel });
   };
 
   const doToggleCLevel = async (param: Parametro) => {
@@ -186,7 +180,7 @@ export default function Parametros() {
 
   const handleConfirmCLevel = async () => {
     if (!clevelConfirm) return;
-    await doToggleCLevel(clevelConfirm);
+    await doToggleCLevel(clevelConfirm.param);
     setClevelConfirm(null);
   };
 
