@@ -220,6 +220,11 @@ export default function ContratoPJDetalhe() {
       setContrato(ct);
       setAcessosSistemas(acessos || []);
       setEquipamentos(equips || []);
+      // Fetch gestor name
+      if (ct.gestor_direto_id) {
+        const { data: gp } = await supabase.from("profiles").select("full_name").eq("id", ct.gestor_direto_id).single();
+        setGestorNome(gp?.full_name || null);
+      }
       methods.reset({
         contato_nome: ct.contato_nome,
         contato_telefone: ct.contato_telefone || "",
