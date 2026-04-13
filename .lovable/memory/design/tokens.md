@@ -1,16 +1,16 @@
 ---
-name: Warm Coral Fetély theme
-description: Warm coral primary (#E8887E), peach beige bg, moss green sidebar — inspired by Fetély moodboard
+name: Green mono palette from sidebar reference
+description: Full green palette derived from sidebar moss green (156 28% 22%), all UI tokens in green tones
 type: design
 ---
-- Primary: warm coral `5 75% 65%` (~#E8887E) — used for buttons, links, ring. Reserve red only for errors.
-- Background: peach beige `29 50% 94%` (~#F5EDE3)
-- Foreground: dark moss `156 22% 15%`
-- Sidebar BG: moss green `156 28% 22%` (~#2A483C)
-- Sidebar accent: `156 22% 28%`
-- Success: `152 60% 36%` (green)
-- Warning: `32 95% 50%` (amber)
-- Info: `200 70% 50%` (blue)
-- Destructive: `0 72% 51%` (red — errors only)
-- Chart palette: coral, moss, tangerine, gold, light coral
-- Dark mode: deep moss bg with coral accents
+- Primary: moss green `156 28% 22%` (same as sidebar) — buttons, links, ring
+- Background: very light green `150 20% 96%`
+- Foreground: dark green `156 28% 12%`
+- Sidebar BG: `156 28% 22%` (reference green)
+- Sidebar accent: `156 24% 28%`
+- Sidebar primary (active): `152 40% 50%` (brighter green)
+- Accent: light sage `152 20% 88%`
+- Muted: `150 14% 92%`
+- Chart palette: 5 green tones from dark to light
+- Semantic colors unchanged: destructive red, success green, warning amber, info blue
+- Dark mode: deep green bg with medium green primary
