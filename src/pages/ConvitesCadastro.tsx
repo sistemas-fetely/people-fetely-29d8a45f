@@ -119,7 +119,7 @@ export default function ConvitesCadastro() {
       if (error) throw error;
       toast.success("Convite criado com sucesso!");
       setFormOpen(false);
-      setForm({ nome: "", email: "", tipo: "clt", cargo: "", departamento: "" });
+      setForm({ nome: "", email: "", tipo: "clt", cargo: "", departamento: "", grupo_acesso_id: "" });
       fetchConvites();
     } catch (err: any) {
       toast.error(err.message);
