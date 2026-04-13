@@ -295,7 +295,7 @@ export default function NotaFiscalDetalhe() {
               </Badge>
             </div>
             <p className="text-muted-foreground text-sm mt-0.5">
-              Competência {nota.competencia} · Emitida em {formatDate(nota.data_emissao)}
+              Competência {formatDate(nota.competencia)} · Emitida em {formatDate(nota.data_emissao)}
             </p>
           </div>
         </div>
@@ -618,7 +618,7 @@ export default function NotaFiscalDetalhe() {
             <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
               <InfoItem label="Número" value={nota.numero} icon={Hash} />
               <InfoItem label="Série" value={nota.serie} />
-              <InfoItem label="Competência" value={nota.competencia} icon={Calendar} />
+              <InfoItem label="Competência" value={formatDate(nota.competencia)} icon={Calendar} />
               <InfoItem label="Data de Emissão" value={formatDate(nota.data_emissao)} icon={Calendar} />
               <InfoItem label="Data de Vencimento" value={formatDate(nota.data_vencimento)} icon={Calendar} />
               <InfoItem label="Data de Pagamento" value={formatDate(nota.data_pagamento)} icon={Calendar} />
