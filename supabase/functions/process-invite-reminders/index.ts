@@ -164,8 +164,42 @@ Deno.serve(async (req) => {
         .eq("id", alerta.id);
     }
 
+    // 3. Process overdue onboarding tasks
+    let onboardingUpdated = 0;
+    const { data: overdueTarefas } = await supabase
+      .from("onboarding_tarefas")
+      .select("id, titulo, checklist_id, responsavel_user_id")
+      .eq("status", "pendente")
+      .lt("prazo_data", today);
+
+    for (const tarefa of overdueTarefas || []) {
+      await supabase.from("onboarding_tarefas").update({ status: "atrasada" }).eq("id", tarefa.id);
+
+      // Notify responsible user
+      if (tarefa.responsavel_user_id) {
+        await supabase.from("notificacoes_rh").insert({
+          tipo: "onboarding_tarefa_atrasada",
+          titulo: `Tarefa de onboarding atrasada`,
+          mensagem: `A tarefa "${tarefa.titulo}" está atrasada. Conclua o mais rápido possível.`,
+          link: "/onboarding",
+          user_id: tarefa.responsavel_user_id,
+        });
+      }
+
+      // Notify HR (broadcast)
+      await supabase.from("notificacoes_rh").insert({
+        tipo: "onboarding_tarefa_atrasada",
+        titulo: `Tarefa de onboarding atrasada`,
+        mensagem: `A tarefa "${tarefa.titulo}" está atrasada.`,
+        link: "/onboarding",
+        user_id: null,
+      });
+
+      onboardingUpdated++;
+    }
+
     return new Response(
-      JSON.stringify({ ok: true, convites_processed: (convites || []).length, alertas_processed: (alertas || []).length }),
+      JSON.stringify({ ok: true, convites_processed: (convites || []).length, alertas_processed: (alertas || []).length, onboarding_updated: onboardingUpdated }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {

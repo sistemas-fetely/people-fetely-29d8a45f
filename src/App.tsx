@@ -38,6 +38,7 @@ import ConvitesCadastro from "@/pages/ConvitesCadastro";
 import ConviteDetalhe from "@/pages/ConviteDetalhe";
 import Unsubscribe from "@/pages/Unsubscribe";
 import ConfigurarPerfis from "@/pages/ConfigurarPerfis";
+import Onboarding from "@/pages/Onboarding";
 
 const queryClient = new QueryClient();
 
@@ -161,6 +162,11 @@ const App = () => (
               <Route path="/convites-cadastro/:id" element={
                 <ProtectedRoute permModule="convites">
                   <ConviteDetalhe />
+                </ProtectedRoute>
+              } />
+              <Route path="/onboarding" element={
+                <ProtectedRoute permModule="convites">
+                  <Onboarding />
                 </ProtectedRoute>
               } />
               <Route path="/recrutamento" element={
