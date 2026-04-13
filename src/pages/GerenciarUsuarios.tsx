@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -30,6 +31,7 @@ type AppRole = Database["public"]["Enums"]["app_role"];
 
 const ROLE_LABELS: Record<AppRole, string> = {
   super_admin: "Super Admin",
+  admin_rh: "Admin RH",
   gestor_rh: "Gestor RH",
   gestor_direto: "Gestor Direto",
   colaborador: "Colaborador",
@@ -38,13 +40,14 @@ const ROLE_LABELS: Record<AppRole, string> = {
 
 const ROLE_DESCRIPTIONS: Record<AppRole, string> = {
   super_admin: "Acesso total ao sistema, incluindo gerenciamento de usuários e configurações",
+  admin_rh: "Gestão completa de RH, acesso a dados sensíveis e configuração de gestores",
   gestor_rh: "Gestão de pessoas, folha de pagamento, benefícios e convites",
   gestor_direto: "Visualização de colaboradores da equipe e aprovações",
   colaborador: "Acesso ao próprio perfil, holerites e férias",
   financeiro: "Gestão financeira, notas fiscais, pagamentos PJ e folha",
 };
 
-const ALL_ROLES: AppRole[] = ["super_admin", "gestor_rh", "gestor_direto", "colaborador", "financeiro"];
+const ALL_ROLES: AppRole[] = ["super_admin", "admin_rh", "gestor_rh", "gestor_direto", "colaborador", "financeiro"];
 
 async function callManageUser(action: string, payload: Record<string, unknown>) {
   const { data, error } = await supabase.functions.invoke("manage-user", {
@@ -210,6 +213,14 @@ export default function GerenciarUsuarios() {
 
   const getUserRoles = (userId: string) =>
     allRoles.filter((r) => r.user_id === userId).map((r) => r.role);
+
+  const getUserRoleRecord = (userId: string, role: AppRole) =>
+    allRoles.find((r) => r.user_id === userId && r.role === role);
+
+  const isGestorManual = (userId: string) => {
+    const record = getUserRoleRecord(userId, "gestor_direto" as AppRole);
+    return record ? (record as any).atribuido_manualmente === true : false;
+  };
 
   const getAuthUser = (userId: string) =>
     authUsers.find((u: { id: string }) => u.id === userId);
@@ -441,8 +452,16 @@ export default function GerenciarUsuarios() {
                         <TableCell>
                           <div className="flex flex-wrap gap-1">
                             {roles.map((role) => (
-                              <Badge key={role} variant="secondary" className="text-xs">
+                              <Badge
+                                key={role}
+                                variant="secondary"
+                                className={`text-xs ${role === "gestor_direto" && !isGestorManual(profile.user_id) ? "border border-dashed border-muted-foreground/40" : ""}`}
+                                title={role === "gestor_direto" ? (isGestorManual(profile.user_id) ? "Atribuído manualmente" : "Atribuído automaticamente") : undefined}
+                              >
                                 {ROLE_LABELS[role] || role}
+                                {role === "gestor_direto" && !isGestorManual(profile.user_id) && (
+                                  <span className="ml-1 text-[10px] text-muted-foreground">(auto)</span>
+                                )}
                               </Badge>
                             ))}
                           </div>
@@ -625,18 +644,54 @@ export default function GerenciarUsuarios() {
             <DialogDescription>{selectedUser?.name}</DialogDescription>
           </DialogHeader>
           <div className="space-y-2 py-2">
-            {ALL_ROLES.map((role) => (
-              <label key={role} className="flex items-center gap-2 rounded-md border p-3 cursor-pointer hover:bg-muted/50">
-                <Checkbox
-                  checked={selectedRoles.includes(role)}
-                  onCheckedChange={() => toggleRole(role)}
-                />
-                <div>
-                  <span className="text-sm font-medium">{ROLE_LABELS[role]}</span>
-                  <p className="text-xs text-muted-foreground">{ROLE_DESCRIPTIONS[role]}</p>
+            {ALL_ROLES.map((role) => {
+              const isGestorDireto = role === "gestor_direto";
+              const currentRecord = selectedUser ? getUserRoleRecord(selectedUser.userId, role) : null;
+              const isManual = currentRecord ? (currentRecord as any).atribuido_manualmente === true : false;
+              const isAutoAssigned = isGestorDireto && selectedRoles.includes(role) && !isManual;
+
+              return (
+                <div key={role} className="rounded-md border p-3 space-y-2">
+                  <label className="flex items-center gap-2 cursor-pointer hover:bg-muted/50">
+                    <Checkbox
+                      checked={selectedRoles.includes(role)}
+                      onCheckedChange={() => toggleRole(role)}
+                    />
+                    <div className="flex-1">
+                      <span className="text-sm font-medium">{ROLE_LABELS[role]}</span>
+                      <p className="text-xs text-muted-foreground">{ROLE_DESCRIPTIONS[role]}</p>
+                    </div>
+                    {isGestorDireto && selectedRoles.includes(role) && (
+                      <Badge variant="outline" className={`text-[10px] ${isAutoAssigned ? "border-dashed" : ""}`}>
+                        {isAutoAssigned ? "Auto" : "Manual"}
+                      </Badge>
+                    )}
+                  </label>
+                  {isGestorDireto && selectedRoles.includes(role) && (
+                    <div className="flex items-center gap-2 ml-6">
+                      <Switch
+                        checked={isManual}
+                        onCheckedChange={async (checked) => {
+                          if (!selectedUser) return;
+                          const { error } = await supabase
+                            .from("user_roles")
+                            .update({ atribuido_manualmente: checked } as any)
+                            .eq("user_id", selectedUser.userId)
+                            .eq("role", "gestor_direto" as any);
+                          if (error) {
+                            toast.error("Erro ao atualizar flag manual");
+                          } else {
+                            queryClient.invalidateQueries({ queryKey: ["admin-user-roles"] });
+                            toast.success(checked ? "Marcado como atribuição manual" : "Marcado como atribuição automática");
+                          }
+                        }}
+                      />
+                      <span className="text-xs text-muted-foreground">Atribuído manualmente (protege contra remoção automática)</span>
+                    </div>
+                  )}
                 </div>
-              </label>
-            ))}
+              );
+            })}
           </div>
           <div className="space-y-2 pt-2">
             <Label className="text-sm font-medium">Tipo de Colaborador</Label>

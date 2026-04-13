@@ -605,6 +605,7 @@ export type Database = {
           forma_pagamento: string
           foto_url: string | null
           genero: string | null
+          gestor_direto_id: string | null
           id: string
           inscricao_estadual: string | null
           inscricao_municipal: string | null
@@ -660,6 +661,7 @@ export type Database = {
           forma_pagamento?: string
           foto_url?: string | null
           genero?: string | null
+          gestor_direto_id?: string | null
           id?: string
           inscricao_estadual?: string | null
           inscricao_municipal?: string | null
@@ -715,6 +717,7 @@ export type Database = {
           forma_pagamento?: string
           foto_url?: string | null
           genero?: string | null
+          gestor_direto_id?: string | null
           id?: string
           inscricao_estadual?: string | null
           inscricao_municipal?: string | null
@@ -739,7 +742,15 @@ export type Database = {
           user_id?: string | null
           valor_mensal?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "contratos_pj_gestor_direto_id_fkey"
+            columns: ["gestor_direto_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       convites_cadastro: {
         Row: {
@@ -1792,18 +1803,21 @@ export type Database = {
       }
       user_roles: {
         Row: {
+          atribuido_manualmente: boolean
           created_at: string
           id: string
           role: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
         Insert: {
+          atribuido_manualmente?: boolean
           created_at?: string
           id?: string
           role: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
         Update: {
+          atribuido_manualmente?: boolean
           created_at?: string
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
@@ -1895,6 +1909,7 @@ export type Database = {
         | "gestor_direto"
         | "colaborador"
         | "financeiro"
+        | "admin_rh"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2028,6 +2043,7 @@ export const Constants = {
         "gestor_direto",
         "colaborador",
         "financeiro",
+        "admin_rh",
       ],
     },
   },
