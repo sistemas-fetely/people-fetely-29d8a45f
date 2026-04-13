@@ -94,6 +94,7 @@ interface NotaComContrato {
 interface ContratoPJOption {
   id: string;
   label: string;
+  cnpj: string;
 }
 
 export default function NotasFiscais() {
