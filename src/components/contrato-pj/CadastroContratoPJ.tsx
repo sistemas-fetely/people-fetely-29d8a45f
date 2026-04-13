@@ -68,7 +68,10 @@ export function CadastroContratoPJ() {
     },
   });
 
+  const isSuperAdmin = useAuth().roles.includes("super_admin");
+
   const validateCurrentStep = async () => {
+    if (isSuperAdmin) return true; // Super admin bypasses validation
     const schema = stepSchemas[currentStep - 1];
     if (!schema) return true; // Upload step has no schema
     const values = methods.getValues();
@@ -225,7 +228,11 @@ export function CadastroContratoPJ() {
   const handleFinalSubmit = async () => {
     const valid = await validateCurrentStep();
     if (!valid) return;
-    methods.handleSubmit(onSubmit)();
+    if (isSuperAdmin) {
+      await onSubmit(methods.getValues());
+    } else {
+      methods.handleSubmit(onSubmit)();
+    }
   };
 
   return (

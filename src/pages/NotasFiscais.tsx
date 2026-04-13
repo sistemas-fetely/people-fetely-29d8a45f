@@ -33,6 +33,7 @@ import { toast } from "sonner";
 import { format, parseISO, startOfMonth, endOfMonth, subMonths, startOfYear, endOfYear, startOfQuarter, endOfQuarter, isWithinInterval } from "date-fns";
 import { ptBR as dateFnsPtBR } from "date-fns/locale";
 import ImportNFDialog from "@/components/notas-fiscais/ImportNFDialog";
+import { useAuth } from "@/contexts/AuthContext";
 
 const periodOptions: { value: string; label: string }[] = [
   { value: "todos", label: "Todo Período" },
@@ -100,6 +101,8 @@ interface ContratoPJOption {
 export default function NotasFiscais() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { roles } = useAuth();
+  const isSuperAdmin = roles.includes("super_admin");
   const { hasPermission } = usePermissions();
   const canCreate = hasPermission("notas_fiscais", "create");
   const canEdit = hasPermission("notas_fiscais", "edit");
@@ -465,6 +468,8 @@ export default function NotasFiscais() {
 function NotaFiscalFormDialog({ open, onClose, nota, contratos, onSaved }: {
   open: boolean; onClose: () => void; nota: NotaComContrato | null; contratos: ContratoPJOption[]; onSaved: () => void;
 }) {
+  const { roles } = useAuth();
+  const isSuperAdmin = roles.includes("super_admin");
   const { data: statusParams } = useParametros("status_nota_fiscal");
   const statusMap = useMemo(() => {
     if (statusParams && statusParams.length > 0) {
@@ -494,7 +499,7 @@ function NotaFiscalFormDialog({ open, onClose, nota, contratos, onSaved }: {
   const set = (k: string, v: string) => setForm((f) => ({ ...f, [k]: v }));
 
   const handleSave = async () => {
-    if (!form.contrato_id || !form.numero.trim() || !form.data_emissao || !form.valor || !form.competencia) {
+    if (!isSuperAdmin && (!form.contrato_id || !form.numero.trim() || !form.data_emissao || !form.valor || !form.competencia)) {
       toast.error("Preencha os campos obrigatórios"); return;
     }
     setSaving(true);

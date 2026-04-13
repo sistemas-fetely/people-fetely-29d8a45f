@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface ExtractedNFData {
   numero: string | null;
@@ -40,6 +41,8 @@ interface ImportNFDialogProps {
 type Step = "upload" | "processing" | "review" | "error";
 
 export default function ImportNFDialog({ open, onClose, contratos, onSuccess }: ImportNFDialogProps) {
+  const { roles } = useAuth();
+  const isSuperAdmin = roles.includes("super_admin");
   const [step, setStep] = useState<Step>("upload");
   const [file, setFile] = useState<File | null>(null);
   const [extracted, setExtracted] = useState<ExtractedNFData | null>(null);
@@ -148,7 +151,7 @@ export default function ImportNFDialog({ open, onClose, contratos, onSuccess }: 
   const set = (k: string, v: string) => setForm((f) => ({ ...f, [k]: v }));
 
   const handleSave = async () => {
-    if (!form.contrato_id || !form.numero.trim() || !form.data_emissao || !form.valor || !form.competencia) {
+    if (!isSuperAdmin && (!form.contrato_id || !form.numero.trim() || !form.data_emissao || !form.valor || !form.competencia)) {
       toast.error("Preencha os campos obrigatórios");
       return;
     }
