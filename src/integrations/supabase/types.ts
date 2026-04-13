@@ -1672,6 +1672,103 @@ export type Database = {
         }
         Relationships: []
       }
+      onboarding_checklists: {
+        Row: {
+          colaborador_id: string | null
+          colaborador_tipo: string
+          concluido_em: string | null
+          convite_id: string | null
+          created_at: string
+          id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          colaborador_id?: string | null
+          colaborador_tipo: string
+          concluido_em?: string | null
+          convite_id?: string | null
+          created_at?: string
+          id?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          colaborador_id?: string | null
+          colaborador_tipo?: string
+          concluido_em?: string | null
+          convite_id?: string | null
+          created_at?: string
+          id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onboarding_checklists_convite_id_fkey"
+            columns: ["convite_id"]
+            isOneToOne: false
+            referencedRelation: "convites_cadastro"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      onboarding_tarefas: {
+        Row: {
+          checklist_id: string
+          concluida_em: string | null
+          concluida_por: string | null
+          created_at: string
+          descricao: string | null
+          id: string
+          prazo_data: string | null
+          prazo_dias: number
+          responsavel_role: Database["public"]["Enums"]["app_role"]
+          responsavel_user_id: string | null
+          status: string
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          checklist_id: string
+          concluida_em?: string | null
+          concluida_por?: string | null
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          prazo_data?: string | null
+          prazo_dias?: number
+          responsavel_role: Database["public"]["Enums"]["app_role"]
+          responsavel_user_id?: string | null
+          status?: string
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          checklist_id?: string
+          concluida_em?: string | null
+          concluida_por?: string | null
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          prazo_data?: string | null
+          prazo_dias?: number
+          responsavel_role?: Database["public"]["Enums"]["app_role"]
+          responsavel_user_id?: string | null
+          status?: string
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onboarding_tarefas_checklist_id_fkey"
+            columns: ["checklist_id"]
+            isOneToOne: false
+            referencedRelation: "onboarding_checklists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pagamentos_pj: {
         Row: {
           competencia: string
