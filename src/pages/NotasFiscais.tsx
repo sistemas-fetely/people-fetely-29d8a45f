@@ -4,7 +4,7 @@ import { useParametros } from "@/hooks/useParametros";
 import { usePermissions } from "@/hooks/usePermissions";
 import {
   FileText, Search, MoreHorizontal, Eye, Edit, Trash2, Plus, Loader2,
-  Calendar, Filter, TrendingUp, Clock, CheckCircle2, AlertTriangle, DollarSign,
+  Calendar, Filter, TrendingUp, Clock, CheckCircle2, AlertTriangle, DollarSign, Upload,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -32,6 +32,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format, parseISO, startOfMonth, endOfMonth, subMonths, startOfYear, endOfYear, startOfQuarter, endOfQuarter, isWithinInterval } from "date-fns";
 import { ptBR as dateFnsPtBR } from "date-fns/locale";
+import ImportNFDialog from "@/components/notas-fiscais/ImportNFDialog";
 
 const periodOptions: { value: string; label: string }[] = [
   { value: "todos", label: "Todo Período" },
@@ -93,6 +94,7 @@ interface NotaComContrato {
 interface ContratoPJOption {
   id: string;
   label: string;
+  cnpj: string;
 }
 
 export default function NotasFiscais() {
@@ -120,6 +122,7 @@ export default function NotasFiscais() {
   const [formOpen, setFormOpen] = useState(false);
   const [editNota, setEditNota] = useState<NotaComContrato | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<NotaComContrato | null>(null);
+  const [importOpen, setImportOpen] = useState(false);
 
   const fetchData = async () => {
     const [{ data: nfs }, { data: cps }, { data: pags }] = await Promise.all([
@@ -142,7 +145,7 @@ export default function NotasFiscais() {
       };
     });
     setNotas(mapped);
-    setContratos((cps || []).map((c) => ({ id: c.id, label: c.nome_fantasia || c.razao_social })));
+    setContratos((cps || []).map((c) => ({ id: c.id, label: c.nome_fantasia || c.razao_social, cnpj: c.cnpj })));
     setLoading(false);
   };
 
@@ -212,9 +215,14 @@ export default function NotasFiscais() {
           <p className="text-muted-foreground text-sm mt-1">Gestão de notas fiscais de todos os contratos PJ</p>
         </div>
         {canCreate && (
-          <Button className="gap-2" onClick={() => { setEditNota(null); setFormOpen(true); }}>
-            <Plus className="h-4 w-4" /> Nova NF
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" className="gap-2" onClick={() => setImportOpen(true)}>
+              <Upload className="h-4 w-4" /> Importar PDF
+            </Button>
+            <Button className="gap-2" onClick={() => { setEditNota(null); setFormOpen(true); }}>
+              <Plus className="h-4 w-4" /> Nova NF
+            </Button>
+          </div>
         )}
       </div>
 
@@ -444,6 +452,12 @@ export default function NotasFiscais() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      <ImportNFDialog
+        open={importOpen}
+        onClose={() => setImportOpen(false)}
+        contratos={contratos}
+        onSuccess={fetchData}
+      />
     </div>
   );
 }
