@@ -29,6 +29,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format, parseISO } from "date-fns";
+import { useAuth } from "@/contexts/AuthContext";
 
 const formatCompetencia = (c: string) => {
   if (/^\d{4}-\d{2}$/.test(c)) return format(parseISO(`${c}-01`), "MM/yyyy");
@@ -269,6 +270,8 @@ export default function PagamentosPJ() {
 function PagamentoFormDialog({ open, onClose, pagamento, contratos, onSaved }: {
   open: boolean; onClose: () => void; pagamento: PagamentoComContrato | null; contratos: ContratoPJOption[]; onSaved: () => void;
 }) {
+  const { roles } = useAuth();
+  const isSuperAdmin = roles.includes("super_admin");
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
     contrato_id: pagamento?.contrato_id || "",
@@ -280,7 +283,7 @@ function PagamentoFormDialog({ open, onClose, pagamento, contratos, onSaved }: {
   const set = (k: string, v: string) => setForm((f) => ({ ...f, [k]: v }));
 
   const handleSave = async () => {
-    if (!form.contrato_id || !form.valor || !form.data_prevista || !form.competencia) {
+    if (!isSuperAdmin && (!form.contrato_id || !form.valor || !form.data_prevista || !form.competencia)) {
       toast.error("Preencha os campos obrigatórios"); return;
     }
     setSaving(true);

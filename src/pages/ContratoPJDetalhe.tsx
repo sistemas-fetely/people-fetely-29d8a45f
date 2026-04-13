@@ -792,6 +792,8 @@ function TabNotasFiscais({ contratoId }: { contratoId: string }) {
 function NotaFiscalForm({ open, onClose, nota, contratoId, onSaved }: {
   open: boolean; onClose: () => void; nota: any | null; contratoId: string; onSaved: () => void;
 }) {
+  const { roles } = useAuth();
+  const isSuperAdmin = roles.includes("super_admin");
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
     numero: nota?.numero || "", serie: nota?.serie || "", valor: nota?.valor?.toString() || "",
@@ -802,7 +804,7 @@ function NotaFiscalForm({ open, onClose, nota, contratoId, onSaved }: {
   const set = (k: string, v: string) => setForm((f) => ({ ...f, [k]: v }));
 
   const handleSave = async () => {
-    if (!form.numero.trim() || !form.data_emissao || !form.valor || !form.competencia) {
+    if (!isSuperAdmin && (!form.numero.trim() || !form.data_emissao || !form.valor || !form.competencia)) {
       toast.error("Preencha os campos obrigatórios"); return;
     }
     setSaving(true);
@@ -953,6 +955,8 @@ function TabPagamentos({ contratoId }: { contratoId: string }) {
 function PagamentoForm({ open, onClose, pagamento, contratoId, onSaved }: {
   open: boolean; onClose: () => void; pagamento: any | null; contratoId: string; onSaved: () => void;
 }) {
+  const { roles } = useAuth();
+  const isSuperAdmin = roles.includes("super_admin");
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
     valor: pagamento?.valor?.toString() || "", data_prevista: pagamento?.data_prevista || "",
@@ -963,7 +967,7 @@ function PagamentoForm({ open, onClose, pagamento, contratoId, onSaved }: {
   const set = (k: string, v: string) => setForm((f) => ({ ...f, [k]: v }));
 
   const handleSave = async () => {
-    if (!form.valor || !form.data_prevista || !form.competencia) {
+    if (!isSuperAdmin && (!form.valor || !form.data_prevista || !form.competencia)) {
       toast.error("Preencha os campos obrigatórios"); return;
     }
     setSaving(true);
