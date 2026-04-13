@@ -14,6 +14,79 @@ export type Database = {
   }
   public: {
     Tables: {
+      alertas_agendados: {
+        Row: {
+          colaborador_id: string | null
+          contrato_pj_id: string | null
+          convite_id: string | null
+          created_at: string
+          data_alerta: string
+          executado: boolean
+          executado_em: string | null
+          id: string
+          link: string | null
+          mensagem: string | null
+          tipo: string
+          titulo: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          colaborador_id?: string | null
+          contrato_pj_id?: string | null
+          convite_id?: string | null
+          created_at?: string
+          data_alerta: string
+          executado?: boolean
+          executado_em?: string | null
+          id?: string
+          link?: string | null
+          mensagem?: string | null
+          tipo: string
+          titulo: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          colaborador_id?: string | null
+          contrato_pj_id?: string | null
+          convite_id?: string | null
+          created_at?: string
+          data_alerta?: string
+          executado?: boolean
+          executado_em?: string | null
+          id?: string
+          link?: string | null
+          mensagem?: string | null
+          tipo?: string
+          titulo?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alertas_agendados_colaborador_id_fkey"
+            columns: ["colaborador_id"]
+            isOneToOne: false
+            referencedRelation: "colaboradores_clt"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alertas_agendados_contrato_pj_id_fkey"
+            columns: ["contrato_pj_id"]
+            isOneToOne: false
+            referencedRelation: "contratos_pj"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alertas_agendados_convite_id_fkey"
+            columns: ["convite_id"]
+            isOneToOne: false
+            referencedRelation: "convites_cadastro"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       beneficios_colaborador: {
         Row: {
           colaborador_id: string
@@ -303,6 +376,8 @@ export type Database = {
           email_pessoal: string | null
           estado_civil: string | null
           etnia: string | null
+          fim_periodo_experiencia_1: string | null
+          fim_periodo_experiencia_2: string | null
           foto_url: string | null
           genero: string | null
           gestor_direto_id: string | null
@@ -366,6 +441,8 @@ export type Database = {
           email_pessoal?: string | null
           estado_civil?: string | null
           etnia?: string | null
+          fim_periodo_experiencia_1?: string | null
+          fim_periodo_experiencia_2?: string | null
           foto_url?: string | null
           genero?: string | null
           gestor_direto_id?: string | null
@@ -429,6 +506,8 @@ export type Database = {
           email_pessoal?: string | null
           estado_civil?: string | null
           etnia?: string | null
+          fim_periodo_experiencia_1?: string | null
+          fim_periodo_experiencia_2?: string | null
           foto_url?: string | null
           genero?: string | null
           gestor_direto_id?: string | null
