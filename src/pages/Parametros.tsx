@@ -176,6 +176,7 @@ export default function Parametros() {
     if (error) { toast.error("Erro ao atualizar"); return; }
     toast.success(param.is_clevel ? "Restrição C-Level removida" : "Cargo marcado como C-Level");
     queryClient.invalidateQueries({ queryKey: ["parametros"] });
+    queryClient.invalidateQueries({ queryKey: ["clevel-cargos"] });
   };
 
   const handleConfirmCLevel = async () => {
