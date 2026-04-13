@@ -6,7 +6,7 @@ All monetary values in BRL (R$). Brazilian labor law compliance (CLT, Lei 13.467
 
 ## Memories
 - [Design system](mem://design/tokens) — Corporate blue palette, success/warning/info semantic colors
-- [Permissions system](mem://features/permissions) — Role-based permissions per module with CRUD + special actions
-- [Super admin bypass](mem://features/super-admin-bypass) — Super admin skips form validation on all forms
-- [Admin RH + auto gestor](mem://features/admin-rh-role) — admin_rh role, auto gestor_direto via trigger, manual flag
-- [Parametrizável preference](mem://preferences/parametrizavel) — Always ask if fields should be parametrizable
+- [Super admin bypass](mem://features/super-admin-bypass) — Super admin can save forms with missing required fields
+- [Admin RH role](mem://features/admin-rh-role) — admin_rh role and auto gestor_direto trigger
+- [Permissions](mem://features/permissions) — Role-based permissions with colaborador_tipo scoping
+- [Grupos de Acesso](mem://features/grupos-acesso) — Auto portal access on employee activation via create-portal-access edge function
