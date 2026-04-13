@@ -145,7 +145,7 @@ export default function NotasFiscais() {
       };
     });
     setNotas(mapped);
-    setContratos((cps || []).map((c) => ({ id: c.id, label: c.nome_fantasia || c.razao_social })));
+    setContratos((cps || []).map((c) => ({ id: c.id, label: c.nome_fantasia || c.razao_social, cnpj: c.cnpj })));
     setLoading(false);
   };
 
