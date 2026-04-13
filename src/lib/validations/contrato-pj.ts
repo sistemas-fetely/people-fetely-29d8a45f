@@ -74,6 +74,7 @@ export const dadosProfissionaisPJSchema = z.object({
   dia_vencimento: z.coerce.number().min(1).max(31).default(10),
   renovacao_automatica: z.boolean().default(false),
   status: z.string().default("rascunho"),
+  gestor_direto_id: z.string().optional().or(z.literal("")),
 });
 
 // Step 4: Dados Bancários (reusa do CLT)
