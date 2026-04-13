@@ -5,6 +5,8 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
 import { useParametros } from "@/hooks/useParametros";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import type { DadosProfissionaisPJForm } from "@/lib/validations/contrato-pj";
 
 const statusMap: Record<string, string> = {
@@ -26,6 +28,17 @@ export function StepDadosProfissionaisPJ() {
   const { data: departamentos, isLoading: loadingDepts } = useParametros("departamento");
   const { data: cargos, isLoading: loadingCargos } = useParametros("cargo");
   const { data: formasPagamento, isLoading: loadingFormas } = useParametros("forma_pagamento");
+
+  const { data: profiles, isLoading: loadingProfiles } = useQuery({
+    queryKey: ["profiles-for-gestor"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("id, full_name")
+        .order("full_name");
+      return data || [];
+    },
+  });
 
   return (
     <div className="space-y-6">
@@ -105,6 +118,25 @@ export function StepDadosProfissionaisPJ() {
         <div>
           <Label>Dia do Vencimento</Label>
           <Input type="number" min="1" max="31" {...register("dia_vencimento")} />
+        </div>
+        <div>
+          <Label>Gestor Direto / Líder</Label>
+          {loadingProfiles ? (
+            <div className="flex items-center h-10"><Loader2 className="h-4 w-4 animate-spin" /></div>
+          ) : (
+            <Select
+              value={watch("gestor_direto_id") || "none"}
+              onValueChange={(v) => setValue("gestor_direto_id", v === "none" ? "" : v)}
+            >
+              <SelectTrigger><SelectValue placeholder="Selecione o gestor" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Nenhum</SelectItem>
+                {(profiles || []).map((p) => (
+                  <SelectItem key={p.id} value={p.id}>{p.full_name || "Sem nome"}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         </div>
         <div>
           <Label>Status</Label>
