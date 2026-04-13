@@ -1,7 +1,7 @@
 import {
   LayoutDashboard, Users, FileText, Calendar, ClipboardList, Award,
   GraduationCap, GitBranch, BarChart3, Settings, UserCircle, CreditCard,
-  Briefcase, LogOut, ArrowUpDown, Send, UserCheck,
+  Briefcase, LogOut, ArrowUpDown, Send, UserCheck, ShieldCheck,
 } from "lucide-react";
 import logoFetely from "@/assets/logo_fetely.jpg";
 import { NavLink } from "@/components/NavLink";
@@ -68,6 +68,7 @@ const adminItems: MenuItem[] = [
   { title: "Parâmetros Gerais", url: "/parametros?modulo=geral", icon: Settings, permModule: "parametros" },
   { title: "Parâmetros CLT", url: "/parametros?modulo=clt", icon: Settings, permModule: "parametros" },
   { title: "Parâmetros PJ", url: "/parametros?modulo=pj", icon: Settings, permModule: "parametros" },
+  { title: "Grupos de Acesso", url: "/parametros?modulo=grupos_acesso", icon: ShieldCheck, permModule: "parametros" },
   { title: "Configurações", url: "/configuracoes", icon: Settings, permModule: "usuarios" },
   { title: "Gerenciar Usuários", url: "/gerenciar-usuarios", icon: UserCheck, permModule: "usuarios" },
 ];
