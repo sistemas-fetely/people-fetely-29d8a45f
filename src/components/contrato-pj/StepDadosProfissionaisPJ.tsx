@@ -64,7 +64,7 @@ export function StepDadosProfissionaisPJ() {
             type="text"
             inputMode="decimal"
             value={
-              watch("valor_mensal") != null && watch("valor_mensal") !== ""
+              watch("valor_mensal") != null
                 ? Number(watch("valor_mensal")).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
                 : ""
             }
