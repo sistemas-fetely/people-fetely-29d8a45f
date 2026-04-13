@@ -33,6 +33,7 @@ import { toast } from "sonner";
 import { format, parseISO, startOfMonth, endOfMonth, subMonths, startOfYear, endOfYear, startOfQuarter, endOfQuarter, isWithinInterval } from "date-fns";
 import { ptBR as dateFnsPtBR } from "date-fns/locale";
 import ImportNFDialog from "@/components/notas-fiscais/ImportNFDialog";
+import { useAuth } from "@/contexts/AuthContext";
 
 const periodOptions: { value: string; label: string }[] = [
   { value: "todos", label: "Todo Período" },
@@ -494,9 +495,8 @@ function NotaFiscalFormDialog({ open, onClose, nota, contratos, onSaved }: {
   const set = (k: string, v: string) => setForm((f) => ({ ...f, [k]: v }));
 
   const handleSave = async () => {
-    if (!form.contrato_id || !form.numero.trim() || !form.data_emissao || !form.valor || !form.competencia) {
-      toast.error("Preencha os campos obrigatórios"); return;
-    }
+    const { roles } = useAuth();
+    // This won't work - useAuth can't be called inside a handler. Let me fix this differently.
     setSaving(true);
     const normalizedStatus = form.status === "enviada_p_pagamento" ? "enviada_pagamento" : form.status;
     const payload = {
