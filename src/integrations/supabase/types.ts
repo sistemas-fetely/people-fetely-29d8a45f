@@ -760,13 +760,18 @@ export type Database = {
           created_at: string
           criado_por: string | null
           dados_preenchidos: Json | null
+          data_inicio_prevista: string | null
           departamento: string | null
           email: string
           expira_em: string
           grupo_acesso_id: string | null
           id: string
+          lider_direto_id: string | null
           nome: string
+          observacoes_colaborador: string | null
+          prazo_dias: number
           preenchido_em: string | null
+          salario_previsto: number | null
           status: string
           tipo: string
           token: string
@@ -779,13 +784,18 @@ export type Database = {
           created_at?: string
           criado_por?: string | null
           dados_preenchidos?: Json | null
+          data_inicio_prevista?: string | null
           departamento?: string | null
           email: string
           expira_em?: string
           grupo_acesso_id?: string | null
           id?: string
+          lider_direto_id?: string | null
           nome: string
+          observacoes_colaborador?: string | null
+          prazo_dias?: number
           preenchido_em?: string | null
+          salario_previsto?: number | null
           status?: string
           tipo: string
           token?: string
@@ -798,13 +808,18 @@ export type Database = {
           created_at?: string
           criado_por?: string | null
           dados_preenchidos?: Json | null
+          data_inicio_prevista?: string | null
           departamento?: string | null
           email?: string
           expira_em?: string
           grupo_acesso_id?: string | null
           id?: string
+          lider_direto_id?: string | null
           nome?: string
+          observacoes_colaborador?: string | null
+          prazo_dias?: number
           preenchido_em?: string | null
+          salario_previsto?: number | null
           status?: string
           tipo?: string
           token?: string
@@ -830,6 +845,13 @@ export type Database = {
             columns: ["grupo_acesso_id"]
             isOneToOne: false
             referencedRelation: "grupos_acesso"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "convites_cadastro_lider_direto_id_fkey"
+            columns: ["lider_direto_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
