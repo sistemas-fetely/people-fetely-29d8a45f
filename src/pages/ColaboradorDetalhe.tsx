@@ -112,21 +112,28 @@ export default function ColaboradorDetalhe() {
       setColaborador({ ...colaborador, status: newStatus });
       toast.success(newStatus === "desligado" ? "Colaborador inativado" : "Colaborador reativado");
 
-      // Portal access automation
-      try {
-        if (newStatus === "ativo" && colaborador.email_pessoal) {
-          await supabase.functions.invoke("create-portal-access", {
-            body: {
-              action: "activate",
-              email: colaborador.email_pessoal,
-              nome: colaborador.nome_completo,
-              colaborador_id: id,
-              tipo: "clt",
-            },
-          });
-          toast.success("Acesso ao portal criado automaticamente");
+      // Activation automations
+      if (newStatus === "ativo") {
+        // Portal access (only if email exists)
+        if (colaborador.email_pessoal) {
+          try {
+            await supabase.functions.invoke("create-portal-access", {
+              body: {
+                action: "activate",
+                email: colaborador.email_pessoal,
+                nome: colaborador.nome_completo,
+                colaborador_id: id,
+                tipo: "clt",
+              },
+            });
+            toast.success("Acesso ao portal criado automaticamente");
+          } catch (portalErr) {
+            console.error("Erro na automação de acesso:", portalErr);
+          }
+        }
 
-          // Calculate trial period dates
+        // Calculate trial period dates (always)
+        try {
           const dataInicio = colaborador.data_admissao ? new Date(colaborador.data_admissao) : new Date();
           const fim1 = new Date(dataInicio);
           fim1.setDate(fim1.getDate() + 45);
@@ -149,8 +156,7 @@ export default function ColaboradorDetalhe() {
           const alerta2Date = new Date(fim2);
           alerta2Date.setDate(alerta2Date.getDate() - 5);
 
-          // Get HR users (criado_por or null for broadcast)
-          const alertas = [
+          const alertas: any[] = [
             {
               tipo: "periodo_experiencia_1",
               titulo: `Período de experiência: ${colaborador.nome_completo}`,
@@ -212,56 +218,59 @@ export default function ColaboradorDetalhe() {
             }
           }
 
-          await supabase.from("alertas_agendados").insert(alertas as any);
+          await supabase.from("alertas_agendados").insert(alertas);
+        } catch (alertErr) {
+          console.error("Erro ao criar alertas de experiência:", alertErr);
+        }
 
-          // Create onboarding checklist
-          try {
-            const { data: newChecklist } = await supabase
-              .from("onboarding_checklists")
-              .insert({
-                colaborador_id: id,
-                colaborador_tipo: "clt",
-              } as any)
-              .select("id")
-              .single();
+        // Create onboarding checklist (always)
+        try {
+          const { data: newChecklist } = await supabase
+            .from("onboarding_checklists")
+            .insert({
+              colaborador_id: id,
+              colaborador_tipo: "clt",
+            } as any)
+            .select("id")
+            .single();
 
-            if (newChecklist) {
-              const dataInicioCl = colaborador.data_admissao ? new Date(colaborador.data_admissao) : new Date();
-              let gestorUserId: string | null = null;
-              if (colaborador.gestor_direto_id) {
-                const { data: gp } = await supabase.from("profiles").select("user_id").eq("id", colaborador.gestor_direto_id).single();
-                gestorUserId = gp?.user_id || null;
-              }
-              const tarefas = getTarefasParaTipo("clt").map((t) => {
-                const prazoDate = new Date(dataInicioCl);
-                prazoDate.setDate(prazoDate.getDate() + t.prazo_dias);
-                return {
-                  checklist_id: newChecklist.id,
-                  titulo: t.titulo,
-                  descricao: t.descricao || null,
-                  responsavel_role: t.responsavel_role,
-                  responsavel_user_id:
-                    t.responsavel_role === "colaborador" ? colaborador.user_id :
-                    t.responsavel_role === "gestor_direto" && gestorUserId ? gestorUserId :
-                    null,
-                  prazo_dias: t.prazo_dias,
-                  prazo_data: prazoDate.toISOString().slice(0, 10),
-                };
-              });
-              await supabase.from("onboarding_tarefas").insert(tarefas as any);
+          if (newChecklist) {
+            const dataInicioCl = colaborador.data_admissao ? new Date(colaborador.data_admissao) : new Date();
+            let gestorUserId: string | null = null;
+            if (colaborador.gestor_direto_id) {
+              const { data: gp } = await supabase.from("profiles").select("user_id").eq("id", colaborador.gestor_direto_id).single();
+              gestorUserId = gp?.user_id || null;
             }
-          } catch (onbErr) {
-            console.error("Erro ao criar onboarding:", onbErr);
+            const tarefas = getTarefasParaTipo("clt").map((t) => {
+              const prazoDate = new Date(dataInicioCl);
+              prazoDate.setDate(prazoDate.getDate() + t.prazo_dias);
+              return {
+                checklist_id: newChecklist.id,
+                titulo: t.titulo,
+                descricao: t.descricao || null,
+                responsavel_role: t.responsavel_role,
+                responsavel_user_id:
+                  t.responsavel_role === "colaborador" ? colaborador.user_id :
+                  t.responsavel_role === "gestor_direto" && gestorUserId ? gestorUserId :
+                  null,
+                prazo_dias: t.prazo_dias,
+                prazo_data: prazoDate.toISOString().slice(0, 10),
+              };
+            });
+            await supabase.from("onboarding_tarefas").insert(tarefas as any);
           }
-
-        } else if (newStatus === "desligado" && colaborador.user_id) {
+        } catch (onbErr) {
+          console.error("Erro ao criar onboarding:", onbErr);
+        }
+      } else if (newStatus === "desligado" && colaborador.user_id) {
+        try {
           await supabase.functions.invoke("create-portal-access", {
             body: { action: "revoke", user_id: colaborador.user_id },
           });
           toast.info("Acesso ao portal revogado");
+        } catch (portalErr) {
+          console.error("Erro na automação de acesso:", portalErr);
         }
-      } catch (portalErr) {
-        console.error("Erro na automação de acesso:", portalErr);
       }
     }
     setTogglingStatus(false);
