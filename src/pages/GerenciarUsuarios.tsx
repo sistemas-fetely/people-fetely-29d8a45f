@@ -213,6 +213,14 @@ export default function GerenciarUsuarios() {
   const getUserRoles = (userId: string) =>
     allRoles.filter((r) => r.user_id === userId).map((r) => r.role);
 
+  const getUserRoleRecord = (userId: string, role: AppRole) =>
+    allRoles.find((r) => r.user_id === userId && r.role === role);
+
+  const isGestorManual = (userId: string) => {
+    const record = getUserRoleRecord(userId, "gestor_direto" as AppRole);
+    return record ? (record as any).atribuido_manualmente === true : false;
+  };
+
   const getAuthUser = (userId: string) =>
     authUsers.find((u: { id: string }) => u.id === userId);
 
@@ -443,8 +451,16 @@ export default function GerenciarUsuarios() {
                         <TableCell>
                           <div className="flex flex-wrap gap-1">
                             {roles.map((role) => (
-                              <Badge key={role} variant="secondary" className="text-xs">
+                              <Badge
+                                key={role}
+                                variant="secondary"
+                                className={`text-xs ${role === "gestor_direto" && !isGestorManual(profile.user_id) ? "border border-dashed border-muted-foreground/40" : ""}`}
+                                title={role === "gestor_direto" ? (isGestorManual(profile.user_id) ? "Atribuído manualmente" : "Atribuído automaticamente") : undefined}
+                              >
                                 {ROLE_LABELS[role] || role}
+                                {role === "gestor_direto" && !isGestorManual(profile.user_id) && (
+                                  <span className="ml-1 text-[10px] text-muted-foreground">(auto)</span>
+                                )}
                               </Badge>
                             ))}
                           </div>
