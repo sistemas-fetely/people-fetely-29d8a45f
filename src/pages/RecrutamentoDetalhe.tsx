@@ -18,8 +18,9 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   ArrowLeft, ChevronDown, Copy, Globe, MoreHorizontal, Plus, Loader2,
-  GripVertical, UserPlus, ArrowRight, XCircle
+  GripVertical, UserPlus, ArrowRight, XCircle, User
 } from "lucide-react";
+import { CandidatoDrawer } from "@/components/recrutamento/CandidatoDrawer";
 
 const statusConfig: Record<string, { label: string; className: string }> = {
   rascunho: { label: "Rascunho", className: "bg-muted text-muted-foreground" },
@@ -50,6 +51,8 @@ export default function RecrutamentoDetalhe() {
   const [addCandidatoOpen, setAddCandidatoOpen] = useState(false);
   const [newCandidato, setNewCandidato] = useState({ nome: "", email: "", telefone: "", origem: "indicacao" });
   const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [selectedCandidato, setSelectedCandidato] = useState<any | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   const { data: beneficiosParam = [] } = useParametros("beneficio");
 
@@ -368,6 +371,9 @@ export default function RecrutamentoDetalhe() {
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => { setSelectedCandidato(c); setDrawerOpen(true); }}>
+                                  <User className="h-4 w-4 mr-2" /> Ver perfil
+                                </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => advanceCandidato(c.id)}>
                                   <ArrowRight className="h-4 w-4 mr-2" /> Avançar
                                 </DropdownMenuItem>
@@ -427,6 +433,14 @@ export default function RecrutamentoDetalhe() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <CandidatoDrawer
+        open={drawerOpen}
+        onOpenChange={setDrawerOpen}
+        candidato={selectedCandidato}
+        vagaSkills={(vaga?.skills_obrigatorias as string[] | null) || []}
+        vagaId={id!}
+      />
     </div>
   );
 }
