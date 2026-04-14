@@ -63,6 +63,9 @@ const isFutureRole = (name: string) => FUTURE_ROLES.includes(name);
 
 export default function ConfigurarPerfis() {
   const navigate = useNavigate();
+  const { roles: userRoles } = useAuth();
+  const isSuperAdmin = userRoles.includes("super_admin");
+  const queryClient = useQueryClient();
   const queryClient = useQueryClient();
   const [selectedRole, setSelectedRole] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
