@@ -4,13 +4,14 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
 import { useParametros } from "@/hooks/useParametros";
+import { useCargos } from "@/hooks/useCargos";
 import type { DadosProfissionaisForm } from "@/lib/validations/colaborador-clt";
 
 export function StepDadosProfissionais() {
   const { register, setValue, watch, formState: { errors } } = useFormContext<DadosProfissionaisForm>();
 
   const { data: departamentos, isLoading: loadingDepts } = useParametros("departamento");
-  const { data: cargos, isLoading: loadingCargos } = useParametros("cargo");
+  const { data: cargos, isLoading: loadingCargos } = useCargos("clt");
   const { data: tiposContrato, isLoading: loadingTipos } = useParametros("tipo_contrato");
   const { data: jornadas, isLoading: loadingJornadas } = useParametros("jornada");
   const { data: locaisTrabalho, isLoading: loadingLocais } = useParametros("local_trabalho");
@@ -32,7 +33,7 @@ export function StepDadosProfissionais() {
               <SelectTrigger><SelectValue placeholder="Selecione o cargo" /></SelectTrigger>
               <SelectContent>
                 {(cargos || []).map((c) => (
-                  <SelectItem key={c.id} value={c.label}>{c.label}</SelectItem>
+                  <SelectItem key={c.id} value={c.nome}>{c.nome}</SelectItem>
                 ))}
               </SelectContent>
             </Select>

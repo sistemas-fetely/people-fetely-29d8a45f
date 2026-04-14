@@ -5,6 +5,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
 import { useParametros } from "@/hooks/useParametros";
+import { useCargos } from "@/hooks/useCargos";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { DadosProfissionaisPJForm } from "@/lib/validations/contrato-pj";
@@ -26,7 +27,7 @@ export function StepDadosProfissionaisPJ() {
   const { register, setValue, watch, formState: { errors } } = useFormContext<DadosProfissionaisPJForm>();
 
   const { data: departamentos, isLoading: loadingDepts } = useParametros("departamento");
-  const { data: cargos, isLoading: loadingCargos } = useParametros("cargo");
+  const { data: cargos, isLoading: loadingCargos } = useCargos("pj");
   const { data: formasPagamento, isLoading: loadingFormas } = useParametros("forma_pagamento");
 
   const { data: profiles, isLoading: loadingProfiles } = useQuery({
@@ -53,7 +54,7 @@ export function StepDadosProfissionaisPJ() {
               <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
               <SelectContent>
                 {(cargos || []).map((c) => (
-                  <SelectItem key={c.id} value={c.label}>{c.label}</SelectItem>
+                  <SelectItem key={c.id} value={c.nome}>{c.nome}</SelectItem>
                 ))}
               </SelectContent>
             </Select>

@@ -2,24 +2,22 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 /**
- * Returns a Set of cargo values that are marked as C-Level.
- * Use this to check if a specific cargo is C-Level before showing salary.
+ * Returns a Set of cargo names that are marked as C-Level.
+ * Now reads from the unified `cargos` table instead of `parametros`.
  */
 export function useCLevelCargos() {
   const { data: clevelCargos = new Set<string>() } = useQuery({
     queryKey: ["clevel-cargos"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("parametros")
-        .select("valor, label")
-        .eq("categoria", "cargo")
+        .from("cargos")
+        .select("nome")
         .eq("is_clevel", true)
         .eq("ativo", true);
       if (error) throw error;
       const set = new Set<string>();
-      (data || []).forEach((p) => {
-        set.add(p.valor);
-        set.add(p.label);
+      (data || []).forEach((c) => {
+        set.add(c.nome);
       });
       return set;
     },
