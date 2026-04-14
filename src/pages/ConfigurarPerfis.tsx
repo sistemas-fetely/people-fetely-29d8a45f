@@ -1,6 +1,8 @@
 import { useState } from "react";
+import { Navigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -49,8 +51,20 @@ interface CustomRole {
   is_system: boolean;
 }
 
+const FUTURE_ROLES = ["admin_ti", "recrutador", "fiscal", "operacional"];
+const FUTURE_ROLE_MODULES: Record<string, string> = {
+  admin_ti: "Módulo TI",
+  recrutador: "Módulo Recrutamento",
+  fiscal: "Integração ERP",
+  operacional: "Unidade Fabril",
+};
+
+const isFutureRole = (name: string) => FUTURE_ROLES.includes(name);
+
 export default function ConfigurarPerfis() {
   const navigate = useNavigate();
+  const { roles: userRoles } = useAuth();
+  const isSuperAdmin = userRoles.includes("super_admin");
   const queryClient = useQueryClient();
   const [selectedRole, setSelectedRole] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
@@ -279,6 +293,10 @@ export default function ConfigurarPerfis() {
     );
   }
 
+  if (!isSuperAdmin) {
+    return <Navigate to="/sem-permissao" replace />;
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -300,7 +318,7 @@ export default function ConfigurarPerfis() {
       <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6">
         {/* Role list */}
         <div className="space-y-2">
-          {roles.map((role) => (
+          {roles.filter((r) => !isFutureRole(r.name)).map((role) => (
             <Card
               key={role.id}
               className={`cursor-pointer transition-all hover:shadow-md ${
@@ -340,6 +358,36 @@ export default function ConfigurarPerfis() {
               </CardContent>
             </Card>
           ))}
+
+          {/* Future roles section */}
+          {roles.filter((r) => isFutureRole(r.name)).length > 0 && (
+            <>
+              <Separator className="my-3" />
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground px-1">Roles futuros</p>
+              {roles.filter((r) => isFutureRole(r.name)).map((role) => (
+                <Card
+                  key={role.id}
+                  className="opacity-60 border-dashed cursor-default"
+                  title={`Este perfil será ativado quando o ${FUTURE_ROLE_MODULES[role.name] || "módulo"} estiver disponível`}
+                >
+                  <CardContent className="p-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <Shield className="h-4 w-4 text-muted-foreground shrink-0" />
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <p className="text-sm font-medium truncate">{role.name}</p>
+                            <Badge variant="outline" className="text-[9px] px-1.5 py-0 border-amber-400 text-amber-600 dark:text-amber-400">Em breve</Badge>
+                          </div>
+                          <p className="text-[10px] text-muted-foreground truncate">{role.description || "—"}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </>
+          )}
         </div>
 
         {/* Permission editor */}
