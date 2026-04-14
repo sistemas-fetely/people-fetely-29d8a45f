@@ -670,13 +670,113 @@ export default function RecrutamentoDetalhe() {
         </AlertDialogContent>
       </AlertDialog>
 
-      <CandidatoDrawer
-        open={drawerOpen}
-        onOpenChange={setDrawerOpen}
-        candidato={selectedCandidato}
-        vagaSkills={(vaga?.skills_obrigatorias as string[] | null) || []}
-        vagaId={id!}
-      />
+      {/* Drawer do candidato — inline simples */}
+      <Sheet open={!!selectedCandidato} onOpenChange={(open) => { if (!open) setSelectedCandidato(null); }}>
+        <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
+          {selectedCandidato && (
+            <div className="space-y-6 py-4">
+              {/* Header */}
+              <div className="flex items-start gap-3">
+                <div className="h-12 w-12 rounded-full flex items-center justify-center text-lg font-semibold shrink-0 text-white" style={{ backgroundColor: "#1A4A3A" }}>
+                  {selectedCandidato.nome?.split(" ").map((n: string) => n[0]).filter(Boolean).slice(0, 2).join("").toUpperCase()}
+                </div>
+                <div className="min-w-0 space-y-1">
+                  <p className="text-lg font-semibold leading-tight">{selectedCandidato.nome}</p>
+                  <p className="text-sm text-muted-foreground">{selectedCandidato.email}</p>
+                  {selectedCandidato.telefone && (
+                    <p className="text-sm text-muted-foreground">{selectedCandidato.telefone}</p>
+                  )}
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    <Badge variant="secondary" className="text-xs capitalize">{selectedCandidato.status}</Badge>
+                    <Badge variant="outline" className="text-xs capitalize">{selectedCandidato.origem || "portal"}</Badge>
+                  </div>
+                  {selectedCandidato.created_at && (
+                    <p className="text-xs text-muted-foreground">
+                      Candidatura em {new Date(selectedCandidato.created_at).toLocaleDateString("pt-BR")}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Abas */}
+              <Tabs defaultValue="perfil">
+                <TabsList className="grid w-full grid-cols-4">
+                  <TabsTrigger value="perfil" className="text-xs">Perfil</TabsTrigger>
+                  <TabsTrigger value="avaliacao" className="text-xs">Avaliação</TabsTrigger>
+                  <TabsTrigger value="historico" className="text-xs">Histórico</TabsTrigger>
+                  <TabsTrigger value="notas" className="text-xs">Notas</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="perfil" className="space-y-4 mt-4">
+                  {selectedCandidato.linkedin_url && (
+                    <div className="space-y-1">
+                      <p className="text-xs font-medium text-muted-foreground">LinkedIn</p>
+                      <a href={selectedCandidato.linkedin_url.startsWith("http") ? selectedCandidato.linkedin_url : `https://${selectedCandidato.linkedin_url}`}
+                        target="_blank" rel="noopener noreferrer"
+                        className="text-sm text-primary flex items-center gap-1 hover:underline">
+                        {selectedCandidato.linkedin_url} <ExternalLink className="h-3 w-3" />
+                      </a>
+                    </div>
+                  )}
+                  {selectedCandidato.portfolio_url && (
+                    <div className="space-y-1">
+                      <p className="text-xs font-medium text-muted-foreground">Portfólio</p>
+                      <a href={selectedCandidato.portfolio_url.startsWith("http") ? selectedCandidato.portfolio_url : `https://${selectedCandidato.portfolio_url}`}
+                        target="_blank" rel="noopener noreferrer"
+                        className="text-sm text-primary flex items-center gap-1 hover:underline">
+                        {selectedCandidato.portfolio_url} <ExternalLink className="h-3 w-3" />
+                      </a>
+                    </div>
+                  )}
+                  {!selectedCandidato.linkedin_url && !selectedCandidato.portfolio_url && (
+                    <p className="text-sm text-muted-foreground italic">Nenhum link informado pelo candidato.</p>
+                  )}
+                  {/* LGPD */}
+                  <div className="text-xs text-muted-foreground pt-2 border-t">
+                    Consentimento LGPD: {selectedCandidato.consentimento_lgpd_at
+                      ? new Date(selectedCandidato.consentimento_lgpd_at).toLocaleDateString("pt-BR")
+                      : "não registrado"}
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="avaliacao" className="mt-4">
+                  <p className="text-sm text-muted-foreground italic">Avaliações disponíveis no scorecard do candidato.</p>
+                </TabsContent>
+
+                <TabsContent value="historico" className="mt-4">
+                  <p className="text-sm text-muted-foreground italic">Histórico de movimentações do candidato.</p>
+                </TabsContent>
+
+                <TabsContent value="notas" className="space-y-3 mt-4">
+                  <div className="flex gap-2">
+                    <Textarea
+                      value={notaTexto}
+                      onChange={(e) => setNotaTexto(e.target.value)}
+                      placeholder="Adicionar nota interna..."
+                      rows={2}
+                      className="flex-1"
+                    />
+                    <Button size="sm" className="self-end" disabled={!notaTexto.trim()}>
+                      Salvar
+                    </Button>
+                  </div>
+                </TabsContent>
+              </Tabs>
+
+              {/* Ações */}
+              <div className="flex gap-2 pt-4 border-t">
+                <Button className="flex-1" onClick={() => { advanceCandidato(selectedCandidato.id); setSelectedCandidato(null); }}>
+                  <ArrowRight className="h-4 w-4 mr-1" /> Avançar etapa
+                </Button>
+                <Button variant="outline" className="text-destructive border-destructive/30 hover:bg-destructive/10"
+                  onClick={() => { rejectCandidato(selectedCandidato.id); setSelectedCandidato(null); }}>
+                  <XCircle className="h-4 w-4 mr-1" /> Recusar
+                </Button>
+              </div>
+            </div>
+          )}
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
