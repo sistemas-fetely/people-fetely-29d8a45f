@@ -43,19 +43,27 @@ const ROLE_LABELS: Record<AppRole, string> = {
 };
 
 const ROLE_DESCRIPTIONS: Record<AppRole, string> = {
-  super_admin: "Acesso total ao sistema, incluindo gerenciamento de usuários e configurações",
-  admin_rh: "Gestão completa de RH, acesso a dados sensíveis e configuração de gestores",
-  admin_ti: "Administração de acessos a sistemas e infraestrutura de TI",
-  gestor_rh: "Gestão de pessoas, folha de pagamento, benefícios e convites",
-  gestor_direto: "Visualização de colaboradores da equipe e aprovações",
-  colaborador: "Acesso ao próprio perfil, holerites e férias",
-  financeiro: "Gestão financeira, notas fiscais, pagamentos PJ e folha",
-  fiscal: "Acompanhamento de obrigações fiscais e tributárias",
-  operacional: "Gestão operacional de processos do dia a dia",
-  recrutador: "Gestão de vagas, convites e processo seletivo",
+  super_admin: "Acesso total ao sistema. Único que vê salário C-Level e configura perfis.",
+  admin_rh: "Gestão completa de pessoas, dados sensíveis (salário não C-Level). Cria e edita usuários.",
+  admin_ti: "Gerencia acessos a sistemas e equipamentos. (Módulo TI — em breve)",
+  gestor_rh: "Gestão operacional de pessoas. Sem dados financeiros, folha, parâmetros ou usuários.",
+  gestor_direto: "Visualiza e aprova para seu time. Recebe tarefas de onboarding.",
+  colaborador: "Portal self-service. Acessa apenas seus próprios dados.",
+  financeiro: "Puramente financeiro. Folha, NF, pagamentos PJ. Sem dados operacionais de RH.",
+  fiscal: "NF-e e integração ERP. Subconjunto do financeiro. (Integração ERP — em breve)",
+  operacional: "Ponto, turnos e NRs da unidade fabril. (Unidade Fabril — em breve)",
+  recrutador: "Gerencia vagas e candidatos. (Módulo Recrutamento — em breve)",
 };
 
-const ALL_ROLES: AppRole[] = ["super_admin", "admin_rh", "admin_ti", "gestor_rh", "gestor_direto", "colaborador", "financeiro", "fiscal", "operacional", "recrutador"];
+const ACTIVE_ROLES: AppRole[] = [
+  "super_admin", "admin_rh", "gestor_rh", "gestor_direto", "colaborador", "financeiro"
+];
+const FUTURE_ROLES: AppRole[] = [
+  "admin_ti", "recrutador", "fiscal", "operacional"
+];
+const ALL_ROLES: AppRole[] = [...ACTIVE_ROLES, ...FUTURE_ROLES];
+
+const isFutureRole = (role: AppRole) => FUTURE_ROLES.includes(role);
 
 async function callManageUser(action: string, payload: Record<string, unknown>) {
   const { data, error } = await supabase.functions.invoke("manage-user", {
@@ -329,13 +337,15 @@ export default function GerenciarUsuarios() {
                 <Label>Perfis de Acesso</Label>
                 <div className="grid grid-cols-1 gap-2">
                   {ALL_ROLES.map((role) => (
-                    <label key={role} className="flex items-center gap-2 rounded-md border p-2 cursor-pointer hover:bg-muted/50">
+                    <label key={role} className={`flex items-center gap-2 rounded-md border p-2 cursor-pointer hover:bg-muted/50 ${isFutureRole(role) ? "border-dashed opacity-60" : ""}`}>
                       <Checkbox
                         checked={newUser.roles.includes(role)}
                         onCheckedChange={() => toggleNewUserRole(role)}
+                        disabled={isFutureRole(role)}
                       />
-                      <div>
+                      <div className="flex-1">
                         <span className="text-sm font-medium">{ROLE_LABELS[role]}</span>
+                        {isFutureRole(role) && <Badge variant="outline" className="ml-2 text-[10px] border-dashed">Em breve</Badge>}
                         <p className="text-xs text-muted-foreground">{ROLE_DESCRIPTIONS[role]}</p>
                       </div>
                     </label>
@@ -602,11 +612,12 @@ export default function GerenciarUsuarios() {
                 getUserRoles(p.user_id).includes(role)
               );
               return (
-                <Card key={role} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate("/configurar-perfis")}>
+                <Card key={role} className={`cursor-pointer hover:shadow-md transition-shadow ${isFutureRole(role) ? "border-dashed opacity-60" : ""}`} onClick={() => navigate("/configurar-perfis")}>
                   <CardHeader className="pb-3">
                     <div className="flex items-center gap-2">
                       <ShieldCheck className="h-5 w-5 text-foreground" />
                       <CardTitle className="text-base">{ROLE_LABELS[role]}</CardTitle>
+                      {isFutureRole(role) && <Badge variant="outline" className="text-[10px] border-dashed">Em breve</Badge>}
                     </div>
                     <p className="text-xs text-muted-foreground">{ROLE_DESCRIPTIONS[role]}</p>
                   </CardHeader>
@@ -659,14 +670,16 @@ export default function GerenciarUsuarios() {
               const isAutoAssigned = isGestorDireto && selectedRoles.includes(role) && !isManual;
 
               return (
-                <div key={role} className="rounded-md border p-3 space-y-2">
+                <div key={role} className={`rounded-md border p-3 space-y-2 ${isFutureRole(role) ? "border-dashed opacity-60" : ""}`}>
                   <label className="flex items-center gap-2 cursor-pointer hover:bg-muted/50">
                     <Checkbox
                       checked={selectedRoles.includes(role)}
                       onCheckedChange={() => toggleRole(role)}
+                      disabled={isFutureRole(role)}
                     />
                     <div className="flex-1">
                       <span className="text-sm font-medium">{ROLE_LABELS[role]}</span>
+                      {isFutureRole(role) && <Badge variant="outline" className="ml-2 text-[10px] border-dashed">Em breve</Badge>}
                       <p className="text-xs text-muted-foreground">{ROLE_DESCRIPTIONS[role]}</p>
                     </div>
                     {isGestorDireto && selectedRoles.includes(role) && (
