@@ -1,0 +1,360 @@
+import { useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useParametros } from "@/hooks/useParametros";
+import { usePermissions } from "@/hooks/usePermissions";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
+
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Plus, Trash2, ArrowRight, ArrowLeft, Loader2 } from "lucide-react";
+
+const SKILLS_CATALOGO = [
+  "Adobe Illustrator", "Adobe Photoshop", "Canva Pro", "Figma",
+  "React / TypeScript", "Supabase", "Git", "ERP Bling", "Lovable",
+  "Excel Avançado", "Power BI", "CRM", "Negociação B2B",
+  "Copywriting", "Instagram Strategy", "Meta Ads",
+  "Supply Chain", "Importação / Incoterms",
+  "Legislação CLT", "eSocial", "Gestão de times",
+];
+
+const NIVEIS = [
+  { value: "jr", label: "Jr" },
+  { value: "pl", label: "Pl" },
+  { value: "sr", label: "Sr" },
+  { value: "coordenacao", label: "Coordenação" },
+  { value: "especialista", label: "Especialista" },
+  { value: "c-level", label: "C-Level" },
+];
+
+interface Props {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
+export function NovaVagaDialog({ open, onOpenChange }: Props) {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const { isSuperAdmin, isAdminRH } = usePermissions();
+  const canSeeFaixa = isSuperAdmin || isAdminRH;
+
+  const [step, setStep] = useState(1);
+
+  // Step 1
+  const [titulo, setTitulo] = useState("");
+  const [area, setArea] = useState("");
+  const [tipoContrato, setTipoContrato] = useState("");
+  const [nivel, setNivel] = useState("");
+  const [gestorId, setGestorId] = useState("");
+  const [localTrabalho, setLocalTrabalho] = useState("");
+  const [jornada, setJornada] = useState("");
+  const [beneficios, setBeneficios] = useState("");
+  const [vigenciaFim, setVigenciaFim] = useState("");
+
+  // Step 2
+  const [missao, setMissao] = useState("");
+  const [responsabilidades, setResponsabilidades] = useState<string[]>([""]);
+  const [skillsObrigatorias, setSkillsObrigatorias] = useState<string[]>([]);
+  const [skillsDesejadas, setSkillsDesejadas] = useState<string[]>([]);
+  const [ferramentas, setFerramentas] = useState<string[]>([""]);
+  const [faixaMin, setFaixaMin] = useState("");
+  const [faixaMax, setFaixaMax] = useState("");
+
+  const { data: departamentos = [] } = useParametros("departamento");
+  const { data: locais = [] } = useParametros("local_trabalho");
+
+  const { data: gestores = [] } = useQuery({
+    queryKey: ["gestores-para-vaga"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, full_name, user_id")
+        .order("full_name");
+      if (error) throw error;
+      // Filter profiles that have gestor_direto or admin_rh roles
+      const { data: rolesData } = await supabase
+        .from("user_roles")
+        .select("user_id, role")
+        .in("role", ["gestor_direto", "admin_rh", "gestor_rh", "super_admin"]);
+      const gestorUserIds = new Set((rolesData || []).map((r) => r.user_id));
+      return (data || []).filter((p) => gestorUserIds.has(p.user_id));
+    },
+    enabled: open,
+  });
+
+  const mutation = useMutation({
+    mutationFn: async () => {
+      const payload: Record<string, any> = {
+        titulo,
+        area,
+        tipo_contrato: tipoContrato,
+        nivel,
+        status: "rascunho",
+        local_trabalho: localTrabalho || null,
+        jornada: jornada || null,
+        beneficios: beneficios || null,
+        vigencia_fim: vigenciaFim || null,
+        vigencia_inicio: new Date().toISOString().split("T")[0],
+        missao: missao || null,
+        responsabilidades: responsabilidades.filter(Boolean),
+        skills_obrigatorias: skillsObrigatorias.filter(Boolean),
+        skills_desejadas: skillsDesejadas.filter(Boolean),
+        ferramentas: ferramentas.filter(Boolean),
+        gestor_id: gestorId || null,
+        criado_por: user?.id || null,
+      };
+      if (canSeeFaixa) {
+        if (faixaMin) payload.faixa_min = Number(faixaMin);
+        if (faixaMax) payload.faixa_max = Number(faixaMax);
+      }
+      const { error } = await supabase.from("vagas").insert(payload);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Vaga criada! Revise e publique quando estiver pronto.");
+      queryClient.invalidateQueries({ queryKey: ["vagas"] });
+      resetAndClose();
+    },
+    onError: (err: any) => toast.error(err.message || "Erro ao criar vaga"),
+  });
+
+  function resetAndClose() {
+    setStep(1);
+    setTitulo(""); setArea(""); setTipoContrato(""); setNivel("");
+    setGestorId(""); setLocalTrabalho(""); setJornada(""); setBeneficios("");
+    setVigenciaFim(""); setMissao(""); setResponsabilidades([""]);
+    setSkillsObrigatorias([]); setSkillsDesejadas([]); setFerramentas([""]);
+    setFaixaMin(""); setFaixaMax("");
+    onOpenChange(false);
+  }
+
+  const step1Valid = titulo.trim() && area && tipoContrato && nivel;
+
+  // Dynamic list helpers
+  const addItem = (list: string[], setList: (v: string[]) => void) => setList([...list, ""]);
+  const removeItem = (list: string[], setList: (v: string[]) => void, i: number) =>
+    setList(list.filter((_, idx) => idx !== i));
+  const updateItem = (list: string[], setList: (v: string[]) => void, i: number, val: string) =>
+    setList(list.map((v, idx) => (idx === i ? val : v)));
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => { if (!v) resetAndClose(); else onOpenChange(v); }}>
+      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>
+            Nova Vaga — Etapa {step} de 2
+          </DialogTitle>
+          <p className="text-sm text-muted-foreground">
+            {step === 1 ? "Dados da vaga" : "Perfil e requisitos"}
+          </p>
+        </DialogHeader>
+
+        {step === 1 && (
+          <div className="space-y-4 mt-2">
+            <div className="space-y-2">
+              <Label>Título da vaga *</Label>
+              <Input value={titulo} onChange={(e) => setTitulo(e.target.value)} placeholder="Ex: Analista de Design Jr" />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Área *</Label>
+                <Select value={area} onValueChange={setArea}>
+                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent>
+                    {departamentos.map((d) => (
+                      <SelectItem key={d.id} value={d.valor}>{d.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Tipo de contrato *</Label>
+                <Select value={tipoContrato} onValueChange={setTipoContrato}>
+                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="clt">CLT</SelectItem>
+                    <SelectItem value="pj">PJ</SelectItem>
+                    <SelectItem value="ambos">Ambos</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Nível *</Label>
+                <Select value={nivel} onValueChange={setNivel}>
+                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent>
+                    {NIVEIS.map((n) => (
+                      <SelectItem key={n.value} value={n.value}>{n.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Gestor responsável</Label>
+                <Select value={gestorId} onValueChange={setGestorId}>
+                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent>
+                    {gestores.map((g) => (
+                      <SelectItem key={g.id} value={g.user_id}>{g.full_name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Local de trabalho</Label>
+                <Select value={localTrabalho} onValueChange={setLocalTrabalho}>
+                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent>
+                    {locais.map((l) => (
+                      <SelectItem key={l.id} value={l.valor}>{l.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Vigência até</Label>
+                <Input type="date" value={vigenciaFim} onChange={(e) => setVigenciaFim(e.target.value)} />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Jornada</Label>
+              <Input value={jornada} onChange={(e) => setJornada(e.target.value)} placeholder="Ex: Seg-Sex, 9h-18h" />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Benefícios</Label>
+              <Textarea value={beneficios} onChange={(e) => setBeneficios(e.target.value)} placeholder="Descreva os benefícios da posição" rows={3} />
+            </div>
+
+            <div className="flex justify-end pt-2">
+              <Button onClick={() => setStep(2)} disabled={!step1Valid}>
+                Avançar <ArrowRight className="h-4 w-4 ml-2" />
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {step === 2 && (
+          <div className="space-y-4 mt-2">
+            <div className="space-y-2">
+              <Label>Missão da posição</Label>
+              <Textarea value={missao} onChange={(e) => setMissao(e.target.value)}
+                placeholder="O que essa pessoa vai resolver de verdade por aqui?" rows={3} />
+            </div>
+
+            {/* Responsabilidades */}
+            <div className="space-y-2">
+              <Label>Responsabilidades</Label>
+              {responsabilidades.map((r, i) => (
+                <div key={i} className="flex gap-2">
+                  <Input value={r} onChange={(e) => updateItem(responsabilidades, setResponsabilidades, i, e.target.value)}
+                    placeholder={`Responsabilidade ${i + 1}`} />
+                  {responsabilidades.length > 1 && (
+                    <Button variant="ghost" size="icon" onClick={() => removeItem(responsabilidades, setResponsabilidades, i)}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              ))}
+              <Button variant="outline" size="sm" onClick={() => addItem(responsabilidades, setResponsabilidades)}>
+                <Plus className="h-3 w-3 mr-1" /> Adicionar
+              </Button>
+            </div>
+
+            {/* Skills obrigatórias */}
+            <div className="space-y-2">
+              <Label>Skills obrigatórias</Label>
+              <div className="flex flex-wrap gap-2">
+                {SKILLS_CATALOGO.map((s) => (
+                  <Button key={s} variant={skillsObrigatorias.includes(s) ? "default" : "outline"} size="sm"
+                    className="text-xs h-7"
+                    onClick={() => setSkillsObrigatorias(
+                      skillsObrigatorias.includes(s)
+                        ? skillsObrigatorias.filter((x) => x !== s)
+                        : [...skillsObrigatorias, s]
+                    )}>
+                    {s}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            {/* Skills desejadas */}
+            <div className="space-y-2">
+              <Label>Skills desejadas</Label>
+              <div className="flex flex-wrap gap-2">
+                {SKILLS_CATALOGO.filter((s) => !skillsObrigatorias.includes(s)).map((s) => (
+                  <Button key={s} variant={skillsDesejadas.includes(s) ? "secondary" : "outline"} size="sm"
+                    className="text-xs h-7"
+                    onClick={() => setSkillsDesejadas(
+                      skillsDesejadas.includes(s)
+                        ? skillsDesejadas.filter((x) => x !== s)
+                        : [...skillsDesejadas, s]
+                    )}>
+                    {s}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            {/* Ferramentas */}
+            <div className="space-y-2">
+              <Label>Ferramentas / Sistemas</Label>
+              {ferramentas.map((f, i) => (
+                <div key={i} className="flex gap-2">
+                  <Input value={f} onChange={(e) => updateItem(ferramentas, setFerramentas, i, e.target.value)}
+                    placeholder={`Ferramenta ${i + 1}`} />
+                  {ferramentas.length > 1 && (
+                    <Button variant="ghost" size="icon" onClick={() => removeItem(ferramentas, setFerramentas, i)}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              ))}
+              <Button variant="outline" size="sm" onClick={() => addItem(ferramentas, setFerramentas)}>
+                <Plus className="h-3 w-3 mr-1" /> Adicionar
+              </Button>
+            </div>
+
+            {/* Faixa salarial — only for super_admin and admin_rh */}
+            {canSeeFaixa && (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Faixa salarial mín.</Label>
+                  <Input type="number" value={faixaMin} onChange={(e) => setFaixaMin(e.target.value)} placeholder="R$" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Faixa salarial máx.</Label>
+                  <Input type="number" value={faixaMax} onChange={(e) => setFaixaMax(e.target.value)} placeholder="R$" />
+                </div>
+              </div>
+            )}
+
+            <div className="flex justify-between pt-2">
+              <Button variant="outline" onClick={() => setStep(1)}>
+                <ArrowLeft className="h-4 w-4 mr-2" /> Voltar
+              </Button>
+              <Button onClick={() => mutation.mutate()} disabled={mutation.isPending}>
+                {mutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                Criar Vaga
+              </Button>
+            </div>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
