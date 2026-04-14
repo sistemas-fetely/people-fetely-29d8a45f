@@ -311,7 +311,7 @@ export default function Cargos() {
           <h1 className="text-2xl font-bold text-foreground">Cargos e Salários</h1>
           <p className="text-sm text-muted-foreground">Plano de Posições e Remuneração</p>
         </div>
-        <Button disabled className="gap-2">
+        <Button className="gap-2" onClick={() => navigate("/cargos/novo")}>
           <Plus className="h-4 w-4" /> Novo Cargo
         </Button>
       </div>
