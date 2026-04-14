@@ -84,7 +84,7 @@ const adminItems: MenuItem[] = [
   { title: "Grupos de Acesso", url: "/parametros?modulo=grupos_acesso", icon: ShieldCheck, permModule: "parametros" },
   { title: "Configurações", url: "/configuracoes", icon: Settings, permModule: "usuarios" },
   { title: "Gerenciar Usuários", url: "/gerenciar-usuarios", icon: UserCheck, permModule: "usuarios" },
-  { title: "Configurar Perfis", url: "/configurar-perfis", icon: Shield, permModule: "usuarios" },
+  { title: "Configurar Perfis", url: "/configurar-perfis", icon: Shield, permModule: "usuarios", requireRole: "super_admin" },
 ];
 
 interface MenuGroupProps {
