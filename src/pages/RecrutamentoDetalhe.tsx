@@ -51,6 +51,8 @@ export default function RecrutamentoDetalhe() {
   const [addCandidatoOpen, setAddCandidatoOpen] = useState(false);
   const [newCandidato, setNewCandidato] = useState({ nome: "", email: "", telefone: "", origem: "indicacao" });
   const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [selectedCandidato, setSelectedCandidato] = useState<any | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   const { data: beneficiosParam = [] } = useParametros("beneficio");
 
