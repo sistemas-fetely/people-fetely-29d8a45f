@@ -89,6 +89,20 @@ export default function CargoForm() {
   const qc = useQueryClient();
   const [form, setForm] = useState<FormState>(buildInitial);
 
+  const { data: departamentos } = useQuery({
+    queryKey: ["parametros-departamentos"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("parametros")
+        .select("label, valor")
+        .eq("categoria", "departamento")
+        .eq("ativo", true)
+        .order("label");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
   const { data: cargo } = useQuery({
     queryKey: ["cargo", id],
     queryFn: async () => {
@@ -193,7 +207,14 @@ export default function CargoForm() {
 
         <div>
           <Label>Departamento</Label>
-          <Input value={form.departamento} onChange={(e) => setField("departamento", e.target.value)} placeholder="Ex: Design" />
+          <Select value={form.departamento ?? ""} onValueChange={(v) => setField("departamento", v)}>
+            <SelectTrigger><SelectValue placeholder="Selecione o departamento" /></SelectTrigger>
+            <SelectContent>
+              {(departamentos ?? []).map((d: any) => (
+                <SelectItem key={d.valor} value={d.label}>{d.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="flex gap-6">
