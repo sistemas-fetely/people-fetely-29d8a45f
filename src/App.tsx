@@ -41,6 +41,7 @@ import ConfigurarPerfis from "@/pages/ConfigurarPerfis";
 import Onboarding from "@/pages/Onboarding";
 import Recrutamento from "@/pages/Recrutamento";
 import RecrutamentoDetalhe from "@/pages/RecrutamentoDetalhe";
+import PortalCandidatura from "@/pages/PortalCandidatura";
 
 const queryClient = new QueryClient();
 
@@ -59,6 +60,7 @@ const App = () => (
             <Route path="/sem-permissao" element={<SemPermissao />} />
             <Route path="/aguardando-aprovacao" element={<AguardandoAprovacao />} />
             <Route path="/cadastro/:token" element={<CadastroPublico />} />
+            <Route path="/vagas/:id" element={<PortalCandidatura />} />
             <Route path="/unsubscribe" element={<Unsubscribe />} />
 
             {/* Protected routes */}
