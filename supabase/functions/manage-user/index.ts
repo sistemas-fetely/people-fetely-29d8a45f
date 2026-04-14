@@ -1,4 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
+import { createClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -11,9 +11,8 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Verify caller is super_admin
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
+    if (!authHeader?.startsWith("Bearer ")) {
       return new Response(JSON.stringify({ error: "Não autorizado" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -21,27 +20,39 @@ Deno.serve(async (req) => {
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-    // Verify caller with anon client
-    const anonClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
+    const userClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
+      auth: { persistSession: false, autoRefreshToken: false },
     });
-    const { data: { user: caller }, error: userError } = await anonClient.auth.getUser();
-    if (userError || !caller) {
-      console.error("Auth error:", userError?.message || "No user found");
+
+    const token = authHeader.slice("Bearer ".length);
+    const { data: claimsData, error: claimsError } = await userClient.auth.getClaims(token);
+    const callerId = claimsData?.claims?.sub;
+
+    if (claimsError || typeof callerId !== "string") {
+      console.error("Auth claims error:", claimsError?.message ?? "Token inválido");
       return new Response(JSON.stringify({ error: "Não autorizado" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    const callerId = caller.id;
 
-    // Check super_admin role
-    const { data: hasRole } = await anonClient.rpc("has_role", {
+    const { data: hasRole, error: roleError } = await userClient.rpc("has_role", {
       _user_id: callerId,
       _role: "super_admin",
     });
+
+    if (roleError) {
+      console.error("Role check error:", roleError.message);
+      return new Response(JSON.stringify({ error: "Erro ao validar permissão" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     if (!hasRole) {
       return new Response(JSON.stringify({ error: "Sem permissão" }), {
         status: 403,
@@ -49,7 +60,9 @@ Deno.serve(async (req) => {
       });
     }
 
-    const adminClient = createClient(supabaseUrl, serviceRoleKey);
+    const adminClient = createClient(supabaseUrl, serviceRoleKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
     const body = await req.json();
     const { action } = body;
 
