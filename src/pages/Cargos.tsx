@@ -283,6 +283,7 @@ function CargoDrawer({ cargo, onClose }: { cargo: Cargo; onClose: () => void }) 
 
 /* ─── Main Page ─── */
 export default function Cargos() {
+  const navigate = useNavigate();
   const { data: cargos, isLoading } = useAllCargos();
   const [search, setSearch] = useState("");
   const [filtroDepartamento, setFiltroDepartamento] = useState("todos");
