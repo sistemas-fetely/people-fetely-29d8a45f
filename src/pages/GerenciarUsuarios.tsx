@@ -316,10 +316,10 @@ export default function GerenciarUsuarios() {
               Novo Usuário
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-md">
+          <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Cadastrar Novo Usuário</DialogTitle>
-              <DialogDescription>O usuário será criado já aprovado e com e-mail confirmado.</DialogDescription>
+              <DialogTitle>Novo Usuário</DialogTitle>
+              <DialogDescription>O usuário receberá um e-mail com link para definir senha no primeiro acesso.</DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-2">
               <div className="space-y-2">
@@ -331,7 +331,7 @@ export default function GerenciarUsuarios() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>E-mail *</Label>
+                <Label>E-mail Corporativo *</Label>
                 <Input
                   type="email"
                   value={newUser.email}
@@ -340,65 +340,86 @@ export default function GerenciarUsuarios() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Senha *</Label>
-                <div className="relative">
-                  <Input
-                    type={showPassword ? "text" : "password"}
-                    value={newUser.password}
-                    onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
-                    placeholder="Mínimo 6 caracteres"
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="absolute right-0 top-0 h-full px-3"
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </Button>
-                </div>
+                <Label>Tipo de Acesso</Label>
+                <Select value={newUser.tipo_acesso} onValueChange={(v: "vinculado" | "externo") => setNewUser({ ...newUser, tipo_acesso: v, colaborador_id: "", colaborador_tipo: "" })}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="externo">Usuário externo (sem vínculo)</SelectItem>
+                    <SelectItem value="vinculado">Colaborador vinculado</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  {newUser.tipo_acesso === "externo"
+                    ? "Contador, advogado, consultor ou sócio com acesso ao sistema"
+                    : "Vincular a um cadastro CLT ou PJ existente"}
+                </p>
               </div>
+              {newUser.tipo_acesso === "vinculado" && (
+                <div className="space-y-2">
+                  <Label>Vincular a</Label>
+                  <Select value={newUser.colaborador_tipo || "none"} onValueChange={(v) => setNewUser({ ...newUser, colaborador_tipo: v === "none" ? "" : v, colaborador_id: "" })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o tipo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Selecione...</SelectItem>
+                      <SelectItem value="clt">Colaborador CLT</SelectItem>
+                      <SelectItem value="pj">Contrato PJ</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {newUser.colaborador_tipo === "clt" && (
+                    <Select value={newUser.colaborador_id || "none"} onValueChange={(v) => setNewUser({ ...newUser, colaborador_id: v === "none" ? "" : v })}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione o colaborador" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">Selecione...</SelectItem>
+                        {unlinkedCLT.map((c) => (
+                          <SelectItem key={c.id} value={c.id}>{c.nome_completo} — {c.cargo}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                  {newUser.colaborador_tipo === "pj" && (
+                    <Select value={newUser.colaborador_id || "none"} onValueChange={(v) => setNewUser({ ...newUser, colaborador_id: v === "none" ? "" : v })}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione o contrato" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">Selecione...</SelectItem>
+                        {unlinkedPJ.map((c) => (
+                          <SelectItem key={c.id} value={c.id}>{c.contato_nome} — {c.razao_social}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                </div>
+              )}
               <div className="space-y-2">
                 <Label>Perfis de Acesso</Label>
                 <div className="grid grid-cols-1 gap-2">
-                  {ALL_ROLES.map((role) => (
-                    <label key={role} className={`flex items-center gap-2 rounded-md border p-2 cursor-pointer hover:bg-muted/50 ${isFutureRole(role) ? "border-dashed opacity-60" : ""}`}>
+                  {ACTIVE_ROLES.filter((role) => isSuperAdmin || role !== "super_admin").map((role) => (
+                    <label key={role} className="flex items-center gap-2 rounded-md border p-2 cursor-pointer hover:bg-muted/50">
                       <Checkbox
                         checked={newUser.roles.includes(role)}
                         onCheckedChange={() => toggleNewUserRole(role)}
-                        disabled={isFutureRole(role)}
                       />
                       <div className="flex-1">
                         <span className="text-sm font-medium">{ROLE_LABELS[role]}</span>
-                        {isFutureRole(role) && <Badge variant="outline" className="ml-2 text-[10px] border-dashed">Em breve</Badge>}
                         <p className="text-xs text-muted-foreground">{ROLE_DESCRIPTIONS[role]}</p>
                       </div>
                     </label>
                   ))}
                 </div>
               </div>
-              <div className="space-y-2">
-                <Label>Tipo de Colaborador</Label>
-                <Select value={newUser.colaborador_tipo} onValueChange={(v) => setNewUser({ ...newUser, colaborador_tipo: v })}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Automático (detectar pelo cadastro)" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="auto">Automático</SelectItem>
-                    <SelectItem value="clt">CLT</SelectItem>
-                    <SelectItem value="pj">PJ</SelectItem>
-                    <SelectItem value="ambos">Ambos (CLT + PJ)</SelectItem>
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-muted-foreground">Define quais módulos o usuário terá acesso</p>
-              </div>
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setCreateOpen(false)}>Cancelar</Button>
               <Button
                 onClick={() => createUser.mutate()}
-                disabled={!newUser.email || !newUser.password || !newUser.full_name || createUser.isPending}
+                disabled={!newUser.email || !newUser.full_name || createUser.isPending}
               >
                 {createUser.isPending ? "Criando..." : "Criar Usuário"}
               </Button>
