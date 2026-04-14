@@ -2309,6 +2309,8 @@ export type Database = {
           faixa_max: number | null
           faixa_min: number | null
           ferramentas: string[] | null
+          ferramentas_ids: string[] | null
+          ferramentas_outras: string | null
           gestor_id: string | null
           id: string
           is_clevel: boolean | null
@@ -2338,6 +2340,8 @@ export type Database = {
           faixa_max?: number | null
           faixa_min?: number | null
           ferramentas?: string[] | null
+          ferramentas_ids?: string[] | null
+          ferramentas_outras?: string | null
           gestor_id?: string | null
           id?: string
           is_clevel?: boolean | null
@@ -2367,6 +2371,8 @@ export type Database = {
           faixa_max?: number | null
           faixa_min?: number | null
           ferramentas?: string[] | null
+          ferramentas_ids?: string[] | null
+          ferramentas_outras?: string | null
           gestor_id?: string | null
           id?: string
           is_clevel?: boolean | null
