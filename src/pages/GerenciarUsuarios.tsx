@@ -734,79 +734,128 @@ export default function GerenciarUsuarios() {
 
       {/* Dialog for editing user roles */}
       <Dialog open={rolesDialogOpen} onOpenChange={setRolesDialogOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-lg max-h-[85vh] flex flex-col">
           <DialogHeader>
-            <DialogTitle>Editar Perfis de Acesso</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              <Shield className="h-5 w-5 text-primary" />
+              Editar Perfis de Acesso
+            </DialogTitle>
             <DialogDescription>{selectedUser?.name}</DialogDescription>
           </DialogHeader>
-          <div className="space-y-2 py-2">
-            {ALL_ROLES.filter((role) => isSuperAdmin || role !== "super_admin").map((role) => {
-              const isGestorDireto = role === "gestor_direto";
-              const currentRecord = selectedUser ? getUserRoleRecord(selectedUser.userId, role) : null;
-              const isManual = currentRecord ? (currentRecord as any).atribuido_manualmente === true : false;
-              const isAutoAssigned = isGestorDireto && selectedRoles.includes(role) && !isManual;
 
-              return (
-                <div key={role} className={`rounded-md border p-3 space-y-2 ${isFutureRole(role) ? "border-dashed opacity-60" : ""}`}>
-                  <label className="flex items-center gap-2 cursor-pointer hover:bg-muted/50">
-                    <Checkbox
-                      checked={selectedRoles.includes(role)}
-                      onCheckedChange={() => toggleRole(role)}
-                      disabled={isFutureRole(role)}
-                    />
-                    <div className="flex-1">
-                      <span className="text-sm font-medium">{ROLE_LABELS[role]}</span>
-                      {isFutureRole(role) && <Badge variant="outline" className="ml-2 text-[10px] border-dashed">Em breve</Badge>}
-                      <p className="text-xs text-muted-foreground">{ROLE_DESCRIPTIONS[role]}</p>
+          <div className="flex-1 overflow-y-auto space-y-4 py-2 pr-1">
+            {/* Active roles as selectable cards */}
+            <div>
+              <Label className="text-xs uppercase text-muted-foreground tracking-wider mb-2 block">Perfis Disponíveis</Label>
+              <div className="grid grid-cols-2 gap-2">
+                {ACTIVE_ROLES.filter((role) => isSuperAdmin || role !== "super_admin").map((role) => {
+                  const isSelected = selectedRoles.includes(role);
+                  const isGestorDireto = role === "gestor_direto";
+                  const currentRecord = selectedUser ? getUserRoleRecord(selectedUser.userId, role) : null;
+                  const isManual = currentRecord ? (currentRecord as any).atribuido_manualmente === true : false;
+                  const isAutoAssigned = isGestorDireto && isSelected && !isManual;
+
+                  return (
+                    <div key={role} className="flex flex-col">
+                      <button
+                        type="button"
+                        onClick={() => toggleRole(role)}
+                        className={`relative rounded-lg border-2 p-3 text-left transition-all hover:shadow-sm ${
+                          isSelected
+                            ? "border-primary bg-primary/5 ring-1 ring-primary/20"
+                            : "border-border hover:border-muted-foreground/30"
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-1">
+                          <span className="text-sm font-semibold leading-tight">{ROLE_LABELS[role]}</span>
+                          {isSelected && (
+                            <CheckCircle2 className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                          )}
+                        </div>
+                        <p className="text-[11px] text-muted-foreground mt-1 leading-snug line-clamp-2">{ROLE_DESCRIPTIONS[role]}</p>
+                        {isGestorDireto && isSelected && (
+                          <Badge variant="outline" className={`mt-1.5 text-[10px] ${isAutoAssigned ? "border-dashed" : ""}`}>
+                            {isAutoAssigned ? "Auto" : "Manual"}
+                          </Badge>
+                        )}
+                      </button>
+                      {isGestorDireto && isSelected && (
+                        <div className="flex items-center gap-2 mt-1.5 ml-1">
+                          <Switch
+                            id="gestor-manual"
+                            checked={isManual}
+                            onCheckedChange={async (checked) => {
+                              if (!selectedUser) return;
+                              const { error } = await supabase
+                                .from("user_roles")
+                                .update({ atribuido_manualmente: checked } as any)
+                                .eq("user_id", selectedUser.userId)
+                                .eq("role", "gestor_direto" as any);
+                              if (error) {
+                                toast.error("Erro ao atualizar flag manual");
+                              } else {
+                                queryClient.invalidateQueries({ queryKey: ["admin-user-roles"] });
+                                toast.success(checked ? "Marcado como manual" : "Marcado como automático");
+                              }
+                            }}
+                          />
+                          <label htmlFor="gestor-manual" className="text-[11px] text-muted-foreground cursor-pointer">
+                            Proteger contra remoção automática
+                          </label>
+                        </div>
+                      )}
                     </div>
-                    {isGestorDireto && selectedRoles.includes(role) && (
-                      <Badge variant="outline" className={`text-[10px] ${isAutoAssigned ? "border-dashed" : ""}`}>
-                        {isAutoAssigned ? "Auto" : "Manual"}
-                      </Badge>
-                    )}
-                  </label>
-                  {isGestorDireto && selectedRoles.includes(role) && (
-                    <div className="flex items-center gap-2 ml-6">
-                      <Switch
-                        checked={isManual}
-                        onCheckedChange={async (checked) => {
-                          if (!selectedUser) return;
-                          const { error } = await supabase
-                            .from("user_roles")
-                            .update({ atribuido_manualmente: checked } as any)
-                            .eq("user_id", selectedUser.userId)
-                            .eq("role", "gestor_direto" as any);
-                          if (error) {
-                            toast.error("Erro ao atualizar flag manual");
-                          } else {
-                            queryClient.invalidateQueries({ queryKey: ["admin-user-roles"] });
-                            toast.success(checked ? "Marcado como atribuição manual" : "Marcado como atribuição automática");
-                          }
-                        }}
-                      />
-                      <span className="text-xs text-muted-foreground">Atribuído manualmente (protege contra remoção automática)</span>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Future roles collapsed */}
+            <Collapsible>
+              <CollapsibleTrigger className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors group w-full">
+                <ChevronRight className="h-3.5 w-3.5 transition-transform group-data-[state=open]:rotate-90" />
+                <span>Perfis futuros ({FUTURE_ROLES.length})</span>
+                <span className="flex-1 border-t border-dashed border-border ml-2" />
+              </CollapsibleTrigger>
+              <CollapsibleContent className="pt-2">
+                <div className="grid grid-cols-2 gap-2">
+                  {FUTURE_ROLES.map((role) => (
+                    <div
+                      key={role}
+                      className="rounded-lg border border-dashed border-border p-3 opacity-50"
+                    >
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-sm font-medium">{ROLE_LABELS[role]}</span>
+                        <Badge variant="outline" className="text-[9px] border-dashed px-1.5 py-0">Em breve</Badge>
+                      </div>
+                      <p className="text-[11px] text-muted-foreground mt-1 leading-snug line-clamp-2">{ROLE_DESCRIPTIONS[role]}</p>
                     </div>
-                  )}
+                  ))}
                 </div>
-              );
-            })}
+              </CollapsibleContent>
+            </Collapsible>
+
+            {/* Tipo de Colaborador */}
+            <div className="rounded-lg border border-border p-3 space-y-2 bg-muted/30">
+              <Label className="text-sm font-medium flex items-center gap-1.5">
+                Tipo de Colaborador
+              </Label>
+              <Select value={selectedColabTipo || "auto"} onValueChange={(v) => setSelectedColabTipo(v === "auto" ? "" : v)}>
+                <SelectTrigger className="bg-background">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="auto">Automático (detectar pelo cadastro)</SelectItem>
+                  <SelectItem value="clt">CLT</SelectItem>
+                  <SelectItem value="pj">PJ</SelectItem>
+                  <SelectItem value="ambos">Ambos (CLT + PJ)</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-[11px] text-muted-foreground">Define quais módulos o usuário terá acesso baseado no tipo de vínculo</p>
+            </div>
           </div>
-          <div className="space-y-2 pt-2">
-            <Label className="text-sm font-medium">Tipo de Colaborador</Label>
-            <Select value={selectedColabTipo || "auto"} onValueChange={(v) => setSelectedColabTipo(v === "auto" ? "" : v)}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="auto">Automático (detectar pelo cadastro)</SelectItem>
-                <SelectItem value="clt">CLT</SelectItem>
-                <SelectItem value="pj">PJ</SelectItem>
-                <SelectItem value="ambos">Ambos (CLT + PJ)</SelectItem>
-              </SelectContent>
-            </Select>
-            <p className="text-xs text-muted-foreground">Define quais módulos o usuário terá acesso</p>
-          </div>
-          <DialogFooter>
+
+          <DialogFooter className="border-t pt-4 mt-2">
             <Button variant="outline" onClick={() => setRolesDialogOpen(false)}>Cancelar</Button>
             <Button
               onClick={() => {
