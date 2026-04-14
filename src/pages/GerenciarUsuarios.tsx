@@ -151,6 +151,31 @@ export default function GerenciarUsuarios() {
     },
   });
 
+  // Fetch linked CLT/PJ to determine user type badges
+  const { data: linkedCLT = [] } = useQuery({
+    queryKey: ["linked-clt-users"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("colaboradores_clt")
+        .select("id, user_id")
+        .not("user_id", "is", null);
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: linkedPJ = [] } = useQuery({
+    queryKey: ["linked-pj-users"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("contratos_pj")
+        .select("id, user_id")
+        .not("user_id", "is", null);
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const createUser = useMutation({
     mutationFn: async () => {
       await callManageUser("create_user_standalone", {
