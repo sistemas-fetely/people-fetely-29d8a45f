@@ -59,6 +59,7 @@ export function NovaVagaDialog({ open, onOpenChange }: Props) {
   const [skillsDesejadas, setSkillsDesejadas] = useState<string[]>([]);
   const [ferramentasIds, setFerramentasIds] = useState<string[]>([]);
   const [ferramentasOutras, setFerramentasOutras] = useState("");
+  const [faixaMin, setFaixaMin] = useState("");
   const [faixaMax, setFaixaMax] = useState("");
 
   const { data: departamentos = [] } = useParametros("departamento");
