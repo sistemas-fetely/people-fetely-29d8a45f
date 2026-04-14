@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useParametros } from "@/hooks/useParametros";
@@ -70,6 +70,31 @@ export function NovaVagaDialog({ open, onOpenChange }: Props) {
   const { data: sistemasParam = [] } = useParametros("sistema");
   const { data: cargos = [] } = useParametros("cargo");
 
+  // PCS faixas salariais
+  const { data: faixasPCS } = useQuery({
+    queryKey: ["pcs-faixas", titulo, tipoContrato],
+    queryFn: async () => {
+      if (!titulo || !tipoContrato || tipoContrato === "ambos") return null;
+      const { data } = await supabase
+        .from("pcs_faixas")
+        .select("*")
+        .eq("cargo", titulo)
+        .eq("tipo", tipoContrato)
+        .eq("ativo", true)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!titulo && !!tipoContrato && tipoContrato !== "ambos",
+  });
+
+  // Auto-fill faixa when PCS data loads
+  useEffect(() => {
+    if (faixasPCS) {
+      setFaixaMin(String(faixasPCS.f1_min ?? ""));
+      setFaixaMax(String(faixasPCS.f1_max ?? ""));
+    }
+  }, [faixasPCS]);
+
   const skillsCatalogo = [...ferramentasParam, ...sistemasParam].map((p) => p.label);
 
   const { data: gestores = [] } = useQuery({
@@ -80,7 +105,6 @@ export function NovaVagaDialog({ open, onOpenChange }: Props) {
         .select("id, full_name, user_id")
         .order("full_name");
       if (error) throw error;
-      // Filter profiles that have gestor_direto or admin_rh roles
       const { data: rolesData } = await supabase
         .from("user_roles")
         .select("user_id, role")
@@ -443,15 +467,43 @@ export function NovaVagaDialog({ open, onOpenChange }: Props) {
 
             {/* Faixa salarial — only for super_admin and admin_rh */}
             {canSeeFaixa && (
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Faixa salarial mín.</Label>
-                  <Input type="number" value={faixaMin} onChange={(e) => setFaixaMin(e.target.value)} placeholder="R$" />
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Faixa salarial mín.</Label>
+                    <Input type="number" value={faixaMin} onChange={(e) => setFaixaMin(e.target.value)} placeholder="R$" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Faixa salarial máx.</Label>
+                    <Input type="number" value={faixaMax} onChange={(e) => setFaixaMax(e.target.value)} placeholder="R$" />
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label>Faixa salarial máx.</Label>
-                  <Input type="number" value={faixaMax} onChange={(e) => setFaixaMax(e.target.value)} placeholder="R$" />
-                </div>
+
+                {faixasPCS ? (
+                  <div className="border rounded-md p-3 bg-muted/30 space-y-1">
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">Tabela PCS — {titulo} ({tipoContrato.toUpperCase()})</p>
+                    {[
+                      { key: "F1", label: "Entrada", min: faixasPCS.f1_min, max: faixasPCS.f1_max },
+                      { key: "F2", label: "Desenvolvimento", min: faixasPCS.f2_min, max: faixasPCS.f2_max },
+                      { key: "F3", label: "Pleno", min: faixasPCS.f3_min, max: faixasPCS.f3_max },
+                      { key: "F4", label: "Sênior", min: faixasPCS.f4_min, max: faixasPCS.f4_max },
+                      { key: "F5", label: "Referência", min: faixasPCS.f5_min, max: faixasPCS.f5_max },
+                    ].map((f) => (
+                      <div key={f.key} className="flex items-center text-xs gap-2">
+                        <span className="font-semibold w-8">{f.key}</span>
+                        <span className="text-muted-foreground w-28">· {f.label}</span>
+                        <span>R$ {Number(f.min).toLocaleString("pt-BR")} – R$ {Number(f.max).toLocaleString("pt-BR")}</span>
+                      </div>
+                    ))}
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Pré-preenchido com F1 (entrada recomendada). Edite se necessário.
+                    </p>
+                  </div>
+                ) : titulo && tipoContrato && tipoContrato !== "ambos" ? (
+                  <p className="text-xs text-muted-foreground">
+                    Cargo sem faixa no PPR. Preencha manualmente.
+                  </p>
+                ) : null}
               </div>
             )}
 
