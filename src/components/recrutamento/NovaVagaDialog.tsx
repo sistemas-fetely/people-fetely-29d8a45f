@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useParametros } from "@/hooks/useParametros";
+import { useCargos, type Cargo } from "@/hooks/useCargos";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
