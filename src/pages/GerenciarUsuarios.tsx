@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -76,6 +77,9 @@ async function callManageUser(action: string, payload: Record<string, unknown>) 
 
 export default function GerenciarUsuarios() {
   const navigate = useNavigate();
+  const { roles: myRoles } = useAuth();
+  const isSuperAdmin = myRoles.includes("super_admin");
+  const isAdminRH = myRoles.includes("admin_rh");
   const queryClient = useQueryClient();
   const [createOpen, setCreateOpen] = useState(false);
   const [rolesDialogOpen, setRolesDialogOpen] = useState(false);
@@ -242,6 +246,14 @@ export default function GerenciarUsuarios() {
     authUsers.find((u: { id: string }) => u.id === userId);
 
   const openRolesDialog = (userId: string, name: string) => {
+    // admin_rh cannot edit super_admin or other admin_rh users
+    if (!isSuperAdmin) {
+      const targetRoles = getUserRoles(userId);
+      if (targetRoles.includes("super_admin") || targetRoles.includes("admin_rh")) {
+        toast.error("Sem permissão para editar este usuário");
+        return;
+      }
+    }
     setSelectedUser({ userId, name });
     setSelectedRoles(getUserRoles(userId));
     const profile = profiles.find((p) => p.user_id === userId);
@@ -572,15 +584,17 @@ export default function GerenciarUsuarios() {
                                 Inativar
                               </Button>
                             )}
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="text-destructive hover:text-destructive gap-1"
-                              onClick={() => setDeleteConfirm({ userId: profile.user_id, name: profile.full_name || "Usuário" })}
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                              Deletar
-                            </Button>
+                            {isSuperAdmin && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="text-destructive hover:text-destructive gap-1"
+                                onClick={() => setDeleteConfirm({ userId: profile.user_id, name: profile.full_name || "Usuário" })}
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                                Deletar
+                              </Button>
+                            )}
                           </div>
                         </TableCell>
                       </TableRow>
