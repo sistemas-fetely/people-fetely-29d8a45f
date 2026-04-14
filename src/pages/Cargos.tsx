@@ -19,7 +19,7 @@ import {
   Sheet, SheetContent, SheetHeader, SheetTitle,
 } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Lock, Plus, Search, Trash2, Save, Loader2, X } from "lucide-react";
+import { Lock, Plus, Search, Trash2, Save, Loader2, X, Pencil } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const nivelLabels: Record<string, string> = {
@@ -353,6 +353,7 @@ export default function Cargos() {
               <TableHead className="text-right">Faixa F1 (PJ)</TableHead>
               <TableHead className="text-center">C-Level</TableHead>
               <TableHead className="text-center">Status</TableHead>
+              <TableHead className="w-12"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -401,6 +402,11 @@ export default function Cargos() {
                     <Badge variant={cargo.ativo ? "default" : "secondary"} className="text-[10px]">
                       {cargo.ativo ? "Ativo" : "Inativo"}
                     </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); navigate(`/cargos/${cargo.id}`); }}>
+                      <Pencil className="h-4 w-4" />
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))
