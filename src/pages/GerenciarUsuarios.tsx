@@ -647,19 +647,23 @@ export default function GerenciarUsuarios() {
                               Perfis
                             </Button>
                             <Button
-                              size="sm"
-                              variant="outline"
-                              className="gap-1"
-                              onClick={() => {
-                                setLinkUser({ userId: profile.user_id, name: profile.full_name || "Usuário" });
-                                setLinkColaboradorId("");
-                                setLinkContratoPjId("");
-                                setLinkDialogOpen(true);
-                              }}
-                            >
-                              <Link2 className="h-3.5 w-3.5" />
-                              Vincular
-                            </Button>
+                               size="sm"
+                               variant="outline"
+                               className={`gap-1 ${
+                                 getUserLink(profile.user_id)
+                                   ? "border-emerald-500 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700"
+                                   : "text-muted-foreground hover:text-foreground"
+                               }`}
+                               onClick={() => {
+                                 setLinkUser({ userId: profile.user_id, name: profile.full_name || "Usuário" });
+                                 setLinkColaboradorId("");
+                                 setLinkContratoPjId("");
+                                 setLinkDialogOpen(true);
+                               }}
+                             >
+                               <Link2 className="h-3.5 w-3.5" />
+                               {getUserLink(profile.user_id) ? "Vinculado" : "Vincular"}
+                             </Button>
                             {isBanned ? (
                               <Button
                                 size="sm"
