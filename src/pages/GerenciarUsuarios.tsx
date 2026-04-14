@@ -337,13 +337,15 @@ export default function GerenciarUsuarios() {
                 <Label>Perfis de Acesso</Label>
                 <div className="grid grid-cols-1 gap-2">
                   {ALL_ROLES.map((role) => (
-                    <label key={role} className="flex items-center gap-2 rounded-md border p-2 cursor-pointer hover:bg-muted/50">
+                    <label key={role} className={`flex items-center gap-2 rounded-md border p-2 cursor-pointer hover:bg-muted/50 ${isFutureRole(role) ? "border-dashed opacity-60" : ""}`}>
                       <Checkbox
                         checked={newUser.roles.includes(role)}
                         onCheckedChange={() => toggleNewUserRole(role)}
+                        disabled={isFutureRole(role)}
                       />
-                      <div>
+                      <div className="flex-1">
                         <span className="text-sm font-medium">{ROLE_LABELS[role]}</span>
+                        {isFutureRole(role) && <Badge variant="outline" className="ml-2 text-[10px] border-dashed">Em breve</Badge>}
                         <p className="text-xs text-muted-foreground">{ROLE_DESCRIPTIONS[role]}</p>
                       </div>
                     </label>
@@ -610,11 +612,12 @@ export default function GerenciarUsuarios() {
                 getUserRoles(p.user_id).includes(role)
               );
               return (
-                <Card key={role} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate("/configurar-perfis")}>
+                <Card key={role} className={`cursor-pointer hover:shadow-md transition-shadow ${isFutureRole(role) ? "border-dashed opacity-60" : ""}`} onClick={() => navigate("/configurar-perfis")}>
                   <CardHeader className="pb-3">
                     <div className="flex items-center gap-2">
                       <ShieldCheck className="h-5 w-5 text-foreground" />
                       <CardTitle className="text-base">{ROLE_LABELS[role]}</CardTitle>
+                      {isFutureRole(role) && <Badge variant="outline" className="text-[10px] border-dashed">Em breve</Badge>}
                     </div>
                     <p className="text-xs text-muted-foreground">{ROLE_DESCRIPTIONS[role]}</p>
                   </CardHeader>
@@ -667,14 +670,16 @@ export default function GerenciarUsuarios() {
               const isAutoAssigned = isGestorDireto && selectedRoles.includes(role) && !isManual;
 
               return (
-                <div key={role} className="rounded-md border p-3 space-y-2">
+                <div key={role} className={`rounded-md border p-3 space-y-2 ${isFutureRole(role) ? "border-dashed opacity-60" : ""}`}>
                   <label className="flex items-center gap-2 cursor-pointer hover:bg-muted/50">
                     <Checkbox
                       checked={selectedRoles.includes(role)}
                       onCheckedChange={() => toggleRole(role)}
+                      disabled={isFutureRole(role)}
                     />
                     <div className="flex-1">
                       <span className="text-sm font-medium">{ROLE_LABELS[role]}</span>
+                      {isFutureRole(role) && <Badge variant="outline" className="ml-2 text-[10px] border-dashed">Em breve</Badge>}
                       <p className="text-xs text-muted-foreground">{ROLE_DESCRIPTIONS[role]}</p>
                     </div>
                     {isGestorDireto && selectedRoles.includes(role) && (
