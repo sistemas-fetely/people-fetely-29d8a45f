@@ -18,8 +18,9 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   ArrowLeft, ChevronDown, Copy, Globe, MoreHorizontal, Plus, Loader2,
-  GripVertical, UserPlus, ArrowRight, XCircle
+  GripVertical, UserPlus, ArrowRight, XCircle, User
 } from "lucide-react";
+import { CandidatoDrawer } from "@/components/recrutamento/CandidatoDrawer";
 
 const statusConfig: Record<string, { label: string; className: string }> = {
   rascunho: { label: "Rascunho", className: "bg-muted text-muted-foreground" },
