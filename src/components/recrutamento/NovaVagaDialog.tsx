@@ -460,31 +460,37 @@ export function NovaVagaDialog({ open, onOpenChange }: Props) {
                   </div>
                 </div>
 
-                {faixasPCS ? (
-                  <div className="border rounded-md p-3 bg-muted/30 space-y-1">
-                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">Tabela PCS — {titulo} ({tipoContrato.toUpperCase()})</p>
-                    {[
-                      { key: "F1", label: "Entrada", min: faixasPCS.f1_min, max: faixasPCS.f1_max },
-                      { key: "F2", label: "Desenvolvimento", min: faixasPCS.f2_min, max: faixasPCS.f2_max },
-                      { key: "F3", label: "Pleno", min: faixasPCS.f3_min, max: faixasPCS.f3_max },
-                      { key: "F4", label: "Sênior", min: faixasPCS.f4_min, max: faixasPCS.f4_max },
-                      { key: "F5", label: "Referência", min: faixasPCS.f5_min, max: faixasPCS.f5_max },
-                    ].map((f) => (
-                      <div key={f.key} className="flex items-center text-xs gap-2">
-                        <span className="font-semibold w-8">{f.key}</span>
-                        <span className="text-muted-foreground w-28">· {f.label}</span>
-                        <span>R$ {Number(f.min).toLocaleString("pt-BR")} – R$ {Number(f.max).toLocaleString("pt-BR")}</span>
+                {(() => {
+                  const cargoMatch = cargosData.find((c) => c.nome === titulo);
+                  const tipo = tipoContrato === "pj" ? "pj" : "clt";
+                  const hasFaixa = cargoMatch && (cargoMatch as any)[`faixa_${tipo}_f1_min`] != null;
+                  if (hasFaixa) {
+                    return (
+                      <div className="border rounded-md p-3 bg-muted/30 space-y-1">
+                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">Tabela PPR — {titulo} ({tipoContrato.toUpperCase()})</p>
+                        {["F1","F2","F3","F4","F5"].map((fk, i) => {
+                          const labels = ["Entrada","Desenvolvimento","Pleno","Sênior","Referência"];
+                          const min = (cargoMatch as any)[`faixa_${tipo}_${fk.toLowerCase()}_min`];
+                          const max = (cargoMatch as any)[`faixa_${tipo}_${fk.toLowerCase()}_max`];
+                          return (
+                            <div key={fk} className="flex items-center text-xs gap-2">
+                              <span className="font-semibold w-8">{fk}</span>
+                              <span className="text-muted-foreground w-28">· {labels[i]}</span>
+                              <span>R$ {Number(min || 0).toLocaleString("pt-BR")} – R$ {Number(max || 0).toLocaleString("pt-BR")}</span>
+                            </div>
+                          );
+                        })}
+                        <p className="text-xs text-muted-foreground mt-2">
+                          Pré-preenchido com F1 (entrada recomendada). Edite se necessário.
+                        </p>
                       </div>
-                    ))}
-                    <p className="text-xs text-muted-foreground mt-2">
-                      Pré-preenchido com F1 (entrada recomendada). Edite se necessário.
-                    </p>
-                  </div>
-                ) : titulo && tipoContrato && tipoContrato !== "ambos" ? (
-                  <p className="text-xs text-muted-foreground">
-                    Cargo sem faixa no PPR. Preencha manualmente.
-                  </p>
-                ) : null}
+                    );
+                  }
+                  if (titulo && tipoContrato && tipoContrato !== "ambos") {
+                    return <p className="text-xs text-muted-foreground">Cargo sem faixa no PPR. Preencha manualmente.</p>;
+                  }
+                  return null;
+                })()}
               </div>
             )}
 
