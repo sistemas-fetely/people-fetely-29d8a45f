@@ -1,0 +1,6 @@
+ALTER TABLE public.cargos
+ADD COLUMN IF NOT EXISTS missao TEXT,
+ADD COLUMN IF NOT EXISTS responsabilidades TEXT[] DEFAULT '{}',
+ADD COLUMN IF NOT EXISTS skills_obrigatorias TEXT[] DEFAULT '{}',
+ADD COLUMN IF NOT EXISTS skills_desejadas TEXT[] DEFAULT '{}',
+ADD COLUMN IF NOT EXISTS ferramentas TEXT[] DEFAULT '{}';

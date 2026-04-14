@@ -394,11 +394,16 @@ export type Database = {
           faixa_pj_f4_min: number | null
           faixa_pj_f5_max: number | null
           faixa_pj_f5_min: number | null
+          ferramentas: string[] | null
           id: string
           is_clevel: boolean | null
+          missao: string | null
           nivel: string
           nome: string
           protege_salario: boolean | null
+          responsabilidades: string[] | null
+          skills_desejadas: string[] | null
+          skills_obrigatorias: string[] | null
           tipo_contrato: string
           updated_at: string | null
         }
@@ -426,11 +431,16 @@ export type Database = {
           faixa_pj_f4_min?: number | null
           faixa_pj_f5_max?: number | null
           faixa_pj_f5_min?: number | null
+          ferramentas?: string[] | null
           id?: string
           is_clevel?: boolean | null
+          missao?: string | null
           nivel: string
           nome: string
           protege_salario?: boolean | null
+          responsabilidades?: string[] | null
+          skills_desejadas?: string[] | null
+          skills_obrigatorias?: string[] | null
           tipo_contrato?: string
           updated_at?: string | null
         }
@@ -458,11 +468,16 @@ export type Database = {
           faixa_pj_f4_min?: number | null
           faixa_pj_f5_max?: number | null
           faixa_pj_f5_min?: number | null
+          ferramentas?: string[] | null
           id?: string
           is_clevel?: boolean | null
+          missao?: string | null
           nivel?: string
           nome?: string
           protege_salario?: boolean | null
+          responsabilidades?: string[] | null
+          skills_desejadas?: string[] | null
+          skills_obrigatorias?: string[] | null
           tipo_contrato?: string
           updated_at?: string | null
         }
