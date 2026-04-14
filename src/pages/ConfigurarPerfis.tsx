@@ -51,6 +51,16 @@ interface CustomRole {
   is_system: boolean;
 }
 
+const FUTURE_ROLES = ["admin_ti", "recrutador", "fiscal", "operacional"];
+const FUTURE_ROLE_MODULES: Record<string, string> = {
+  admin_ti: "Módulo TI",
+  recrutador: "Módulo Recrutamento",
+  fiscal: "Integração ERP",
+  operacional: "Unidade Fabril",
+};
+
+const isFutureRole = (name: string) => FUTURE_ROLES.includes(name);
+
 export default function ConfigurarPerfis() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
