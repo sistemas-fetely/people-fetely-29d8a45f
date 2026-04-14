@@ -27,7 +27,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import {
   CheckCircle2, XCircle, UserCheck, UserX, Users, UserPlus,
-  Shield, ShieldCheck, ShieldAlert, Pencil, Trash2, Settings2, Link2, LinkIcon, Unlink,
+  Shield, ShieldCheck, ShieldAlert, Pencil, Trash2, Link2, LinkIcon, Unlink,
   ChevronDown, ChevronRight,
 } from "lucide-react";
 import { toast } from "sonner";
