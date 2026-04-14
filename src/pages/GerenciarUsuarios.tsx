@@ -262,6 +262,10 @@ export default function GerenciarUsuarios() {
   };
 
   const toggleRole = (role: AppRole) => {
+    if (!isSuperAdmin && role === "super_admin") {
+      toast.error("Apenas Super Admin pode atribuir este role");
+      return;
+    }
     setSelectedRoles((prev) =>
       prev.includes(role) ? prev.filter((r) => r !== role) : [...prev, role]
     );
