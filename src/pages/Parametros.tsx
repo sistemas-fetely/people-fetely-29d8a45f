@@ -3,7 +3,7 @@ import { useAllParametros } from "@/hooks/useParametros";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { usePermissions } from "@/hooks/usePermissions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,7 +22,7 @@ import {
 import {
   Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Plus, Pencil, Trash2, Loader2, Monitor, Package, Settings2, FileText, Search, Briefcase } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, Monitor, Package, Settings2, FileText, Search } from "lucide-react";
 import type { Parametro } from "@/hooks/useParametros";
 
 interface CategoriaConfig {
@@ -192,7 +192,6 @@ export default function Parametros() {
   const [searchParams, setSearchParams] = useSearchParams();
   const modulo = searchParams.get("modulo") || "geral";
   const { isSuperAdmin } = usePermissions();
-  const navigate = useNavigate();
 
   const { data: allParams, isLoading } = useAllParametros();
   const { data: usageData } = useParametroUsage();
