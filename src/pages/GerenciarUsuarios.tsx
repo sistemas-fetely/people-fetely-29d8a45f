@@ -526,7 +526,10 @@ export default function GerenciarUsuarios() {
       <Tabs defaultValue="usuarios">
         <TabsList>
           <TabsTrigger value="usuarios" className="gap-2"><Users className="h-4 w-4" /> Usuários</TabsTrigger>
-          <TabsTrigger value="perfis" className="gap-2"><Shield className="h-4 w-4" /> Perfis de Acesso</TabsTrigger>
+          <TabsTrigger value="grupos" className="gap-2"><ShieldCheck className="h-4 w-4" /> Grupos de Acesso</TabsTrigger>
+          {isSuperAdmin && (
+            <TabsTrigger value="perfis" className="gap-2"><Shield className="h-4 w-4" /> Configurar Perfis</TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="usuarios" className="mt-4">
