@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useAllParametros } from "@/hooks/useParametros";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import { usePermissions } from "@/hooks/usePermissions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,9 +19,11 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
-import { Plus, Pencil, Trash2, Loader2, Monitor, Package, Settings2, FileText, ShieldCheck } from "lucide-react";
+import {
+  Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Plus, Pencil, Trash2, Loader2, Monitor, Package, Settings2, FileText, Search } from "lucide-react";
 import type { Parametro } from "@/hooks/useParametros";
-import GruposAcessoTab from "@/components/grupos-acesso/GruposAcessoTab";
 
 interface CategoriaConfig {
   value: string;
@@ -52,13 +54,47 @@ const CATEGORIAS_PJ: CategoriaConfig[] = [
   { value: "forma_pagamento", label: "Formas de Pagamento", icon: Settings2, description: "Formas de pagamento para prestadores PJ" },
 ];
 
-const MODULO_MAP: Record<string, { title: string; categorias: CategoriaConfig[] }> = {
-  geral: { title: "Parâmetros Gerais", categorias: CATEGORIAS_GERAL },
-  clt: { title: "Parâmetros CLT", categorias: CATEGORIAS_CLT },
-  pj: { title: "Parâmetros PJ", categorias: CATEGORIAS_PJ },
-  grupos_acesso: { title: "Grupos de Acesso", categorias: [] },
+// NOVAS ABAS: adicionar aqui conforme novos módulos forem ativados
+// Exemplos futuros: Financeiro, Benefícios, Recrutamento, Operacional
+
+const MODULO_MAP: Record<string, { label: string; categorias: CategoriaConfig[] }> = {
+  geral: { label: "Geral", categorias: CATEGORIAS_GERAL },
+  clt: { label: "CLT", categorias: CATEGORIAS_CLT },
+  pj: { label: "PJ", categorias: CATEGORIAS_PJ },
 };
 
+/* ── Usage counts hook ── */
+function useParametroUsage() {
+  return useQuery({
+    queryKey: ["parametro-usage"],
+    queryFn: async () => {
+      const [cltRes, pjRes] = await Promise.all([
+        supabase.from("colaboradores_clt").select("cargo, departamento", { count: "exact" }),
+        supabase.from("contratos_pj").select("tipo_servico, departamento", { count: "exact" }),
+      ]);
+
+      const usage: Record<string, Record<string, number>> = {
+        cargo: {},
+        departamento: {},
+        tipo_servico: {},
+      };
+
+      (cltRes.data || []).forEach((c) => {
+        if (c.cargo) usage.cargo[c.cargo] = (usage.cargo[c.cargo] || 0) + 1;
+        if (c.departamento) usage.departamento[c.departamento] = (usage.departamento[c.departamento] || 0) + 1;
+      });
+      (pjRes.data || []).forEach((c) => {
+        if (c.tipo_servico) usage.tipo_servico[c.tipo_servico] = (usage.tipo_servico[c.tipo_servico] || 0) + 1;
+        if (c.departamento) usage.departamento[c.departamento] = (usage.departamento[c.departamento] || 0) + 1;
+      });
+
+      return usage;
+    },
+    staleTime: 30_000,
+  });
+}
+
+/* ── Form dialog ── */
 function ParametroForm({
   open, onClose, parametro, categoria,
 }: {
@@ -94,6 +130,7 @@ function ParametroForm({
         toast.success("Parâmetro adicionado!");
       }
       queryClient.invalidateQueries({ queryKey: ["parametros"] });
+      queryClient.invalidateQueries({ queryKey: ["parametro-usage"] });
       onClose();
     } catch (err: any) {
       toast.error(err.message || "Erro ao salvar");
@@ -139,21 +176,43 @@ function ParametroForm({
   );
 }
 
+/* ── Usage badge component ── */
+function UsageBadge({ count }: { count: number | undefined }) {
+  if (count === undefined) return null;
+  if (count === 0) {
+    return <Badge variant="destructive" className="text-[10px]">Sem uso</Badge>;
+  }
+  return (
+    <Badge variant="secondary" className="text-[10px]">
+      {count} {count === 1 ? "colaborador" : "colaboradores"}
+    </Badge>
+  );
+}
+
+/* ── Main page ── */
 export default function Parametros() {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const modulo = searchParams.get("modulo") || "geral";
-  const config = MODULO_MAP[modulo] || MODULO_MAP.geral;
-  const CATEGORIAS = config.categorias;
   const { isSuperAdmin } = usePermissions();
 
   const { data: allParams, isLoading } = useAllParametros();
+  const { data: usageData } = useParametroUsage();
   const queryClient = useQueryClient();
   const [editParam, setEditParam] = useState<Parametro | null>(null);
   const [formOpen, setFormOpen] = useState(false);
-  const [formCategoria, setFormCategoria] = useState(CATEGORIAS[0]?.value || "");
+  const [formCategoria, setFormCategoria] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<Parametro | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [clevelConfirm, setClevelConfirm] = useState<{ param: Parametro; enabling: boolean } | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const handleModuloChange = (value: string) => {
+    setSearchParams({ modulo: value });
+    setSearchTerm("");
+  };
+
+  const config = MODULO_MAP[modulo] || MODULO_MAP.geral;
+  const CATEGORIAS = config.categorias;
 
   const handleToggleAtivo = async (param: Parametro) => {
     const { error } = await supabase
@@ -185,6 +244,13 @@ export default function Parametros() {
     setClevelConfirm(null);
   };
 
+  const getUsageCount = (param: Parametro): number | undefined => {
+    if (!usageData) return undefined;
+    const catUsage = usageData[param.categoria];
+    if (!catUsage) return undefined;
+    return catUsage[param.valor] || 0;
+  };
+
   const handleDelete = async () => {
     if (!deleteTarget) return;
     setDeleting(true);
@@ -208,134 +274,185 @@ export default function Parametros() {
     setFormOpen(true);
   };
 
-  const grouped = CATEGORIAS.map((cat) => ({
-    ...cat,
-    items: (allParams || []).filter((p) => p.categoria === cat.value),
-  }));
-
-  if (modulo === "grupos_acesso") {
-    return (
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Grupos de Acesso</h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            Define automaticamente o perfil de cada colaborador no portal
-          </p>
-        </div>
-        <GruposAcessoTab />
-      </div>
-    );
-  }
+  const grouped = useMemo(() => {
+    const lowerSearch = searchTerm.toLowerCase();
+    return CATEGORIAS.map((cat) => {
+      const allItems = (allParams || []).filter((p) => p.categoria === cat.value);
+      const filteredItems = lowerSearch
+        ? allItems.filter((p) => p.label.toLowerCase().includes(lowerSearch))
+        : allItems;
+      return { ...cat, items: filteredItems, totalCount: allItems.length };
+    });
+  }, [CATEGORIAS, allParams, searchTerm]);
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">{config.title}</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Parâmetros</h1>
         <p className="text-muted-foreground text-sm mt-1">
           Gerencie as opções disponíveis nas listas de cadastro
         </p>
       </div>
 
-      {isLoading ? (
-        <div className="flex justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      ) : (
-        <Tabs defaultValue={CATEGORIAS[0]?.value}>
-          <TabsList className="flex-wrap h-auto">
-            {CATEGORIAS.map((cat) => (
-              <TabsTrigger key={cat.value} value={cat.value} className="gap-2">
-                <cat.icon className="h-4 w-4" />
-                {cat.label}
-              </TabsTrigger>
-            ))}
-          </TabsList>
+      {/* Top-level module tabs */}
+      <Tabs value={modulo} onValueChange={handleModuloChange}>
+        <TabsList>
+          {Object.entries(MODULO_MAP).map(([key, val]) => (
+            <TabsTrigger key={key} value={key}>{val.label}</TabsTrigger>
+          ))}
+        </TabsList>
 
-          {grouped.map((cat) => {
-            const isCargos = cat.value === "cargo";
-            return (
-              <TabsContent key={cat.value} value={cat.value}>
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between pb-2">
-                    <div>
-                      <CardTitle className="text-lg">{cat.label}</CardTitle>
-                      <p className="text-sm text-muted-foreground">{cat.description}</p>
-                    </div>
-                    <Button onClick={() => openNew(cat.value)} className="gap-2" size="sm">
-                      <Plus className="h-4 w-4" /> Adicionar
-                    </Button>
-                  </CardHeader>
-                  <CardContent>
-                    {cat.items.length === 0 ? (
-                      <p className="text-sm text-muted-foreground text-center py-8">
-                        Nenhum parâmetro cadastrado nesta categoria.
-                      </p>
-                    ) : (
-                      <div className="space-y-2">
-                        {cat.items.map((param) => (
-                          <div
-                            key={param.id}
-                            className="flex items-center justify-between border rounded-lg p-3 hover:bg-muted/50 transition-colors"
-                          >
-                            <div className="flex items-center gap-3 flex-1 min-w-0">
-                              <Switch
-                                checked={param.ativo}
-                                onCheckedChange={() => handleToggleAtivo(param)}
-                              />
-                              <div className="min-w-0">
-                                <div className="flex items-center gap-2 flex-wrap">
-                                  <span className="font-medium text-sm">{param.label}</span>
-                                  <Badge variant="outline" className="text-[10px] font-mono">
-                                    {param.valor}
-                                  </Badge>
-                                  {!param.ativo && (
-                                    <Badge variant="secondary" className="text-[10px]">Inativo</Badge>
-                                  )}
-                                  {isCargos && param.is_clevel && (
-                                    <span className="bg-red-100 text-red-700 text-xs font-medium px-2 py-0.5 rounded-full">
-                                      C-Level 🔒
-                                    </span>
-                                  )}
-                                </div>
-                                {param.descricao && (
-                                  <p className="text-xs text-muted-foreground truncate">{param.descricao}</p>
-                                )}
+        {Object.entries(MODULO_MAP).map(([key]) => (
+          <TabsContent key={key} value={key}>
+            {isLoading ? (
+              <div className="flex justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {/* Search */}
+                <div className="relative max-w-md">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder={`Buscar em ${config.label}...`}
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-9"
+                  />
+                </div>
+
+                {/* Sub-tabs (categories) */}
+                <Tabs defaultValue={CATEGORIAS[0]?.value}>
+                  <TabsList className="flex-wrap h-auto">
+                    {grouped.map((cat) => (
+                      <TabsTrigger key={cat.value} value={cat.value} className="gap-2">
+                        <cat.icon className="h-4 w-4" />
+                        {cat.label}
+                        <Badge variant="secondary" className="text-[10px] ml-1 px-1.5 py-0">
+                          {cat.totalCount}
+                        </Badge>
+                      </TabsTrigger>
+                    ))}
+                  </TabsList>
+
+                  {grouped.map((cat) => {
+                    const isCargos = cat.value === "cargo";
+                    return (
+                      <TabsContent key={cat.value} value={cat.value}>
+                        <Card>
+                          <CardHeader className="flex flex-row items-center justify-between pb-2">
+                            <div>
+                              <CardTitle className="text-lg">{cat.label}</CardTitle>
+                              <p className="text-sm text-muted-foreground">{cat.description}</p>
+                            </div>
+                            <Button onClick={() => openNew(cat.value)} className="gap-2" size="sm">
+                              <Plus className="h-4 w-4" /> Adicionar
+                            </Button>
+                          </CardHeader>
+                          <CardContent>
+                            {cat.items.length === 0 ? (
+                              <p className="text-sm text-muted-foreground text-center py-8">
+                                {searchTerm
+                                  ? `Nenhum parâmetro encontrado para "${searchTerm}"`
+                                  : "Nenhum parâmetro cadastrado nesta categoria."}
+                              </p>
+                            ) : (
+                              <div className="space-y-2">
+                                <TooltipProvider>
+                                  {cat.items.map((param) => {
+                                    const usageCount = getUsageCount(param);
+                                    const isInUse = usageCount !== undefined && usageCount > 0;
+                                    return (
+                                      <div
+                                        key={param.id}
+                                        className="flex items-center justify-between border rounded-lg p-3 hover:bg-muted/50 transition-colors"
+                                      >
+                                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                                          <Switch
+                                            checked={param.ativo}
+                                            onCheckedChange={() => handleToggleAtivo(param)}
+                                          />
+                                          <div className="min-w-0">
+                                            <div className="flex items-center gap-2 flex-wrap">
+                                              <span className="font-medium text-sm">{param.label}</span>
+                                              <Badge variant="outline" className="text-[10px] font-mono">
+                                                {param.valor}
+                                              </Badge>
+                                              {!param.ativo && (
+                                                <Badge variant="secondary" className="text-[10px]">Inativo</Badge>
+                                              )}
+                                              {isCargos && param.is_clevel && (
+                                                <span className="bg-red-100 text-red-700 text-xs font-medium px-2 py-0.5 rounded-full">
+                                                  C-Level 🔒
+                                                </span>
+                                              )}
+                                              <UsageBadge count={usageCount} />
+                                            </div>
+                                            {param.descricao && (
+                                              <p className="text-xs text-muted-foreground truncate">{param.descricao}</p>
+                                            )}
+                                          </div>
+                                        </div>
+                                        <div className="flex items-center gap-2 ml-2">
+                                          {isCargos && isSuperAdmin && (
+                                            <div className="flex items-center gap-1.5" title="C-Level">
+                                              <span className="text-[10px] text-muted-foreground hidden sm:inline">C-Level</span>
+                                              <Switch
+                                                checked={param.is_clevel}
+                                                onCheckedChange={() => handleToggleCLevel(param)}
+                                                className="data-[state=checked]:bg-orange-500"
+                                              />
+                                            </div>
+                                          )}
+                                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(param)}>
+                                            <Pencil className="h-3.5 w-3.5" />
+                                          </Button>
+                                          {isInUse ? (
+                                            <Tooltip>
+                                              <TooltipTrigger asChild>
+                                                <span>
+                                                  <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-8 w-8 text-muted-foreground cursor-not-allowed opacity-50"
+                                                    disabled
+                                                  >
+                                                    <Trash2 className="h-3.5 w-3.5" />
+                                                  </Button>
+                                                </span>
+                                              </TooltipTrigger>
+                                              <TooltipContent>
+                                                Este parâmetro está em uso e não pode ser excluído
+                                              </TooltipContent>
+                                            </Tooltip>
+                                          ) : (
+                                            <Button
+                                              variant="ghost"
+                                              size="icon"
+                                              className="h-8 w-8 text-destructive hover:text-destructive"
+                                              onClick={() => setDeleteTarget(param)}
+                                            >
+                                              <Trash2 className="h-3.5 w-3.5" />
+                                            </Button>
+                                          )}
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </TooltipProvider>
                               </div>
-                            </div>
-                            <div className="flex items-center gap-2 ml-2">
-                              {isCargos && isSuperAdmin && (
-                                <div className="flex items-center gap-1.5" title="C-Level">
-                                  <span className="text-[10px] text-muted-foreground hidden sm:inline">C-Level</span>
-                                  <Switch
-                                    checked={param.is_clevel}
-                                    onCheckedChange={() => handleToggleCLevel(param)}
-                                    className="data-[state=checked]:bg-orange-500"
-                                  />
-                                </div>
-                              )}
-                              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(param)}>
-                                <Pencil className="h-3.5 w-3.5" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 text-destructive hover:text-destructive"
-                                onClick={() => setDeleteTarget(param)}
-                              >
-                                <Trash2 className="h-3.5 w-3.5" />
-                              </Button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            );
-          })}
-        </Tabs>
-      )}
+                            )}
+                          </CardContent>
+                        </Card>
+                      </TabsContent>
+                    );
+                  })}
+                </Tabs>
+              </div>
+            )}
+          </TabsContent>
+        ))}
+      </Tabs>
 
       {formOpen && (
         <ParametroForm
@@ -363,7 +480,6 @@ export default function Parametros() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* C-Level confirmation dialog */}
       <AlertDialog open={!!clevelConfirm} onOpenChange={() => setClevelConfirm(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
