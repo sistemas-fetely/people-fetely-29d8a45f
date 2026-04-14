@@ -442,7 +442,6 @@ export default function Parametros() {
                             )}
                           </CardContent>
                         </Card>
-                        )}
                       </TabsContent>
                     );
                   })}
