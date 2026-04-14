@@ -205,6 +205,111 @@ export type Database = {
           },
         ]
       }
+      candidato_avaliacoes: {
+        Row: {
+          avaliador_id: string
+          candidato_id: string
+          comentario: string | null
+          created_at: string
+          id: string
+          score: number
+          skill: string
+        }
+        Insert: {
+          avaliador_id: string
+          candidato_id: string
+          comentario?: string | null
+          created_at?: string
+          id?: string
+          score: number
+          skill: string
+        }
+        Update: {
+          avaliador_id?: string
+          candidato_id?: string
+          comentario?: string | null
+          created_at?: string
+          id?: string
+          score?: number
+          skill?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "candidato_avaliacoes_candidato_id_fkey"
+            columns: ["candidato_id"]
+            isOneToOne: false
+            referencedRelation: "candidatos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      candidato_historico: {
+        Row: {
+          candidato_id: string
+          created_at: string
+          id: string
+          responsavel_id: string | null
+          status_anterior: string | null
+          status_novo: string
+        }
+        Insert: {
+          candidato_id: string
+          created_at?: string
+          id?: string
+          responsavel_id?: string | null
+          status_anterior?: string | null
+          status_novo: string
+        }
+        Update: {
+          candidato_id?: string
+          created_at?: string
+          id?: string
+          responsavel_id?: string | null
+          status_anterior?: string | null
+          status_novo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "candidato_historico_candidato_id_fkey"
+            columns: ["candidato_id"]
+            isOneToOne: false
+            referencedRelation: "candidatos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      candidato_notas: {
+        Row: {
+          autor_id: string
+          candidato_id: string
+          conteudo: string
+          created_at: string
+          id: string
+        }
+        Insert: {
+          autor_id: string
+          candidato_id: string
+          conteudo: string
+          created_at?: string
+          id?: string
+        }
+        Update: {
+          autor_id?: string
+          candidato_id?: string
+          conteudo?: string
+          created_at?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "candidato_notas_candidato_id_fkey"
+            columns: ["candidato_id"]
+            isOneToOne: false
+            referencedRelation: "candidatos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       candidatos: {
         Row: {
           consentimento_lgpd: boolean | null
