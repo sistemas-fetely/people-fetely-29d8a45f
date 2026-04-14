@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import GruposAcessoTab from "@/components/grupos-acesso/GruposAcessoTab";
 import ConfigurarPerfisTab from "@/components/configurar-perfis/ConfigurarPerfisTab";
 import { supabase } from "@/integrations/supabase/client";
@@ -82,6 +82,11 @@ async function callManageUser(action: string, payload: Record<string, unknown>) 
 
 export default function GerenciarUsuarios() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get("tab") || "usuarios";
+  const handleTabChange = (value: string) => {
+    setSearchParams(value === "usuarios" ? {} : { tab: value }, { replace: true });
+  };
   const { roles: myRoles } = useAuth();
   const isSuperAdmin = myRoles.includes("super_admin");
   const isAdminRH = myRoles.includes("admin_rh");
@@ -523,7 +528,7 @@ export default function GerenciarUsuarios() {
         </Card>
       </div>
 
-      <Tabs defaultValue="usuarios">
+      <Tabs value={activeTab} onValueChange={handleTabChange}>
         <TabsList>
           <TabsTrigger value="usuarios" className="gap-2"><Users className="h-4 w-4" /> Usuários</TabsTrigger>
           <TabsTrigger value="grupos" className="gap-2"><ShieldCheck className="h-4 w-4" /> Grupos de Acesso</TabsTrigger>
