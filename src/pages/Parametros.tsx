@@ -338,8 +338,23 @@ export default function Parametros() {
 
                   {grouped.map((cat) => {
                     const isCargos = cat.value === "cargo";
+                    const isTipoServico = cat.value === "tipo_servico";
+                    const isRedirectedToCargos = isCargos || isTipoServico;
                     return (
                       <TabsContent key={cat.value} value={cat.value}>
+                        {isRedirectedToCargos ? (
+                          <div className="rounded-lg border border-border p-6 bg-muted/30 text-center">
+                            <Briefcase className="mx-auto mb-3 h-8 w-8 text-muted-foreground" />
+                            <h3 className="font-medium mb-1">Cargos e Salários</h3>
+                            <p className="text-sm text-muted-foreground mb-4">
+                              Os cargos agora são gerenciados com faixas salariais integradas
+                              no Plano de Posições e Remuneração.
+                            </p>
+                            <Button variant="outline" size="sm" onClick={() => navigate('/cargos')}>
+                              Ir para Cargos e Salários →
+                            </Button>
+                          </div>
+                        ) : (
                         <Card>
                           <CardHeader className="flex flex-row items-center justify-between pb-2">
                             <div>
