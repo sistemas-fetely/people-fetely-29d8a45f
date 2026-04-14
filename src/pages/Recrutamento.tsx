@@ -27,6 +27,7 @@ const tipoContratoLabel: Record<string, string> = {
 };
 
 export default function Recrutamento() {
+  const navigate = useNavigate();
   const { hasPermission } = usePermissions();
   const canCreate = hasPermission("recrutamento", "create");
   const [dialogOpen, setDialogOpen] = useState(false);
