@@ -3,7 +3,7 @@ import { useAllParametros } from "@/hooks/useParametros";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { usePermissions } from "@/hooks/usePermissions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,7 +22,7 @@ import {
 import {
   Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Plus, Pencil, Trash2, Loader2, Monitor, Package, Settings2, FileText, Search } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, Monitor, Package, Settings2, FileText, Search, Briefcase } from "lucide-react";
 import type { Parametro } from "@/hooks/useParametros";
 
 interface CategoriaConfig {
@@ -194,6 +194,7 @@ export default function Parametros() {
   const [searchParams, setSearchParams] = useSearchParams();
   const modulo = searchParams.get("modulo") || "geral";
   const { isSuperAdmin } = usePermissions();
+  const navigate = useNavigate();
 
   const { data: allParams, isLoading } = useAllParametros();
   const { data: usageData } = useParametroUsage();
@@ -337,8 +338,23 @@ export default function Parametros() {
 
                   {grouped.map((cat) => {
                     const isCargos = cat.value === "cargo";
+                    const isTipoServico = cat.value === "tipo_servico";
+                    const isRedirectedToCargos = isCargos || isTipoServico;
                     return (
                       <TabsContent key={cat.value} value={cat.value}>
+                        {isRedirectedToCargos ? (
+                          <div className="rounded-lg border border-border p-6 bg-muted/30 text-center">
+                            <Briefcase className="mx-auto mb-3 h-8 w-8 text-muted-foreground" />
+                            <h3 className="font-medium mb-1">Cargos e Salários</h3>
+                            <p className="text-sm text-muted-foreground mb-4">
+                              Os cargos agora são gerenciados com faixas salariais integradas
+                              no Plano de Posições e Remuneração.
+                            </p>
+                            <Button variant="outline" size="sm" onClick={() => navigate('/cargos')}>
+                              Ir para Cargos e Salários →
+                            </Button>
+                          </div>
+                        ) : (
                         <Card>
                           <CardHeader className="flex flex-row items-center justify-between pb-2">
                             <div>
@@ -444,6 +460,7 @@ export default function Parametros() {
                             )}
                           </CardContent>
                         </Card>
+                        )}
                       </TabsContent>
                     );
                   })}
