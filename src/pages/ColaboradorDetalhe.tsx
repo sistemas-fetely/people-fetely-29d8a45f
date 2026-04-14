@@ -33,6 +33,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useCLevelCargos } from "@/hooks/useCLevelCargos";
+import { useParametros } from "@/hooks/useParametros";
 import { useQuery } from "@tanstack/react-query";
 import type { Tables } from "@/integrations/supabase/types";
 
@@ -81,6 +82,7 @@ export default function ColaboradorDetalhe() {
   const { user } = useAuth();
   const { canSeeSalary } = usePermissions();
   const { isCargoClevel } = useCLevelCargos();
+  const { data: sistemasParametros } = useParametros("sistema");
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(searchParams.get("edit") === "true");
   const [saving, setSaving] = useState(false);
@@ -617,7 +619,7 @@ export default function ColaboradorDetalhe() {
                   {acessosSistemas.map((a) => (
                     <div key={a.id} className="border rounded-lg p-3 flex items-center justify-between">
                       <div>
-                        <p className="font-medium text-sm">{a.sistema}</p>
+                        <p className="font-medium text-sm">{(sistemasParametros || []).find((s) => s.valor === a.sistema)?.label || a.sistema}</p>
                         {a.usuario && <p className="text-xs text-muted-foreground">Usuário: {a.usuario}</p>}
                         {a.observacoes && <p className="text-xs text-muted-foreground">{a.observacoes}</p>}
                       </div>
