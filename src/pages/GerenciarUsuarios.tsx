@@ -86,14 +86,16 @@ export default function GerenciarUsuarios() {
   const [selectedUser, setSelectedUser] = useState<{ userId: string; name: string } | null>(null);
   const [selectedRoles, setSelectedRoles] = useState<AppRole[]>([]);
   const [selectedColabTipo, setSelectedColabTipo] = useState<string>("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [newUser, setNewUser] = useState({ email: "", password: "", full_name: "", roles: ["colaborador"] as string[], colaborador_tipo: "" });
+  const [newUser, setNewUser] = useState({
+    email: "", full_name: "", roles: ["colaborador"] as string[],
+    tipo_acesso: "externo" as "vinculado" | "externo",
+    colaborador_id: "", colaborador_tipo: ""
+  });
   const [deleteConfirm, setDeleteConfirm] = useState<{ userId: string; name: string } | null>(null);
   const [linkDialogOpen, setLinkDialogOpen] = useState(false);
   const [linkUser, setLinkUser] = useState<{ userId: string; name: string } | null>(null);
   const [linkColaboradorId, setLinkColaboradorId] = useState("");
   const [linkContratoPjId, setLinkContratoPjId] = useState("");
-
   const { data: profiles = [], isLoading } = useQuery({
     queryKey: ["admin-profiles"],
     queryFn: async () => {
