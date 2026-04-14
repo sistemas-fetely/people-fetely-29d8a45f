@@ -369,6 +369,105 @@ export type Database = {
           },
         ]
       }
+      cargos: {
+        Row: {
+          ativo: boolean | null
+          created_at: string | null
+          departamento: string | null
+          faixa_clt_f1_max: number | null
+          faixa_clt_f1_min: number | null
+          faixa_clt_f2_max: number | null
+          faixa_clt_f2_min: number | null
+          faixa_clt_f3_max: number | null
+          faixa_clt_f3_min: number | null
+          faixa_clt_f4_max: number | null
+          faixa_clt_f4_min: number | null
+          faixa_clt_f5_max: number | null
+          faixa_clt_f5_min: number | null
+          faixa_pj_f1_max: number | null
+          faixa_pj_f1_min: number | null
+          faixa_pj_f2_max: number | null
+          faixa_pj_f2_min: number | null
+          faixa_pj_f3_max: number | null
+          faixa_pj_f3_min: number | null
+          faixa_pj_f4_max: number | null
+          faixa_pj_f4_min: number | null
+          faixa_pj_f5_max: number | null
+          faixa_pj_f5_min: number | null
+          id: string
+          is_clevel: boolean | null
+          nivel: string
+          nome: string
+          protege_salario: boolean | null
+          tipo_contrato: string
+          updated_at: string | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          created_at?: string | null
+          departamento?: string | null
+          faixa_clt_f1_max?: number | null
+          faixa_clt_f1_min?: number | null
+          faixa_clt_f2_max?: number | null
+          faixa_clt_f2_min?: number | null
+          faixa_clt_f3_max?: number | null
+          faixa_clt_f3_min?: number | null
+          faixa_clt_f4_max?: number | null
+          faixa_clt_f4_min?: number | null
+          faixa_clt_f5_max?: number | null
+          faixa_clt_f5_min?: number | null
+          faixa_pj_f1_max?: number | null
+          faixa_pj_f1_min?: number | null
+          faixa_pj_f2_max?: number | null
+          faixa_pj_f2_min?: number | null
+          faixa_pj_f3_max?: number | null
+          faixa_pj_f3_min?: number | null
+          faixa_pj_f4_max?: number | null
+          faixa_pj_f4_min?: number | null
+          faixa_pj_f5_max?: number | null
+          faixa_pj_f5_min?: number | null
+          id?: string
+          is_clevel?: boolean | null
+          nivel: string
+          nome: string
+          protege_salario?: boolean | null
+          tipo_contrato?: string
+          updated_at?: string | null
+        }
+        Update: {
+          ativo?: boolean | null
+          created_at?: string | null
+          departamento?: string | null
+          faixa_clt_f1_max?: number | null
+          faixa_clt_f1_min?: number | null
+          faixa_clt_f2_max?: number | null
+          faixa_clt_f2_min?: number | null
+          faixa_clt_f3_max?: number | null
+          faixa_clt_f3_min?: number | null
+          faixa_clt_f4_max?: number | null
+          faixa_clt_f4_min?: number | null
+          faixa_clt_f5_max?: number | null
+          faixa_clt_f5_min?: number | null
+          faixa_pj_f1_max?: number | null
+          faixa_pj_f1_min?: number | null
+          faixa_pj_f2_max?: number | null
+          faixa_pj_f2_min?: number | null
+          faixa_pj_f3_max?: number | null
+          faixa_pj_f3_min?: number | null
+          faixa_pj_f4_max?: number | null
+          faixa_pj_f4_min?: number | null
+          faixa_pj_f5_max?: number | null
+          faixa_pj_f5_min?: number | null
+          id?: string
+          is_clevel?: boolean | null
+          nivel?: string
+          nome?: string
+          protege_salario?: boolean | null
+          tipo_contrato?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       colaborador_acessos_sistemas: {
         Row: {
           colaborador_id: string
@@ -514,6 +613,7 @@ export type Database = {
           banco_codigo: string | null
           banco_nome: string | null
           cargo: string
+          cargo_id: string | null
           cep: string | null
           certificado_reservista: string | null
           chave_pix: string | null
@@ -579,6 +679,7 @@ export type Database = {
           banco_codigo?: string | null
           banco_nome?: string | null
           cargo: string
+          cargo_id?: string | null
           cep?: string | null
           certificado_reservista?: string | null
           chave_pix?: string | null
@@ -644,6 +745,7 @@ export type Database = {
           banco_codigo?: string | null
           banco_nome?: string | null
           cargo?: string
+          cargo_id?: string | null
           cep?: string | null
           certificado_reservista?: string | null
           chave_pix?: string | null
@@ -704,6 +806,13 @@ export type Database = {
           zona_eleitoral?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "colaboradores_clt_cargo_id_fkey"
+            columns: ["cargo_id"]
+            isOneToOne: false
+            referencedRelation: "cargos"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "colaboradores_clt_gestor_direto_id_fkey"
             columns: ["gestor_direto_id"]
@@ -822,6 +931,7 @@ export type Database = {
           bairro: string | null
           banco_codigo: string | null
           banco_nome: string | null
+          cargo_id: string | null
           cep: string | null
           chave_pix: string | null
           cidade: string | null
@@ -878,6 +988,7 @@ export type Database = {
           bairro?: string | null
           banco_codigo?: string | null
           banco_nome?: string | null
+          cargo_id?: string | null
           cep?: string | null
           chave_pix?: string | null
           cidade?: string | null
@@ -934,6 +1045,7 @@ export type Database = {
           bairro?: string | null
           banco_codigo?: string | null
           banco_nome?: string | null
+          cargo_id?: string | null
           cep?: string | null
           chave_pix?: string | null
           cidade?: string | null
@@ -986,6 +1098,13 @@ export type Database = {
           valor_mensal?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "contratos_pj_cargo_id_fkey"
+            columns: ["cargo_id"]
+            isOneToOne: false
+            referencedRelation: "cargos"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "contratos_pj_gestor_direto_id_fkey"
             columns: ["gestor_direto_id"]
@@ -2302,6 +2421,7 @@ export type Database = {
           beneficios: string | null
           beneficios_ids: string[] | null
           beneficios_outros: string | null
+          cargo_id: string | null
           created_at: string | null
           criado_por: string | null
           departamento: string | null
@@ -2333,6 +2453,7 @@ export type Database = {
           beneficios?: string | null
           beneficios_ids?: string[] | null
           beneficios_outros?: string | null
+          cargo_id?: string | null
           created_at?: string | null
           criado_por?: string | null
           departamento?: string | null
@@ -2364,6 +2485,7 @@ export type Database = {
           beneficios?: string | null
           beneficios_ids?: string[] | null
           beneficios_outros?: string | null
+          cargo_id?: string | null
           created_at?: string | null
           criado_por?: string | null
           departamento?: string | null
@@ -2390,7 +2512,15 @@ export type Database = {
           vigencia_fim?: string | null
           vigencia_inicio?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "vagas_cargo_id_fkey"
+            columns: ["cargo_id"]
+            isOneToOne: false
+            referencedRelation: "cargos"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
