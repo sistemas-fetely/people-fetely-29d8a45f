@@ -21,12 +21,14 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   ArrowLeft, ChevronDown, Copy, Globe, MoreHorizontal, Plus, Loader2,
-  GripVertical, UserPlus, ArrowRight, XCircle, User, CheckCircle2
+  GripVertical, UserPlus, ArrowRight, XCircle, User, CheckCircle2, ExternalLink
 } from "lucide-react";
-import { CandidatoDrawer } from "@/components/recrutamento/CandidatoDrawer";
 
 const statusConfig: Record<string, { label: string; className: string }> = {
   rascunho: { label: "Rascunho", className: "bg-muted text-muted-foreground" },
