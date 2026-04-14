@@ -83,6 +83,8 @@ export default function ColaboradorDetalhe() {
   const { canSeeSalary } = usePermissions();
   const { isCargoClevel } = useCLevelCargos();
   const { data: sistemasParametros } = useParametros("sistema");
+  const { data: tiposEquipParametros } = useParametros("tipo_equipamento");
+  const { data: estadosEquipParametros } = useParametros("estado_equipamento");
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(searchParams.get("edit") === "true");
   const [saving, setSaving] = useState(false);
@@ -639,11 +641,11 @@ export default function ColaboradorDetalhe() {
                   {equipamentos.map((e) => (
                     <div key={e.id} className="border rounded-lg p-3">
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                        <InfoField label="Tipo" value={e.tipo} />
+                        <InfoField label="Tipo" value={(tiposEquipParametros || []).find((t) => t.valor === e.tipo)?.label || e.tipo} />
                         <InfoField label="Marca / Modelo" value={[e.marca, e.modelo].filter(Boolean).join(" ") || null} />
                         <InfoField label="Nº Patrimônio" value={e.numero_patrimonio} />
                         <InfoField label="Nº Série" value={e.numero_serie} />
-                        <InfoField label="Estado" value={e.estado} />
+                        <InfoField label="Estado" value={(estadosEquipParametros || []).find((s) => s.valor === e.estado)?.label || e.estado} />
                         <InfoField label="Data Entrega" value={e.data_entrega ? safeFormatDate(e.data_entrega) : ""} />
                       </div>
                       {e.observacoes && <p className="text-xs text-muted-foreground mt-2">{e.observacoes}</p>}
