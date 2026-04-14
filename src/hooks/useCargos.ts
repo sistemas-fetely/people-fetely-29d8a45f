@@ -30,6 +30,11 @@ export interface Cargo {
   faixa_pj_f5_min: number | null;
   faixa_pj_f5_max: number | null;
   ativo: boolean;
+  missao: string | null;
+  responsabilidades: string[];
+  skills_obrigatorias: string[];
+  skills_desejadas: string[];
+  ferramentas: string[];
 }
 
 export function useCargos(filtroTipo?: "clt" | "pj" | "ambos") {

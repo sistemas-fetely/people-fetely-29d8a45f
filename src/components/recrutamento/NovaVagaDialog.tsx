@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useParametros } from "@/hooks/useParametros";
+import { useCargos, type Cargo } from "@/hooks/useCargos";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -80,32 +81,19 @@ export function NovaVagaDialog({ open, onOpenChange }: Props) {
   const { data: beneficiosParam = [] } = useParametros("beneficio");
   const { data: ferramentasParam = [] } = useParametros("ferramenta");
   const { data: sistemasParam = [] } = useParametros("sistema");
-  const { data: cargos = [] } = useParametros("cargo");
+  const { data: cargosData = [] } = useCargos();
 
-  // PCS faixas salariais
-  const { data: faixasPCS } = useQuery({
-    queryKey: ["pcs-faixas", titulo, tipoContrato],
-    queryFn: async () => {
-      if (!titulo || !tipoContrato || tipoContrato === "ambos") return null;
-      const { data } = await supabase
-        .from("pcs_faixas")
-        .select("*")
-        .eq("cargo", titulo)
-        .eq("tipo", tipoContrato)
-        .eq("ativo", true)
-        .maybeSingle();
-      return data;
-    },
-    enabled: !!titulo && !!tipoContrato && tipoContrato !== "ambos",
-  });
-
-  // Auto-fill faixa when PCS data loads
+  // Auto-fill faixa from cargos table
   useEffect(() => {
-    if (faixasPCS) {
-      setFaixaMin(String(faixasPCS.f1_min ?? ""));
-      setFaixaMax(String(faixasPCS.f1_max ?? ""));
-    }
-  }, [faixasPCS]);
+    if (!titulo || !tipoContrato) return;
+    const cargoMatch = cargosData.find((c) => c.nome === titulo);
+    if (!cargoMatch) return;
+    const tipo = tipoContrato === "pj" ? "pj" : "clt";
+    const f1Min = (cargoMatch as any)[`faixa_${tipo}_f1_min`];
+    const f1Max = (cargoMatch as any)[`faixa_${tipo}_f1_max`];
+    if (f1Min != null) setFaixaMin(String(f1Min));
+    if (f1Max != null) setFaixaMax(String(f1Max));
+  }, [titulo, tipoContrato, cargosData]);
 
   const skillsCatalogo = SKILLS_CATALOGO;
 
@@ -202,24 +190,39 @@ export function NovaVagaDialog({ open, onOpenChange }: Props) {
             <div className="space-y-2">
               <Label>Título da vaga *</Label>
               <Select value={titulo} onValueChange={(v) => {
-                const autoNivel = v.includes("Jr") ? "jr"
-                  : (v.includes("Pl") || v.includes("Pleno")) ? "pl"
-                  : (v.includes("Sr") || v.includes("Sênior")) ? "sr"
-                  : v.includes("Coord") ? "coordenacao"
-                  : ["CEO","COO","CFO","CMO","CPO","CTO","CHRO"].some(c => v.includes(c)) ? "c-level"
-                  : nivel;
                 setTitulo(v);
-                setNivel(autoNivel);
+                // Auto-fill from cargo data
+                const cargoMatch = cargosData.find((c) => c.nome === v);
+                if (cargoMatch) {
+                  const autoNivel = cargoMatch.nivel;
+                  setNivel(autoNivel);
+                  // Auto-fill Job Description & Skills from cargo
+                  if (cargoMatch.missao) setMissao(cargoMatch.missao);
+                  if (cargoMatch.responsabilidades?.length) setResponsabilidades(cargoMatch.responsabilidades);
+                  if (cargoMatch.skills_obrigatorias?.length) setSkillsObrigatorias(cargoMatch.skills_obrigatorias);
+                  if (cargoMatch.skills_desejadas?.length) setSkillsDesejadas(cargoMatch.skills_desejadas);
+                  if (cargoMatch.ferramentas?.length) {
+                    // Match ferramentas labels to param valores
+                    const matchedIds = [...ferramentasParam, ...sistemasParam]
+                      .filter((p) => cargoMatch.ferramentas.includes(p.label))
+                      .map((p) => p.valor);
+                    if (matchedIds.length) setFerramentasIds(matchedIds);
+                    const unmatched = cargoMatch.ferramentas.filter(
+                      (f) => ![...ferramentasParam, ...sistemasParam].some((p) => p.label === f)
+                    );
+                    if (unmatched.length) setFerramentasOutras(unmatched.join(", "));
+                  }
+                }
               }}>
                 <SelectTrigger><SelectValue placeholder="Selecione o cargo" /></SelectTrigger>
                 <SelectContent>
-                  {cargos.map((c) => (
-                    <SelectItem key={c.id} value={c.label}>{c.label}</SelectItem>
+                  {cargosData.map((c) => (
+                    <SelectItem key={c.id} value={c.nome}>{c.nome}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground">
-                Não encontrou o cargo? Verifique Parâmetros → CLT → Cargos / Funções
+                Não encontrou o cargo? Cadastre em Admin → Cargos e Salários
               </p>
             </div>
 
@@ -457,31 +460,37 @@ export function NovaVagaDialog({ open, onOpenChange }: Props) {
                   </div>
                 </div>
 
-                {faixasPCS ? (
-                  <div className="border rounded-md p-3 bg-muted/30 space-y-1">
-                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">Tabela PCS — {titulo} ({tipoContrato.toUpperCase()})</p>
-                    {[
-                      { key: "F1", label: "Entrada", min: faixasPCS.f1_min, max: faixasPCS.f1_max },
-                      { key: "F2", label: "Desenvolvimento", min: faixasPCS.f2_min, max: faixasPCS.f2_max },
-                      { key: "F3", label: "Pleno", min: faixasPCS.f3_min, max: faixasPCS.f3_max },
-                      { key: "F4", label: "Sênior", min: faixasPCS.f4_min, max: faixasPCS.f4_max },
-                      { key: "F5", label: "Referência", min: faixasPCS.f5_min, max: faixasPCS.f5_max },
-                    ].map((f) => (
-                      <div key={f.key} className="flex items-center text-xs gap-2">
-                        <span className="font-semibold w-8">{f.key}</span>
-                        <span className="text-muted-foreground w-28">· {f.label}</span>
-                        <span>R$ {Number(f.min).toLocaleString("pt-BR")} – R$ {Number(f.max).toLocaleString("pt-BR")}</span>
+                {(() => {
+                  const cargoMatch = cargosData.find((c) => c.nome === titulo);
+                  const tipo = tipoContrato === "pj" ? "pj" : "clt";
+                  const hasFaixa = cargoMatch && (cargoMatch as any)[`faixa_${tipo}_f1_min`] != null;
+                  if (hasFaixa) {
+                    return (
+                      <div className="border rounded-md p-3 bg-muted/30 space-y-1">
+                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">Tabela PPR — {titulo} ({tipoContrato.toUpperCase()})</p>
+                        {["F1","F2","F3","F4","F5"].map((fk, i) => {
+                          const labels = ["Entrada","Desenvolvimento","Pleno","Sênior","Referência"];
+                          const min = (cargoMatch as any)[`faixa_${tipo}_${fk.toLowerCase()}_min`];
+                          const max = (cargoMatch as any)[`faixa_${tipo}_${fk.toLowerCase()}_max`];
+                          return (
+                            <div key={fk} className="flex items-center text-xs gap-2">
+                              <span className="font-semibold w-8">{fk}</span>
+                              <span className="text-muted-foreground w-28">· {labels[i]}</span>
+                              <span>R$ {Number(min || 0).toLocaleString("pt-BR")} – R$ {Number(max || 0).toLocaleString("pt-BR")}</span>
+                            </div>
+                          );
+                        })}
+                        <p className="text-xs text-muted-foreground mt-2">
+                          Pré-preenchido com F1 (entrada recomendada). Edite se necessário.
+                        </p>
                       </div>
-                    ))}
-                    <p className="text-xs text-muted-foreground mt-2">
-                      Pré-preenchido com F1 (entrada recomendada). Edite se necessário.
-                    </p>
-                  </div>
-                ) : titulo && tipoContrato && tipoContrato !== "ambos" ? (
-                  <p className="text-xs text-muted-foreground">
-                    Cargo sem faixa no PPR. Preencha manualmente.
-                  </p>
-                ) : null}
+                    );
+                  }
+                  if (titulo && tipoContrato && tipoContrato !== "ambos") {
+                    return <p className="text-xs text-muted-foreground">Cargo sem faixa no PPR. Preencha manualmente.</p>;
+                  }
+                  return null;
+                })()}
               </div>
             )}
 
