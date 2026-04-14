@@ -172,7 +172,7 @@ const App = () => (
               } />
               <Route path="/recrutamento" element={
                 <ProtectedRoute permModule="recrutamento">
-                  <PlaceholderPage title="Recrutamento e Seleção" description="Kanban de vagas e candidatos" />
+                  <Recrutamento />
                 </ProtectedRoute>
               } />
               <Route path="/avaliacoes" element={
