@@ -2160,6 +2160,10 @@ export type Database = {
         | "colaborador"
         | "financeiro"
         | "admin_rh"
+        | "admin_ti"
+        | "fiscal"
+        | "operacional"
+        | "recrutador"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2294,6 +2298,10 @@ export const Constants = {
         "colaborador",
         "financeiro",
         "admin_rh",
+        "admin_ti",
+        "fiscal",
+        "operacional",
+        "recrutador",
       ],
     },
   },
