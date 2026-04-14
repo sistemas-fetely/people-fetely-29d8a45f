@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
+import GruposAcessoTab from "@/components/grupos-acesso/GruposAcessoTab";
+import ConfigurarPerfisTab from "@/components/configurar-perfis/ConfigurarPerfisTab";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -25,7 +27,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import {
   CheckCircle2, XCircle, UserCheck, UserX, Users, UserPlus,
-  Shield, ShieldCheck, ShieldAlert, Pencil, Trash2, Settings2, Link2, LinkIcon, Unlink,
+  Shield, ShieldCheck, ShieldAlert, Pencil, Trash2, Link2, LinkIcon, Unlink,
   ChevronDown, ChevronRight,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -524,7 +526,10 @@ export default function GerenciarUsuarios() {
       <Tabs defaultValue="usuarios">
         <TabsList>
           <TabsTrigger value="usuarios" className="gap-2"><Users className="h-4 w-4" /> Usuários</TabsTrigger>
-          <TabsTrigger value="perfis" className="gap-2"><Shield className="h-4 w-4" /> Perfis de Acesso</TabsTrigger>
+          <TabsTrigger value="grupos" className="gap-2"><ShieldCheck className="h-4 w-4" /> Grupos de Acesso</TabsTrigger>
+          {isSuperAdmin && (
+            <TabsTrigger value="perfis" className="gap-2"><Shield className="h-4 w-4" /> Configurar Perfis</TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="usuarios" className="mt-4">
@@ -727,60 +732,15 @@ export default function GerenciarUsuarios() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="perfis" className="mt-4">
-          <div className="flex justify-end mb-4">
-            <Button className="gap-2" onClick={() => navigate("/configurar-perfis")}>
-              <Settings2 className="h-4 w-4" />
-              Configurar Permissões dos Perfis
-            </Button>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {ALL_ROLES.map((role) => {
-              const usersWithRole = profiles.filter((p) =>
-                getUserRoles(p.user_id).includes(role)
-              );
-              return (
-                <Card key={role} className={`cursor-pointer hover:shadow-md transition-shadow ${isFutureRole(role) ? "border-dashed opacity-60" : ""}`} onClick={() => navigate("/configurar-perfis")}>
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center gap-2">
-                      <ShieldCheck className="h-5 w-5 text-foreground" />
-                      <CardTitle className="text-base">{ROLE_LABELS[role]}</CardTitle>
-                      {isFutureRole(role) && <Badge variant="outline" className="text-[10px] border-dashed">Em breve</Badge>}
-                    </div>
-                    <p className="text-xs text-muted-foreground">{ROLE_DESCRIPTIONS[role]}</p>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      <p className="text-xs font-medium text-muted-foreground uppercase">
-                        {usersWithRole.length} usuário{usersWithRole.length !== 1 ? "s" : ""}
-                      </p>
-                      {usersWithRole.length > 0 ? (
-                        <div className="space-y-1.5 max-h-40 overflow-y-auto">
-                          {usersWithRole.map((p) => {
-                            const authUser = getAuthUser(p.user_id);
-                            return (
-                              <div key={p.id} className="flex items-center gap-2 text-sm rounded-md bg-muted/50 px-2 py-1.5">
-                                <div className="h-6 w-6 rounded-full bg-muted flex items-center justify-center text-xs font-medium text-foreground">
-                                  {(p.full_name || "?")[0].toUpperCase()}
-                                </div>
-                                <div className="min-w-0 flex-1">
-                                  <p className="truncate text-xs font-medium">{p.full_name || "—"}</p>
-                                  <p className="truncate text-[10px] text-muted-foreground">{authUser?.email || ""}</p>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      ) : (
-                        <p className="text-xs text-muted-foreground italic">Nenhum usuário com este perfil</p>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
+        <TabsContent value="grupos" className="mt-4">
+          <GruposAcessoTab />
         </TabsContent>
+
+        {isSuperAdmin && (
+          <TabsContent value="perfis" className="mt-4">
+            <ConfigurarPerfisTab />
+          </TabsContent>
+        )}
       </Tabs>
 
       {/* Dialog for editing user roles */}
