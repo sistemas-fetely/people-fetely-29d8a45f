@@ -40,20 +40,17 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { data: hasRole, error: roleError } = await userClient.rpc("has_role", {
+    // Check caller roles
+    const { data: isSuperAdmin } = await userClient.rpc("has_role", {
       _user_id: callerId,
       _role: "super_admin",
     });
+    const { data: isAdminRH } = await userClient.rpc("has_role", {
+      _user_id: callerId,
+      _role: "admin_rh",
+    });
 
-    if (roleError) {
-      console.error("Role check error:", roleError.message);
-      return new Response(JSON.stringify({ error: "Erro ao validar permissão" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    if (!hasRole) {
+    if (!isSuperAdmin && !isAdminRH) {
       return new Response(JSON.stringify({ error: "Sem permissão" }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -71,6 +68,14 @@ Deno.serve(async (req) => {
       if (!email || !password || !full_name) {
         return new Response(JSON.stringify({ error: "Email, senha e nome são obrigatórios" }), {
           status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // admin_rh cannot assign super_admin
+      if (!isSuperAdmin && roles?.includes("super_admin")) {
+        return new Response(JSON.stringify({ error: "Sem permissão para atribuir super_admin" }), {
+          status: 403,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
@@ -111,6 +116,100 @@ Deno.serve(async (req) => {
       });
     }
 
+    if (action === "create_user_standalone") {
+      const { email, full_name, roles, colaborador_id, colaborador_tipo } = body;
+      if (!email || !full_name) {
+        return new Response(JSON.stringify({ error: "Email e nome são obrigatórios" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // admin_rh cannot assign super_admin
+      if (!isSuperAdmin && roles?.includes("super_admin")) {
+        return new Response(JSON.stringify({ error: "Sem permissão para atribuir super_admin" }), {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Create user without password (will use recovery link for first access)
+      const { data: newUser, error: createError } = await adminClient.auth.admin.createUser({
+        email,
+        email_confirm: true,
+        user_metadata: { full_name },
+      });
+
+      if (createError) {
+        return new Response(JSON.stringify({ error: createError.message }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Create/update profile
+      await adminClient.from("profiles").upsert({
+        user_id: newUser.user.id,
+        full_name,
+        approved: true,
+        colaborador_tipo: colaborador_tipo || "all",
+      }, { onConflict: "user_id" });
+
+      // Assign roles
+      if (roles && roles.length > 0) {
+        await adminClient.from("user_roles").delete().eq("user_id", newUser.user.id);
+        const roleInserts = roles.map((role: string) => ({
+          user_id: newUser.user.id,
+          role,
+        }));
+        await adminClient.from("user_roles").insert(roleInserts);
+      }
+
+      // Link to colaborador if provided
+      if (colaborador_id && colaborador_tipo === "clt") {
+        await adminClient.from("colaboradores_clt")
+          .update({ user_id: newUser.user.id })
+          .eq("id", colaborador_id);
+      }
+      if (colaborador_id && colaborador_tipo === "pj") {
+        await adminClient.from("contratos_pj")
+          .update({ user_id: newUser.user.id })
+          .eq("id", colaborador_id);
+      }
+
+      // Send password recovery link for first access
+      try {
+        await adminClient.auth.admin.generateLink({
+          type: "recovery",
+          email,
+        });
+      } catch (linkErr) {
+        console.error("Erro ao gerar link de recuperação:", linkErr);
+      }
+
+      // Send welcome email
+      try {
+        await adminClient.functions.invoke("send-transactional-email", {
+          body: {
+            templateName: "boas-vindas-portal",
+            recipientEmail: email,
+            idempotencyKey: `boas-vindas-${newUser.user.id}`,
+            templateData: {
+              nome: full_name,
+              email,
+              link: Deno.env.get("SITE_URL") || "https://people-fetely.lovable.app",
+            },
+          },
+        });
+      } catch (emailErr) {
+        console.error("Erro ao enviar e-mail de boas-vindas:", emailErr);
+      }
+
+      return new Response(JSON.stringify({ success: true, user_id: newUser.user.id }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     if (action === "toggle_ban") {
       const { user_id, ban } = body;
       if (!user_id) {
@@ -144,6 +243,14 @@ Deno.serve(async (req) => {
       if (!user_id || !roles) {
         return new Response(JSON.stringify({ error: "user_id e roles são obrigatórios" }), {
           status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // admin_rh cannot assign super_admin
+      if (!isSuperAdmin && roles.includes("super_admin")) {
+        return new Response(JSON.stringify({ error: "Sem permissão para atribuir super_admin" }), {
+          status: 403,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
@@ -247,6 +354,14 @@ Deno.serve(async (req) => {
     }
 
     if (action === "delete_user") {
+      // Only super_admin can delete
+      if (!isSuperAdmin) {
+        return new Response(JSON.stringify({ error: "Apenas Super Admin pode deletar usuários" }), {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
       const { user_id } = body;
       if (!user_id) {
         return new Response(JSON.stringify({ error: "user_id é obrigatório" }), {
