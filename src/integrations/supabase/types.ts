@@ -2172,60 +2172,6 @@ export type Database = {
         }
         Relationships: []
       }
-      pcs_faixas: {
-        Row: {
-          ativo: boolean | null
-          cargo: string
-          created_at: string | null
-          f1_max: number | null
-          f1_min: number | null
-          f2_max: number | null
-          f2_min: number | null
-          f3_max: number | null
-          f3_min: number | null
-          f4_max: number | null
-          f4_min: number | null
-          f5_max: number | null
-          f5_min: number | null
-          id: string
-          tipo: string
-        }
-        Insert: {
-          ativo?: boolean | null
-          cargo: string
-          created_at?: string | null
-          f1_max?: number | null
-          f1_min?: number | null
-          f2_max?: number | null
-          f2_min?: number | null
-          f3_max?: number | null
-          f3_min?: number | null
-          f4_max?: number | null
-          f4_min?: number | null
-          f5_max?: number | null
-          f5_min?: number | null
-          id?: string
-          tipo: string
-        }
-        Update: {
-          ativo?: boolean | null
-          cargo?: string
-          created_at?: string | null
-          f1_max?: number | null
-          f1_min?: number | null
-          f2_max?: number | null
-          f2_min?: number | null
-          f3_max?: number | null
-          f3_min?: number | null
-          f4_max?: number | null
-          f4_min?: number | null
-          f5_max?: number | null
-          f5_min?: number | null
-          id?: string
-          tipo?: string
-        }
-        Relationships: []
-      }
       posicoes: {
         Row: {
           area: string | null
