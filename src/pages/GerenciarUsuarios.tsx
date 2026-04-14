@@ -532,11 +532,12 @@ export default function GerenciarUsuarios() {
                         </TableCell>
                         <TableCell>
                           {(() => {
-                            const tipo = (profile as any).colaborador_tipo;
-                            if (tipo === "clt") return <Badge variant="outline" className="text-xs border-blue-300 text-blue-700">CLT</Badge>;
-                            if (tipo === "pj") return <Badge variant="outline" className="text-xs border-emerald-300 text-emerald-700">PJ</Badge>;
-                            if (tipo === "ambos") return <div className="flex gap-1"><Badge variant="outline" className="text-xs border-blue-300 text-blue-700">CLT</Badge><Badge variant="outline" className="text-xs border-emerald-300 text-emerald-700">PJ</Badge></div>;
-                            return <Badge variant="outline" className="text-xs border-amber-300 text-amber-700">Não definido</Badge>;
+                            const hasCLT = linkedCLT.some((c) => c.user_id === profile.user_id);
+                            const hasPJ = linkedPJ.some((c) => c.user_id === profile.user_id);
+                            if (hasCLT && hasPJ) return <div className="flex gap-1"><Badge variant="outline" className="text-xs border-blue-300 text-blue-700">CLT</Badge><Badge variant="outline" className="text-xs border-emerald-300 text-emerald-700">PJ</Badge></div>;
+                            if (hasCLT) return <Badge variant="outline" className="text-xs border-blue-300 text-blue-700">CLT</Badge>;
+                            if (hasPJ) return <Badge variant="outline" className="text-xs border-emerald-300 text-emerald-700">PJ</Badge>;
+                            return <Badge variant="outline" className="text-xs border-muted-foreground/40 text-muted-foreground">Externo</Badge>;
                           })()}
                         </TableCell>
                         <TableCell>
