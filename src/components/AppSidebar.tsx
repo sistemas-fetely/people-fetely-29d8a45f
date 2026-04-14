@@ -24,13 +24,19 @@ const roleLabels: Record<AppRole, string> = {
   admin_rh: "Admin RH",
   admin_ti: "Admin TI",
   gestor_rh: "Gestor RH",
-  gestor_direto: "Gestor",
+  gestor_direto: "Gestor Direto",
   colaborador: "Colaborador",
   financeiro: "Financeiro",
   fiscal: "Fiscal",
   operacional: "Operacional",
   recrutador: "Recrutador",
 };
+
+const ROLE_PRIORITY: AppRole[] = [
+  "super_admin", "admin_rh", "gestor_rh", "financeiro",
+  "admin_ti", "recrutador", "fiscal", "operacional",
+  "gestor_direto", "colaborador",
+];
 
 interface MenuItem {
   title: string;
@@ -148,7 +154,7 @@ export function AppSidebar() {
     : user?.email?.slice(0, 2).toUpperCase() || "??";
 
   const displayName = profile?.full_name || user?.email || "Usuário";
-  const primaryRole = roles[0] ? roleLabels[roles[0]] : "Colaborador";
+  const primaryRole = roleLabels[ROLE_PRIORITY.find(r => roles.includes(r)) || roles[0]] || "Colaborador";
 
   return (
     <Sidebar collapsible="icon" className="border-r-0">
