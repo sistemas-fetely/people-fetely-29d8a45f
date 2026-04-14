@@ -43,19 +43,27 @@ const ROLE_LABELS: Record<AppRole, string> = {
 };
 
 const ROLE_DESCRIPTIONS: Record<AppRole, string> = {
-  super_admin: "Acesso total ao sistema, incluindo gerenciamento de usuários e configurações",
-  admin_rh: "Gestão completa de RH, acesso a dados sensíveis e configuração de gestores",
-  admin_ti: "Administração de acessos a sistemas e infraestrutura de TI",
-  gestor_rh: "Gestão de pessoas, folha de pagamento, benefícios e convites",
-  gestor_direto: "Visualização de colaboradores da equipe e aprovações",
-  colaborador: "Acesso ao próprio perfil, holerites e férias",
-  financeiro: "Gestão financeira, notas fiscais, pagamentos PJ e folha",
-  fiscal: "Acompanhamento de obrigações fiscais e tributárias",
-  operacional: "Gestão operacional de processos do dia a dia",
-  recrutador: "Gestão de vagas, convites e processo seletivo",
+  super_admin: "Acesso total ao sistema. Único que vê salário C-Level e configura perfis.",
+  admin_rh: "Gestão completa de pessoas, dados sensíveis (salário não C-Level). Cria e edita usuários.",
+  admin_ti: "Gerencia acessos a sistemas e equipamentos. (Módulo TI — em breve)",
+  gestor_rh: "Gestão operacional de pessoas. Sem dados financeiros, folha, parâmetros ou usuários.",
+  gestor_direto: "Visualiza e aprova para seu time. Recebe tarefas de onboarding.",
+  colaborador: "Portal self-service. Acessa apenas seus próprios dados.",
+  financeiro: "Puramente financeiro. Folha, NF, pagamentos PJ. Sem dados operacionais de RH.",
+  fiscal: "NF-e e integração ERP. Subconjunto do financeiro. (Integração ERP — em breve)",
+  operacional: "Ponto, turnos e NRs da unidade fabril. (Unidade Fabril — em breve)",
+  recrutador: "Gerencia vagas e candidatos. (Módulo Recrutamento — em breve)",
 };
 
-const ALL_ROLES: AppRole[] = ["super_admin", "admin_rh", "admin_ti", "gestor_rh", "gestor_direto", "colaborador", "financeiro", "fiscal", "operacional", "recrutador"];
+const ACTIVE_ROLES: AppRole[] = [
+  "super_admin", "admin_rh", "gestor_rh", "gestor_direto", "colaborador", "financeiro"
+];
+const FUTURE_ROLES: AppRole[] = [
+  "admin_ti", "recrutador", "fiscal", "operacional"
+];
+const ALL_ROLES: AppRole[] = [...ACTIVE_ROLES, ...FUTURE_ROLES];
+
+const isFutureRole = (role: AppRole) => FUTURE_ROLES.includes(role);
 
 async function callManageUser(action: string, payload: Record<string, unknown>) {
   const { data, error } = await supabase.functions.invoke("manage-user", {
