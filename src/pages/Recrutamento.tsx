@@ -145,6 +145,7 @@ export default function Recrutamento() {
           )}
         </CardContent>
       </Card>
+      <NovaVagaDialog open={dialogOpen} onOpenChange={setDialogOpen} />
     </div>
   );
 }
