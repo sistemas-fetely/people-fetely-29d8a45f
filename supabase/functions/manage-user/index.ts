@@ -242,7 +242,7 @@ Deno.serve(async (req) => {
         });
       }
 
-      if (user_id === caller.id) {
+      if (user_id === callerId) {
         return new Response(JSON.stringify({ error: "Não é possível deletar seu próprio usuário" }), {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
