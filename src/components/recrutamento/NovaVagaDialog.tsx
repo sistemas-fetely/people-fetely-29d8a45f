@@ -16,7 +16,18 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Trash2, ArrowRight, ArrowLeft, Loader2, X } from "lucide-react";
 
-// Skills catalog removed — now driven by ferramentas + sistemas parametros
+const SKILLS_CATALOGO = [
+  "React / TypeScript","Node.js","Python","SQL / PostgreSQL","APIs REST","Git",
+  "Design Gráfico","UX/UI","Motion Design","Design de Produto",
+  "Identidade Visual","Design de Embalagem","Direção de Arte",
+  "Marketing Digital","SEO","Copywriting","Gestão de Mídias Sociais",
+  "Tráfego Pago","Branding","Email Marketing",
+  "Vendas B2B","Negociação","Key Account Management","Trade Marketing",
+  "Supply Chain","Logística","Importação / Exportação","Gestão de Estoque",
+  "Controle de Qualidade","Gestão de Times","Planejamento Estratégico",
+  "Análise de Dados","Recrutamento & Seleção","Folha de Pagamento",
+  "Legislação CLT","eSocial","HRBP","Gestão de Projetos","OKRs / KPIs",
+];
 
 const NIVEIS = [
   { value: "jr", label: "Jr" },
@@ -95,7 +106,7 @@ export function NovaVagaDialog({ open, onOpenChange }: Props) {
     }
   }, [faixasPCS]);
 
-  const skillsCatalogo = [...ferramentasParam, ...sistemasParam].map((p) => p.label);
+  const skillsCatalogo = SKILLS_CATALOGO;
 
   const { data: gestores = [] } = useQuery({
     queryKey: ["gestores-para-vaga"],
