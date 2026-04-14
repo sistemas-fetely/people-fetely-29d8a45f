@@ -43,6 +43,7 @@ import Recrutamento from "@/pages/Recrutamento";
 import RecrutamentoDetalhe from "@/pages/RecrutamentoDetalhe";
 import PortalCandidatura from "@/pages/PortalCandidatura";
 import Cargos from "@/pages/Cargos";
+import CargoForm from "@/pages/CargoForm";
 
 const queryClient = new QueryClient();
 
