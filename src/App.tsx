@@ -39,6 +39,7 @@ import ConviteDetalhe from "@/pages/ConviteDetalhe";
 import Unsubscribe from "@/pages/Unsubscribe";
 import ConfigurarPerfis from "@/pages/ConfigurarPerfis";
 import Onboarding from "@/pages/Onboarding";
+import Recrutamento from "@/pages/Recrutamento";
 
 const queryClient = new QueryClient();
 
@@ -171,7 +172,7 @@ const App = () => (
               } />
               <Route path="/recrutamento" element={
                 <ProtectedRoute permModule="recrutamento">
-                  <PlaceholderPage title="Recrutamento e Seleção" description="Kanban de vagas e candidatos" />
+                  <Recrutamento />
                 </ProtectedRoute>
               } />
               <Route path="/avaliacoes" element={

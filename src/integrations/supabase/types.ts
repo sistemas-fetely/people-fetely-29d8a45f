@@ -205,6 +205,65 @@ export type Database = {
           },
         ]
       }
+      candidatos: {
+        Row: {
+          consentimento_lgpd: boolean | null
+          consentimento_lgpd_at: string | null
+          created_at: string | null
+          curriculo_url: string | null
+          email: string
+          id: string
+          linkedin_url: string | null
+          nome: string
+          origem: string | null
+          portfolio_url: string | null
+          status: string
+          telefone: string | null
+          updated_at: string | null
+          vaga_id: string
+        }
+        Insert: {
+          consentimento_lgpd?: boolean | null
+          consentimento_lgpd_at?: string | null
+          created_at?: string | null
+          curriculo_url?: string | null
+          email: string
+          id?: string
+          linkedin_url?: string | null
+          nome: string
+          origem?: string | null
+          portfolio_url?: string | null
+          status?: string
+          telefone?: string | null
+          updated_at?: string | null
+          vaga_id: string
+        }
+        Update: {
+          consentimento_lgpd?: boolean | null
+          consentimento_lgpd_at?: string | null
+          created_at?: string | null
+          curriculo_url?: string | null
+          email?: string
+          id?: string
+          linkedin_url?: string | null
+          nome?: string
+          origem?: string | null
+          portfolio_url?: string | null
+          status?: string
+          telefone?: string | null
+          updated_at?: string | null
+          vaga_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "candidatos_vaga_id_fkey"
+            columns: ["vaga_id"]
+            isOneToOne: false
+            referencedRelation: "vagas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       colaborador_acessos_sistemas: {
         Row: {
           colaborador_id: string
@@ -2072,6 +2131,90 @@ export type Database = {
           revogado_em?: string | null
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      vagas: {
+        Row: {
+          area: string
+          beneficios: string | null
+          created_at: string | null
+          criado_por: string | null
+          departamento: string | null
+          descricao: string | null
+          faixa_max: number | null
+          faixa_min: number | null
+          ferramentas: string[] | null
+          gestor_id: string | null
+          id: string
+          is_clevel: boolean | null
+          jornada: string | null
+          local_trabalho: string | null
+          missao: string | null
+          nivel: string
+          responsabilidades: string[] | null
+          skills_desejadas: string[] | null
+          skills_obrigatorias: string[] | null
+          status: string
+          tipo_contrato: string
+          titulo: string
+          updated_at: string | null
+          vigencia_fim: string | null
+          vigencia_inicio: string | null
+        }
+        Insert: {
+          area: string
+          beneficios?: string | null
+          created_at?: string | null
+          criado_por?: string | null
+          departamento?: string | null
+          descricao?: string | null
+          faixa_max?: number | null
+          faixa_min?: number | null
+          ferramentas?: string[] | null
+          gestor_id?: string | null
+          id?: string
+          is_clevel?: boolean | null
+          jornada?: string | null
+          local_trabalho?: string | null
+          missao?: string | null
+          nivel?: string
+          responsabilidades?: string[] | null
+          skills_desejadas?: string[] | null
+          skills_obrigatorias?: string[] | null
+          status?: string
+          tipo_contrato?: string
+          titulo: string
+          updated_at?: string | null
+          vigencia_fim?: string | null
+          vigencia_inicio?: string | null
+        }
+        Update: {
+          area?: string
+          beneficios?: string | null
+          created_at?: string | null
+          criado_por?: string | null
+          departamento?: string | null
+          descricao?: string | null
+          faixa_max?: number | null
+          faixa_min?: number | null
+          ferramentas?: string[] | null
+          gestor_id?: string | null
+          id?: string
+          is_clevel?: boolean | null
+          jornada?: string | null
+          local_trabalho?: string | null
+          missao?: string | null
+          nivel?: string
+          responsabilidades?: string[] | null
+          skills_desejadas?: string[] | null
+          skills_obrigatorias?: string[] | null
+          status?: string
+          tipo_contrato?: string
+          titulo?: string
+          updated_at?: string | null
+          vigencia_fim?: string | null
+          vigencia_inicio?: string | null
         }
         Relationships: []
       }
