@@ -32,22 +32,30 @@ type AppRole = Database["public"]["Enums"]["app_role"];
 const ROLE_LABELS: Record<AppRole, string> = {
   super_admin: "Super Admin",
   admin_rh: "Admin RH",
+  admin_ti: "Admin TI",
   gestor_rh: "Gestor RH",
   gestor_direto: "Gestor Direto",
   colaborador: "Colaborador",
   financeiro: "Financeiro",
+  fiscal: "Fiscal",
+  operacional: "Operacional",
+  recrutador: "Recrutador",
 };
 
 const ROLE_DESCRIPTIONS: Record<AppRole, string> = {
   super_admin: "Acesso total ao sistema, incluindo gerenciamento de usuários e configurações",
   admin_rh: "Gestão completa de RH, acesso a dados sensíveis e configuração de gestores",
+  admin_ti: "Administração de acessos a sistemas e infraestrutura de TI",
   gestor_rh: "Gestão de pessoas, folha de pagamento, benefícios e convites",
   gestor_direto: "Visualização de colaboradores da equipe e aprovações",
   colaborador: "Acesso ao próprio perfil, holerites e férias",
   financeiro: "Gestão financeira, notas fiscais, pagamentos PJ e folha",
+  fiscal: "Acompanhamento de obrigações fiscais e tributárias",
+  operacional: "Gestão operacional de processos do dia a dia",
+  recrutador: "Gestão de vagas, convites e processo seletivo",
 };
 
-const ALL_ROLES: AppRole[] = ["super_admin", "admin_rh", "gestor_rh", "gestor_direto", "colaborador", "financeiro"];
+const ALL_ROLES: AppRole[] = ["super_admin", "admin_rh", "admin_ti", "gestor_rh", "gestor_direto", "colaborador", "financeiro", "fiscal", "operacional", "recrutador"];
 
 async function callManageUser(action: string, payload: Record<string, unknown>) {
   const { data, error } = await supabase.functions.invoke("manage-user", {
