@@ -28,6 +28,7 @@ const tipoContratoLabel: Record<string, string> = {
 export default function Recrutamento() {
   const { hasPermission } = usePermissions();
   const canCreate = hasPermission("recrutamento", "create");
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   const { data: vagas = [], isLoading: loadingVagas } = useQuery({
     queryKey: ["vagas"],
