@@ -40,6 +40,7 @@ import Unsubscribe from "@/pages/Unsubscribe";
 import ConfigurarPerfis from "@/pages/ConfigurarPerfis";
 import Onboarding from "@/pages/Onboarding";
 import Recrutamento from "@/pages/Recrutamento";
+import RecrutamentoDetalhe from "@/pages/RecrutamentoDetalhe";
 
 const queryClient = new QueryClient();
 
