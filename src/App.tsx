@@ -221,12 +221,12 @@ const App = () => (
                   <ConfigurarPerfis />
                 </ProtectedRoute>
               } />
-              </Route>
               <Route path="/cargos" element={
                 <ProtectedRoute permModule="parametros">
                   <Cargos />
                 </ProtectedRoute>
               } />
+              </Route>
 
             <Route path="*" element={<NotFound />} />
           </Routes>
