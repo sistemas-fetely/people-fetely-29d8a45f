@@ -14,7 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, ArrowRight, ArrowLeft, Loader2 } from "lucide-react";
+import { Plus, Trash2, ArrowRight, ArrowLeft, Loader2, X } from "lucide-react";
 
 const SKILLS_CATALOGO = [
   "Adobe Illustrator", "Adobe Photoshop", "Canva Pro", "Figma",
@@ -72,6 +72,7 @@ export function NovaVagaDialog({ open, onOpenChange }: Props) {
   const { data: locais = [] } = useParametros("local_trabalho");
   const { data: jornadas = [] } = useParametros("jornada");
   const { data: beneficiosParam = [] } = useParametros("beneficio");
+  const { data: cargos = [] } = useParametros("cargo");
 
   const { data: gestores = [] } = useQuery({
     queryKey: ["gestores-para-vaga"],
@@ -165,7 +166,26 @@ export function NovaVagaDialog({ open, onOpenChange }: Props) {
           <div className="space-y-4 mt-2">
             <div className="space-y-2">
               <Label>Título da vaga *</Label>
-              <Input value={titulo} onChange={(e) => setTitulo(e.target.value)} placeholder="Ex: Analista de Design Jr" />
+              <Select value={titulo} onValueChange={(v) => {
+                const autoNivel = v.includes("Jr") ? "jr"
+                  : (v.includes("Pl") || v.includes("Pleno")) ? "pl"
+                  : (v.includes("Sr") || v.includes("Sênior")) ? "sr"
+                  : v.includes("Coord") ? "coordenacao"
+                  : ["CEO","COO","CFO","CMO","CPO","CTO","CHRO"].some(c => v.includes(c)) ? "c-level"
+                  : nivel;
+                setTitulo(v);
+                setNivel(autoNivel);
+              }}>
+                <SelectTrigger><SelectValue placeholder="Selecione o cargo" /></SelectTrigger>
+                <SelectContent>
+                  {cargos.map((c) => (
+                    <SelectItem key={c.id} value={c.label}>{c.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Não encontrou o cargo? Verifique Parâmetros → CLT → Cargos / Funções
+              </p>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -271,8 +291,9 @@ export function NovaVagaDialog({ open, onOpenChange }: Props) {
                   {beneficiosIds.map((v) => {
                     const param = beneficiosParam.find((b) => b.valor === v);
                     return (
-                      <Badge key={v} variant="secondary" className="text-xs">
+                      <Badge key={v} variant="secondary" className="text-xs gap-1">
                         {param?.label || v}
+                        <X className="h-3 w-3 cursor-pointer" onClick={() => setBeneficiosIds(beneficiosIds.filter((x) => x !== v))} />
                       </Badge>
                     );
                   })}
