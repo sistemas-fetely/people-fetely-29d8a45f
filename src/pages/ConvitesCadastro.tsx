@@ -163,7 +163,8 @@ export default function ConvitesCadastro() {
   const [actionLoading, setActionLoading] = useState(false);
 
   const { data: departamentos } = useParametros("departamento");
-  const { data: cargos } = useParametros("cargo");
+  const { data: cargosRaw } = useCargos();
+  const cargos = (cargosRaw || []).map((c) => ({ id: c.id, valor: c.nome, label: c.nome, is_clevel: c.is_clevel }));
   const { isCargoClevel } = useCLevelCargos();
   const { canSeeSalary, isSuperAdmin } = usePermissions();
 
