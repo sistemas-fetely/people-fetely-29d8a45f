@@ -39,6 +39,7 @@ import ConviteDetalhe from "@/pages/ConviteDetalhe";
 import Unsubscribe from "@/pages/Unsubscribe";
 import ConfigurarPerfis from "@/pages/ConfigurarPerfis";
 import Onboarding from "@/pages/Onboarding";
+import Recrutamento from "@/pages/Recrutamento";
 
 const queryClient = new QueryClient();
 
