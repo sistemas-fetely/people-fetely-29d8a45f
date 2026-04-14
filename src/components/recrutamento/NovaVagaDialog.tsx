@@ -81,7 +81,7 @@ export function NovaVagaDialog({ open, onOpenChange }: Props) {
   const { data: beneficiosParam = [] } = useParametros("beneficio");
   const { data: ferramentasParam = [] } = useParametros("ferramenta");
   const { data: sistemasParam = [] } = useParametros("sistema");
-  const { data: cargos = [] } = useParametros("cargo");
+  const { data: cargosData = [] } = useCargos();
 
   // PCS faixas salariais
   const { data: faixasPCS } = useQuery({
