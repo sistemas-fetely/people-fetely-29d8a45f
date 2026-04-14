@@ -377,17 +377,16 @@ export function NovaVagaDialog({ open, onOpenChange }: Props) {
             <div className="space-y-2">
               <Label>Skills obrigatórias</Label>
               <div className="flex flex-wrap gap-2">
-                {skillsCatalogo.map((s) => (
-                  <Button key={s} variant={skillsObrigatorias.includes(s) ? "default" : "outline"} size="sm"
-                    className="text-xs h-7"
-                    onClick={() => setSkillsObrigatorias(
-                      skillsObrigatorias.includes(s)
-                        ? skillsObrigatorias.filter((x) => x !== s)
-                        : [...skillsObrigatorias, s]
-                    )}>
-                    {s}
-                  </Button>
-                ))}
+                {skillsCatalogo.map((s) => {
+                  const selected = skillsObrigatorias.includes(s);
+                  return (
+                    <button key={s} type="button"
+                      onClick={() => setSkillsObrigatorias(selected ? skillsObrigatorias.filter((x) => x !== s) : [...skillsObrigatorias, s])}
+                      className={cn("inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium transition-colors cursor-pointer", selected ? "border-transparent text-white" : "border-border text-muted-foreground bg-background hover:bg-muted")}
+                      style={selected ? { backgroundColor: "#1A4A3A" } : undefined}
+                    >{s}</button>
+                  );
+                })}
               </div>
             </div>
 
@@ -395,17 +394,16 @@ export function NovaVagaDialog({ open, onOpenChange }: Props) {
             <div className="space-y-2">
               <Label>Skills desejadas</Label>
               <div className="flex flex-wrap gap-2">
-                {skillsCatalogo.filter((s) => !skillsObrigatorias.includes(s)).map((s) => (
-                  <Button key={s} variant={skillsDesejadas.includes(s) ? "secondary" : "outline"} size="sm"
-                    className="text-xs h-7"
-                    onClick={() => setSkillsDesejadas(
-                      skillsDesejadas.includes(s)
-                        ? skillsDesejadas.filter((x) => x !== s)
-                        : [...skillsDesejadas, s]
-                    )}>
-                    {s}
-                  </Button>
-                ))}
+                {skillsCatalogo.filter((s) => !skillsObrigatorias.includes(s)).map((s) => {
+                  const selected = skillsDesejadas.includes(s);
+                  return (
+                    <button key={s} type="button"
+                      onClick={() => setSkillsDesejadas(selected ? skillsDesejadas.filter((x) => x !== s) : [...skillsDesejadas, s])}
+                      className={cn("inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium transition-colors cursor-pointer", selected ? "border-transparent text-white" : "border-border text-muted-foreground bg-background hover:bg-muted")}
+                      style={selected ? { backgroundColor: "#1A6BBF" } : undefined}
+                    >{s}</button>
+                  );
+                })}
               </div>
             </div>
 
