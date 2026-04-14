@@ -16,14 +16,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Trash2, ArrowRight, ArrowLeft, Loader2, X } from "lucide-react";
 
-const SKILLS_CATALOGO = [
-  "Adobe Illustrator", "Adobe Photoshop", "Canva Pro", "Figma",
-  "React / TypeScript", "Supabase", "Git", "ERP Bling", "Lovable",
-  "Excel Avançado", "Power BI", "CRM", "Negociação B2B",
-  "Copywriting", "Instagram Strategy", "Meta Ads",
-  "Supply Chain", "Importação / Incoterms",
-  "Legislação CLT", "eSocial", "Gestão de times",
-];
+// Skills catalog removed — now driven by ferramentas + sistemas parametros
 
 const NIVEIS = [
   { value: "jr", label: "Jr" },
