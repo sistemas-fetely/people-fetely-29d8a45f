@@ -82,6 +82,7 @@ export default function ColaboradorDetalhe() {
   const { user } = useAuth();
   const { canSeeSalary } = usePermissions();
   const { isCargoClevel } = useCLevelCargos();
+  const { data: sistemasParametros } = useParametros("sistema");
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(searchParams.get("edit") === "true");
   const [saving, setSaving] = useState(false);
