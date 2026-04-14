@@ -77,6 +77,7 @@ const rhItems: MenuItem[] = [
 ];
 
 const adminItems: MenuItem[] = [
+  { title: "Cargos e Salários", url: "/cargos", icon: Briefcase, permModule: "parametros" },
   { title: "Parâmetros", url: "/parametros", icon: Settings, permModule: "parametros" },
   { title: "Configurações", url: "/configuracoes", icon: Settings, permModule: "usuarios" },
   { title: "Gerenciar Usuários", url: "/gerenciar-usuarios", icon: UserCheck, permModule: "usuarios" },

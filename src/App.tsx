@@ -42,6 +42,7 @@ import Onboarding from "@/pages/Onboarding";
 import Recrutamento from "@/pages/Recrutamento";
 import RecrutamentoDetalhe from "@/pages/RecrutamentoDetalhe";
 import PortalCandidatura from "@/pages/PortalCandidatura";
+import Cargos from "@/pages/Cargos";
 
 const queryClient = new QueryClient();
 
@@ -220,7 +221,12 @@ const App = () => (
                   <ConfigurarPerfis />
                 </ProtectedRoute>
               } />
-            </Route>
+              </Route>
+              <Route path="/cargos" element={
+                <ProtectedRoute permModule="parametros">
+                  <Cargos />
+                </ProtectedRoute>
+              } />
 
             <Route path="*" element={<NotFound />} />
           </Routes>
