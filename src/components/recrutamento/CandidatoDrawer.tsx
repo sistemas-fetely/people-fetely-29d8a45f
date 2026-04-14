@@ -73,9 +73,7 @@ export function CandidatoDrawer({ open, onOpenChange, candidato, vagaSkills, vag
   const [scores, setScores] = useState<Record<string, number>>({});
   const [comentario, setComentario] = useState("");
 
-  if (!candidato) return null;
-
-  const cId = candidato.id;
+  const cId = candidato?.id ?? "";
 
   // Queries
   const { data: avaliacoes = [] } = useQuery({
