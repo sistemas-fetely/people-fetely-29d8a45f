@@ -41,6 +41,7 @@ import { ptBR } from "date-fns/locale";
 import { useParametros } from "@/hooks/useParametros";
 import { useCargos } from "@/hooks/useCargos";
 import { useCLevelCargos } from "@/hooks/useCLevelCargos";
+import { usePermissions } from "@/hooks/usePermissions";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
