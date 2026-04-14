@@ -1,0 +1,1 @@
+ALTER TABLE public.convites_cadastro ADD COLUMN IF NOT EXISTS origem TEXT NOT NULL DEFAULT 'manual';

@@ -1012,6 +1012,7 @@ export type Database = {
           lider_direto_id: string | null
           nome: string
           observacoes_colaborador: string | null
+          origem: string
           prazo_dias: number
           preenchido_em: string | null
           salario_previsto: number | null
@@ -1036,6 +1037,7 @@ export type Database = {
           lider_direto_id?: string | null
           nome: string
           observacoes_colaborador?: string | null
+          origem?: string
           prazo_dias?: number
           preenchido_em?: string | null
           salario_previsto?: number | null
@@ -1060,6 +1062,7 @@ export type Database = {
           lider_direto_id?: string | null
           nome?: string
           observacoes_colaborador?: string | null
+          origem?: string
           prazo_dias?: number
           preenchido_em?: string | null
           salario_previsto?: number | null
