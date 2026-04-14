@@ -371,6 +371,9 @@ export default function RecrutamentoDetalhe() {
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => { setSelectedCandidato(c); setDrawerOpen(true); }}>
+                                  <User className="h-4 w-4 mr-2" /> Ver perfil
+                                </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => advanceCandidato(c.id)}>
                                   <ArrowRight className="h-4 w-4 mr-2" /> Avançar
                                 </DropdownMenuItem>
