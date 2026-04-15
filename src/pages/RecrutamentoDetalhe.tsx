@@ -177,7 +177,7 @@ export default function RecrutamentoDetalhe() {
     queryFn: async () => {
       const { data } = await supabase
         .from("testes_tecnicos" as any)
-        .select("candidato_id, enviado_em, entregue_em, resultado, prazo_entrega")
+        .select("candidato_id, enviado_em, entregue_em, resultado, prazo_entrega, skills_validadas")
         .eq("vaga_id", id!);
       return (data ?? []) as any[];
     },
@@ -1380,6 +1380,35 @@ export default function RecrutamentoDetalhe() {
                     </div>
                   )}
 
+                  {/* Skills validadas pelo teste */}
+                  {selectedCandidato?.id && (() => {
+                    const testeDoC = testesTecnicos.find((t: any) => t.candidato_id === selectedCandidato.id);
+                    const validadas = (testeDoC as any)?.skills_validadas?.filter((s: any) => s.resultado);
+                    if (!validadas?.length) return null;
+                    return (
+                      <div className="space-y-2">
+                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                          Skills validadas no teste
+                        </p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {validadas.map((s: any, i: number) => (
+                            <span key={i}
+                              className="px-2 py-0.5 rounded-full text-xs font-medium flex items-center gap-1"
+                              style={{
+                                backgroundColor: s.resultado === "confirmado" ? "#D8F3DC" :
+                                  s.resultado === "parcial" ? "#FEF3C7" : "#FEE2E2",
+                                color: s.resultado === "confirmado" ? "#1A4A3A" :
+                                  s.resultado === "parcial" ? "#D97706" : "#DC2626",
+                              }}>
+                              {s.resultado === "confirmado" ? "✓" :
+                               s.resultado === "parcial" ? "~" : "✗"} {s.skill}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })()}
+
                   {/* Motivação */}
                   {selectedCandidato.mensagem && (
                     <div className="space-y-1">
@@ -2286,6 +2315,7 @@ function TesteTecnico({
     nota: 0,
     pontos_avaliados: "",
     resultado: "",
+    skills_validadas: [] as { skill: string; nivel_declarado: string; resultado: string; observacao: string }[],
   });
 
   const { data: teste, isLoading } = useQuery({
@@ -2316,6 +2346,14 @@ function TesteTecnico({
         nota: (teste as any).nota ?? 0,
         pontos_avaliados: (teste as any).pontos_avaliados ?? "",
         resultado: (teste as any).resultado ?? "",
+        skills_validadas: (teste as any).skills_validadas?.length > 0
+          ? (teste as any).skills_validadas
+          : ((teste as any).skills_a_validar ?? []).map((s: any) => ({
+              skill: s.skill,
+              nivel_declarado: s.nivel_declarado,
+              resultado: "",
+              observacao: "",
+            })),
       });
       if ((teste as any).enviado_em) setFase("resultado");
     }
@@ -2354,7 +2392,19 @@ function TesteTecnico({
           desafio_entregaveis: data.entregaveis || "",
           desafio_criterios: data.criterios || "",
         }));
-        toast.success("Desafio gerado! Revise antes de enviar ao candidato.");
+        // Salvar skills_a_validar no banco
+        if (data.skills_a_validar?.length > 0) {
+          await supabase
+            .from("testes_tecnicos" as any)
+            .upsert({
+              candidato_id: candidatoId,
+              vaga_id: vagaId,
+              skills_a_validar: data.skills_a_validar,
+              updated_at: new Date().toISOString(),
+            } as any, { onConflict: "candidato_id,vaga_id" });
+          queryClient.invalidateQueries({ queryKey: ["teste-tecnico", candidatoId] });
+        }
+        toast.success("Desafio gerado com validadores de skills! Revise antes de enviar.");
       } else {
         toast.error("Resposta inesperada da IA. Preencha manualmente.");
       }
@@ -2697,6 +2747,80 @@ function TesteTecnico({
             </div>
           </div>
 
+          {/* Validação de skills */}
+          {formResultado.skills_validadas.length > 0 && (
+            <div className="space-y-3">
+              <div>
+                <Label className="text-xs">Validação de skills declaradas</Label>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Com base na entrega, confirme se as skills declaradas pelo candidato são reais.
+                </p>
+              </div>
+              {formResultado.skills_validadas.map((sv, i) => {
+                const skillInfo = (teste as any)?.skills_a_validar?.find(
+                  (s: any) => s.skill === sv.skill
+                );
+                return (
+                  <div key={i} className="p-3 rounded-lg border space-y-2"
+                    style={{
+                      borderColor: sv.resultado === "confirmado" ? "#1A4A3A40" :
+                        sv.resultado === "parcial" ? "#D9770640" :
+                        sv.resultado === "nao_confirmado" ? "#DC262640" :
+                        "var(--color-border-tertiary)",
+                      backgroundColor: sv.resultado === "confirmado" ? "#F0FFF4" :
+                        sv.resultado === "parcial" ? "#FFFBEB" :
+                        sv.resultado === "nao_confirmado" ? "#FEF2F2" :
+                        undefined,
+                    }}>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-xs font-semibold">{sv.skill}</p>
+                        <p className="text-xs text-muted-foreground">
+                          Declarado: <span className="capitalize">{sv.nivel_declarado}</span>
+                        </p>
+                      </div>
+                      <div className="flex gap-1">
+                        {[
+                          { value: "confirmado", label: "✓", title: "Confirmado", cor: "#1A4A3A" },
+                          { value: "parcial", label: "~", title: "Parcial", cor: "#D97706" },
+                          { value: "nao_confirmado", label: "✗", title: "Não confirmado", cor: "#DC2626" },
+                        ].map(op => (
+                          <button key={op.value} type="button"
+                            title={op.title}
+                            onClick={() => {
+                              const arr = [...formResultado.skills_validadas];
+                              arr[i] = { ...arr[i], resultado: op.value };
+                              setFormResultado(f => ({ ...f, skills_validadas: arr }));
+                            }}
+                            className="w-7 h-7 rounded-full text-xs font-bold border transition-colors"
+                            style={sv.resultado === op.value
+                              ? { backgroundColor: op.cor, color: "white", borderColor: op.cor }
+                              : { borderColor: "#E5E7EB", color: "#9CA3AF" }}>
+                            {op.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    {skillInfo?.como_validar && (
+                      <p className="text-xs text-muted-foreground italic border-t pt-2">
+                        Como foi testada: {skillInfo.como_validar}
+                      </p>
+                    )}
+                    <Input
+                      value={sv.observacao}
+                      className="h-7 text-xs"
+                      placeholder="Observação opcional..."
+                      onChange={e => {
+                        const arr = [...formResultado.skills_validadas];
+                        arr[i] = { ...arr[i], observacao: e.target.value };
+                        setFormResultado(f => ({ ...f, skills_validadas: arr }));
+                      }}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          )}
           <Button className="w-full text-white" style={{ backgroundColor: corTema }}
             disabled={salvando || !formResultado.resultado}
             onClick={salvarResultado}>

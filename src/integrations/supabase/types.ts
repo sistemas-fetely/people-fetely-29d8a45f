@@ -2483,6 +2483,8 @@ export type Database = {
           pontos_avaliados: string | null
           prazo_entrega: string | null
           resultado: string | null
+          skills_a_validar: Json | null
+          skills_validadas: Json | null
           updated_at: string | null
           vaga_id: string
         }
@@ -2505,6 +2507,8 @@ export type Database = {
           pontos_avaliados?: string | null
           prazo_entrega?: string | null
           resultado?: string | null
+          skills_a_validar?: Json | null
+          skills_validadas?: Json | null
           updated_at?: string | null
           vaga_id: string
         }
@@ -2527,6 +2531,8 @@ export type Database = {
           pontos_avaliados?: string | null
           prazo_entrega?: string | null
           resultado?: string | null
+          skills_a_validar?: Json | null
+          skills_validadas?: Json | null
           updated_at?: string | null
           vaga_id?: string
         }
