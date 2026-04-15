@@ -6,6 +6,7 @@ import { useParametros } from "@/hooks/useParametros";
 import { useCargos, type Cargo } from "@/hooks/useCargos";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSkillsCatalogo, salvarNovaSkill } from "@/hooks/useSkillsCatalogo";
 import { toast } from "sonner";
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -17,19 +18,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Trash2, ArrowRight, ArrowLeft, Loader2, X } from "lucide-react";
-
-const SKILLS_CATALOGO = [
-  "React / TypeScript","Node.js","Python","SQL / PostgreSQL","APIs REST","Git",
-  "Design Gráfico","UX/UI","Motion Design","Design de Produto",
-  "Identidade Visual","Design de Embalagem","Direção de Arte",
-  "Marketing Digital","SEO","Copywriting","Gestão de Mídias Sociais",
-  "Tráfego Pago","Branding","Email Marketing",
-  "Vendas B2B","Negociação","Key Account Management","Trade Marketing",
-  "Supply Chain","Logística","Importação / Exportação","Gestão de Estoque",
-  "Controle de Qualidade","Gestão de Times","Planejamento Estratégico",
-  "Análise de Dados","Recrutamento & Seleção","Folha de Pagamento",
-  "Legislação CLT","eSocial","HRBP","Gestão de Projetos","OKRs / KPIs",
-];
 
 const NIVEIS = [
   { value: "jr", label: "Jr" },
@@ -74,6 +62,8 @@ export function NovaVagaDialog({ open, onOpenChange }: Props) {
   const [ferramentasOutras, setFerramentasOutras] = useState("");
   const [faixaMin, setFaixaMin] = useState("");
   const [faixaMax, setFaixaMax] = useState("");
+  const [novaSkillObrig, setNovaSkillObrig] = useState("");
+  const [novaSkillDesej, setNovaSkillDesej] = useState("");
 
   const { data: departamentos = [] } = useParametros("departamento");
   const { data: locais = [] } = useParametros("local_trabalho");
@@ -94,7 +84,19 @@ export function NovaVagaDialog({ open, onOpenChange }: Props) {
     if (f1Max != null) setFaixaMax(String(f1Max));
   }, [titulo, tipoContrato, cargosData]);
 
-  const skillsCatalogo = SKILLS_CATALOGO;
+  // Skills from database
+  const niveisMap: Record<string, string> = {
+    jr: "jr", pl: "pl", sr: "sr",
+    coordenacao: "coordenacao", especialista: "especialista", "c-level": "c_level"
+  };
+  const nivelNormalizado = niveisMap[nivel] || "todos";
+
+  const { data: skillsCatalogo = [] } = useSkillsCatalogo(area || undefined, nivelNormalizado !== "todos" ? nivelNormalizado : undefined);
+
+  const skillsPorNivel = {
+    especificas: skillsCatalogo.filter(s => s.nivel === nivelNormalizado && s.nivel !== "todos"),
+    gerais: skillsCatalogo.filter(s => s.nivel === "todos"),
+  };
 
   // Usar apenas sistemas — categoria única consolidada
   const ferramentasSistemasCatalogo = sistemasParam;
@@ -167,6 +169,7 @@ export function NovaVagaDialog({ open, onOpenChange }: Props) {
     setVigenciaFim(""); setMissao(""); setResponsabilidades([""]);
     setSkillsObrigatorias([]); setSkillsDesejadas([]); setFerramentasIds([]); setFerramentasOutras("");
     setFaixaMin(""); setFaixaMax("");
+    setNovaSkillObrig(""); setNovaSkillDesej("");
     onOpenChange(false);
   }
 
@@ -197,18 +200,15 @@ export function NovaVagaDialog({ open, onOpenChange }: Props) {
               <Label>Título da vaga *</Label>
               <Select value={titulo} onValueChange={(v) => {
                 setTitulo(v);
-                // Auto-fill from cargo data
                 const cargoMatch = cargosData.find((c) => c.nome === v);
                 if (cargoMatch) {
                   const autoNivel = cargoMatch.nivel;
                   setNivel(autoNivel);
-                  // Auto-fill Job Description & Skills from cargo
                   if (cargoMatch.missao) setMissao(cargoMatch.missao);
                   if (cargoMatch.responsabilidades?.length) setResponsabilidades(cargoMatch.responsabilidades);
                   if (cargoMatch.skills_obrigatorias?.length) setSkillsObrigatorias(cargoMatch.skills_obrigatorias);
                   if (cargoMatch.skills_desejadas?.length) setSkillsDesejadas(cargoMatch.skills_desejadas);
                   if (cargoMatch.ferramentas?.length) {
-                    // Match ferramentas labels to param valores
                     const matchedIds = ferramentasSistemasCatalogo
                       .filter((p) => cargoMatch.ferramentas.includes(p.label))
                       .map((p) => p.valor);
@@ -414,27 +414,86 @@ export function NovaVagaDialog({ open, onOpenChange }: Props) {
                   ))}
                 </div>
               )}
-              <div className="flex flex-wrap gap-2">
-                {skillsCatalogo.filter((s) => !skillsObrigatorias.includes(s) && !skillsDesejadas.includes(s)).map((s) => (
-                  <button key={s} type="button"
-                    onClick={() => setSkillsObrigatorias([...skillsObrigatorias, s])}
-                    className="inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium transition-colors cursor-pointer border-border text-muted-foreground bg-background hover:bg-muted"
-                  >{s}</button>
-                ))}
-              </div>
-              <Input
-                placeholder="Adicionar skill personalizada (Enter)"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    const val = (e.target as HTMLInputElement).value.trim();
+
+              {/* Sugestões por nível */}
+              {area && nivel && skillsCatalogo.length > 0 && (
+                <div className="space-y-2">
+                  {skillsPorNivel.especificas.filter(s =>
+                    !skillsObrigatorias.includes(s.skill) && !skillsDesejadas.includes(s.skill)
+                  ).length > 0 && (
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-1">
+                        Sugeridas para {NIVEIS.find(n => n.value === nivel)?.label} em {area}:
+                      </p>
+                      <div className="flex flex-wrap gap-1">
+                        {skillsPorNivel.especificas
+                          .filter(s => !skillsObrigatorias.includes(s.skill) && !skillsDesejadas.includes(s.skill))
+                          .map(s => (
+                            <button key={s.id} type="button"
+                              onClick={() => setSkillsObrigatorias([...skillsObrigatorias, s.skill])}
+                              className="inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium transition-colors cursor-pointer border-[#1A4A3A]/30 text-[#1A4A3A] bg-[#1A4A3A]/5 hover:bg-[#1A4A3A]/10">
+                              + {s.skill}
+                            </button>
+                          ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {skillsPorNivel.gerais.filter(s =>
+                    !skillsObrigatorias.includes(s.skill) && !skillsDesejadas.includes(s.skill)
+                  ).length > 0 && (
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-1">Gerais de {area}:</p>
+                      <div className="flex flex-wrap gap-1">
+                        {skillsPorNivel.gerais
+                          .filter(s => !skillsObrigatorias.includes(s.skill) && !skillsDesejadas.includes(s.skill))
+                          .map(s => (
+                            <button key={s.id} type="button"
+                              onClick={() => setSkillsObrigatorias([...skillsObrigatorias, s.skill])}
+                              className="inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium transition-colors cursor-pointer border-border text-muted-foreground bg-background hover:bg-muted">
+                              + {s.skill}
+                            </button>
+                          ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Input nova skill com botão confirmar */}
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Adicionar skill personalizada"
+                  value={novaSkillObrig}
+                  onChange={(e) => setNovaSkillObrig(e.target.value)}
+                  onKeyDown={async (e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      const val = novaSkillObrig.trim();
+                      if (val && !skillsObrigatorias.includes(val)) {
+                        setSkillsObrigatorias([...skillsObrigatorias, val]);
+                        if (area) await salvarNovaSkill(val, area, nivelNormalizado, "obrigatoria");
+                        setNovaSkillObrig("");
+                      }
+                    }
+                  }}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="shrink-0"
+                  onClick={async () => {
+                    const val = novaSkillObrig.trim();
                     if (val && !skillsObrigatorias.includes(val)) {
                       setSkillsObrigatorias([...skillsObrigatorias, val]);
-                      (e.target as HTMLInputElement).value = "";
+                      if (area) await salvarNovaSkill(val, area, nivelNormalizado, "obrigatoria");
+                      setNovaSkillObrig("");
                     }
-                  }
-                }}
-              />
+                  }}>
+                  Confirmar
+                </Button>
+              </div>
             </div>
 
             {/* Skills desejadas */}
@@ -452,27 +511,60 @@ export function NovaVagaDialog({ open, onOpenChange }: Props) {
                   ))}
                 </div>
               )}
-              <div className="flex flex-wrap gap-2">
-                {skillsCatalogo.filter((s) => !skillsObrigatorias.includes(s) && !skillsDesejadas.includes(s)).map((s) => (
-                  <button key={s} type="button"
-                    onClick={() => setSkillsDesejadas([...skillsDesejadas, s])}
-                    className="inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium transition-colors cursor-pointer border-border text-muted-foreground bg-background hover:bg-muted"
-                  >{s}</button>
-                ))}
-              </div>
-              <Input
-                placeholder="Adicionar skill personalizada (Enter)"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    const val = (e.target as HTMLInputElement).value.trim();
+
+              {/* Sugestões desejadas */}
+              {area && nivel && skillsCatalogo.length > 0 && (
+                <div className="flex flex-wrap gap-1">
+                  {skillsCatalogo
+                    .filter(s =>
+                      (s.tipo === "desejada" || s.tipo === "ambos") &&
+                      !skillsObrigatorias.includes(s.skill) &&
+                      !skillsDesejadas.includes(s.skill)
+                    )
+                    .map(s => (
+                      <button key={s.id} type="button"
+                        onClick={() => setSkillsDesejadas([...skillsDesejadas, s.skill])}
+                        className="inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium transition-colors cursor-pointer border-blue-200 text-blue-700 bg-blue-50 hover:bg-blue-100">
+                        + {s.skill}
+                      </button>
+                    ))}
+                </div>
+              )}
+
+              {/* Input nova skill desejada com botão confirmar */}
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Adicionar skill personalizada"
+                  value={novaSkillDesej}
+                  onChange={(e) => setNovaSkillDesej(e.target.value)}
+                  onKeyDown={async (e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      const val = novaSkillDesej.trim();
+                      if (val && !skillsDesejadas.includes(val)) {
+                        setSkillsDesejadas([...skillsDesejadas, val]);
+                        if (area) await salvarNovaSkill(val, area, nivelNormalizado, "desejada");
+                        setNovaSkillDesej("");
+                      }
+                    }
+                  }}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="shrink-0"
+                  onClick={async () => {
+                    const val = novaSkillDesej.trim();
                     if (val && !skillsDesejadas.includes(val)) {
                       setSkillsDesejadas([...skillsDesejadas, val]);
-                      (e.target as HTMLInputElement).value = "";
+                      if (area) await salvarNovaSkill(val, area, nivelNormalizado, "desejada");
+                      setNovaSkillDesej("");
                     }
-                  }
-                }}
-              />
+                  }}>
+                  Confirmar
+                </Button>
+              </div>
             </div>
 
             {/* Ferramentas */}
