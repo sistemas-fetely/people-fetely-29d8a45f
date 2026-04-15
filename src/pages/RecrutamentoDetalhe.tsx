@@ -84,7 +84,7 @@ export default function RecrutamentoDetalhe() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("vagas")
-        .select("*")
+        .select("*, gestor:profiles!vagas_gestor_id_fkey(id, full_name)")
         .eq("id", id!)
         .single();
       if (error) throw error;
@@ -535,6 +535,7 @@ export default function RecrutamentoDetalhe() {
               { label: "Nível", value: vaga.nivel },
               { label: "Local", value: vaga.local_trabalho },
               { label: "Jornada", value: vaga.jornada },
+              { label: "Gestor", value: (vaga as any).gestor?.full_name ?? "—" },
               { label: "Vigência", value: vaga.vigencia_fim ? new Date(vaga.vigencia_fim).toLocaleDateString("pt-BR") : "—" },
             ].map(item => item.value ? (
               <div key={item.label} className="flex justify-between gap-2">
