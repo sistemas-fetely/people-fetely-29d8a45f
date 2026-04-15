@@ -42,6 +42,7 @@ import Onboarding from "@/pages/Onboarding";
 import Recrutamento from "@/pages/Recrutamento";
 import RecrutamentoDetalhe from "@/pages/RecrutamentoDetalhe";
 import PortalCandidatura from "@/pages/PortalCandidatura";
+import VagaPublica from "@/pages/VagaPublica";
 import Cargos from "@/pages/Cargos";
 import CargoForm from "@/pages/CargoForm";
 import CargosEnriquecimento from "@/pages/CargosEnriquecimento";
@@ -64,7 +65,8 @@ const App = () => (
             <Route path="/sem-permissao" element={<SemPermissao />} />
             <Route path="/aguardando-aprovacao" element={<AguardandoAprovacao />} />
             <Route path="/cadastro/:token" element={<CadastroPublico />} />
-            <Route path="/vagas/:id" element={<PortalCandidatura />} />
+            <Route path="/vagas/:id" element={<VagaPublica />} />
+            <Route path="/vagas/:id/candidatura" element={<PortalCandidatura />} />
             <Route path="/vagas/:id/teste" element={<EntregaTeste />} />
             <Route path="/unsubscribe" element={<Unsubscribe />} />
 
