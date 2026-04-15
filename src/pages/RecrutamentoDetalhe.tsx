@@ -400,6 +400,7 @@ export default function RecrutamentoDetalhe() {
       toast.success(`Convite gerado para ${contratarCandidato?.nome}! Acesse Convites de Cadastro para enviar.`);
       setContratarOpen(false);
       queryClient.invalidateQueries({ queryKey: ["candidatos", id] });
+      queryClient.invalidateQueries({ queryKey: ["ofertas-vaga", id] });
       // Ask about closing the vaga
       setEncerrarVagaOpen(true);
     },
@@ -487,8 +488,13 @@ export default function RecrutamentoDetalhe() {
         if (testeCand.resultado === "reprovado") return { label: "Reprovado", cor: "#DC2626" };
         return { label: "Aprovado", cor: "#1A4A3A" };
       }
-      case "oferta":
+      case "oferta": {
+        const ofertaCand = ofertasCandidatos.find((o: any) => o.candidato_id === c.id);
+        if (!ofertaCand?.enviado_em) return { label: "Registrar oferta", cor: "#DC2626" };
+        if (ofertaCand.status === "aceita") return { label: "Oferta aceita", cor: "#1A4A3A" };
+        if (ofertaCand.status === "recusada") return { label: "Oferta recusada", cor: "#DC2626" };
         return { label: "Em negociação", cor: "#D97706" };
+      }
       default:
         return null;
     }
@@ -654,6 +660,34 @@ export default function RecrutamentoDetalhe() {
           "O resultado do Teste Técnico é Reprovado. Tem certeza que quer avançar?",
           { duration: 5000 }
         );
+      }
+    }
+
+    // Bloqueio: Oferta → Contratado sem oferta aceita
+    if (c.status === "oferta" && nextStatus === "contratado") {
+      const { data: oferta } = await supabase
+        .from("ofertas_candidato" as any)
+        .select("status, enviado_em")
+        .eq("candidato_id", candidatoId)
+        .eq("vaga_id", id!)
+        .maybeSingle();
+
+      if (!oferta?.enviado_em) {
+        toast.error(
+          "Registre e envie a proposta antes de contratar.",
+          { duration: 5000 }
+        );
+        setSelectedCandidato(c);
+        return;
+      }
+
+      if ((oferta as any).status !== "aceita") {
+        toast.error(
+          "A proposta precisa estar com status 'Aceita' antes de contratar.",
+          { duration: 5000 }
+        );
+        setSelectedCandidato(c);
+        return;
       }
     }
 
