@@ -752,7 +752,29 @@ export default function RecrutamentoDetalhe() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Drawer do candidato */}
+      {/* Excluir vaga dialog */}
+      <AlertDialog open={confirmarExclusao} onOpenChange={setConfirmarExclusao}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir vaga</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir a vaga "{vaga.titulo}"?
+              Esta ação não pode ser desfeita e todos os candidatos vinculados serão removidos.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={excluindo}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={excluindo}
+              onClick={(e) => { e.preventDefault(); excluirVaga(); }}
+            >
+              {excluindo ? "Excluindo..." : "Sim, excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <Sheet open={!!selectedCandidato} onOpenChange={(open) => { if (!open) setSelectedCandidato(null); }}>
         <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
           {selectedCandidato && (
