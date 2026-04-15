@@ -129,26 +129,43 @@ Incluir as 3 experiências mais recentes e todas as formações. Skills técnica
             },
             {
               role: "user",
-              content: `Você é um especialista sênior em recrutamento. Calcule o score de aderência deste candidato para a vaga.
+              content: `Você é um especialista sênior em recrutamento e desenvolvimento de carreira. Avalie com profundidade e inteligência a aderência deste candidato à vaga.
 
-REGRAS CRÍTICAS DE AVALIAÇÃO POR NÍVEL:
+═══ LÓGICA DE NÍVEL — LEIA COM ATENÇÃO ═══
 
-1. Se o candidato tem nível ACIMA do pedido (ex: Sr candidatando-se a Jr): pontuação ALTA (80-95%). Ele entrega mais do que o mínimo exigido. Penalize levemente apenas se houver risco real de overqualification.
+DETECÇÃO DO NÍVEL REAL DO CANDIDATO:
+Analise as experiências e defina o nível real:
+- Jr: 0-2 anos, atividades de suporte/execução, pouca autonomia
+- Pl: 2-5 anos, entrega independente, começa a liderar tarefas
+- Sr: 5+ anos, referência técnica, lidera projetos e pessoas
+- Coordenação/Especialista: 7+ anos, gestão de times ou especialização profunda
 
-2. Se o candidato tem nível COMPATÍVEL com o pedido: avaliar normalmente (50-85%).
+REGRAS DE ADEQUAÇÃO DE NÍVEL (peso 30 pontos):
+- Candidato Sr ou Coord candidatando-se a vaga Jr/Pl:
+  → nivel_adequacao: 25-30 pts. Overqualification é irrelevante — ele ENTREGA o que a vaga pede e mais.
+  → Penalize APENAS se o candidato não tiver NENHUMA das skills básicas da vaga.
+- Candidato Pl candidatando-se a vaga Jr:
+  → nivel_adequacao: 22-28 pts. Tem o essencial e está em progressão natural.
+- Candidato Jr candidatando-se a vaga Jr:
+  → nivel_adequacao: 18-25 pts. Nível correto — avalie pela qualidade das skills básicas.
+- Candidato Jr candidatando-se a vaga Pl/Sr:
+  → nivel_adequacao: 8-15 pts. Risco real de performance abaixo do esperado.
+- Candidato Jr candidatando-se a vaga Sr/Coord:
+  → nivel_adequacao: 2-8 pts. Lacuna crítica de experiência.
 
-3. Se o candidato tem nível ABAIXO do pedido (ex: Jr candidatando-se a Sr): pontuação BAIXA (10-45%). Falta de experiência é crítica.
+REGRAS DE SKILLS (peso 35 pontos):
+- Para vagas Jr: skills básicas corretas valem muito. Não exija profundidade — o candidato Jr está aprendendo.
+- Para candidatos Sr em vagas Jr: as skills do candidato são mais avançadas que as pedidas — isso é POSITIVO. Pontue alto mesmo que os nomes não sejam idênticos.
+- Avalie equivalências: "Photoshop" = "Edição de imagem"; "React" = "TypeScript/Frontend"; "Google Analytics" = "Análise de Métricas".
+- Skills desejadas são bônus — não penalize por não ter.
 
-4. Para vagas Jr: não penalize por falta de ferramentas avançadas ou experiências longas — isso não é esperado de um Jr.
+REGRAS DE EXPERIÊNCIA (peso 20 pontos):
+- Jr com 0-1 ano de experiência ou estágios: completamente normal para uma vaga Jr. Pontue 14-18.
+- Jr com formação forte + estágio: pontue 16-18.
+- Sr com experiências em áreas adjacentes à vaga: pontue 15-18.
+- Ausência total de experiência em candidato Jr: pontue 10-13 (ainda possível).
 
-5. Para vagas Jr: valorize potencial, formação, skills básicas corretas e motivação.
-
-COMO DETECTAR O NÍVEL DO CANDIDATO:
-- Analise a quantidade e profundidade das experiências
-- Anos de experiência acumulados
-- Complexidade das atividades descritas
-- Nível das skills declaradas
-- Formação acadêmica
+═══ DADOS DA AVALIAÇÃO ═══
 
 VAGA:
 - Título: ${vaga.titulo}
@@ -164,12 +181,14 @@ CANDIDATO:
 - Formações: ${JSON.stringify(candidato.formacoes)}
 - Motivação: "${candidato.mensagem || ""}"
 
-DIMENSÕES DE AVALIAÇÃO:
-- skills_match (0-35): aderência das skills declaradas às skills obrigatórias da vaga
-- nivel_adequacao (0-30): compatibilidade do nível do candidato com o nível exigido (MAIOR PESO — siga as regras acima)
-- experiencia_relevante (0-20): qualidade e relevância das experiências para o cargo
-- sistemas_match (0-10): aderência às ferramentas pedidas
-- motivacao (0-5): clareza e alinhamento da motivação declarada
+═══ CALIBRAÇÃO DE REFERÊNCIA ═══
+Use estas referências para calibrar seu score:
+- Candidato Sr experiente em vaga Jr, com skills relevantes → score: 85-95
+- Candidato Pl maduro em vaga Jr → score: 78-88
+- Candidato Jr com skills básicas corretas em vaga Jr → score: 65-78
+- Candidato Jr fraco (poucas skills) em vaga Jr → score: 45-62
+- Candidato Jr em vaga Pl → score: 30-48
+- Candidato Jr em vaga Sr → score: 10-28
 
 Responda APENAS com JSON válido:
 {
@@ -180,7 +199,7 @@ Responda APENAS com JSON válido:
   "motivacao": 0-5,
   "total": 0-100,
   "nivel_detectado": "jr|pl|sr|coordenacao|especialista",
-  "resumo": "2 linhas explicando o fit — mencionar se está acima ou abaixo do nível pedido"
+  "resumo": "2 linhas explicando o fit — mencionar se está acima ou abaixo do nível pedido e por quê"
 }`,
             },
           ],
