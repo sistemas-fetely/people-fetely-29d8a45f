@@ -1277,6 +1277,39 @@ export default function RecrutamentoDetalhe() {
                   </div>
                 </TabsContent>
 
+                <TabsContent value="entrevistas" className="space-y-6 mt-4">
+                  {["entrevista_rh", "entrevista_gestor", "teste_tecnico", "oferta", "contratado"]
+                    .includes(selectedCandidato.status) ? (
+                    <>
+                      <FormularioEntrevista
+                        candidatoId={selectedCandidato.id}
+                        vagaId={id!}
+                        tipo="rh"
+                        readOnly={
+                          selectedCandidato.status !== "entrevista_rh" &&
+                          !["entrevista_gestor", "teste_tecnico", "oferta", "contratado"]
+                            .includes(selectedCandidato.status)
+                        }
+                      />
+                      {["entrevista_gestor", "teste_tecnico", "oferta", "contratado"]
+                        .includes(selectedCandidato.status) && (
+                        <div className="border-t pt-4">
+                          <FormularioEntrevista
+                            candidatoId={selectedCandidato.id}
+                            vagaId={id!}
+                            tipo="gestor"
+                            readOnly={selectedCandidato.status !== "entrevista_gestor"}
+                          />
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <p className="text-sm text-muted-foreground italic text-center py-4">
+                      Formulários disponíveis a partir da etapa Entrevista RH.
+                    </p>
+                  )}
+                </TabsContent>
+
                 <TabsContent value="avaliacao" className="mt-4">
                   <p className="text-sm text-muted-foreground italic">Avaliações disponíveis no scorecard do candidato.</p>
                 </TabsContent>
