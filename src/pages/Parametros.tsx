@@ -22,7 +22,7 @@ import {
 import {
   Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Plus, Pencil, Trash2, Loader2, Monitor, Package, Settings2, FileText, Search } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, Monitor, Package, Settings2, FileText, Search, Wrench, Heart } from "lucide-react";
 import type { Parametro } from "@/hooks/useParametros";
 
 interface CategoriaConfig {
@@ -36,13 +36,15 @@ const CATEGORIAS_GERAL: CategoriaConfig[] = [
   { value: "departamento", label: "Departamentos", icon: Monitor, description: "Departamentos da empresa para rateio de custos" },
   { value: "local_trabalho", label: "Locais de Trabalho", icon: Monitor, description: "Locais de trabalho disponíveis para colaboradores" },
   { value: "sistema", label: "Sistemas", icon: Monitor, description: "Sistemas de acesso para colaboradores" },
+  { value: "ferramenta", label: "Ferramentas", icon: Wrench, description: "Ferramentas e softwares utilizados pela empresa" },
+  { value: "beneficio", label: "Benefícios", icon: Heart, description: "Tipos de benefícios oferecidos pela empresa" },
+  { value: "tipo_equipamento", label: "Tipos de Equipamento", icon: Package, description: "Tipos de equipamentos disponíveis" },
+  { value: "estado_equipamento", label: "Estados de Equipamento", icon: Settings2, description: "Condições dos equipamentos" },
 ];
 
 const CATEGORIAS_CLT: CategoriaConfig[] = [
   { value: "tipo_contrato", label: "Tipos de Contrato", icon: Settings2, description: "Modalidades de contrato CLT conforme legislação" },
   { value: "jornada", label: "Jornadas", icon: Settings2, description: "Jornadas de trabalho e escalas" },
-  { value: "tipo_equipamento", label: "Tipos de Equipamento", icon: Package, description: "Tipos de equipamentos disponíveis" },
-  { value: "estado_equipamento", label: "Estados de Equipamento", icon: Settings2, description: "Condições dos equipamentos" },
   { value: "encargo_folha", label: "Encargos Folha", icon: FileText, description: "Alíquotas de FGTS, INSS Patronal, VT e dedução IRRF" },
   { value: "inss_faixa", label: "Faixas INSS", icon: FileText, description: "Faixas progressivas de contribuição INSS do empregado" },
   { value: "irrf_faixa", label: "Faixas IRRF", icon: FileText, description: "Faixas progressivas do Imposto de Renda Retido na Fonte" },
@@ -274,6 +276,10 @@ export default function Parametros() {
     setFormOpen(true);
   };
 
+  const estadosEquipamento = useMemo(() => {
+    return (allParams || []).filter((p) => p.categoria === "estado_equipamento" && p.ativo);
+  }, [allParams]);
+
   const grouped = useMemo(() => {
     const lowerSearch = searchTerm.toLowerCase();
     return CATEGORIAS.map((cat) => {
@@ -384,6 +390,16 @@ export default function Parametros() {
                                             </div>
                                             {param.descricao && (
                                               <p className="text-xs text-muted-foreground truncate">{param.descricao}</p>
+                                            )}
+                                            {param.categoria === "tipo_equipamento" && estadosEquipamento.length > 0 && (
+                                              <div className="mt-1.5 flex items-center gap-1 flex-wrap">
+                                                <span className="text-xs text-muted-foreground mr-1">Estados:</span>
+                                                {estadosEquipamento.map((e) => (
+                                                  <Badge key={e.id} variant="secondary" className="text-[10px]">
+                                                    {e.label}
+                                                  </Badge>
+                                                ))}
+                                              </div>
                                             )}
                                           </div>
                                         </div>
