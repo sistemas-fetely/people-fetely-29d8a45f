@@ -2423,7 +2423,7 @@ function TesteTecnico({
             descricao: formDesafio.desafio_descricao,
             entregaveis: formDesafio.desafio_entregaveis,
             criterios: formDesafio.desafio_criterios,
-            prazo: (() => { const [ano, mes, dia] = formDesafio.prazo_entrega.split("-"); return `${dia}/${mes}/${ano}`; })(),
+            prazo: (() => { if (!formDesafio.prazo_entrega) return ""; const parts = formDesafio.prazo_entrega.split("-"); if (parts.length !== 3) return formDesafio.prazo_entrega; const [ano, mes, dia] = parts; return `${dia}/${mes}/${ano}`; })(),
             link_portal: `${window.location.origin}/vagas/${vagaId}`,
           },
         },
@@ -2444,9 +2444,20 @@ function TesteTecnico({
       toast.error("Candidato sem e-mail cadastrado.");
       return;
     }
+    if (!teste) {
+      toast.error("Dados do teste não carregados. Tente novamente.");
+      return;
+    }
     setEnviando(true);
     try {
-      await supabase.functions.invoke("send-transactional-email", {
+      const prazoFormatado = (teste as any).prazo_entrega
+        ? (() => {
+            const [ano, mes, dia] = ((teste as any).prazo_entrega as string).split("-");
+            return `${dia}/${mes}/${ano}`;
+          })()
+        : "";
+
+      const { error } = await supabase.functions.invoke("send-transactional-email", {
         body: {
           templateName: "teste-tecnico-candidato",
           recipientEmail: candidato.email,
@@ -2454,18 +2465,16 @@ function TesteTecnico({
           templateData: {
             nome: candidato.nome,
             cargo: vaga?.titulo ?? "",
-            contexto: formDesafio.desafio_contexto,
-            descricao: formDesafio.desafio_descricao,
-            entregaveis: formDesafio.desafio_entregaveis,
-            criterios: formDesafio.desafio_criterios,
-            prazo: (() => {
-              const [ano, mes, dia] = formDesafio.prazo_entrega.split("-");
-              return `${dia}/${mes}/${ano}`;
-            })(),
+            contexto: (teste as any).desafio_contexto ?? "",
+            descricao: (teste as any).desafio_descricao ?? "",
+            entregaveis: (teste as any).desafio_entregaveis ?? "",
+            criterios: (teste as any).desafio_criterios ?? "",
+            prazo: prazoFormatado,
             link_portal: `${window.location.origin}/vagas/${vagaId}`,
           },
         },
       });
+      if (error) throw error;
       toast.success(`Teste reenviado para ${candidato.email}!`);
     } catch (e: any) {
       toast.error("Erro ao reenviar: " + e.message);
