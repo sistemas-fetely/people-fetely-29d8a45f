@@ -428,23 +428,36 @@ export default function RecrutamentoDetalhe() {
 
   const addCandidatoMutation = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from("candidatos").insert({
+      const { data: inserted, error } = await supabase.from("candidatos").insert({
         vaga_id: id!,
         nome: newCandidato.nome,
         email: newCandidato.email,
         telefone: newCandidato.telefone || null,
-        origem: newCandidato.origem,
+        origem: newCandidato.origem || "indicacao",
         status: "recebido",
         consentimento_lgpd: true,
         consentimento_lgpd_at: new Date().toISOString(),
-      } as any);
+        experiencias: newCandidato.experiencias.length > 0 ? newCandidato.experiencias : null,
+        formacoes: newCandidato.formacoes.length > 0 ? newCandidato.formacoes : null,
+        skills_candidato: newCandidato.skills_candidato.length > 0 ? newCandidato.skills_candidato : null,
+        sistemas_candidato: newCandidato.sistemas_candidato.length > 0 ? newCandidato.sistemas_candidato : null,
+        mensagem: newCandidato.mensagem || null,
+      } as any).select().single();
       if (error) throw error;
+      return inserted;
     },
-    onSuccess: () => {
+    onSuccess: (inserted) => {
       toast.success("Candidato adicionado!");
       setAddCandidatoOpen(false);
-      setNewCandidato({ nome: "", email: "", telefone: "", origem: "indicacao" });
+      const resetState = { nome: "", email: "", telefone: "", origem: "indicacao", experiencias: [] as any[], formacoes: [] as any[], skills_candidato: [] as any[], sistemas_candidato: [] as any[], mensagem: "" };
+      setNewCandidato(resetState);
+      setAddCandidatoPdfCarregado(false);
+      setAddCandidatoNomePDF("");
       queryClient.invalidateQueries({ queryKey: ["candidatos", id] });
+      // Calculate score if profile data exists
+      if (inserted && (newCandidato.experiencias.length > 0 || newCandidato.skills_candidato.length > 0)) {
+        calcularScoreCandidato(inserted.id, newCandidato);
+      }
     },
     onError: (err: any) => toast.error(err.message),
   });
