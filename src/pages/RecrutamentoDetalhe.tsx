@@ -56,6 +56,7 @@ export default function RecrutamentoDetalhe() {
   const { user } = useAuth();
   const { isSuperAdmin, isAdminRH } = usePermissions();
   const canSeeFaixa = isSuperAdmin || isAdminRH;
+  const podeExcluir = isSuperAdmin || isAdminRH;
 
   const [addCandidatoOpen, setAddCandidatoOpen] = useState(false);
   const [newCandidato, setNewCandidato] = useState({ nome: "", email: "", telefone: "", origem: "indicacao" });
