@@ -27,7 +27,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   ArrowLeft, ChevronDown, Copy, Globe, MoreHorizontal, Plus, Loader2,
-  UserPlus, ArrowRight, XCircle, User, CheckCircle2, ExternalLink, Users, Link
+  UserPlus, ArrowRight, XCircle, User, CheckCircle2, ExternalLink, Users, Link, Trash2
 } from "lucide-react";
 
 const statusConfig: Record<string, { label: string; className: string }> = {
@@ -56,6 +56,7 @@ export default function RecrutamentoDetalhe() {
   const { user } = useAuth();
   const { isSuperAdmin, isAdminRH } = usePermissions();
   const canSeeFaixa = isSuperAdmin || isAdminRH;
+  const podeExcluir = isSuperAdmin || isAdminRH;
 
   const [addCandidatoOpen, setAddCandidatoOpen] = useState(false);
   const [newCandidato, setNewCandidato] = useState({ nome: "", email: "", telefone: "", origem: "indicacao" });
@@ -72,6 +73,8 @@ export default function RecrutamentoDetalhe() {
     data_inicio: "", lider_direto_id: "", beneficios_ids: [] as string[], jornada: "",
   });
   const [encerrarVagaOpen, setEncerrarVagaOpen] = useState(false);
+  const [confirmarExclusao, setConfirmarExclusao] = useState(false);
+  const [excluindo, setExcluindo] = useState(false);
 
   const { data: beneficiosParam = [] } = useParametros("beneficio");
 
@@ -247,6 +250,23 @@ export default function RecrutamentoDetalhe() {
     toast.success("Link copiado!");
   };
 
+  async function excluirVaga() {
+    setExcluindo(true);
+    try {
+      await supabase.from("candidatos").delete().eq("vaga_id", id!);
+      const { error } = await supabase.from("vagas").delete().eq("id", id!);
+      if (error) throw error;
+      toast.success("Vaga excluída com sucesso.");
+      queryClient.invalidateQueries({ queryKey: ["vagas"] });
+      navigate("/recrutamento");
+    } catch (e: any) {
+      toast.error("Erro ao excluir vaga: " + e.message);
+    } finally {
+      setExcluindo(false);
+      setConfirmarExclusao(false);
+    }
+  }
+
   const getInitials = (name: string) =>
     name.split(" ").map((n) => n[0]).filter(Boolean).slice(0, 2).join("").toUpperCase();
 
@@ -357,6 +377,13 @@ export default function RecrutamentoDetalhe() {
             <Button variant="outline" size="sm" onClick={() => updateStatusMutation.mutate("aberta")}
               disabled={updateStatusMutation.isPending}>
               Reabrir vaga
+            </Button>
+           )}
+          {podeExcluir && (
+            <Button variant="outline" size="sm"
+              className="text-destructive border-destructive/30 hover:bg-destructive/10"
+              onClick={() => setConfirmarExclusao(true)}>
+              <Trash2 className="h-4 w-4 mr-2" /> Excluir vaga
             </Button>
           )}
         </div>
@@ -725,7 +752,29 @@ export default function RecrutamentoDetalhe() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Drawer do candidato */}
+      {/* Excluir vaga dialog */}
+      <AlertDialog open={confirmarExclusao} onOpenChange={setConfirmarExclusao}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir vaga</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir a vaga "{vaga.titulo}"?
+              Esta ação não pode ser desfeita e todos os candidatos vinculados serão removidos.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={excluindo}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={excluindo}
+              onClick={(e) => { e.preventDefault(); excluirVaga(); }}
+            >
+              {excluindo ? "Excluindo..." : "Sim, excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <Sheet open={!!selectedCandidato} onOpenChange={(open) => { if (!open) setSelectedCandidato(null); }}>
         <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
           {selectedCandidato && (
