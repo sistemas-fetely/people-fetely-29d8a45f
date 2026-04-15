@@ -1648,10 +1648,10 @@ export default function RecrutamentoDetalhe() {
                   <TabsTrigger value="perfil" className="text-xs">Perfil</TabsTrigger>
                   <TabsTrigger value="entrevistas" className="text-xs">Entrevistas</TabsTrigger>
                   <TabsTrigger value="teste" className="text-xs">Teste</TabsTrigger>
+                  <TabsTrigger value="avaliacao" className="text-xs">Score</TabsTrigger>
                   <TabsTrigger value="oferta" className="text-xs">Proposta</TabsTrigger>
-                  <TabsTrigger value="avaliacao" className="text-xs">Avaliação</TabsTrigger>
-                  <TabsTrigger value="historico" className="text-xs">Histórico</TabsTrigger>
                   <TabsTrigger value="notas" className="text-xs">Notas</TabsTrigger>
+                  <TabsTrigger value="historico" className="text-xs">Histórico</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="perfil" className="space-y-4 mt-4">
