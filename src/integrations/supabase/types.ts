@@ -317,11 +317,19 @@ export type Database = {
           created_at: string | null
           curriculo_url: string | null
           email: string
+          experiencias: Json | null
+          formacoes: Json | null
           id: string
           linkedin_url: string | null
+          mensagem: string | null
           nome: string
           origem: string | null
           portfolio_url: string | null
+          score_calculado_em: string | null
+          score_detalhado: Json | null
+          score_total: number | null
+          sistemas_candidato: Json | null
+          skills_candidato: Json | null
           status: string
           telefone: string | null
           updated_at: string | null
@@ -333,11 +341,19 @@ export type Database = {
           created_at?: string | null
           curriculo_url?: string | null
           email: string
+          experiencias?: Json | null
+          formacoes?: Json | null
           id?: string
           linkedin_url?: string | null
+          mensagem?: string | null
           nome: string
           origem?: string | null
           portfolio_url?: string | null
+          score_calculado_em?: string | null
+          score_detalhado?: Json | null
+          score_total?: number | null
+          sistemas_candidato?: Json | null
+          skills_candidato?: Json | null
           status?: string
           telefone?: string | null
           updated_at?: string | null
@@ -349,11 +365,19 @@ export type Database = {
           created_at?: string | null
           curriculo_url?: string | null
           email?: string
+          experiencias?: Json | null
+          formacoes?: Json | null
           id?: string
           linkedin_url?: string | null
+          mensagem?: string | null
           nome?: string
           origem?: string | null
           portfolio_url?: string | null
+          score_calculado_em?: string | null
+          score_detalhado?: Json | null
+          score_total?: number | null
+          sistemas_candidato?: Json | null
+          skills_candidato?: Json | null
           status?: string
           telefone?: string | null
           updated_at?: string | null
