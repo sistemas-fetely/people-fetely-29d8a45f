@@ -101,6 +101,20 @@ function useParametroUsage() {
 }
 
 /* ── Form dialog ── */
+function parseSistemaMeta(descricao: string | null): { url: string; tipo_licenca: string; custo_mensal: number } {
+  if (!descricao) return { url: "", tipo_licenca: "gratuito", custo_mensal: 0 };
+  try {
+    const parsed = JSON.parse(descricao);
+    return {
+      url: parsed.url || "",
+      tipo_licenca: parsed.tipo_licenca || "gratuito",
+      custo_mensal: parsed.custo_mensal ?? 0,
+    };
+  } catch {
+    return { url: "", tipo_licenca: "gratuito", custo_mensal: 0 };
+  }
+}
+
 function ParametroForm({
   open, onClose, parametro, categoria,
 }: {
@@ -116,22 +130,38 @@ function ParametroForm({
   const [descricao, setDescricao] = useState(parametro?.descricao || "");
   const [ordem, setOrdem] = useState(parametro?.ordem ?? 0);
 
+  const isSistema = categoria === "sistema";
+  const meta = parseSistemaMeta(isSistema ? parametro?.descricao ?? null : null);
+  const [sistemaUrl, setSistemaUrl] = useState(meta.url);
+  const [tipoLicenca, setTipoLicenca] = useState(meta.tipo_licenca);
+  const [custoMensal, setCustoMensal] = useState(meta.custo_mensal);
+
   const handleSave = async () => {
     if (!label.trim()) { toast.error("O nome é obrigatório"); return; }
     const valorFinal = valor.trim() || label.trim().toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "");
+
+    let descricaoFinal: string | null = descricao.trim() || null;
+    if (isSistema) {
+      descricaoFinal = JSON.stringify({
+        url: sistemaUrl.trim(),
+        tipo_licenca: tipoLicenca,
+        custo_mensal: custoMensal || 0,
+      });
+    }
+
     setSaving(true);
     try {
       if (parametro) {
         const { error } = await supabase
           .from("parametros")
-          .update({ valor: valorFinal, label: label.trim(), descricao: descricao.trim() || null, ordem } as any)
+          .update({ valor: valorFinal, label: label.trim(), descricao: descricaoFinal, ordem } as any)
           .eq("id", parametro.id);
         if (error) throw error;
         toast.success("Parâmetro atualizado!");
       } else {
         const { error } = await supabase
           .from("parametros")
-          .insert({ categoria, valor: valorFinal, label: label.trim(), descricao: descricao.trim() || null, ordem } as any);
+          .insert({ categoria, valor: valorFinal, label: label.trim(), descricao: descricaoFinal, ordem } as any);
         if (error) throw error;
         toast.success("Parâmetro adicionado!");
       }
@@ -149,22 +179,55 @@ function ParametroForm({
     <Dialog open={open} onOpenChange={() => onClose()}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{parametro ? "Editar Parâmetro" : "Novo Parâmetro"}</DialogTitle>
+          <DialogTitle>{parametro ? "Editar" : "Novo"} {isSistema ? "Sistema" : "Parâmetro"}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-2">
           <div className="space-y-2">
-            <Label>Nome *</Label>
-            <Input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Ex: Google Workspace" />
+            <Label>{isSistema ? "Nome do sistema" : "Nome"} *</Label>
+            <Input value={label} onChange={(e) => setLabel(e.target.value)} placeholder={isSistema ? "Ex: Google Workspace" : "Ex: Departamento"} />
           </div>
           <div className="space-y-2">
             <Label>Código (valor)</Label>
             <Input value={valor} onChange={(e) => setValor(e.target.value)} placeholder="Auto-gerado se vazio" />
             <p className="text-xs text-muted-foreground">Identificador interno. Se vazio, será gerado a partir do nome.</p>
           </div>
-          <div className="space-y-2">
-            <Label>Descrição</Label>
-            <Input value={descricao} onChange={(e) => setDescricao(e.target.value)} placeholder="Descrição opcional" />
-          </div>
+
+          {isSistema ? (
+            <>
+              <div className="space-y-2">
+                <Label>URL de acesso</Label>
+                <Input value={sistemaUrl} onChange={(e) => setSistemaUrl(e.target.value)} placeholder="https://..." />
+              </div>
+              <div className="space-y-2">
+                <Label>Tipo de licença</Label>
+                <Select value={tipoLicenca} onValueChange={setTipoLicenca}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="por_usuario">Por usuário</SelectItem>
+                    <SelectItem value="conta_unica">Conta única</SelectItem>
+                    <SelectItem value="gratuito">Gratuito</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Custo mensal estimado (R$)</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  step={0.01}
+                  value={custoMensal || ""}
+                  onChange={(e) => setCustoMensal(Number(e.target.value))}
+                  placeholder="0,00"
+                />
+              </div>
+            </>
+          ) : (
+            <div className="space-y-2">
+              <Label>Descrição</Label>
+              <Input value={descricao} onChange={(e) => setDescricao(e.target.value)} placeholder="Descrição opcional" />
+            </div>
+          )}
+
           <div className="space-y-2">
             <Label>Ordem de exibição</Label>
             <Input type="number" value={ordem} onChange={(e) => setOrdem(Number(e.target.value))} />
