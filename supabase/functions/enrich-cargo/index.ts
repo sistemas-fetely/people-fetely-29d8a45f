@@ -29,8 +29,9 @@ serve(async (req) => {
 
 Pesquise em fontes brasileiras como Robert Half, Michael Page, Glassdoor, LinkedIn Salary.
 
-Os valores salariais devem ser mensais em reais (BRL). Faixa F1 = entrada, F5 = referência/topo.
-Para PJ, considere que o valor mensal é tipicamente 30-50% maior que CLT.`;
+Os valores salariais devem ser mensais em reais (BRL).
+Faixas representam progressão salarial: F1 = entrada, F2 = desenvolvimento (1-2 anos), F3 = pleno (autônomo), F4 = sênior (referência na área), F5 = teto da faixa (próximo de promoção).
+Calcule valores progressivos e realistas. Para PJ, considere que o valor mensal é tipicamente 30-50% maior que CLT.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -58,18 +59,34 @@ Para PJ, considere que o valor mensal é tipicamente 30-50% maior que CLT.`;
                   skills_obrigatorias: { type: "array", items: { type: "string" }, description: "5 skills obrigatórias" },
                   skills_desejadas: { type: "array", items: { type: "string" }, description: "3 skills desejáveis" },
                   ferramentas: { type: "array", items: { type: "string" }, description: "3 ferramentas principais" },
-                  faixa_clt_f1_min: { type: "number" },
-                  faixa_clt_f1_max: { type: "number" },
-                  faixa_clt_f5_min: { type: "number" },
-                  faixa_clt_f5_max: { type: "number" },
-                  faixa_pj_f1_min: { type: "number" },
-                  faixa_pj_f1_max: { type: "number" },
-                  faixa_pj_f5_min: { type: "number" },
-                  faixa_pj_f5_max: { type: "number" },
+                  faixa_clt_f1_min: { type: "number", description: "CLT F1 entrada mín" },
+                  faixa_clt_f1_max: { type: "number", description: "CLT F1 entrada máx" },
+                  faixa_clt_f2_min: { type: "number", description: "CLT F2 desenvolvimento mín" },
+                  faixa_clt_f2_max: { type: "number", description: "CLT F2 desenvolvimento máx" },
+                  faixa_clt_f3_min: { type: "number", description: "CLT F3 pleno mín" },
+                  faixa_clt_f3_max: { type: "number", description: "CLT F3 pleno máx" },
+                  faixa_clt_f4_min: { type: "number", description: "CLT F4 sênior mín" },
+                  faixa_clt_f4_max: { type: "number", description: "CLT F4 sênior máx" },
+                  faixa_clt_f5_min: { type: "number", description: "CLT F5 referência mín" },
+                  faixa_clt_f5_max: { type: "number", description: "CLT F5 referência máx" },
+                  faixa_pj_f1_min: { type: "number", description: "PJ F1 entrada mín" },
+                  faixa_pj_f1_max: { type: "number", description: "PJ F1 entrada máx" },
+                  faixa_pj_f2_min: { type: "number", description: "PJ F2 desenvolvimento mín" },
+                  faixa_pj_f2_max: { type: "number", description: "PJ F2 desenvolvimento máx" },
+                  faixa_pj_f3_min: { type: "number", description: "PJ F3 pleno mín" },
+                  faixa_pj_f3_max: { type: "number", description: "PJ F3 pleno máx" },
+                  faixa_pj_f4_min: { type: "number", description: "PJ F4 sênior mín" },
+                  faixa_pj_f4_max: { type: "number", description: "PJ F4 sênior máx" },
+                  faixa_pj_f5_min: { type: "number", description: "PJ F5 referência mín" },
+                  faixa_pj_f5_max: { type: "number", description: "PJ F5 referência máx" },
                 },
                 required: ["missao", "responsabilidades", "skills_obrigatorias", "skills_desejadas", "ferramentas",
-                  "faixa_clt_f1_min", "faixa_clt_f1_max", "faixa_clt_f5_min", "faixa_clt_f5_max",
-                  "faixa_pj_f1_min", "faixa_pj_f1_max", "faixa_pj_f5_min", "faixa_pj_f5_max"],
+                  "faixa_clt_f1_min", "faixa_clt_f1_max", "faixa_clt_f2_min", "faixa_clt_f2_max",
+                  "faixa_clt_f3_min", "faixa_clt_f3_max", "faixa_clt_f4_min", "faixa_clt_f4_max",
+                  "faixa_clt_f5_min", "faixa_clt_f5_max",
+                  "faixa_pj_f1_min", "faixa_pj_f1_max", "faixa_pj_f2_min", "faixa_pj_f2_max",
+                  "faixa_pj_f3_min", "faixa_pj_f3_max", "faixa_pj_f4_min", "faixa_pj_f4_max",
+                  "faixa_pj_f5_min", "faixa_pj_f5_max"],
                 additionalProperties: false,
               },
             },
