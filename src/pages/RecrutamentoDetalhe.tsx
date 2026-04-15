@@ -1201,35 +1201,35 @@ export default function RecrutamentoDetalhe() {
             )}
           </div>
 
-          {/* Col 2 — Salary & Benefits */}
-          <div className="space-y-3">
+          {/* Col 2 — Salary, Benefits & Responsibilities */}
+          <div className="space-y-4">
             {canSeeFaixa && (vaga.faixa_min || vaga.faixa_max) && (
-              <>
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Remuneração</p>
-                <p className="text-sm font-semibold text-[#1A4A3A]">
+              <div>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">Remuneração</p>
+                <p className="text-base font-bold text-[#1A4A3A]">
                   {vaga.faixa_min ? `R$ ${Number(vaga.faixa_min).toLocaleString("pt-BR")}` : "—"}
                   {" – "}
                   {vaga.faixa_max ? `R$ ${Number(vaga.faixa_max).toLocaleString("pt-BR")}` : "—"}
                 </p>
-              </>
+              </div>
             )}
             {(beneficiosLabels.length > 0 || vaga.beneficios_outros) && (
               <div>
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">Benefícios</p>
-                <div className="flex flex-wrap gap-1">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Benefícios</p>
+                <div className="flex flex-wrap gap-1.5">
                   {beneficiosLabels.map((b) => (
-                    <Badge key={b} variant="outline" className="text-xs">{b}</Badge>
+                    <span key={b} className="px-2.5 py-1 rounded-full text-xs font-medium bg-[#1A4A3A]/8 text-[#1A4A3A] border border-[#1A4A3A]/15">{b}</span>
                   ))}
                 </div>
                 {vaga.beneficios_outros && (
-                  <p className="text-xs text-muted-foreground mt-1">{vaga.beneficios_outros}</p>
+                  <p className="text-sm text-muted-foreground mt-2">{vaga.beneficios_outros}</p>
                 )}
               </div>
             )}
             {(vaga.responsabilidades as string[] | null)?.length ? (
-              <div className="pt-2 border-t">
-                <p className="text-xs font-medium text-muted-foreground uppercase mb-1">Responsabilidades</p>
-                <ul className="text-xs text-muted-foreground list-disc pl-4 space-y-0.5">
+              <div className="pt-3 border-t">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Responsabilidades</p>
+                <ul className="text-sm text-muted-foreground list-disc pl-4 space-y-1">
                   {(vaga.responsabilidades as string[]).map((r, i) => <li key={i}>{r}</li>)}
                 </ul>
               </div>
@@ -1237,37 +1237,39 @@ export default function RecrutamentoDetalhe() {
           </div>
 
           {/* Col 3 — Skills */}
-          <div className="space-y-3">
+          <div className="space-y-4">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Skills</p>
             {(vaga.skills_obrigatorias as string[] | null)?.length ? (
               <div>
-                <p className="text-xs text-muted-foreground mb-1">Obrigatórias</p>
-                <div className="flex flex-wrap gap-1">
+                <p className="text-xs font-medium text-muted-foreground mb-1.5">Obrigatórias</p>
+                <div className="flex flex-wrap gap-1.5">
                   {(vaga.skills_obrigatorias as string[]).map((s) => (
-                    <span key={s} className="px-2 py-0.5 rounded-full text-xs bg-[#1A4A3A] text-white">{s}</span>
+                    <span key={s} className="px-2.5 py-1 rounded-full text-xs font-medium bg-[#1A4A3A] text-white">{s}</span>
                   ))}
                 </div>
               </div>
             ) : null}
             {(vaga.skills_desejadas as string[] | null)?.length ? (
               <div>
-                <p className="text-xs text-muted-foreground mb-1">Desejadas</p>
-                <div className="flex flex-wrap gap-1">
+                <p className="text-xs font-medium text-muted-foreground mb-1.5">Desejadas</p>
+                <div className="flex flex-wrap gap-1.5">
                   {(vaga.skills_desejadas as string[]).map((s) => (
-                    <span key={s} className="px-2 py-0.5 rounded-full text-xs bg-blue-100 text-blue-800">{s}</span>
+                    <span key={s} className="px-2.5 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">{s}</span>
                   ))}
                 </div>
               </div>
             ) : null}
             {(vaga.ferramentas as string[] | null)?.length ? (
               <div>
-                <p className="text-xs text-muted-foreground mb-1">Ferramentas</p>
-                <div className="flex flex-wrap gap-1">
+                <p className="text-xs font-medium text-muted-foreground mb-1.5">Ferramentas</p>
+                <div className="flex flex-wrap gap-1.5">
                   {(vaga.ferramentas as string[]).map((s) => (
-                    <Badge key={s} variant="outline" className="text-xs">{s}</Badge>
+                    <span key={s} className="px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700 border border-gray-200">{s}</span>
                   ))}
                 </div>
               </div>
+            ) : null}
+          </div>
             ) : null}
           </div>
         </div>
