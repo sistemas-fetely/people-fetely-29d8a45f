@@ -1942,8 +1942,115 @@ export default function RecrutamentoDetalhe() {
                   />
                 </TabsContent>
 
-                <TabsContent value="avaliacao" className="mt-4">
-                  <p className="text-sm text-muted-foreground italic">Avaliações disponíveis no scorecard do candidato.</p>
+                <TabsContent value="avaliacao" className="space-y-4 mt-4">
+                  {(selectedCandidato as any).score_total > 0 ? (
+                    <>
+                      {/* Score total + resumo */}
+                      <div className="p-4 rounded-lg border" style={{
+                        backgroundColor: (selectedCandidato as any).score_total >= 80 ? '#F0FFF4' :
+                          (selectedCandidato as any).score_total >= 50 ? '#FFFBEB' : '#FEF2F2'
+                      }}>
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="text-sm font-semibold">Score de aderência</p>
+                          <span className="text-2xl font-bold" style={{ color:
+                            (selectedCandidato as any).score_total >= 80 ? '#1A4A3A' :
+                            (selectedCandidato as any).score_total >= 50 ? '#D97706' : '#DC2626'
+                          }}>
+                            {(selectedCandidato as any).score_total}%
+                          </span>
+                        </div>
+                        {(selectedCandidato as any).score_detalhado?.resumo && (
+                          <p className="text-sm text-muted-foreground whitespace-pre-line">
+                            {(selectedCandidato as any).score_detalhado.resumo}
+                          </p>
+                        )}
+                        {(selectedCandidato as any).score_detalhado?.nivel_detectado && (
+                          <p className="text-xs text-muted-foreground mt-2 pt-2 border-t">
+                            Nível detectado: <span className="font-medium capitalize">{(selectedCandidato as any).score_detalhado.nivel_detectado}</span>
+                            {" · "}Nível da vaga: <span className="font-medium capitalize">{(vaga as any)?.nivel ?? "?"}</span>
+                            {(selectedCandidato as any).score_calculado_em && (
+                              <> {" · "}Calculado em {new Date((selectedCandidato as any).score_calculado_em).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })}</>
+                            )}
+                          </p>
+                        )}
+                      </div>
+                      {/* Alertas */}
+                      {(selectedCandidato as any).score_detalhado?.alerta && (
+                        <div className="flex items-start gap-2 p-3 rounded-lg border" style={{
+                          backgroundColor: (selectedCandidato as any).score_detalhado.alerta === "underqualified" ? "#FEF2F2" : "#FFF7ED",
+                          borderColor: (selectedCandidato as any).score_detalhado.alerta === "underqualified" ? "#DC262630" : "#D9770630"
+                        }}>
+                          <AlertTriangle className="h-4 w-4 flex-shrink-0 mt-0.5" style={{
+                            color: (selectedCandidato as any).score_detalhado.alerta === "underqualified" ? "#DC2626" : "#D97706"
+                          }} />
+                          <div>
+                            <p className="text-sm font-medium" style={{
+                              color: (selectedCandidato as any).score_detalhado.alerta === "underqualified" ? "#DC2626" : "#D97706"
+                            }}>
+                              {(selectedCandidato as any).score_detalhado.alerta === "overqualified" ? "Overqualified — risco de turnover" :
+                               (selectedCandidato as any).score_detalhado.alerta === "overqualified_leve" ? "Overqualified leve — avaliar motivação" :
+                               "Underqualified — pode não atender o nível exigido"}
+                            </p>
+                            {(selectedCandidato as any).score_detalhado.alerta_texto && (
+                              <p className="text-xs text-muted-foreground mt-1">{(selectedCandidato as any).score_detalhado.alerta_texto}</p>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                      {(selectedCandidato as any).score_detalhado?.alerta_salarial && (
+                        <div className="flex items-start gap-2 p-3 rounded-lg border" style={{
+                          backgroundColor: (selectedCandidato as any).score_detalhado.alerta_salarial === "acima_critico" ? "#FEF2F2" : "#FFF7ED",
+                          borderColor: (selectedCandidato as any).score_detalhado.alerta_salarial === "acima_critico" ? "#DC262630" : "#D9770630"
+                        }}>
+                          <span className="text-base flex-shrink-0">💰</span>
+                          <div>
+                            <p className="text-sm font-medium" style={{
+                              color: (selectedCandidato as any).score_detalhado.alerta_salarial === "acima_critico" ? "#DC2626" : "#D97706"
+                            }}>
+                              {(selectedCandidato as any).score_detalhado.alerta_salarial === "acima_critico" ? "Pretensão muito acima da faixa" :
+                               (selectedCandidato as any).score_detalhado.alerta_salarial === "acima_leve" ? "Pretensão levemente acima da faixa" :
+                               "Pretensão abaixo da faixa — avaliar"}
+                            </p>
+                            {(selectedCandidato as any).pretensao_salarial && (
+                              <p className="text-xs text-muted-foreground mt-1">
+                                Pretensão: R$ {Number((selectedCandidato as any).pretensao_salarial).toLocaleString("pt-BR")}
+                                {(vaga as any)?.faixa_max && <> · Faixa da vaga: até R$ {Number((vaga as any).faixa_max).toLocaleString("pt-BR")}</>}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                      {/* Breakdown por dimensão */}
+                      <div className="p-4 rounded-lg border space-y-3">
+                        <p className="text-sm font-semibold">Detalhamento por dimensão</p>
+                        {[
+                          { label: "Skills", valor: (selectedCandidato as any).score_detalhado?.skills_match, max: 35, cor: "#1A4A3A" },
+                          { label: "Adequação de nível", valor: (selectedCandidato as any).score_detalhado?.nivel_adequacao, max: 30, cor: "#2563EB" },
+                          { label: "Experiência relevante", valor: (selectedCandidato as any).score_detalhado?.experiencia_relevante, max: 20, cor: "#7C3AED" },
+                          { label: "Sistemas e ferramentas", valor: (selectedCandidato as any).score_detalhado?.sistemas_match, max: 10, cor: "#0891B2" },
+                          { label: "Motivação", valor: (selectedCandidato as any).score_detalhado?.motivacao, max: 5, cor: "#D97706" },
+                        ].map(dim => dim.valor != null ? (
+                          <div key={dim.label} className="space-y-1">
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs font-medium">{dim.label}</span>
+                              <span className="text-xs font-bold" style={{ color: dim.cor }}>{dim.valor}/{dim.max}</span>
+                            </div>
+                            <div className="h-2 rounded-full bg-gray-100 overflow-hidden">
+                              <div className="h-full rounded-full transition-all" style={{
+                                width: `${(dim.valor / dim.max) * 100}%`,
+                                backgroundColor: dim.cor
+                              }} />
+                            </div>
+                          </div>
+                        ) : null)}
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-center py-8 space-y-2">
+                      <p className="text-sm text-muted-foreground">Score ainda não calculado.</p>
+                      <p className="text-xs text-muted-foreground">O score é gerado automaticamente quando o candidato tem perfil completo (experiências, skills).</p>
+                    </div>
+                  )}
                 </TabsContent>
 
                 <TabsContent value="historico" className="mt-4">
