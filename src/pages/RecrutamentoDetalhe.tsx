@@ -472,6 +472,22 @@ export default function RecrutamentoDetalhe() {
                         </span>
                       </div>
 
+                      {/* Score badge */}
+                      {(c as any).score_total > 0 && (
+                        <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-100">
+                          <span className="text-xs text-muted-foreground">Score</span>
+                          <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                            (c as any).score_total >= 80
+                              ? "bg-green-100 text-green-700"
+                              : (c as any).score_total >= 50
+                                ? "bg-yellow-100 text-yellow-700"
+                                : "bg-red-100 text-red-700"
+                          }`}>
+                            {(c as any).score_total}%
+                          </span>
+                        </div>
+                      )}
+
                       {/* Hover actions */}
                       <div className="flex gap-1 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
                         <Button
