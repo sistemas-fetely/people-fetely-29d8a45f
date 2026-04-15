@@ -170,22 +170,28 @@ export default function PortalCandidatura() {
     try {
       const { data: candidato, error } = await supabase
         .from("candidatos")
-        .insert({
-          vaga_id: id!,
-          nome: form.nome,
-          email: form.email,
-          telefone: form.telefone || null,
-          linkedin_url: form.linkedin_url || null,
-          experiencias: form.experiencias,
-          formacoes: form.formacoes,
-          skills_candidato: form.skills_candidato,
-          sistemas_candidato: form.sistemas_candidato,
-          mensagem: form.mensagem || null,
-          consentimento_lgpd: true,
-          consentimento_lgpd_at: new Date().toISOString(),
-          status: "recebido",
-          origem: "portal",
-        } as any)
+        .upsert(
+          {
+            vaga_id: id!,
+            nome: form.nome,
+            email: form.email,
+            telefone: form.telefone || null,
+            linkedin_url: form.linkedin_url || null,
+            experiencias: form.experiencias,
+            formacoes: form.formacoes,
+            skills_candidato: form.skills_candidato,
+            sistemas_candidato: form.sistemas_candidato,
+            mensagem: form.mensagem || null,
+            consentimento_lgpd: true,
+            consentimento_lgpd_at: new Date().toISOString(),
+            status: "recebido",
+            origem: "portal",
+          } as any,
+          {
+            onConflict: "vaga_id,email",
+            ignoreDuplicates: false,
+          }
+        )
         .select()
         .single();
 

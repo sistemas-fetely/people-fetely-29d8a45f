@@ -1,0 +1,1 @@
+ALTER TABLE public.candidatos ADD CONSTRAINT candidatos_vaga_id_email_unique UNIQUE (vaga_id, email);
