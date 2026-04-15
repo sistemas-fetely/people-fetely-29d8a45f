@@ -182,30 +182,45 @@ export default function RecrutamentoDetalhe() {
 
   const editarVagaMutation = useMutation({
     mutationFn: async (dados: any) => {
+      const { data: vagaAtual, error: checkError } = await supabase
+        .from("vagas")
+        .select("id")
+        .eq("id", id!)
+        .single();
+
+      if (checkError || !vagaAtual) {
+        throw new Error("Vaga não encontrada. Atualize a página.");
+      }
+
+      const updateData: any = {};
+      if (dados.titulo) updateData.titulo = dados.titulo;
+      if (dados.area !== undefined) updateData.area = dados.area;
+      if (dados.nivel !== undefined) updateData.nivel = dados.nivel;
+      if (dados.local_trabalho !== undefined) updateData.local_trabalho = dados.local_trabalho;
+      if (dados.jornada !== undefined) updateData.jornada = dados.jornada;
+      if (dados.salario_min !== undefined) updateData.faixa_min = dados.salario_min ? Number(dados.salario_min) : null;
+      if (dados.salario_max !== undefined) updateData.faixa_max = dados.salario_max ? Number(dados.salario_max) : null;
+      if (dados.skills_obrigatorias !== undefined) updateData.skills_obrigatorias = dados.skills_obrigatorias;
+      if (dados.skills_desejadas !== undefined) updateData.skills_desejadas = dados.skills_desejadas;
+      if (dados.ferramentas !== undefined) updateData.ferramentas = dados.ferramentas;
+      if (dados.descricao !== undefined) updateData.missao = dados.descricao;
+
       const { error } = await supabase
         .from("vagas")
-        .update({
-          titulo: dados.titulo,
-          area: dados.area,
-          nivel: dados.nivel,
-          local_trabalho: dados.local_trabalho,
-          jornada: dados.jornada,
-          faixa_min: dados.salario_min ? Number(dados.salario_min) : null,
-          faixa_max: dados.salario_max ? Number(dados.salario_max) : null,
-          skills_obrigatorias: dados.skills_obrigatorias,
-          skills_desejadas: dados.skills_desejadas,
-          ferramentas: dados.ferramentas,
-          missao: dados.descricao,
-        } as any)
+        .update(updateData)
         .eq("id", id!);
       if (error) throw error;
     },
     onSuccess: () => {
       toast.success("Vaga atualizada!");
       queryClient.invalidateQueries({ queryKey: ["vaga", id] });
+      queryClient.invalidateQueries({ queryKey: ["vagas"] });
       setEditarVagaOpen(false);
     },
-    onError: (err: any) => toast.error(err.message),
+    onError: (err: any) => {
+      toast.error("Erro ao salvar: " + err.message);
+      console.error("Erro editarVaga:", err);
+    },
   });
 
   const moveCandidatoMutation = useMutation({
