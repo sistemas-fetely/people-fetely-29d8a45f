@@ -39,8 +39,7 @@ const CATEGORIAS_GERAL: CategoriaConfig[] = [
   { value: "sistema", label: "Sistemas", icon: Monitor, description: "Sistemas de acesso para colaboradores" },
   { value: "ferramenta", label: "Ferramentas", icon: Wrench, description: "Ferramentas e softwares utilizados pela empresa" },
   { value: "beneficio", label: "Benefícios", icon: Heart, description: "Tipos de benefícios oferecidos pela empresa" },
-  { value: "tipo_equipamento", label: "Tipos de Equipamento", icon: Package, description: "Tipos de equipamentos disponíveis" },
-  { value: "estado_equipamento", label: "Estados de Equipamento", icon: Settings2, description: "Condições dos equipamentos" },
+  { value: "tipo_equipamento", label: "Tipos de Equipamento", icon: Package, description: "Tipos de equipamentos e seus estados" },
 ];
 
 const CATEGORIAS_CLT: CategoriaConfig[] = [
