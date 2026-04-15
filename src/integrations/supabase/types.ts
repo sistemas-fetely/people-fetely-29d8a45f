@@ -2076,6 +2076,72 @@ export type Database = {
         }
         Relationships: []
       }
+      ofertas_candidato: {
+        Row: {
+          beneficios: string | null
+          candidato_id: string
+          created_at: string | null
+          data_inicio: string | null
+          enviado_em: string | null
+          enviado_por: string | null
+          id: string
+          observacoes: string | null
+          respondido_em: string | null
+          salario_proposto: number | null
+          status: string | null
+          tipo_contrato: string | null
+          updated_at: string | null
+          vaga_id: string
+        }
+        Insert: {
+          beneficios?: string | null
+          candidato_id: string
+          created_at?: string | null
+          data_inicio?: string | null
+          enviado_em?: string | null
+          enviado_por?: string | null
+          id?: string
+          observacoes?: string | null
+          respondido_em?: string | null
+          salario_proposto?: number | null
+          status?: string | null
+          tipo_contrato?: string | null
+          updated_at?: string | null
+          vaga_id: string
+        }
+        Update: {
+          beneficios?: string | null
+          candidato_id?: string
+          created_at?: string | null
+          data_inicio?: string | null
+          enviado_em?: string | null
+          enviado_por?: string | null
+          id?: string
+          observacoes?: string | null
+          respondido_em?: string | null
+          salario_proposto?: number | null
+          status?: string | null
+          tipo_contrato?: string | null
+          updated_at?: string | null
+          vaga_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ofertas_candidato_candidato_id_fkey"
+            columns: ["candidato_id"]
+            isOneToOne: false
+            referencedRelation: "candidatos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ofertas_candidato_vaga_id_fkey"
+            columns: ["vaga_id"]
+            isOneToOne: false
+            referencedRelation: "vagas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       onboarding_checklists: {
         Row: {
           colaborador_id: string | null
