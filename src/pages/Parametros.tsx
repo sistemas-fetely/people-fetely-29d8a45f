@@ -243,6 +243,8 @@ export default function Parametros() {
   };
 
   const getUsageCount = (param: Parametro): number | undefined => {
+    // Departamento is a reference parameter without formal FK — skip usage tracking
+    if (param.categoria === "departamento") return undefined;
     if (!usageData) return undefined;
     const catUsage = usageData[param.categoria];
     if (!catUsage) return undefined;
