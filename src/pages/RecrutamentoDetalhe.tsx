@@ -1204,32 +1204,164 @@ export default function RecrutamentoDetalhe() {
       </div>
 
       {/* Add candidato dialog */}
-      <Dialog open={addCandidatoOpen} onOpenChange={setAddCandidatoOpen}>
-        <DialogContent className="max-w-md">
+      <Dialog open={addCandidatoOpen} onOpenChange={(open) => {
+        setAddCandidatoOpen(open);
+        if (!open) {
+          setNewCandidato({ nome: "", email: "", telefone: "", origem: "indicacao", experiencias: [], formacoes: [], skills_candidato: [], sistemas_candidato: [], mensagem: "" });
+          setAddCandidatoPdfCarregado(false);
+          setAddCandidatoNomePDF("");
+        }
+      }}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Adicionar Candidato</DialogTitle>
           </DialogHeader>
-          <div className="space-y-3">
-            <div className="space-y-1">
-              <Label>Nome *</Label>
-              <Input value={newCandidato.nome} onChange={(e) => setNewCandidato({ ...newCandidato, nome: e.target.value })} />
+
+          <div className="space-y-4">
+            {/* Upload de CV */}
+            <div className="rounded-xl overflow-hidden shadow-sm border">
+              <div className="px-4 py-3 bg-primary/10 flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-primary/20">
+                  <Sparkles className="h-4 w-4 text-primary" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-foreground">Importar CV</p>
+                  <p className="text-xs text-muted-foreground">A IA lê e preenche os campos automaticamente</p>
+                </div>
+              </div>
+              <div className="bg-card px-4 pb-4 pt-3">
+                {!addCandidatoPdfCarregado ? (
+                  <div
+                    className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-colors ${
+                      addCandidatoArrastando ? "border-primary bg-primary/5" : "border-border hover:border-primary/40"
+                    }`}
+                    onDragOver={(e) => { e.preventDefault(); setAddCandidatoArrastando(true); }}
+                    onDragLeave={() => setAddCandidatoArrastando(false)}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      setAddCandidatoArrastando(false);
+                      const file = e.dataTransfer.files[0];
+                      if (file?.type === "application/pdf") processarPDFCandidato(file);
+                      else toast.error("Apenas arquivos PDF são aceitos.");
+                    }}
+                    onClick={() => document.getElementById("pdf-candidato-rh")?.click()}
+                  >
+                    <input id="pdf-candidato-rh" type="file" accept=".pdf" className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) processarPDFCandidato(file);
+                      }}
+                    />
+                    {addCandidatoImportando ? (
+                      <div className="space-y-2">
+                        <Loader2 className="h-6 w-6 animate-spin mx-auto text-primary" />
+                        <p className="text-sm font-medium text-primary">Lendo o CV...</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        <FileText className="h-8 w-8 mx-auto text-muted-foreground" />
+                        <p className="text-sm font-medium">Arraste o PDF ou clique para selecionar</p>
+                        <p className="text-xs text-muted-foreground">PDF · máx. 5MB</p>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-3 p-3 rounded-xl border bg-success/10 border-success/30">
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-success">
+                      <Check className="h-4 w-4 text-white" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-success">CV importado!</p>
+                      <p className="text-xs text-muted-foreground truncate">{addCandidatoNomePDF}</p>
+                    </div>
+                    <Button type="button" variant="ghost" size="sm" className="text-muted-foreground"
+                      onClick={() => { setAddCandidatoPdfCarregado(false); setAddCandidatoNomePDF(""); }}>
+                      Trocar
+                    </Button>
+                  </div>
+                )}
+              </div>
             </div>
-            <div className="space-y-1">
-              <Label>E-mail *</Label>
-              <Input type="email" value={newCandidato.email} onChange={(e) => setNewCandidato({ ...newCandidato, email: e.target.value })} />
+
+            {/* Divisor */}
+            <div className="flex items-center gap-3">
+              <div className="flex-1 h-px bg-border" />
+              <span className="text-xs text-muted-foreground uppercase">dados do candidato</span>
+              <div className="flex-1 h-px bg-border" />
             </div>
-            <div className="space-y-1">
-              <Label>Telefone</Label>
-              <Input value={newCandidato.telefone} onChange={(e) => setNewCandidato({ ...newCandidato, telefone: e.target.value })} />
+
+            {/* Campos */}
+            <div className="space-y-3">
+              <div className="space-y-1">
+                <Label>Nome *</Label>
+                <Input value={newCandidato.nome} onChange={(e) => setNewCandidato({ ...newCandidato, nome: e.target.value })}
+                  placeholder="Nome completo" />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label>E-mail *</Label>
+                  <Input type="email" value={newCandidato.email} onChange={(e) => setNewCandidato({ ...newCandidato, email: e.target.value })}
+                    placeholder="email@exemplo.com" />
+                </div>
+                <div className="space-y-1">
+                  <Label>Telefone</Label>
+                  <Input value={newCandidato.telefone} onChange={(e) => setNewCandidato({ ...newCandidato, telefone: e.target.value })}
+                    placeholder="(11) 99999-9999" />
+                </div>
+              </div>
+              <div className="space-y-1">
+                <Label>Origem</Label>
+                <Select value={newCandidato.origem} onValueChange={(v) => setNewCandidato({ ...newCandidato, origem: v })}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="indicacao">Indicação</SelectItem>
+                    <SelectItem value="linkedin">LinkedIn</SelectItem>
+                    <SelectItem value="email_direto">E-mail direto</SelectItem>
+                    <SelectItem value="agencia">Agência</SelectItem>
+                    <SelectItem value="outro">Outro</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Skills importadas — preview */}
+              {newCandidato.skills_candidato.length > 0 && (
+                <div className="space-y-1.5">
+                  <Label className="text-xs text-muted-foreground">Skills identificadas no CV</Label>
+                  <div className="flex flex-wrap gap-1">
+                    {newCandidato.skills_candidato.slice(0, 8).map((s: any, i: number) => (
+                      <Badge key={i} variant="secondary" className="text-xs">{s.skill}</Badge>
+                    ))}
+                    {newCandidato.skills_candidato.length > 8 && (
+                      <Badge variant="outline" className="text-xs">+{newCandidato.skills_candidato.length - 8} mais</Badge>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Experiências — preview */}
+              {newCandidato.experiencias.length > 0 && (
+                <div className="space-y-1.5">
+                  <Label className="text-xs text-muted-foreground">Experiências importadas</Label>
+                  <div className="space-y-1">
+                    {newCandidato.experiencias.slice(0, 2).map((exp: any, i: number) => (
+                      <div key={i} className="text-xs p-2 rounded bg-muted/50">
+                        <p className="font-medium">{exp.cargo}</p>
+                        <p className="text-muted-foreground">{exp.empresa} · {exp.periodo_inicio} – {exp.atual ? "atual" : exp.periodo_fim}</p>
+                      </div>
+                    ))}
+                    {newCandidato.experiencias.length > 2 && (
+                      <p className="text-xs text-muted-foreground">+{newCandidato.experiencias.length - 2} experiência{newCandidato.experiencias.length - 2 > 1 ? "s" : ""}</p>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
-            <div className="space-y-1">
-              <Label>Origem</Label>
-              <Input value={newCandidato.origem} onChange={(e) => setNewCandidato({ ...newCandidato, origem: e.target.value })} placeholder="indicacao" />
-            </div>
+
             <Button className="w-full" disabled={!newCandidato.nome.trim() || !newCandidato.email.trim() || addCandidatoMutation.isPending}
               onClick={() => addCandidatoMutation.mutate()}>
-              {addCandidatoMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              Adicionar
+              {addCandidatoMutation.isPending ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Adicionando...</> : "Adicionar candidato"}
             </Button>
           </div>
         </DialogContent>
