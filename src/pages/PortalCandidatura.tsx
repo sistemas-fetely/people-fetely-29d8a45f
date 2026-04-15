@@ -191,6 +191,70 @@ export default function PortalCandidatura() {
 
       if (error) throw error;
 
+      // Enviar e-mail de confirmação para o candidato
+      try {
+        await supabase.functions.invoke("enviar-email", {
+          body: {
+            to: form.email,
+            subject: `Candidatura recebida — ${vaga?.titulo} na Fetely`,
+            html: `
+              <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff;">
+                <div style="background: #1A4A3A; padding: 32px 40px; text-align: center;">
+                  <h1 style="color: #ffffff; font-size: 28px; font-weight: 700; margin: 0; letter-spacing: -0.5px;">Fetély.</h1>
+                  <p style="color: #D8F3DC; font-size: 13px; margin: 8px 0 0; font-style: italic;">
+                    Vamos celebrar!! Venha criar algo novo...
+                  </p>
+                </div>
+                <div style="padding: 40px;">
+                  <h2 style="color: #1A4A3A; font-size: 22px; font-weight: 700; margin: 0 0 16px;">
+                    Candidatura recebida! 🎉
+                  </h2>
+                  <p style="color: #374151; font-size: 15px; line-height: 1.6; margin: 0 0 20px;">
+                    Olá, <strong>${form.nome.split(' ')[0]}</strong>!
+                  </p>
+                  <p style="color: #374151; font-size: 15px; line-height: 1.6; margin: 0 0 28px;">
+                    Recebemos sua candidatura para a vaga de
+                    <strong>${vaga?.titulo}</strong>.
+                    Estamos muito felizes com seu interesse em fazer parte da Fetely!
+                  </p>
+                  <div style="background: #F0FFF4; border: 1px solid #D8F3DC; border-radius: 12px; padding: 20px; margin: 0 0 28px;">
+                    <p style="color: #6B7280; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 6px;">Vaga</p>
+                    <p style="color: #1A4A3A; font-size: 18px; font-weight: 700; margin: 0 0 4px;">${vaga?.titulo}</p>
+                    <p style="color: #6B7280; font-size: 13px; margin: 0;">
+                      ${vaga?.area ?? ''} · ${(vaga as any)?.tipo?.toUpperCase() ?? ''}
+                    </p>
+                  </div>
+                  <p style="color: #374151; font-size: 15px; line-height: 1.6; margin: 0 0 20px;">
+                    Nossa equipe vai analisar seu perfil com cuidado.
+                    Se houver avanço no processo, entraremos em contato
+                    pelo e-mail <strong>${form.email}</strong>.
+                  </p>
+                  <p style="color: #374151; font-size: 15px; line-height: 1.6; margin: 0 0 28px;">
+                    Enquanto isso, que tal seguir a Fetely no Instagram?
+                    Compartilhamos bastante do nosso jeito de celebrar o dia a dia.
+                  </p>
+                  <a href="https://instagram.com/fetely.oficial" target="_blank"
+                     style="display: inline-block; background: #1A4A3A; color: #ffffff;
+                            padding: 14px 28px; border-radius: 10px; text-decoration: none;
+                            font-weight: 600; font-size: 14px;">
+                    Seguir @fetely.oficial →
+                  </a>
+                </div>
+                <div style="background: #F9FAFB; padding: 24px 40px; border-top: 1px solid #E5E7EB;">
+                  <p style="color: #9CA3AF; font-size: 11px; line-height: 1.6; margin: 0; text-align: center;">
+                    Você recebeu este e-mail porque se candidatou a uma vaga na Fetely.
+                    Seus dados serão tratados conforme nossa política de privacidade
+                    (LGPD) e retidos por até 180 dias após o encerramento da vaga.
+                  </p>
+                </div>
+              </div>
+            `,
+          },
+        });
+      } catch (emailError) {
+        console.error("Erro ao enviar e-mail de confirmação:", emailError);
+      }
+
       // Score in background
       calcularScore(candidato.id);
       setEnviado(true);
