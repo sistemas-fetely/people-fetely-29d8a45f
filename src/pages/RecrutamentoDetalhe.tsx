@@ -2517,7 +2517,7 @@ function TesteTecnico({
           })()
         : "";
 
-      const { error } = await supabase.functions.invoke("send-transactional-email", {
+      const emailResult = await supabase.functions.invoke("send-transactional-email", {
         body: {
           templateName: "teste-tecnico-candidato",
           recipientEmail: candidato.email,
@@ -2534,8 +2534,11 @@ function TesteTecnico({
           },
         },
       });
-      if (error) throw error;
-      toast.success(`Teste reenviado para ${candidato.email}!`);
+      if (emailResult.error) {
+        toast.error("Erro ao reenviar e-mail: " + emailResult.error.message);
+      } else {
+        toast.success(`Teste reenviado para ${candidato.email}!`);
+      }
     } catch (e: any) {
       toast.error("Erro ao reenviar: " + e.message);
     } finally {
