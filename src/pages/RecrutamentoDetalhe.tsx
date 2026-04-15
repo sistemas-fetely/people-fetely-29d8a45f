@@ -144,6 +144,19 @@ export default function RecrutamentoDetalhe() {
 
   const { data: beneficiosParam = [] } = useParametros("beneficio");
 
+  const { data: entrevistasRH = [] } = useQuery({
+    queryKey: ["entrevista-rh", id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("entrevistas_candidato")
+        .select("candidato_id, recomendacao")
+        .eq("vaga_id", id!)
+        .eq("tipo", "rh");
+      return (data ?? []) as any[];
+    },
+    enabled: !!id,
+  });
+
   const { data: vaga, isLoading: vagaLoading } = useQuery({
     queryKey: ["vaga", id],
     queryFn: async () => {
@@ -421,6 +434,15 @@ export default function RecrutamentoDetalhe() {
         if (stageKey === "contratado") {
           openContratarDialog(c);
         } else {
+          // Verificar bloqueios de entrevista no drag
+          if (c.status === "entrevista_rh" && stageKey === "entrevista_gestor") {
+            const temEntrevista = entrevistasRH.some((e: any) => e.candidato_id === c.id);
+            if (!temEntrevista) {
+              toast.error("Preencha o formulário de Entrevista RH antes de avançar.");
+              setDraggingId(null);
+              return;
+            }
+          }
           moverCandidatoComHistorico(draggingId, c.status, stageKey, null, (c as any).score_total);
         }
       }
@@ -451,7 +473,7 @@ export default function RecrutamentoDetalhe() {
     }
   };
 
-  const advanceCandidato = (candidatoId: string) => {
+  const advanceCandidato = async (candidatoId: string) => {
     const c = candidatos.find((x) => x.id === candidatoId);
     if (!c) return;
     const idx = KANBAN_STAGES.findIndex((s) => s.key === c.status);
@@ -479,6 +501,44 @@ export default function RecrutamentoDetalhe() {
           `${c.nome} não tem perfil completo. Considere solicitar o perfil antes de avançar.`,
           { duration: 5000 }
         );
+      }
+    }
+
+    // Bloqueio: Entrevista RH → Entrevista Gestor sem formulário RH
+    if (c.status === "entrevista_rh" && nextStatus === "entrevista_gestor") {
+      const { data: entrevistaRH } = await supabase
+        .from("entrevistas_candidato")
+        .select("id, recomendacao")
+        .eq("candidato_id", candidatoId)
+        .eq("vaga_id", id!)
+        .eq("tipo", "rh")
+        .maybeSingle();
+      if (!entrevistaRH) {
+        toast.error("Preencha o formulário de Entrevista RH antes de avançar.", { duration: 5000 });
+        setSelectedCandidato(c);
+        return;
+      }
+      if ((entrevistaRH as any).recomendacao === "nao_avançar") {
+        toast.warning("O formulário de RH indica 'Não avançar'. Tem certeza?", { duration: 5000 });
+      }
+    }
+
+    // Bloqueio: Entrevista Gestor → próxima etapa sem formulário Gestor
+    if (c.status === "entrevista_gestor" && ["teste_tecnico", "oferta"].includes(nextStatus)) {
+      const { data: entrevistaGestor } = await supabase
+        .from("entrevistas_candidato")
+        .select("id, recomendacao")
+        .eq("candidato_id", candidatoId)
+        .eq("vaga_id", id!)
+        .eq("tipo", "gestor")
+        .maybeSingle();
+      if (!entrevistaGestor) {
+        toast.error("Preencha o formulário de Entrevista Gestor antes de avançar.", { duration: 5000 });
+        setSelectedCandidato(c);
+        return;
+      }
+      if ((entrevistaGestor as any).recomendacao === "nao_avançar") {
+        toast.warning("O formulário do Gestor indica 'Não avançar'. Tem certeza?", { duration: 5000 });
       }
     }
 
@@ -1061,8 +1121,9 @@ export default function RecrutamentoDetalhe() {
               </div>
 
               <Tabs defaultValue="perfil">
-                <TabsList className="grid w-full grid-cols-4">
+                <TabsList className="grid w-full grid-cols-5">
                   <TabsTrigger value="perfil" className="text-xs">Perfil</TabsTrigger>
+                  <TabsTrigger value="entrevistas" className="text-xs">Entrevistas</TabsTrigger>
                   <TabsTrigger value="avaliacao" className="text-xs">Avaliação</TabsTrigger>
                   <TabsTrigger value="historico" className="text-xs">Histórico</TabsTrigger>
                   <TabsTrigger value="notas" className="text-xs">Notas</TabsTrigger>
