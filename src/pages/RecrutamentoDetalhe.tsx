@@ -28,7 +28,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   ArrowLeft, Copy, Globe, MoreHorizontal, Plus, Loader2,
-  UserPlus, ArrowRight, XCircle, User, CheckCircle2, ExternalLink, Users, Link, Trash2, Check, Mail, AlertTriangle, Pencil, X, Sparkles, ClipboardList, FileText, Upload
+  UserPlus, ArrowRight, XCircle, User, CheckCircle2, ExternalLink, Users, Link, Trash2, Check, Mail, AlertTriangle, Pencil, X, Sparkles, ClipboardList, FileText, Upload, Clock
 } from "lucide-react";
 
 const statusConfig: Record<string, { label: string; className: string }> = {
@@ -2723,6 +2723,16 @@ function TesteTecnico({
     }
   }, [teste]);
 
+  const prazoVencido = (teste as any)?.prazo_entrega
+    ? new Date((teste as any).prazo_entrega + "T23:59:59") < new Date()
+    : false;
+
+  const jaEntregou = !!(teste as any)?.entregue_em;
+
+  function extrairDominio(url: string): string {
+    try { return new URL(url).hostname.replace("www.", ""); } catch { return "link externo"; }
+  }
+
   async function gerarDesafioIA() {
     setGerando(true);
     try {
@@ -2974,15 +2984,24 @@ function TesteTecnico({
       {/* Toggle Desafio / Resultado */}
       {jaEnviado && (
         <div className="flex gap-2">
-          {(["desafio", "resultado"] as const).map(f => (
-            <button key={f} type="button" onClick={() => setFase(f)}
-              className="px-3 py-1 rounded-full text-xs border transition-colors capitalize"
-              style={fase === f
-                ? { backgroundColor: corTema, color: "white", borderColor: corTema }
-                : { borderColor: "#E5E7EB", color: "#6B7280" }}>
-              {f === "desafio" ? "Desafio enviado" : "Registrar resultado"}
-            </button>
-          ))}
+          <button type="button" onClick={() => setFase("desafio")}
+            className="px-3 py-1 rounded-full text-xs border transition-colors"
+            style={fase === "desafio"
+              ? { backgroundColor: corTema, color: "white", borderColor: corTema }
+              : { borderColor: "#E5E7EB", color: "#6B7280" }}>
+            Desafio enviado
+          </button>
+          <button type="button" onClick={() => setFase("resultado")}
+            className="px-3 py-1 rounded-full text-xs border transition-colors"
+            style={fase === "resultado"
+              ? { backgroundColor: corTema, color: "white", borderColor: corTema }
+              : { borderColor: "#E5E7EB", color: "#6B7280" }}>
+            {jaEntregou
+              ? "Resultado • Entrega ✓"
+              : prazoVencido
+                ? "Resultado • Sem entrega ⚠"
+                : "Registrar resultado"}
+          </button>
         </div>
       )}
 
@@ -3085,11 +3104,65 @@ function TesteTecnico({
       {/* FASE: RESULTADO */}
       {fase === "resultado" && (
         <div className="space-y-3">
-          <div className="space-y-1.5">
-            <Label className="text-xs">Link da entrega</Label>
-            <Input value={formResultado.link_entrega} placeholder="Drive, Notion, GitHub, etc."
-              onChange={e => setFormResultado(f => ({ ...f, link_entrega: e.target.value }))} />
-          </div>
+          {/* Card de status da entrega */}
+          {jaEntregou ? (
+            <div className="p-3 rounded-lg border space-y-2" style={{ backgroundColor: "#F0FFF4", borderColor: "#1A4A3A40" }}>
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 flex-shrink-0" style={{ color: "#1A4A3A" }} />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium" style={{ color: "#1A4A3A" }}>Entrega recebida</p>
+                  <p className="text-xs text-muted-foreground">
+                    {new Date((teste as any).entregue_em).toLocaleDateString("pt-BR", {
+                      day: "2-digit", month: "2-digit", year: "numeric",
+                      hour: "2-digit", minute: "2-digit"
+                    })}
+                    {formResultado.link_entrega && (
+                      <> · {formResultado.link_entrega.includes("supabase") ? "📎 Arquivo enviado" : extrairDominio(formResultado.link_entrega)}</>
+                    )}
+                  </p>
+                </div>
+                {formResultado.link_entrega && (
+                  <Button variant="outline" size="sm" className="h-7 text-xs gap-1"
+                    onClick={() => window.open(formResultado.link_entrega, "_blank")}>
+                    <ExternalLink className="h-3 w-3" />
+                    {formResultado.link_entrega.includes("supabase") ? "Abrir arquivo" : "Abrir entrega"}
+                  </Button>
+                )}
+              </div>
+            </div>
+          ) : prazoVencido ? (
+            <div className="p-3 rounded-lg border space-y-1" style={{ backgroundColor: "#FEF2F2", borderColor: "#DC262640" }}>
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4 flex-shrink-0" style={{ color: "#DC2626" }} />
+                <div>
+                  <p className="text-sm font-medium" style={{ color: "#DC2626" }}>Prazo vencido — entrega não recebida</p>
+                  <p className="text-xs text-muted-foreground">
+                    Prazo era {(() => { const [a,m,d] = ((teste as any).prazo_entrega as string).split("-"); return `${d}/${m}/${a}`; })()}
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : (teste as any)?.prazo_entrega ? (
+            <div className="p-3 rounded-lg border space-y-1" style={{ backgroundColor: "#FFFBEB", borderColor: "#D9770640" }}>
+              <div className="flex items-center gap-2">
+                <Clock className="h-4 w-4 flex-shrink-0" style={{ color: "#D97706" }} />
+                <div>
+                  <p className="text-sm font-medium" style={{ color: "#D97706" }}>Aguardando entrega</p>
+                  <p className="text-xs text-muted-foreground">
+                    Prazo: {(() => { const [a,m,d] = ((teste as any).prazo_entrega as string).split("-"); return `${d}/${m}/${a}`; })()}
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : null}
+          {/* Link da entrega — só mostra input se NÃO tem entrega (preenchimento manual pelo RH) */}
+          {!jaEntregou && (
+            <div className="space-y-1.5">
+              <Label className="text-xs">Link da entrega</Label>
+              <Input value={formResultado.link_entrega} placeholder="Drive, Notion, GitHub, etc."
+                onChange={e => setFormResultado(f => ({ ...f, link_entrega: e.target.value }))} />
+            </div>
+          )}
 
           <div className="space-y-1.5">
             <Label className="text-xs">Nota geral</Label>
