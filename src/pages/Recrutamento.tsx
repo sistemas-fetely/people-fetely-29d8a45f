@@ -73,8 +73,20 @@ export default function Recrutamento() {
     },
   });
 
-  const vagasAbertas = vagas.filter((v) => v.status === "aberta").length;
-  const vagasEmSelecao = vagas.filter((v) => v.status === "em_selecao").length;
+  const vagasAbertas = vagas
+    .filter((v) => v.status === "aberta")
+    .reduce((sum, v) => {
+      const total = (v as any).num_vagas ?? 1;
+      const preenchidas = (v as any).vagas_preenchidas ?? 0;
+      return sum + Math.max(0, total - preenchidas);
+    }, 0);
+  const vagasEmSelecao = vagas
+    .filter((v) => v.status === "em_selecao")
+    .reduce((sum, v) => {
+      const total = (v as any).num_vagas ?? 1;
+      const preenchidas = (v as any).vagas_preenchidas ?? 0;
+      return sum + Math.max(0, total - preenchidas);
+    }, 0);
   const totalCandidatos = candidatos.length;
   const now = new Date();
   const contratacoesMes = candidatos.filter((c) => {
