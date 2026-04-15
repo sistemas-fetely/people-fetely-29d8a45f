@@ -33,8 +33,8 @@ const roleLabels: Record<AppRole, string> = {
 };
 
 const ROLE_PRIORITY: AppRole[] = [
-  "super_admin", "admin_rh", "gestor_rh", "financeiro",
-  "admin_ti", "recrutador", "fiscal", "operacional",
+  "super_admin", "admin_rh", "gestor_rh", "recrutador", "financeiro",
+  "admin_ti", "fiscal", "operacional",
   "gestor_direto", "colaborador",
 ];
 
