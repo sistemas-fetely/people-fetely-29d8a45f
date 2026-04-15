@@ -2028,8 +2028,8 @@ export default function RecrutamentoDetalhe() {
                           { label: "Adequação de nível", valor: (selectedCandidato as any).score_detalhado?.nivel_adequacao, max: 30, cor: "#2563EB" },
                           { label: "Experiência relevante", valor: (selectedCandidato as any).score_detalhado?.experiencia_relevante, max: 20, cor: "#7C3AED" },
                           { label: "Sistemas e ferramentas", valor: (selectedCandidato as any).score_detalhado?.sistemas_match, max: 10, cor: "#0891B2" },
-                          { label: "Motivação", valor: (selectedCandidato as any).score_detalhado?.motivacao, max: 5, cor: "#D97706" },
-                        ].map(dim => dim.valor != null ? (
+                          { label: "Motivação", valor: (selectedCandidato as any).score_detalhado?.motivacao, max: 5, cor: "#D97706", texto: (selectedCandidato as any).score_detalhado?.motivacao_texto },
+                        ].map((dim: any) => dim.valor != null ? (
                           <div key={dim.label} className="space-y-1">
                             <div className="flex items-center justify-between">
                               <span className="text-xs font-medium">{dim.label}</span>
@@ -2041,6 +2041,9 @@ export default function RecrutamentoDetalhe() {
                                 backgroundColor: dim.cor
                               }} />
                             </div>
+                            {dim.texto && (
+                              <p className="text-xs text-muted-foreground italic">{dim.texto}</p>
+                            )}
                           </div>
                         ) : null)}
                       </div>

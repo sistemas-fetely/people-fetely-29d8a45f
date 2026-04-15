@@ -164,6 +164,18 @@ REGRAS DE EXPERIÊNCIA (peso 20 pontos):
 - Avalie relevância da experiência para a vaga específica
 - Experiência em área diferente da vaga = menos pontos mesmo se for Sr
 
+REGRAS DE MOTIVAÇÃO (peso 5 pontos):
+O candidato responde "Por que a Fetely?" no formulário. Avalie a resposta com base no DNA da marca:
+- A Fetely é uma marca de lifestyle com espírito comemorativo. Valoriza presença, cuidado, celebração do ordinário, estética no dia a dia.
+- Tom da marca: questionador, humano, poético, atual. Frase síntese: "Gesto não se delega pro ChatGPT."
+- Cultura interna: autogestão, maturidade, orgulho do que se constrói. Não é corporativismo — é gente que cuida.
+Avalie:
+- 5 pts: texto demonstra conexão genuína com o DNA — menciona celebração, presença, cuidado, estética ou propósito. Não é genérico.
+- 3-4 pts: texto mostra interesse real mas sem conexão profunda com o DNA. Menciona a empresa de forma positiva mas poderia ser sobre qualquer marca.
+- 1-2 pts: texto genérico, copiado de template, ou focado apenas em salário/benefício.
+- 0 pts: campo vazio ou não respondido.
+O campo "motivacao_texto" deve trazer uma avaliação em 1 frase explicando a nota.
+
 REGRAS DE PRETENSÃO SALARIAL (ajuste no total, peso até -15 pontos):
 - Se pretensão não informada: ignorar, não penalizar nem bonificar.
 - Se pretensão dentro da faixa da vaga (entre faixa_min e faixa_max): nenhum ajuste.
@@ -217,7 +229,8 @@ Responda APENAS com JSON válido:
   "alerta": "overqualified|overqualified_leve|underqualified|null",
   "alerta_texto": "string explicando o risco em 1 linha, ou null se não há alerta",
   "alerta_salarial": "acima_leve|acima_critico|abaixo|null",
-  "resumo": "3 linhas: (1) nível detectado vs nível da vaga, (2) principal gap ou principal força, (3) recomendação clara: Avançar / Avaliar com cautela / Não recomendado"
+  "resumo": "3 linhas: (1) nível detectado vs nível da vaga, (2) principal gap ou principal força, (3) recomendação clara: Avançar / Avaliar com cautela / Não recomendado",
+  "motivacao_texto": "string com avaliação em 1 frase da motivação, ou null se campo vazio"
 }`,
             },
           ],
