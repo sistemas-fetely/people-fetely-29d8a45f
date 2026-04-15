@@ -174,13 +174,21 @@ export default function RecrutamentoDetalhe() {
   const { data: gestorNome } = useQuery({
     queryKey: ["gestor-nome", (vaga as any)?.gestor_id],
     queryFn: async () => {
-      if (!(vaga as any)?.gestor_id) return null;
-      const { data } = await supabase
-        .from("profiles")
-        .select("full_name")
-        .eq("id", (vaga as any).gestor_id)
+      const gestorId = (vaga as any)?.gestor_id;
+      if (!gestorId) return null;
+      const { data: clt } = await supabase
+        .from("colaboradores_clt")
+        .select("nome_completo")
+        .eq("id", gestorId)
         .maybeSingle();
-      return data?.full_name ?? null;
+      if (clt?.nome_completo) return clt.nome_completo;
+      const { data: pj } = await supabase
+        .from("contratos_pj")
+        .select("contato_nome")
+        .eq("id", gestorId)
+        .maybeSingle();
+      if (pj?.contato_nome) return pj.contato_nome;
+      return null;
     },
     enabled: !!(vaga as any)?.gestor_id,
   });
