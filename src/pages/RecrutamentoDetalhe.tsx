@@ -63,7 +63,7 @@ export default function RecrutamentoDetalhe() {
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [selectedCandidato, setSelectedCandidato] = useState<any | null>(null);
   const [notaTexto, setNotaTexto] = useState("");
-  
+  const [vagaPublicada, setVagaPublicada] = useState(false);
 
   // Contratar flow
   const [contratarOpen, setContratarOpen] = useState(false);
