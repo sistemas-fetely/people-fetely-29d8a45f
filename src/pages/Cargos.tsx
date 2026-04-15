@@ -234,9 +234,17 @@ export default function Cargos() {
           <h1 className="text-2xl font-bold text-foreground">Cargos e Salários</h1>
           <p className="text-sm text-muted-foreground">Plano de Posições e Remuneração</p>
         </div>
-        <Button className="gap-2" onClick={() => navigate("/cargos/novo")}>
-          <Plus className="h-4 w-4" /> Novo Cargo
-        </Button>
+        <div className="flex gap-2">
+          {(isSuperAdmin || isAdminRH) && (
+            <Button variant="outline" onClick={() => navigate("/cargos/enriquecimento")}>
+              <Sparkles className="h-4 w-4 mr-2" />
+              Enriquecer em lote
+            </Button>
+          )}
+          <Button className="gap-2" onClick={() => navigate("/cargos/novo")}>
+            <Plus className="h-4 w-4" /> Novo Cargo
+          </Button>
+        </div>
       </div>
 
       <div className="flex flex-wrap gap-3">
