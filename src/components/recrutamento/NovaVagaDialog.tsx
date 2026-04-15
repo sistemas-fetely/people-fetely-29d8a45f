@@ -386,35 +386,77 @@ export function NovaVagaDialog({ open, onOpenChange }: Props) {
             {/* Skills obrigatórias */}
             <div className="space-y-2">
               <Label>Skills obrigatórias</Label>
+              {skillsObrigatorias.length > 0 && (
+                <div className="flex flex-wrap gap-1 mb-1">
+                  {skillsObrigatorias.map((s, i) => (
+                    <span key={i} className="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium text-white" style={{ backgroundColor: "#1A4A3A" }}>
+                      {s}
+                      <button type="button" onClick={() => setSkillsObrigatorias(skillsObrigatorias.filter((_, idx) => idx !== i))}>
+                        <X className="h-3 w-3" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
               <div className="flex flex-wrap gap-2">
-                {skillsCatalogo.map((s) => {
-                  const selected = skillsObrigatorias.includes(s);
-                  return (
-                    <button key={s} type="button"
-                      onClick={() => setSkillsObrigatorias(selected ? skillsObrigatorias.filter((x) => x !== s) : [...skillsObrigatorias, s])}
-                      className={cn("inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium transition-colors cursor-pointer", selected ? "border-transparent text-white" : "border-border text-muted-foreground bg-background hover:bg-muted")}
-                      style={selected ? { backgroundColor: "#1A4A3A" } : undefined}
-                    >{s}</button>
-                  );
-                })}
+                {skillsCatalogo.filter((s) => !skillsObrigatorias.includes(s) && !skillsDesejadas.includes(s)).map((s) => (
+                  <button key={s} type="button"
+                    onClick={() => setSkillsObrigatorias([...skillsObrigatorias, s])}
+                    className="inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium transition-colors cursor-pointer border-border text-muted-foreground bg-background hover:bg-muted"
+                  >{s}</button>
+                ))}
               </div>
+              <Input
+                placeholder="Adicionar skill personalizada (Enter)"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    const val = (e.target as HTMLInputElement).value.trim();
+                    if (val && !skillsObrigatorias.includes(val)) {
+                      setSkillsObrigatorias([...skillsObrigatorias, val]);
+                      (e.target as HTMLInputElement).value = "";
+                    }
+                  }
+                }}
+              />
             </div>
 
             {/* Skills desejadas */}
             <div className="space-y-2">
               <Label>Skills desejadas</Label>
+              {skillsDesejadas.length > 0 && (
+                <div className="flex flex-wrap gap-1 mb-1">
+                  {skillsDesejadas.map((s, i) => (
+                    <span key={i} className="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium text-white" style={{ backgroundColor: "#1A6BBF" }}>
+                      {s}
+                      <button type="button" onClick={() => setSkillsDesejadas(skillsDesejadas.filter((_, idx) => idx !== i))}>
+                        <X className="h-3 w-3" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
               <div className="flex flex-wrap gap-2">
-                {skillsCatalogo.filter((s) => !skillsObrigatorias.includes(s)).map((s) => {
-                  const selected = skillsDesejadas.includes(s);
-                  return (
-                    <button key={s} type="button"
-                      onClick={() => setSkillsDesejadas(selected ? skillsDesejadas.filter((x) => x !== s) : [...skillsDesejadas, s])}
-                      className={cn("inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium transition-colors cursor-pointer", selected ? "border-transparent text-white" : "border-border text-muted-foreground bg-background hover:bg-muted")}
-                      style={selected ? { backgroundColor: "#1A6BBF" } : undefined}
-                    >{s}</button>
-                  );
-                })}
+                {skillsCatalogo.filter((s) => !skillsObrigatorias.includes(s) && !skillsDesejadas.includes(s)).map((s) => (
+                  <button key={s} type="button"
+                    onClick={() => setSkillsDesejadas([...skillsDesejadas, s])}
+                    className="inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium transition-colors cursor-pointer border-border text-muted-foreground bg-background hover:bg-muted"
+                  >{s}</button>
+                ))}
               </div>
+              <Input
+                placeholder="Adicionar skill personalizada (Enter)"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    const val = (e.target as HTMLInputElement).value.trim();
+                    if (val && !skillsDesejadas.includes(val)) {
+                      setSkillsDesejadas([...skillsDesejadas, val]);
+                      (e.target as HTMLInputElement).value = "";
+                    }
+                  }
+                }}
+              />
             </div>
 
             {/* Ferramentas */}
