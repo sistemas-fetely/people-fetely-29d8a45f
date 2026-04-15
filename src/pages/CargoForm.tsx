@@ -103,19 +103,25 @@ export default function CargoForm() {
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
-      setForm((f: any) => ({
-        ...f,
-        missao: data.missao || f.missao,
-        faixa_clt_f1_min: data.faixa_clt_f1_min?.toString() || f.faixa_clt_f1_min,
-        faixa_clt_f1_max: data.faixa_clt_f1_max?.toString() || f.faixa_clt_f1_max,
-        faixa_clt_f5_min: data.faixa_clt_f5_min?.toString() || f.faixa_clt_f5_min,
-        faixa_clt_f5_max: data.faixa_clt_f5_max?.toString() || f.faixa_clt_f5_max,
-        faixa_pj_f1_min: data.faixa_pj_f1_min?.toString() || f.faixa_pj_f1_min,
-        faixa_pj_f1_max: data.faixa_pj_f1_max?.toString() || f.faixa_pj_f1_max,
-        faixa_pj_f5_min: data.faixa_pj_f5_min?.toString() || f.faixa_pj_f5_min,
-        faixa_pj_f5_max: data.faixa_pj_f5_max?.toString() || f.faixa_pj_f5_max,
-      }));
-      toast.success("Informações preenchidas com dados de mercado. Revise antes de salvar.");
+      let algumPreenchido = false;
+      setForm((f: any) => {
+        const updated: any = { ...f };
+        // Só preenche campos vazios
+        if (!f.missao && data.missao) { updated.missao = data.missao; algumPreenchido = true; }
+        const faixas = [
+          "faixa_clt_f1_min", "faixa_clt_f1_max", "faixa_clt_f5_min", "faixa_clt_f5_max",
+          "faixa_pj_f1_min", "faixa_pj_f1_max", "faixa_pj_f5_min", "faixa_pj_f5_max",
+        ];
+        for (const k of faixas) {
+          if (!f[k] && data[k] != null) { updated[k] = data[k].toString(); algumPreenchido = true; }
+        }
+        return updated;
+      });
+      if (algumPreenchido) {
+        toast.success("Campos vazios preenchidos com dados de mercado. Revise antes de salvar.");
+      } else {
+        toast.info("Este cargo já tem todas as informações preenchidas. Edite manualmente se quiser atualizar.");
+      }
     } catch (err: any) {
       console.error("Erro ao enriquecer cargo:", err);
       toast.error("Não foi possível buscar dados de mercado. Tente novamente.");
