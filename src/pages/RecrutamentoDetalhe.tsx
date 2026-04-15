@@ -2392,19 +2392,24 @@ function TesteTecnico({
           desafio_entregaveis: data.entregaveis || "",
           desafio_criterios: data.criterios || "",
         }));
-        // Salvar skills_a_validar no banco
-        if (data.skills_a_validar?.length > 0) {
-          await supabase
-            .from("testes_tecnicos" as any)
-            .upsert({
-              candidato_id: candidatoId,
-              vaga_id: vagaId,
-              skills_a_validar: data.skills_a_validar,
-              updated_at: new Date().toISOString(),
-            } as any, { onConflict: "candidato_id,vaga_id" });
-          queryClient.invalidateQueries({ queryKey: ["teste-tecnico", candidatoId] });
-        }
-        toast.success("Desafio gerado com validadores de skills! Revise antes de enviar.");
+        // Salvar desafio completo + skills_a_validar no banco de uma vez
+        // Evita que o invalidateQueries sobrescreva o formDesafio
+        await supabase
+          .from("testes_tecnicos" as any)
+          .upsert({
+            candidato_id: candidatoId,
+            vaga_id: vagaId,
+            desafio_contexto: data.contexto || null,
+            desafio_descricao: data.descricao || null,
+            desafio_entregaveis: data.entregaveis || null,
+            desafio_criterios: data.criterios || null,
+            skills_a_validar: data.skills_a_validar ?? [],
+            updated_at: new Date().toISOString(),
+          } as any, { onConflict: "candidato_id,vaga_id" });
+        // Invalidar DEPOIS de salvar tudo — o useEffect vai
+        // carregar os dados corretos do banco
+        queryClient.invalidateQueries({ queryKey: ["teste-tecnico", candidatoId] });
+        toast.success("Desafio gerado! Revise e defina o prazo antes de enviar.");
       } else {
         toast.error("Resposta inesperada da IA. Preencha manualmente.");
       }
