@@ -44,7 +44,7 @@ const KANBAN_STAGES = [
   { key: "entrevista_rh",     label: "Entrevista RH",      cor: "#2563EB", bg: "#EFF6FF" },
   { key: "entrevista_gestor", label: "Entrevista Gestor",  cor: "#7C3AED", bg: "#F5F3FF" },
   { key: "teste_tecnico",     label: "Teste Técnico",      cor: "#0891B2", bg: "#ECFEFF" },
-  { key: "oferta",            { key: "oferta",            label: "Proposta",           cor: "#D97706", bg: "#FFF7ED" },, bg: "#FFF7ED" },
+  { key: "oferta",            label: "Proposta",           cor: "#D97706", bg: "#FFF7ED" },
   { key: "contratado",        label: "Contratado",         cor: "#1A4A3A", bg: "#D8F3DC" },
   { key: "recusado",          label: "Recusado",           cor: "#DC2626", bg: "#FEF2F2" },
 ] as const;
