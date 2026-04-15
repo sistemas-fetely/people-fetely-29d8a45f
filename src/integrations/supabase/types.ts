@@ -2463,6 +2463,84 @@ export type Database = {
         }
         Relationships: []
       }
+      testes_tecnicos: {
+        Row: {
+          avaliado_em: string | null
+          avaliado_por: string | null
+          candidato_id: string
+          created_at: string | null
+          desafio_contexto: string | null
+          desafio_criterios: string | null
+          desafio_descricao: string | null
+          desafio_entregaveis: string | null
+          enviado_em: string | null
+          enviado_por: string | null
+          id: string
+          link_entrega: string | null
+          nota: number | null
+          pontos_avaliados: string | null
+          prazo_entrega: string | null
+          resultado: string | null
+          updated_at: string | null
+          vaga_id: string
+        }
+        Insert: {
+          avaliado_em?: string | null
+          avaliado_por?: string | null
+          candidato_id: string
+          created_at?: string | null
+          desafio_contexto?: string | null
+          desafio_criterios?: string | null
+          desafio_descricao?: string | null
+          desafio_entregaveis?: string | null
+          enviado_em?: string | null
+          enviado_por?: string | null
+          id?: string
+          link_entrega?: string | null
+          nota?: number | null
+          pontos_avaliados?: string | null
+          prazo_entrega?: string | null
+          resultado?: string | null
+          updated_at?: string | null
+          vaga_id: string
+        }
+        Update: {
+          avaliado_em?: string | null
+          avaliado_por?: string | null
+          candidato_id?: string
+          created_at?: string | null
+          desafio_contexto?: string | null
+          desafio_criterios?: string | null
+          desafio_descricao?: string | null
+          desafio_entregaveis?: string | null
+          enviado_em?: string | null
+          enviado_por?: string | null
+          id?: string
+          link_entrega?: string | null
+          nota?: number | null
+          pontos_avaliados?: string | null
+          prazo_entrega?: string | null
+          resultado?: string | null
+          updated_at?: string | null
+          vaga_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "testes_tecnicos_candidato_id_fkey"
+            columns: ["candidato_id"]
+            isOneToOne: false
+            referencedRelation: "candidatos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "testes_tecnicos_vaga_id_fkey"
+            columns: ["vaga_id"]
+            isOneToOne: false
+            referencedRelation: "vagas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           atribuido_manualmente: boolean
