@@ -73,6 +73,8 @@ export default function RecrutamentoDetalhe() {
     data_inicio: "", lider_direto_id: "", beneficios_ids: [] as string[], jornada: "",
   });
   const [encerrarVagaOpen, setEncerrarVagaOpen] = useState(false);
+  const [confirmarExclusao, setConfirmarExclusao] = useState(false);
+  const [excluindo, setExcluindo] = useState(false);
 
   const { data: beneficiosParam = [] } = useParametros("beneficio");
 
