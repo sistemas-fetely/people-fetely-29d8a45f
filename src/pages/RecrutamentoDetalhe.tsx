@@ -27,7 +27,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   ArrowLeft, Copy, Globe, MoreHorizontal, Plus, Loader2,
-  UserPlus, ArrowRight, XCircle, User, CheckCircle2, ExternalLink, Users, Link, Trash2, Check, Mail, AlertTriangle
+  UserPlus, ArrowRight, XCircle, User, CheckCircle2, ExternalLink, Users, Link, Trash2, Check, Mail, AlertTriangle, Pencil, X
 } from "lucide-react";
 
 const statusConfig: Record<string, { label: string; className: string }> = {
@@ -83,6 +83,9 @@ export default function RecrutamentoDetalhe() {
   const [gatilhoProximoStatus, setGatilhoProximoStatus] = useState("");
   const [gatilhoJustificativa, setGatilhoJustificativa] = useState("");
   const SCORE_MINIMO_ENTREVISTA = 40;
+
+  const [editarVagaOpen, setEditarVagaOpen] = useState(false);
+  const [editarForm, setEditarForm] = useState<any>({});
 
   async function solicitarPerfilCompleto(candidato: any) {
     if (!candidato.email) {
@@ -462,6 +465,31 @@ export default function RecrutamentoDetalhe() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {(isSuperAdmin || isAdminRH) && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setEditarForm({
+                  titulo: vaga.titulo ?? "",
+                  area: vaga.area ?? "",
+                  nivel: (vaga as any).nivel ?? "",
+                  local_trabalho: (vaga as any).local_trabalho ?? "",
+                  jornada: (vaga as any).jornada ?? "",
+                  salario_min: (vaga as any).salario_min?.toString() ?? "",
+                  salario_max: (vaga as any).salario_max?.toString() ?? "",
+                  skills_obrigatorias: (vaga as any).skills_obrigatorias ?? [],
+                  skills_desejadas: (vaga as any).skills_desejadas ?? [],
+                  ferramentas: (vaga as any).ferramentas ?? [],
+                  beneficios: (vaga as any).beneficios ?? [],
+                  descricao: (vaga as any).descricao ?? "",
+                });
+                setEditarVagaOpen(true);
+              }}
+            >
+              <Pencil className="h-4 w-4 mr-2" /> Editar vaga
+            </Button>
+          )}
           <Button variant="outline" size="sm" onClick={() => setAddCandidatoOpen(true)}>
             <UserPlus className="h-4 w-4 mr-2" /> Adicionar Candidato
           </Button>
