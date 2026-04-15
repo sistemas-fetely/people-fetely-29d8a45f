@@ -368,6 +368,7 @@ export type Database = {
           nome: string
           origem: string | null
           portfolio_url: string | null
+          pretensao_salarial: number | null
           score_calculado_em: string | null
           score_detalhado: Json | null
           score_total: number | null
@@ -392,6 +393,7 @@ export type Database = {
           nome: string
           origem?: string | null
           portfolio_url?: string | null
+          pretensao_salarial?: number | null
           score_calculado_em?: string | null
           score_detalhado?: Json | null
           score_total?: number | null
@@ -416,6 +418,7 @@ export type Database = {
           nome?: string
           origem?: string | null
           portfolio_url?: string | null
+          pretensao_salarial?: number | null
           score_calculado_em?: string | null
           score_detalhado?: Json | null
           score_total?: number | null

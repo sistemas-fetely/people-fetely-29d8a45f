@@ -1,0 +1,1 @@
+ALTER TABLE public.candidatos ADD COLUMN IF NOT EXISTS pretensao_salarial NUMERIC DEFAULT NULL;
