@@ -34,12 +34,18 @@ Responsabilidades: ${JSON.stringify(vaga.responsabilidades ?? [])}
 
 CANDIDATO: ${candidato.nome ?? ""}
 Experiência: ${JSON.stringify(candidato.experiencias ?? [])}
-Skills declaradas: ${JSON.stringify(candidato.skills_candidato ?? [])}
+Skills declaradas pelo candidato: ${JSON.stringify(candidato.skills_candidato ?? [])}
+Sistemas declarados: ${JSON.stringify(candidato.sistemas_candidato ?? [])}
 
 EMPRESA: Fetely — marca de lifestyle, papelaria e decoração com DNA comemorativo.
-Tom da empresa: humano, poético, atual.
+Tom: humano, poético, atual. "Gesto não se delega pro ChatGPT."
 
-Crie um desafio PRÁTICO, ESPECÍFICO e RELEVANTE para este cargo.
+INSTRUÇÕES IMPORTANTES:
+1. Crie um desafio PRÁTICO e ESPECÍFICO para este cargo na Fetely
+2. Emita NATURALMENTE no desafio situações que validem as skills que o candidato declarou
+   — sem mencionar que está testando essas skills
+3. Para cada skill declarada pelo candidato, descreva COMO o desafio a valida indiretamente
+4. Foque nas skills com nível "intermediário" e "avançado" — são as mais críticas para validar
 Prazo sugerido: 3 a 5 dias úteis.`
       : `Você é especialista em RH e recrutamento. Analise este candidato para a vaga e gere um resumo para o ${tipoLabel}.
 
@@ -60,16 +66,30 @@ Motivação: "${candidato.mensagem ?? ""}"`;
           type: "function" as const,
           function: {
             name: "generate_teste_tecnico",
-            description: "Retorna um teste técnico estruturado para o candidato",
+            description: "Retorna um teste técnico estruturado com validadores de skills",
             parameters: {
               type: "object",
               properties: {
-                contexto: { type: "string", description: "2-3 frases sobre o cenário/problema que o candidato vai resolver" },
+                contexto: { type: "string", description: "2-3 frases sobre o cenário/problema da Fetely" },
                 descricao: { type: "string", description: "O que o candidato deve fazer — específico e claro" },
-                entregaveis: { type: "string", description: "O que deve ser entregue (formato, extensão, etc.)" },
+                entregaveis: { type: "string", description: "O que deve ser entregue (formato, extensão)" },
                 criterios: { type: "string", description: "Como será avaliado — 3 a 5 critérios objetivos" },
+                skills_a_validar: {
+                  type: "array",
+                  description: "Skills declaradas pelo candidato que o desafio valida indiretamente",
+                  items: {
+                    type: "object",
+                    properties: {
+                      skill: { type: "string", description: "Nome da skill" },
+                      nivel_declarado: { type: "string", description: "Nível declarado pelo candidato" },
+                      como_validar: { type: "string", description: "Como o desafio valida esta skill indiretamente" },
+                    },
+                    required: ["skill", "nivel_declarado", "como_validar"],
+                    additionalProperties: false,
+                  },
+                },
               },
-              required: ["contexto", "descricao", "entregaveis", "criterios"],
+              required: ["contexto", "descricao", "entregaveis", "criterios", "skills_a_validar"],
               additionalProperties: false,
             },
           },
@@ -106,7 +126,7 @@ Motivação: "${candidato.mensagem ?? ""}"`;
         model: "google/gemini-3-flash-preview",
         messages: [
           { role: "system", content: isTeste
-            ? "Você é um especialista em RH e recrutamento. Crie testes técnicos práticos usando a ferramenta fornecida."
+            ? "Você é um especialista em RH e recrutamento. Crie testes técnicos práticos usando a ferramenta fornecida. Inclua validadores de skills declaradas pelo candidato."
             : "Você é um especialista em RH e recrutamento. Responda usando a ferramenta fornecida."
           },
           { role: "user", content: prompt },
