@@ -2329,7 +2329,7 @@ function TesteTecnico({
             descricao: formDesafio.desafio_descricao,
             entregaveis: formDesafio.desafio_entregaveis,
             criterios: formDesafio.desafio_criterios,
-            prazo: new Date(formDesafio.prazo_entrega).toLocaleDateString("pt-BR"),
+            prazo: (() => { const [ano, mes, dia] = formDesafio.prazo_entrega.split("-"); return `${dia}/${mes}/${ano}`; })(),
           },
         },
       });
