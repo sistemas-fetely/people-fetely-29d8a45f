@@ -205,6 +205,7 @@ function CargoDrawer({ cargo, onClose }: { cargo: Cargo; onClose: () => void }) 
 export default function Cargos() {
   const navigate = useNavigate();
   const { data: cargos, isLoading } = useAllCargos();
+  const { isSuperAdmin, isAdminRH } = usePermissions();
   const [search, setSearch] = useState("");
   const [filtroDepartamento, setFiltroDepartamento] = useState("todos");
   const [filtroTipo, setFiltroTipo] = useState("todos");
