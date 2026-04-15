@@ -8,6 +8,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSkillsCatalogo, salvarNovaSkill } from "@/hooks/useSkillsCatalogo";
 import { useFerramentasCatalogo, salvarNovaFerramenta } from "@/hooks/useFerramentasCatalogo";
+import { useBeneficiosCatalogo, salvarNovoBeneficio } from "@/hooks/useBeneficiosCatalogo";
 import { toast } from "sonner";
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -50,8 +51,8 @@ export function NovaVagaDialog({ open, onOpenChange }: Props) {
   const [gestorId, setGestorId] = useState("");
   const [localTrabalho, setLocalTrabalho] = useState("");
   const [jornada, setJornada] = useState("");
-  const [beneficiosIds, setBeneficiosIds] = useState<string[]>([]);
-  const [beneficiosOutros, setBeneficiosOutros] = useState("");
+  const [beneficiosSelecionados, setBeneficiosSelecionados] = useState<string[]>([]);
+  const [novoBeneficio, setNovoBeneficio] = useState("");
   const [vigenciaFim, setVigenciaFim] = useState("");
 
   // Step 2
@@ -69,7 +70,7 @@ export function NovaVagaDialog({ open, onOpenChange }: Props) {
   const { data: departamentos = [] } = useParametros("departamento");
   const { data: locais = [] } = useParametros("local_trabalho");
   const { data: jornadas = [] } = useParametros("jornada");
-  const { data: beneficiosParam = [] } = useParametros("beneficio");
+  const { data: beneficiosCatalogo = [] } = useBeneficiosCatalogo(tipoContrato || undefined);
   const { data: cargosData = [] } = useCargos();
 
   // Auto-fill faixa from cargos table
@@ -135,9 +136,8 @@ export function NovaVagaDialog({ open, onOpenChange }: Props) {
         status: "rascunho",
         local_trabalho: localTrabalho || null,
         jornada: jornada || null,
-        beneficios: beneficiosParam.filter(b => beneficiosIds.includes(b.valor)).map(b => b.label).join(", ") + (beneficiosOutros ? (beneficiosIds.length > 0 ? ", " : "") + beneficiosOutros : "") || null,
-        beneficios_ids: beneficiosIds.length > 0 ? beneficiosIds : null,
-        beneficios_outros: beneficiosOutros || null,
+        beneficios: beneficiosSelecionados.join(", ") || null,
+        beneficios_ids: beneficiosSelecionados.length > 0 ? beneficiosSelecionados : null,
         vigencia_fim: vigenciaFim || null,
         vigencia_inicio: new Date().toISOString().split("T")[0],
         missao: missao || null,
@@ -167,7 +167,7 @@ export function NovaVagaDialog({ open, onOpenChange }: Props) {
   function resetAndClose() {
     setStep(1);
     setTitulo(""); setArea(""); setTipoContrato(""); setNivel("");
-    setGestorId(""); setLocalTrabalho(""); setJornada(""); setBeneficiosIds([]); setBeneficiosOutros("");
+    setGestorId(""); setLocalTrabalho(""); setJornada(""); setBeneficiosSelecionados([]); setNovoBeneficio("");
     setVigenciaFim(""); setMissao(""); setResponsabilidades([""]);
     setSkillsObrigatorias([]); setSkillsDesejadas([]);
     setFerramentasSelecionadas([]); setNovaFerramenta("");
@@ -313,37 +313,63 @@ export function NovaVagaDialog({ open, onOpenChange }: Props) {
 
             <div className="space-y-2">
               <Label>Benefícios</Label>
-              <div className="flex flex-wrap gap-2">
-                {beneficiosParam.map((b) => {
-                  const selected = beneficiosIds.includes(b.valor);
-                  return (
-                    <button
-                      key={b.id}
-                      type="button"
-                      onClick={() =>
-                        setBeneficiosIds(selected
-                          ? beneficiosIds.filter((v) => v !== b.valor)
-                          : [...beneficiosIds, b.valor])
+
+              {beneficiosSelecionados.length > 0 && (
+                <div className="flex flex-wrap gap-1 mb-1">
+                  {beneficiosSelecionados.map((b, i) => (
+                    <span key={i} className="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium text-white" style={{ backgroundColor: "#C2185B" }}>
+                      {b}
+                      <button type="button" onClick={() => setBeneficiosSelecionados(beneficiosSelecionados.filter((_, idx) => idx !== i))}>
+                        <X className="h-3 w-3" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              {beneficiosCatalogo.filter(b => !beneficiosSelecionados.includes(b.beneficio)).length > 0 && (
+                <div className="flex flex-wrap gap-1">
+                  {beneficiosCatalogo
+                    .filter(b => !beneficiosSelecionados.includes(b.beneficio))
+                    .map(b => (
+                      <button key={b.id} type="button"
+                        onClick={() => setBeneficiosSelecionados([...beneficiosSelecionados, b.beneficio])}
+                        className="inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium transition-colors cursor-pointer border-border text-muted-foreground bg-background hover:bg-muted">
+                        + {b.beneficio}
+                      </button>
+                    ))}
+                </div>
+              )}
+
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Adicionar benefício personalizado"
+                  value={novoBeneficio}
+                  onChange={(e) => setNovoBeneficio(e.target.value)}
+                  onKeyDown={async (e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      const val = novoBeneficio.trim();
+                      if (val && !beneficiosSelecionados.includes(val)) {
+                        setBeneficiosSelecionados([...beneficiosSelecionados, val]);
+                        await salvarNovoBeneficio(val, tipoContrato || "todos");
+                        setNovoBeneficio("");
                       }
-                      className={cn(
-                        "inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium transition-colors cursor-pointer",
-                        selected
-                          ? "border-transparent text-white"
-                          : "border-border text-muted-foreground bg-background hover:bg-muted"
-                      )}
-                      style={selected ? { backgroundColor: "#C2185B" } : undefined}
-                    >
-                      {b.label}
-                    </button>
-                  );
-                })}
+                    }
+                  }}
+                />
+                <Button type="button" variant="outline" size="sm" className="shrink-0"
+                  onClick={async () => {
+                    const val = novoBeneficio.trim();
+                    if (val && !beneficiosSelecionados.includes(val)) {
+                      setBeneficiosSelecionados([...beneficiosSelecionados, val]);
+                      await salvarNovoBeneficio(val, tipoContrato || "todos");
+                      setNovoBeneficio("");
+                    }
+                  }}>
+                  Confirmar
+                </Button>
               </div>
-              <Input
-                value={beneficiosOutros}
-                onChange={(e) => setBeneficiosOutros(e.target.value)}
-                placeholder="Outros benefícios não listados"
-                className="mt-2"
-              />
             </div>
 
             <div className="flex justify-end pt-2">
@@ -368,17 +394,17 @@ export function NovaVagaDialog({ open, onOpenChange }: Props) {
               <p className="text-xs text-muted-foreground">Liste as principais atividades desta posição</p>
               {responsabilidades.map((r, i) => (
                 <div key={i} className="flex items-start gap-2">
-                  <span className="mt-2.5 h-1.5 w-1.5 rounded-full bg-[#1A4A3A] flex-shrink-0" />
-                  <Input
+                  <span className="mt-3 h-1.5 w-1.5 rounded-full bg-[#1A4A3A] flex-shrink-0" />
+                  <Textarea
                     value={r}
                     onChange={(e) => updateItem(responsabilidades, setResponsabilidades, i, e.target.value)}
                     placeholder={`Responsabilidade ${i + 1}`}
-                    className="flex-1 border-0 border-b rounded-none px-0 focus-visible:ring-0 focus-visible:border-[#1A4A3A] bg-transparent"
+                    className="flex-1 resize-none text-sm border rounded-md px-3 py-2 min-h-[60px]"
                   />
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 text-muted-foreground hover:text-destructive flex-shrink-0"
+                    className="h-8 w-8 text-muted-foreground hover:text-destructive flex-shrink-0 mt-1"
                     onClick={() => removeItem(responsabilidades, setResponsabilidades, i)}
                   >
                     <X className="h-3.5 w-3.5" />

@@ -87,6 +87,33 @@ export type Database = {
           },
         ]
       }
+      beneficios_catalogo: {
+        Row: {
+          ativo: boolean | null
+          beneficio: string
+          created_at: string | null
+          criado_por: string | null
+          id: string
+          tipo: string
+        }
+        Insert: {
+          ativo?: boolean | null
+          beneficio: string
+          created_at?: string | null
+          criado_por?: string | null
+          id?: string
+          tipo?: string
+        }
+        Update: {
+          ativo?: boolean | null
+          beneficio?: string
+          created_at?: string | null
+          criado_por?: string | null
+          id?: string
+          tipo?: string
+        }
+        Relationships: []
+      }
       beneficios_colaborador: {
         Row: {
           colaborador_id: string
