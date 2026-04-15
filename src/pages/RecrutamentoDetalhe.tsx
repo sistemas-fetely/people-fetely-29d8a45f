@@ -27,7 +27,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   ArrowLeft, Copy, Globe, MoreHorizontal, Plus, Loader2,
-  UserPlus, ArrowRight, XCircle, User, CheckCircle2, ExternalLink, Users, Link, Trash2, Check, Mail
+  UserPlus, ArrowRight, XCircle, User, CheckCircle2, ExternalLink, Users, Link, Trash2, Check, Mail, AlertTriangle
 } from "lucide-react";
 
 const statusConfig: Record<string, { label: string; className: string }> = {
@@ -77,6 +77,12 @@ export default function RecrutamentoDetalhe() {
   const [excluindo, setExcluindo] = useState(false);
   const [publicando, setPublicando] = useState(false);
   const [solicitando, setSolicitando] = useState(false);
+
+  const [gatilhoDialog, setGatilhoDialog] = useState(false);
+  const [gatilhoCandidato, setGatilhoCandidato] = useState<any>(null);
+  const [gatilhoProximoStatus, setGatilhoProximoStatus] = useState("");
+  const [gatilhoJustificativa, setGatilhoJustificativa] = useState("");
+  const SCORE_MINIMO_ENTREVISTA = 40;
 
   async function solicitarPerfilCompleto(candidato: any) {
     if (!candidato.email) {
@@ -328,10 +334,33 @@ export default function RecrutamentoDetalhe() {
         if (stageKey === "contratado") {
           openContratarDialog(c);
         } else {
-          moveCandidatoMutation.mutate({ candidatoId: draggingId, newStatus: stageKey });
+          moverCandidatoComHistorico(draggingId, c.status, stageKey, null, (c as any).score_total);
         }
       }
       setDraggingId(null);
+    }
+  };
+
+  const moverCandidatoComHistorico = async (
+    candidatoId: string,
+    deStatus: string,
+    paraStatus: string,
+    justificativa: string | null,
+    score: number | null
+  ) => {
+    moveCandidatoMutation.mutate({ candidatoId, newStatus: paraStatus });
+    try {
+      await supabase.from("candidato_historico").insert({
+        candidato_id: candidatoId,
+        status_anterior: deStatus,
+        status_novo: paraStatus,
+        responsavel_id: user?.id || null,
+        justificativa: justificativa || null,
+        score_no_momento: score || null,
+        vaga_id: id || null,
+      } as any);
+    } catch (e) {
+      console.error("Erro ao registrar histórico:", e);
     }
   };
 
@@ -341,15 +370,45 @@ export default function RecrutamentoDetalhe() {
     const idx = KANBAN_STAGES.findIndex((s) => s.key === c.status);
     if (idx < 0 || idx >= KANBAN_STAGES.length - 2) return;
     const nextStatus = KANBAN_STAGES[idx + 1].key;
+
+    // Bloqueio suave: Triagem → Entrevista RH com score < 40%
+    if (c.status === "triagem" && nextStatus === "entrevista_rh") {
+      const score = (c as any).score_total ?? 0;
+      if (score < SCORE_MINIMO_ENTREVISTA) {
+        setGatilhoCandidato(c);
+        setGatilhoProximoStatus(nextStatus);
+        setGatilhoJustificativa("");
+        setGatilhoDialog(true);
+        return;
+      }
+    }
+
+    // Alerta: perfil incompleto ao sair de Recebido
+    if (c.status === "recebido" && nextStatus === "triagem") {
+      const temPerfil = (c as any).experiencias?.length > 0 ||
+                        (c as any).skills_candidato?.length > 0;
+      if (!temPerfil) {
+        toast.warning(
+          `${c.nome} não tem perfil completo. Considere solicitar o perfil antes de avançar.`,
+          { duration: 5000 }
+        );
+      }
+    }
+
     if (nextStatus === "contratado") {
       openContratarDialog(c);
     } else {
-      moveCandidatoMutation.mutate({ candidatoId, newStatus: nextStatus });
+      moverCandidatoComHistorico(candidatoId, c.status, nextStatus, null, (c as any).score_total);
     }
   };
 
   const rejectCandidato = (candidatoId: string) => {
-    moveCandidatoMutation.mutate({ candidatoId, newStatus: "recusado" });
+    const c = candidatos.find((x) => x.id === candidatoId);
+    if (c) {
+      moverCandidatoComHistorico(candidatoId, c.status, "recusado", null, (c as any).score_total);
+    } else {
+      moveCandidatoMutation.mutate({ candidatoId, newStatus: "recusado" });
+    }
   };
 
   const scrollToColuna = (colId: string) => {
