@@ -56,6 +56,8 @@ export function NovaVagaDialog({ open, onOpenChange }: Props) {
   const [novoBeneficio, setNovoBeneficio] = useState("");
   const [vigenciaFim, setVigenciaFim] = useState("");
   const [numVagas, setNumVagas] = useState(1);
+  const [errosDuplicata, setErrosDuplicata] = useState<string[]>([]);
+  const [verificandoDuplicata, setVerificandoDuplicata] = useState(false);
 
   // Step 2
   const [missao, setMissao] = useState("");
@@ -184,10 +186,41 @@ export function NovaVagaDialog({ open, onOpenChange }: Props) {
     setFaixaMin(""); setFaixaMax("");
     setNovaSkillObrig(""); setNovaSkillDesej("");
     setNumVagas(1);
+    setErrosDuplicata([]);
+    setVerificandoDuplicata(false);
     onOpenChange(false);
   }
 
   const step1Valid = titulo.trim() && area && tipoContrato && nivel;
+
+  async function verificarDuplicata(): Promise<boolean> {
+    if (!titulo.trim() || !tipoContrato || !gestorId) return false;
+    setVerificandoDuplicata(true);
+    try {
+      const { data } = await supabase
+        .from("vagas")
+        .select("id, titulo, tipo_contrato, status")
+        .ilike("titulo", titulo.trim())
+        .eq("tipo_contrato", tipoContrato)
+        .eq("gestor_id", gestorId)
+        .in("status", ["rascunho", "aberta", "em_selecao"]);
+      if (data && data.length > 0) {
+        const statusLabel: Record<string, string> = {
+          rascunho: "rascunho",
+          aberta: "aberta",
+          em_selecao: "em seleção",
+        };
+        setErrosDuplicata([
+          `Já existe uma vaga "${titulo}" (${tipoContrato.toUpperCase()}) com este gestor — status: ${statusLabel[data[0].status] ?? data[0].status}.`
+        ]);
+        return true;
+      }
+      setErrosDuplicata([]);
+      return false;
+    } finally {
+      setVerificandoDuplicata(false);
+    }
+  }
 
   // Dynamic list helpers
   const addItem = (list: string[], setList: (v: string[]) => void) => setList([...list, ""]);
