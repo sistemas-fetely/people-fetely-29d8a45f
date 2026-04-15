@@ -53,6 +53,16 @@ interface Candidato {
   created_at: string | null;
   consentimento_lgpd: boolean | null;
   consentimento_lgpd_at: string | null;
+  score_total?: number;
+  score_detalhado?: {
+    skills_match?: number;
+    nivel_skills?: number;
+    sistemas_match?: number;
+    experiencia?: number;
+    motivacao?: number;
+    total?: number;
+    resumo?: string;
+  };
 }
 
 interface Props {
@@ -318,6 +328,49 @@ export function CandidatoDrawer({ open, onOpenChange, candidato, vagaSkills, vag
               )}
               {!candidato.linkedin_url && !candidato.portfolio_url && (
                 <p className="text-sm text-muted-foreground italic">Nenhum link informado pelo candidato.</p>
+              )}
+
+              {/* Score de aderência */}
+              {candidato.score_detalhado?.total && candidato.score_detalhado.total > 0 && (
+                <div className="pt-4 border-t space-y-3">
+                  <p className="text-xs font-medium text-muted-foreground uppercase">Score de aderência</p>
+                  <div className="flex items-center gap-3">
+                    <div className={`text-3xl font-bold ${
+                      (candidato.score_total ?? 0) >= 80 ? "text-green-600"
+                        : (candidato.score_total ?? 0) >= 50 ? "text-yellow-600"
+                        : "text-red-600"
+                    }`}>
+                      {candidato.score_total}%
+                    </div>
+                    {candidato.score_detalhado.resumo && (
+                      <p className="text-xs text-muted-foreground flex-1">
+                        {candidato.score_detalhado.resumo}
+                      </p>
+                    )}
+                  </div>
+                  <div className="space-y-1.5">
+                    {[
+                      { label: "Skills match", valor: candidato.score_detalhado.skills_match ?? 0, max: 40 },
+                      { label: "Nível skills", valor: candidato.score_detalhado.nivel_skills ?? 0, max: 20 },
+                      { label: "Sistemas", valor: candidato.score_detalhado.sistemas_match ?? 0, max: 15 },
+                      { label: "Experiência", valor: candidato.score_detalhado.experiencia ?? 0, max: 15 },
+                      { label: "Motivação", valor: candidato.score_detalhado.motivacao ?? 0, max: 10 },
+                    ].map((item) => (
+                      <div key={item.label} className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground w-24">{item.label}</span>
+                        <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
+                          <div
+                            className="h-full rounded-full transition-all"
+                            style={{ width: `${(item.valor / item.max) * 100}%`, backgroundColor: "#1A4A3A" }}
+                          />
+                        </div>
+                        <span className="text-xs font-medium w-12 text-right">
+                          {item.valor}/{item.max}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               )}
             </TabsContent>
 
