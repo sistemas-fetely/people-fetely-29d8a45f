@@ -1289,6 +1289,177 @@ export default function RecrutamentoDetalhe() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Dialog editar vaga */}
+      <Dialog open={editarVagaOpen} onOpenChange={setEditarVagaOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Pencil className="h-4 w-4" />
+              Editar vaga
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div>
+              <Label>Título da vaga</Label>
+              <Input value={editarForm.titulo ?? ""}
+                onChange={e => setEditarForm((f: any) => ({ ...f, titulo: e.target.value }))} />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Área</Label>
+                <Input value={editarForm.area ?? ""}
+                  onChange={e => setEditarForm((f: any) => ({ ...f, area: e.target.value }))} />
+              </div>
+              <div>
+                <Label>Nível</Label>
+                <Select value={editarForm.nivel ?? ""}
+                  onValueChange={v => setEditarForm((f: any) => ({ ...f, nivel: v }))}>
+                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="jr">Júnior</SelectItem>
+                    <SelectItem value="pl">Pleno</SelectItem>
+                    <SelectItem value="sr">Sênior</SelectItem>
+                    <SelectItem value="coordenacao">Coordenação</SelectItem>
+                    <SelectItem value="especialista">Especialista</SelectItem>
+                    <SelectItem value="c_level">C-Level</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Local de trabalho</Label>
+                <Input value={editarForm.local_trabalho ?? ""}
+                  onChange={e => setEditarForm((f: any) => ({ ...f, local_trabalho: e.target.value }))} />
+              </div>
+              <div>
+                <Label>Jornada</Label>
+                <Input value={editarForm.jornada ?? ""}
+                  onChange={e => setEditarForm((f: any) => ({ ...f, jornada: e.target.value }))} />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Salário mínimo</Label>
+                <Input type="number" value={editarForm.salario_min ?? ""} placeholder="R$ 0"
+                  onChange={e => setEditarForm((f: any) => ({ ...f, salario_min: e.target.value }))} />
+              </div>
+              <div>
+                <Label>Salário máximo</Label>
+                <Input type="number" value={editarForm.salario_max ?? ""} placeholder="R$ 0"
+                  onChange={e => setEditarForm((f: any) => ({ ...f, salario_max: e.target.value }))} />
+              </div>
+            </div>
+
+            {/* Skills obrigatórias */}
+            <div>
+              <Label>Skills obrigatórias</Label>
+              <div className="flex flex-wrap gap-1.5 mb-2 min-h-[32px] p-2 border rounded-lg bg-muted/20">
+                {(editarForm.skills_obrigatorias ?? []).map((s: string, i: number) => (
+                  <span key={i} className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-primary text-primary-foreground">
+                    {s}
+                    <button type="button" onClick={() =>
+                      setEditarForm((f: any) => ({
+                        ...f, skills_obrigatorias: f.skills_obrigatorias.filter((_: string, idx: number) => idx !== i)
+                      }))}>
+                      <X className="h-3 w-3" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+              <Input placeholder="Digite e pressione Enter para adicionar"
+                onKeyDown={e => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    const val = (e.target as HTMLInputElement).value.trim();
+                    if (val) {
+                      setEditarForm((f: any) => ({ ...f, skills_obrigatorias: [...(f.skills_obrigatorias ?? []), val] }));
+                      (e.target as HTMLInputElement).value = "";
+                    }
+                  }
+                }} />
+            </div>
+
+            {/* Skills desejadas */}
+            <div>
+              <Label>Skills desejadas</Label>
+              <div className="flex flex-wrap gap-1.5 mb-2 min-h-[32px] p-2 border rounded-lg bg-muted/20">
+                {(editarForm.skills_desejadas ?? []).map((s: string, i: number) => (
+                  <span key={i} className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-info/20 text-info">
+                    {s}
+                    <button type="button" onClick={() =>
+                      setEditarForm((f: any) => ({
+                        ...f, skills_desejadas: f.skills_desejadas.filter((_: string, idx: number) => idx !== i)
+                      }))}>
+                      <X className="h-3 w-3" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+              <Input placeholder="Digite e pressione Enter para adicionar"
+                onKeyDown={e => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    const val = (e.target as HTMLInputElement).value.trim();
+                    if (val) {
+                      setEditarForm((f: any) => ({ ...f, skills_desejadas: [...(f.skills_desejadas ?? []), val] }));
+                      (e.target as HTMLInputElement).value = "";
+                    }
+                  }
+                }} />
+            </div>
+
+            {/* Ferramentas */}
+            <div>
+              <Label>Ferramentas e sistemas</Label>
+              <div className="flex flex-wrap gap-1.5 mb-2 min-h-[32px] p-2 border rounded-lg bg-muted/20">
+                {(editarForm.ferramentas ?? []).map((s: string, i: number) => (
+                  <span key={i} className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-accent text-accent-foreground">
+                    {s}
+                    <button type="button" onClick={() =>
+                      setEditarForm((f: any) => ({
+                        ...f, ferramentas: f.ferramentas.filter((_: string, idx: number) => idx !== i)
+                      }))}>
+                      <X className="h-3 w-3" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+              <Input placeholder="Digite e pressione Enter para adicionar"
+                onKeyDown={e => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    const val = (e.target as HTMLInputElement).value.trim();
+                    if (val) {
+                      setEditarForm((f: any) => ({ ...f, ferramentas: [...(f.ferramentas ?? []), val] }));
+                      (e.target as HTMLInputElement).value = "";
+                    }
+                  }
+                }} />
+            </div>
+
+            {/* Descrição */}
+            <div>
+              <Label>Descrição / Missão da vaga</Label>
+              <Textarea rows={3} value={editarForm.descricao ?? ""}
+                placeholder="Descreva o contexto e o propósito desta vaga..."
+                onChange={e => setEditarForm((f: any) => ({ ...f, descricao: e.target.value }))} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditarVagaOpen(false)}>Cancelar</Button>
+            <Button
+              disabled={!editarForm.titulo || editarVagaMutation.isPending}
+              onClick={() => editarVagaMutation.mutate(editarForm)}
+            >
+              {editarVagaMutation.isPending ? (
+                <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Salvando...</>
+              ) : "Salvar alterações"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
