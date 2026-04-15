@@ -47,18 +47,25 @@ Deno.serve(async (req) => {
     )
   }
 
-  // Validate JWT in code since verify_jwt = false
+  // Validate JWT — supports both HS256 and ES256
   const authHeader = req.headers.get('Authorization')
   if (!authHeader?.startsWith('Bearer ')) {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: corsHeaders })
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      status: 401, headers: corsHeaders
+    })
   }
 
-  const authClient = createClient(supabaseUrl, anonKey, {
-    global: { headers: { Authorization: authHeader } },
-  })
-  const { data: claimsData, error: claimsError } = await authClient.auth.getClaims(authHeader.replace('Bearer ', ''))
-  if (claimsError || !claimsData?.claims) {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: corsHeaders })
+  // Use service role client to validate — bypasses algorithm restriction
+  const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey)
+  const token = authHeader.replace('Bearer ', '')
+  const { data: userData, error: userError } = await supabaseAdmin.auth.getUser(token)
+  if (userError || !userData?.user) {
+    return new Response(JSON.stringify({
+      error: 'Unauthorized',
+      code: userError?.code || 'INVALID_TOKEN'
+    }), {
+      status: 401, headers: corsHeaders
+    })
   }
 
   // Parse request body
