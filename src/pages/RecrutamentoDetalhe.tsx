@@ -198,6 +198,48 @@ export default function RecrutamentoDetalhe() {
     }
   }
 
+  async function recalcularTodosScores() {
+    if (!vaga || !candidatos?.length) return;
+    const candidatosComPerfil = candidatos.filter((c: any) =>
+      c.skills_candidato?.length > 0 || c.experiencias?.length > 0
+    );
+    if (candidatosComPerfil.length === 0) {
+      toast.info("Nenhum candidato com perfil para recalcular.");
+      return;
+    }
+    toast.info(`Recalculando ${candidatosComPerfil.length} candidato(s)...`);
+    let ok = 0;
+    let erro = 0;
+    for (const c of candidatosComPerfil) {
+      try {
+        await supabase.functions.invoke("score-candidato", {
+          body: {
+            action: "calcular_score",
+            candidato_id: c.id,
+            vaga: {
+              titulo: vaga.titulo,
+              nivel: (vaga as any).nivel,
+              skills_obrigatorias: (vaga as any).skills_obrigatorias ?? [],
+              skills_desejadas: (vaga as any).skills_desejadas ?? [],
+              ferramentas: (vaga as any).ferramentas ?? [],
+            },
+            candidato: {
+              skills_candidato: (c as any).skills_candidato ?? [],
+              sistemas_candidato: (c as any).sistemas_candidato ?? [],
+              experiencias: (c as any).experiencias ?? [],
+              formacoes: (c as any).formacoes ?? [],
+              mensagem: (c as any).mensagem ?? "",
+            },
+          },
+        });
+        ok++;
+      } catch {
+        erro++;
+      }
+    }
+    queryClient.invalidateQueries({ queryKey: ["candidatos", id] });
+    toast.success(`Scores recalculados: ${ok} ok${erro > 0 ? `, ${erro} com erro` : ""}`);
+  }
 
 
   async function salvarEmailCandidato(candidatoId: string, email: string) {
