@@ -410,12 +410,25 @@ export default function RecrutamentoDetalhe() {
       } as any);
     },
     onSuccess: () => {
-      toast.success(`Convite gerado para ${contratarCandidato?.nome}! Acesse Convites de Cadastro para enviar.`);
+      toast.success(`Convite gerado para ${contratarCandidato?.nome}!`);
       setContratarOpen(false);
       queryClient.invalidateQueries({ queryKey: ["candidatos", id] });
       queryClient.invalidateQueries({ queryKey: ["ofertas-vaga", id] });
-      // Ask about closing the vaga
-      setEncerrarVagaOpen(true);
+      queryClient.invalidateQueries({ queryKey: ["vaga", id] });
+
+      const numVagas = (vaga as any)?.num_vagas ?? 1;
+      const preenchidas = ((vaga as any)?.vagas_preenchidas ?? 0) + 1;
+
+      if (preenchidas >= numVagas) {
+        setEncerrarVagaOpen(true);
+      } else {
+        const restantes = numVagas - preenchidas;
+        toast.info(
+          `${preenchidas}/${numVagas} vagas preenchidas. Ainda ${restantes} posição${restantes > 1 ? "ões" : ""} em aberto.`,
+          { duration: 5000 }
+        );
+        navigate("/convites-cadastro");
+      }
     },
     onError: (err: any) => toast.error(err.message),
   });
