@@ -2466,11 +2466,11 @@ function TesteTecnico({
         updated_at: new Date().toISOString(),
       } as any, { onConflict: "candidato_id,vaga_id" });
 
-      await supabase.functions.invoke("send-transactional-email", {
+      const emailResult = await supabase.functions.invoke("send-transactional-email", {
         body: {
           templateName: "teste-tecnico-candidato",
           recipientEmail: candidato.email,
-          idempotencyKey: `teste-tecnico-${candidatoId}`,
+          idempotencyKey: `teste-tecnico-${candidatoId}-${Date.now()}`,
           templateData: {
             nome: candidato.nome,
             cargo: vaga?.titulo ?? "",
@@ -2486,7 +2486,12 @@ function TesteTecnico({
 
       queryClient.invalidateQueries({ queryKey: ["teste-tecnico", candidatoId] });
       setFase("resultado");
-      toast.success(`Desafio enviado para ${candidato.email}!`);
+      if (emailResult.error) {
+        console.error("Erro ao enviar e-mail:", emailResult.error);
+        toast.warning(`Desafio salvo mas e-mail não enviado: ${emailResult.error.message}. Tente reenviar.`);
+      } else {
+        toast.success(`Desafio enviado para ${candidato.email}!`);
+      }
     } catch (e: any) {
       toast.error("Erro ao enviar: " + e.message);
     } finally {
@@ -2512,7 +2517,7 @@ function TesteTecnico({
           })()
         : "";
 
-      const { error } = await supabase.functions.invoke("send-transactional-email", {
+      const emailResult = await supabase.functions.invoke("send-transactional-email", {
         body: {
           templateName: "teste-tecnico-candidato",
           recipientEmail: candidato.email,
@@ -2529,8 +2534,11 @@ function TesteTecnico({
           },
         },
       });
-      if (error) throw error;
-      toast.success(`Teste reenviado para ${candidato.email}!`);
+      if (emailResult.error) {
+        toast.error("Erro ao reenviar e-mail: " + emailResult.error.message);
+      } else {
+        toast.success(`Teste reenviado para ${candidato.email}!`);
+      }
     } catch (e: any) {
       toast.error("Erro ao reenviar: " + e.message);
     } finally {
