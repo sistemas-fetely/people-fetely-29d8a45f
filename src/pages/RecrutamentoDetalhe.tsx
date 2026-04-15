@@ -199,20 +199,25 @@ export default function RecrutamentoDetalhe() {
     enabled: !!id,
   });
 
-  // Fetch potential leaders for the select
+  // Fetch potential leaders from active colaboradores CLT + PJ
   const { data: lideres = [] } = useQuery({
-    queryKey: ["lideres-options"],
+    queryKey: ["gestores-para-vaga"],
     queryFn: async () => {
-      const { data: profiles } = await supabase.from("profiles").select("id, user_id, full_name");
-      if (!profiles) return [];
-      // Get user_ids that have gestor_direto or admin_rh role
-      const { data: roles } = await supabase.from("user_roles").select("user_id, role");
-      const liderUserIds = new Set(
-        (roles || [])
-          .filter((r) => r.role === "gestor_direto" || r.role === "admin_rh" || r.role === "super_admin")
-          .map((r) => r.user_id)
-      );
-      return profiles.filter((p) => liderUserIds.has(p.user_id));
+      const { data: clt } = await supabase
+        .from("colaboradores_clt")
+        .select("id, nome_completo, cargo, departamento")
+        .eq("status", "ativo")
+        .order("nome_completo");
+      const { data: pj } = await supabase
+        .from("contratos_pj")
+        .select("id, contato_nome, tipo_servico, departamento")
+        .eq("status", "ativo")
+        .order("contato_nome");
+      const todos = [
+        ...(clt ?? []).map(c => ({ id: c.id, nome: c.nome_completo, cargo: c.cargo, tipo: "CLT" })),
+        ...(pj ?? []).map(c => ({ id: c.id, nome: c.contato_nome, cargo: c.tipo_servico, tipo: "PJ" })),
+      ];
+      return todos.sort((a, b) => a.nome.localeCompare(b.nome));
     },
   });
 
@@ -965,8 +970,11 @@ export default function RecrutamentoDetalhe() {
                 onValueChange={(v) => setContratarForm({ ...contratarForm, lider_direto_id: v })}>
                 <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
                 <SelectContent>
-                  {lideres.map((l) => (
-                    <SelectItem key={l.id} value={l.id}>{l.full_name || l.user_id}</SelectItem>
+                  {lideres.map((l: any) => (
+                    <SelectItem key={l.id} value={l.id}>
+                      {l.nome} {l.cargo ? `— ${l.cargo}` : ""}
+                      <span className="text-xs text-muted-foreground ml-1">({l.tipo})</span>
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -1533,7 +1541,8 @@ export default function RecrutamentoDetalhe() {
                   <SelectItem value="__none__">— Sem gestor —</SelectItem>
                   {lideres.map((l: any) => (
                     <SelectItem key={l.id} value={l.id}>
-                      {l.full_name}
+                      {l.nome} {l.cargo ? `— ${l.cargo}` : ""}
+                      <span className="text-xs text-muted-foreground ml-1">({l.tipo})</span>
                     </SelectItem>
                   ))}
                 </SelectContent>
