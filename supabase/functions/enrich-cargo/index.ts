@@ -25,13 +25,20 @@ serve(async (req) => {
       coordenacao: "Coordenação", especialista: "Especialista", c_level: "C-Level"
     };
 
-    const prompt = `Para o cargo "${nome}" nível ${nivelLabel[nivel] || nivel} no Brasil${departamento ? `, área de ${departamento}` : ""}, forneça dados de mercado.
+    const prompt = `Você é especialista em RH e mercado de trabalho brasileiro.
+Para o cargo "${nome}" nível ${nivelLabel[nivel] || nivel}${departamento ? `, área de ${departamento}` : ""}, em uma empresa de médio porte no Brasil:
 
-Pesquise em fontes brasileiras como Robert Half, Michael Page, Glassdoor, LinkedIn Salary.
+Pesquise dados reais de mercado (Robert Half, Michael Page, Glassdoor, LinkedIn).
 
-Os valores salariais devem ser mensais em reais (BRL).
+Os valores salariais devem ser mensais em reais (BRL) para São Paulo/SP.
 Faixas representam progressão salarial: F1 = entrada, F2 = desenvolvimento (1-2 anos), F3 = pleno (autônomo), F4 = sênior (referência na área), F5 = teto da faixa (próximo de promoção).
-Calcule valores progressivos e realistas. Para PJ, considere que o valor mensal é tipicamente 30-50% maior que CLT.`;
+Calcule valores progressivos e realistas entre faixas. Para PJ, considere que o valor mensal é tipicamente 30-50% maior que CLT.
+
+IMPORTANTE:
+- Responsabilidades devem ser atividades concretas e específicas para "${nome}"
+- Skills obrigatórias devem ser competências técnicas específicas para "${nome}"
+- Skills desejadas devem ser diferenciais específicos
+- Ferramentas devem ser softwares/sistemas reais usados neste cargo`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
