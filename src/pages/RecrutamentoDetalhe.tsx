@@ -435,10 +435,15 @@ export default function RecrutamentoDetalhe() {
     setContratarOpen(true);
   };
 
-  const copyLink = () => {
+  const copyLink = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     const url = `${window.location.origin}/vagas/${id}`;
-    navigator.clipboard.writeText(url);
-    toast.success("Link copiado!");
+    navigator.clipboard.writeText(url).then(() => {
+      toast.success("Link copiado!");
+    }).catch(() => {
+      toast.error("Não foi possível copiar o link");
+    });
   };
 
   async function publicarVaga() {
