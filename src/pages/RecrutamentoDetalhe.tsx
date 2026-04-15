@@ -27,7 +27,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   ArrowLeft, Copy, Globe, MoreHorizontal, Plus, Loader2,
-  UserPlus, ArrowRight, XCircle, User, CheckCircle2, ExternalLink, Users, Link, Trash2, Check, Mail, AlertTriangle
+  UserPlus, ArrowRight, XCircle, User, CheckCircle2, ExternalLink, Users, Link, Trash2, Check, Mail, AlertTriangle, Pencil, X
 } from "lucide-react";
 
 const statusConfig: Record<string, { label: string; className: string }> = {
@@ -83,6 +83,9 @@ export default function RecrutamentoDetalhe() {
   const [gatilhoProximoStatus, setGatilhoProximoStatus] = useState("");
   const [gatilhoJustificativa, setGatilhoJustificativa] = useState("");
   const SCORE_MINIMO_ENTREVISTA = 40;
+
+  const [editarVagaOpen, setEditarVagaOpen] = useState(false);
+  const [editarForm, setEditarForm] = useState<any>({});
 
   async function solicitarPerfilCompleto(candidato: any) {
     if (!candidato.email) {
@@ -173,6 +176,35 @@ export default function RecrutamentoDetalhe() {
       toast.success(`Vaga atualizada para "${label}"`);
       queryClient.invalidateQueries({ queryKey: ["vaga", id] });
       queryClient.invalidateQueries({ queryKey: ["vagas"] });
+    },
+    onError: (err: any) => toast.error(err.message),
+  });
+
+  const editarVagaMutation = useMutation({
+    mutationFn: async (dados: any) => {
+      const { error } = await supabase
+        .from("vagas")
+        .update({
+          titulo: dados.titulo,
+          area: dados.area,
+          nivel: dados.nivel,
+          local_trabalho: dados.local_trabalho,
+          jornada: dados.jornada,
+          salario_min: dados.salario_min ? Number(dados.salario_min) : null,
+          salario_max: dados.salario_max ? Number(dados.salario_max) : null,
+          skills_obrigatorias: dados.skills_obrigatorias,
+          skills_desejadas: dados.skills_desejadas,
+          ferramentas: dados.ferramentas,
+          beneficios: dados.beneficios,
+          descricao: dados.descricao,
+        } as any)
+        .eq("id", id!);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Vaga atualizada!");
+      queryClient.invalidateQueries({ queryKey: ["vaga", id] });
+      setEditarVagaOpen(false);
     },
     onError: (err: any) => toast.error(err.message),
   });
@@ -462,6 +494,31 @@ export default function RecrutamentoDetalhe() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {(isSuperAdmin || isAdminRH) && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setEditarForm({
+                  titulo: vaga.titulo ?? "",
+                  area: vaga.area ?? "",
+                  nivel: (vaga as any).nivel ?? "",
+                  local_trabalho: (vaga as any).local_trabalho ?? "",
+                  jornada: (vaga as any).jornada ?? "",
+                  salario_min: (vaga as any).salario_min?.toString() ?? "",
+                  salario_max: (vaga as any).salario_max?.toString() ?? "",
+                  skills_obrigatorias: (vaga as any).skills_obrigatorias ?? [],
+                  skills_desejadas: (vaga as any).skills_desejadas ?? [],
+                  ferramentas: (vaga as any).ferramentas ?? [],
+                  beneficios: (vaga as any).beneficios ?? [],
+                  descricao: (vaga as any).descricao ?? "",
+                });
+                setEditarVagaOpen(true);
+              }}
+            >
+              <Pencil className="h-4 w-4 mr-2" /> Editar vaga
+            </Button>
+          )}
           <Button variant="outline" size="sm" onClick={() => setAddCandidatoOpen(true)}>
             <UserPlus className="h-4 w-4 mr-2" /> Adicionar Candidato
           </Button>
@@ -1228,6 +1285,177 @@ export default function RecrutamentoDetalhe() {
             >
               <ArrowRight className="h-4 w-4 mr-2" />
               Avançar com justificativa
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog editar vaga */}
+      <Dialog open={editarVagaOpen} onOpenChange={setEditarVagaOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Pencil className="h-4 w-4" />
+              Editar vaga
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div>
+              <Label>Título da vaga</Label>
+              <Input value={editarForm.titulo ?? ""}
+                onChange={e => setEditarForm((f: any) => ({ ...f, titulo: e.target.value }))} />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Área</Label>
+                <Input value={editarForm.area ?? ""}
+                  onChange={e => setEditarForm((f: any) => ({ ...f, area: e.target.value }))} />
+              </div>
+              <div>
+                <Label>Nível</Label>
+                <Select value={editarForm.nivel ?? ""}
+                  onValueChange={v => setEditarForm((f: any) => ({ ...f, nivel: v }))}>
+                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="jr">Júnior</SelectItem>
+                    <SelectItem value="pl">Pleno</SelectItem>
+                    <SelectItem value="sr">Sênior</SelectItem>
+                    <SelectItem value="coordenacao">Coordenação</SelectItem>
+                    <SelectItem value="especialista">Especialista</SelectItem>
+                    <SelectItem value="c_level">C-Level</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Local de trabalho</Label>
+                <Input value={editarForm.local_trabalho ?? ""}
+                  onChange={e => setEditarForm((f: any) => ({ ...f, local_trabalho: e.target.value }))} />
+              </div>
+              <div>
+                <Label>Jornada</Label>
+                <Input value={editarForm.jornada ?? ""}
+                  onChange={e => setEditarForm((f: any) => ({ ...f, jornada: e.target.value }))} />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Salário mínimo</Label>
+                <Input type="number" value={editarForm.salario_min ?? ""} placeholder="R$ 0"
+                  onChange={e => setEditarForm((f: any) => ({ ...f, salario_min: e.target.value }))} />
+              </div>
+              <div>
+                <Label>Salário máximo</Label>
+                <Input type="number" value={editarForm.salario_max ?? ""} placeholder="R$ 0"
+                  onChange={e => setEditarForm((f: any) => ({ ...f, salario_max: e.target.value }))} />
+              </div>
+            </div>
+
+            {/* Skills obrigatórias */}
+            <div>
+              <Label>Skills obrigatórias</Label>
+              <div className="flex flex-wrap gap-1.5 mb-2 min-h-[32px] p-2 border rounded-lg bg-muted/20">
+                {(editarForm.skills_obrigatorias ?? []).map((s: string, i: number) => (
+                  <span key={i} className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-primary text-primary-foreground">
+                    {s}
+                    <button type="button" onClick={() =>
+                      setEditarForm((f: any) => ({
+                        ...f, skills_obrigatorias: f.skills_obrigatorias.filter((_: string, idx: number) => idx !== i)
+                      }))}>
+                      <X className="h-3 w-3" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+              <Input placeholder="Digite e pressione Enter para adicionar"
+                onKeyDown={e => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    const val = (e.target as HTMLInputElement).value.trim();
+                    if (val) {
+                      setEditarForm((f: any) => ({ ...f, skills_obrigatorias: [...(f.skills_obrigatorias ?? []), val] }));
+                      (e.target as HTMLInputElement).value = "";
+                    }
+                  }
+                }} />
+            </div>
+
+            {/* Skills desejadas */}
+            <div>
+              <Label>Skills desejadas</Label>
+              <div className="flex flex-wrap gap-1.5 mb-2 min-h-[32px] p-2 border rounded-lg bg-muted/20">
+                {(editarForm.skills_desejadas ?? []).map((s: string, i: number) => (
+                  <span key={i} className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-info/20 text-info">
+                    {s}
+                    <button type="button" onClick={() =>
+                      setEditarForm((f: any) => ({
+                        ...f, skills_desejadas: f.skills_desejadas.filter((_: string, idx: number) => idx !== i)
+                      }))}>
+                      <X className="h-3 w-3" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+              <Input placeholder="Digite e pressione Enter para adicionar"
+                onKeyDown={e => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    const val = (e.target as HTMLInputElement).value.trim();
+                    if (val) {
+                      setEditarForm((f: any) => ({ ...f, skills_desejadas: [...(f.skills_desejadas ?? []), val] }));
+                      (e.target as HTMLInputElement).value = "";
+                    }
+                  }
+                }} />
+            </div>
+
+            {/* Ferramentas */}
+            <div>
+              <Label>Ferramentas e sistemas</Label>
+              <div className="flex flex-wrap gap-1.5 mb-2 min-h-[32px] p-2 border rounded-lg bg-muted/20">
+                {(editarForm.ferramentas ?? []).map((s: string, i: number) => (
+                  <span key={i} className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-accent text-accent-foreground">
+                    {s}
+                    <button type="button" onClick={() =>
+                      setEditarForm((f: any) => ({
+                        ...f, ferramentas: f.ferramentas.filter((_: string, idx: number) => idx !== i)
+                      }))}>
+                      <X className="h-3 w-3" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+              <Input placeholder="Digite e pressione Enter para adicionar"
+                onKeyDown={e => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    const val = (e.target as HTMLInputElement).value.trim();
+                    if (val) {
+                      setEditarForm((f: any) => ({ ...f, ferramentas: [...(f.ferramentas ?? []), val] }));
+                      (e.target as HTMLInputElement).value = "";
+                    }
+                  }
+                }} />
+            </div>
+
+            {/* Descrição */}
+            <div>
+              <Label>Descrição / Missão da vaga</Label>
+              <Textarea rows={3} value={editarForm.descricao ?? ""}
+                placeholder="Descreva o contexto e o propósito desta vaga..."
+                onChange={e => setEditarForm((f: any) => ({ ...f, descricao: e.target.value }))} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditarVagaOpen(false)}>Cancelar</Button>
+            <Button
+              disabled={!editarForm.titulo || editarVagaMutation.isPending}
+              onClick={() => editarVagaMutation.mutate(editarForm)}
+            >
+              {editarVagaMutation.isPending ? (
+                <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Salvando...</>
+              ) : "Salvar alterações"}
             </Button>
           </DialogFooter>
         </DialogContent>
