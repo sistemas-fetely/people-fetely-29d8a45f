@@ -276,6 +276,10 @@ export default function Parametros() {
     setFormOpen(true);
   };
 
+  const estadosEquipamento = useMemo(() => {
+    return (allParams || []).filter((p) => p.categoria === "estado_equipamento" && p.ativo);
+  }, [allParams]);
+
   const grouped = useMemo(() => {
     const lowerSearch = searchTerm.toLowerCase();
     return CATEGORIAS.map((cat) => {
