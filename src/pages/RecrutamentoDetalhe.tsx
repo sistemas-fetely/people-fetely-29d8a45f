@@ -1038,13 +1038,23 @@ export default function RecrutamentoDetalhe() {
                       {/* Score badge */}
                       {(c as any).score_total > 0 && (
                         <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-100">
-                          <span className="text-xs text-muted-foreground">Score</span>
+                          <span className="text-xs text-muted-foreground">
+                            {(c as any).score_detalhado?.alerta?.startsWith("overqualified")
+                              ? "⚠ Overqualified"
+                              : (c as any).score_detalhado?.alerta === "underqualified"
+                                ? "⚠ Underqualified"
+                                : "Score"}
+                          </span>
                           <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-                            (c as any).score_total >= 80
-                              ? "bg-green-100 text-green-700"
-                              : (c as any).score_total >= 50
-                                ? "bg-yellow-100 text-yellow-700"
-                                : "bg-red-100 text-red-700"
+                            (c as any).score_detalhado?.alerta?.startsWith("overqualified")
+                              ? "bg-orange-100 text-orange-700"
+                              : (c as any).score_detalhado?.alerta === "underqualified"
+                                ? "bg-red-100 text-red-700"
+                                : (c as any).score_total >= 80
+                                  ? "bg-green-100 text-green-700"
+                                  : (c as any).score_total >= 50
+                                    ? "bg-yellow-100 text-yellow-700"
+                                    : "bg-red-100 text-red-700"
                           }`}>
                             {(c as any).score_total}%
                           </span>
@@ -1590,18 +1600,50 @@ export default function RecrutamentoDetalhe() {
                   {(selectedCandidato as any).score_total > 0 && (
                     <div className="p-3 rounded-lg border space-y-2"
                       style={{ backgroundColor:
+                        (selectedCandidato as any).score_detalhado?.alerta?.startsWith("overqualified") ? '#FFF7ED' :
                         (selectedCandidato as any).score_total >= 80 ? '#F0FFF4' :
                         (selectedCandidato as any).score_total >= 50 ? '#FFFBEB' : '#FEF2F2'
                       }}>
                       <div className="flex items-center justify-between">
                         <p className="text-xs font-medium text-muted-foreground">Score de aderência</p>
                         <span className="text-lg font-bold" style={{ color:
+                          (selectedCandidato as any).score_detalhado?.alerta?.startsWith("overqualified") ? '#D97706' :
                           (selectedCandidato as any).score_total >= 80 ? '#1A4A3A' :
                           (selectedCandidato as any).score_total >= 50 ? '#D97706' : '#DC2626'
                         }}>
                           {(selectedCandidato as any).score_total}%
                         </span>
                       </div>
+                      {(selectedCandidato as any).score_detalhado?.alerta && (
+                        <div className="flex items-start gap-2 p-2 rounded-md border" style={{
+                          backgroundColor: (selectedCandidato as any).score_detalhado.alerta === "underqualified" ? "#FEF2F2" : "#FFF7ED",
+                          borderColor: (selectedCandidato as any).score_detalhado.alerta === "underqualified" ? "#DC262630" : "#D9770630"
+                        }}>
+                          <AlertTriangle className="h-3.5 w-3.5 flex-shrink-0 mt-0.5" style={{
+                            color: (selectedCandidato as any).score_detalhado.alerta === "underqualified" ? "#DC2626" : "#D97706"
+                          }} />
+                          <div>
+                            <p className="text-xs font-medium" style={{
+                              color: (selectedCandidato as any).score_detalhado.alerta === "underqualified" ? "#DC2626" : "#D97706"
+                            }}>
+                              {(selectedCandidato as any).score_detalhado.alerta === "overqualified" ? "Overqualified — risco de turnover" :
+                               (selectedCandidato as any).score_detalhado.alerta === "overqualified_leve" ? "Overqualified leve — avaliar motivação" :
+                               "Underqualified — pode não atender o nível exigido"}
+                            </p>
+                            {(selectedCandidato as any).score_detalhado.alerta_texto && (
+                              <p className="text-xs text-muted-foreground mt-0.5">
+                                {(selectedCandidato as any).score_detalhado.alerta_texto}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                      {(selectedCandidato as any).score_detalhado?.nivel_detectado && (
+                        <p className="text-xs text-muted-foreground">
+                          Nível detectado: <span className="font-medium capitalize">{(selectedCandidato as any).score_detalhado.nivel_detectado}</span>
+                          {" · "}Vaga: <span className="font-medium capitalize">{(vaga as any)?.nivel ?? "?"}</span>
+                        </p>
+                      )}
                       {(selectedCandidato as any).score_detalhado?.resumo && (
                         <p className="text-xs text-muted-foreground">
                           {(selectedCandidato as any).score_detalhado.resumo}
