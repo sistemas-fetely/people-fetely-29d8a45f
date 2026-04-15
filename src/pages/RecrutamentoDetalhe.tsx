@@ -27,7 +27,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   ArrowLeft, Copy, Globe, MoreHorizontal, Plus, Loader2,
-  UserPlus, ArrowRight, XCircle, User, CheckCircle2, ExternalLink, Users, Link, Trash2, Check
+  UserPlus, ArrowRight, XCircle, User, CheckCircle2, ExternalLink, Users, Link, Trash2, Check, Mail
 } from "lucide-react";
 
 const statusConfig: Record<string, { label: string; className: string }> = {
@@ -76,6 +76,48 @@ export default function RecrutamentoDetalhe() {
   const [confirmarExclusao, setConfirmarExclusao] = useState(false);
   const [excluindo, setExcluindo] = useState(false);
   const [publicando, setPublicando] = useState(false);
+  const [solicitando, setSolicitando] = useState(false);
+
+  async function solicitarPerfilCompleto(candidato: any) {
+    if (!candidato.email) {
+      toast.error("Candidato sem e-mail cadastrado.");
+      return;
+    }
+    setSolicitando(true);
+    try {
+      const link = `${window.location.origin}/vagas/${id}`;
+      const { error } = await supabase.functions.invoke("enviar-email", {
+        body: {
+          to: candidato.email,
+          subject: `${vaga?.titulo} — Complete seu perfil na Fetely`,
+          html: `
+            <div style="font-family: sans-serif; max-width: 560px; margin: 0 auto; padding: 32px;">
+              <h2 style="color: #1A4A3A; margin-bottom: 8px;">Olá, ${candidato.nome}!</h2>
+              <p style="color: #6B7280; margin-bottom: 24px;">
+                Recebemos seu interesse na vaga de <strong>${vaga?.titulo}</strong> na Fetely.
+                Para avançarmos no processo, precisamos que você complete seu perfil.
+              </p>
+              <a href="${link}" 
+                 style="display: inline-block; background: #1A4A3A; color: white; 
+                        padding: 12px 24px; border-radius: 8px; text-decoration: none;
+                        font-weight: 500;">
+                Completar meu perfil →
+              </a>
+              <p style="color: #9CA3AF; font-size: 12px; margin-top: 32px;">
+                Fetely · Vamos celebrar!! Venha criar algo novo...
+              </p>
+            </div>
+          `,
+        },
+      });
+      if (error) throw error;
+      toast.success(`E-mail enviado para ${candidato.email}`);
+    } catch (e: any) {
+      toast.error("Erro ao enviar e-mail: " + e.message);
+    } finally {
+      setSolicitando(false);
+    }
+  }
 
   const { data: beneficiosParam = [] } = useParametros("beneficio");
 
@@ -837,6 +879,31 @@ export default function RecrutamentoDetalhe() {
                 </TabsList>
 
                 <TabsContent value="perfil" className="space-y-4 mt-4">
+                  {/* Score se existir */}
+                  {(selectedCandidato as any).score_total > 0 && (
+                    <div className="p-3 rounded-lg border space-y-2"
+                      style={{ backgroundColor:
+                        (selectedCandidato as any).score_total >= 80 ? '#F0FFF4' :
+                        (selectedCandidato as any).score_total >= 50 ? '#FFFBEB' : '#FEF2F2'
+                      }}>
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs font-medium text-muted-foreground">Score de aderência</p>
+                        <span className="text-lg font-bold" style={{ color:
+                          (selectedCandidato as any).score_total >= 80 ? '#1A4A3A' :
+                          (selectedCandidato as any).score_total >= 50 ? '#D97706' : '#DC2626'
+                        }}>
+                          {(selectedCandidato as any).score_total}%
+                        </span>
+                      </div>
+                      {(selectedCandidato as any).score_detalhado?.resumo && (
+                        <p className="text-xs text-muted-foreground">
+                          {(selectedCandidato as any).score_detalhado.resumo}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Links */}
                   {selectedCandidato.linkedin_url && (
                     <div className="space-y-1">
                       <p className="text-xs font-medium text-muted-foreground">LinkedIn</p>
@@ -857,9 +924,101 @@ export default function RecrutamentoDetalhe() {
                       </a>
                     </div>
                   )}
-                  {!selectedCandidato.linkedin_url && !selectedCandidato.portfolio_url && (
-                    <p className="text-sm text-muted-foreground italic">Nenhum link informado pelo candidato.</p>
+
+                  {/* Experiências */}
+                  {(selectedCandidato as any).experiencias?.length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Experiências</p>
+                      {(selectedCandidato as any).experiencias.map((exp: any, i: number) => (
+                        <div key={i} className="p-3 rounded-lg bg-muted/30 space-y-0.5">
+                          <p className="text-sm font-medium">{exp.cargo}</p>
+                          <p className="text-xs text-muted-foreground">{exp.empresa}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {exp.periodo_inicio} – {exp.atual ? 'atual' : exp.periodo_fim}
+                          </p>
+                          {exp.descricao && (
+                            <p className="text-xs text-muted-foreground mt-1">{exp.descricao}</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
                   )}
+
+                  {/* Formações */}
+                  {(selectedCandidato as any).formacoes?.length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Formação</p>
+                      {(selectedCandidato as any).formacoes.map((form: any, i: number) => (
+                        <div key={i} className="p-3 rounded-lg bg-muted/30 space-y-0.5">
+                          <p className="text-sm font-medium">{form.curso}</p>
+                          <p className="text-xs text-muted-foreground">{form.instituicao}</p>
+                          <p className="text-xs text-muted-foreground capitalize">{form.nivel} · {form.status}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Skills */}
+                  {(selectedCandidato as any).skills_candidato?.length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Skills declaradas</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {(selectedCandidato as any).skills_candidato.map((s: any, i: number) => (
+                          <span key={i} className="px-2 py-1 rounded-full text-xs font-medium bg-primary text-primary-foreground">
+                            {s.skill}
+                            {s.nivel && s.nivel !== 'intermediario' && (
+                              <span className="ml-1 opacity-70">· {s.nivel}</span>
+                            )}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Sistemas */}
+                  {(selectedCandidato as any).sistemas_candidato?.length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Sistemas e ferramentas</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {(selectedCandidato as any).sistemas_candidato.map((s: any, i: number) => (
+                          <span key={i} className="px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                            {s.sistema}
+                            {s.nivel && s.nivel !== 'intermediario' && (
+                              <span className="ml-1 opacity-70">· {s.nivel}</span>
+                            )}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Motivação */}
+                  {selectedCandidato.mensagem && (
+                    <div className="space-y-1">
+                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Por que a Fetely</p>
+                      <p className="text-sm text-muted-foreground italic">"{selectedCandidato.mensagem}"</p>
+                    </div>
+                  )}
+
+                  {/* Perfil incompleto — botão solicitar */}
+                  {!(selectedCandidato as any).experiencias?.length && (
+                    <div className="p-4 rounded-lg border border-dashed text-center space-y-3">
+                      <p className="text-sm text-muted-foreground">
+                        Este candidato não preencheu o perfil completo.
+                      </p>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={solicitando}
+                        onClick={() => solicitarPerfilCompleto(selectedCandidato)}
+                      >
+                        {solicitando ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Mail className="h-4 w-4 mr-2" />}
+                        Solicitar perfil por e-mail
+                      </Button>
+                    </div>
+                  )}
+
+                  {/* LGPD */}
                   <div className="text-xs text-muted-foreground pt-2 border-t">
                     Consentimento LGPD: {selectedCandidato.consentimento_lgpd_at
                       ? new Date(selectedCandidato.consentimento_lgpd_at).toLocaleDateString("pt-BR")
