@@ -246,7 +246,7 @@ export function NovaVagaDialog({ open, onOpenChange }: Props) {
             <div className="space-y-2">
               <Label>Título da vaga *</Label>
               <Select value={titulo} onValueChange={(v) => {
-                setTitulo(v);
+                setTitulo(v); setErrosDuplicata([]);
                 const cargoMatch = cargosData.find((c) => c.nome === v);
                 if (cargoMatch) {
                   const autoNivel = cargoMatch.nivel;
@@ -286,7 +286,7 @@ export function NovaVagaDialog({ open, onOpenChange }: Props) {
               </div>
               <div className="space-y-2">
                 <Label>Tipo de contrato *</Label>
-                <Select value={tipoContrato} onValueChange={setTipoContrato}>
+                <Select value={tipoContrato} onValueChange={(v) => { setTipoContrato(v); setErrosDuplicata([]); }}>
                   <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="clt">CLT</SelectItem>
@@ -333,7 +333,7 @@ export function NovaVagaDialog({ open, onOpenChange }: Props) {
               </div>
               <div className="space-y-2">
                 <Label>Gestor responsável</Label>
-                <Select value={gestorId} onValueChange={setGestorId}>
+                <Select value={gestorId} onValueChange={(v) => { setGestorId(v); setErrosDuplicata([]); }}>
                   <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                   <SelectContent>
                 {gestores.map((g) => (
@@ -438,9 +438,36 @@ export function NovaVagaDialog({ open, onOpenChange }: Props) {
               </div>
             </div>
 
+            {errosDuplicata.length > 0 && (
+              <div className="p-3 rounded-lg border flex items-start gap-2.5"
+                style={{ backgroundColor: "#FEF2F2", borderColor: "#FCA5A5" }}>
+                <span style={{ fontSize: 16 }}>🚫</span>
+                <div className="space-y-1">
+                  <p className="text-xs font-semibold text-red-700">
+                    Vaga duplicada — não é possível criar
+                  </p>
+                  <p className="text-xs text-red-600">
+                    {errosDuplicata[0]}
+                  </p>
+                  <p className="text-xs text-red-500 mt-1">
+                    Se precisar de mais posições, edite a vaga existente
+                    e aumente o número de vagas.
+                  </p>
+                </div>
+              </div>
+            )}
+
             <div className="flex justify-end pt-2">
-              <Button onClick={() => setStep(2)} disabled={!step1Valid}>
-                Avançar <ArrowRight className="h-4 w-4 ml-2" />
+              <Button
+                onClick={async () => {
+                  const isDuplicata = await verificarDuplicata();
+                  if (!isDuplicata) setStep(2);
+                }}
+                disabled={!step1Valid || verificandoDuplicata}
+              >
+                {verificandoDuplicata
+                  ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Verificando...</>
+                  : <>Avançar <ArrowRight className="h-4 w-4 ml-2" /></>}
               </Button>
             </div>
           </div>
