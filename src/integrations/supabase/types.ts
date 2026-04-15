@@ -2505,6 +2505,39 @@ export type Database = {
           },
         ]
       }
+      skills_catalogo: {
+        Row: {
+          area: string
+          ativo: boolean | null
+          created_at: string | null
+          criado_por: string | null
+          id: string
+          nivel: string
+          skill: string
+          tipo: string
+        }
+        Insert: {
+          area: string
+          ativo?: boolean | null
+          created_at?: string | null
+          criado_por?: string | null
+          id?: string
+          nivel?: string
+          skill: string
+          tipo?: string
+        }
+        Update: {
+          area?: string
+          ativo?: boolean | null
+          created_at?: string | null
+          criado_por?: string | null
+          id?: string
+          nivel?: string
+          skill?: string
+          tipo?: string
+        }
+        Relationships: []
+      }
       suppressed_emails: {
         Row: {
           created_at: string
