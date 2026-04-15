@@ -218,6 +218,7 @@ export default function RecrutamentoDetalhe() {
       if (dados.skills_desejadas !== undefined) updateData.skills_desejadas = dados.skills_desejadas;
       if (dados.ferramentas !== undefined) updateData.ferramentas = dados.ferramentas;
       if (dados.descricao !== undefined) updateData.missao = dados.descricao;
+      if (dados.gestor_id !== undefined) updateData.gestor_id = dados.gestor_id || null;
 
       const { error } = await supabase
         .from("vagas")
@@ -540,6 +541,7 @@ export default function RecrutamentoDetalhe() {
                   ferramentas: (vaga as any).ferramentas ?? [],
                   beneficios: (vaga as any).beneficios ?? [],
                   descricao: (vaga as any).descricao ?? "",
+                  gestor_id: (vaga as any).gestor_id ?? "",
                 });
                 setEditarVagaOpen(true);
               }}
@@ -1366,6 +1368,26 @@ export default function RecrutamentoDetalhe() {
                 <Input value={editarForm.jornada ?? ""}
                   onChange={e => setEditarForm((f: any) => ({ ...f, jornada: e.target.value }))} />
               </div>
+            </div>
+            {/* Gestor responsável */}
+            <div>
+              <Label>Gestor responsável</Label>
+              <Select
+                value={editarForm.gestor_id ?? ""}
+                onValueChange={v => setEditarForm((f: any) => ({ ...f, gestor_id: v }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o gestor" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">— Sem gestor —</SelectItem>
+                  {lideres.map((l: any) => (
+                    <SelectItem key={l.id} value={l.id}>
+                      {l.full_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
