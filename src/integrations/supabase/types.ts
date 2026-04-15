@@ -1440,6 +1440,69 @@ export type Database = {
         }
         Relationships: []
       }
+      entrevistas_candidato: {
+        Row: {
+          candidato_id: string
+          created_at: string | null
+          fit_cultural: number | null
+          id: string
+          impressao_geral: number | null
+          observacoes: string | null
+          pontos_atencao: string | null
+          pontos_fortes: string | null
+          preenchido_por: string | null
+          recomendacao: string | null
+          tipo: string
+          updated_at: string | null
+          vaga_id: string
+        }
+        Insert: {
+          candidato_id: string
+          created_at?: string | null
+          fit_cultural?: number | null
+          id?: string
+          impressao_geral?: number | null
+          observacoes?: string | null
+          pontos_atencao?: string | null
+          pontos_fortes?: string | null
+          preenchido_por?: string | null
+          recomendacao?: string | null
+          tipo: string
+          updated_at?: string | null
+          vaga_id: string
+        }
+        Update: {
+          candidato_id?: string
+          created_at?: string | null
+          fit_cultural?: number | null
+          id?: string
+          impressao_geral?: number | null
+          observacoes?: string | null
+          pontos_atencao?: string | null
+          pontos_fortes?: string | null
+          preenchido_por?: string | null
+          recomendacao?: string | null
+          tipo?: string
+          updated_at?: string | null
+          vaga_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entrevistas_candidato_candidato_id_fkey"
+            columns: ["candidato_id"]
+            isOneToOne: false
+            referencedRelation: "candidatos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entrevistas_candidato_vaga_id_fkey"
+            columns: ["vaga_id"]
+            isOneToOne: false
+            referencedRelation: "vagas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ferias_periodos: {
         Row: {
           colaborador_id: string
