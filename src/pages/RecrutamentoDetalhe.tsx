@@ -1160,6 +1160,146 @@ export default function RecrutamentoDetalhe() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Dialog de gatilho — score abaixo do mínimo */}
+      <Dialog open={gatilhoDialog} onOpenChange={(open) => {
+        if (!open) {
+          setGatilhoDialog(false);
+          setGatilhoCandidato(null);
+          setGatilhoJustificativa("");
+        }
+      }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-amber-600">
+              <AlertTriangle className="h-5 w-5" />
+              Score abaixo do mínimo
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="p-3 rounded-lg bg-amber-50 border border-amber-200">
+              <p className="text-sm text-amber-800">
+                <strong>{gatilhoCandidato?.nome}</strong> tem score de{" "}
+                <strong>{(gatilhoCandidato as any)?.score_total ?? 0}%</strong>{" "}
+                (mínimo recomendado: {SCORE_MINIMO_ENTREVISTA}%).
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">
+                Por que está avançando para Entrevista RH? *
+              </Label>
+              <Textarea
+                value={gatilhoJustificativa}
+                onChange={e => setGatilhoJustificativa(e.target.value)}
+                placeholder="Ex: Candidato tem experiência específica relevante que não foi capturada pelo score automático..."
+                rows={3}
+                className="resize-none"
+              />
+              <p className="text-xs text-muted-foreground">
+                Esta justificativa ficará registrada no histórico do candidato.
+              </p>
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setGatilhoDialog(false);
+                setGatilhoCandidato(null);
+                setGatilhoJustificativa("");
+              }}
+            >
+              Cancelar
+            </Button>
+            <Button
+              disabled={!gatilhoJustificativa.trim()}
+              onClick={() => {
+                moverCandidatoComHistorico(
+                  gatilhoCandidato.id,
+                  gatilhoCandidato.status,
+                  gatilhoProximoStatus,
+                  gatilhoJustificativa,
+                  (gatilhoCandidato as any)?.score_total
+                );
+                setGatilhoDialog(false);
+                setGatilhoCandidato(null);
+                setGatilhoJustificativa("");
+              }}
+            >
+              <ArrowRight className="h-4 w-4 mr-2" />
+              Avançar com justificativa
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+function HistoricoCandidato({ candidatoId }: { candidatoId?: string }) {
+  const { data: historico = [] } = useQuery({
+    queryKey: ["candidato-historico", candidatoId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("candidato_historico")
+        .select("*")
+        .eq("candidato_id", candidatoId!)
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!candidatoId,
+  });
+
+  const stageLabel = (key: string) =>
+    KANBAN_STAGES.find(s => s.key === key)?.label ?? key;
+
+  if (!candidatoId || historico.length === 0) {
+    return (
+      <p className="text-sm text-muted-foreground italic">
+        Nenhuma movimentação registrada.
+      </p>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      {historico.map((h: any) => (
+        <div key={h.id} className="flex gap-3">
+          <div className="flex flex-col items-center">
+            <div className="w-2 h-2 rounded-full bg-primary mt-1.5 flex-shrink-0" />
+            <div className="w-px flex-1 bg-border mt-1" />
+          </div>
+          <div className="pb-3 flex-1 min-w-0">
+            <p className="text-sm">
+              <span className="text-muted-foreground">
+                {stageLabel(h.status_anterior ?? "")}
+              </span>
+              {" → "}
+              <span className="font-medium">{stageLabel(h.status_novo)}</span>
+            </p>
+            {h.justificativa && (
+              <div className="mt-1.5 p-2 rounded-md bg-amber-50 border border-amber-100">
+                <p className="text-xs text-amber-800">
+                  <span className="font-medium">Exceção: </span>
+                  {h.justificativa}
+                </p>
+                {h.score_no_momento != null && (
+                  <p className="text-xs text-amber-600 mt-0.5">
+                    Score no momento: {h.score_no_momento}%
+                  </p>
+                )}
+              </div>
+            )}
+            <p className="text-xs text-muted-foreground mt-1">
+              {new Date(h.created_at).toLocaleDateString("pt-BR", {
+                day: "2-digit", month: "2-digit", year: "numeric",
+                hour: "2-digit", minute: "2-digit"
+              })}
+            </p>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
