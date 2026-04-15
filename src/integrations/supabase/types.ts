@@ -1729,6 +1729,33 @@ export type Database = {
           },
         ]
       }
+      ferramentas_catalogo: {
+        Row: {
+          area: string
+          ativo: boolean | null
+          created_at: string | null
+          criado_por: string | null
+          ferramenta: string
+          id: string
+        }
+        Insert: {
+          area?: string
+          ativo?: boolean | null
+          created_at?: string | null
+          criado_por?: string | null
+          ferramenta: string
+          id?: string
+        }
+        Update: {
+          area?: string
+          ativo?: boolean | null
+          created_at?: string | null
+          criado_por?: string | null
+          ferramenta?: string
+          id?: string
+        }
+        Relationships: []
+      }
       folha_competencias: {
         Row: {
           competencia: string

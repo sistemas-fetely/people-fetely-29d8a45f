@@ -7,6 +7,7 @@ import { useCargos, type Cargo } from "@/hooks/useCargos";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSkillsCatalogo, salvarNovaSkill } from "@/hooks/useSkillsCatalogo";
+import { useFerramentasCatalogo, salvarNovaFerramenta } from "@/hooks/useFerramentasCatalogo";
 import { toast } from "sonner";
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -58,8 +59,8 @@ export function NovaVagaDialog({ open, onOpenChange }: Props) {
   const [responsabilidades, setResponsabilidades] = useState<string[]>([""]);
   const [skillsObrigatorias, setSkillsObrigatorias] = useState<string[]>([]);
   const [skillsDesejadas, setSkillsDesejadas] = useState<string[]>([]);
-  const [ferramentasIds, setFerramentasIds] = useState<string[]>([]);
-  const [ferramentasOutras, setFerramentasOutras] = useState("");
+  const [ferramentasSelecionadas, setFerramentasSelecionadas] = useState<string[]>([]);
+  const [novaFerramenta, setNovaFerramenta] = useState("");
   const [faixaMin, setFaixaMin] = useState("");
   const [faixaMax, setFaixaMax] = useState("");
   const [novaSkillObrig, setNovaSkillObrig] = useState("");
@@ -69,7 +70,6 @@ export function NovaVagaDialog({ open, onOpenChange }: Props) {
   const { data: locais = [] } = useParametros("local_trabalho");
   const { data: jornadas = [] } = useParametros("jornada");
   const { data: beneficiosParam = [] } = useParametros("beneficio");
-  const { data: sistemasParam = [] } = useParametros("sistema");
   const { data: cargosData = [] } = useCargos();
 
   // Auto-fill faixa from cargos table
@@ -98,8 +98,10 @@ export function NovaVagaDialog({ open, onOpenChange }: Props) {
     gerais: skillsCatalogo.filter(s => s.nivel === "todos"),
   };
 
-  // Usar apenas sistemas — categoria única consolidada
-  const ferramentasSistemasCatalogo = sistemasParam;
+  // Ferramentas from database
+  const { data: ferramentasCatalogo = [] } = useFerramentasCatalogo(area || undefined);
+  const ferramentasEspecificas = ferramentasCatalogo.filter(f => f.area !== "todos");
+  const ferramentasTransversais = ferramentasCatalogo.filter(f => f.area === "todos");
 
   const { data: gestores = [] } = useQuery({
     queryKey: ["gestores-para-vaga"],
@@ -142,8 +144,8 @@ export function NovaVagaDialog({ open, onOpenChange }: Props) {
         responsabilidades: responsabilidades.filter(Boolean),
         skills_obrigatorias: skillsObrigatorias.filter(Boolean),
         skills_desejadas: skillsDesejadas.filter(Boolean),
-        ferramentas: ferramentasSistemasCatalogo.filter(p => ferramentasIds.includes(p.valor)).map(p => p.label).concat(ferramentasOutras ? [ferramentasOutras] : []),
-        ferramentas_ids: ferramentasIds.length > 0 ? ferramentasIds : null,
+        ferramentas: ferramentasSelecionadas,
+        ferramentas_ids: ferramentasSelecionadas.length > 0 ? ferramentasSelecionadas : null,
         gestor_id: gestorId || null,
         criado_por: user?.id || null,
       };
@@ -167,7 +169,8 @@ export function NovaVagaDialog({ open, onOpenChange }: Props) {
     setTitulo(""); setArea(""); setTipoContrato(""); setNivel("");
     setGestorId(""); setLocalTrabalho(""); setJornada(""); setBeneficiosIds([]); setBeneficiosOutros("");
     setVigenciaFim(""); setMissao(""); setResponsabilidades([""]);
-    setSkillsObrigatorias([]); setSkillsDesejadas([]); setFerramentasIds([]); setFerramentasOutras("");
+    setSkillsObrigatorias([]); setSkillsDesejadas([]);
+    setFerramentasSelecionadas([]); setNovaFerramenta("");
     setFaixaMin(""); setFaixaMax("");
     setNovaSkillObrig(""); setNovaSkillDesej("");
     onOpenChange(false);
@@ -209,14 +212,7 @@ export function NovaVagaDialog({ open, onOpenChange }: Props) {
                   if (cargoMatch.skills_obrigatorias?.length) setSkillsObrigatorias(cargoMatch.skills_obrigatorias);
                   if (cargoMatch.skills_desejadas?.length) setSkillsDesejadas(cargoMatch.skills_desejadas);
                   if (cargoMatch.ferramentas?.length) {
-                    const matchedIds = ferramentasSistemasCatalogo
-                      .filter((p) => cargoMatch.ferramentas.includes(p.label))
-                      .map((p) => p.valor);
-                    if (matchedIds.length) setFerramentasIds(matchedIds);
-                    const unmatched = cargoMatch.ferramentas.filter(
-                      (f) => !ferramentasSistemasCatalogo.some((p) => p.label === f)
-                    );
-                    if (unmatched.length) setFerramentasOutras(unmatched.join(", "));
+                    setFerramentasSelecionadas(cargoMatch.ferramentas);
                   }
                 }
               }}>
@@ -415,7 +411,6 @@ export function NovaVagaDialog({ open, onOpenChange }: Props) {
                 </div>
               )}
 
-              {/* Sugestões por nível */}
               {area && nivel && skillsCatalogo.length > 0 && (
                 <div className="space-y-2">
                   {skillsPorNivel.especificas.filter(s =>
@@ -460,7 +455,6 @@ export function NovaVagaDialog({ open, onOpenChange }: Props) {
                 </div>
               )}
 
-              {/* Input nova skill com botão confirmar */}
               <div className="flex gap-2">
                 <Input
                   placeholder="Adicionar skill personalizada"
@@ -478,11 +472,7 @@ export function NovaVagaDialog({ open, onOpenChange }: Props) {
                     }
                   }}
                 />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="shrink-0"
+                <Button type="button" variant="outline" size="sm" className="shrink-0"
                   onClick={async () => {
                     const val = novaSkillObrig.trim();
                     if (val && !skillsObrigatorias.includes(val)) {
@@ -512,7 +502,6 @@ export function NovaVagaDialog({ open, onOpenChange }: Props) {
                 </div>
               )}
 
-              {/* Sugestões desejadas */}
               {area && nivel && skillsCatalogo.length > 0 && (
                 <div className="flex flex-wrap gap-1">
                   {skillsCatalogo
@@ -531,7 +520,6 @@ export function NovaVagaDialog({ open, onOpenChange }: Props) {
                 </div>
               )}
 
-              {/* Input nova skill desejada com botão confirmar */}
               <div className="flex gap-2">
                 <Input
                   placeholder="Adicionar skill personalizada"
@@ -549,11 +537,7 @@ export function NovaVagaDialog({ open, onOpenChange }: Props) {
                     }
                   }}
                 />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="shrink-0"
+                <Button type="button" variant="outline" size="sm" className="shrink-0"
                   onClick={async () => {
                     const val = novaSkillDesej.trim();
                     if (val && !skillsDesejadas.includes(val)) {
@@ -567,40 +551,92 @@ export function NovaVagaDialog({ open, onOpenChange }: Props) {
               </div>
             </div>
 
-            {/* Ferramentas */}
+            {/* Ferramentas / Sistemas */}
             <div className="space-y-2">
               <Label>Ferramentas / Sistemas</Label>
-              <div className="flex flex-wrap gap-2">
-                {ferramentasSistemasCatalogo.map((f) => {
-                  const selected = ferramentasIds.includes(f.valor);
-                  return (
-                    <button
-                      key={f.id}
-                      type="button"
-                      onClick={() =>
-                        setFerramentasIds(selected
-                          ? ferramentasIds.filter((v) => v !== f.valor)
-                          : [...ferramentasIds, f.valor])
+
+              {/* Tags selecionadas */}
+              {ferramentasSelecionadas.length > 0 && (
+                <div className="flex flex-wrap gap-1 mb-1">
+                  {ferramentasSelecionadas.map((f, i) => (
+                    <span key={i} className="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium text-white" style={{ backgroundColor: "#5E35B1" }}>
+                      {f}
+                      <button type="button" onClick={() => setFerramentasSelecionadas(ferramentasSelecionadas.filter((_, idx) => idx !== i))}>
+                        <X className="h-3 w-3" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              {/* Sugestões específicas da área */}
+              {ferramentasEspecificas.filter(f => !ferramentasSelecionadas.includes(f.ferramenta)).length > 0 && (
+                <div>
+                  {area && (
+                    <p className="text-xs text-muted-foreground mb-1">Usadas em {area}:</p>
+                  )}
+                  <div className="flex flex-wrap gap-1">
+                    {ferramentasEspecificas
+                      .filter(f => !ferramentasSelecionadas.includes(f.ferramenta))
+                      .map(f => (
+                        <button key={f.id} type="button"
+                          onClick={() => setFerramentasSelecionadas([...ferramentasSelecionadas, f.ferramenta])}
+                          className="inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium transition-colors cursor-pointer border-purple-200 text-purple-700 bg-purple-50 hover:bg-purple-100">
+                          + {f.ferramenta}
+                        </button>
+                      ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Ferramentas transversais */}
+              {ferramentasTransversais.filter(f => !ferramentasSelecionadas.includes(f.ferramenta)).length > 0 && (
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1">Ferramentas gerais:</p>
+                  <div className="flex flex-wrap gap-1">
+                    {ferramentasTransversais
+                      .filter(f => !ferramentasSelecionadas.includes(f.ferramenta))
+                      .map(f => (
+                        <button key={f.id} type="button"
+                          onClick={() => setFerramentasSelecionadas([...ferramentasSelecionadas, f.ferramenta])}
+                          className="inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium transition-colors cursor-pointer border-border text-muted-foreground bg-background hover:bg-muted">
+                          + {f.ferramenta}
+                        </button>
+                      ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Input nova ferramenta */}
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Adicionar ferramenta personalizada"
+                  value={novaFerramenta}
+                  onChange={(e) => setNovaFerramenta(e.target.value)}
+                  onKeyDown={async (e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      const val = novaFerramenta.trim();
+                      if (val && !ferramentasSelecionadas.includes(val)) {
+                        setFerramentasSelecionadas([...ferramentasSelecionadas, val]);
+                        await salvarNovaFerramenta(val, area || "todos");
+                        setNovaFerramenta("");
                       }
-                      className={cn(
-                        "inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium transition-colors cursor-pointer",
-                        selected
-                          ? "border-transparent text-white"
-                          : "border-border text-muted-foreground bg-background hover:bg-muted"
-                      )}
-                      style={selected ? { backgroundColor: "#5E35B1" } : undefined}
-                    >
-                      {f.label}
-                    </button>
-                  );
-                })}
+                    }
+                  }}
+                />
+                <Button type="button" variant="outline" size="sm" className="shrink-0"
+                  onClick={async () => {
+                    const val = novaFerramenta.trim();
+                    if (val && !ferramentasSelecionadas.includes(val)) {
+                      setFerramentasSelecionadas([...ferramentasSelecionadas, val]);
+                      await salvarNovaFerramenta(val, area || "todos");
+                      setNovaFerramenta("");
+                    }
+                  }}>
+                  Confirmar
+                </Button>
               </div>
-              <Input
-                value={ferramentasOutras}
-                onChange={(e) => setFerramentasOutras(e.target.value)}
-                placeholder="Outras ferramentas não listadas"
-                className="mt-2"
-              />
             </div>
 
             {/* Faixa salarial — only for super_admin and admin_rh */}
