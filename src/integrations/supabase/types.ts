@@ -2143,6 +2143,7 @@ export type Database = {
           is_clevel: boolean | null
           label: string
           ordem: number
+          parent_id: string | null
           updated_at: string
           valor: string
         }
@@ -2155,6 +2156,7 @@ export type Database = {
           is_clevel?: boolean | null
           label: string
           ordem?: number
+          parent_id?: string | null
           updated_at?: string
           valor: string
         }
@@ -2167,10 +2169,19 @@ export type Database = {
           is_clevel?: boolean | null
           label?: string
           ordem?: number
+          parent_id?: string | null
           updated_at?: string
           valor?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "parametros_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "parametros"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       posicoes: {
         Row: {
