@@ -109,8 +109,12 @@ export default function CargoForm() {
         // Só preenche campos vazios
         if (!f.missao && data.missao) { updated.missao = data.missao; algumPreenchido = true; }
         const faixas = [
-          "faixa_clt_f1_min", "faixa_clt_f1_max", "faixa_clt_f5_min", "faixa_clt_f5_max",
-          "faixa_pj_f1_min", "faixa_pj_f1_max", "faixa_pj_f5_min", "faixa_pj_f5_max",
+          "faixa_clt_f1_min", "faixa_clt_f1_max", "faixa_clt_f2_min", "faixa_clt_f2_max",
+          "faixa_clt_f3_min", "faixa_clt_f3_max", "faixa_clt_f4_min", "faixa_clt_f4_max",
+          "faixa_clt_f5_min", "faixa_clt_f5_max",
+          "faixa_pj_f1_min", "faixa_pj_f1_max", "faixa_pj_f2_min", "faixa_pj_f2_max",
+          "faixa_pj_f3_min", "faixa_pj_f3_max", "faixa_pj_f4_min", "faixa_pj_f4_max",
+          "faixa_pj_f5_min", "faixa_pj_f5_max",
         ];
         for (const k of faixas) {
           if (!f[k] && data[k] != null) { updated[k] = data[k].toString(); algumPreenchido = true; }
