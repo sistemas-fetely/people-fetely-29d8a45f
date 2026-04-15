@@ -1523,14 +1523,14 @@ export default function RecrutamentoDetalhe() {
             <div>
               <Label>Gestor responsável</Label>
               <Select
-                value={editarForm.gestor_id ?? ""}
-                onValueChange={v => setEditarForm((f: any) => ({ ...f, gestor_id: v }))}
+                value={editarForm.gestor_id || "__none__"}
+                onValueChange={v => setEditarForm((f: any) => ({ ...f, gestor_id: v === "__none__" ? "" : v }))}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione o gestor" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">— Sem gestor —</SelectItem>
+                  <SelectItem value="__none__">— Sem gestor —</SelectItem>
                   {lideres.map((l: any) => (
                     <SelectItem key={l.id} value={l.id}>
                       {l.full_name}
