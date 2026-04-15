@@ -250,6 +250,25 @@ export default function RecrutamentoDetalhe() {
     toast.success("Link copiado!");
   };
 
+  const [publicando, setPublicando] = useState(false);
+  async function publicarVaga() {
+    setPublicando(true);
+    try {
+      const { error } = await supabase
+        .from("vagas")
+        .update({ status: "aberta", publicado_em: new Date().toISOString() } as any)
+        .eq("id", id!);
+      if (error) throw error;
+      queryClient.invalidateQueries({ queryKey: ["vaga", id] });
+      queryClient.invalidateQueries({ queryKey: ["vagas"] });
+      setVagaPublicada(true);
+    } catch (e: any) {
+      toast.error("Erro ao publicar vaga: " + e.message);
+    } finally {
+      setPublicando(false);
+    }
+  }
+
   async function excluirVaga() {
     setExcluindo(true);
     try {
