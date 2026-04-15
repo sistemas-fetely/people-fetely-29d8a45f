@@ -555,6 +555,32 @@ export default function RecrutamentoDetalhe() {
       }
     }
 
+    // Bloqueio: Teste Técnico → Oferta sem resultado registrado
+    if (c.status === "teste_tecnico" && nextStatus === "oferta") {
+      const { data: teste } = await supabase
+        .from("testes_tecnicos" as any)
+        .select("resultado")
+        .eq("candidato_id", candidatoId)
+        .eq("vaga_id", id!)
+        .maybeSingle();
+
+      if (!teste || !(teste as any).resultado) {
+        toast.error(
+          "Registre o resultado do Teste Técnico antes de avançar.",
+          { duration: 5000 }
+        );
+        setSelectedCandidato(c);
+        return;
+      }
+
+      if ((teste as any).resultado === "reprovado") {
+        toast.warning(
+          "O resultado do Teste Técnico é Reprovado. Tem certeza que quer avançar?",
+          { duration: 5000 }
+        );
+      }
+    }
+
     if (nextStatus === "contratado") {
       openContratarDialog(c);
     } else {
@@ -1137,9 +1163,10 @@ export default function RecrutamentoDetalhe() {
               </div>
 
               <Tabs defaultValue="perfil">
-                <TabsList className="grid w-full grid-cols-5">
+                <TabsList className="grid w-full grid-cols-6">
                   <TabsTrigger value="perfil" className="text-xs">Perfil</TabsTrigger>
                   <TabsTrigger value="entrevistas" className="text-xs">Entrevistas</TabsTrigger>
+                  <TabsTrigger value="teste" className="text-xs">Teste</TabsTrigger>
                   <TabsTrigger value="avaliacao" className="text-xs">Avaliação</TabsTrigger>
                   <TabsTrigger value="historico" className="text-xs">Histórico</TabsTrigger>
                   <TabsTrigger value="notas" className="text-xs">Notas</TabsTrigger>
@@ -1328,6 +1355,15 @@ export default function RecrutamentoDetalhe() {
                       Formulários disponíveis a partir da etapa Entrevista RH.
                     </p>
                   )}
+                </TabsContent>
+
+                <TabsContent value="teste" className="mt-4">
+                  <TesteTecnico
+                    candidatoId={selectedCandidato.id}
+                    vagaId={id!}
+                    candidato={selectedCandidato}
+                    vaga={vaga}
+                  />
                 </TabsContent>
 
                 <TabsContent value="avaliacao" className="mt-4">
