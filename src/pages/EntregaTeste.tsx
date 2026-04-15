@@ -125,7 +125,7 @@ export default function EntregaTeste() {
               nome_candidato: candidato.nome,
               cargo: vaga?.titulo ?? "",
               link_entrega: linkFinal,
-              link_sistema: `${window.location.origin}/recrutamento`,
+              link_sistema: publicUrl("/recrutamento"),
             },
           },
         });

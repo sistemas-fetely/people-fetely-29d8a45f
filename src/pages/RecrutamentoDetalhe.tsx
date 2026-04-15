@@ -106,7 +106,7 @@ export default function RecrutamentoDetalhe() {
     }
     setSolicitando(true);
     try {
-      const link = `${window.location.origin}/vagas/${id}`;
+      const link = publicUrl(`/vagas/${id}`);
       const { error } = await supabase.functions.invoke("send-transactional-email", {
         body: {
           templateName: "solicitar-perfil-candidato",
@@ -554,7 +554,7 @@ export default function RecrutamentoDetalhe() {
   const copyLink = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    const url = `${window.location.origin}/vagas/${id}`;
+    const url = publicUrl(`/vagas/${id}`);
     navigator.clipboard.writeText(url).then(() => {
       toast.success("Link copiado!");
     }).catch(() => {
@@ -1888,7 +1888,7 @@ export default function RecrutamentoDetalhe() {
                 Link da vaga
               </p>
               <p className="text-sm font-mono text-gray-700 break-all leading-relaxed">
-                {window.location.origin}/vagas/{id}
+                {PUBLIC_APP_URL}/vagas/{id}
               </p>
             </div>
             {/* Sugestão de onde compartilhar */}
@@ -1907,7 +1907,7 @@ export default function RecrutamentoDetalhe() {
                 className="w-full h-11 font-medium"
                 style={{ backgroundColor: "#1A4A3A" }}
                 onClick={() => {
-                  navigator.clipboard.writeText(`${window.location.origin}/vagas/${id}`);
+                  navigator.clipboard.writeText(publicUrl(`/vagas/${id}`));
                   toast.success("Link copiado!");
                   setVagaPublicada(false);
                 }}>
@@ -2843,7 +2843,7 @@ function TesteTecnico({
             entregaveis: formDesafio.desafio_entregaveis,
             criterios: formDesafio.desafio_criterios,
             prazo: (() => { if (!formDesafio.prazo_entrega) return ""; const parts = formDesafio.prazo_entrega.split("-"); if (parts.length !== 3) return formDesafio.prazo_entrega; const [ano, mes, dia] = parts; return `${dia}/${mes}/${ano}`; })(),
-            link_portal: `${window.location.origin}/vagas/${vagaId}`,
+            link_portal: publicUrl(`/vagas/${vagaId}`),
           },
         },
       });
@@ -2894,7 +2894,7 @@ function TesteTecnico({
             entregaveis: (teste as any).desafio_entregaveis ?? "",
             criterios: (teste as any).desafio_criterios ?? "",
             prazo: prazoFormatado,
-            link_portal: `${window.location.origin}/vagas/${vagaId}`,
+            link_portal: publicUrl(`/vagas/${vagaId}`),
           },
         },
       });

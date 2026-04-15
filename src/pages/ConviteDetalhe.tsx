@@ -151,7 +151,7 @@ export default function ConviteDetalhe() {
             tipo: convite.tipo,
             cargo: convite.cargo || "",
             departamento: convite.departamento || "",
-            link: `${window.location.origin}/cadastro/${convite.token}`,
+            link: publicUrl(`/cadastro/${convite.token}`),
           },
         },
       });
