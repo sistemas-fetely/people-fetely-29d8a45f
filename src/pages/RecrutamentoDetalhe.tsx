@@ -1731,3 +1731,223 @@ function HistoricoCandidato({ candidatoId }: { candidatoId?: string }) {
     </div>
   );
 }
+
+function FormularioEntrevista({
+  candidatoId,
+  vagaId,
+  tipo,
+  readOnly = false,
+}: {
+  candidatoId: string;
+  vagaId: string;
+  tipo: "rh" | "gestor";
+  readOnly?: boolean;
+}) {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const [salvando, setSalvando] = useState(false);
+  const [form, setForm] = useState({
+    impressao_geral: 0,
+    fit_cultural: 0,
+    pontos_fortes: "",
+    pontos_atencao: "",
+    recomendacao: "",
+    observacoes: "",
+  });
+
+  const { data: entrevista, isLoading } = useQuery({
+    queryKey: ["entrevista", candidatoId, tipo],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("entrevistas_candidato")
+        .select("*")
+        .eq("candidato_id", candidatoId)
+        .eq("vaga_id", vagaId)
+        .eq("tipo", tipo)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!candidatoId && !!vagaId,
+  });
+
+  useEffect(() => {
+    if (entrevista) {
+      setForm({
+        impressao_geral: (entrevista as any).impressao_geral ?? 0,
+        fit_cultural: (entrevista as any).fit_cultural ?? 0,
+        pontos_fortes: (entrevista as any).pontos_fortes ?? "",
+        pontos_atencao: (entrevista as any).pontos_atencao ?? "",
+        recomendacao: (entrevista as any).recomendacao ?? "",
+        observacoes: (entrevista as any).observacoes ?? "",
+      });
+    }
+  }, [entrevista]);
+
+  async function salvar() {
+    if (!form.impressao_geral || !form.fit_cultural || !form.recomendacao) {
+      toast.error("Preencha impressão geral, fit cultural e recomendação.");
+      return;
+    }
+    setSalvando(true);
+    try {
+      const { error } = await supabase
+        .from("entrevistas_candidato")
+        .upsert({
+          candidato_id: candidatoId,
+          vaga_id: vagaId,
+          tipo,
+          impressao_geral: form.impressao_geral,
+          fit_cultural: form.fit_cultural,
+          pontos_fortes: form.pontos_fortes || null,
+          pontos_atencao: form.pontos_atencao || null,
+          recomendacao: form.recomendacao,
+          observacoes: form.observacoes || null,
+          preenchido_por: user?.id || null,
+          updated_at: new Date().toISOString(),
+        } as any, {
+          onConflict: "candidato_id,vaga_id,tipo",
+        });
+      if (error) throw error;
+      toast.success("Formulário salvo!");
+      queryClient.invalidateQueries({ queryKey: ["entrevista", candidatoId, tipo] });
+      queryClient.invalidateQueries({ queryKey: ["entrevista-rh", vagaId] });
+    } catch (e: any) {
+      toast.error("Erro ao salvar: " + e.message);
+    } finally {
+      setSalvando(false);
+    }
+  }
+
+  const titulo = tipo === "rh" ? "Entrevista RH" : "Entrevista Gestor";
+  const corTema = tipo === "rh" ? "#2563EB" : "#7C3AED";
+
+  const StarRating = ({ value, onChange, disabled }: { value: number; onChange?: (v: number) => void; disabled?: boolean }) => (
+    <div className="flex gap-1">
+      {[1, 2, 3, 4, 5].map(n => (
+        <button
+          key={n}
+          type="button"
+          disabled={disabled}
+          onClick={() => !disabled && onChange?.(n)}
+          className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors ${
+            n <= value
+              ? "text-white"
+              : "bg-muted text-muted-foreground hover:bg-muted/80"
+          }`}
+          style={n <= value ? { backgroundColor: corTema } : undefined}
+        >
+          {n}
+        </button>
+      ))}
+    </div>
+  );
+
+  if (isLoading) return <p className="text-sm text-muted-foreground">Carregando...</p>;
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-2 pb-2 border-b">
+        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: corTema }} />
+        <p className="text-sm font-semibold">{titulo}</p>
+        {entrevista && (
+          <span className="text-xs text-muted-foreground ml-auto">
+            Preenchido em {new Date((entrevista as any).updated_at).toLocaleDateString("pt-BR")}
+          </span>
+        )}
+      </div>
+
+      <div className="space-y-1.5">
+        <Label className="text-xs">Impressão geral *</Label>
+        <StarRating
+          value={form.impressao_geral}
+          onChange={v => !readOnly && setForm(f => ({ ...f, impressao_geral: v }))}
+          disabled={readOnly}
+        />
+      </div>
+
+      <div className="space-y-1.5">
+        <Label className="text-xs">Fit cultural *</Label>
+        <StarRating
+          value={form.fit_cultural}
+          onChange={v => !readOnly && setForm(f => ({ ...f, fit_cultural: v }))}
+          disabled={readOnly}
+        />
+      </div>
+
+      <div className="space-y-1.5">
+        <Label className="text-xs">Pontos fortes observados</Label>
+        <Textarea
+          value={form.pontos_fortes}
+          rows={2}
+          className="resize-none text-sm"
+          placeholder="O que chamou atenção positivamente..."
+          disabled={readOnly}
+          onChange={e => setForm(f => ({ ...f, pontos_fortes: e.target.value }))}
+        />
+      </div>
+
+      <div className="space-y-1.5">
+        <Label className="text-xs">Pontos de atenção</Label>
+        <Textarea
+          value={form.pontos_atencao}
+          rows={2}
+          className="resize-none text-sm"
+          placeholder="Dúvidas ou preocupações levantadas..."
+          disabled={readOnly}
+          onChange={e => setForm(f => ({ ...f, pontos_atencao: e.target.value }))}
+        />
+      </div>
+
+      <div className="space-y-1.5">
+        <Label className="text-xs">Recomendação *</Label>
+        <div className="flex gap-2">
+          {[
+            { value: "avançar", label: "✅ Avançar", cor: "#1A4A3A" },
+            { value: "aguardar", label: "⏳ Aguardar", cor: "#D97706" },
+            { value: "nao_avançar", label: "❌ Não avançar", cor: "#DC2626" },
+          ].map(op => (
+            <button
+              key={op.value}
+              type="button"
+              disabled={readOnly}
+              onClick={() => !readOnly && setForm(f => ({ ...f, recomendacao: op.value }))}
+              className={`flex-1 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                form.recomendacao === op.value
+                  ? "text-white border-transparent"
+                  : "bg-background text-muted-foreground border-border hover:bg-muted"
+              }`}
+              style={form.recomendacao === op.value ? { backgroundColor: op.cor } : undefined}
+            >
+              {op.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="space-y-1.5">
+        <Label className="text-xs">Observações livres</Label>
+        <Textarea
+          value={form.observacoes}
+          rows={3}
+          className="resize-none text-sm"
+          placeholder="Anotações adicionais para o processo..."
+          disabled={readOnly}
+          onChange={e => setForm(f => ({ ...f, observacoes: e.target.value }))}
+        />
+      </div>
+
+      {!readOnly && (
+        <Button
+          className="w-full text-white"
+          style={{ backgroundColor: corTema }}
+          disabled={salvando || !form.impressao_geral || !form.fit_cultural || !form.recomendacao}
+          onClick={salvar}
+        >
+          {salvando ? (
+            <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Salvando...</>
+          ) : entrevista ? "Atualizar formulário" : "Salvar formulário"}
+        </Button>
+      )}
+    </div>
+  );
+}
