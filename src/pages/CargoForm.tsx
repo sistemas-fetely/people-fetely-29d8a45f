@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Loader2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 
 const NIVEIS = [
@@ -88,6 +88,41 @@ export default function CargoForm() {
   const isNovo = !id || id === "novo";
   const qc = useQueryClient();
   const [form, setForm] = useState<FormState>(buildInitial);
+  const [enriquecendo, setEnriquecendo] = useState(false);
+
+  async function enriquecerComIA() {
+    if (!form.nome || !form.nivel) {
+      toast.error("Preencha o nome e o nível do cargo antes de enriquecer.");
+      return;
+    }
+    setEnriquecendo(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("enrich-cargo", {
+        body: { nome: form.nome, nivel: form.nivel, departamento: form.departamento || undefined },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      setForm((f: any) => ({
+        ...f,
+        missao: data.missao || f.missao,
+        faixa_clt_f1_min: data.faixa_clt_f1_min?.toString() || f.faixa_clt_f1_min,
+        faixa_clt_f1_max: data.faixa_clt_f1_max?.toString() || f.faixa_clt_f1_max,
+        faixa_clt_f5_min: data.faixa_clt_f5_min?.toString() || f.faixa_clt_f5_min,
+        faixa_clt_f5_max: data.faixa_clt_f5_max?.toString() || f.faixa_clt_f5_max,
+        faixa_pj_f1_min: data.faixa_pj_f1_min?.toString() || f.faixa_pj_f1_min,
+        faixa_pj_f1_max: data.faixa_pj_f1_max?.toString() || f.faixa_pj_f1_max,
+        faixa_pj_f5_min: data.faixa_pj_f5_min?.toString() || f.faixa_pj_f5_min,
+        faixa_pj_f5_max: data.faixa_pj_f5_max?.toString() || f.faixa_pj_f5_max,
+      }));
+      toast.success("Informações preenchidas com dados de mercado. Revise antes de salvar.");
+    } catch (err: any) {
+      console.error("Erro ao enriquecer cargo:", err);
+      toast.error("Não foi possível buscar dados de mercado. Tente novamente.");
+    } finally {
+      setEnriquecendo(false);
+    }
+  }
 
   const { data: departamentos } = useQuery({
     queryKey: ["parametros-departamentos"],
@@ -181,7 +216,25 @@ export default function CargoForm() {
       <div className="space-y-6">
         <div>
           <Label>Nome do cargo *</Label>
-          <Input value={form.nome} onChange={(e) => setField("nome", e.target.value)} placeholder="Ex: Analista Design Jr" />
+          <div className="flex gap-2">
+            <Input value={form.nome} onChange={(e) => setField("nome", e.target.value)} placeholder="Ex: Analista Design Jr" className="flex-1" />
+            <Button
+              type="button"
+              variant="outline"
+              onClick={enriquecerComIA}
+              disabled={!form.nome || !form.nivel || enriquecendo}
+              title="Preencher missão, skills e faixas salariais com dados de mercado"
+            >
+              {enriquecendo ? (
+                <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Buscando...</>
+              ) : (
+                <><Sparkles className="h-4 w-4 mr-2" />Enriquecer com IA</>
+              )}
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground mt-1">
+            Preencha o nome e o nível, depois clique em "Enriquecer com IA" para sugerir missão e faixas salariais de mercado.
+          </p>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
