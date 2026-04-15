@@ -2410,6 +2410,7 @@ export type Database = {
           local_trabalho: string | null
           missao: string | null
           nivel: string
+          publicado_em: string | null
           responsabilidades: string[] | null
           skills_desejadas: string[] | null
           skills_obrigatorias: string[] | null
@@ -2442,6 +2443,7 @@ export type Database = {
           local_trabalho?: string | null
           missao?: string | null
           nivel?: string
+          publicado_em?: string | null
           responsabilidades?: string[] | null
           skills_desejadas?: string[] | null
           skills_obrigatorias?: string[] | null
@@ -2474,6 +2476,7 @@ export type Database = {
           local_trabalho?: string | null
           missao?: string | null
           nivel?: string
+          publicado_em?: string | null
           responsabilidades?: string[] | null
           skills_desejadas?: string[] | null
           skills_obrigatorias?: string[] | null

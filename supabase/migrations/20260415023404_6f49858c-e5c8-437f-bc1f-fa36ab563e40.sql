@@ -1,0 +1,1 @@
+ALTER TABLE public.vagas ADD COLUMN IF NOT EXISTS publicado_em TIMESTAMPTZ;
