@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Loader2, Sparkles } from "lucide-react";
+import { ArrowLeft, Loader2, Plus, Sparkles, X } from "lucide-react";
 import { toast } from "sonner";
 
 const NIVEIS = [
@@ -47,13 +47,18 @@ interface FormState {
   is_clevel: boolean;
   protege_salario: boolean;
   missao: string;
-  [key: string]: string | boolean | number | null;
+  responsabilidades: string[];
+  skills_obrigatorias: string[];
+  skills_desejadas: string[];
+  ferramentas: string[];
+  [key: string]: string | boolean | number | null | string[];
 }
 
 function buildInitial(): FormState {
   const base: FormState = {
     nome: "", nivel: "jr", departamento: "", tipo_contrato: "ambos",
     is_clevel: false, protege_salario: false, missao: "",
+    responsabilidades: [], skills_obrigatorias: [], skills_desejadas: [], ferramentas: [],
   };
   for (const f of FAIXA_KEYS) {
     base[`faixa_clt_${f}_min`] = "";
@@ -66,7 +71,7 @@ function buildInitial(): FormState {
 
 function FaixaRow({ label, minKey, maxKey, form, setField }: {
   label: string; minKey: string; maxKey: string;
-  form: FormState; setField: (k: string, v: string) => void;
+  form: FormState; setField: (k: string, v: any) => void;
 }) {
   return (
     <div className="grid grid-cols-2 gap-3">
@@ -82,6 +87,41 @@ function FaixaRow({ label, minKey, maxKey, form, setField }: {
   );
 }
 
+function TagInput({ values, onChange, placeholder, colorClass }: {
+  values: string[];
+  onChange: (v: string[]) => void;
+  placeholder: string;
+  colorClass: string;
+}) {
+  return (
+    <div>
+      <div className="flex flex-wrap gap-2 mb-2">
+        {values.map((s, i) => (
+          <span key={i} className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs ${colorClass}`}>
+            {s}
+            <button type="button" onClick={() => onChange(values.filter((_, idx) => idx !== i))}>
+              <X className="h-3 w-3" />
+            </button>
+          </span>
+        ))}
+      </div>
+      <Input
+        placeholder={placeholder}
+        onKeyDown={e => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            const val = (e.target as HTMLInputElement).value.trim();
+            if (val) {
+              onChange([...values, val]);
+              (e.target as HTMLInputElement).value = "";
+            }
+          }
+        }}
+      />
+    </div>
+  );
+}
+
 export default function CargoForm() {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -89,6 +129,10 @@ export default function CargoForm() {
   const qc = useQueryClient();
   const [form, setForm] = useState<FormState>(buildInitial);
   const [enriquecendo, setEnriquecendo] = useState(false);
+
+  function setField(k: string, v: any) {
+    setForm((prev) => ({ ...prev, [k]: v }));
+  }
 
   async function enriquecerComIA() {
     if (!form.nome || !form.nivel) {
@@ -104,10 +148,21 @@ export default function CargoForm() {
       if (data?.error) throw new Error(data.error);
 
       let algumPreenchido = false;
-      setForm((f: any) => {
+      setForm((f) => {
         const updated: any = { ...f };
-        // Só preenche campos vazios
         if (!f.missao && data.missao) { updated.missao = data.missao; algumPreenchido = true; }
+        if ((!f.responsabilidades || f.responsabilidades.length === 0) && data.responsabilidades?.length) {
+          updated.responsabilidades = data.responsabilidades; algumPreenchido = true;
+        }
+        if ((!f.skills_obrigatorias || f.skills_obrigatorias.length === 0) && data.skills_obrigatorias?.length) {
+          updated.skills_obrigatorias = data.skills_obrigatorias; algumPreenchido = true;
+        }
+        if ((!f.skills_desejadas || f.skills_desejadas.length === 0) && data.skills_desejadas?.length) {
+          updated.skills_desejadas = data.skills_desejadas; algumPreenchido = true;
+        }
+        if ((!f.ferramentas || f.ferramentas.length === 0) && data.ferramentas?.length) {
+          updated.ferramentas = data.ferramentas; algumPreenchido = true;
+        }
         const faixas = [
           "faixa_clt_f1_min", "faixa_clt_f1_max", "faixa_clt_f2_min", "faixa_clt_f2_max",
           "faixa_clt_f3_min", "faixa_clt_f3_max", "faixa_clt_f4_min", "faixa_clt_f4_max",
@@ -168,6 +223,10 @@ export default function CargoForm() {
     state.is_clevel = cargo.is_clevel ?? false;
     state.protege_salario = cargo.protege_salario ?? false;
     state.missao = cargo.missao ?? "";
+    state.responsabilidades = (cargo.responsabilidades as string[]) ?? [];
+    state.skills_obrigatorias = (cargo.skills_obrigatorias as string[]) ?? [];
+    state.skills_desejadas = (cargo.skills_desejadas as string[]) ?? [];
+    state.ferramentas = (cargo.ferramentas as string[]) ?? [];
     for (const f of FAIXA_KEYS) {
       state[`faixa_clt_${f}_min`] = toStr((cargo as any)[`faixa_clt_${f}_min`]);
       state[`faixa_clt_${f}_max`] = toStr((cargo as any)[`faixa_clt_${f}_max`]);
@@ -176,10 +235,6 @@ export default function CargoForm() {
     }
     setForm(state);
   }, [cargo]);
-
-  function setField(k: string, v: string | boolean) {
-    setForm((prev) => ({ ...prev, [k]: v }));
-  }
 
   const salvar = useMutation({
     mutationFn: async () => {
@@ -191,6 +246,10 @@ export default function CargoForm() {
         is_clevel: form.is_clevel,
         protege_salario: form.protege_salario,
         missao: form.missao || null,
+        responsabilidades: form.responsabilidades.length > 0 ? form.responsabilidades : null,
+        skills_obrigatorias: form.skills_obrigatorias.length > 0 ? form.skills_obrigatorias : null,
+        skills_desejadas: form.skills_desejadas.length > 0 ? form.skills_desejadas : null,
+        ferramentas: form.ferramentas.length > 0 ? form.ferramentas : null,
       };
       for (const f of FAIXA_KEYS) {
         payload[`faixa_clt_${f}_min`] = toNum(form[`faixa_clt_${f}_min`] as string);
@@ -243,7 +302,7 @@ export default function CargoForm() {
             </Button>
           </div>
           <p className="text-xs text-muted-foreground mt-1">
-            Preencha o nome e o nível, depois clique em "Enriquecer com IA" para sugerir missão e faixas salariais de mercado.
+            Preencha o nome e o nível, depois clique em "Enriquecer com IA" para sugerir missão, skills e faixas salariais.
           </p>
         </div>
 
@@ -291,12 +350,97 @@ export default function CargoForm() {
           </label>
         </div>
 
-        <div>
-          <Label>Missão da posição</Label>
-          <Textarea value={form.missao} onChange={(e) => setField("missao", e.target.value)} placeholder="O que essa pessoa vai resolver?" />
+        {/* JOB DESCRIPTION */}
+        <div className="space-y-4 pt-4 border-t">
+          <p className="font-medium text-sm">Job Description</p>
+
+          <div>
+            <Label>Missão da posição</Label>
+            <Textarea
+              rows={3}
+              value={form.missao ?? ""}
+              placeholder="O que essa pessoa vai resolver de verdade por aqui?"
+              onChange={e => setField("missao", e.target.value)}
+            />
+          </div>
+
+          <div>
+            <Label>Responsabilidades</Label>
+            <div className="space-y-2">
+              {(form.responsabilidades ?? []).map((r: string, i: number) => (
+                <div key={i} className="flex gap-2">
+                  <Input
+                    value={r}
+                    onChange={e => {
+                      const arr = [...(form.responsabilidades ?? [])];
+                      arr[i] = e.target.value;
+                      setField("responsabilidades", arr);
+                    }}
+                    placeholder={`Responsabilidade ${i + 1}`}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => {
+                      const arr = (form.responsabilidades ?? []).filter((_: string, idx: number) => idx !== i);
+                      setField("responsabilidades", arr);
+                    }}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setField("responsabilidades", [...(form.responsabilidades ?? []), ""])}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Adicionar responsabilidade
+              </Button>
+            </div>
+          </div>
         </div>
 
-        <div className="space-y-3">
+        {/* SKILLS */}
+        <div className="space-y-4 pt-4 border-t">
+          <p className="font-medium text-sm">Skills</p>
+
+          <div>
+            <Label>Skills obrigatórias</Label>
+            <TagInput
+              values={form.skills_obrigatorias ?? []}
+              onChange={(v) => setField("skills_obrigatorias", v)}
+              placeholder="Digite e pressione Enter"
+              colorClass="bg-primary/15 text-primary"
+            />
+          </div>
+
+          <div>
+            <Label>Skills desejadas</Label>
+            <TagInput
+              values={form.skills_desejadas ?? []}
+              onChange={(v) => setField("skills_desejadas", v)}
+              placeholder="Digite e pressione Enter"
+              colorClass="bg-blue-100 text-blue-800"
+            />
+          </div>
+
+          <div>
+            <Label>Ferramentas e sistemas</Label>
+            <TagInput
+              values={form.ferramentas ?? []}
+              onChange={(v) => setField("ferramentas", v)}
+              placeholder="Digite e pressione Enter"
+              colorClass="bg-purple-100 text-purple-800"
+            />
+          </div>
+        </div>
+
+        {/* FAIXAS SALARIAIS */}
+        <div className="space-y-3 pt-4 border-t">
           <p className="font-medium text-sm">Faixas salariais CLT</p>
           {FAIXA_KEYS.map((f, i) => (
             <FaixaRow key={`clt-${f}`} label={FAIXA_LABELS[i]} minKey={`faixa_clt_${f}_min`} maxKey={`faixa_clt_${f}_max`} form={form} setField={setField} />
