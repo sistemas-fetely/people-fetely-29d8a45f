@@ -267,6 +267,8 @@ export default function CargoForm() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["cargos"] });
+      qc.invalidateQueries({ queryKey: ["cargo-detalhe"] });
+      qc.invalidateQueries({ queryKey: ["cargo"] });
       toast.success(isNovo ? "Cargo criado!" : "Cargo atualizado!");
       navigate("/cargos");
     },

@@ -56,50 +56,7 @@ const FERRAMENTAS_CATALOGO = [
 
 /* ─── Drawer Component ─── */
 function CargoDrawer({ cargo, onClose }: { cargo: Cargo; onClose: () => void }) {
-  const queryClient = useQueryClient();
-  const [saving, setSaving] = useState(false);
-
-  // Job Description state
-  const [missao, setMissao] = useState(cargo.missao || "");
-  const [responsabilidades, setResponsabilidades] = useState<string[]>(
-    cargo.responsabilidades?.length ? cargo.responsabilidades : [""]
-  );
-
-  // Skills state
-  const [skillsObrigatorias, setSkillsObrigatorias] = useState<string[]>(cargo.skills_obrigatorias || []);
-  const [skillsDesejadas, setSkillsDesejadas] = useState<string[]>(cargo.skills_desejadas || []);
-  const [ferramentas, setFerramentas] = useState<string[]>(cargo.ferramentas || []);
-
-  const saveJobDescription = async () => {
-    setSaving(true);
-    const { error } = await supabase
-      .from("cargos")
-      .update({
-        missao: missao || null,
-        responsabilidades: responsabilidades.filter(Boolean),
-      } as any)
-      .eq("id", cargo.id);
-    setSaving(false);
-    if (error) { toast.error(error.message); return; }
-    toast.success("Job Description salva");
-    queryClient.invalidateQueries({ queryKey: ["cargos"] });
-  };
-
-  const saveSkills = async () => {
-    setSaving(true);
-    const { error } = await supabase
-      .from("cargos")
-      .update({
-        skills_obrigatorias: skillsObrigatorias,
-        skills_desejadas: skillsDesejadas,
-        ferramentas,
-      } as any)
-      .eq("id", cargo.id);
-    setSaving(false);
-    if (error) { toast.error(error.message); return; }
-    toast.success("Skills salvas");
-    queryClient.invalidateQueries({ queryKey: ["cargos"] });
-  };
+  const navigate = useNavigate();
 
   const faixas = [
     { key: "F1", label: "Entrada" },
@@ -108,10 +65,6 @@ function CargoDrawer({ cargo, onClose }: { cargo: Cargo; onClose: () => void }) 
     { key: "F4", label: "Sênior" },
     { key: "F5", label: "Referência" },
   ];
-
-  const toggleBadge = (list: string[], setList: (v: string[]) => void, item: string) => {
-    setList(list.includes(item) ? list.filter((x) => x !== item) : [...list, item]);
-  };
 
   return (
     <Sheet open onOpenChange={(v) => { if (!v) onClose(); }}>
@@ -132,150 +85,122 @@ function CargoDrawer({ cargo, onClose }: { cargo: Cargo; onClose: () => void }) 
           </div>
         </SheetHeader>
 
-        <Tabs defaultValue="remuneracao" className="mt-4">
-          <TabsList className="w-full">
-            <TabsTrigger value="remuneracao" className="flex-1">Remuneração</TabsTrigger>
-            <TabsTrigger value="jd" className="flex-1">Job Description</TabsTrigger>
-            <TabsTrigger value="skills" className="flex-1">Skills</TabsTrigger>
-          </TabsList>
-
-          {/* Tab: Remuneração */}
-          <TabsContent value="remuneracao" className="space-y-4 mt-4">
-            {cargo.tipo_contrato !== "pj" && (
-              <div>
-                <h4 className="text-sm font-semibold mb-2">Faixas CLT</h4>
-                <div className="border rounded-md divide-y text-sm">
-                  {faixas.map((f) => {
-                    const min = (cargo as any)[`faixa_clt_${f.key.toLowerCase()}_min`];
-                    const max = (cargo as any)[`faixa_clt_${f.key.toLowerCase()}_max`];
-                    return (
-                      <div key={f.key} className="flex items-center px-3 py-2 gap-2">
-                        <span className="font-semibold w-8 text-xs">{f.key}</span>
-                        <span className="text-muted-foreground text-xs w-28">{f.label}</span>
-                        <span className="text-xs tabular-nums">{fmt(min)} – {fmt(max)}</span>
-                      </div>
-                    );
-                  })}
-                </div>
+        <div className="mt-4 space-y-0">
+          {/* Remuneração */}
+          {cargo.tipo_contrato !== "pj" && (
+            <div className="py-4">
+              <h4 className="text-sm font-semibold mb-2">Faixas CLT</h4>
+              <div className="border rounded-md divide-y text-sm">
+                {faixas.map((f) => {
+                  const min = (cargo as any)[`faixa_clt_${f.key.toLowerCase()}_min`];
+                  const max = (cargo as any)[`faixa_clt_${f.key.toLowerCase()}_max`];
+                  return (
+                    <div key={f.key} className="flex items-center px-3 py-2 gap-2">
+                      <span className="font-semibold w-8 text-xs">{f.key}</span>
+                      <span className="text-muted-foreground text-xs w-28">{f.label}</span>
+                      <span className="text-xs tabular-nums">{fmt(min)} – {fmt(max)}</span>
+                    </div>
+                  );
+                })}
               </div>
-            )}
-            {cargo.tipo_contrato !== "clt" && (
-              <div>
-                <h4 className="text-sm font-semibold mb-2">Faixas PJ</h4>
-                <div className="border rounded-md divide-y text-sm">
-                  {faixas.map((f) => {
-                    const min = (cargo as any)[`faixa_pj_${f.key.toLowerCase()}_min`];
-                    const max = (cargo as any)[`faixa_pj_${f.key.toLowerCase()}_max`];
-                    return (
-                      <div key={f.key} className="flex items-center px-3 py-2 gap-2">
-                        <span className="font-semibold w-8 text-xs">{f.key}</span>
-                        <span className="text-muted-foreground text-xs w-28">{f.label}</span>
-                        <span className="text-xs tabular-nums">{fmt(min)} – {fmt(max)}</span>
-                      </div>
-                    );
-                  })}
-                </div>
+            </div>
+          )}
+          {cargo.tipo_contrato !== "clt" && (
+            <div className="py-4">
+              <h4 className="text-sm font-semibold mb-2">Faixas PJ</h4>
+              <div className="border rounded-md divide-y text-sm">
+                {faixas.map((f) => {
+                  const min = (cargo as any)[`faixa_pj_${f.key.toLowerCase()}_min`];
+                  const max = (cargo as any)[`faixa_pj_${f.key.toLowerCase()}_max`];
+                  return (
+                    <div key={f.key} className="flex items-center px-3 py-2 gap-2">
+                      <span className="font-semibold w-8 text-xs">{f.key}</span>
+                      <span className="text-muted-foreground text-xs w-28">{f.label}</span>
+                      <span className="text-xs tabular-nums">{fmt(min)} – {fmt(max)}</span>
+                    </div>
+                  );
+                })}
               </div>
-            )}
-          </TabsContent>
+            </div>
+          )}
 
-          {/* Tab: Job Description */}
-          <TabsContent value="jd" className="space-y-4 mt-4">
-            <div className="space-y-2">
-              <Label>Missão</Label>
-              <Textarea
-                value={missao}
-                onChange={(e) => setMissao(e.target.value)}
-                placeholder="O que essa pessoa vai resolver de verdade por aqui?"
-                rows={4}
-              />
+          {/* Missão */}
+          {cargo.missao && (
+            <div className="pt-4 border-t">
+              <p className="text-xs font-medium text-muted-foreground mb-1">Missão</p>
+              <p className="text-sm">{cargo.missao}</p>
             </div>
-            <div className="space-y-2">
-              <Label>Responsabilidades</Label>
-              {responsabilidades.map((r, i) => (
-                <div key={i} className="flex gap-2">
-                  <Input
-                    value={r}
-                    onChange={(e) => {
-                      const copy = [...responsabilidades];
-                      copy[i] = e.target.value;
-                      setResponsabilidades(copy);
-                    }}
-                    placeholder={`Responsabilidade ${i + 1}`}
-                  />
-                  {responsabilidades.length > 1 && (
-                    <Button variant="ghost" size="icon" onClick={() => setResponsabilidades(responsabilidades.filter((_, idx) => idx !== i))}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
-              ))}
-              <Button variant="outline" size="sm" onClick={() => setResponsabilidades([...responsabilidades, ""])}>
-                <Plus className="h-3 w-3 mr-1" /> Adicionar
-              </Button>
+          )}
+
+          {/* Responsabilidades */}
+          {cargo.responsabilidades?.length > 0 && (
+            <div className="pt-4 border-t">
+              <p className="text-xs font-medium text-muted-foreground mb-2">Responsabilidades</p>
+              <ul className="space-y-1">
+                {cargo.responsabilidades.map((r: string, i: number) => (
+                  <li key={i} className="text-sm flex gap-2">
+                    <span className="text-muted-foreground">·</span>
+                    {r}
+                  </li>
+                ))}
+              </ul>
             </div>
-            <Button onClick={saveJobDescription} disabled={saving} className="w-full gap-2">
-              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-              Salvar Job Description
+          )}
+
+          {/* Skills Obrigatórias */}
+          {cargo.skills_obrigatorias?.length > 0 && (
+            <div className="pt-4 border-t">
+              <p className="text-xs font-medium text-muted-foreground mb-2">Skills obrigatórias</p>
+              <div className="flex flex-wrap gap-1">
+                {cargo.skills_obrigatorias.map((s: string, i: number) => (
+                  <span key={i} className="px-2 py-0.5 rounded-full bg-emerald-700 text-white text-xs">
+                    {s}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Skills Desejadas */}
+          {cargo.skills_desejadas?.length > 0 && (
+            <div className="pt-4 border-t">
+              <p className="text-xs font-medium text-muted-foreground mb-2">Skills desejadas</p>
+              <div className="flex flex-wrap gap-1">
+                {cargo.skills_desejadas.map((s: string, i: number) => (
+                  <span key={i} className="px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 text-xs">
+                    {s}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Ferramentas */}
+          {cargo.ferramentas?.length > 0 && (
+            <div className="pt-4 border-t">
+              <p className="text-xs font-medium text-muted-foreground mb-2">Ferramentas e sistemas</p>
+              <div className="flex flex-wrap gap-1">
+                {cargo.ferramentas.map((s: string, i: number) => (
+                  <span key={i} className="px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 text-xs">
+                    {s}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Botão editar */}
+          <div className="pt-4 border-t">
+            <Button
+              className="w-full"
+              variant="outline"
+              onClick={() => navigate(`/cargos/${cargo.id}`)}
+            >
+              <Pencil className="h-4 w-4 mr-2" />
+              Editar cargo completo
             </Button>
-          </TabsContent>
-
-          {/* Tab: Skills */}
-          <TabsContent value="skills" className="space-y-4 mt-4">
-            <div className="space-y-2">
-              <Label>Skills Obrigatórias</Label>
-              <div className="flex flex-wrap gap-1.5">
-                {SKILLS_CATALOGO.map((s) => {
-                  const selected = skillsObrigatorias.includes(s);
-                  return (
-                    <button key={s} type="button"
-                      onClick={() => toggleBadge(skillsObrigatorias, setSkillsObrigatorias, s)}
-                      className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-medium transition-colors cursor-pointer ${
-                        selected ? "border-transparent text-white bg-emerald-700" : "border-border text-muted-foreground bg-background hover:bg-muted"
-                      }`}
-                    >{s}</button>
-                  );
-                })}
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label>Skills Desejadas</Label>
-              <div className="flex flex-wrap gap-1.5">
-                {SKILLS_CATALOGO.filter((s) => !skillsObrigatorias.includes(s)).map((s) => {
-                  const selected = skillsDesejadas.includes(s);
-                  return (
-                    <button key={s} type="button"
-                      onClick={() => toggleBadge(skillsDesejadas, setSkillsDesejadas, s)}
-                      className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-medium transition-colors cursor-pointer ${
-                        selected ? "border-transparent text-white bg-blue-600" : "border-border text-muted-foreground bg-background hover:bg-muted"
-                      }`}
-                    >{s}</button>
-                  );
-                })}
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label>Ferramentas / Sistemas</Label>
-              <div className="flex flex-wrap gap-1.5">
-                {FERRAMENTAS_CATALOGO.map((f) => {
-                  const selected = ferramentas.includes(f);
-                  return (
-                    <button key={f} type="button"
-                      onClick={() => toggleBadge(ferramentas, setFerramentas, f)}
-                      className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-medium transition-colors cursor-pointer ${
-                        selected ? "border-transparent text-white bg-purple-600" : "border-border text-muted-foreground bg-background hover:bg-muted"
-                      }`}
-                    >{f}</button>
-                  );
-                })}
-              </div>
-            </div>
-            <Button onClick={saveSkills} disabled={saving} className="w-full gap-2">
-              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-              Salvar Skills
-            </Button>
-          </TabsContent>
-        </Tabs>
+          </div>
+        </div>
       </SheetContent>
     </Sheet>
   );
