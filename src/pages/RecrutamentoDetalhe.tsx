@@ -39,14 +39,14 @@ const statusConfig: Record<string, { label: string; className: string }> = {
 };
 
 const KANBAN_STAGES = [
-  { key: "recebido", label: "Recebido" },
-  { key: "triagem", label: "Triagem" },
-  { key: "entrevista_rh", label: "Entrevista RH" },
-  { key: "entrevista_gestor", label: "Entrevista Gestor" },
-  { key: "teste_tecnico", label: "Teste Técnico" },
-  { key: "oferta", label: "Oferta" },
-  { key: "contratado", label: "Contratado" },
-  { key: "recusado", label: "Recusado" },
+  { key: "recebido",          label: "Recebido",           cor: "#6B7280", bg: "#F3F4F6" },
+  { key: "triagem",           label: "Triagem",            cor: "#D97706", bg: "#FFFBEB" },
+  { key: "entrevista_rh",     label: "Entrevista RH",      cor: "#2563EB", bg: "#EFF6FF" },
+  { key: "entrevista_gestor", label: "Entrevista Gestor",  cor: "#7C3AED", bg: "#F5F3FF" },
+  { key: "teste_tecnico",     label: "Teste Técnico",      cor: "#0891B2", bg: "#ECFEFF" },
+  { key: "oferta",            label: "Oferta",             cor: "#D97706", bg: "#FFF7ED" },
+  { key: "contratado",        label: "Contratado",         cor: "#1A4A3A", bg: "#D8F3DC" },
+  { key: "recusado",          label: "Recusado",           cor: "#DC2626", bg: "#FEF2F2" },
 ] as const;
 
 export default function RecrutamentoDetalhe() {
@@ -317,21 +317,16 @@ export default function RecrutamentoDetalhe() {
   ) || [];
 
   return (
-    <div className="flex flex-col h-full -m-6">
+    <div className="flex flex-col h-full -m-6 overflow-hidden">
       {/* HEADER */}
-      <div className="flex items-center justify-between px-6 py-4 border-b">
+      <div className="flex items-center justify-between px-6 py-4 border-b flex-shrink-0">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="icon" onClick={() => navigate("/recrutamento")}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-xl font-semibold">{vaga.titulo}</h1>
-              <Badge className={statusConfig[vaga.status]?.className}>
-                {statusConfig[vaga.status]?.label || vaga.status}
-              </Badge>
-            </div>
-            <p className="text-sm text-muted-foreground">
+            <h1 className="text-lg font-semibold">{vaga.titulo}</h1>
+            <p className="text-xs text-muted-foreground">
               {vaga.area}
               {vaga.tipo_contrato ? ` · ${vaga.tipo_contrato.toUpperCase()}` : ""}
               {vaga.local_trabalho ? ` · ${vaga.local_trabalho}` : ""}
@@ -367,215 +362,234 @@ export default function RecrutamentoDetalhe() {
         </div>
       </div>
 
-      {/* METRICS PILLS */}
-      <div className="flex gap-2 px-6 py-3 border-b overflow-x-auto">
-        {KANBAN_STAGES.map((col) => {
-          const count = candidatos.filter((c) => c.status === col.key).length;
-          return (
-            <div
-              key={col.key}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted/50 text-xs whitespace-nowrap cursor-pointer hover:bg-muted transition-colors"
-              onClick={() => scrollToColuna(col.key)}
-            >
-              <span className="font-medium">{col.label}</span>
-              <span className="bg-background rounded-full px-1.5 py-0.5 font-semibold">
-                {count}
+      {/* BODY: left panel + kanban */}
+      <div className="flex flex-1 overflow-hidden">
+
+        {/* LEFT PANEL — vacancy details */}
+        <div className="w-72 flex-shrink-0 border-r overflow-y-auto p-5 space-y-5">
+          {/* Status + actions */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <Badge className={statusConfig[vaga.status]?.className}>
+                {statusConfig[vaga.status]?.label || vaga.status}
+              </Badge>
+              <span className="text-xs text-muted-foreground">
+                desde {new Date(vaga.created_at).toLocaleDateString("pt-BR")}
               </span>
             </div>
-          );
-        })}
-        <div className="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs">
-          <Users className="h-3 w-3" />
-          <span className="font-semibold">{candidatos.length} total</span>
-        </div>
-      </div>
-
-      {/* KANBAN — full width */}
-      <div className="flex-1 overflow-hidden">
-        <div className="h-full flex gap-3 p-4 overflow-x-auto">
-          {KANBAN_STAGES.map((stage) => {
-            const cards = candidatos.filter((c) => c.status === stage.key);
-            return (
-              <div
-                key={stage.key}
-                id={`col-${stage.key}`}
-                className="flex flex-col min-w-[170px] flex-1"
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={() => handleDrop(stage.key)}
-              >
-                {/* Column header */}
-                <div className="flex items-center justify-between mb-2 px-1">
-                  <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                    {stage.label}
-                  </span>
-                  <span className="text-xs font-semibold bg-muted rounded-full px-2 py-0.5">
-                    {cards.length}
-                  </span>
-                </div>
-
-                {/* Cards */}
-                <div className="flex-1 space-y-2 overflow-y-auto max-h-[calc(100vh-280px)]">
-                  {cards.map((c) => (
-                    <div
-                      key={c.id}
-                      draggable
-                      onDragStart={() => handleDragStart(c.id)}
-                      onDragEnd={handleDragEnd}
-                      className={`bg-background border rounded-lg p-3 cursor-pointer hover:border-primary/40 hover:shadow-sm transition-all group ${
-                        draggingId === c.id ? "opacity-50" : ""
-                      }`}
-                      onClick={() => setSelectedCandidato(c)}
-                    >
-                      {/* Avatar + Name */}
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className="w-7 h-7 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center font-medium flex-shrink-0">
-                          {getInitials(c.nome)}
-                        </div>
-                        <p className="text-sm font-medium truncate leading-tight">{c.nome}</p>
-                      </div>
-
-                      {/* Origin + Date */}
-                      <div className="flex items-center justify-between">
-                        <Badge variant="outline" className="text-xs px-1.5 py-0">
-                          {c.origem || "portal"}
-                        </Badge>
-                        <span className="text-xs text-muted-foreground">
-                          {c.created_at ? format(new Date(c.created_at), "dd/MM") : ""}
-                        </span>
-                      </div>
-
-                      {/* Hover actions */}
-                      <div className="flex gap-1 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Button
-                          variant="ghost" size="sm"
-                          className="h-6 text-xs flex-1 px-2"
-                          onClick={(e) => { e.stopPropagation(); advanceCandidato(c.id); }}
-                        >
-                          Avançar →
-                        </Button>
-                        <Button
-                          variant="ghost" size="sm"
-                          className="h-6 text-xs text-destructive px-2"
-                          onClick={(e) => { e.stopPropagation(); rejectCandidato(c.id); }}
-                        >
-                          ✕
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-
-                  {cards.length === 0 && (
-                    <div className="border border-dashed rounded-lg p-4 text-center text-xs text-muted-foreground">
-                      Nenhum candidato
-                    </div>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* COLLAPSIBLE DETAILS */}
-      <div className="border-t">
-        <button
-          className="w-full flex items-center justify-between px-6 py-3 hover:bg-muted/30 transition-colors text-sm"
-          onClick={() => setDetalhesAbertos(!detalhesAbertos)}
-        >
-          <span className="font-medium">Detalhes da vaga</span>
-          <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${detalhesAbertos ? "rotate-180" : ""}`} />
-        </button>
-        {detalhesAbertos && (
-          <div className="px-6 pb-6 grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Col 1 — Info */}
-            <div className="space-y-3">
-              <p className="text-xs font-medium text-muted-foreground uppercase">Informações</p>
-              <div className="space-y-1 text-sm">
-                <p><span className="text-muted-foreground">Tipo:</span> {vaga.tipo_contrato === "clt" ? "CLT" : vaga.tipo_contrato === "pj" ? "PJ" : "CLT/PJ"}</p>
-                <p><span className="text-muted-foreground">Nível:</span> {vaga.nivel}</p>
-                {vaga.local_trabalho && <p><span className="text-muted-foreground">Local:</span> {vaga.local_trabalho}</p>}
-                {vaga.jornada && <p><span className="text-muted-foreground">Jornada:</span> {vaga.jornada}</p>}
-                {vaga.vigencia_fim && <p><span className="text-muted-foreground">Vigência:</span> {format(new Date(vaga.vigencia_fim), "dd/MM/yyyy")}</p>}
-              </div>
-              {vaga.missao && (
-                <div className="pt-2 border-t">
-                  <p className="text-xs font-medium text-muted-foreground uppercase mb-1">Missão</p>
-                  <p className="text-sm text-muted-foreground whitespace-pre-wrap">{vaga.missao}</p>
-                </div>
-              )}
-            </div>
-
-            {/* Col 2 — Salary & Benefits */}
-            <div className="space-y-3">
-              {canSeeFaixa && (vaga.faixa_min || vaga.faixa_max) && (
-                <>
-                  <p className="text-xs font-medium text-muted-foreground uppercase">Remuneração</p>
-                  <p className="text-sm">
-                    {vaga.faixa_min ? `R$ ${Number(vaga.faixa_min).toLocaleString("pt-BR")}` : "—"}
-                    {" – "}
-                    {vaga.faixa_max ? `R$ ${Number(vaga.faixa_max).toLocaleString("pt-BR")}` : "—"}
-                  </p>
-                </>
-              )}
-              {(beneficiosLabels.length > 0 || vaga.beneficios_outros) && (
-                <div className={canSeeFaixa && (vaga.faixa_min || vaga.faixa_max) ? "pt-2 border-t" : ""}>
-                  <p className="text-xs font-medium text-muted-foreground uppercase mb-1">Benefícios</p>
-                  <div className="flex flex-wrap gap-1">
-                    {beneficiosLabels.map((b) => (
-                      <Badge key={b} variant="outline" className="text-xs">{b}</Badge>
-                    ))}
-                  </div>
-                  {vaga.beneficios_outros && (
-                    <p className="text-sm text-muted-foreground mt-2">{vaga.beneficios_outros}</p>
-                  )}
-                </div>
-              )}
-              {(vaga.responsabilidades as string[] | null)?.length ? (
-                <div className="pt-2 border-t">
-                  <p className="text-xs font-medium text-muted-foreground uppercase mb-1">Responsabilidades</p>
-                  <ul className="text-sm text-muted-foreground list-disc pl-4 space-y-0.5">
-                    {(vaga.responsabilidades as string[]).map((r, i) => <li key={i}>{r}</li>)}
-                  </ul>
-                </div>
-              ) : null}
-            </div>
-
-            {/* Col 3 — Skills */}
-            <div className="space-y-3">
-              <p className="text-xs font-medium text-muted-foreground uppercase">Skills</p>
-              {(vaga.skills_obrigatorias as string[] | null)?.length ? (
-                <div>
-                  <p className="text-xs text-muted-foreground mb-1">Obrigatórias</p>
-                  <div className="flex flex-wrap gap-1">
-                    {(vaga.skills_obrigatorias as string[]).map((s) => (
-                      <Badge key={s} variant="default" className="text-xs">{s}</Badge>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
-              {(vaga.skills_desejadas as string[] | null)?.length ? (
-                <div>
-                  <p className="text-xs text-muted-foreground mb-1">Desejadas</p>
-                  <div className="flex flex-wrap gap-1">
-                    {(vaga.skills_desejadas as string[]).map((s) => (
-                      <Badge key={s} variant="secondary" className="text-xs">{s}</Badge>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
-              {(vaga.ferramentas as string[] | null)?.length ? (
-                <div>
-                  <p className="text-xs text-muted-foreground mb-1">Ferramentas</p>
-                  <div className="flex flex-wrap gap-1">
-                    {(vaga.ferramentas as string[]).map((s) => (
-                      <Badge key={s} variant="outline" className="text-xs">{s}</Badge>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
-            </div>
+            <Button variant="outline" size="sm" className="w-full" onClick={copyLink}>
+              <Link className="h-3.5 w-3.5 mr-2" /> Copiar link do portal
+            </Button>
+            <Button
+              variant="outline" size="sm"
+              className={`w-full ${vaga.status === "aberta" || vaga.status === "em_selecao" ? "text-destructive border-destructive/30" : ""}`}
+              onClick={() => {
+                if (vaga.status === "aberta" || vaga.status === "em_selecao") {
+                  updateStatusMutation.mutate("encerrada");
+                } else if (vaga.status === "encerrada") {
+                  updateStatusMutation.mutate("aberta");
+                }
+              }}
+              disabled={updateStatusMutation.isPending}
+            >
+              {vaga.status === "aberta" || vaga.status === "em_selecao" ? "Encerrar vaga" : vaga.status === "encerrada" ? "Reabrir vaga" : ""}
+            </Button>
           </div>
-        )}
+
+          <div className="border-t" />
+
+          {/* Basic info */}
+          <div className="space-y-2">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Informações</p>
+            {[
+              { label: "Tipo", value: vaga.tipo_contrato === "clt" ? "CLT" : vaga.tipo_contrato === "pj" ? "PJ" : "CLT/PJ" },
+              { label: "Nível", value: vaga.nivel },
+              { label: "Área", value: vaga.area },
+              { label: "Local", value: vaga.local_trabalho },
+              { label: "Jornada", value: vaga.jornada },
+              { label: "Vigência", value: vaga.vigencia_fim ? new Date(vaga.vigencia_fim).toLocaleDateString("pt-BR") : null },
+            ].map(item => item.value ? (
+              <div key={item.label} className="flex items-start justify-between gap-2">
+                <span className="text-xs text-muted-foreground flex-shrink-0">{item.label}</span>
+                <span className="text-xs font-medium text-right">{item.value}</span>
+              </div>
+            ) : null)}
+          </div>
+
+          {/* Salary range */}
+          {canSeeFaixa && (vaga.faixa_min || vaga.faixa_max) && (
+            <>
+              <div className="border-t" />
+              <div className="space-y-1.5">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Faixa salarial</p>
+                <p className="text-sm font-semibold text-[#1A4A3A]">
+                  {vaga.faixa_min ? `R$ ${Number(vaga.faixa_min).toLocaleString("pt-BR")}` : "—"}
+                  {" – "}
+                  {vaga.faixa_max ? `R$ ${Number(vaga.faixa_max).toLocaleString("pt-BR")}` : "—"}
+                </p>
+              </div>
+            </>
+          )}
+
+          {/* Benefits */}
+          {(beneficiosLabels.length > 0 || vaga.beneficios_outros) && (
+            <>
+              <div className="border-t" />
+              <div className="space-y-2">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Benefícios</p>
+                <div className="flex flex-wrap gap-1">
+                  {beneficiosLabels.map((b) => (
+                    <Badge key={b} variant="outline" className="text-xs">{b}</Badge>
+                  ))}
+                </div>
+                {vaga.beneficios_outros && (
+                  <p className="text-xs text-muted-foreground">{vaga.beneficios_outros}</p>
+                )}
+              </div>
+            </>
+          )}
+
+          {/* Mission */}
+          {vaga.missao && (
+            <>
+              <div className="border-t" />
+              <div className="space-y-1.5">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Missão</p>
+                <p className="text-xs text-muted-foreground whitespace-pre-wrap">{vaga.missao}</p>
+              </div>
+            </>
+          )}
+
+          {/* Skills obrigatórias */}
+          {(vaga.skills_obrigatorias as string[] | null)?.length ? (
+            <>
+              <div className="border-t" />
+              <div className="space-y-2">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Skills obrigatórias</p>
+                <div className="flex flex-wrap gap-1">
+                  {(vaga.skills_obrigatorias as string[]).map((s) => (
+                    <span key={s} className="px-2 py-0.5 rounded-full text-xs bg-[#1A4A3A] text-white">{s}</span>
+                  ))}
+                </div>
+              </div>
+            </>
+          ) : null}
+
+          {/* Skills desejadas */}
+          {(vaga.skills_desejadas as string[] | null)?.length ? (
+            <>
+              <div className="border-t" />
+              <div className="space-y-2">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Skills desejadas</p>
+                <div className="flex flex-wrap gap-1">
+                  {(vaga.skills_desejadas as string[]).map((s) => (
+                    <span key={s} className="px-2 py-0.5 rounded-full text-xs bg-blue-100 text-blue-800">{s}</span>
+                  ))}
+                </div>
+              </div>
+            </>
+          ) : null}
+        </div>
+
+        {/* KANBAN — right side */}
+        <div className="flex-1 overflow-hidden bg-muted/20">
+          <div className="flex gap-3 p-4 overflow-x-auto h-full">
+            {KANBAN_STAGES.map((stage) => {
+              const cards = candidatos.filter((c) => c.status === stage.key);
+              return (
+                <div
+                  key={stage.key}
+                  id={`col-${stage.key}`}
+                  className="flex flex-col min-w-[200px] flex-1 rounded-xl overflow-hidden"
+                  style={{ backgroundColor: stage.bg }}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={() => handleDrop(stage.key)}
+                >
+                  {/* Column header */}
+                  <div className="px-3 py-2.5 flex items-center justify-between"
+                    style={{ backgroundColor: stage.cor }}>
+                    <span className="text-xs font-semibold text-white uppercase tracking-wider">
+                      {stage.label}
+                    </span>
+                    <span className="bg-white/20 text-white text-xs font-bold rounded-full px-2 py-0.5 min-w-[20px] text-center">
+                      {cards.length}
+                    </span>
+                  </div>
+
+                  {/* Cards */}
+                  <div className="flex-1 p-2 space-y-2 overflow-y-auto max-h-[calc(100vh-180px)]">
+                    {cards.map((c) => (
+                      <div
+                        key={c.id}
+                        draggable
+                        onDragStart={() => handleDragStart(c.id)}
+                        onDragEnd={handleDragEnd}
+                        className={`bg-white rounded-lg p-3 cursor-pointer shadow-sm border border-transparent hover:shadow-md hover:border-gray-200 transition-all group ${
+                          draggingId === c.id ? "opacity-50" : ""
+                        }`}
+                        style={{ borderLeftWidth: "3px", borderLeftColor: stage.cor }}
+                        onClick={() => setSelectedCandidato(c)}
+                      >
+                        {/* Avatar + Name */}
+                        <div className="flex items-center gap-2 mb-2">
+                          <div
+                            className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
+                            style={{ backgroundColor: stage.cor }}
+                          >
+                            {getInitials(c.nome)}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-sm font-semibold truncate leading-tight">{c.nome}</p>
+                            <p className="text-xs text-muted-foreground truncate">{c.email}</p>
+                          </div>
+                        </div>
+
+                        {/* Footer */}
+                        <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-100">
+                          <span className="text-xs px-2 py-0.5 rounded-full font-medium"
+                            style={{ backgroundColor: stage.bg, color: stage.cor }}>
+                            {c.origem || "portal"}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            {c.created_at ? format(new Date(c.created_at), "dd/MM") : ""}
+                          </span>
+                        </div>
+
+                        {/* Hover actions */}
+                        <div className="flex gap-1 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Button
+                            variant="ghost" size="sm"
+                            className="h-6 text-xs flex-1 px-2 hover:bg-gray-100"
+                            onClick={(e) => { e.stopPropagation(); advanceCandidato(c.id); }}
+                          >
+                            Avançar →
+                          </Button>
+                          <Button
+                            variant="ghost" size="sm"
+                            className="h-6 text-xs text-destructive hover:bg-red-50 px-2"
+                            onClick={(e) => { e.stopPropagation(); rejectCandidato(c.id); }}
+                          >
+                            Recusar
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+
+                    {cards.length === 0 && (
+                      <div className="flex flex-col items-center justify-center py-8 text-center">
+                        <div className="w-8 h-8 rounded-full mb-2 flex items-center justify-center opacity-30"
+                          style={{ backgroundColor: stage.cor }}>
+                          <Plus className="h-4 w-4 text-white" />
+                        </div>
+                        <p className="text-xs text-muted-foreground opacity-60">Nenhum candidato</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
       </div>
 
       {/* Add candidato dialog */}
