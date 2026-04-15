@@ -125,15 +125,34 @@ Incluir as 3 experiências mais recentes e todas as formações. Skills técnica
             {
               role: "system",
               content:
-                "Você é um especialista em recrutamento. Calcule o score de aderência de candidatos. Responda APENAS com JSON válido, sem markdown.",
+                "Você é um especialista sênior em recrutamento. Calcule scores de aderência de candidatos. Responda APENAS com JSON válido, sem markdown.",
             },
             {
               role: "user",
-              content: `Calcule o score de aderência deste candidato para a vaga.
+              content: `Você é um especialista sênior em recrutamento. Calcule o score de aderência deste candidato para a vaga.
+
+REGRAS CRÍTICAS DE AVALIAÇÃO POR NÍVEL:
+
+1. Se o candidato tem nível ACIMA do pedido (ex: Sr candidatando-se a Jr): pontuação ALTA (80-95%). Ele entrega mais do que o mínimo exigido. Penalize levemente apenas se houver risco real de overqualification.
+
+2. Se o candidato tem nível COMPATÍVEL com o pedido: avaliar normalmente (50-85%).
+
+3. Se o candidato tem nível ABAIXO do pedido (ex: Jr candidatando-se a Sr): pontuação BAIXA (10-45%). Falta de experiência é crítica.
+
+4. Para vagas Jr: não penalize por falta de ferramentas avançadas ou experiências longas — isso não é esperado de um Jr.
+
+5. Para vagas Jr: valorize potencial, formação, skills básicas corretas e motivação.
+
+COMO DETECTAR O NÍVEL DO CANDIDATO:
+- Analise a quantidade e profundidade das experiências
+- Anos de experiência acumulados
+- Complexidade das atividades descritas
+- Nível das skills declaradas
+- Formação acadêmica
 
 VAGA:
 - Título: ${vaga.titulo}
-- Nível: ${vaga.nivel}
+- Nível exigido: ${vaga.nivel}
 - Skills obrigatórias: ${JSON.stringify(vaga.skills_obrigatorias)}
 - Skills desejadas: ${JSON.stringify(vaga.skills_desejadas)}
 - Ferramentas: ${JSON.stringify(vaga.ferramentas)}
@@ -145,15 +164,23 @@ CANDIDATO:
 - Formações: ${JSON.stringify(candidato.formacoes)}
 - Motivação: "${candidato.mensagem || ""}"
 
-Responda APENAS com JSON:
+DIMENSÕES DE AVALIAÇÃO:
+- skills_match (0-35): aderência das skills declaradas às skills obrigatórias da vaga
+- nivel_adequacao (0-30): compatibilidade do nível do candidato com o nível exigido (MAIOR PESO — siga as regras acima)
+- experiencia_relevante (0-20): qualidade e relevância das experiências para o cargo
+- sistemas_match (0-10): aderência às ferramentas pedidas
+- motivacao (0-5): clareza e alinhamento da motivação declarada
+
+Responda APENAS com JSON válido:
 {
-  "skills_match": 0-40,
-  "nivel_skills": 0-20,
-  "sistemas_match": 0-15,
-  "experiencia": 0-15,
-  "motivacao": 0-10,
+  "skills_match": 0-35,
+  "nivel_adequacao": 0-30,
+  "experiencia_relevante": 0-20,
+  "sistemas_match": 0-10,
+  "motivacao": 0-5,
   "total": 0-100,
-  "resumo": "2 linhas sobre o fit do candidato"
+  "nivel_detectado": "jr|pl|sr|coordenacao|especialista",
+  "resumo": "2 linhas explicando o fit — mencionar se está acima ou abaixo do nível pedido"
 }`,
             },
           ],
