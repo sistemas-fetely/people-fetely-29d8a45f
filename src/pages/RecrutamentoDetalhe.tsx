@@ -184,6 +184,19 @@ export default function RecrutamentoDetalhe() {
     enabled: !!id,
   });
 
+  // Buscar ofertas em lote
+  const { data: ofertasCandidatos = [] } = useQuery({
+    queryKey: ["ofertas-vaga", id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("ofertas_candidato" as any)
+        .select("candidato_id, status, enviado_em, salario_proposto")
+        .eq("vaga_id", id!);
+      return (data ?? []) as any[];
+    },
+    enabled: !!id,
+  });
+
   const { data: vaga, isLoading: vagaLoading } = useQuery({
     queryKey: ["vaga", id],
     queryFn: async () => {
