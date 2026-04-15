@@ -44,6 +44,7 @@ import RecrutamentoDetalhe from "@/pages/RecrutamentoDetalhe";
 import PortalCandidatura from "@/pages/PortalCandidatura";
 import Cargos from "@/pages/Cargos";
 import CargoForm from "@/pages/CargoForm";
+import CargosEnriquecimento from "@/pages/CargosEnriquecimento";
 
 const queryClient = new QueryClient();
 
@@ -225,6 +226,11 @@ const App = () => (
               <Route path="/cargos" element={
                 <ProtectedRoute permModule="parametros">
                   <Cargos />
+                </ProtectedRoute>
+              } />
+              <Route path="/cargos/enriquecimento" element={
+                <ProtectedRoute permModule="parametros">
+                  <CargosEnriquecimento />
                 </ProtectedRoute>
               } />
               <Route path="/cargos/novo" element={

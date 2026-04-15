@@ -13,7 +13,8 @@ import {
 import {
   Sheet, SheetContent, SheetHeader, SheetTitle,
 } from "@/components/ui/sheet";
-import { Lock, Plus, Search, Pencil } from "lucide-react";
+import { Lock, Plus, Search, Pencil, Sparkles } from "lucide-react";
+import { usePermissions } from "@/hooks/usePermissions";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const nivelLabels: Record<string, string> = {
