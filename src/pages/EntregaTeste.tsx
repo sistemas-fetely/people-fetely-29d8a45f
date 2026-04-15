@@ -175,8 +175,8 @@ export default function EntregaTeste() {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-[#0891B2] text-white py-6 px-6 text-center">
-        <h1 className="text-xl font-bold tracking-tight">Fetély.</h1>
-        <p className="text-cyan-100 text-sm mt-1">
+        <h1 className="text-3xl font-bold tracking-tight">Fetély.</h1>
+        <p className="text-cyan-100 text-sm mt-1 italic">
           Vamos celebrar!! Venha criar algo novo...
         </p>
       </div>

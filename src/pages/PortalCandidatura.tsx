@@ -229,10 +229,10 @@ export default function PortalCandidatura() {
   const Header = () => (
     <header className="border-b border-border/40 bg-card/80 backdrop-blur-sm">
       <div className="max-w-3xl mx-auto px-6 py-5 flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight" style={{ color: "hsl(156, 28%, 22%)" }}>
+        <h1 className="text-3xl font-bold tracking-tight" style={{ color: "hsl(156, 28%, 22%)" }}>
           Fetély.
         </h1>
-        <p className="text-xs text-muted-foreground italic hidden sm:block max-w-[260px] text-right">
+        <p className="text-sm text-muted-foreground italic hidden sm:block max-w-[280px] text-right">
           Vamos celebrar!! Venha criar algo novo...
         </p>
       </div>

@@ -27,8 +27,8 @@ export default function VagaPublica() {
   const Header = () => (
     <header style={{ backgroundColor: "#1a3d2b" }} className="text-white">
       <div className="max-w-4xl mx-auto px-6 py-5 flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight">Fetély.</h1>
-        <p className="text-xs italic hidden sm:block max-w-[260px] text-right opacity-80">
+        <h1 className="text-3xl font-bold tracking-tight">Fetély.</h1>
+        <p className="text-sm italic hidden sm:block max-w-[280px] text-right opacity-80">
           Vamos celebrar!! Venha criar algo novo...
         </p>
       </div>
