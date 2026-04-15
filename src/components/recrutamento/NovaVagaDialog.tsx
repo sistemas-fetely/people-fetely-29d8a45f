@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -97,6 +97,17 @@ export function NovaVagaDialog({ open, onOpenChange }: Props) {
 
   const skillsCatalogo = SKILLS_CATALOGO;
 
+  const ferramentasSistemasCatalogo = useMemo(() => {
+    const todos = [...ferramentasParam, ...sistemasParam];
+    const vistos = new Set<string>();
+    return todos.filter(item => {
+      const key = item.label.toLowerCase().trim();
+      if (vistos.has(key)) return false;
+      vistos.add(key);
+      return true;
+    });
+  }, [ferramentasParam, sistemasParam]);
+
   const { data: gestores = [] } = useQuery({
     queryKey: ["gestores-para-vaga"],
     queryFn: async () => {
@@ -138,7 +149,7 @@ export function NovaVagaDialog({ open, onOpenChange }: Props) {
         responsabilidades: responsabilidades.filter(Boolean),
         skills_obrigatorias: skillsObrigatorias.filter(Boolean),
         skills_desejadas: skillsDesejadas.filter(Boolean),
-        ferramentas: [...ferramentasParam, ...sistemasParam].filter(p => ferramentasIds.includes(p.valor)).map(p => p.label).concat(ferramentasOutras ? [ferramentasOutras] : []),
+        ferramentas: ferramentasSistemasCatalogo.filter(p => ferramentasIds.includes(p.valor)).map(p => p.label).concat(ferramentasOutras ? [ferramentasOutras] : []),
         ferramentas_ids: ferramentasIds.length > 0 ? ferramentasIds : null,
         gestor_id: gestorId || null,
         criado_por: user?.id || null,
@@ -207,12 +218,12 @@ export function NovaVagaDialog({ open, onOpenChange }: Props) {
                   if (cargoMatch.skills_desejadas?.length) setSkillsDesejadas(cargoMatch.skills_desejadas);
                   if (cargoMatch.ferramentas?.length) {
                     // Match ferramentas labels to param valores
-                    const matchedIds = [...ferramentasParam, ...sistemasParam]
+                    const matchedIds = ferramentasSistemasCatalogo
                       .filter((p) => cargoMatch.ferramentas.includes(p.label))
                       .map((p) => p.valor);
                     if (matchedIds.length) setFerramentasIds(matchedIds);
                     const unmatched = cargoMatch.ferramentas.filter(
-                      (f) => ![...ferramentasParam, ...sistemasParam].some((p) => p.label === f)
+                      (f) => !ferramentasSistemasCatalogo.some((p) => p.label === f)
                     );
                     if (unmatched.length) setFerramentasOutras(unmatched.join(", "));
                   }
@@ -477,7 +488,7 @@ export function NovaVagaDialog({ open, onOpenChange }: Props) {
             <div className="space-y-2">
               <Label>Ferramentas / Sistemas</Label>
               <div className="flex flex-wrap gap-2">
-                {[...ferramentasParam, ...sistemasParam].map((f) => {
+                {ferramentasSistemasCatalogo.map((f) => {
                   const selected = ferramentasIds.includes(f.valor);
                   return (
                     <button
