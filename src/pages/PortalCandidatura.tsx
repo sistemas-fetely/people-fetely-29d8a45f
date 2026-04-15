@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Check, Loader2, Sparkles, Plus, CheckCircle2 } from "lucide-react";
+import { Check, Loader2, Plus, CheckCircle2, FileText, Upload } from "lucide-react";
 import { toast } from "sonner";
 
 export default function PortalCandidatura() {
@@ -51,28 +51,61 @@ export default function PortalCandidatura() {
   ];
   const sistemasVaga: string[] = (vaga as any)?.cargos?.ferramentas ?? (vaga as any)?.ferramentas ?? [];
 
-  async function importarLinkedIn() {
-    if (!form.linkedin_url) return;
+  const [arrastando, setArrastando] = useState(false);
+  const [pdfCarregado, setPdfCarregado] = useState(false);
+  const [nomePDF, setNomePDF] = useState("");
+
+  async function processarPDF(file: File) {
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("PDF muito grande. Máximo 5MB.");
+      return;
+    }
     setImportando(true);
+    setNomePDF(file.name);
     try {
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = reader.result as string;
+          resolve(result.split(",")[1]);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+
       const { data, error } = await supabase.functions.invoke("score-candidato", {
-        body: { action: "import_linkedin", linkedin_url: form.linkedin_url },
+        body: { action: "parse_pdf", pdf_base64: base64 },
       });
       if (error) throw error;
       const perfil = data?.perfil;
+
       if (perfil && (perfil.nome || perfil.experiencias?.length > 0)) {
         setForm((f) => ({
           ...f,
           nome: perfil.nome || f.nome,
+          email: perfil.email || f.email,
+          telefone: perfil.telefone || f.telefone,
+          linkedin_url: perfil.linkedin_url || f.linkedin_url,
           experiencias: perfil.experiencias?.length > 0 ? perfil.experiencias.slice(0, 3) : f.experiencias,
           formacoes: perfil.formacoes?.length > 0 ? perfil.formacoes : f.formacoes,
+          skills_candidato: skillsVaga
+            .filter(({ skill }) =>
+              perfil.skills_identificadas?.some(
+                (s: string) => s.toLowerCase().includes(skill.toLowerCase()) || skill.toLowerCase().includes(s.toLowerCase())
+              )
+            )
+            .map(({ skill }) => ({ skill, nivel: "intermediario" })),
         }));
-        toast.success("Dados importados! Revise e complete antes de enviar.");
+        setPdfCarregado(true);
+        toast.success("Currículo importado! Revise os campos e complete o que faltar.");
       } else {
-        toast.error("Não foi possível importar. Preencha manualmente.");
+        toast.error("Não foi possível ler o PDF. Preencha manualmente.");
+        setPdfCarregado(false);
       }
-    } catch {
-      toast.error("Erro ao importar. Preencha manualmente.");
+    } catch (error) {
+      console.error("Erro ao processar PDF:", error);
+      toast.error("Não foi possível ler o PDF. Preencha manualmente.");
+      setPdfCarregado(false);
     } finally {
       setImportando(false);
     }
@@ -263,26 +296,102 @@ export default function PortalCandidatura() {
           </div>
 
           <div className="space-y-1.5">
-            <Label className="text-xs">LinkedIn</Label>
-            <div className="flex gap-2">
-              <Input
-                value={form.linkedin_url}
-                onChange={(e) => setForm((f) => ({ ...f, linkedin_url: e.target.value }))}
-                placeholder="linkedin.com/in/seu-perfil"
-                className="flex-1"
+            <Label className="text-xs">LinkedIn (opcional)</Label>
+            <Input
+              value={form.linkedin_url}
+              onChange={(e) => setForm((f) => ({ ...f, linkedin_url: e.target.value }))}
+              placeholder="linkedin.com/in/seu-perfil"
+            />
+          </div>
+        </div>
+
+        {/* Upload de currículo */}
+        <div className="bg-card rounded-xl p-6 space-y-4 shadow-sm border">
+          <h2 className="font-semibold text-sm uppercase tracking-wide" style={{ color: "#1A4A3A" }}>
+            Currículo
+          </h2>
+
+          {!pdfCarregado ? (
+            <div
+              className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors ${
+                arrastando ? "border-[#1A4A3A] bg-[#1A4A3A]/5" : "border-border hover:border-[#1A4A3A]/40"
+              }`}
+              onDragOver={(e) => { e.preventDefault(); setArrastando(true); }}
+              onDragLeave={() => setArrastando(false)}
+              onDrop={(e) => {
+                e.preventDefault();
+                setArrastando(false);
+                const file = e.dataTransfer.files[0];
+                if (file?.type === "application/pdf") processarPDF(file);
+                else toast.error("Apenas arquivos PDF são aceitos.");
+              }}
+              onClick={() => document.getElementById("pdf-upload")?.click()}
+            >
+              <input
+                id="pdf-upload"
+                type="file"
+                accept=".pdf"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) processarPDF(file);
+                }}
               />
-              <Button variant="outline" size="sm" onClick={importarLinkedIn} disabled={importando || !form.linkedin_url}>
-                {importando ? (
-                  <><Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />Importando...</>
-                ) : (
-                  <><Sparkles className="h-3.5 w-3.5 mr-1.5" />Importar</>
-                )}
+
+              {importando ? (
+                <div className="space-y-3">
+                  <Loader2 className="h-8 w-8 animate-spin mx-auto" style={{ color: "#1A4A3A" }} />
+                  <p className="text-sm font-medium" style={{ color: "#1A4A3A" }}>
+                    Lendo seu currículo...
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    A IA está extraindo suas informações
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center mx-auto" style={{ backgroundColor: "rgba(26,74,58,0.1)" }}>
+                    <FileText className="h-6 w-6" style={{ color: "#1A4A3A" }} />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">
+                      Arraste seu currículo ou clique para selecionar
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      PDF · máx. 5MB · Exportado do LinkedIn ou qualquer currículo
+                    </p>
+                  </div>
+                  <Button type="button" variant="outline" size="sm">
+                    <Upload className="h-4 w-4 mr-2" />
+                    Selecionar PDF
+                  </Button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="flex items-center gap-3 p-4 rounded-xl border bg-green-50 border-green-200">
+              <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "#1A4A3A" }}>
+                <Check className="h-5 w-5 text-white" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium" style={{ color: "#1A4A3A" }}>
+                  Currículo importado com sucesso!
+                </p>
+                <p className="text-xs text-muted-foreground truncate">
+                  {nomePDF} · Revise os campos abaixo
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="text-muted-foreground"
+                onClick={() => { setPdfCarregado(false); setNomePDF(""); }}
+              >
+                Trocar
               </Button>
             </div>
-            <p className="text-xs text-muted-foreground">
-              Cole o link do seu perfil e clique em Importar para preencher automaticamente suas experiências.
-            </p>
-          </div>
+          )}
         </div>
 
         {/* SEÇÃO 2 — Experiências */}

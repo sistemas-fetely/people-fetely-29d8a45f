@@ -14,12 +14,12 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    const { action, candidato_id, linkedin_url, vaga, candidato } = await req.json();
+    const { action, candidato_id, pdf_base64, vaga, candidato } = await req.json();
 
-    // --- IMPORT LINKEDIN ---
-    if (action === "import_linkedin") {
-      if (!linkedin_url) {
-        return new Response(JSON.stringify({ error: "linkedin_url obrigatório" }), {
+    // --- PARSE PDF ---
+    if (action === "parse_pdf") {
+      if (!pdf_base64) {
+        return new Response(JSON.stringify({ error: "pdf_base64 obrigatório" }), {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
@@ -37,24 +37,37 @@ serve(async (req) => {
             {
               role: "system",
               content:
-                "Você é um assistente que extrai dados estruturados de perfis LinkedIn. Responda APENAS com JSON válido, sem markdown.",
+                "Você é um assistente que extrai dados estruturados de currículos em PDF. Responda APENAS com JSON válido, sem markdown.",
             },
             {
               role: "user",
-              content: `Com base no URL do LinkedIn: ${linkedin_url}
-
-Tente inferir informações profissionais típicas para este perfil.
-Responda APENAS com JSON:
+              content: [
+                {
+                  type: "file",
+                  file: {
+                    filename: "curriculo.pdf",
+                    file_data: `data:application/pdf;base64,${pdf_base64}`,
+                  },
+                },
+                {
+                  type: "text",
+                  text: `Extraia as informações deste currículo e responda APENAS com JSON válido:
 {
   "nome": "string ou null",
+  "email": "string ou null",
+  "telefone": "string ou null",
+  "linkedin_url": "string ou null",
   "experiencias": [
-    { "cargo": "string", "empresa": "string", "periodo_inicio": "MM/YYYY", "periodo_fim": "MM/YYYY ou null se atual", "atual": boolean, "descricao": "string" }
+    { "cargo": "string", "empresa": "string", "periodo_inicio": "MM/AAAA", "periodo_fim": "MM/AAAA ou null se atual", "atual": boolean, "descricao": "resumo breve das atividades" }
   ],
   "formacoes": [
-    { "curso": "string", "instituicao": "string", "nivel": "graduacao|pos|mba|tecnico|outro", "status": "concluido|cursando", "ano_conclusao": "YYYY ou null" }
-  ]
+    { "curso": "string", "instituicao": "string", "nivel": "tecnico|graduacao|pos|mba|mestrado|outro", "status": "concluido|cursando", "ano_conclusao": "AAAA ou null" }
+  ],
+  "skills_identificadas": ["string"]
 }
-Incluir apenas as 3 experiências mais recentes. Se não puder inferir, retorne { "nome": null, "experiencias": [], "formacoes": [] }.`,
+Incluir as 3 experiências mais recentes e todas as formações. Skills técnicas identificadas no currículo.`,
+                },
+              ],
             },
           ],
         }),
