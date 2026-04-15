@@ -27,7 +27,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   ArrowLeft, Copy, Globe, MoreHorizontal, Plus, Loader2,
-  UserPlus, ArrowRight, XCircle, User, CheckCircle2, ExternalLink, Users, Link, Trash2, Check
+  UserPlus, ArrowRight, XCircle, User, CheckCircle2, ExternalLink, Users, Link, Trash2, Check, Mail
 } from "lucide-react";
 
 const statusConfig: Record<string, { label: string; className: string }> = {
@@ -837,6 +837,31 @@ export default function RecrutamentoDetalhe() {
                 </TabsList>
 
                 <TabsContent value="perfil" className="space-y-4 mt-4">
+                  {/* Score se existir */}
+                  {(selectedCandidato as any).score_total > 0 && (
+                    <div className="p-3 rounded-lg border space-y-2"
+                      style={{ backgroundColor:
+                        (selectedCandidato as any).score_total >= 80 ? '#F0FFF4' :
+                        (selectedCandidato as any).score_total >= 50 ? '#FFFBEB' : '#FEF2F2'
+                      }}>
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs font-medium text-muted-foreground">Score de aderência</p>
+                        <span className="text-lg font-bold" style={{ color:
+                          (selectedCandidato as any).score_total >= 80 ? '#1A4A3A' :
+                          (selectedCandidato as any).score_total >= 50 ? '#D97706' : '#DC2626'
+                        }}>
+                          {(selectedCandidato as any).score_total}%
+                        </span>
+                      </div>
+                      {(selectedCandidato as any).score_detalhado?.resumo && (
+                        <p className="text-xs text-muted-foreground">
+                          {(selectedCandidato as any).score_detalhado.resumo}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Links */}
                   {selectedCandidato.linkedin_url && (
                     <div className="space-y-1">
                       <p className="text-xs font-medium text-muted-foreground">LinkedIn</p>
@@ -857,9 +882,101 @@ export default function RecrutamentoDetalhe() {
                       </a>
                     </div>
                   )}
-                  {!selectedCandidato.linkedin_url && !selectedCandidato.portfolio_url && (
-                    <p className="text-sm text-muted-foreground italic">Nenhum link informado pelo candidato.</p>
+
+                  {/* Experiências */}
+                  {(selectedCandidato as any).experiencias?.length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Experiências</p>
+                      {(selectedCandidato as any).experiencias.map((exp: any, i: number) => (
+                        <div key={i} className="p-3 rounded-lg bg-muted/30 space-y-0.5">
+                          <p className="text-sm font-medium">{exp.cargo}</p>
+                          <p className="text-xs text-muted-foreground">{exp.empresa}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {exp.periodo_inicio} – {exp.atual ? 'atual' : exp.periodo_fim}
+                          </p>
+                          {exp.descricao && (
+                            <p className="text-xs text-muted-foreground mt-1">{exp.descricao}</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
                   )}
+
+                  {/* Formações */}
+                  {(selectedCandidato as any).formacoes?.length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Formação</p>
+                      {(selectedCandidato as any).formacoes.map((form: any, i: number) => (
+                        <div key={i} className="p-3 rounded-lg bg-muted/30 space-y-0.5">
+                          <p className="text-sm font-medium">{form.curso}</p>
+                          <p className="text-xs text-muted-foreground">{form.instituicao}</p>
+                          <p className="text-xs text-muted-foreground capitalize">{form.nivel} · {form.status}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Skills */}
+                  {(selectedCandidato as any).skills_candidato?.length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Skills declaradas</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {(selectedCandidato as any).skills_candidato.map((s: any, i: number) => (
+                          <span key={i} className="px-2 py-1 rounded-full text-xs font-medium bg-primary text-primary-foreground">
+                            {s.skill}
+                            {s.nivel && s.nivel !== 'intermediario' && (
+                              <span className="ml-1 opacity-70">· {s.nivel}</span>
+                            )}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Sistemas */}
+                  {(selectedCandidato as any).sistemas_candidato?.length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Sistemas e ferramentas</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {(selectedCandidato as any).sistemas_candidato.map((s: any, i: number) => (
+                          <span key={i} className="px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                            {s.sistema}
+                            {s.nivel && s.nivel !== 'intermediario' && (
+                              <span className="ml-1 opacity-70">· {s.nivel}</span>
+                            )}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Motivação */}
+                  {selectedCandidato.mensagem && (
+                    <div className="space-y-1">
+                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Por que a Fetely</p>
+                      <p className="text-sm text-muted-foreground italic">"{selectedCandidato.mensagem}"</p>
+                    </div>
+                  )}
+
+                  {/* Perfil incompleto — botão solicitar */}
+                  {!(selectedCandidato as any).experiencias?.length && (
+                    <div className="p-4 rounded-lg border border-dashed text-center space-y-3">
+                      <p className="text-sm text-muted-foreground">
+                        Este candidato não preencheu o perfil completo.
+                      </p>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={solicitando}
+                        onClick={() => solicitarPerfilCompleto(selectedCandidato)}
+                      >
+                        {solicitando ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Mail className="h-4 w-4 mr-2" />}
+                        Solicitar perfil por e-mail
+                      </Button>
+                    </div>
+                  )}
+
+                  {/* LGPD */}
                   <div className="text-xs text-muted-foreground pt-2 border-t">
                     Consentimento LGPD: {selectedCandidato.consentimento_lgpd_at
                       ? new Date(selectedCandidato.consentimento_lgpd_at).toLocaleDateString("pt-BR")
