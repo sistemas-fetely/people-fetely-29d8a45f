@@ -26,7 +26,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  ArrowLeft, ChevronDown, Copy, Globe, MoreHorizontal, Plus, Loader2,
+  ArrowLeft, Copy, Globe, MoreHorizontal, Plus, Loader2,
   UserPlus, ArrowRight, XCircle, User, CheckCircle2, ExternalLink, Users, Link, Trash2
 } from "lucide-react";
 
@@ -63,7 +63,7 @@ export default function RecrutamentoDetalhe() {
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [selectedCandidato, setSelectedCandidato] = useState<any | null>(null);
   const [notaTexto, setNotaTexto] = useState("");
-  const [detalhesAbertos, setDetalhesAbertos] = useState(false);
+  
 
   // Contratar flow
   const [contratarOpen, setContratarOpen] = useState(false);
@@ -489,111 +489,102 @@ export default function RecrutamentoDetalhe() {
         </div>
       </div>
 
-      {/* COLLAPSIBLE DETAILS — bottom */}
+      {/* DETAILS — always visible */}
       <div className="border-t flex-shrink-0">
-        <button
-          className="w-full flex items-center justify-between px-6 py-3 hover:bg-muted/30 transition-colors"
-          onClick={() => setDetalhesAbertos(!detalhesAbertos)}
-        >
-          <span className="text-sm font-medium">Detalhes da vaga</span>
-          <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${detalhesAbertos ? "rotate-180" : ""}`} />
-        </button>
-        {detalhesAbertos && (
-          <div className="px-6 pb-6 grid grid-cols-1 md:grid-cols-3 gap-6 border-t">
-            {/* Col 1 — Info */}
-            <div className="space-y-2 pt-4">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Informações</p>
-              {[
-                { label: "Tipo", value: vaga.tipo_contrato === "clt" ? "CLT" : vaga.tipo_contrato === "pj" ? "PJ" : "CLT/PJ" },
-                { label: "Nível", value: vaga.nivel },
-                { label: "Local", value: vaga.local_trabalho },
-                { label: "Jornada", value: vaga.jornada },
-                { label: "Vigência", value: vaga.vigencia_fim ? new Date(vaga.vigencia_fim).toLocaleDateString("pt-BR") : "—" },
-              ].map(item => item.value ? (
-                <div key={item.label} className="flex justify-between gap-2">
-                  <span className="text-xs text-muted-foreground">{item.label}</span>
-                  <span className="text-xs font-medium text-right">{item.value}</span>
-                </div>
-              ) : null)}
-              {vaga.missao && (
-                <div className="pt-2 border-t">
-                  <p className="text-xs font-medium text-muted-foreground uppercase mb-1">Missão</p>
-                  <p className="text-xs text-muted-foreground whitespace-pre-wrap">{vaga.missao}</p>
-                </div>
-              )}
-            </div>
-
-            {/* Col 2 — Salary & Benefits */}
-            <div className="space-y-3 pt-4">
-              {canSeeFaixa && (vaga.faixa_min || vaga.faixa_max) && (
-                <>
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Remuneração</p>
-                  <p className="text-sm font-semibold text-[#1A4A3A]">
-                    {vaga.faixa_min ? `R$ ${Number(vaga.faixa_min).toLocaleString("pt-BR")}` : "—"}
-                    {" – "}
-                    {vaga.faixa_max ? `R$ ${Number(vaga.faixa_max).toLocaleString("pt-BR")}` : "—"}
-                  </p>
-                </>
-              )}
-              {(beneficiosLabels.length > 0 || vaga.beneficios_outros) && (
-                <div>
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">Benefícios</p>
-                  <div className="flex flex-wrap gap-1">
-                    {beneficiosLabels.map((b) => (
-                      <Badge key={b} variant="outline" className="text-xs">{b}</Badge>
-                    ))}
-                  </div>
-                  {vaga.beneficios_outros && (
-                    <p className="text-xs text-muted-foreground mt-1">{vaga.beneficios_outros}</p>
-                  )}
-                </div>
-              )}
-              {(vaga.responsabilidades as string[] | null)?.length ? (
-                <div className="pt-2 border-t">
-                  <p className="text-xs font-medium text-muted-foreground uppercase mb-1">Responsabilidades</p>
-                  <ul className="text-xs text-muted-foreground list-disc pl-4 space-y-0.5">
-                    {(vaga.responsabilidades as string[]).map((r, i) => <li key={i}>{r}</li>)}
-                  </ul>
-                </div>
-              ) : null}
-            </div>
-
-            {/* Col 3 — Skills */}
-            <div className="space-y-3 pt-4">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Skills</p>
-              {(vaga.skills_obrigatorias as string[] | null)?.length ? (
-                <div>
-                  <p className="text-xs text-muted-foreground mb-1">Obrigatórias</p>
-                  <div className="flex flex-wrap gap-1">
-                    {(vaga.skills_obrigatorias as string[]).map((s) => (
-                      <span key={s} className="px-2 py-0.5 rounded-full text-xs bg-[#1A4A3A] text-white">{s}</span>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
-              {(vaga.skills_desejadas as string[] | null)?.length ? (
-                <div>
-                  <p className="text-xs text-muted-foreground mb-1">Desejadas</p>
-                  <div className="flex flex-wrap gap-1">
-                    {(vaga.skills_desejadas as string[]).map((s) => (
-                      <span key={s} className="px-2 py-0.5 rounded-full text-xs bg-blue-100 text-blue-800">{s}</span>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
-              {(vaga.ferramentas as string[] | null)?.length ? (
-                <div>
-                  <p className="text-xs text-muted-foreground mb-1">Ferramentas</p>
-                  <div className="flex flex-wrap gap-1">
-                    {(vaga.ferramentas as string[]).map((s) => (
-                      <Badge key={s} variant="outline" className="text-xs">{s}</Badge>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
-            </div>
+        <div className="px-6 py-4 grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Col 1 — Info */}
+          <div className="space-y-2">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Informações</p>
+            {[
+              { label: "Tipo", value: vaga.tipo_contrato === "clt" ? "CLT" : vaga.tipo_contrato === "pj" ? "PJ" : "CLT/PJ" },
+              { label: "Nível", value: vaga.nivel },
+              { label: "Local", value: vaga.local_trabalho },
+              { label: "Jornada", value: vaga.jornada },
+              { label: "Vigência", value: vaga.vigencia_fim ? new Date(vaga.vigencia_fim).toLocaleDateString("pt-BR") : "—" },
+            ].map(item => item.value ? (
+              <div key={item.label} className="flex justify-between gap-2">
+                <span className="text-xs text-muted-foreground">{item.label}</span>
+                <span className="text-xs font-medium text-right">{item.value}</span>
+              </div>
+            ) : null)}
+            {vaga.missao && (
+              <div className="pt-2 border-t">
+                <p className="text-xs font-medium text-muted-foreground uppercase mb-1">Missão</p>
+                <p className="text-xs text-muted-foreground whitespace-pre-wrap">{vaga.missao}</p>
+              </div>
+            )}
           </div>
-        )}
+
+          {/* Col 2 — Salary & Benefits */}
+          <div className="space-y-3">
+            {canSeeFaixa && (vaga.faixa_min || vaga.faixa_max) && (
+              <>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Remuneração</p>
+                <p className="text-sm font-semibold text-[#1A4A3A]">
+                  {vaga.faixa_min ? `R$ ${Number(vaga.faixa_min).toLocaleString("pt-BR")}` : "—"}
+                  {" – "}
+                  {vaga.faixa_max ? `R$ ${Number(vaga.faixa_max).toLocaleString("pt-BR")}` : "—"}
+                </p>
+              </>
+            )}
+            {(beneficiosLabels.length > 0 || vaga.beneficios_outros) && (
+              <div>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">Benefícios</p>
+                <div className="flex flex-wrap gap-1">
+                  {beneficiosLabels.map((b) => (
+                    <Badge key={b} variant="outline" className="text-xs">{b}</Badge>
+                  ))}
+                </div>
+                {vaga.beneficios_outros && (
+                  <p className="text-xs text-muted-foreground mt-1">{vaga.beneficios_outros}</p>
+                )}
+              </div>
+            )}
+            {(vaga.responsabilidades as string[] | null)?.length ? (
+              <div className="pt-2 border-t">
+                <p className="text-xs font-medium text-muted-foreground uppercase mb-1">Responsabilidades</p>
+                <ul className="text-xs text-muted-foreground list-disc pl-4 space-y-0.5">
+                  {(vaga.responsabilidades as string[]).map((r, i) => <li key={i}>{r}</li>)}
+                </ul>
+              </div>
+            ) : null}
+          </div>
+
+          {/* Col 3 — Skills */}
+          <div className="space-y-3">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Skills</p>
+            {(vaga.skills_obrigatorias as string[] | null)?.length ? (
+              <div>
+                <p className="text-xs text-muted-foreground mb-1">Obrigatórias</p>
+                <div className="flex flex-wrap gap-1">
+                  {(vaga.skills_obrigatorias as string[]).map((s) => (
+                    <span key={s} className="px-2 py-0.5 rounded-full text-xs bg-[#1A4A3A] text-white">{s}</span>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+            {(vaga.skills_desejadas as string[] | null)?.length ? (
+              <div>
+                <p className="text-xs text-muted-foreground mb-1">Desejadas</p>
+                <div className="flex flex-wrap gap-1">
+                  {(vaga.skills_desejadas as string[]).map((s) => (
+                    <span key={s} className="px-2 py-0.5 rounded-full text-xs bg-blue-100 text-blue-800">{s}</span>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+            {(vaga.ferramentas as string[] | null)?.length ? (
+              <div>
+                <p className="text-xs text-muted-foreground mb-1">Ferramentas</p>
+                <div className="flex flex-wrap gap-1">
+                  {(vaga.ferramentas as string[]).map((s) => (
+                    <Badge key={s} variant="outline" className="text-xs">{s}</Badge>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+          </div>
+        </div>
       </div>
 
       {/* Add candidato dialog */}
@@ -883,25 +874,5 @@ export default function RecrutamentoDetalhe() {
         </SheetContent>
       </Sheet>
     </div>
-  );
-}
-
-function CollapsibleSection({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <Collapsible defaultOpen>
-      <Card>
-        <CollapsibleTrigger className="w-full">
-          <CardHeader className="py-3 px-4 flex flex-row items-center justify-between">
-            <CardTitle className="text-sm">{title}</CardTitle>
-            <ChevronDown className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-        </CollapsibleTrigger>
-        <CollapsibleContent>
-          <CardContent className="pt-0 px-4 pb-3">
-            {children}
-          </CardContent>
-        </CollapsibleContent>
-      </Card>
-    </Collapsible>
   );
 }
