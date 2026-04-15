@@ -27,7 +27,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   ArrowLeft, Copy, Globe, MoreHorizontal, Plus, Loader2,
-  UserPlus, ArrowRight, XCircle, User, CheckCircle2, ExternalLink, Users, Link, Trash2, Check, Mail, AlertTriangle, Pencil, X, Sparkles
+  UserPlus, ArrowRight, XCircle, User, CheckCircle2, ExternalLink, Users, Link, Trash2, Check, Mail, AlertTriangle, Pencil, X, Sparkles, ClipboardList
 } from "lucide-react";
 
 const statusConfig: Record<string, { label: string; className: string }> = {
@@ -552,6 +552,32 @@ export default function RecrutamentoDetalhe() {
       }
       if ((entrevistaGestor as any).recomendacao === "nao_avançar") {
         toast.warning("O formulário do Gestor indica 'Não avançar'. Tem certeza?", { duration: 5000 });
+      }
+    }
+
+    // Bloqueio: Teste Técnico → Oferta sem resultado registrado
+    if (c.status === "teste_tecnico" && nextStatus === "oferta") {
+      const { data: teste } = await supabase
+        .from("testes_tecnicos" as any)
+        .select("resultado")
+        .eq("candidato_id", candidatoId)
+        .eq("vaga_id", id!)
+        .maybeSingle();
+
+      if (!teste || !(teste as any).resultado) {
+        toast.error(
+          "Registre o resultado do Teste Técnico antes de avançar.",
+          { duration: 5000 }
+        );
+        setSelectedCandidato(c);
+        return;
+      }
+
+      if ((teste as any).resultado === "reprovado") {
+        toast.warning(
+          "O resultado do Teste Técnico é Reprovado. Tem certeza que quer avançar?",
+          { duration: 5000 }
+        );
       }
     }
 
@@ -1137,9 +1163,10 @@ export default function RecrutamentoDetalhe() {
               </div>
 
               <Tabs defaultValue="perfil">
-                <TabsList className="grid w-full grid-cols-5">
+                <TabsList className="grid w-full grid-cols-6">
                   <TabsTrigger value="perfil" className="text-xs">Perfil</TabsTrigger>
                   <TabsTrigger value="entrevistas" className="text-xs">Entrevistas</TabsTrigger>
+                  <TabsTrigger value="teste" className="text-xs">Teste</TabsTrigger>
                   <TabsTrigger value="avaliacao" className="text-xs">Avaliação</TabsTrigger>
                   <TabsTrigger value="historico" className="text-xs">Histórico</TabsTrigger>
                   <TabsTrigger value="notas" className="text-xs">Notas</TabsTrigger>
@@ -1328,6 +1355,15 @@ export default function RecrutamentoDetalhe() {
                       Formulários disponíveis a partir da etapa Entrevista RH.
                     </p>
                   )}
+                </TabsContent>
+
+                <TabsContent value="teste" className="mt-4">
+                  <TesteTecnico
+                    candidatoId={selectedCandidato.id}
+                    vagaId={id!}
+                    candidato={selectedCandidato}
+                    vaga={vaga}
+                  />
                 </TabsContent>
 
                 <TabsContent value="avaliacao" className="mt-4">
@@ -2120,6 +2156,392 @@ function FormularioEntrevista({
             <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Salvando...</>
           ) : entrevista ? "Atualizar formulário" : "Salvar formulário"}
         </Button>
+      )}
+    </div>
+  );
+}
+
+function TesteTecnico({
+  candidatoId,
+  vagaId,
+  candidato,
+  vaga,
+}: {
+  candidatoId: string;
+  vagaId: string;
+  candidato: any;
+  vaga: any;
+}) {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const [gerando, setGerando] = useState(false);
+  const [salvando, setSalvando] = useState(false);
+  const [enviando, setEnviando] = useState(false);
+  const [fase, setFase] = useState<"desafio" | "resultado">("desafio");
+
+  const [formDesafio, setFormDesafio] = useState({
+    desafio_contexto: "",
+    desafio_descricao: "",
+    desafio_entregaveis: "",
+    desafio_criterios: "",
+    prazo_entrega: "",
+  });
+
+  const [formResultado, setFormResultado] = useState({
+    link_entrega: "",
+    nota: 0,
+    pontos_avaliados: "",
+    resultado: "",
+  });
+
+  const { data: teste, isLoading } = useQuery({
+    queryKey: ["teste-tecnico", candidatoId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("testes_tecnicos" as any)
+        .select("*")
+        .eq("candidato_id", candidatoId)
+        .eq("vaga_id", vagaId)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!candidatoId && !!vagaId,
+  });
+
+  useEffect(() => {
+    if (teste) {
+      setFormDesafio({
+        desafio_contexto: (teste as any).desafio_contexto ?? "",
+        desafio_descricao: (teste as any).desafio_descricao ?? "",
+        desafio_entregaveis: (teste as any).desafio_entregaveis ?? "",
+        desafio_criterios: (teste as any).desafio_criterios ?? "",
+        prazo_entrega: (teste as any).prazo_entrega ?? "",
+      });
+      setFormResultado({
+        link_entrega: (teste as any).link_entrega ?? "",
+        nota: (teste as any).nota ?? 0,
+        pontos_avaliados: (teste as any).pontos_avaliados ?? "",
+        resultado: (teste as any).resultado ?? "",
+      });
+      if ((teste as any).enviado_em) setFase("resultado");
+    }
+  }, [teste]);
+
+  async function gerarDesafioIA() {
+    setGerando(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("analyze-candidato", {
+        body: {
+          candidato: {
+            nome: candidato?.nome ?? "",
+            experiencias: (candidato as any)?.experiencias ?? [],
+            skills_candidato: (candidato as any)?.skills_candidato ?? [],
+            sistemas_candidato: (candidato as any)?.sistemas_candidato ?? [],
+          },
+          vaga: {
+            titulo: vaga?.titulo ?? "",
+            nivel: (vaga as any)?.nivel ?? "",
+            area: (vaga as any)?.area ?? "",
+            skills_obrigatorias: (vaga as any)?.skills_obrigatorias ?? [],
+            skills_desejadas: (vaga as any)?.skills_desejadas ?? [],
+            responsabilidades: (vaga as any)?.responsabilidades ?? [],
+          },
+          tipo: "teste_tecnico",
+        },
+      });
+
+      if (error) throw error;
+
+      if (data?.contexto) {
+        setFormDesafio(f => ({
+          ...f,
+          desafio_contexto: data.contexto || "",
+          desafio_descricao: data.descricao || "",
+          desafio_entregaveis: data.entregaveis || "",
+          desafio_criterios: data.criterios || "",
+        }));
+        toast.success("Desafio gerado! Revise antes de enviar ao candidato.");
+      } else {
+        toast.error("Resposta inesperada da IA. Preencha manualmente.");
+      }
+    } catch (e) {
+      console.error(e);
+      toast.error("Erro ao gerar desafio. Preencha manualmente.");
+    } finally {
+      setGerando(false);
+    }
+  }
+
+  async function salvarDesafio() {
+    if (!formDesafio.desafio_descricao || !formDesafio.prazo_entrega) {
+      toast.error("Preencha a descrição do desafio e o prazo.");
+      return;
+    }
+    setSalvando(true);
+    try {
+      const { error } = await supabase
+        .from("testes_tecnicos" as any)
+        .upsert({
+          candidato_id: candidatoId,
+          vaga_id: vagaId,
+          ...formDesafio,
+          updated_at: new Date().toISOString(),
+        } as any, { onConflict: "candidato_id,vaga_id" });
+      if (error) throw error;
+      queryClient.invalidateQueries({ queryKey: ["teste-tecnico", candidatoId] });
+      toast.success("Desafio salvo!");
+    } catch (e: any) {
+      toast.error("Erro ao salvar: " + e.message);
+    } finally {
+      setSalvando(false);
+    }
+  }
+
+  async function enviarDesafio() {
+    if (!candidato?.email) {
+      toast.error("Candidato sem e-mail cadastrado.");
+      return;
+    }
+    if (!formDesafio.desafio_descricao || !formDesafio.prazo_entrega) {
+      toast.error("Salve o desafio antes de enviar.");
+      return;
+    }
+    setEnviando(true);
+    try {
+      await supabase.from("testes_tecnicos" as any).upsert({
+        candidato_id: candidatoId,
+        vaga_id: vagaId,
+        ...formDesafio,
+        enviado_em: new Date().toISOString(),
+        enviado_por: user?.id || null,
+        updated_at: new Date().toISOString(),
+      } as any, { onConflict: "candidato_id,vaga_id" });
+
+      await supabase.functions.invoke("send-transactional-email", {
+        body: {
+          templateName: "teste-tecnico-candidato",
+          recipientEmail: candidato.email,
+          idempotencyKey: `teste-tecnico-${candidatoId}`,
+          templateData: {
+            nome: candidato.nome,
+            cargo: vaga?.titulo ?? "",
+            contexto: formDesafio.desafio_contexto,
+            descricao: formDesafio.desafio_descricao,
+            entregaveis: formDesafio.desafio_entregaveis,
+            criterios: formDesafio.desafio_criterios,
+            prazo: new Date(formDesafio.prazo_entrega).toLocaleDateString("pt-BR"),
+          },
+        },
+      });
+
+      queryClient.invalidateQueries({ queryKey: ["teste-tecnico", candidatoId] });
+      setFase("resultado");
+      toast.success(`Desafio enviado para ${candidato.email}!`);
+    } catch (e: any) {
+      toast.error("Erro ao enviar: " + e.message);
+    } finally {
+      setEnviando(false);
+    }
+  }
+
+  async function salvarResultado() {
+    if (!formResultado.resultado) {
+      toast.error("Selecione o resultado antes de salvar.");
+      return;
+    }
+    setSalvando(true);
+    try {
+      const { error } = await supabase
+        .from("testes_tecnicos" as any)
+        .update({
+          ...formResultado,
+          avaliado_em: new Date().toISOString(),
+          avaliado_por: user?.id || null,
+          updated_at: new Date().toISOString(),
+        } as any)
+        .eq("candidato_id", candidatoId)
+        .eq("vaga_id", vagaId);
+      if (error) throw error;
+      queryClient.invalidateQueries({ queryKey: ["teste-tecnico", candidatoId] });
+      toast.success("Resultado registrado!");
+    } catch (e: any) {
+      toast.error("Erro ao salvar: " + e.message);
+    } finally {
+      setSalvando(false);
+    }
+  }
+
+  if (isLoading) return <div className="flex items-center gap-2 py-4"><Loader2 className="h-4 w-4 animate-spin" /><span className="text-sm text-muted-foreground">Carregando...</span></div>;
+
+  const corTema = "#0891B2";
+  const jaEnviado = !!(teste as any)?.enviado_em;
+
+  const StarRating = ({ value, onChange }: { value: number; onChange: (v: number) => void }) => (
+    <div className="flex gap-1">
+      {[1, 2, 3, 4, 5].map(n => (
+        <button key={n} type="button" onClick={() => onChange(n)}
+          className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors border"
+          style={n <= value ? { backgroundColor: corTema, color: "white", borderColor: corTema } : { borderColor: "#E5E7EB", color: "#6B7280" }}
+        >
+          {n}
+        </button>
+      ))}
+    </div>
+  );
+
+  return (
+    <div className="space-y-4">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <ClipboardList className="h-4 w-4" style={{ color: corTema }} />
+          <p className="text-sm font-semibold">Teste Técnico</p>
+        </div>
+        {jaEnviado && (
+          <Badge variant="outline" className="text-xs">
+            Enviado em {new Date((teste as any).enviado_em).toLocaleDateString("pt-BR")}
+          </Badge>
+        )}
+      </div>
+
+      {/* Toggle Desafio / Resultado */}
+      {jaEnviado && (
+        <div className="flex gap-2">
+          {(["desafio", "resultado"] as const).map(f => (
+            <button key={f} type="button" onClick={() => setFase(f)}
+              className="px-3 py-1 rounded-full text-xs border transition-colors capitalize"
+              style={fase === f
+                ? { backgroundColor: corTema, color: "white", borderColor: corTema }
+                : { borderColor: "#E5E7EB", color: "#6B7280" }}>
+              {f === "desafio" ? "Desafio enviado" : "Registrar resultado"}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* FASE: DESAFIO */}
+      {fase === "desafio" && (
+        <div className="space-y-3">
+          {!jaEnviado && (
+            <Button variant="outline" size="sm" disabled={gerando} onClick={gerarDesafioIA}
+              className="w-full">
+              {gerando ? (
+                <><Loader2 className="h-4 w-4 animate-spin mr-1" />Gerando desafio com IA...</>
+              ) : (
+                <><Sparkles className="h-4 w-4 mr-1" />Gerar desafio com IA</>
+              )}
+            </Button>
+          )}
+
+          <div className="space-y-1.5">
+            <Label className="text-xs">Contexto *</Label>
+            <Textarea value={formDesafio.desafio_contexto} rows={2} className="resize-none text-sm"
+              placeholder="Cenário/problema que o candidato vai resolver..."
+              disabled={jaEnviado}
+              onChange={e => setFormDesafio(f => ({ ...f, desafio_contexto: e.target.value }))} />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-xs">Desafio *</Label>
+            <Textarea value={formDesafio.desafio_descricao} rows={3} className="resize-none text-sm"
+              placeholder="O que o candidato deve fazer..."
+              disabled={jaEnviado}
+              onChange={e => setFormDesafio(f => ({ ...f, desafio_descricao: e.target.value }))} />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-xs">Entregáveis</Label>
+            <Textarea value={formDesafio.desafio_entregaveis} rows={2} className="resize-none text-sm"
+              placeholder="O que deve ser entregue e em qual formato..."
+              disabled={jaEnviado}
+              onChange={e => setFormDesafio(f => ({ ...f, desafio_entregaveis: e.target.value }))} />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-xs">Critérios de avaliação</Label>
+            <Textarea value={formDesafio.desafio_criterios} rows={2} className="resize-none text-sm"
+              placeholder="Como o trabalho será avaliado..."
+              disabled={jaEnviado}
+              onChange={e => setFormDesafio(f => ({ ...f, desafio_criterios: e.target.value }))} />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-xs">Prazo de entrega *</Label>
+            <Input type="date" value={formDesafio.prazo_entrega} disabled={jaEnviado}
+              min={new Date().toISOString().split("T")[0]}
+              onChange={e => setFormDesafio(f => ({ ...f, prazo_entrega: e.target.value }))} />
+          </div>
+
+          {!jaEnviado && (
+            <div className="flex gap-2 pt-2">
+              <Button variant="outline" size="sm" disabled={salvando} onClick={salvarDesafio}>
+                {salvando ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
+                Salvar rascunho
+              </Button>
+              <Button size="sm" disabled={enviando || !formDesafio.desafio_descricao || !formDesafio.prazo_entrega}
+                style={{ backgroundColor: corTema }} className="text-white"
+                onClick={enviarDesafio}>
+                {enviando
+                  ? <><Loader2 className="h-4 w-4 animate-spin mr-1" />Enviando...</>
+                  : <><Mail className="h-4 w-4 mr-1" />Enviar para {candidato?.nome?.split(" ")[0]}</>}
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* FASE: RESULTADO */}
+      {fase === "resultado" && (
+        <div className="space-y-3">
+          <div className="space-y-1.5">
+            <Label className="text-xs">Link da entrega</Label>
+            <Input value={formResultado.link_entrega} placeholder="Drive, Notion, GitHub, etc."
+              onChange={e => setFormResultado(f => ({ ...f, link_entrega: e.target.value }))} />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-xs">Nota geral</Label>
+            <StarRating value={formResultado.nota}
+              onChange={v => setFormResultado(f => ({ ...f, nota: v }))} />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-xs">Pontos avaliados</Label>
+            <Textarea value={formResultado.pontos_avaliados} rows={3} className="resize-none text-sm"
+              placeholder="O que se destacou na entrega? O que ficou abaixo do esperado?"
+              onChange={e => setFormResultado(f => ({ ...f, pontos_avaliados: e.target.value }))} />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-xs">Resultado *</Label>
+            <div className="flex gap-2">
+              {[
+                { value: "aprovado", label: "✅ Aprovado", cor: "#1A4A3A" },
+                { value: "pendente", label: "⏳ Pendente", cor: "#D97706" },
+                { value: "reprovado", label: "❌ Reprovado", cor: "#DC2626" },
+              ].map(op => (
+                <button key={op.value} type="button"
+                  onClick={() => setFormResultado(f => ({ ...f, resultado: op.value }))}
+                  className="flex-1 py-1.5 rounded-lg text-xs font-medium border transition-colors"
+                  style={formResultado.resultado === op.value
+                    ? { backgroundColor: op.cor, color: "white", borderColor: op.cor }
+                    : { borderColor: "#E5E7EB", color: "#6B7280" }}>
+                  {op.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <Button className="w-full text-white" style={{ backgroundColor: corTema }}
+            disabled={salvando || !formResultado.resultado}
+            onClick={salvarResultado}>
+            {salvando
+              ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Salvando...</>
+              : teste && (teste as any).avaliado_em
+                ? "Atualizar resultado"
+                : "Registrar resultado"}
+          </Button>
+        </div>
       )}
     </div>
   );
