@@ -47,13 +47,18 @@ export default function Recrutamento() {
   const { data: gestoresMap = {} } = useQuery({
     queryKey: ["gestores-map"],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("profiles")
-        .select("id, full_name");
-      return (data ?? []).reduce((acc: Record<string, string>, p: any) => {
-        acc[p.id] = p.full_name;
-        return acc;
-      }, {});
+      const { data: clt } = await supabase
+        .from("colaboradores_clt")
+        .select("id, nome_completo")
+        .eq("status", "ativo");
+      const { data: pj } = await supabase
+        .from("contratos_pj")
+        .select("id, contato_nome")
+        .eq("status", "ativo");
+      const map: Record<string, string> = {};
+      (clt ?? []).forEach((c: any) => { map[c.id] = c.nome_completo; });
+      (pj ?? []).forEach((c: any) => { map[c.id] = c.contato_nome; });
+      return map;
     },
   });
 
@@ -156,7 +161,7 @@ export default function Recrutamento() {
                         )}
                       </TableCell>
                       <TableCell>
-                      </TableCell>
+                        <Badge className={cfg.className}>{cfg.label}</Badge>
                       <TableCell className="text-center">{candidatosPorVaga[vaga.id] || 0}</TableCell>
                       <TableCell className="text-muted-foreground text-sm">
                         {vaga.vigencia_inicio
