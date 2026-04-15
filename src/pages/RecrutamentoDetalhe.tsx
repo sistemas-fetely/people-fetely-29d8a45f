@@ -157,6 +157,33 @@ export default function RecrutamentoDetalhe() {
     enabled: !!id,
   });
 
+  // Buscar entrevistas do gestor em lote
+  const { data: entrevistasGestor = [] } = useQuery({
+    queryKey: ["entrevista-gestor", id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("entrevistas_candidato")
+        .select("candidato_id, recomendacao")
+        .eq("vaga_id", id!)
+        .eq("tipo", "gestor");
+      return (data ?? []) as any[];
+    },
+    enabled: !!id,
+  });
+
+  // Buscar testes técnicos em lote
+  const { data: testesTecnicos = [] } = useQuery({
+    queryKey: ["testes-tecnicos-vaga", id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("testes_tecnicos" as any)
+        .select("candidato_id, enviado_em, resultado")
+        .eq("vaga_id", id!);
+      return (data ?? []) as any[];
+    },
+    enabled: !!id,
+  });
+
   const { data: vaga, isLoading: vagaLoading } = useQuery({
     queryKey: ["vaga", id],
     queryFn: async () => {
@@ -415,6 +442,48 @@ export default function RecrutamentoDetalhe() {
       toast.error("Erro ao publicar vaga: " + e.message);
     } finally {
       setPublicando(false);
+    }
+  }
+
+  function getStatusCard(c: any) {
+    switch (c.status) {
+      case "recebido": {
+        const temPerfil = (c as any).experiencias?.length > 0 || (c as any).skills_candidato?.length > 0;
+        if (!temPerfil) return { label: "Perfil incompleto", cor: "#D97706" };
+        return null;
+      }
+      case "triagem": {
+        const score = (c as any).score_total ?? 0;
+        if (score < 40) return { label: `Score ${score}%`, cor: "#DC2626" };
+        return { label: `Score ${score}%`, cor: score >= 80 ? "#1A4A3A" : "#D97706" };
+      }
+      case "entrevista_rh": {
+        const temEntrevistaRH = entrevistasRH.some((e: any) => e.candidato_id === c.id);
+        if (!temEntrevistaRH) return { label: "Preencher formulário", cor: "#DC2626" };
+        const recRH = entrevistasRH.find((e: any) => e.candidato_id === c.id)?.recomendacao;
+        if (recRH === "nao_avançar") return { label: "Não avançar", cor: "#DC2626" };
+        if (recRH === "aguardar") return { label: "Aguardar", cor: "#D97706" };
+        return { label: "Formulário ok", cor: "#1A4A3A" };
+      }
+      case "entrevista_gestor": {
+        const temEntrevistaG = entrevistasGestor.some((e: any) => e.candidato_id === c.id);
+        if (!temEntrevistaG) return { label: "Preencher formulário", cor: "#DC2626" };
+        const recG = entrevistasGestor.find((e: any) => e.candidato_id === c.id)?.recomendacao;
+        if (recG === "nao_avançar") return { label: "Não avançar", cor: "#DC2626" };
+        if (recG === "aguardar") return { label: "Aguardar", cor: "#D97706" };
+        return { label: "Formulário ok", cor: "#1A4A3A" };
+      }
+      case "teste_tecnico": {
+        const teste = testesTecnicos.find((t: any) => t.candidato_id === c.id);
+        if (!teste?.enviado_em) return { label: "Enviar teste", cor: "#DC2626" };
+        if (!teste?.resultado || teste.resultado === "pendente") return { label: "Aguardando entrega", cor: "#D97706" };
+        if (teste.resultado === "reprovado") return { label: "Reprovado", cor: "#DC2626" };
+        return { label: "Aprovado", cor: "#1A4A3A" };
+      }
+      case "oferta":
+        return { label: "Em negociação", cor: "#D97706" };
+      default:
+        return null;
     }
   }
 
@@ -788,6 +857,24 @@ export default function RecrutamentoDetalhe() {
                           </span>
                         </div>
                       )}
+
+                      {/* Status / próxima ação */}
+                      {(() => {
+                        const statusCard = getStatusCard(c);
+                        if (!statusCard) return null;
+                        return (
+                          <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-100">
+                            <span className="text-xs text-muted-foreground">Status</span>
+                            <span className="text-xs font-medium px-2 py-0.5 rounded-full"
+                              style={{
+                                backgroundColor: statusCard.cor + "18",
+                                color: statusCard.cor,
+                              }}>
+                              {statusCard.label}
+                            </span>
+                          </div>
+                        );
+                      })()}
 
                       {/* Hover actions */}
                       <div className="flex gap-1 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -2344,6 +2431,40 @@ function TesteTecnico({
     }
   }
 
+  async function reenviarDesafio() {
+    if (!candidato?.email) {
+      toast.error("Candidato sem e-mail cadastrado.");
+      return;
+    }
+    setEnviando(true);
+    try {
+      await supabase.functions.invoke("send-transactional-email", {
+        body: {
+          templateName: "teste-tecnico-candidato",
+          recipientEmail: candidato.email,
+          idempotencyKey: `teste-tecnico-reenvio-${candidatoId}-${Date.now()}`,
+          templateData: {
+            nome: candidato.nome,
+            cargo: vaga?.titulo ?? "",
+            contexto: formDesafio.desafio_contexto,
+            descricao: formDesafio.desafio_descricao,
+            entregaveis: formDesafio.desafio_entregaveis,
+            criterios: formDesafio.desafio_criterios,
+            prazo: (() => {
+              const [ano, mes, dia] = formDesafio.prazo_entrega.split("-");
+              return `${dia}/${mes}/${ano}`;
+            })(),
+          },
+        },
+      });
+      toast.success(`Teste reenviado para ${candidato.email}!`);
+    } catch (e: any) {
+      toast.error("Erro ao reenviar: " + e.message);
+    } finally {
+      setEnviando(false);
+    }
+  }
+
   async function salvarResultado() {
     if (!formResultado.resultado) {
       toast.error("Selecione o resultado antes de salvar.");
@@ -2416,6 +2537,31 @@ function TesteTecnico({
               {f === "desafio" ? "Desafio enviado" : "Registrar resultado"}
             </button>
           ))}
+        </div>
+      )}
+
+      {/* Botão reenviar — disponível quando já foi enviado */}
+      {jaEnviado && fase === "desafio" && (
+        <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border">
+          <div>
+            <p className="text-xs font-medium">Desafio enviado</p>
+            <p className="text-xs text-muted-foreground">
+              {new Date((teste as any).enviado_em).toLocaleDateString("pt-BR", {
+                day: "2-digit", month: "2-digit", year: "numeric",
+                hour: "2-digit", minute: "2-digit"
+              })}
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={enviando}
+            onClick={reenviarDesafio}
+          >
+            {enviando
+              ? <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />Reenviando...</>
+              : <>↩ Reenviar</>}
+          </Button>
         </div>
       )}
 
