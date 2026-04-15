@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { publicUrl } from "@/lib/urls";
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -124,7 +125,7 @@ export default function EntregaTeste() {
               nome_candidato: candidato.nome,
               cargo: vaga?.titulo ?? "",
               link_entrega: linkFinal,
-              link_sistema: `${window.location.origin}/recrutamento`,
+              link_sistema: publicUrl("/recrutamento"),
             },
           },
         });

@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { publicUrl } from "@/lib/urls";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -322,7 +323,7 @@ export default function ConvitesCadastro() {
     setDeleteTarget(null);
   };
 
-  const getLink = (token: string) => `${window.location.origin}/cadastro/${token}`;
+  const getLink = (token: string) => publicUrl(`/cadastro/${token}`);
   const copyLink = (token: string) => {
     navigator.clipboard.writeText(getLink(token));
     toast.success("Link copiado!");
