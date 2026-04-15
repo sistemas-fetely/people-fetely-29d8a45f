@@ -283,6 +283,12 @@ export default function RecrutamentoDetalhe() {
     moveCandidatoMutation.mutate({ candidatoId, newStatus: "recusado" });
   };
 
+  const scrollToColuna = (colId: string) => {
+    document.getElementById(`col-${colId}`)?.scrollIntoView({
+      behavior: "smooth", block: "nearest", inline: "center",
+    });
+  };
+
   if (vagaLoading) {
     return (
       <div className="p-6 space-y-4">
