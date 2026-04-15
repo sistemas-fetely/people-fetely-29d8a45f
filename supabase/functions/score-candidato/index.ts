@@ -164,6 +164,13 @@ REGRAS DE EXPERIÊNCIA (peso 20 pontos):
 - Avalie relevância da experiência para a vaga específica
 - Experiência em área diferente da vaga = menos pontos mesmo se for Sr
 
+REGRAS DE PRETENSÃO SALARIAL (ajuste no total, peso até -15 pontos):
+- Se pretensão não informada: ignorar, não penalizar nem bonificar.
+- Se pretensão dentro da faixa da vaga (entre faixa_min e faixa_max): nenhum ajuste.
+- Se pretensão até 20% acima da faixa_max: subtrair 5 pontos do total. alerta_salarial: "acima_leve"
+- Se pretensão mais de 20% acima da faixa_max: subtrair 10-15 pontos do total. alerta_salarial: "acima_critico"
+- Se pretensão abaixo da faixa_min: não penalizar, mas registrar alerta_salarial: "abaixo" (pode indicar underqualification ou desespero).
+
 ═══ DADOS DA AVALIAÇÃO ═══
 
 VAGA:
@@ -172,6 +179,7 @@ VAGA:
 - Skills obrigatórias: ${JSON.stringify(vaga.skills_obrigatorias)}
 - Skills desejadas: ${JSON.stringify(vaga.skills_desejadas)}
 - Ferramentas: ${JSON.stringify(vaga.ferramentas)}
+- Faixa salarial da vaga: R$ ${vaga.faixa_min ?? "não informada"} – R$ ${vaga.faixa_max ?? "não informada"}
 
 CANDIDATO:
 - Skills declaradas: ${JSON.stringify(candidato.skills_candidato)}
@@ -179,6 +187,7 @@ CANDIDATO:
 - Experiências: ${JSON.stringify(candidato.experiencias)}
 - Formações: ${JSON.stringify(candidato.formacoes)}
 - Motivação: "${candidato.mensagem || ""}"
+- Pretensão salarial: R$ ${candidato.pretensao_salarial ?? "não informada"}
 
 ═══ CALIBRAÇÃO ═══
 - Candidato Jr bom em vaga Jr → 65-78
@@ -199,6 +208,7 @@ Responda APENAS com JSON válido:
   "nivel_detectado": "jr|pl|sr|coordenacao|especialista",
   "alerta": "overqualified|overqualified_leve|underqualified|null",
   "alerta_texto": "string explicando o risco em 1 linha, ou null se não há alerta",
+  "alerta_salarial": "acima_leve|acima_critico|abaixo|null",
   "resumo": "2 linhas explicando o fit — mencionar nível detectado vs nível da vaga"
 }`,
             },
