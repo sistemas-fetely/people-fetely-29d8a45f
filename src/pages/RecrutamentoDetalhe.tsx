@@ -44,7 +44,7 @@ const KANBAN_STAGES = [
   { key: "entrevista_rh",     label: "Entrevista RH",      cor: "#2563EB", bg: "#EFF6FF" },
   { key: "entrevista_gestor", label: "Entrevista Gestor",  cor: "#7C3AED", bg: "#F5F3FF" },
   { key: "teste_tecnico",     label: "Teste Técnico",      cor: "#0891B2", bg: "#ECFEFF" },
-  { key: "oferta",            label: "Oferta",             cor: "#D97706", bg: "#FFF7ED" },
+  { key: "oferta",            label: "Proposta",           cor: "#D97706", bg: "#FFF7ED" },
   { key: "contratado",        label: "Contratado",         cor: "#1A4A3A", bg: "#D8F3DC" },
   { key: "recusado",          label: "Recusado",           cor: "#DC2626", bg: "#FEF2F2" },
 ] as const;
@@ -503,9 +503,9 @@ export default function RecrutamentoDetalhe() {
       }
       case "oferta": {
         const ofertaCand = ofertasCandidatos.find((o: any) => o.candidato_id === c.id);
-        if (!ofertaCand?.enviado_em) return { label: "Registrar oferta", cor: "#DC2626" };
-        if (ofertaCand.status === "aceita") return { label: "Oferta aceita", cor: "#1A4A3A" };
-        if (ofertaCand.status === "recusada") return { label: "Oferta recusada", cor: "#DC2626" };
+        if (!ofertaCand?.enviado_em) return { label: "Registrar proposta", cor: "#DC2626" };
+        if (ofertaCand.status === "aceita") return { label: "Proposta aceita", cor: "#1A4A3A" };
+        if (ofertaCand.status === "recusada") return { label: "Proposta recusada", cor: "#DC2626" };
         return { label: "Em negociação", cor: "#D97706" };
       }
       default:
@@ -1308,7 +1308,7 @@ export default function RecrutamentoDetalhe() {
                   <TabsTrigger value="perfil" className="text-xs">Perfil</TabsTrigger>
                   <TabsTrigger value="entrevistas" className="text-xs">Entrevistas</TabsTrigger>
                   <TabsTrigger value="teste" className="text-xs">Teste</TabsTrigger>
-                  <TabsTrigger value="oferta" className="text-xs">Oferta</TabsTrigger>
+                  <TabsTrigger value="oferta" className="text-xs">Proposta</TabsTrigger>
                   <TabsTrigger value="avaliacao" className="text-xs">Avaliação</TabsTrigger>
                   <TabsTrigger value="historico" className="text-xs">Histórico</TabsTrigger>
                   <TabsTrigger value="notas" className="text-xs">Notas</TabsTrigger>
