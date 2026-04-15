@@ -10,6 +10,7 @@ interface Props {
   entregaveis?: string
   criterios?: string
   prazo?: string
+  link_portal?: string
 }
 
 export function TesteTecnicoCandidato({
@@ -20,6 +21,7 @@ export function TesteTecnicoCandidato({
   entregaveis = "",
   criterios = "",
   prazo = "",
+  link_portal = "",
 }: Props) {
   const primeiroNome = nome.split(" ")[0]
   return (
@@ -99,6 +101,33 @@ export function TesteTecnicoCandidato({
             <Text style={{ fontSize: 14, color: "#334155", margin: "0 0 8px", lineHeight: "1.6" }}>
               Qualquer dúvida, entre em contato respondendo este e-mail.
             </Text>
+
+            {link_portal && (
+              <Section style={{ backgroundColor: "#ECFEFF", borderRadius: 8, padding: "16px", margin: "0 0 16px", textAlign: "center" as const }}>
+                <Text style={{ fontSize: 12, fontWeight: 600, color: "#0891B2", margin: "0 0 8px", textTransform: "uppercase" as const }}>
+                  Como entregar seu teste
+                </Text>
+                <Text style={{ fontSize: 13, color: "#334155", margin: "0 0 12px", lineHeight: "1.5" }}>
+                  Acesse o link abaixo, faça upload do seu arquivo ou cole o link da sua entrega (Google Drive, GitHub, Notion, etc.):
+                </Text>
+                <Button
+                  href={`${link_portal}/teste`}
+                  style={{
+                    backgroundColor: "#0891B2",
+                    color: "#FFFFFF",
+                    padding: "10px 24px",
+                    borderRadius: 8,
+                    fontSize: 14,
+                    fontWeight: 600,
+                    textDecoration: "none",
+                    display: "inline-block",
+                  }}
+                >
+                  Entregar meu teste →
+                </Button>
+              </Section>
+            )}
+
             <Text style={{ fontSize: 14, color: "#334155", margin: "0 0 0", lineHeight: "1.6" }}>
               Boa sorte! Estamos torcendo por você. ✨
             </Text>
@@ -128,5 +157,6 @@ export const template = {
     entregaveis: "PDF com no mínimo 3 alternativas de layout",
     criterios: "Aderência ao DNA Fetely, criatividade, execução técnica",
     prazo: "20/04/2026",
+    link_portal: "https://people-fetely.lovable.app/vagas/abc123",
   },
 }

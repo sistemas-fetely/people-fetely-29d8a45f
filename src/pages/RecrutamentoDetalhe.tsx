@@ -177,7 +177,7 @@ export default function RecrutamentoDetalhe() {
     queryFn: async () => {
       const { data } = await supabase
         .from("testes_tecnicos" as any)
-        .select("candidato_id, enviado_em, resultado")
+        .select("candidato_id, enviado_em, entregue_em, resultado, prazo_entrega")
         .eq("vaga_id", id!);
       return (data ?? []) as any[];
     },
@@ -474,10 +474,17 @@ export default function RecrutamentoDetalhe() {
         return { label: "Formulário ok", cor: "#1A4A3A" };
       }
       case "teste_tecnico": {
-        const teste = testesTecnicos.find((t: any) => t.candidato_id === c.id);
-        if (!teste?.enviado_em) return { label: "Enviar teste", cor: "#DC2626" };
-        if (!teste?.resultado || teste.resultado === "pendente") return { label: "Aguardando entrega", cor: "#D97706" };
-        if (teste.resultado === "reprovado") return { label: "Reprovado", cor: "#DC2626" };
+        const testeCand = testesTecnicos.find((t: any) => t.candidato_id === c.id);
+        if (!testeCand?.enviado_em) return { label: "Enviar teste", cor: "#DC2626" };
+        const prazoVencidoCard = testeCand.prazo_entrega &&
+          new Date(testeCand.prazo_entrega + "T23:59:59") < new Date();
+        if (!testeCand.entregue_em) {
+          if (prazoVencidoCard) return { label: "Prazo vencido", cor: "#DC2626" };
+          return { label: "Aguardando entrega", cor: "#D97706" };
+        }
+        if (testeCand.entregue_em && (!testeCand.resultado || testeCand.resultado === "pendente"))
+          return { label: "Avaliar entrega", cor: "#2563EB" };
+        if (testeCand.resultado === "reprovado") return { label: "Reprovado", cor: "#DC2626" };
         return { label: "Aprovado", cor: "#1A4A3A" };
       }
       case "oferta":
@@ -2417,6 +2424,7 @@ function TesteTecnico({
             entregaveis: formDesafio.desafio_entregaveis,
             criterios: formDesafio.desafio_criterios,
             prazo: (() => { const [ano, mes, dia] = formDesafio.prazo_entrega.split("-"); return `${dia}/${mes}/${ano}`; })(),
+            link_portal: `${window.location.origin}/vagas/${vagaId}`,
           },
         },
       });
@@ -2454,6 +2462,7 @@ function TesteTecnico({
               const [ano, mes, dia] = formDesafio.prazo_entrega.split("-");
               return `${dia}/${mes}/${ano}`;
             })(),
+            link_portal: `${window.location.origin}/vagas/${vagaId}`,
           },
         },
       });
@@ -2484,6 +2493,7 @@ function TesteTecnico({
         .eq("vaga_id", vagaId);
       if (error) throw error;
       queryClient.invalidateQueries({ queryKey: ["teste-tecnico", candidatoId] });
+      queryClient.invalidateQueries({ queryKey: ["testes-tecnicos-vaga", vagaId] });
       toast.success("Resultado registrado!");
     } catch (e: any) {
       toast.error("Erro ao salvar: " + e.message);

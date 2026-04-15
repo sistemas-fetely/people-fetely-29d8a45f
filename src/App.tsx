@@ -45,6 +45,7 @@ import PortalCandidatura from "@/pages/PortalCandidatura";
 import Cargos from "@/pages/Cargos";
 import CargoForm from "@/pages/CargoForm";
 import CargosEnriquecimento from "@/pages/CargosEnriquecimento";
+import EntregaTeste from "@/pages/EntregaTeste";
 
 const queryClient = new QueryClient();
 
@@ -64,6 +65,7 @@ const App = () => (
             <Route path="/aguardando-aprovacao" element={<AguardandoAprovacao />} />
             <Route path="/cadastro/:token" element={<CadastroPublico />} />
             <Route path="/vagas/:id" element={<PortalCandidatura />} />
+            <Route path="/vagas/:id/teste" element={<EntregaTeste />} />
             <Route path="/unsubscribe" element={<Unsubscribe />} />
 
             {/* Protected routes */}

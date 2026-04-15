@@ -2473,11 +2473,13 @@ export type Database = {
           desafio_criterios: string | null
           desafio_descricao: string | null
           desafio_entregaveis: string | null
+          entregue_em: string | null
           enviado_em: string | null
           enviado_por: string | null
           id: string
           link_entrega: string | null
           nota: number | null
+          notificacao_rh_enviada: boolean | null
           pontos_avaliados: string | null
           prazo_entrega: string | null
           resultado: string | null
@@ -2493,11 +2495,13 @@ export type Database = {
           desafio_criterios?: string | null
           desafio_descricao?: string | null
           desafio_entregaveis?: string | null
+          entregue_em?: string | null
           enviado_em?: string | null
           enviado_por?: string | null
           id?: string
           link_entrega?: string | null
           nota?: number | null
+          notificacao_rh_enviada?: boolean | null
           pontos_avaliados?: string | null
           prazo_entrega?: string | null
           resultado?: string | null
@@ -2513,11 +2517,13 @@ export type Database = {
           desafio_criterios?: string | null
           desafio_descricao?: string | null
           desafio_entregaveis?: string | null
+          entregue_em?: string | null
           enviado_em?: string | null
           enviado_por?: string | null
           id?: string
           link_entrega?: string | null
           nota?: number | null
+          notificacao_rh_enviada?: boolean | null
           pontos_avaliados?: string | null
           prazo_entrega?: string | null
           resultado?: string | null
