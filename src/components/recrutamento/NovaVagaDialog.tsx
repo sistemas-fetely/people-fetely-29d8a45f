@@ -9,6 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useSkillsCatalogo, salvarNovaSkill } from "@/hooks/useSkillsCatalogo";
 import { useFerramentasCatalogo, salvarNovaFerramenta } from "@/hooks/useFerramentasCatalogo";
 import { useBeneficiosCatalogo, salvarNovoBeneficio } from "@/hooks/useBeneficiosCatalogo";
+import { useResponsabilidadesCatalogo, salvarNovaResponsabilidade } from "@/hooks/useResponsabilidadesCatalogo";
 import { toast } from "sonner";
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -103,6 +104,12 @@ export function NovaVagaDialog({ open, onOpenChange }: Props) {
   const { data: ferramentasCatalogo = [] } = useFerramentasCatalogo(area || undefined);
   const ferramentasEspecificas = ferramentasCatalogo.filter(f => f.area !== "todos");
   const ferramentasTransversais = ferramentasCatalogo.filter(f => f.area === "todos");
+
+  // Responsabilidades from database
+  const { data: responsabilidadesCatalogo = [] } = useResponsabilidadesCatalogo(
+    area || undefined,
+    nivelNormalizado !== "todos" ? nivelNormalizado : undefined
+  );
 
   const { data: gestores = [] } = useQuery({
     queryKey: ["gestores-para-vaga"],
@@ -388,37 +395,93 @@ export function NovaVagaDialog({ open, onOpenChange }: Props) {
                 placeholder="O que essa pessoa vai resolver de verdade por aqui?" rows={3} />
             </div>
 
-            {/* Responsabilidades */}
+             {/* Responsabilidades */}
             <div className="space-y-2">
               <Label className="text-sm font-medium">Responsabilidades</Label>
               <p className="text-xs text-muted-foreground">Liste as principais atividades desta posição</p>
-              {responsabilidades.map((r, i) => (
-                <div key={i} className="flex items-start gap-2">
-                  <span className="mt-3 h-1.5 w-1.5 rounded-full bg-[#1A4A3A] flex-shrink-0" />
-                  <Textarea
-                    value={r}
-                    onChange={(e) => updateItem(responsabilidades, setResponsabilidades, i, e.target.value)}
-                    placeholder={`Responsabilidade ${i + 1}`}
-                    className="flex-1 resize-none text-sm border rounded-md px-3 py-2 min-h-[60px]"
-                  />
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-muted-foreground hover:text-destructive flex-shrink-0 mt-1"
-                    onClick={() => removeItem(responsabilidades, setResponsabilidades, i)}
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </Button>
+
+              {/* Tags adicionadas */}
+              {responsabilidades.filter(r => r.trim()).length > 0 && (
+                <div className="space-y-1.5">
+                  {responsabilidades.map((r, i) => r.trim() ? (
+                    <div key={i} className="flex items-start gap-2 rounded-lg border bg-muted/30 px-3 py-2">
+                      <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-[#1A4A3A] flex-shrink-0" />
+                      <Textarea
+                        value={r}
+                        onChange={(e) => updateItem(responsabilidades, setResponsabilidades, i, e.target.value)}
+                        className="flex-1 resize-none text-sm border-0 p-0 bg-transparent focus-visible:ring-0 min-h-[40px]"
+                      />
+                      <Button
+                        variant="ghost" size="icon"
+                        className="h-6 w-6 text-muted-foreground hover:text-destructive flex-shrink-0"
+                        onClick={() => removeItem(responsabilidades, setResponsabilidades, i)}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ) : null)}
                 </div>
-              ))}
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-[#1A4A3A] hover:text-[#1A4A3A] hover:bg-[#1A4A3A]/5 pl-0 mt-1"
-                onClick={() => addItem(responsabilidades, setResponsabilidades)}
-              >
-                <Plus className="h-3.5 w-3.5 mr-1.5" /> Adicionar responsabilidade
-              </Button>
+              )}
+
+              {/* Sugestões do catálogo */}
+              {area && nivel && responsabilidadesCatalogo.length > 0 && (
+                <div className="space-y-1.5">
+                  <p className="text-xs text-muted-foreground">
+                    Sugeridas para {NIVEIS.find(n => n.value === nivel)?.label} em {area}:
+                  </p>
+                  <div className="flex flex-col gap-1.5">
+                    {responsabilidadesCatalogo
+                      .filter(rc => !responsabilidades.includes(rc.responsabilidade))
+                      .map(rc => (
+                        <button key={rc.id} type="button"
+                          onClick={() => {
+                            const filtradas = responsabilidades.filter(r => r.trim());
+                            setResponsabilidades([...filtradas, rc.responsabilidade]);
+                          }}
+                          className="flex items-start gap-2 text-left px-3 py-2 rounded-lg border border-dashed border-[#1A4A3A]/30 text-[#1A4A3A] hover:bg-[#1A4A3A]/5 transition-colors text-xs">
+                          <span className="mt-0.5 flex-shrink-0">+</span>
+                          <span>{rc.responsabilidade}</span>
+                        </button>
+                      ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Input nova responsabilidade */}
+              <div className="flex gap-2 mt-2">
+                <Textarea
+                  id="nova-resp-input"
+                  rows={2}
+                  placeholder="Descrever nova responsabilidade..."
+                  className="flex-1 resize-none text-sm"
+                  onKeyDown={async (e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      const val = (e.target as HTMLTextAreaElement).value.trim();
+                      if (val) {
+                        const filtradas = responsabilidades.filter(r => r.trim());
+                        setResponsabilidades([...filtradas, val]);
+                        if (area) await salvarNovaResponsabilidade(val, area, nivelNormalizado);
+                        (e.target as HTMLTextAreaElement).value = "";
+                      }
+                    }
+                  }}
+                />
+                <Button type="button" variant="outline" size="sm" className="self-end"
+                  onClick={async () => {
+                    const textarea = document.getElementById("nova-resp-input") as HTMLTextAreaElement;
+                    const val = textarea?.value.trim();
+                    if (val) {
+                      const filtradas = responsabilidades.filter(r => r.trim());
+                      setResponsabilidades([...filtradas, val]);
+                      if (area) await salvarNovaResponsabilidade(val, area, nivelNormalizado);
+                      textarea.value = "";
+                    }
+                  }}>
+                  Confirmar
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">Enter confirma · Shift+Enter quebra linha</p>
             </div>
 
             {/* Skills obrigatórias */}

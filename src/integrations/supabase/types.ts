@@ -2518,6 +2518,36 @@ export type Database = {
         }
         Relationships: []
       }
+      responsabilidades_catalogo: {
+        Row: {
+          area: string
+          ativo: boolean | null
+          created_at: string | null
+          criado_por: string | null
+          id: string
+          nivel: string
+          responsabilidade: string
+        }
+        Insert: {
+          area: string
+          ativo?: boolean | null
+          created_at?: string | null
+          criado_por?: string | null
+          id?: string
+          nivel?: string
+          responsabilidade: string
+        }
+        Update: {
+          area?: string
+          ativo?: boolean | null
+          created_at?: string | null
+          criado_por?: string | null
+          id?: string
+          nivel?: string
+          responsabilidade?: string
+        }
+        Relationships: []
+      }
       role_permissions: {
         Row: {
           colaborador_tipo: string
