@@ -620,12 +620,12 @@ export default function CadastroPublico() {
       const conviteData = data as unknown as ConviteData;
 
       if (conviteData.status === "cancelado") { setError("Este convite foi cancelado."); setLoading(false); return; }
-      if (new Date(conviteData.expira_em) < new Date() && conviteData.status !== "preenchido") { setError("Este convite expirou."); setLoading(false); return; }
+      if (new Date(conviteData.expira_em) < new Date() && conviteData.status !== "preenchido" && conviteData.status !== "devolvido") { setError("Este convite expirou."); setLoading(false); return; }
 
       setConvite(conviteData);
 
       // Pre-fill with saved data
-      if (conviteData.dados_preenchidos && conviteData.status === "preenchido") {
+      if (conviteData.dados_preenchidos && (conviteData.status === "preenchido" || conviteData.status === "devolvido")) {
         const saved = conviteData.dados_preenchidos as Record<string, any>;
         if (saved.documentos_upload && Array.isArray(saved.documentos_upload)) {
           setUploadedFiles(saved.documentos_upload);
@@ -864,6 +864,24 @@ export default function CadastroPublico() {
               )}
             </CardContent>
           </Card>
+        )}
+
+        {/* Banner de devolução */}
+        {convite?.status === "devolvido" && (convite as any)?.dados_preenchidos?._comentario_rh && (
+          <div className="rounded-lg border border-amber-300 bg-amber-50 p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <AlertTriangle className="h-5 w-5 text-amber-600 flex-shrink-0" />
+              <p className="font-semibold text-amber-800 text-sm">Cadastro devolvido para ajustes</p>
+            </div>
+            <p className="text-sm text-amber-900 leading-relaxed">
+              {(convite as any).dados_preenchidos._comentario_rh}
+            </p>
+            {(convite as any).dados_preenchidos._devolvido_em && (
+              <p className="text-xs text-amber-600 mt-2">
+                Devolvido em {new Date((convite as any).dados_preenchidos._devolvido_em).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+              </p>
+            )}
+          </div>
         )}
 
         {/* Progress */}
