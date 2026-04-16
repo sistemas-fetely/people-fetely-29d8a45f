@@ -2828,6 +2828,128 @@ export type Database = {
           },
         ]
       }
+      ti_ativos: {
+        Row: {
+          atribuido_em: string | null
+          colaborador_id: string | null
+          colaborador_nome: string | null
+          colaborador_tipo: string | null
+          created_at: string
+          created_by: string | null
+          data_compra: string | null
+          devolvido_em: string | null
+          estado: string
+          fornecedor: string | null
+          garantia_ate: string | null
+          hostname: string | null
+          id: string
+          localizacao: string | null
+          marca: string | null
+          modelo: string | null
+          nota_fiscal: string | null
+          numero_patrimonio: string | null
+          numero_serie: string | null
+          observacoes: string | null
+          status: string
+          tipo: string
+          updated_at: string
+          valor_compra: number | null
+        }
+        Insert: {
+          atribuido_em?: string | null
+          colaborador_id?: string | null
+          colaborador_nome?: string | null
+          colaborador_tipo?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_compra?: string | null
+          devolvido_em?: string | null
+          estado?: string
+          fornecedor?: string | null
+          garantia_ate?: string | null
+          hostname?: string | null
+          id?: string
+          localizacao?: string | null
+          marca?: string | null
+          modelo?: string | null
+          nota_fiscal?: string | null
+          numero_patrimonio?: string | null
+          numero_serie?: string | null
+          observacoes?: string | null
+          status?: string
+          tipo: string
+          updated_at?: string
+          valor_compra?: number | null
+        }
+        Update: {
+          atribuido_em?: string | null
+          colaborador_id?: string | null
+          colaborador_nome?: string | null
+          colaborador_tipo?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_compra?: string | null
+          devolvido_em?: string | null
+          estado?: string
+          fornecedor?: string | null
+          garantia_ate?: string | null
+          hostname?: string | null
+          id?: string
+          localizacao?: string | null
+          marca?: string | null
+          modelo?: string | null
+          nota_fiscal?: string | null
+          numero_patrimonio?: string | null
+          numero_serie?: string | null
+          observacoes?: string | null
+          status?: string
+          tipo?: string
+          updated_at?: string
+          valor_compra?: number | null
+        }
+        Relationships: []
+      }
+      ti_ativos_historico: {
+        Row: {
+          acao: string
+          ativo_id: string
+          created_at: string
+          de_colaborador: string | null
+          id: string
+          observacoes: string | null
+          para_colaborador: string | null
+          responsavel_id: string | null
+        }
+        Insert: {
+          acao: string
+          ativo_id: string
+          created_at?: string
+          de_colaborador?: string | null
+          id?: string
+          observacoes?: string | null
+          para_colaborador?: string | null
+          responsavel_id?: string | null
+        }
+        Update: {
+          acao?: string
+          ativo_id?: string
+          created_at?: string
+          de_colaborador?: string | null
+          id?: string
+          observacoes?: string | null
+          para_colaborador?: string | null
+          responsavel_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ti_ativos_historico_ativo_id_fkey"
+            columns: ["ativo_id"]
+            isOneToOne: false
+            referencedRelation: "ti_ativos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           atribuido_manualmente: boolean

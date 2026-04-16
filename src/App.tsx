@@ -48,6 +48,9 @@ import CargoForm from "@/pages/CargoForm";
 import CargosEnriquecimento from "@/pages/CargosEnriquecimento";
 import EntregaTeste from "@/pages/EntregaTeste";
 import PortalSNCF from "@/pages/PortalSNCF";
+import TILayout from "@/layouts/TILayout";
+import TIDashboard from "@/pages/ti/TIDashboard";
+import TIAtivos from "@/pages/ti/TIAtivos";
 
 const queryClient = new QueryClient();
 
@@ -73,6 +76,12 @@ const App = () => (
 
             {/* SNCF Portal — porta de entrada (sem AppLayout) */}
             <Route path="/sncf" element={<ProtectedRoute><PortalSNCF /></ProtectedRoute>} />
+
+            {/* TI Fetely */}
+            <Route path="/ti" element={<ProtectedRoute><TILayout /></ProtectedRoute>}>
+              <Route index element={<TIDashboard />} />
+              <Route path="ativos" element={<TIAtivos />} />
+            </Route>
 
             {/* Protected routes */}
             <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
