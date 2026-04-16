@@ -152,41 +152,49 @@ export default function ContratoPJDetalhe() {
               });
             }
           }
-          // Create onboarding checklist for PJ
+          // Create onboarding checklist for PJ (only if not already created by wizard)
           try {
-            const { data: newChecklist } = await supabase
+            const { data: existingChecklist } = await supabase
               .from("onboarding_checklists")
-              .insert({
-                colaborador_id: id,
-                colaborador_tipo: "pj",
-              } as any)
               .select("id")
-              .single();
+              .eq("colaborador_id", id)
+              .maybeSingle();
 
-            if (newChecklist) {
-              const dataInicioPj = contrato.data_inicio ? new Date(contrato.data_inicio) : new Date();
-              let gestorUserId: string | null = null;
-              if (contrato.gestor_direto_id) {
-                const { data: gp } = await supabase.from("profiles").select("user_id").eq("id", contrato.gestor_direto_id).single();
-                gestorUserId = gp?.user_id || null;
+            if (!existingChecklist) {
+              const { data: newChecklist } = await supabase
+                .from("onboarding_checklists")
+                .insert({
+                  colaborador_id: id,
+                  colaborador_tipo: "pj",
+                } as any)
+                .select("id")
+                .single();
+
+              if (newChecklist) {
+                const dataInicioPj = contrato.data_inicio ? new Date(contrato.data_inicio) : new Date();
+                let gestorUserId: string | null = null;
+                if (contrato.gestor_direto_id) {
+                  const { data: gp } = await supabase.from("profiles").select("user_id").eq("id", contrato.gestor_direto_id).single();
+                  gestorUserId = gp?.user_id || null;
+                }
+                const tarefas = getTarefasParaTipo("pj").map((t) => {
+                  const prazoDate = new Date(dataInicioPj);
+                  prazoDate.setDate(prazoDate.getDate() + t.prazo_dias);
+                  return {
+                    checklist_id: newChecklist.id,
+                    titulo: t.titulo,
+                    descricao: t.descricao || null,
+                    responsavel_role: t.responsavel_role,
+                    responsavel_user_id:
+                      t.responsavel_role === "colaborador" ? contrato.user_id :
+                      t.responsavel_role === "gestor_direto" && gestorUserId ? gestorUserId :
+                      null,
+                    prazo_dias: t.prazo_dias,
+                    prazo_data: prazoDate.toISOString().slice(0, 10),
+                  };
+                });
+                await supabase.from("onboarding_tarefas").insert(tarefas as any);
               }
-              const tarefas = getTarefasParaTipo("pj").map((t) => {
-                const prazoDate = new Date(dataInicioPj);
-                prazoDate.setDate(prazoDate.getDate() + t.prazo_dias);
-                return {
-                  checklist_id: newChecklist.id,
-                  titulo: t.titulo,
-                  descricao: t.descricao || null,
-                  responsavel_role: t.responsavel_role,
-                  responsavel_user_id:
-                    t.responsavel_role === "colaborador" ? contrato.user_id :
-                    t.responsavel_role === "gestor_direto" && gestorUserId ? gestorUserId :
-                    null,
-                  prazo_dias: t.prazo_dias,
-                  prazo_data: prazoDate.toISOString().slice(0, 10),
-                };
-              });
-              await supabase.from("onboarding_tarefas").insert(tarefas as any);
             }
           } catch (onbErr) {
             console.error("Erro ao criar onboarding PJ:", onbErr);

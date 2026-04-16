@@ -9,6 +9,7 @@ import { ArrowLeft, ArrowRight, Save, Loader2 } from "lucide-react";
 import { StepUploadDocumentos, type UploadedFile } from "./StepUploadDocumentosCLT";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { getTarefasDinamicas } from "@/lib/onboarding-tarefas";
 import { WizardSteps } from "./WizardSteps";
 import { StepDadosPessoais } from "./StepDadosPessoais";
 import { StepDocumentos } from "./StepDocumentos";
@@ -177,6 +178,62 @@ export function CadastroColaboradorCLT() {
           .from("convites_cadastro")
           .update({ colaborador_id: inserted.id, status: "cadastrado" })
           .eq("id", conviteId);
+      }
+
+      // Gerar onboarding automático
+      try {
+        let provisionamento = null;
+        if (conviteId) {
+          const { data: conviteData } = await supabase
+            .from("convites_cadastro")
+            .select("dados_contratacao, data_inicio_prevista, lider_direto_id")
+            .eq("id", conviteId)
+            .single();
+          provisionamento = (conviteData as any)?.dados_contratacao || null;
+        }
+
+        const { data: newChecklist } = await supabase
+          .from("onboarding_checklists")
+          .insert({
+            colaborador_id: inserted.id,
+            colaborador_tipo: "clt",
+            convite_id: conviteId || null,
+          } as any)
+          .select("id")
+          .single();
+
+        if (newChecklist) {
+          const dataAdmissao = data.data_admissao ? new Date(data.data_admissao + "T12:00:00") : new Date();
+
+          let gestorUserId: string | null = null;
+          const gestorId = (data as any).lider_direto_id || (initialData as any)?.lider_direto_id;
+          if (gestorId) {
+            const { data: gp } = await supabase.from("profiles").select("user_id").eq("id", gestorId).single();
+            gestorUserId = gp?.user_id || null;
+          }
+
+          const tarefaTemplates = getTarefasDinamicas("clt", provisionamento);
+          const tarefas = tarefaTemplates.map((t) => {
+            const prazoDate = new Date(dataAdmissao);
+            prazoDate.setDate(prazoDate.getDate() + t.prazo_dias);
+            return {
+              checklist_id: newChecklist.id,
+              titulo: t.titulo,
+              descricao: t.descricao || null,
+              responsavel_role: t.responsavel_role,
+              responsavel_user_id:
+                t.responsavel_role === "gestor_direto" && gestorUserId ? gestorUserId : null,
+              prazo_dias: t.prazo_dias,
+              prazo_data: prazoDate.toISOString().slice(0, 10),
+            };
+          });
+
+          if (tarefas.length > 0) {
+            await supabase.from("onboarding_tarefas").insert(tarefas as any);
+          }
+        }
+      } catch (onbErr) {
+        console.error("Erro ao criar onboarding:", onbErr);
       }
 
       toast.success("Colaborador cadastrado com sucesso!");

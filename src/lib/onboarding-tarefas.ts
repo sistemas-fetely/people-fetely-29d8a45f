@@ -72,3 +72,76 @@ export const TAREFAS_PADRAO: TarefaTemplate[] = [
 export function getTarefasParaTipo(tipo: "clt" | "pj"): TarefaTemplate[] {
   return TAREFAS_PADRAO.filter((t) => !t.somente_clt || tipo === "clt");
 }
+
+interface ProvisionamentoData {
+  email_corporativo?: boolean;
+  email_corporativo_formato?: string;
+  celular_corporativo?: boolean;
+  sistemas_ids?: string[];
+  equipamentos?: { tipo: string; quantidade: number }[];
+}
+
+export function getTarefasDinamicas(tipo: "clt" | "pj", provisionamento?: ProvisionamentoData): TarefaTemplate[] {
+  const tarefas: TarefaTemplate[] = [];
+
+  // Tarefas padrão filtradas por tipo
+  tarefas.push(...getTarefasParaTipo(tipo));
+
+  if (!provisionamento) return tarefas;
+
+  // Email corporativo
+  if (provisionamento.email_corporativo) {
+    tarefas.push({
+      titulo: `Criar e-mail corporativo${provisionamento.email_corporativo_formato ? `: ${provisionamento.email_corporativo_formato}` : ""}`,
+      descricao: "Criar conta de e-mail corporativo no Google Workspace ou provedor da empresa.",
+      responsavel_role: "admin_rh",
+      prazo_dias: -2,
+    });
+  }
+
+  // Celular corporativo
+  if (provisionamento.celular_corporativo) {
+    tarefas.push({
+      titulo: "Providenciar celular corporativo (aparelho + linha)",
+      descricao: "Solicitar aparelho e ativar linha telefônica corporativa.",
+      responsavel_role: "admin_rh",
+      prazo_dias: -2,
+    });
+  }
+
+  // Sistemas — uma tarefa por sistema
+  if (provisionamento.sistemas_ids && provisionamento.sistemas_ids.length > 0) {
+    const idxGenerico = tarefas.findIndex(t => t.titulo === "Criar acessos nos sistemas");
+    if (idxGenerico !== -1) tarefas.splice(idxGenerico, 1);
+
+    for (const sistema of provisionamento.sistemas_ids) {
+      tarefas.push({
+        titulo: `Cadastrar acesso: ${sistema}`,
+        descricao: `Criar usuário e configurar permissões no sistema ${sistema}.`,
+        responsavel_role: "admin_rh",
+        prazo_dias: -1,
+      });
+    }
+  }
+
+  // Equipamentos — uma tarefa por tipo de equipamento
+  if (provisionamento.equipamentos && provisionamento.equipamentos.length > 0) {
+    const idxGenerico = tarefas.findIndex(t => t.titulo === "Entregar equipamentos");
+    if (idxGenerico !== -1) tarefas.splice(idxGenerico, 1);
+
+    for (const eq of provisionamento.equipamentos) {
+      const qtd = eq.quantidade > 1 ? ` (${eq.quantidade}x)` : "";
+      tarefas.push({
+        titulo: `Preparar e entregar: ${eq.tipo}${qtd}`,
+        descricao: `Separar, configurar e preparar ${eq.tipo} para entrega no primeiro dia.`,
+        responsavel_role: "admin_rh",
+        prazo_dias: -2,
+      });
+    }
+  }
+
+  // Ordenar por prazo_dias (tarefas antes do D-day primeiro)
+  tarefas.sort((a, b) => a.prazo_dias - b.prazo_dias);
+
+  return tarefas;
+}
