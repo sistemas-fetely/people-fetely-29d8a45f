@@ -218,6 +218,47 @@ export default function Cargos() {
   const [search, setSearch] = useState("");
   const [filtroDepartamento, setFiltroDepartamento] = useState("todos");
   const [filtroTipo, setFiltroTipo] = useState("todos");
+  const [deleteTarget, setDeleteTarget] = useState<Cargo | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      const checks = await Promise.all([
+        supabase.from("colaboradores_clt").select("id", { count: "exact", head: true }).eq("cargo", deleteTarget.nome),
+        supabase.from("contratos_pj").select("id", { count: "exact", head: true }).eq("tipo_servico", deleteTarget.nome),
+        supabase.from("vagas").select("id", { count: "exact", head: true }).eq("titulo", deleteTarget.nome),
+        supabase.from("convites_cadastro").select("id", { count: "exact", head: true }).eq("cargo", deleteTarget.nome),
+      ]);
+      const [clt, pj, vagas, convites] = checks;
+      const usos: string[] = [];
+      if ((clt.count || 0) > 0) usos.push(`${clt.count} colaborador(es) CLT`);
+      if ((pj.count || 0) > 0) usos.push(`${pj.count} contrato(s) PJ`);
+      if ((vagas.count || 0) > 0) usos.push(`${vagas.count} vaga(s)`);
+      if ((convites.count || 0) > 0) usos.push(`${convites.count} convite(s)`);
+
+      if (usos.length > 0) {
+        setDeleteError(`Este cargo está vinculado a: ${usos.join(", ")}. Não é possível excluir. Desative-o se não quiser que apareça em novos cadastros.`);
+        setDeleting(false);
+        return;
+      }
+
+      const { error } = await supabase.from("cargos").delete().eq("id", deleteTarget.id);
+      if (error) throw error;
+
+      toast.success(`Cargo "${deleteTarget.nome}" excluído com sucesso.`);
+      setDeleteTarget(null);
+      window.location.reload();
+    } catch (err: any) {
+      toast.error("Erro ao excluir: " + err.message);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   const [selected, setSelected] = useState<Cargo | null>(null);
 
   const departamentos = useMemo(() => {
