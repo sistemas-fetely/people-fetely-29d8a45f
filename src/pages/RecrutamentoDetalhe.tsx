@@ -40,13 +40,13 @@ const statusConfig: Record<string, { label: string; className: string }> = {
 };
 
 const KANBAN_STAGES = [
-  { key: "recebido",          label: "Recebido",           cor: "#6B7280", bg: "#F3F4F6" },
-  { key: "triagem",           label: "Triagem",            cor: "#D97706", bg: "#FFFBEB" },
-  { key: "entrevista_rh",     label: "Entrevista RH",      cor: "#2563EB", bg: "#EFF6FF" },
-  { key: "entrevista_gestor", label: "Entrevista Gestor",  cor: "#7C3AED", bg: "#F5F3FF" },
-  { key: "teste_tecnico",     label: "Teste Técnico",      cor: "#0891B2", bg: "#ECFEFF" },
-  { key: "oferta",            label: "Proposta",           cor: "#D97706", bg: "#FFF7ED" },
-  { key: "contratado",        label: "Contratado",         cor: "#1A4A3A", bg: "#D8F3DC" },
+  { key: "recebido",          label: "Recebido",           cor: "#86EFAC", bg: "#F0FFF4" },
+  { key: "triagem",           label: "Triagem",            cor: "#4ADE80", bg: "#ECFDF5" },
+  { key: "entrevista_rh",     label: "Entrevista RH",      cor: "#22C55E", bg: "#DCFCE7" },
+  { key: "entrevista_gestor", label: "Entrevista Gestor",  cor: "#16A34A", bg: "#D1FAE5" },
+  { key: "teste_tecnico",     label: "Teste Técnico",      cor: "#15803D", bg: "#BBF7D0" },
+  { key: "oferta",            label: "Proposta",           cor: "#166534", bg: "#A7F3D0" },
+  { key: "contratado",        label: "Contratado",         cor: "#1A4A3A", bg: "#6EE7B7" },
   { key: "recusado",          label: "Recusado",           cor: "#DC2626", bg: "#FEF2F2" },
 ] as const;
 
