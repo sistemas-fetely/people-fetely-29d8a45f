@@ -7,7 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import {
   Plus, Loader2, Copy, Trash2, MoreHorizontal, Send, Clock, CheckCircle2,
   XCircle, Search, RefreshCw, ExternalLink, Eye, Mail, Lock, CalendarIcon,
-  ArrowRightLeft, AlertTriangle, FileSearch, Undo2, UserCheck, X,
+  ArrowRightLeft, AlertTriangle, FileSearch, Undo2, UserCheck, X, UserPlus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -55,6 +55,7 @@ const STATUS_CONFIG: Record<string, { label: string; badge: string; icon: typeof
   preenchido: { label: "Preenchido", badge: "bg-emerald-100 text-emerald-700 border-0", icon: CheckCircle2 },
   em_revisao: { label: "Em Revisão", badge: "bg-purple-100 text-purple-700 border-0", icon: FileSearch },
   devolvido: { label: "Devolvido", badge: "bg-orange-100 text-orange-700 border-0", icon: Undo2 },
+  aprovado: { label: "Aprovado", badge: "bg-blue-100 text-blue-700 border-0", icon: CheckCircle2 },
   cadastrado: { label: "Cadastrado", badge: "bg-muted text-muted-foreground border-0", icon: UserCheck },
   expirado: { label: "Expirado", badge: "bg-red-100 text-red-700 border-0", icon: XCircle },
   cancelado: { label: "Cancelado", badge: "bg-muted text-muted-foreground border-0", icon: XCircle },
@@ -67,6 +68,7 @@ const FUNNEL_PHASES = [
   { key: "preenchido", label: "Preenchidos", emoji: "📝", color: "border-l-emerald-500", textColor: "text-emerald-700" },
   { key: "em_revisao", label: "Em Revisão", emoji: "🔍", color: "border-l-purple-500", textColor: "text-purple-700" },
   { key: "devolvido", label: "Devolvidos", emoji: "↩️", color: "border-l-orange-500", textColor: "text-orange-700" },
+  { key: "aprovado", label: "Aprovados", emoji: "👍", color: "border-l-blue-500", textColor: "text-blue-700" },
   { key: "cadastrado", label: "Cadastrados", emoji: "✅", color: "border-l-muted", textColor: "text-muted-foreground" },
 ];
 
@@ -127,6 +129,7 @@ function getDisplayStatus(c: Convite): string {
   const now = new Date();
   if (c.status === "cancelado") return "cancelado";
   if (c.status === "cadastrado") return "cadastrado";
+  if (c.status === "aprovado") return "aprovado";
   if ((c.status === "pendente" || c.status === "email_enviado") && new Date(c.expira_em) <= now) return "expirado";
   // "Atrasado" = email_enviado + sent 3+ days ago without filling
   if (c.status === "email_enviado") {
@@ -448,8 +451,8 @@ export default function ConvitesCadastro() {
   const handleApprove = async (convite: Convite) => {
     setActionLoading(true);
     try {
-      await supabase.from("convites_cadastro").update({ status: "cadastrado" }).eq("id", convite.id);
-      setConvites(prev => prev.map(c => c.id === convite.id ? { ...c, status: "cadastrado" } : c));
+      await supabase.from("convites_cadastro").update({ status: "aprovado" }).eq("id", convite.id);
+      setConvites(prev => prev.map(c => c.id === convite.id ? { ...c, status: "aprovado" } : c));
       setReviewTarget(null);
       toast.success(`Convite de ${convite.nome} aprovado! Prossiga com o cadastro.`);
       // Navigate to detail page for export
@@ -692,6 +695,12 @@ export default function ConvitesCadastro() {
                                   <DropdownMenuItem onClick={() => sendEmail(c)} className="gap-2"><Mail className="h-4 w-4" /> Reenviar</DropdownMenuItem>
                                 </>
                               )}
+                              {c.displayStatus === "aprovado" && (
+                                <>
+                                  <DropdownMenuItem onClick={() => navigate(`/convites-cadastro/${c.id}`)} className="gap-2"><UserPlus className="h-4 w-4" /> Criar Colaborador</DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => { setReviewTarget(c); setReturnDialogOpen(true); }} className="gap-2"><Undo2 className="h-4 w-4" /> Devolver com Comentário</DropdownMenuItem>
+                                </>
+                              )}
                               {c.displayStatus === "cadastrado" && (
                                 <DropdownMenuItem onClick={() => navigate(`/convites-cadastro/${c.id}`)} className="gap-2"><Eye className="h-4 w-4" /> Ver Detalhes</DropdownMenuItem>
                               )}
@@ -831,7 +840,7 @@ export default function ConvitesCadastro() {
                   </Button>
                   <Button className="flex-1 gap-2" onClick={() => handleApprove(reviewTarget)} disabled={actionLoading}>
                     {actionLoading && <Loader2 className="h-4 w-4 animate-spin" />}
-                    <CheckCircle2 className="h-4 w-4" /> Aprovar e Ativar
+                    <CheckCircle2 className="h-4 w-4" /> Aprovar Cadastro
                   </Button>
                 </div>
               )}

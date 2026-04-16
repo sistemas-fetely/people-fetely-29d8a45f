@@ -239,14 +239,16 @@ export default function ConviteDetalhe() {
   const expired = convite.status === "pendente" && new Date(convite.expira_em) <= new Date();
   const displayStatus = expired ? "expirado" : convite.status;
   const isCadastrado = convite.status === "cadastrado";
+  const isAprovado = convite.status === "aprovado";
   const alreadyLinked = !!convite.colaborador_id || !!convite.contrato_pj_id;
-  const canExport = hasDados && !alreadyLinked;
-  const canEdit = !isCadastrado;
+  const canExport = hasDados && !alreadyLinked && (isAprovado || isCadastrado);
+  const canEdit = !isCadastrado && !isAprovado;
 
   const statusLabels: Record<string, string> = {
     pendente: "Pendente",
     email_enviado: "Email Enviado",
     preenchido: "Preenchido",
+    aprovado: "Aprovado — Aguardando Cadastro",
     cadastrado: "Cadastrado com Sucesso",
     expirado: "Expirado",
     cancelado: "Cancelado",
