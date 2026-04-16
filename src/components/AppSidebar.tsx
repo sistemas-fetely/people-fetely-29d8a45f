@@ -1,7 +1,7 @@
 import {
   LayoutDashboard, Users, FileText, Calendar, ClipboardList, Award,
   GraduationCap, GitBranch, BarChart3, Settings, UserCircle, CreditCard,
-  Briefcase, LogOut, ArrowUpDown, Send, UserCheck, ClipboardCheck,
+  Briefcase, LogOut, ArrowUpDown, Send, UserCheck, ClipboardCheck, LayoutGrid,
 } from "lucide-react";
 import logoFetely from "@/assets/logo_fetely.jpg";
 import { NavLink } from "@/components/NavLink";
@@ -47,7 +47,7 @@ interface MenuItem {
 }
 
 const mainItems: MenuItem[] = [
-  { title: "Dashboard", url: "/", icon: LayoutDashboard, permModule: "dashboard" },
+  { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard, permModule: "dashboard" },
   { title: "Pessoas", url: "/pessoas", icon: Users, permModule: "colaboradores" },
   { title: "Organograma", url: "/organograma", icon: GitBranch, permModule: "organograma" },
   { title: "Férias", url: "/ferias", icon: Calendar, permModule: "ferias" },
@@ -172,6 +172,25 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent className="px-2 space-y-1">
+        {/* Voltar ao Portal SNCF */}
+        <SidebarGroup>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <NavLink
+                    to="/sncf"
+                    className="flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-all duration-200"
+                  >
+                    <LayoutGrid className="h-[18px] w-[18px] shrink-0" />
+                    {!collapsed && <span>SNCF</span>}
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+        <div className="mx-4 border-t border-sidebar-border/40" />
         <MenuGroup label="Principal" items={mainItems} collapsed={collapsed} canViewModule={canView} userRoles={roles} />
         <div className="mx-4 border-t border-sidebar-border/40" />
         <MenuGroup label="CLT" items={cltItems} collapsed={collapsed} canViewModule={canView} userRoles={roles} />

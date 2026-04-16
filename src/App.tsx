@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -47,6 +47,7 @@ import Cargos from "@/pages/Cargos";
 import CargoForm from "@/pages/CargoForm";
 import CargosEnriquecimento from "@/pages/CargosEnriquecimento";
 import EntregaTeste from "@/pages/EntregaTeste";
+import PortalSNCF from "@/pages/PortalSNCF";
 
 const queryClient = new QueryClient();
 
@@ -70,9 +71,13 @@ const App = () => (
             <Route path="/vagas/:id/teste" element={<EntregaTeste />} />
             <Route path="/unsubscribe" element={<Unsubscribe />} />
 
+            {/* SNCF Portal — porta de entrada (sem AppLayout) */}
+            <Route path="/sncf" element={<ProtectedRoute><PortalSNCF /></ProtectedRoute>} />
+
             {/* Protected routes */}
             <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
-              <Route path="/" element={<Dashboard />} />
+              <Route path="/" element={<Navigate to="/sncf" replace />} />
+              <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/pessoas" element={<Pessoas />} />
               <Route path="/colaboradores" element={
                 <ProtectedRoute permModule="colaboradores">
