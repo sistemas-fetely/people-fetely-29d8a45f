@@ -593,8 +593,8 @@ export default function ConvitesCadastro() {
               <p className="text-xl font-bold" style={{ color: phase.color }}>
                 {funnelCounts[phase.key] || 0}
                 {phase.key === "email_enviado" && atrasadosCount > 0 && (
-                  <span className="text-xs font-semibold ml-1.5" style={{ color: "#D97706" }}>
-                    ({atrasadosCount} atrasado{atrasadosCount > 1 ? "s" : ""})
+                  <span className="text-xs font-medium ml-1.5 px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 inline-flex items-center gap-0.5">
+                    ⚠️ {atrasadosCount}
                   </span>
                 )}
               </p>
