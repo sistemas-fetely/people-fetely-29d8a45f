@@ -475,6 +475,25 @@ export default function ConvitesCadastro() {
         dados_preenchidos: updatedData,
       }).eq("id", reviewTarget.id);
       setConvites(prev => prev.map(c => c.id === reviewTarget.id ? { ...c, status: "devolvido", dados_preenchidos: updatedData } : c));
+
+      // Enviar e-mail ao colaborador informando a devolução
+      try {
+        await supabase.functions.invoke("send-transactional-email", {
+          body: {
+            templateName: "cadastro-devolvido",
+            recipientEmail: reviewTarget.email,
+            idempotencyKey: `cadastro-devolvido-${reviewTarget.id}-${Date.now()}`,
+            templateData: {
+              nome: reviewTarget.nome,
+              comentario: returnComment.trim(),
+              link: getLink(reviewTarget.token),
+            },
+          },
+        });
+      } catch (emailErr: any) {
+        console.error("Erro ao enviar e-mail de devolução:", emailErr);
+      }
+
       setReviewTarget(null);
       setReturnDialogOpen(false);
       setReturnComment("");
