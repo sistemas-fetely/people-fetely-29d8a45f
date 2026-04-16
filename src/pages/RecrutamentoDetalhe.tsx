@@ -3792,24 +3792,43 @@ function ModuloOferta({
 
         {/* Salário */}
         {canSeeFaixa && (
-          <div className="space-y-1.5">
+          <div className="space-y-2">
             <Label className="text-xs">
               {form.tipo_contrato === "pj" ? "Honorários propostos (R$)" : "Salário proposto (R$)"}
             </Label>
+            {(faixaMinEfetiva || faixaMaxEfetiva) && (
+              <div className="p-3 rounded-lg border space-y-2" style={{ backgroundColor: "#F0F7F4", borderColor: "#1A4A3A20" }}>
+                <p className="text-xs font-semibold" style={{ color: "#1A4A3A" }}>Faixa salarial do cargo</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <p className="text-xs text-muted-foreground">F1 (entrada)</p>
+                    <p className="text-sm font-semibold" style={{ color: "#1A4A3A" }}>
+                      R$ {Number(faixaMinEfetiva ?? 0).toLocaleString("pt-BR")} – R$ {Number(faixaMaxEfetiva ?? 0).toLocaleString("pt-BR")}
+                    </p>
+                  </div>
+                  {faixaF5Max && (
+                    <div>
+                      <p className="text-xs text-muted-foreground">F5 (topo)</p>
+                      <p className="text-sm font-medium text-muted-foreground">
+                        até R$ {Number(faixaF5Max).toLocaleString("pt-BR")}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
             <Input type="number" value={form.salario_proposto} className="h-9"
               placeholder="0,00"
               onChange={e => setForm(f => ({ ...f, salario_proposto: e.target.value }))}
             />
-            {(vaga?.faixa_min || vaga?.faixa_max) && (
-              <p className="text-xs text-muted-foreground">
-                Faixa da vaga: R$ {Number(vaga.faixa_min ?? 0).toLocaleString("pt-BR")} – R$ {Number(vaga.faixa_max ?? 0).toLocaleString("pt-BR")}
-              </p>
+            {form.salario_proposto && faixaMinEfetiva && Number(form.salario_proposto) < Number(faixaMinEfetiva) && (
+              <p className="text-xs font-medium" style={{ color: "#D97706" }}>⚠ Valor abaixo da faixa mínima do cargo (F1)</p>
             )}
-            {form.salario_proposto && vaga?.faixa_min && Number(form.salario_proposto) < Number(vaga.faixa_min) && (
-              <p className="text-xs font-medium" style={{ color: "#D97706" }}>⚠ Valor abaixo da faixa mínima da vaga</p>
+            {form.salario_proposto && faixaMaxEfetiva && Number(form.salario_proposto) > Number(faixaMaxEfetiva) && (
+              <p className="text-xs font-medium" style={{ color: "#D97706" }}>⚠ Valor acima da faixa F1 — verifique se é uma promoção ou exceção</p>
             )}
-            {form.salario_proposto && vaga?.faixa_max && Number(form.salario_proposto) > Number(vaga.faixa_max) && (
-              <p className="text-xs font-medium" style={{ color: "#DC2626" }}>⚠ Valor acima da faixa máxima da vaga</p>
+            {form.salario_proposto && faixaF5Max && Number(form.salario_proposto) > Number(faixaF5Max) && (
+              <p className="text-xs font-medium" style={{ color: "#DC2626" }}>⚠ Valor acima do topo da faixa (F5) — não permitido</p>
             )}
           </div>
         )}
