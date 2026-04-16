@@ -329,6 +329,36 @@ export default function ConvitesCadastro() {
         }
       }
 
+      // Se veio do recrutamento, atualizar candidato e registrar histórico
+      const prefill = (location.state as any)?.prefill;
+      if (prefill?.origem === "recrutamento" && prefill.candidato_id) {
+        await supabase
+          .from("candidatos")
+          .update({ status: "contratado" } as any)
+          .eq("id", prefill.candidato_id);
+
+        await supabase.from("candidato_historico").insert({
+          candidato_id: prefill.candidato_id,
+          status_anterior: "oferta",
+          status_novo: "contratado",
+          responsavel_id: user?.id || null,
+        } as any);
+
+        // Incrementar vagas_preenchidas
+        if (prefill.vaga_id) {
+          const { data: vagaData } = await supabase
+            .from("vagas")
+            .select("vagas_preenchidas")
+            .eq("id", prefill.vaga_id)
+            .single();
+
+          await supabase
+            .from("vagas")
+            .update({ vagas_preenchidas: ((vagaData as any)?.vagas_preenchidas ?? 0) + 1 } as any)
+            .eq("id", prefill.vaga_id);
+        }
+      }
+
       toast.success("Convite criado com sucesso!");
       setFormOpen(false);
       setForm(initialForm);
