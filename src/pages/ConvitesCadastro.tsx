@@ -638,7 +638,7 @@ export default function ConvitesCadastro() {
                     <TableHead className="hidden lg:table-cell">Depto</TableHead>
                     {!isGestorDireto && <TableHead className="hidden xl:table-cell">Líder</TableHead>}
                     {!isGestorDireto && <TableHead className="hidden xl:table-cell">Grupo</TableHead>}
-                    {canSeeSensitive && <TableHead className="hidden xl:table-cell">Salário</TableHead>}
+                    
                     <TableHead>Status</TableHead>
                     <TableHead className="hidden md:table-cell">Início</TableHead>
                     <TableHead className="hidden md:table-cell">Tempo</TableHead>
@@ -667,19 +667,15 @@ export default function ConvitesCadastro() {
                         <TableCell className="text-sm hidden lg:table-cell">{c.departamento || "—"}</TableCell>
                         {!isGestorDireto && <TableCell className="text-sm hidden xl:table-cell">{c.lider_direto_id ? (liderMap.get(c.lider_direto_id) || "—") : "—"}</TableCell>}
                         {!isGestorDireto && <TableCell className="text-sm hidden xl:table-cell">{c.grupo_acesso_id ? (grupoMap.get(c.grupo_acesso_id) || "—") : "—"}</TableCell>}
-                        {canSeeSensitive && (
-                          <TableCell className="text-sm hidden xl:table-cell">
-                            {c.salario_previsto
-                              ? canSeeSalary(isCargoClevel(c.cargo))
-                                ? `R$ ${Number(c.salario_previsto).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`
-                                : "🔒"
-                              : "—"}
-                          </TableCell>
-                        )}
                         <TableCell>
                           <Badge variant="outline" className={statusCfg.badge}>
                             {statusCfg.label}
                           </Badge>
+                          {c.displayStatus === "email_enviado" && daysSince >= 3 && (
+                            <p className="text-[10px] mt-0.5 font-medium" style={{ color: daysSince >= 14 ? "#DC2626" : "#D97706" }}>
+                              {daysSince >= 14 ? "3 lembretes enviados" : daysSince >= 7 ? "2 lembretes enviados" : "1 lembrete enviado"} · {daysSince} dias
+                            </p>
+                          )}
                         </TableCell>
                         <TableCell className="text-sm hidden md:table-cell">
                           {c.data_inicio_prevista ? format(parseISO(c.data_inicio_prevista), "dd/MM/yy") : "—"}
@@ -728,12 +724,6 @@ export default function ConvitesCadastro() {
                               )}
                               {c.displayStatus === "cadastrado" && (
                                 <DropdownMenuItem onClick={() => navigate(`/convites-cadastro/${c.id}`)} className="gap-2"><Eye className="h-4 w-4" /> Ver Detalhes</DropdownMenuItem>
-                              )}
-                              {c.displayStatus === "expirado" && (
-                                <>
-                                  <DropdownMenuItem onClick={() => sendEmail(c)} className="gap-2"><Mail className="h-4 w-4" /> Reenviar Convite</DropdownMenuItem>
-                                  <DropdownMenuItem onClick={() => setDeleteTarget(c)} className="gap-2 text-destructive"><Trash2 className="h-4 w-4" /> Excluir</DropdownMenuItem>
-                                </>
                               )}
                             </DropdownMenuContent>
                           </DropdownMenu>
