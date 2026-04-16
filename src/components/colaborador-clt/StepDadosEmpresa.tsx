@@ -44,10 +44,6 @@ export function StepDadosEmpresa() {
             )}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="ramal">Ramal</Label>
-            <Input id="ramal" placeholder="Ex: 2045" {...register("ramal")} />
-          </div>
-          <div className="space-y-2">
             <Label htmlFor="data_integracao">Data de Integração</Label>
             <Input id="data_integracao" type="date" {...register("data_integracao")} />
           </div>
