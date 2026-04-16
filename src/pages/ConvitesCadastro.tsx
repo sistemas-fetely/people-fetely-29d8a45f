@@ -6,9 +6,10 @@ import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   Plus, Loader2, Copy, Trash2, MoreHorizontal, Send, Clock, CheckCircle2,
-  XCircle, Search, RefreshCw, ExternalLink, Eye, Mail, Lock, CalendarIcon,
+  XCircle, Search, RefreshCw, ExternalLink, Eye, Mail, MailX, Lock, CalendarIcon,
   ArrowRightLeft, AlertTriangle, FileSearch, Undo2, UserCheck, X, UserPlus,
 } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -89,6 +90,7 @@ interface Convite {
   prazo_dias: number;
   colaborador_id: string | null;
   contrato_pj_id: string | null;
+  lembretes_ativos: boolean;
 }
 
 interface LiderOption {
@@ -661,7 +663,49 @@ export default function ConvitesCadastro() {
                     return (
                       <TableRow key={c.id} className={cn("cursor-pointer hover:bg-muted/50", rowClass)} onClick={() => navigate(`/convites-cadastro/${c.id}`)}>
                         <TableCell className="font-medium">{c.nome}</TableCell>
-                        <TableCell className="text-sm hidden md:table-cell">{c.email}</TableCell>
+                        <TableCell className="text-sm hidden md:table-cell">
+                          <div className="flex items-center gap-1.5">
+                            <span>{c.email}</span>
+                            {c.displayStatus === "email_enviado" && (
+                              <TooltipProvider delayDuration={200}>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <button
+                                      className="inline-flex items-center justify-center rounded p-0.5 transition-colors hover:bg-muted"
+                                      onClick={async (e) => {
+                                        e.stopPropagation();
+                                        const newValue = !c.lembretes_ativos;
+                                        // Optimistic update
+                                        setConvites(prev => prev.map(cv => cv.id === c.id ? { ...cv, lembretes_ativos: newValue } : cv));
+                                        const { error } = await supabase.from("convites_cadastro").update({
+                                          lembretes_ativos: newValue,
+                                          lembretes_suspenso_por: newValue ? null : user?.id ?? null,
+                                          lembretes_suspenso_em: newValue ? null : new Date().toISOString(),
+                                        } as any).eq("id", c.id);
+                                        if (error) {
+                                          // Rollback
+                                          setConvites(prev => prev.map(cv => cv.id === c.id ? { ...cv, lembretes_ativos: !newValue } : cv));
+                                          toast.error("Erro ao atualizar lembretes");
+                                        } else {
+                                          toast.success(newValue ? "Lembretes reativados" : "Lembretes suspensos");
+                                        }
+                                      }}
+                                    >
+                                      {c.lembretes_ativos !== false ? (
+                                        <Mail className="h-3.5 w-3.5 text-blue-500" />
+                                      ) : (
+                                        <MailX className="h-3.5 w-3.5 text-red-500" />
+                                      )}
+                                    </button>
+                                  </TooltipTrigger>
+                                  <TooltipContent side="top">
+                                    <p>{c.lembretes_ativos !== false ? "Lembretes ativos" : "Lembretes suspensos"}</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            )}
+                          </div>
+                        </TableCell>
                         <TableCell><Badge variant="outline" className="text-xs">{c.tipo.toUpperCase()}</Badge></TableCell>
                         <TableCell className="text-sm hidden lg:table-cell">{c.cargo || "—"}</TableCell>
                         <TableCell className="text-sm hidden lg:table-cell">{c.departamento || "—"}</TableCell>
