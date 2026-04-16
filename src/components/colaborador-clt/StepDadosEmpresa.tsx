@@ -9,7 +9,7 @@ import { useParametros } from "@/hooks/useParametros";
 import type { DadosEmpresaForm } from "@/lib/validations/colaborador-clt";
 
 export function StepDadosEmpresa() {
-  const { register, setValue, watch, formState: { errors } } = useFormContext<DadosEmpresaForm>();
+  const { register, setValue, watch, formState: { errors } } = useFormContext<any>();
 
   const { data: sistemas, isLoading: loadingSistemas } = useParametros("sistema");
   const { data: tiposEquip, isLoading: loadingTipos } = useParametros("tipo_equipamento");
@@ -25,6 +25,18 @@ export function StepDadosEmpresa() {
 
   return (
     <div className="space-y-8">
+      {/* Banner quando dados vieram do convite */}
+      {(watch("email_corporativo") || (watch("acessos_sistemas") as any[])?.length > 0 || (watch("equipamentos") as any[])?.length > 0) && (
+        <div className="rounded-lg border-l-4 p-3 mb-4 bg-primary/5 border-primary">
+          <p className="text-sm font-medium text-primary">
+            Dados definidos na contratação — confira e ajuste se necessário
+          </p>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Esses dados foram preenchidos pelo RH no momento da contratação e podem ser editados aqui.
+          </p>
+        </div>
+      )}
+
       {/* Email Corporativo e Informações */}
       <div>
         <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
@@ -40,12 +52,26 @@ export function StepDadosEmpresa() {
               {...register("email_corporativo")}
             />
             {errors.email_corporativo && (
-              <p className="text-xs text-destructive">{errors.email_corporativo.message}</p>
+              <p className="text-xs text-destructive">{errors.email_corporativo?.message as string}</p>
             )}
           </div>
           <div className="space-y-2">
             <Label htmlFor="data_integracao">Data de Integração</Label>
             <Input id="data_integracao" type="date" {...register("data_integracao")} />
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="celular_corporativo_info">Celular Corporativo</Label>
+          <div className="flex items-center gap-3">
+            <Switch
+              id="celular_corporativo_info"
+              checked={watch("celular_corporativo") || false}
+              onCheckedChange={(checked) => setValue("celular_corporativo", checked)}
+            />
+            <span className="text-sm text-muted-foreground">
+              {watch("celular_corporativo") ? "Sim — aparelho + linha" : "Não necessário"}
+            </span>
           </div>
         </div>
       </div>
