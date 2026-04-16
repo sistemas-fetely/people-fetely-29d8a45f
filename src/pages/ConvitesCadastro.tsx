@@ -9,6 +9,7 @@ import {
   XCircle, Search, RefreshCw, ExternalLink, Eye, Mail, MailX, Lock, CalendarIcon,
   ArrowRightLeft, AlertTriangle, FileSearch, Undo2, UserCheck, X, UserPlus,
 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
