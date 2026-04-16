@@ -30,7 +30,10 @@ export function StepDadosProfissionais() {
           {loadingCargos ? (
             <div className="flex items-center h-10"><Loader2 className="h-4 w-4 animate-spin" /></div>
           ) : (
-            <Select value={watch("cargo") || ""} onValueChange={(v) => setValue("cargo", v)}>
+            <Select
+              value={(cargos || []).find(c => c.nome.toLowerCase() === (watch("cargo") || "").toLowerCase())?.nome || watch("cargo") || ""}
+              onValueChange={(v) => setValue("cargo", v)}
+            >
               <SelectTrigger><SelectValue placeholder="Selecione o cargo" /></SelectTrigger>
               <SelectContent>
                 {(cargos || []).map((c) => (
@@ -46,7 +49,10 @@ export function StepDadosProfissionais() {
           {loadingDepts ? (
             <div className="flex items-center h-10"><Loader2 className="h-4 w-4 animate-spin" /></div>
           ) : (
-            <Select value={watch("departamento") || ""} onValueChange={(v) => setValue("departamento", v)}>
+            <Select
+              value={(departamentos || []).find(d => d.label.toLowerCase() === (watch("departamento") || "").toLowerCase())?.label || watch("departamento") || ""}
+              onValueChange={(v) => setValue("departamento", v)}
+            >
               <SelectTrigger><SelectValue placeholder="Selecione o departamento" /></SelectTrigger>
               <SelectContent>
                 {(departamentos || []).map((d) => (
