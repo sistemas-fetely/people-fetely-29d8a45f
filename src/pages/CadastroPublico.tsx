@@ -620,7 +620,7 @@ export default function CadastroPublico() {
       const conviteData = data as unknown as ConviteData;
 
       if (conviteData.status === "cancelado") { setError("Este convite foi cancelado."); setLoading(false); return; }
-      if (new Date(conviteData.expira_em) < new Date() && conviteData.status !== "preenchido" && conviteData.status !== "devolvido") { setError("Este convite expirou."); setLoading(false); return; }
+      
 
       setConvite(conviteData);
 
@@ -812,8 +812,6 @@ export default function CadastroPublico() {
             Olá, {convite?.nome}! Complete seu cadastro abaixo.
           </p>
           <div className="flex items-center gap-2 mt-2 text-primary-foreground/70 text-xs">
-            <Clock className="h-3 w-3" />
-            <span>Expira em {daysLeft} dia(s)</span>
             {autoSaving && (
               <span className="ml-auto flex items-center gap-1">
                 <Loader2 className="h-3 w-3 animate-spin" /> Salvando...
