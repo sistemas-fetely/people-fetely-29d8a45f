@@ -1213,6 +1213,9 @@ export type Database = {
           expira_em: string
           grupo_acesso_id: string | null
           id: string
+          lembretes_ativos: boolean
+          lembretes_suspenso_em: string | null
+          lembretes_suspenso_por: string | null
           lider_direto_id: string | null
           nome: string
           observacoes_colaborador: string | null
@@ -1238,6 +1241,9 @@ export type Database = {
           expira_em?: string
           grupo_acesso_id?: string | null
           id?: string
+          lembretes_ativos?: boolean
+          lembretes_suspenso_em?: string | null
+          lembretes_suspenso_por?: string | null
           lider_direto_id?: string | null
           nome: string
           observacoes_colaborador?: string | null
@@ -1263,6 +1269,9 @@ export type Database = {
           expira_em?: string
           grupo_acesso_id?: string | null
           id?: string
+          lembretes_ativos?: boolean
+          lembretes_suspenso_em?: string | null
+          lembretes_suspenso_por?: string | null
           lider_direto_id?: string | null
           nome?: string
           observacoes_colaborador?: string | null
