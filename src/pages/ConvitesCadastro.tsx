@@ -9,6 +9,7 @@ import {
   XCircle, Search, RefreshCw, ExternalLink, Eye, Mail, MailX, Lock, CalendarIcon,
   ArrowRightLeft, AlertTriangle, FileSearch, Undo2, UserCheck, X, UserPlus,
 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -117,6 +118,11 @@ const initialForm = {
   jornada_semanal: "44",
   horario_trabalho: "",
   local_trabalho: "",
+  email_corporativo: false,
+  email_corporativo_formato: "",
+  celular_corporativo: false,
+  sistemas_ids: [] as string[],
+  equipamentos: [] as { tipo: string; quantidade: number }[],
 };
 
 // ─── Helper: compute display status ─────────────────────────────────
@@ -170,6 +176,11 @@ export default function ConvitesCadastro() {
         jornada_semanal: prefill.jornada_semanal || "44",
         horario_trabalho: prefill.horario_trabalho || "",
         local_trabalho: prefill.local_trabalho || "",
+        email_corporativo: prefill.email_corporativo || false,
+        email_corporativo_formato: prefill.email_corporativo_formato || "",
+        celular_corporativo: prefill.celular_corporativo || false,
+        sistemas_ids: prefill.sistemas_ids || [],
+        equipamentos: prefill.equipamentos || [],
       });
       setFormOpen(true);
       // Limpar o state para não reabrir ao navegar de volta
@@ -188,6 +199,8 @@ export default function ConvitesCadastro() {
   const { data: jornadas } = useParametros("jornada");
   const { data: locaisTrabalho } = useParametros("local_trabalho");
   const { data: horariosTrabalho } = useParametros("horario_trabalho");
+  const { data: sistemasParam = [] } = useParametros("sistema");
+  const { data: tiposEquipamento = [] } = useParametros("tipo_equipamento");
   const { data: cargosRaw } = useCargos();
   const cargos = (cargosRaw || []).map((c) => ({ id: c.id, valor: c.nome, label: c.nome, is_clevel: c.is_clevel }));
   const { isCargoClevel } = useCLevelCargos();
@@ -306,6 +319,11 @@ export default function ConvitesCadastro() {
         jornada_semanal: form.jornada_semanal || null,
         horario_trabalho: form.horario_trabalho || null,
         local_trabalho: form.local_trabalho || null,
+        email_corporativo: form.email_corporativo,
+        email_corporativo_formato: form.email_corporativo_formato || null,
+        celular_corporativo: form.celular_corporativo,
+        sistemas_ids: form.sistemas_ids.length > 0 ? form.sistemas_ids : null,
+        equipamentos: form.equipamentos.filter(e => e.tipo).length > 0 ? form.equipamentos.filter(e => e.tipo) : null,
       };
 
       const { data, error } = await supabase
@@ -1088,7 +1106,128 @@ export default function ConvitesCadastro() {
                     <SelectContent>{filteredGrupos.map((g: any) => <SelectItem key={g.id} value={g.id}>{g.nome}</SelectItem>)}</SelectContent>
                   </Select>
                   <p className="text-xs text-muted-foreground mt-1">Define o role automático ao ativar</p>
+              </div>
+
+              {/* Section 3: Provisionamento */}
+              <div className="rounded-lg border bg-muted/30 p-4 space-y-4">
+                <div>
+                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Provisionamento</h3>
+                  <p className="text-xs text-muted-foreground mt-1">Defina o que precisa ser preparado antes da chegada do colaborador. Essas informações geram tarefas automáticas no onboarding.</p>
                 </div>
+
+                {/* Email corporativo */}
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      id="email_corporativo"
+                      checked={form.email_corporativo}
+                      onCheckedChange={(checked) => {
+                        setForm({ ...form, email_corporativo: !!checked, email_corporativo_formato: checked ? `${form.nome.trim().split(" ")[0]?.toLowerCase()}.${form.nome.trim().split(" ").slice(-1)[0]?.toLowerCase()}@fetely.com.br` : "" });
+                      }}
+                    />
+                    <Label htmlFor="email_corporativo" className="cursor-pointer">Criar e-mail corporativo Fetely</Label>
+                  </div>
+                  {form.email_corporativo && (
+                    <Input
+                      value={form.email_corporativo_formato}
+                      onChange={(e) => setForm({ ...form, email_corporativo_formato: e.target.value })}
+                      placeholder="nome.sobrenome@fetely.com.br"
+                      className="ml-7"
+                    />
+                  )}
+                </div>
+
+                {/* Celular corporativo */}
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="celular_corporativo"
+                    checked={form.celular_corporativo}
+                    onCheckedChange={(checked) => setForm({ ...form, celular_corporativo: !!checked })}
+                  />
+                  <Label htmlFor="celular_corporativo" className="cursor-pointer">Celular corporativo (aparelho + linha)</Label>
+                </div>
+
+                {/* Sistemas */}
+                <div className="space-y-2">
+                  <Label>Sistemas que vai utilizar</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {sistemasParam.map((s) => {
+                      const selected = form.sistemas_ids.includes(s.valor);
+                      return (
+                        <Badge
+                          key={s.id}
+                          variant={selected ? "default" : "outline"}
+                          className="cursor-pointer"
+                          onClick={() => {
+                            setForm({
+                              ...form,
+                              sistemas_ids: selected
+                                ? form.sistemas_ids.filter((id) => id !== s.valor)
+                                : [...form.sistemas_ids, s.valor],
+                            });
+                          }}
+                        >
+                          {s.label}
+                        </Badge>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Equipamentos */}
+                <div className="space-y-2">
+                  <Label>Equipamentos necessários</Label>
+                  {form.equipamentos.map((eq, idx) => (
+                    <div key={idx} className="flex items-center gap-2">
+                      <Select
+                        value={eq.tipo}
+                        onValueChange={(v) => {
+                          const updated = [...form.equipamentos];
+                          updated[idx] = { ...updated[idx], tipo: v };
+                          setForm({ ...form, equipamentos: updated });
+                        }}
+                      >
+                        <SelectTrigger className="flex-1"><SelectValue placeholder="Tipo de equipamento" /></SelectTrigger>
+                        <SelectContent>
+                          {tiposEquipamento.map((t) => (
+                            <SelectItem key={t.id} value={t.valor}>{t.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Input
+                        type="number"
+                        min={1}
+                        value={eq.quantidade}
+                        onChange={(e) => {
+                          const updated = [...form.equipamentos];
+                          updated[idx] = { ...updated[idx], quantidade: parseInt(e.target.value) || 1 };
+                          setForm({ ...form, equipamentos: updated });
+                        }}
+                        className="w-20"
+                        placeholder="Qtd"
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {
+                          setForm({ ...form, equipamentos: form.equipamentos.filter((_, i) => i !== idx) });
+                        }}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setForm({ ...form, equipamentos: [...form.equipamentos, { tipo: "", quantidade: 1 }] })}
+                  >
+                    <Plus className="h-4 w-4 mr-1" /> Adicionar equipamento
+                  </Button>
+                </div>
+              </div>
               </div>
 
               {/* Section 3: Dados Sensíveis */}
