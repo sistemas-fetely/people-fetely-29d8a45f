@@ -7,7 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import {
   Plus, Loader2, Copy, Trash2, MoreHorizontal, Send, Clock, CheckCircle2,
   XCircle, Search, RefreshCw, ExternalLink, Eye, Mail, Lock, CalendarIcon,
-  ArrowRightLeft, AlertTriangle, FileSearch, Undo2, UserCheck, X,
+  ArrowRightLeft, AlertTriangle, FileSearch, Undo2, UserCheck, X, UserPlus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
