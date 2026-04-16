@@ -52,7 +52,7 @@ export function StepDadosEmpresa() {
               {...register("email_corporativo")}
             />
             {errors.email_corporativo && (
-              <p className="text-xs text-destructive">{errors.email_corporativo.message}</p>
+              <p className="text-xs text-destructive">{errors.email_corporativo?.message as string}</p>
             )}
           </div>
           <div className="space-y-2">
