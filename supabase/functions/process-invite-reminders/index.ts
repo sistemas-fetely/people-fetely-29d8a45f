@@ -30,9 +30,13 @@ Deno.serve(async (req) => {
       const daysSince = Math.floor((now.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24));
       const appLink = `https://people-fetely.lovable.app/cadastro/${convite.token}`;
 
-      if (daysSince === 3) await sendReminder(supabase, convite, appLink, now, "d3", false);
-      if (daysSince === 7) await sendReminder(supabase, convite, appLink, now, "d7", false);
-      if (daysSince === 14) await sendReminder(supabase, convite, appLink, now, "d14", true);
+      if (convite.lembretes_ativos === false) {
+        // Skip reminders for this invite — suspended by HR
+      } else {
+        if (daysSince === 3) await sendReminder(supabase, convite, appLink, now, "d3", false);
+        if (daysSince === 7) await sendReminder(supabase, convite, appLink, now, "d7", false);
+        if (daysSince === 14) await sendReminder(supabase, convite, appLink, now, "d14", true);
+      }
 
       if (daysSince === 90) {
         const { data: existing } = await supabase
