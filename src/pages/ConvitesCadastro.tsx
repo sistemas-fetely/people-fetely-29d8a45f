@@ -359,7 +359,31 @@ export default function ConvitesCadastro() {
         }
       }
 
-      toast.success("Convite criado com sucesso!");
+      // Enviar e-mail automaticamente quando vem do recrutamento
+      if (prefill?.origem === "recrutamento" && data) {
+        try {
+          await supabase.functions.invoke("send-transactional-email", {
+            body: {
+              templateName: "convite-cadastro",
+              recipientEmail: data.email,
+              idempotencyKey: `convite-${data.id}-${Date.now()}`,
+              templateData: {
+                nome: data.nome,
+                tipo: data.tipo,
+                cargo: data.cargo || undefined,
+                departamento: data.departamento || undefined,
+                link: getLink(data.token),
+              },
+            },
+          });
+          await supabase.from("convites_cadastro").update({ status: "email_enviado" }).eq("id", data.id);
+          toast.success(`Convite criado e e-mail enviado para ${data.email}!`);
+        } catch (emailErr: any) {
+          toast.warning("Convite criado mas e-mail não enviado: " + (emailErr.message || "erro desconhecido"));
+        }
+      } else {
+        toast.success("Convite criado com sucesso!");
+      }
       setFormOpen(false);
       setForm(initialForm);
       setLiderSearch("");
