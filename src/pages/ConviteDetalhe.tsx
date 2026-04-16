@@ -398,7 +398,13 @@ export default function ConviteDetalhe() {
             <ConviteDocumentosCLT dados={formData} editing={editing} updateField={updateField} />
           </TabsContent>
           <TabsContent value="profissionais">
-            <ConviteDadosProfissionaisCLT dados={formData} editing={editing} updateField={updateField} />
+            <ConviteDadosProfissionaisCLT dados={{
+              ...formData,
+              cargo: formData.cargo || convite.cargo || "",
+              departamento: formData.departamento || convite.departamento || "",
+              salario_base: formData.salario_base || (convite as any).salario_previsto || "",
+              data_admissao: formData.data_admissao || (convite as any).data_inicio_prevista || "",
+            }} editing={editing} updateField={updateField} />
           </TabsContent>
           <TabsContent value="empresa">
             <ConviteDadosEmpresaCLT dados={formData} editing={editing} updateField={updateField} />
@@ -429,7 +435,13 @@ export default function ConviteDetalhe() {
             <ConviteDadosEmpresaPJ dados={formData} editing={editing} updateField={updateField} />
           </TabsContent>
           <TabsContent value="profissionais">
-            <ConviteDadosProfissionaisPJ dados={formData} editing={editing} updateField={updateField} />
+            <ConviteDadosProfissionaisPJ dados={{
+              ...formData,
+              tipo_servico: formData.tipo_servico || convite.cargo || "",
+              departamento: formData.departamento || convite.departamento || "",
+              valor_mensal: formData.valor_mensal || (convite as any).salario_previsto || "",
+              data_inicio: formData.data_inicio || (convite as any).data_inicio_prevista || "",
+            }} editing={editing} updateField={updateField} />
           </TabsContent>
           <TabsContent value="bancarios">
             <ConviteDadosBancarios dados={formData} editing={editing} updateField={updateField} />
