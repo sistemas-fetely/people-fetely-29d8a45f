@@ -15,6 +15,7 @@ export function StepDadosProfissionais() {
   const { data: tiposContrato, isLoading: loadingTipos } = useParametros("tipo_contrato");
   const { data: jornadas, isLoading: loadingJornadas } = useParametros("jornada");
   const { data: locaisTrabalho, isLoading: loadingLocais } = useParametros("local_trabalho");
+  const { data: horariosTrabalho, isLoading: loadingHorarios } = useParametros("horario_trabalho");
 
   return (
     <div className="space-y-6">
@@ -111,8 +112,24 @@ export function StepDadosProfissionais() {
           )}
         </div>
         <div>
-          <Label htmlFor="horario_trabalho">Horário de Trabalho</Label>
-          <Input id="horario_trabalho" {...register("horario_trabalho")} placeholder="08:00 - 17:00" />
+          <Label>Horário de Trabalho</Label>
+          {loadingHorarios ? (
+            <div className="flex items-center h-10"><Loader2 className="h-4 w-4 animate-spin" /></div>
+          ) : (
+            <Select value={watch("horario_trabalho") || ""} onValueChange={(v) => setValue("horario_trabalho", v)}>
+              <SelectTrigger><SelectValue placeholder="Selecione o horário" /></SelectTrigger>
+              <SelectContent>
+                {(horariosTrabalho || []).map((h) => (
+                  <SelectItem key={h.id} value={h.valor}>
+                    <div>
+                      <span>{h.label}</span>
+                      {h.descricao && <span className="text-muted-foreground ml-2 text-xs">— {h.descricao}</span>}
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         </div>
         <div>
           <Label>Local de Trabalho</Label>

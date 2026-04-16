@@ -20,6 +20,7 @@ export function ConviteDadosProfissionaisCLT({ dados, editing, updateField }: Pr
   const { data: tiposContrato, isLoading: loadingTipos } = useParametros("tipo_contrato");
   const { data: jornadas, isLoading: loadingJornadas } = useParametros("jornada");
   const { data: locaisTrabalho, isLoading: loadingLocais } = useParametros("local_trabalho");
+  const { data: horariosTrabalho, isLoading: loadingHorarios } = useParametros("horario_trabalho");
   const { data: sistemas, isLoading: loadingSistemas } = useParametros("sistema");
 
   // sistemas selecionados ficam em dados.acessos_sistemas como array de { sistema: string, tem_acesso: boolean }
@@ -116,7 +117,12 @@ export function ConviteDadosProfissionaisCLT({ dados, editing, updateField }: Pr
             (jornadas || []).map((j) => ({ value: j.valor, label: j.label })),
             loadingJornadas
           )}
-          {renderField("Horário de Trabalho", "horario_trabalho", "text", "08:00 - 17:00")}
+          {renderSelect(
+            "Horário de Trabalho",
+            "horario_trabalho",
+            (horariosTrabalho || []).map((h) => ({ value: h.valor, label: h.label })),
+            loadingHorarios
+          )}
           {renderSelect(
             "Local de Trabalho",
             "local_trabalho",
