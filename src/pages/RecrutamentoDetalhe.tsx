@@ -75,12 +75,6 @@ export default function RecrutamentoDetalhe() {
   const [vagaPublicada, setVagaPublicada] = useState(false);
 
   // Contratar flow
-  const [contratarOpen, setContratarOpen] = useState(false);
-  const [contratarCandidato, setContratarCandidato] = useState<any | null>(null);
-  const [contratarForm, setContratarForm] = useState({
-    cargo: "", tipo: "clt" as string, salario: "",
-    data_inicio: "", lider_direto_id: "", beneficios_ids: [] as string[], jornada: "",
-  });
   const [encerrarVagaOpen, setEncerrarVagaOpen] = useState(false);
   const [confirmarExclusao, setConfirmarExclusao] = useState(false);
   const [excluindo, setExcluindo] = useState(false);
@@ -513,90 +507,38 @@ export default function RecrutamentoDetalhe() {
     onError: (err: any) => toast.error(err.message),
   });
 
-  const contratarMutation = useMutation({
-    mutationFn: async () => {
-      if (!contratarCandidato || !vaga) throw new Error("Dados incompletos");
-
-      // 1. Create convite
-      const tipoConvite = contratarForm.tipo === "pj" ? "pj" : "clt";
-      const { error: conviteError } = await supabase.from("convites_cadastro").insert({
-        nome: contratarCandidato.nome,
-        email: contratarCandidato.email,
-        tipo: tipoConvite,
-        cargo: contratarForm.cargo,
-        departamento: vaga.area,
-        salario_previsto: contratarForm.salario ? Number(contratarForm.salario) : null,
-        data_inicio_prevista: contratarForm.data_inicio || null,
-        lider_direto_id: contratarForm.lider_direto_id || null,
-        criado_por: user?.id || null,
-        origem: "recrutamento",
-        dados_preenchidos: {
-          beneficios_ids: contratarForm.beneficios_ids,
-          jornada: contratarForm.jornada,
-        },
-      } as any);
-      if (conviteError) throw conviteError;
-
-      // 2. Update candidato status
-      const { error: candError } = await supabase
-        .from("candidatos")
-        .update({ status: "contratado" } as any)
-        .eq("id", contratarCandidato.id);
-      if (candError) throw candError;
-
-      // 3. Log history
-      await supabase.from("candidato_historico").insert({
-        candidato_id: contratarCandidato.id,
-        status_anterior: contratarCandidato.status,
-        status_novo: "contratado",
-        responsavel_id: user?.id || null,
-      } as any);
-
-      // 4. Incrementar vagas_preenchidas
-      await supabase
-        .from("vagas")
-        .update({
-          vagas_preenchidas: ((vaga as any).vagas_preenchidas ?? 0) + 1
-        } as any)
-        .eq("id", id!);
-    },
-    onSuccess: () => {
-      toast.success(`Convite gerado para ${contratarCandidato?.nome}!`);
-      setContratarOpen(false);
-      queryClient.invalidateQueries({ queryKey: ["candidatos", id] });
-      queryClient.invalidateQueries({ queryKey: ["ofertas-vaga", id] });
-      queryClient.invalidateQueries({ queryKey: ["vaga", id] });
-
-      const numVagas = (vaga as any)?.num_vagas ?? 1;
-      const preenchidas = ((vaga as any)?.vagas_preenchidas ?? 0) + 1;
-
-      if (preenchidas >= numVagas) {
-        setEncerrarVagaOpen(true);
-      } else {
-        const restantes = numVagas - preenchidas;
-        toast.info(
-          `${preenchidas}/${numVagas} vagas preenchidas. Ainda ${restantes} posição${restantes > 1 ? "ões" : ""} em aberto.`,
-          { duration: 5000 }
-        );
-        navigate("/convites-cadastro");
-      }
-    },
-    onError: (err: any) => toast.error(err.message),
-  });
-
-  const openContratarDialog = (candidato: any) => {
+  const openContratarDialog = async (candidato: any) => {
     if (!vaga) return;
-    setContratarCandidato(candidato);
-    setContratarForm({
-      cargo: vaga.titulo || "",
-      tipo: vaga.tipo_contrato === "ambos" ? "clt" : (vaga.tipo_contrato || "clt"),
-      salario: "",
-      data_inicio: "",
-      lider_direto_id: vaga.gestor_id || "",
-      beneficios_ids: (vaga.beneficios_ids as string[] | null) || [],
-      jornada: vaga.jornada || "",
+
+    // Buscar proposta aceita do candidato
+    const { data: ofertaAceita } = await supabase
+      .from("ofertas_candidato" as any)
+      .select("*")
+      .eq("candidato_id", candidato.id)
+      .eq("vaga_id", id!)
+      .eq("status", "aceita")
+      .maybeSingle();
+
+    // Navegar para Convites de Cadastro com dados pré-preenchidos
+    navigate("/convites-cadastro", {
+      state: {
+        prefill: {
+          nome: candidato.nome,
+          email: candidato.email,
+          tipo: (ofertaAceita as any)?.tipo_contrato || (vaga.tipo_contrato === "ambos" ? "clt" : vaga.tipo_contrato) || "clt",
+          cargo: vaga.titulo || "",
+          departamento: vaga.area || "",
+          lider_direto_id: vaga.gestor_id || "",
+          salario_previsto: (ofertaAceita as any)?.salario_proposto?.toString() || "",
+          data_inicio_prevista: (ofertaAceita as any)?.data_inicio || "",
+          jornada: vaga.jornada || "",
+          beneficios_ids: (vaga.beneficios_ids as string[] | null) || [],
+          origem: "recrutamento",
+          candidato_id: candidato.id,
+          vaga_id: id,
+        }
+      }
     });
-    setContratarOpen(true);
   };
 
   const copyLink = (e: React.MouseEvent) => {
@@ -1455,105 +1397,7 @@ export default function RecrutamentoDetalhe() {
         </DialogContent>
       </Dialog>
 
-      {/* Contratar dialog */}
-      <Dialog open={contratarOpen} onOpenChange={setContratarOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <CheckCircle2 className="h-5 w-5 text-success" />
-              Contratar {contratarCandidato?.nome}
-            </DialogTitle>
-          </DialogHeader>
-          <p className="text-sm text-muted-foreground">
-            Preencha os dados para gerar o convite de cadastro automaticamente.
-          </p>
-          <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-1">
-            <div className="space-y-1">
-              <Label>Cargo</Label>
-              <Input value={contratarForm.cargo}
-                onChange={(e) => setContratarForm({ ...contratarForm, cargo: e.target.value })} />
-            </div>
-            <div className="space-y-1">
-              <Label>Tipo de contrato</Label>
-              <Select value={contratarForm.tipo}
-                onValueChange={(v) => setContratarForm({ ...contratarForm, tipo: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="clt">CLT</SelectItem>
-                  <SelectItem value="pj">PJ</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            {canSeeFaixa && (
-              <div className="space-y-1">
-                <Label>{contratarForm.tipo === "pj" ? "Honorários acordado (R$)" : "Salário acordado (R$)"}</Label>
-                <Input type="number" value={contratarForm.salario}
-                  onChange={(e) => setContratarForm({ ...contratarForm, salario: e.target.value })}
-                  placeholder="0,00" />
-              </div>
-            )}
-            <div className="space-y-1">
-              <Label>Data de início</Label>
-              <Input type="date" value={contratarForm.data_inicio}
-                onChange={(e) => setContratarForm({ ...contratarForm, data_inicio: e.target.value })} />
-            </div>
-            <div className="space-y-1">
-              <Label>Líder direto</Label>
-              <Select value={contratarForm.lider_direto_id}
-                onValueChange={(v) => setContratarForm({ ...contratarForm, lider_direto_id: v })}>
-                <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                <SelectContent>
-                  {lideres.map((l: any) => (
-                    <SelectItem key={l.id} value={l.id}>
-                      {l.nome} {l.cargo ? `— ${l.cargo}` : ""}
-                      <span className="text-xs text-muted-foreground ml-1">({l.tipo})</span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1">
-              <Label>Benefícios</Label>
-              <div className="flex flex-wrap gap-1.5">
-                {beneficiosParam.map((b) => {
-                  const selected = contratarForm.beneficios_ids.includes(b.valor);
-                  return (
-                    <Badge
-                      key={b.valor}
-                      variant={selected ? "default" : "outline"}
-                      className="cursor-pointer text-xs"
-                      onClick={() => {
-                        setContratarForm({
-                          ...contratarForm,
-                          beneficios_ids: selected
-                            ? contratarForm.beneficios_ids.filter((x) => x !== b.valor)
-                            : [...contratarForm.beneficios_ids, b.valor],
-                        });
-                      }}
-                    >
-                      {b.label}
-                    </Badge>
-                  );
-                })}
-              </div>
-            </div>
-            <div className="space-y-1">
-              <Label>Jornada</Label>
-              <Input value={contratarForm.jornada}
-                onChange={(e) => setContratarForm({ ...contratarForm, jornada: e.target.value })}
-                placeholder="Ex: Segunda a sexta, 9h-18h" />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setContratarOpen(false)}>Cancelar</Button>
-            <Button onClick={() => contratarMutation.mutate()}
-              disabled={!contratarForm.cargo.trim() || contratarMutation.isPending}>
-              {contratarMutation.isPending && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
-              Gerar convite de cadastro
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Contratar dialog removed — redirects to ConvitesCadastro */}
 
       {/* Encerrar vaga alert */}
       <AlertDialog open={encerrarVagaOpen} onOpenChange={setEncerrarVagaOpen}>
