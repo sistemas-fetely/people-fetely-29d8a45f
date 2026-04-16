@@ -594,7 +594,7 @@ export default function ConvitesCadastro() {
                 {funnelCounts[phase.key] || 0}
                 {phase.key === "email_enviado" && atrasadosCount > 0 && (
                   <span className="text-xs font-medium ml-1.5 px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 inline-flex items-center gap-0.5">
-                    ⚠️ {atrasadosCount}
+                    ⏰ {atrasadosCount}
                   </span>
                 )}
               </p>
