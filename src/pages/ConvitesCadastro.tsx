@@ -53,7 +53,7 @@ const STATUS_CONFIG: Record<string, { label: string; badge: string; icon: typeof
   email_enviado: { label: "Enviado", badge: "bg-sky-100 text-sky-700 border-0", icon: Send },
   atrasado: { label: "Atrasado", badge: "bg-yellow-100 text-yellow-700 border-0", icon: AlertTriangle },
   preenchido: { label: "Preenchido", badge: "bg-emerald-100 text-emerald-700 border-0", icon: CheckCircle2 },
-  em_revisao: { label: "Em Revisão", badge: "bg-purple-100 text-purple-700 border-0", icon: FileSearch },
+  
   devolvido: { label: "Devolvido", badge: "bg-orange-100 text-orange-700 border-0", icon: Undo2 },
   aprovado: { label: "Aprovado", badge: "bg-blue-100 text-blue-700 border-0", icon: CheckCircle2 },
   cadastrado: { label: "Cadastrado", badge: "bg-muted text-muted-foreground border-0", icon: UserCheck },
@@ -63,14 +63,12 @@ const STATUS_CONFIG: Record<string, { label: string; badge: string; icon: typeof
 
 // ─── Funnel phases ───────────────────────────────────────────────────
 const FUNNEL_PHASES = [
-  { key: "email_enviado", label: "Enviados", emoji: "📤", color: "border-l-sky-500", textColor: "text-sky-700" },
-  { key: "atrasado", label: "Atrasados", emoji: "⏰", color: "border-l-yellow-500", textColor: "text-yellow-700" },
-  { key: "preenchido", label: "Preenchidos", emoji: "📝", color: "border-l-emerald-500", textColor: "text-emerald-700" },
-  { key: "em_revisao", label: "Em Revisão", emoji: "🔍", color: "border-l-purple-500", textColor: "text-purple-700" },
-  { key: "devolvido", label: "Devolvidos", emoji: "↩️", color: "border-l-orange-500", textColor: "text-orange-700" },
-  { key: "aprovado", label: "Aprovados", emoji: "👍", color: "border-l-blue-500", textColor: "text-blue-700" },
-  { key: "cadastrado", label: "Cadastrados", emoji: "✅", color: "border-l-muted", textColor: "text-muted-foreground" },
-];
+  { key: "email_enviado", label: "Enviados", emoji: "📤", color: "#5C9A80", bg: "#F0F7F4" },
+  { key: "preenchido", label: "Preenchidos", emoji: "📝", color: "#4A8A6E", bg: "#E5F0EA" },
+  { key: "devolvido", label: "Devolvidos", emoji: "↩️", color: "#D97706", bg: "#FFF7ED" },
+  { key: "aprovado", label: "Aprovados", emoji: "👍", color: "#316A50", bg: "#CEE2D5" },
+  { key: "cadastrado", label: "Cadastrados", emoji: "✅", color: "#1A4A3A", bg: "#A8C9B5" },
+] as const;
 
 interface Convite {
   id: string;
@@ -130,13 +128,10 @@ function getDisplayStatus(c: Convite): string {
   if (c.status === "cancelado") return "cancelado";
   if (c.status === "cadastrado") return "cadastrado";
   if (c.status === "aprovado") return "aprovado";
+  if (c.status === "devolvido") return "devolvido";
+  if (c.status === "preenchido") return "preenchido";
   if ((c.status === "pendente" || c.status === "email_enviado") && new Date(c.expira_em) <= now) return "expirado";
-  // "Atrasado" = email_enviado + sent 3+ days ago without filling
-  if (c.status === "email_enviado") {
-    const daysSinceCreated = differenceInDays(now, new Date(c.created_at));
-    if (daysSinceCreated >= 3) return "atrasado";
-    return "email_enviado";
-  }
+  if (c.status === "email_enviado" || c.status === "pendente") return "email_enviado";
   return c.status;
 }
 
@@ -157,6 +152,7 @@ export default function ConvitesCadastro() {
   const [deleteTarget, setDeleteTarget] = useState<Convite | null>(null);
   const [search, setSearch] = useState("");
   const [funnelFilter, setFunnelFilter] = useState<string | null>(null);
+  const [filtroAtrasados, setFiltroAtrasados] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState(initialForm);
   const [liderSearch, setLiderSearch] = useState("");
@@ -535,14 +531,31 @@ export default function ConvitesCadastro() {
     return counts;
   }, [convitesWithStatus]);
 
+  const atrasadosCount = useMemo(() => {
+    const now = new Date();
+    return convitesWithStatus.filter(c => {
+      if (c.displayStatus !== "email_enviado") return false;
+      const daysSince = Math.floor((now.getTime() - new Date(c.created_at).getTime()) / (1000 * 60 * 60 * 24));
+      return daysSince >= 3;
+    }).length;
+  }, [convitesWithStatus]);
+
   // Filtered list
   const filtered = useMemo(() => {
-    return convitesWithStatus.filter(c => {
+    let result = convitesWithStatus.filter(c => {
       const matchSearch = c.nome.toLowerCase().includes(search.toLowerCase()) || c.email.toLowerCase().includes(search.toLowerCase());
       const matchFunnel = !funnelFilter || c.displayStatus === funnelFilter;
       return matchSearch && matchFunnel;
     });
-  }, [convitesWithStatus, search, funnelFilter]);
+    if (filtroAtrasados) {
+      const now = new Date();
+      result = result.filter(c => {
+        const daysSince = Math.floor((now.getTime() - new Date(c.created_at).getTime()) / (1000 * 60 * 60 * 24));
+        return daysSince >= 3;
+      });
+    }
+    return result;
+  }, [convitesWithStatus, search, funnelFilter, filtroAtrasados]);
 
   return (
     <div className="space-y-6">
@@ -561,28 +574,56 @@ export default function ConvitesCadastro() {
         )}
       </div>
 
-      {/* Funnel cards */}
-      <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-6">
-        {FUNNEL_PHASES.map(phase => (
-          <Card
-            key={phase.key}
-            className={cn(
-              "border-l-[3px] cursor-pointer transition-all hover:shadow-md",
-              phase.color,
-              funnelFilter === phase.key && "ring-2 ring-primary shadow-md"
-            )}
-            onClick={() => setFunnelFilter(funnelFilter === phase.key ? null : phase.key)}
-          >
-            <CardContent className="p-3">
-              <div className="flex items-center justify-between">
-                <p className="text-xs text-muted-foreground">{phase.emoji} {phase.label}</p>
-                {funnelFilter === phase.key && <X className="h-3 w-3 text-muted-foreground" />}
+      {/* Funnel flow */}
+      <div className="flex items-stretch gap-0 overflow-x-auto pb-2">
+        {FUNNEL_PHASES.map((phase, index) => (
+          <div key={phase.key} className="flex items-stretch flex-1 min-w-0">
+            <div
+              className={`flex-1 cursor-pointer transition-all rounded-lg border-2 px-3 py-3 min-w-[120px] ${
+                funnelFilter === phase.key ? "ring-2 ring-primary shadow-md" : "hover:shadow-md"
+              }`}
+              style={{
+                backgroundColor: funnelFilter === phase.key ? phase.bg : "#FFFFFF",
+                borderColor: funnelFilter === phase.key ? phase.color : "#E5E7EB",
+              }}
+              onClick={() => {
+                if (funnelFilter === phase.key) {
+                  setFunnelFilter(null);
+                  setFiltroAtrasados(false);
+                } else {
+                  setFunnelFilter(phase.key);
+                  if (phase.key !== "email_enviado") setFiltroAtrasados(false);
+                }
+              }}
+            >
+              <div className="flex items-center justify-between mb-1">
+                <p className="text-xs font-medium truncate" style={{ color: phase.color }}>
+                  {phase.emoji} {phase.label}
+                </p>
+                {funnelFilter === phase.key && <X className="h-3 w-3 flex-shrink-0" style={{ color: phase.color }} />}
               </div>
-              <p className={cn("text-2xl font-bold mt-1", phase.textColor)}>
+              <p className="text-xl font-bold" style={{ color: phase.color }}>
                 {funnelCounts[phase.key] || 0}
               </p>
-            </CardContent>
-          </Card>
+              {phase.key === "email_enviado" && atrasadosCount > 0 && (
+                <div className="mt-1 flex items-center gap-1">
+                  <span
+                    className="text-xs font-medium px-1.5 py-0.5 rounded-full bg-red-100 text-red-700 cursor-pointer hover:bg-red-200"
+                    onClick={(e) => { e.stopPropagation(); setFiltroAtrasados(!filtroAtrasados); setFunnelFilter("email_enviado"); }}
+                  >
+                    ⏰ {atrasadosCount} atrasado{atrasadosCount > 1 ? "s" : ""}
+                  </span>
+                </div>
+              )}
+            </div>
+            {index < FUNNEL_PHASES.length - 1 && (
+              <div className="flex items-center px-1 flex-shrink-0">
+                <svg width="16" height="24" viewBox="0 0 16 24" fill="none">
+                  <path d="M2 2L12 12L2 22" stroke="#CBD5E1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </div>
+            )}
+          </div>
         ))}
       </div>
 
