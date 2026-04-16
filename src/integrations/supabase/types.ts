@@ -2834,12 +2834,15 @@ export type Database = {
           colaborador_id: string | null
           colaborador_nome: string | null
           colaborador_tipo: string | null
+          condicao: string | null
           created_at: string
           created_by: string | null
           data_compra: string | null
           devolvido_em: string | null
+          especificacoes: Json | null
           estado: string
           fornecedor: string | null
+          fotos: string[] | null
           garantia_ate: string | null
           hostname: string | null
           id: string
@@ -2853,19 +2856,24 @@ export type Database = {
           status: string
           tipo: string
           updated_at: string
+          valor_atual_mercado: number | null
           valor_compra: number | null
+          valor_estimado_em: string | null
         }
         Insert: {
           atribuido_em?: string | null
           colaborador_id?: string | null
           colaborador_nome?: string | null
           colaborador_tipo?: string | null
+          condicao?: string | null
           created_at?: string
           created_by?: string | null
           data_compra?: string | null
           devolvido_em?: string | null
+          especificacoes?: Json | null
           estado?: string
           fornecedor?: string | null
+          fotos?: string[] | null
           garantia_ate?: string | null
           hostname?: string | null
           id?: string
@@ -2879,19 +2887,24 @@ export type Database = {
           status?: string
           tipo: string
           updated_at?: string
+          valor_atual_mercado?: number | null
           valor_compra?: number | null
+          valor_estimado_em?: string | null
         }
         Update: {
           atribuido_em?: string | null
           colaborador_id?: string | null
           colaborador_nome?: string | null
           colaborador_tipo?: string | null
+          condicao?: string | null
           created_at?: string
           created_by?: string | null
           data_compra?: string | null
           devolvido_em?: string | null
+          especificacoes?: Json | null
           estado?: string
           fornecedor?: string | null
+          fotos?: string[] | null
           garantia_ate?: string | null
           hostname?: string | null
           id?: string
@@ -2905,7 +2918,9 @@ export type Database = {
           status?: string
           tipo?: string
           updated_at?: string
+          valor_atual_mercado?: number | null
           valor_compra?: number | null
+          valor_estimado_em?: string | null
         }
         Relationships: []
       }

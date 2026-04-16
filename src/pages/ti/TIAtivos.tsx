@@ -30,12 +30,20 @@ interface Ativo {
   hostname: string | null;
   status: string;
   estado: string;
+  condicao: string | null;
   colaborador_id: string | null;
   colaborador_tipo: string | null;
   colaborador_nome: string | null;
   localizacao: string | null;
   atribuido_em: string | null;
 }
+
+const condicaoVariant: Record<string, { label: string; className: string }> = {
+  otima: { label: "Ótima", className: "bg-emerald-100 text-emerald-700 border-0" },
+  muito_boa: { label: "Muito Boa", className: "bg-blue-100 text-blue-700 border-0" },
+  boa: { label: "Boa", className: "bg-yellow-100 text-yellow-700 border-0" },
+  inativo: { label: "Inativo", className: "bg-red-100 text-red-700 border-0" },
+};
 
 const statusVariant: Record<string, { label: string; className: string }> = {
   disponivel: { label: "Disponível", className: "bg-green-100 text-green-800 hover:bg-green-100" },
@@ -223,6 +231,7 @@ export default function TIAtivos() {
                   <TableHead>Nº Série</TableHead>
                   <TableHead>Nº Patrimônio</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>Condição</TableHead>
                   <TableHead>Colaborador</TableHead>
                   <TableHead>Localização</TableHead>
                   <TableHead className="w-[50px]"></TableHead>
@@ -231,8 +240,13 @@ export default function TIAtivos() {
               <TableBody>
                 {filtered.map((a) => {
                   const v = statusVariant[a.status] || statusVariant.disponivel;
+                  const c = condicaoVariant[a.condicao || "otima"] || condicaoVariant.otima;
                   return (
-                    <TableRow key={a.id}>
+                    <TableRow
+                      key={a.id}
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => handleEditar(a.id)}
+                    >
                       <TableCell className="capitalize font-medium">{a.tipo}</TableCell>
                       <TableCell>{[a.marca, a.modelo].filter(Boolean).join(" ") || "—"}</TableCell>
                       <TableCell className="font-mono text-xs">{a.numero_serie || "—"}</TableCell>
@@ -240,9 +254,12 @@ export default function TIAtivos() {
                       <TableCell>
                         <Badge variant="secondary" className={v.className}>{v.label}</Badge>
                       </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className={c.className}>{c.label}</Badge>
+                      </TableCell>
                       <TableCell>{a.colaborador_nome || "—"}</TableCell>
                       <TableCell className="text-xs text-muted-foreground">{a.localizacao || "—"}</TableCell>
-                      <TableCell>
+                      <TableCell onClick={(e) => e.stopPropagation()}>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="icon" className="h-8 w-8">
