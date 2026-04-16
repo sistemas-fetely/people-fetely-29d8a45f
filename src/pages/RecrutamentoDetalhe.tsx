@@ -850,6 +850,24 @@ export default function RecrutamentoDetalhe() {
       }
     }
 
+    // Bloqueio: Oferta → qualquer próxima etapa sem proposta enviada
+    if (c.status === "oferta" && nextStatus !== "recusado") {
+      const { data: ofertaCheck } = await supabase
+        .from("ofertas_candidato" as any)
+        .select("enviado_em")
+        .eq("candidato_id", candidatoId)
+        .eq("vaga_id", id!)
+        .maybeSingle();
+      if (!(ofertaCheck as any)?.enviado_em) {
+        toast.error(
+          "Envie a proposta ao candidato antes de avançar. Use o botão 'Enviar para...' na aba Proposta.",
+          { duration: 5000 }
+        );
+        setSelectedCandidato(c);
+        return;
+      }
+    }
+
     // Bloqueio: Oferta → Contratado sem oferta aceita
     if (c.status === "oferta" && nextStatus === "contratado") {
       const { data: oferta } = await supabase
