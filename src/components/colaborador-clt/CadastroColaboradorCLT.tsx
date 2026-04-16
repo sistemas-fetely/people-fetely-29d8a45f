@@ -101,7 +101,7 @@ export function CadastroColaboradorCLT() {
   const onSubmit = async (data: AllFormData) => {
     setSaving(true);
     try {
-      const { dependentes, acessos_sistemas, equipamentos, salario_base, jornada_semanal, ...colaboradorData } = data;
+      const { dependentes, acessos_sistemas, equipamentos, salario_base, jornada_semanal, documentos_upload, upload_folder, ...colaboradorData } = data as any;
 
       const cleaned = Object.fromEntries(
         Object.entries(colaboradorData).map(([k, v]) => [k, v === "" ? null : v])
