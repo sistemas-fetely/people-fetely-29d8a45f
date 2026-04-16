@@ -241,6 +241,28 @@ export default function ConviteDetalhe() {
             jornada_semanal: rest.jornada_semanal || (convite as any).dados_contratacao?.jornada_semanal || "44",
             horario_trabalho: rest.horario_trabalho || (convite as any).dados_contratacao?.horario_trabalho || "",
             local_trabalho: rest.local_trabalho || (convite as any).dados_contratacao?.local_trabalho || "",
+            // Provisionamento — do dados_contratacao do convite
+            email_corporativo: (convite as any).dados_contratacao?.email_corporativo_formato || "",
+            data_integracao: (convite as any).data_inicio_prevista || "",
+            acessos_sistemas: ((convite as any).dados_contratacao?.sistemas_ids || []).map((s: string) => ({
+              sistema: s,
+              tem_acesso: true,
+              usuario: "",
+              observacoes: "",
+            })),
+            equipamentos: ((convite as any).dados_contratacao?.equipamentos || []).flatMap((eq: any) =>
+              Array.from({ length: eq.quantidade || 1 }, () => ({
+                tipo: eq.tipo,
+                marca: "",
+                modelo: "",
+                numero_patrimonio: "",
+                numero_serie: "",
+                data_entrega: "",
+                estado: "novo",
+                observacoes: "",
+              }))
+            ),
+            celular_corporativo: (convite as any).dados_contratacao?.celular_corporativo || false,
             // Dependentes e documentos
             dependentes: dependentes || [],
             documentos_upload: documentos_upload || [],
@@ -280,6 +302,27 @@ export default function ConviteDetalhe() {
             // Documentos
             documentos_upload: documentos_upload || [],
             upload_folder: convite.token,
+            // Provisionamento
+            email_corporativo: (convite as any).dados_contratacao?.email_corporativo_formato || "",
+            acessos_sistemas: ((convite as any).dados_contratacao?.sistemas_ids || []).map((s: string) => ({
+              sistema: s,
+              tem_acesso: true,
+              usuario: "",
+              observacoes: "",
+            })),
+            equipamentos: ((convite as any).dados_contratacao?.equipamentos || []).flatMap((eq: any) =>
+              Array.from({ length: eq.quantidade || 1 }, () => ({
+                tipo: eq.tipo,
+                marca: "",
+                modelo: "",
+                numero_patrimonio: "",
+                numero_serie: "",
+                data_entrega: "",
+                estado: "novo",
+                observacoes: "",
+              }))
+            ),
+            celular_corporativo: (convite as any).dados_contratacao?.celular_corporativo || false,
           },
         },
       });
