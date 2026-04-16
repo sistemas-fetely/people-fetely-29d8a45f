@@ -1206,6 +1206,7 @@ export type Database = {
           contrato_pj_id: string | null
           created_at: string
           criado_por: string | null
+          dados_contratacao: Json | null
           dados_preenchidos: Json | null
           data_inicio_prevista: string | null
           departamento: string | null
@@ -1234,6 +1235,7 @@ export type Database = {
           contrato_pj_id?: string | null
           created_at?: string
           criado_por?: string | null
+          dados_contratacao?: Json | null
           dados_preenchidos?: Json | null
           data_inicio_prevista?: string | null
           departamento?: string | null
@@ -1262,6 +1264,7 @@ export type Database = {
           contrato_pj_id?: string | null
           created_at?: string
           criado_por?: string | null
+          dados_contratacao?: Json | null
           dados_preenchidos?: Json | null
           data_inicio_prevista?: string | null
           departamento?: string | null
