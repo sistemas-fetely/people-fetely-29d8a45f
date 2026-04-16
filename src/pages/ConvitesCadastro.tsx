@@ -113,6 +113,10 @@ const initialForm = {
   salario_previsto: "",
   data_inicio_prevista: undefined as Date | undefined,
   observacoes_colaborador: "",
+  tipo_contrato_clt: "indeterminado",
+  jornada_semanal: "44",
+  horario_trabalho: "",
+  local_trabalho: "",
 };
 
 // ─── Helper: compute display status ─────────────────────────────────
@@ -161,8 +165,11 @@ export default function ConvitesCadastro() {
         lider_direto_id: prefill.lider_direto_id || "",
         salario_previsto: prefill.salario_previsto || "",
         data_inicio_prevista: prefill.data_inicio_prevista ? new Date(prefill.data_inicio_prevista) : undefined,
-        
         observacoes_colaborador: "",
+        tipo_contrato_clt: prefill.tipo_contrato_clt || "indeterminado",
+        jornada_semanal: prefill.jornada_semanal || "44",
+        horario_trabalho: prefill.horario_trabalho || "",
+        local_trabalho: prefill.local_trabalho || "",
       });
       setFormOpen(true);
       // Limpar o state para não reabrir ao navegar de volta
@@ -177,6 +184,9 @@ export default function ConvitesCadastro() {
   const [actionLoading, setActionLoading] = useState(false);
 
   const { data: departamentos } = useParametros("departamento");
+  const { data: tiposContrato } = useParametros("tipo_contrato");
+  const { data: jornadas } = useParametros("jornada");
+  const { data: locaisTrabalho } = useParametros("local_trabalho");
   const { data: cargosRaw } = useCargos();
   const cargos = (cargosRaw || []).map((c) => ({ id: c.id, valor: c.nome, label: c.nome, is_clevel: c.is_clevel }));
   const { isCargoClevel } = useCLevelCargos();
@@ -289,6 +299,13 @@ export default function ConvitesCadastro() {
       if (canSeeSensitive && form.salario_previsto) {
         insertData.salario_previsto = parseFloat(form.salario_previsto);
       }
+
+      insertData.dados_contratacao = {
+        tipo_contrato_clt: form.tipo_contrato_clt || null,
+        jornada_semanal: form.jornada_semanal || null,
+        horario_trabalho: form.horario_trabalho || null,
+        local_trabalho: form.local_trabalho || null,
+      };
 
       const { data, error } = await supabase
         .from("convites_cadastro")
@@ -980,6 +997,59 @@ export default function ConvitesCadastro() {
                       <Input value={form.departamento} onChange={(e) => setForm({ ...form, departamento: e.target.value })} placeholder="Departamento" />
                     )}
                   </div>
+                </div>
+                {form.tipo === "clt" && (
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                      <Label>Tipo de Contrato</Label>
+                      {tiposContrato && tiposContrato.length > 0 ? (
+                        <Select value={form.tipo_contrato_clt} onValueChange={(v) => setForm({ ...form, tipo_contrato_clt: v })}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            {tiposContrato.map((t) => (
+                              <SelectItem key={t.id} value={t.valor}>{t.label}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <Input value={form.tipo_contrato_clt} onChange={(e) => setForm({ ...form, tipo_contrato_clt: e.target.value })} placeholder="Indeterminado" />
+                      )}
+                    </div>
+                    <div>
+                      <Label>Jornada Semanal</Label>
+                      {jornadas && jornadas.length > 0 ? (
+                        <Select value={form.jornada_semanal} onValueChange={(v) => setForm({ ...form, jornada_semanal: v })}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            {jornadas.map((j) => (
+                              <SelectItem key={j.id} value={j.valor}>{j.label}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <Input value={form.jornada_semanal} onChange={(e) => setForm({ ...form, jornada_semanal: e.target.value })} placeholder="44" />
+                      )}
+                    </div>
+                    <div>
+                      <Label>Horário de Trabalho</Label>
+                      <Input value={form.horario_trabalho} onChange={(e) => setForm({ ...form, horario_trabalho: e.target.value })} placeholder="08:00 - 17:00" />
+                    </div>
+                  </div>
+                )}
+                <div>
+                  <Label>Local de Trabalho</Label>
+                  {locaisTrabalho && locaisTrabalho.length > 0 ? (
+                    <Select value={form.local_trabalho} onValueChange={(v) => setForm({ ...form, local_trabalho: v })}>
+                      <SelectTrigger><SelectValue placeholder="Selecione o local" /></SelectTrigger>
+                      <SelectContent>
+                        {locaisTrabalho.map((l) => (
+                          <SelectItem key={l.id} value={l.label}>{l.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <Input value={form.local_trabalho} onChange={(e) => setForm({ ...form, local_trabalho: e.target.value })} placeholder="Ex: Escritório, Remoto, Híbrido" />
+                  )}
                 </div>
                 <div>
                   <Label>Líder Direto</Label>

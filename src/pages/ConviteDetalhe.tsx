@@ -237,10 +237,10 @@ export default function ConviteDetalhe() {
             departamento: convite.departamento || rest.departamento || "",
             data_admissao: convite.data_inicio_prevista || rest.data_admissao || new Date().toISOString().split("T")[0],
             salario_base: convite.salario_previsto || rest.salario_base || 0,
-            tipo_contrato: rest.tipo_contrato || "indeterminado",
-            jornada_semanal: rest.jornada_semanal || 44,
-            horario_trabalho: rest.horario_trabalho || "",
-            local_trabalho: rest.local_trabalho || "",
+            tipo_contrato: rest.tipo_contrato || (convite as any).dados_contratacao?.tipo_contrato_clt || "indeterminado",
+            jornada_semanal: rest.jornada_semanal || Number((convite as any).dados_contratacao?.jornada_semanal) || 44,
+            horario_trabalho: rest.horario_trabalho || (convite as any).dados_contratacao?.horario_trabalho || "",
+            local_trabalho: rest.local_trabalho || (convite as any).dados_contratacao?.local_trabalho || "",
             // Dependentes e documentos
             dependentes: dependentes || [],
             documentos_upload: documentos_upload || [],
@@ -404,6 +404,10 @@ export default function ConviteDetalhe() {
               departamento: formData.departamento || convite.departamento || "",
               salario_base: formData.salario_base || (convite as any).salario_previsto || "",
               data_admissao: formData.data_admissao || (convite as any).data_inicio_prevista || "",
+              tipo_contrato: formData.tipo_contrato || (convite as any).dados_contratacao?.tipo_contrato_clt || "indeterminado",
+              jornada_semanal: formData.jornada_semanal || (convite as any).dados_contratacao?.jornada_semanal || "44",
+              horario_trabalho: formData.horario_trabalho || (convite as any).dados_contratacao?.horario_trabalho || "",
+              local_trabalho: formData.local_trabalho || (convite as any).dados_contratacao?.local_trabalho || "",
             }} editing={editing} updateField={updateField} />
           </TabsContent>
           <TabsContent value="empresa">
