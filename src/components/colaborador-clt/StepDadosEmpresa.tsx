@@ -9,7 +9,7 @@ import { useParametros } from "@/hooks/useParametros";
 import type { DadosEmpresaForm } from "@/lib/validations/colaborador-clt";
 
 export function StepDadosEmpresa() {
-  const { register, setValue, watch, formState: { errors } } = useFormContext<DadosEmpresaForm>();
+  const { register, setValue, watch, formState: { errors } } = useFormContext<any>();
 
   const { data: sistemas, isLoading: loadingSistemas } = useParametros("sistema");
   const { data: tiposEquip, isLoading: loadingTipos } = useParametros("tipo_equipamento");
