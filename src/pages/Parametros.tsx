@@ -22,7 +22,8 @@ import {
 import {
   Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Plus, Pencil, Trash2, Loader2, Monitor, Package, Settings2, FileText, Search, Heart, ChevronDown, ExternalLink, MoreHorizontal } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, Monitor, Package, Settings2, FileText, Search, Heart, ChevronDown, ExternalLink, MoreHorizontal, X } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
@@ -100,17 +101,21 @@ function useParametroUsage() {
 }
 
 /* ── Form dialog ── */
-function parseSistemaMeta(descricao: string | null): { url: string; tipo_licenca: string; custo_mensal: number } {
-  if (!descricao) return { url: "", tipo_licenca: "gratuito", custo_mensal: 0 };
+function parseSistemaMeta(descricao: string | null): { url: string; tipo_licenca: string; custo_mensal: number; tipo_acesso: string; instrucoes_cadastro: string; perfis_acesso: string[] } {
+  const defaults = { url: "", tipo_licenca: "gratuito", custo_mensal: 0, tipo_acesso: "login_individual", instrucoes_cadastro: "", perfis_acesso: ["admin", "usuario", "visualizador"] };
+  if (!descricao) return defaults;
   try {
     const parsed = JSON.parse(descricao);
     return {
       url: parsed.url || "",
       tipo_licenca: parsed.tipo_licenca || "gratuito",
       custo_mensal: parsed.custo_mensal ?? 0,
+      tipo_acesso: parsed.tipo_acesso || "login_individual",
+      instrucoes_cadastro: parsed.instrucoes_cadastro || "",
+      perfis_acesso: parsed.perfis_acesso || ["admin", "usuario", "visualizador"],
     };
   } catch {
-    return { url: "", tipo_licenca: "gratuito", custo_mensal: 0 };
+    return defaults;
   }
 }
 
@@ -134,6 +139,10 @@ function ParametroForm({
   const [sistemaUrl, setSistemaUrl] = useState(meta.url);
   const [tipoLicenca, setTipoLicenca] = useState(meta.tipo_licenca);
   const [custoMensal, setCustoMensal] = useState(meta.custo_mensal);
+  const [tipoAcesso, setTipoAcesso] = useState(meta.tipo_acesso);
+  const [instrucoesCadastro, setInstrucoesCadastro] = useState(meta.instrucoes_cadastro);
+  const [perfisAcesso, setPerfisAcesso] = useState<string[]>(meta.perfis_acesso);
+  const [novoPerfil, setNovoPerfil] = useState("");
 
   const handleSave = async () => {
     if (!label.trim()) { toast.error("O nome é obrigatório"); return; }
@@ -145,6 +154,9 @@ function ParametroForm({
         url: sistemaUrl.trim(),
         tipo_licenca: tipoLicenca,
         custo_mensal: custoMensal || 0,
+        tipo_acesso: tipoAcesso,
+        instrucoes_cadastro: instrucoesCadastro.trim(),
+        perfis_acesso: perfisAcesso.filter(Boolean),
       });
     }
 
@@ -218,6 +230,61 @@ function ParametroForm({
                   onChange={(e) => setCustoMensal(Number(e.target.value))}
                   placeholder="0,00"
                 />
+              </div>
+              <div className="space-y-2">
+                <Label>Tipo de acesso</Label>
+                <Select value={tipoAcesso} onValueChange={setTipoAcesso}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="login_individual">Login individual (cada usuário tem o seu)</SelectItem>
+                    <SelectItem value="sso">SSO (login único corporativo)</SelectItem>
+                    <SelectItem value="conta_compartilhada">Conta compartilhada</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Perfis de acesso disponíveis</Label>
+                <div className="flex flex-wrap gap-1.5">
+                  {perfisAcesso.map((perfil, idx) => (
+                    <Badge key={idx} variant="secondary" className="gap-1 cursor-pointer" onClick={() => setPerfisAcesso(perfisAcesso.filter((_, i) => i !== idx))}>
+                      {perfil} <X className="h-3 w-3" />
+                    </Badge>
+                  ))}
+                </div>
+                <div className="flex gap-2">
+                  <Input
+                    value={novoPerfil}
+                    onChange={(e) => setNovoPerfil(e.target.value)}
+                    placeholder="Novo perfil (ex: editor)"
+                    className="flex-1"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && novoPerfil.trim()) {
+                        e.preventDefault();
+                        setPerfisAcesso([...perfisAcesso, novoPerfil.trim()]);
+                        setNovoPerfil("");
+                      }
+                    }}
+                  />
+                  <Button type="button" variant="outline" size="sm" onClick={() => {
+                    if (novoPerfil.trim()) {
+                      setPerfisAcesso([...perfisAcesso, novoPerfil.trim()]);
+                      setNovoPerfil("");
+                    }
+                  }}>
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">Esses perfis aparecerão como opções na ficha do colaborador</p>
+              </div>
+              <div className="space-y-2">
+                <Label>Instruções de cadastro</Label>
+                <Textarea
+                  value={instrucoesCadastro}
+                  onChange={(e) => setInstrucoesCadastro(e.target.value)}
+                  placeholder="Passo a passo para criar acesso neste sistema. Ex: 1. Acesse admin.google.com 2. Clique em Adicionar usuário..."
+                  rows={4}
+                />
+                <p className="text-xs text-muted-foreground">Instruções visíveis para quem executar a tarefa de onboarding</p>
               </div>
             </>
           ) : (

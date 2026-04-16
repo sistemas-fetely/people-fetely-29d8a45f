@@ -162,6 +162,34 @@ export function StepDadosEmpresa() {
                       />
                     </div>
                     <div className="space-y-1">
+                      <Label className="text-xs">Perfil de acesso</Label>
+                      {(() => {
+                        const sistemaParam = sistemas?.find((s) => s.label === sistemaAtual || s.valor === sistemaAtual);
+                        let perfis: string[] = ["admin", "usuario", "visualizador"];
+                        if (sistemaParam?.descricao) {
+                          try {
+                            const meta = JSON.parse(sistemaParam.descricao);
+                            if (meta.perfis_acesso?.length) perfis = meta.perfis_acesso;
+                          } catch {}
+                        }
+                        return (
+                          <Select
+                            value={watch(`acessos_sistemas.${index}.perfil_acesso`) || ""}
+                            onValueChange={(v) => setValue(`acessos_sistemas.${index}.perfil_acesso`, v)}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione o perfil" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {perfis.map((p) => (
+                                <SelectItem key={p} value={p}>{p.charAt(0).toUpperCase() + p.slice(1)}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        );
+                      })()}
+                    </div>
+                    <div className="space-y-1">
                       <Label className="text-xs">Observações</Label>
                       <Input
                         placeholder="Perfil, permissões, etc."
