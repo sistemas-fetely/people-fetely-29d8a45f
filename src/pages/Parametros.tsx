@@ -512,6 +512,10 @@ export default function Parametros() {
                                           className={`flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors ${!param.ativo ? "opacity-60" : ""}`}
                                         >
                                           <div className="flex items-center gap-3 flex-1 min-w-0">
+                                            <Switch
+                                              checked={param.ativo}
+                                              onCheckedChange={() => handleToggleAtivo(param)}
+                                            />
                                             <div className="w-8 h-8 rounded bg-muted flex items-center justify-center flex-shrink-0">
                                               <Monitor className="h-4 w-4 text-muted-foreground" />
                                             </div>
