@@ -40,14 +40,14 @@ const statusConfig: Record<string, { label: string; className: string }> = {
 };
 
 const KANBAN_STAGES = [
-  { key: "recebido",          label: "Recebido",           cor: "#86EFAC", bg: "#F0FFF4" },
-  { key: "triagem",           label: "Triagem",            cor: "#4ADE80", bg: "#ECFDF5" },
-  { key: "entrevista_rh",     label: "Entrevista RH",      cor: "#22C55E", bg: "#DCFCE7" },
-  { key: "entrevista_gestor", label: "Entrevista Gestor",  cor: "#16A34A", bg: "#D1FAE5" },
-  { key: "teste_tecnico",     label: "Teste Técnico",      cor: "#15803D", bg: "#BBF7D0" },
-  { key: "oferta",            label: "Proposta",           cor: "#166534", bg: "#A7F3D0" },
-  { key: "contratado",        label: "Contratado",         cor: "#1A4A3A", bg: "#6EE7B7" },
-  { key: "recusado",          label: "Recusado",           cor: "#DC2626", bg: "#FEF2F2" },
+  { key: "recebido",          label: "Recebido",           cor: "#5C9A80", bg: "#F0F7F4" },
+  { key: "triagem",           label: "Triagem",            cor: "#4A8A6E", bg: "#E5F0EA" },
+  { key: "entrevista_rh",     label: "Entrevista RH",      cor: "#3D7A5F", bg: "#DAE9E0" },
+  { key: "entrevista_gestor", label: "Entrevista Gestor",  cor: "#316A50", bg: "#CEE2D5" },
+  { key: "teste_tecnico",     label: "Teste Técnico",      cor: "#265A42", bg: "#C2DACB" },
+  { key: "oferta",            label: "Proposta",           cor: "#1F5038", bg: "#B5D2C0" },
+  { key: "contratado",        label: "Contratado",         cor: "#1A4A3A", bg: "#A8C9B5" },
+  { key: "recusado",          label: "Recusado",           cor: "#C73E3A", bg: "#FDF0EF" },
 ] as const;
 
 export default function RecrutamentoDetalhe() {
