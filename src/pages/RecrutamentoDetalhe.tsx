@@ -2084,7 +2084,7 @@ export default function RecrutamentoDetalhe() {
                   onClick={() => { rejectCandidato(selectedCandidato.id); setSelectedCandidato(null); }}>
                   <XCircle className="h-4 w-4 mr-1" /> Recusar
                 </Button>
-                {selectedCandidato.status === "oferta" && (
+                {selectedCandidato.status === "contratado" && (
                   <Button variant="default" onClick={() => { openContratarDialog(selectedCandidato); setSelectedCandidato(null); }}>
                     <CheckCircle2 className="h-4 w-4 mr-1" /> Contratar
                   </Button>
@@ -3576,6 +3576,16 @@ function ModuloOferta({
 
   async function salvarOferta() {
     setSalvando(true);
+    if (form.salario_proposto && vaga?.faixa_min && Number(form.salario_proposto) < Number(vaga.faixa_min)) {
+      toast.error("Salário proposto está abaixo da faixa mínima da vaga.");
+      setSalvando(false);
+      return;
+    }
+    if (form.salario_proposto && vaga?.faixa_max && Number(form.salario_proposto) > Number(vaga.faixa_max)) {
+      toast.error("Salário proposto está acima da faixa máxima da vaga.");
+      setSalvando(false);
+      return;
+    }
     try {
       const { error } = await supabase
         .from("ofertas_candidato" as any)
@@ -3607,6 +3617,16 @@ function ModuloOferta({
       return;
     }
     setEnviando(true);
+    if (form.salario_proposto && vaga?.faixa_min && Number(form.salario_proposto) < Number(vaga.faixa_min)) {
+      toast.error("Salário proposto está abaixo da faixa mínima da vaga.");
+      setEnviando(false);
+      return;
+    }
+    if (form.salario_proposto && vaga?.faixa_max && Number(form.salario_proposto) > Number(vaga.faixa_max)) {
+      toast.error("Salário proposto está acima da faixa máxima da vaga.");
+      setEnviando(false);
+      return;
+    }
     try {
       const { error: saveError } = await supabase
         .from("ofertas_candidato" as any)
@@ -3767,6 +3787,17 @@ function ModuloOferta({
               placeholder="0,00"
               onChange={e => setForm(f => ({ ...f, salario_proposto: e.target.value }))}
             />
+            {(vaga?.faixa_min || vaga?.faixa_max) && (
+              <p className="text-xs text-muted-foreground">
+                Faixa da vaga: R$ {Number(vaga.faixa_min ?? 0).toLocaleString("pt-BR")} – R$ {Number(vaga.faixa_max ?? 0).toLocaleString("pt-BR")}
+              </p>
+            )}
+            {form.salario_proposto && vaga?.faixa_min && Number(form.salario_proposto) < Number(vaga.faixa_min) && (
+              <p className="text-xs font-medium" style={{ color: "#D97706" }}>⚠ Valor abaixo da faixa mínima da vaga</p>
+            )}
+            {form.salario_proposto && vaga?.faixa_max && Number(form.salario_proposto) > Number(vaga.faixa_max) && (
+              <p className="text-xs font-medium" style={{ color: "#DC2626" }}>⚠ Valor acima da faixa máxima da vaga</p>
+            )}
           </div>
         )}
 
