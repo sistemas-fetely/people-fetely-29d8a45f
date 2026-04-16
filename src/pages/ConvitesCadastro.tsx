@@ -53,11 +53,9 @@ const STATUS_CONFIG: Record<string, { label: string; badge: string; icon: typeof
   email_enviado: { label: "Enviado", badge: "bg-sky-100 text-sky-700 border-0", icon: Send },
   atrasado: { label: "Atrasado", badge: "bg-yellow-100 text-yellow-700 border-0", icon: AlertTriangle },
   preenchido: { label: "Preenchido", badge: "bg-emerald-100 text-emerald-700 border-0", icon: CheckCircle2 },
-  
   devolvido: { label: "Devolvido", badge: "bg-orange-100 text-orange-700 border-0", icon: Undo2 },
   aprovado: { label: "Aprovado", badge: "bg-blue-100 text-blue-700 border-0", icon: CheckCircle2 },
   cadastrado: { label: "Cadastrado", badge: "bg-muted text-muted-foreground border-0", icon: UserCheck },
-  expirado: { label: "Expirado", badge: "bg-red-100 text-red-700 border-0", icon: XCircle },
   cancelado: { label: "Cancelado", badge: "bg-muted text-muted-foreground border-0", icon: XCircle },
 };
 
@@ -101,12 +99,6 @@ interface LiderOption {
   tipo: "clt" | "pj";
 }
 
-const PRAZO_OPTIONS = [
-  { value: "3", label: "3 dias" },
-  { value: "7", label: "7 dias" },
-  { value: "15", label: "15 dias" },
-  { value: "30", label: "30 dias" },
-];
 
 const initialForm = {
   nome: "",
@@ -118,19 +110,16 @@ const initialForm = {
   lider_direto_id: "",
   salario_previsto: "",
   data_inicio_prevista: undefined as Date | undefined,
-  prazo_dias: "7",
   observacoes_colaborador: "",
 };
 
 // ─── Helper: compute display status ─────────────────────────────────
 function getDisplayStatus(c: Convite): string {
-  const now = new Date();
   if (c.status === "cancelado") return "cancelado";
   if (c.status === "cadastrado") return "cadastrado";
   if (c.status === "aprovado") return "aprovado";
   if (c.status === "devolvido") return "devolvido";
   if (c.status === "preenchido") return "preenchido";
-  if ((c.status === "pendente" || c.status === "email_enviado") && new Date(c.expira_em) <= now) return "expirado";
   if (c.status === "email_enviado" || c.status === "pendente") return "email_enviado";
   return c.status;
 }
@@ -138,7 +127,6 @@ function getDisplayStatus(c: Convite): string {
 // ─── Helper: row bg class based on status ────────────────────────────
 function getRowClass(displayStatus: string): string {
   if (displayStatus === "atrasado") return "bg-yellow-50/50 dark:bg-yellow-950/10";
-  if (displayStatus === "expirado") return "bg-red-50/50 dark:bg-red-950/10";
   return "";
 }
 
