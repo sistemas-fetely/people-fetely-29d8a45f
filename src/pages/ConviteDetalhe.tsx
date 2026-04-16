@@ -238,7 +238,7 @@ export default function ConviteDetalhe() {
             data_admissao: convite.data_inicio_prevista || rest.data_admissao || new Date().toISOString().split("T")[0],
             salario_base: convite.salario_previsto || rest.salario_base || 0,
             tipo_contrato: rest.tipo_contrato || (convite as any).dados_contratacao?.tipo_contrato_clt || "indeterminado",
-            jornada_semanal: rest.jornada_semanal || parseInt((convite as any).dados_contratacao?.jornada_semanal) || 44,
+            jornada_semanal: rest.jornada_semanal || (convite as any).dados_contratacao?.jornada_semanal || "44",
             horario_trabalho: rest.horario_trabalho || (convite as any).dados_contratacao?.horario_trabalho || "",
             local_trabalho: rest.local_trabalho || (convite as any).dados_contratacao?.local_trabalho || "",
             // Dependentes e documentos

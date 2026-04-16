@@ -96,7 +96,7 @@ export function StepDadosProfissionais() {
           {loadingJornadas ? (
             <div className="flex items-center h-10"><Loader2 className="h-4 w-4 animate-spin" /></div>
           ) : (
-            <Select value={watch("jornada_semanal")?.toString() || "44"} onValueChange={(v) => setValue("jornada_semanal", Number(v) || 44)}>
+            <Select value={watch("jornada_semanal") || "44"} onValueChange={(v) => setValue("jornada_semanal", v)}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 {(jornadas || []).map((j) => (
