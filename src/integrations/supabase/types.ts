@@ -2637,6 +2637,83 @@ export type Database = {
         }
         Relationships: []
       }
+      sncf_sistemas: {
+        Row: {
+          ativo: boolean
+          cor: string | null
+          created_at: string
+          descricao: string | null
+          icone: string | null
+          id: string
+          nome: string
+          ordem: number
+          rota_base: string
+          slug: string
+        }
+        Insert: {
+          ativo?: boolean
+          cor?: string | null
+          created_at?: string
+          descricao?: string | null
+          icone?: string | null
+          id?: string
+          nome: string
+          ordem?: number
+          rota_base: string
+          slug: string
+        }
+        Update: {
+          ativo?: boolean
+          cor?: string | null
+          created_at?: string
+          descricao?: string | null
+          icone?: string | null
+          id?: string
+          nome?: string
+          ordem?: number
+          rota_base?: string
+          slug?: string
+        }
+        Relationships: []
+      }
+      sncf_user_systems: {
+        Row: {
+          ativo: boolean
+          concedido_em: string
+          concedido_por: string | null
+          id: string
+          role_no_sistema: string
+          sistema_id: string
+          user_id: string
+        }
+        Insert: {
+          ativo?: boolean
+          concedido_em?: string
+          concedido_por?: string | null
+          id?: string
+          role_no_sistema?: string
+          sistema_id: string
+          user_id: string
+        }
+        Update: {
+          ativo?: boolean
+          concedido_em?: string
+          concedido_por?: string | null
+          id?: string
+          role_no_sistema?: string
+          sistema_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sncf_user_systems_sistema_id_fkey"
+            columns: ["sistema_id"]
+            isOneToOne: false
+            referencedRelation: "sncf_sistemas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       suppressed_emails: {
         Row: {
           created_at: string
