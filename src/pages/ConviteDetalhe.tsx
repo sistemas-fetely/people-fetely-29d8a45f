@@ -405,7 +405,7 @@ export default function ConviteDetalhe() {
                   <Edit className="h-4 w-4 mr-2" /> Editar Dados
                 </Button>
               )}
-              {canExport && (
+              {canExport && convite.status !== "aprovado" && (
                 <Button onClick={handleExportToCadastro}>
                   <UserPlus className="h-4 w-4 mr-2" />
                   {isClt ? "Criar Colaborador CLT" : "Criar Contrato PJ"}
