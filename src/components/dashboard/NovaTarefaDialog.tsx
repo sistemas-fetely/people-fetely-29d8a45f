@@ -70,7 +70,6 @@ export function NovaTarefaDialog({ open, onOpenChange, onCreated }: NovaTarefaDi
   const [responsavel, setResponsavel] = useState<string>("mim"); // "mim" | "area" | user_id
   const [prazoData, setPrazoData] = useState<string>(defaultPrazo());
   const [colaboradorId, setColaboradorId] = useState<string>("none");
-  const [linkAcao, setLinkAcao] = useState<string>("");
 
   useEffect(() => {
     if (!open) return;
@@ -104,7 +103,6 @@ export function NovaTarefaDialog({ open, onOpenChange, onCreated }: NovaTarefaDi
       setResponsavel("mim");
       setPrazoData(defaultPrazo());
       setColaboradorId("none");
-      setLinkAcao("");
     }
   }, [open]);
 
@@ -133,6 +131,13 @@ export function NovaTarefaDialog({ open, onOpenChange, onCreated }: NovaTarefaDi
       const responsavel_role =
         responsavel === "area" ? ROLE_BY_AREA[areaDestino] : null;
 
+      // Link de ação gerado automaticamente: se tem colaborador, vai para o detalhe dele
+      const linkAuto = colabSelecionado
+        ? colabSelecionado.tipo === "clt"
+          ? `/colaboradores/${colabSelecionado.id}`
+          : `/contratos-pj/${colabSelecionado.id}`
+        : null;
+
       const payload: any = {
         titulo: titulo.trim(),
         descricao: descricao.trim() || null,
@@ -146,7 +151,7 @@ export function NovaTarefaDialog({ open, onOpenChange, onCreated }: NovaTarefaDi
         colaborador_id: colabSelecionado?.id || null,
         colaborador_tipo: colabSelecionado?.tipo || null,
         colaborador_nome: colabSelecionado?.nome || null,
-        link_acao: linkAcao.trim() || null,
+        link_acao: linkAuto,
         criado_por: user.id,
         status: "pendente",
       };
@@ -264,15 +269,6 @@ export function NovaTarefaDialog({ open, onOpenChange, onCreated }: NovaTarefaDi
             </div>
           </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="link">Link de ação</Label>
-            <Input
-              id="link"
-              value={linkAcao}
-              onChange={(e) => setLinkAcao(e.target.value)}
-              placeholder="/convites-cadastro/123 (opcional)"
-            />
-          </div>
         </div>
 
         <DialogFooter>

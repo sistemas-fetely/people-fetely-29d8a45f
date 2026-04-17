@@ -581,13 +581,21 @@ export function DashboardOperacional() {
                 </div>
               ) : (
                 <div className="space-y-2">
-                  {tarefas.map((t) => {
+                {tarefas.map((t) => {
                     const PrioIcon = prioridadeIcon[t.prioridade];
                     const ModuloIcon = t.icone;
+                    // Ações diretas que mantêm botão visível
+                    const acoesDiretas = ["Aprovar", "Criar"];
+                    const mostrarBotaoAcao = !t.manual && acoesDiretas.includes(t.acao);
+                    const clicavel = !!t.rota;
                     return (
                       <div
                         key={t.id}
-                        className="flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-accent/30 transition-colors"
+                        className={cn(
+                          "flex items-center gap-3 p-3 rounded-lg border bg-card transition-colors",
+                          clicavel && "cursor-pointer hover:bg-muted/50"
+                        )}
+                        onClick={clicavel ? () => navigate(t.rota) : undefined}
                       >
                         <div className={cn("flex h-9 w-9 items-center justify-center rounded-lg shrink-0", prioridadeColor[t.prioridade])}>
                           <PrioIcon className="h-4 w-4" />
@@ -605,24 +613,7 @@ export function DashboardOperacional() {
                           <p className="text-xs text-muted-foreground truncate">{t.detalhe}</p>
                         </div>
                         {t.manual ? (
-                          <div className="flex items-center gap-1 shrink-0">
-                            {t.rota && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => navigate(t.rota)}
-                              >
-                                Abrir
-                              </Button>
-                            )}
-                            <Button
-                              size="sm"
-                              onClick={() => handleConcluirManual(t.sncfId!)}
-                              style={{ backgroundColor: FETELY_GREEN }}
-                              className="text-white hover:opacity-90"
-                            >
-                              <Check className="h-4 w-4" />
-                            </Button>
+                          <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
@@ -639,16 +630,19 @@ export function DashboardOperacional() {
                               </DropdownMenuContent>
                             </DropdownMenu>
                           </div>
-                        ) : (
+                        ) : mostrarBotaoAcao ? (
                           <Button
                             size="sm"
-                            onClick={() => navigate(t.rota)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(t.rota);
+                            }}
                             style={{ backgroundColor: FETELY_GREEN }}
                             className="shrink-0 text-white hover:opacity-90"
                           >
                             {t.acao}
                           </Button>
-                        )}
+                        ) : null}
                       </div>
                     );
                   })}
