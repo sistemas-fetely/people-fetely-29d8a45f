@@ -765,6 +765,12 @@ export function DashboardOperacional() {
           </div>
         </div>
       )}
+
+      <NovaTarefaDialog
+        open={novaOpen}
+        onOpenChange={setNovaOpen}
+        onCreated={() => setReloadKey((k) => k + 1)}
+      />
     </div>
   );
 }
