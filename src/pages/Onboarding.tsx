@@ -6,17 +6,27 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { CheckCircle2, Clock, AlertTriangle, Loader2, TrendingUp } from "lucide-react";
+import { CheckCircle2, Clock, AlertTriangle, Loader2, TrendingUp, ShieldAlert, ExternalLink } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import {
   Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription,
 } from "@/components/ui/sheet";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 type Checklist = {
   id: string;
@@ -47,6 +57,10 @@ type Tarefa = {
   concluida_em: string | null;
   concluida_por: string | null;
   area_destino?: string | null;
+  bloqueante?: boolean | null;
+  motivo_bloqueio?: string | null;
+  evidencia_texto?: string | null;
+  evidencia_url?: string | null;
 };
 
 const statusFilter = [
@@ -65,6 +79,14 @@ const roleLabels: Record<string, string> = {
   financeiro: "Financeiro",
 };
 
+function diasAtraso(prazoData: string): number {
+  const prazo = new Date(prazoData);
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+  prazo.setHours(0, 0, 0, 0);
+  return Math.floor((hoje.getTime() - prazo.getTime()) / (1000 * 60 * 60 * 24));
+}
+
 export default function Onboarding() {
   const { user } = useAuth();
   const { userRoles: roles } = usePermissions();
@@ -75,6 +97,11 @@ export default function Onboarding() {
   const [selectedChecklist, setSelectedChecklist] = useState<Checklist | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [updatingTask, setUpdatingTask] = useState<string | null>(null);
+
+  // Dialog de conclusão com evidência
+  const [tarefaAConcluir, setTarefaAConcluir] = useState<Tarefa | null>(null);
+  const [observacao, setObservacao] = useState("");
+  const [linkEvidencia, setLinkEvidencia] = useState("");
 
   const isHR = roles.some((r) => ["super_admin", "admin_rh", "gestor_rh"].includes(r));
   const isGestor = roles.includes("gestor_direto");
@@ -97,9 +124,10 @@ export default function Onboarding() {
       return;
     }
 
-    // Load tarefas for all checklists
+    // Load tarefas
     const ids = (cls || []).map((c: any) => c.id);
     let tarefasMap: Record<string, Tarefa[]> = {};
+    let allTarefas: any[] = [];
     if (ids.length > 0) {
       const { data: tarefas } = await supabase
         .from("sncf_tarefas")
@@ -108,14 +136,27 @@ export default function Onboarding() {
         .in("processo_id", ids)
         .order("prazo_dias", { ascending: true });
 
-      (tarefas || []).forEach((t: any) => {
+      allTarefas = tarefas || [];
+
+      // Marcar tarefas pendentes com prazo passado como "atrasada"
+      const hojeStr = new Date().toISOString().split("T")[0];
+      const atrasadas = allTarefas.filter((t: any) => t.status === "pendente" && t.prazo_data && t.prazo_data < hojeStr);
+      if (atrasadas.length > 0) {
+        await supabase.from("sncf_tarefas")
+          .update({ status: "atrasada" })
+          .in("id", atrasadas.map((t: any) => t.id))
+          .eq("status", "pendente");
+        atrasadas.forEach((t: any) => { t.status = "atrasada"; });
+      }
+
+      allTarefas.forEach((t: any) => {
         const item = { ...t, checklist_id: t.processo_id };
         if (!tarefasMap[t.processo_id]) tarefasMap[t.processo_id] = [];
         tarefasMap[t.processo_id].push(item);
       });
     }
 
-    // Load colaborador/contrato names
+    // Load nomes
     const cltIds = (cls || []).filter((c: any) => c.colaborador_tipo === "clt" && c.colaborador_id).map((c: any) => c.colaborador_id);
     const pjIds = (cls || []).filter((c: any) => c.colaborador_tipo === "pj" && c.colaborador_id).map((c: any) => c.colaborador_id);
 
@@ -162,8 +203,27 @@ export default function Onboarding() {
     return (cl.tarefas || []).some(isTarefaAtrasada);
   }
 
+  function hasOverdueLegal(cl: Checklist) {
+    return (cl.tarefas || []).some((t) => isTarefaAtrasada(t) && t.bloqueante);
+  }
+
   function countOverdue(cl: Checklist) {
     return (cl.tarefas || []).filter(isTarefaAtrasada).length;
+  }
+
+  function countOverdueLegal(cl: Checklist) {
+    return (cl.tarefas || []).filter((t) => isTarefaAtrasada(t) && t.bloqueante).length;
+  }
+
+  // Ordena tarefas: bloqueantes primeiro, depois por prazo_data
+  function ordenarTarefas(tarefas: Tarefa[]): Tarefa[] {
+    return [...tarefas].sort((a, b) => {
+      if (a.bloqueante && !b.bloqueante) return -1;
+      if (!a.bloqueante && b.bloqueante) return 1;
+      const ad = a.prazo_data || "9999";
+      const bd = b.prazo_data || "9999";
+      return ad.localeCompare(bd);
+    });
   }
 
   const filtered = checklists.filter((cl) => {
@@ -189,43 +249,113 @@ export default function Onboarding() {
   const totalTarefasGeral = checklists.reduce((acc, cl) => acc + (cl.tarefas || []).length, 0);
   const percConclusaoGeral = totalTarefasGeral > 0 ? Math.round((totalConcluidasGeral / totalTarefasGeral) * 100) : 0;
 
-  async function toggleTarefa(tarefa: Tarefa) {
+  // Abrir dialog para concluir tarefa
+  function handleClickConcluir(tarefa: Tarefa) {
+    if (tarefa.status === "concluida") {
+      // Reabrir tarefa direto, sem dialog
+      reabrirTarefa(tarefa);
+      return;
+    }
+    setTarefaAConcluir(tarefa);
+    setObservacao("");
+    setLinkEvidencia("");
+  }
+
+  async function reabrirTarefa(tarefa: Tarefa) {
     if (!user) return;
     setUpdatingTask(tarefa.id);
-    const newStatus = tarefa.status === "concluida" ? "pendente" : "concluida";
-    const updateData: any = {
-      status: newStatus,
-      concluida_em: newStatus === "concluida" ? new Date().toISOString() : null,
-      concluida_por: newStatus === "concluida" ? user.id : null,
-    };
-    const { error } = await supabase.from("sncf_tarefas").update(updateData).eq("id", tarefa.id);
+    const { error } = await supabase.from("sncf_tarefas").update({
+      status: "pendente",
+      concluida_em: null,
+      concluida_por: null,
+      evidencia_texto: null,
+      evidencia_url: null,
+    } as any).eq("id", tarefa.id);
     if (error) {
-      toast.error("Erro ao atualizar tarefa");
+      toast.error("Erro ao reabrir tarefa");
     } else {
-      if (selectedChecklist) {
-        const updated = { ...selectedChecklist };
-        updated.tarefas = (updated.tarefas || []).map((t) =>
-          t.id === tarefa.id ? { ...t, ...updateData } : t
-        );
-        const allDone = (updated.tarefas || []).every((t) => t.status === "concluida");
-        if (allDone && updated.status !== "concluido") {
-          await supabase.from("onboarding_checklists").update({ status: "concluido", concluido_em: new Date().toISOString() } as any).eq("id", updated.id);
-          updated.status = "concluido";
-          updated.concluido_em = new Date().toISOString();
-
-          await supabase.from("notificacoes_rh").insert({
-            tipo: "onboarding_concluido",
-            titulo: `Onboarding concluído: ${updated.nome}`,
-            mensagem: `Todas as tarefas de onboarding de ${updated.nome} foram concluídas.`,
-            link: "/onboarding",
-            user_id: null,
-          });
-          toast.success("Onboarding concluído!");
-        }
-        setSelectedChecklist(updated);
-      }
       await loadChecklists();
+      if (selectedChecklist) {
+        const updated = await reloadChecklist(selectedChecklist.id);
+        if (updated) setSelectedChecklist(updated);
+      }
     }
+    setUpdatingTask(null);
+  }
+
+  async function reloadChecklist(id: string): Promise<Checklist | null> {
+    const { data: tarefas } = await supabase
+      .from("sncf_tarefas")
+      .select("*")
+      .eq("tipo_processo", "onboarding")
+      .eq("processo_id", id)
+      .order("prazo_dias", { ascending: true });
+    const t = (tarefas || []).map((x: any) => ({ ...x, checklist_id: x.processo_id }));
+    return selectedChecklist ? { ...selectedChecklist, tarefas: t } : null;
+  }
+
+  async function confirmarConclusao() {
+    if (!tarefaAConcluir || !user) return;
+    if (observacao.trim().length < 5) {
+      toast.error("Observação deve ter pelo menos 5 caracteres");
+      return;
+    }
+    setUpdatingTask(tarefaAConcluir.id);
+    const { error } = await supabase.from("sncf_tarefas").update({
+      status: "concluida",
+      concluida_em: new Date().toISOString(),
+      concluida_por: user.id,
+      evidencia_texto: observacao.trim(),
+      evidencia_url: linkEvidencia.trim() || null,
+    } as any).eq("id", tarefaAConcluir.id);
+
+    if (error) {
+      toast.error("Erro ao concluir tarefa");
+      setUpdatingTask(null);
+      return;
+    }
+
+    // Atualizar localmente
+    if (selectedChecklist) {
+      const updated = { ...selectedChecklist };
+      updated.tarefas = (updated.tarefas || []).map((t) =>
+        t.id === tarefaAConcluir.id
+          ? {
+              ...t,
+              status: "concluida",
+              concluida_em: new Date().toISOString(),
+              concluida_por: user.id,
+              evidencia_texto: observacao.trim(),
+              evidencia_url: linkEvidencia.trim() || null,
+            }
+          : t
+      );
+      const allDone = (updated.tarefas || []).every((t) => t.status === "concluida");
+      if (allDone && updated.status !== "concluido") {
+        await supabase.from("onboarding_checklists").update({
+          status: "concluido",
+          concluido_em: new Date().toISOString(),
+        } as any).eq("id", updated.id);
+        updated.status = "concluido";
+        updated.concluido_em = new Date().toISOString();
+
+        await supabase.from("notificacoes_rh").insert({
+          tipo: "onboarding_concluido",
+          titulo: `Onboarding concluído: ${updated.nome}`,
+          mensagem: `Todas as tarefas de onboarding de ${updated.nome} foram concluídas.`,
+          link: "/onboarding",
+          user_id: null,
+        });
+        toast.success("Onboarding concluído!");
+      } else {
+        toast.success("Tarefa concluída");
+      }
+      setSelectedChecklist(updated);
+    }
+    await loadChecklists();
+    setTarefaAConcluir(null);
+    setObservacao("");
+    setLinkEvidencia("");
     setUpdatingTask(null);
   }
 
@@ -234,7 +364,7 @@ export default function Onboarding() {
     setDrawerOpen(true);
   }
 
-  // Colaborador view — show only own tasks
+  // Colaborador view
   if (isColaborador) {
     const myChecklists = checklists.filter((cl) => cl.tarefas?.some((t) => t.responsavel_user_id === user?.id));
     const myTarefas = myChecklists.flatMap((cl) =>
@@ -261,27 +391,41 @@ export default function Onboarding() {
               <Progress value={progress} className="h-3" />
             </div>
             <div className="space-y-3">
-              {myTarefas.map((t) => (
+              {ordenarTarefas(myTarefas).map((t) => (
                 <Card key={t.id} className={isTarefaAtrasada(t) ? "border-warning" : ""}>
                   <CardContent className="p-4 flex items-start gap-3">
                     <Checkbox
                       checked={t.status === "concluida"}
                       disabled={updatingTask === t.id}
-                      onCheckedChange={() => toggleTarefa(t)}
+                      onCheckedChange={() => handleClickConcluir(t)}
                       className="mt-1"
                     />
                     <div className="flex-1 min-w-0">
-                      <p className={`text-sm font-medium ${t.status === "concluida" ? "line-through text-muted-foreground" : ""}`}>
-                        {t.titulo}
-                      </p>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className={`text-sm font-medium ${t.status === "concluida" ? "line-through text-muted-foreground" : ""}`}>
+                          {t.titulo}
+                        </p>
+                        {t.bloqueante && (
+                          <Badge className="bg-destructive text-destructive-foreground text-[10px] h-5">
+                            <ShieldAlert className="h-3 w-3 mr-0.5" /> Legal
+                          </Badge>
+                        )}
+                      </div>
                       {t.descricao && <p className="text-xs text-muted-foreground mt-1">{t.descricao}</p>}
                       {t.prazo_data && (
                         <p className="text-xs text-muted-foreground mt-1">
                           Prazo: {format(new Date(t.prazo_data), "dd/MM/yyyy")}
                         </p>
                       )}
+                      {t.status === "concluida" && t.evidencia_texto && (
+                        <p className="text-xs text-success mt-1">✓ {t.evidencia_texto}</p>
+                      )}
                     </div>
-                    {isTarefaAtrasada(t) && <Badge variant="outline" className="bg-warning/10 text-warning border-0 text-xs">Atrasada</Badge>}
+                    {isTarefaAtrasada(t) && (
+                      <Badge variant="outline" className={`text-xs border-0 ${t.bloqueante ? "bg-destructive/15 text-destructive animate-pulse" : "bg-warning/10 text-warning"}`}>
+                        Atrasada {t.prazo_data ? `${diasAtraso(t.prazo_data)}d` : ""}
+                      </Badge>
+                    )}
                     {t.status === "concluida" && <CheckCircle2 className="h-4 w-4 text-success shrink-0" />}
                   </CardContent>
                 </Card>
@@ -289,12 +433,23 @@ export default function Onboarding() {
             </div>
           </>
         )}
+        <ConcluirTarefaDialog
+          tarefa={tarefaAConcluir}
+          observacao={observacao}
+          linkEvidencia={linkEvidencia}
+          setObservacao={setObservacao}
+          setLinkEvidencia={setLinkEvidencia}
+          onClose={() => setTarefaAConcluir(null)}
+          onConfirm={confirmarConclusao}
+          loading={!!updatingTask}
+        />
       </div>
     );
   }
 
   // HR / Gestor view
   return (
+    <TooltipProvider>
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <h1 className="text-2xl font-bold">Onboarding</h1>
@@ -310,7 +465,6 @@ export default function Onboarding() {
         </Select>
       </div>
 
-      {/* KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-4 flex items-center gap-3">
@@ -359,9 +513,11 @@ export default function Onboarding() {
           {filtered.map((cl) => {
             const progress = getProgress(cl);
             const overdue = hasOverdue(cl);
+            const overdueLegal = hasOverdueLegal(cl);
             const totalT = (cl.tarefas || []).length;
             const concluidasT = (cl.tarefas || []).filter((t) => t.status === "concluida").length;
             const atrasadasT = countOverdue(cl);
+            const atrasadasLegais = countOverdueLegal(cl);
             const porArea = (cl.tarefas || []).reduce((acc: Record<string, { total: number; done: number }>, t) => {
               const area = t.area_destino || "Geral";
               if (!acc[area]) acc[area] = { total: 0, done: 0 };
@@ -382,8 +538,13 @@ export default function Onboarding() {
                       <p className="font-semibold truncate">{cl.nome}</p>
                       <p className="text-sm text-muted-foreground truncate">{cl.cargo} · {cl.departamento}</p>
                     </div>
-                    <div className="flex items-center gap-2 shrink-0">
+                    <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
                       <Badge variant="outline" className="text-xs">{cl.colaborador_tipo?.toUpperCase()}</Badge>
+                      {overdueLegal && (
+                        <Badge className="bg-destructive text-destructive-foreground animate-pulse text-xs">
+                          <ShieldAlert className="h-3 w-3 mr-0.5" /> Tarefa legal atrasada!
+                        </Badge>
+                      )}
                       <Badge
                         variant="outline"
                         className={
@@ -404,14 +565,20 @@ export default function Onboarding() {
                   <div className="flex items-center justify-between text-xs text-muted-foreground gap-2 flex-wrap">
                     <span>
                       {concluidasT} de {totalT} tarefas concluídas
-                      {atrasadasT > 0 && (
-                        <span className="text-destructive font-medium"> · {atrasadasT} atrasada{atrasadasT > 1 ? "s" : ""}</span>
+                      {atrasadasT > 0 && !overdueLegal && (
+                        <Badge variant="outline" className="ml-2 bg-warning/10 text-warning border-0 text-[10px]">
+                          {atrasadasT} atrasada{atrasadasT > 1 ? "s" : ""}
+                        </Badge>
+                      )}
+                      {atrasadasLegais > 0 && (
+                        <span className="ml-2 text-destructive font-medium">
+                          {atrasadasLegais} legal{atrasadasLegais > 1 ? "s" : ""} atrasada{atrasadasLegais > 1 ? "s" : ""}
+                        </span>
                       )}
                     </span>
                     {cl.coordenador_nome && <span>Coordenado por: {cl.coordenador_nome}</span>}
                   </div>
 
-                  {/* Resumo por área */}
                   {Object.keys(porArea).length > 0 && (
                     <div className="flex flex-wrap gap-1.5">
                       {Object.entries(porArea).map(([area, counts]) => (
@@ -432,7 +599,7 @@ export default function Onboarding() {
         </div>
       )}
 
-      {/* Checklist Drawer */}
+      {/* Drawer */}
       <Sheet open={drawerOpen} onOpenChange={setDrawerOpen}>
         <SheetContent className="sm:max-w-lg overflow-y-auto">
           {selectedChecklist && (
@@ -456,7 +623,6 @@ export default function Onboarding() {
                 <Progress value={getProgress(selectedChecklist)} className="h-3" />
               </div>
 
-              {/* Tarefas agrupadas por área */}
               <div className="mt-6 space-y-6">
                 {Object.entries(
                   (selectedChecklist.tarefas || []).reduce((acc: Record<string, Tarefa[]>, t) => {
@@ -465,58 +631,190 @@ export default function Onboarding() {
                     acc[area].push(t);
                     return acc;
                   }, {})
-                ).map(([area, tarefas]) => (
-                  <div key={area} className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">{area}</h4>
-                      <span className="text-xs text-muted-foreground">
-                        {tarefas.filter((t) => t.status === "concluida").length}/{tarefas.length}
-                      </span>
-                    </div>
-                    {tarefas.map((t) => {
-                      const atrasada = isTarefaAtrasada(t);
-                      return (
-                        <div
-                          key={t.id}
-                          className={`flex items-start gap-3 p-3 rounded-lg border ${atrasada ? "border-warning bg-warning/5" : "border-border"}`}
-                        >
-                          <Checkbox
-                            checked={t.status === "concluida"}
-                            disabled={updatingTask === t.id || (!isHR && t.responsavel_user_id !== user?.id)}
-                            onCheckedChange={() => toggleTarefa(t)}
-                            className="mt-0.5"
-                          />
-                          <div className="flex-1 min-w-0">
-                            <p className={`text-sm font-medium ${t.status === "concluida" ? "line-through text-muted-foreground" : ""}`}>
-                              {t.titulo}
-                            </p>
-                            {t.descricao && <p className="text-xs text-muted-foreground mt-1">{t.descricao}</p>}
-                            <div className="flex items-center gap-2 mt-1 flex-wrap">
-                              <Badge variant="outline" className="text-xs">{roleLabels[t.responsavel_role] || t.responsavel_role}</Badge>
-                              {t.prazo_data && (
-                                <span className="text-xs text-muted-foreground">
-                                  Prazo: {format(new Date(t.prazo_data), "dd/MM/yyyy")}
-                                </span>
-                              )}
-                              {t.status === "concluida" && t.concluida_em && (
-                                <span className="text-xs text-success">
-                                  ✓ {format(new Date(t.concluida_em), "dd/MM HH:mm")}
-                                </span>
+                ).map(([area, tarefas]) => {
+                  const tarefasOrdenadas = ordenarTarefas(tarefas);
+                  return (
+                    <div key={area} className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">{area}</h4>
+                        <span className="text-xs text-muted-foreground">
+                          {tarefas.filter((t) => t.status === "concluida").length}/{tarefas.length}
+                        </span>
+                      </div>
+                      {tarefasOrdenadas.map((t) => {
+                        const atrasada = isTarefaAtrasada(t);
+                        const atrasoLegal = atrasada && t.bloqueante;
+                        const dias = atrasada && t.prazo_data ? diasAtraso(t.prazo_data) : 0;
+                        return (
+                          <div
+                            key={t.id}
+                            className={`flex items-start gap-3 p-3 rounded-lg border ${
+                              atrasoLegal
+                                ? "border-destructive bg-destructive/5"
+                                : atrasada
+                                ? "border-warning bg-warning/5"
+                                : t.bloqueante
+                                ? "border-destructive/50"
+                                : "border-border"
+                            }`}
+                          >
+                            <Checkbox
+                              checked={t.status === "concluida"}
+                              disabled={updatingTask === t.id || (!isHR && t.responsavel_user_id !== user?.id)}
+                              onCheckedChange={() => handleClickConcluir(t)}
+                              className="mt-0.5"
+                            />
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <p className={`text-sm font-medium ${t.status === "concluida" ? "line-through text-muted-foreground" : ""}`}>
+                                  {t.titulo}
+                                </p>
+                                {t.bloqueante && (
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Badge className="bg-destructive text-destructive-foreground text-[10px] h-5 cursor-help">
+                                        <ShieldAlert className="h-3 w-3 mr-0.5" /> Legal
+                                      </Badge>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p className="max-w-xs text-xs">{t.motivo_bloqueio || "Tarefa com prazo legal"}</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                )}
+                                {atrasada && (
+                                  <Badge
+                                    variant="outline"
+                                    className={`text-[10px] border-0 ${atrasoLegal ? "bg-destructive text-destructive-foreground animate-pulse" : "bg-warning/15 text-warning"}`}
+                                  >
+                                    {atrasoLegal && <ShieldAlert className="h-3 w-3 mr-0.5" />}
+                                    {atrasoLegal ? "LEGAL — " : ""}Atrasada há {dias} dia{dias !== 1 ? "s" : ""}
+                                  </Badge>
+                                )}
+                              </div>
+                              {t.descricao && <p className="text-xs text-muted-foreground mt-1">{t.descricao}</p>}
+                              <div className="flex items-center gap-2 mt-1 flex-wrap">
+                                <Badge variant="outline" className="text-xs">{roleLabels[t.responsavel_role] || t.responsavel_role}</Badge>
+                                {t.prazo_data && (
+                                  <span className="text-xs text-muted-foreground">
+                                    Prazo: {format(new Date(t.prazo_data), "dd/MM/yyyy")}
+                                  </span>
+                                )}
+                              </div>
+                              {t.status === "concluida" && (
+                                <div className="mt-2 p-2 rounded bg-success/5 border border-success/20 space-y-1">
+                                  {t.evidencia_texto && (
+                                    <p className="text-xs flex items-start gap-1">
+                                      <CheckCircle2 className="h-3 w-3 text-success shrink-0 mt-0.5" />
+                                      <span className="text-foreground">{t.evidencia_texto}</span>
+                                    </p>
+                                  )}
+                                  {t.evidencia_url && (
+                                    <a
+                                      href={t.evidencia_url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-xs text-primary hover:underline inline-flex items-center gap-1"
+                                      onClick={(e) => e.stopPropagation()}
+                                    >
+                                      <ExternalLink className="h-3 w-3" /> Ver evidência
+                                    </a>
+                                  )}
+                                  {t.concluida_em && (
+                                    <p className="text-[10px] text-muted-foreground">
+                                      Concluída em {format(new Date(t.concluida_em), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                                    </p>
+                                  )}
+                                </div>
                               )}
                             </div>
                           </div>
-                          {atrasada && <AlertTriangle className="h-4 w-4 text-warning shrink-0" />}
-                          {t.status === "concluida" && <CheckCircle2 className="h-4 w-4 text-success shrink-0" />}
-                        </div>
-                      );
-                    })}
-                  </div>
-                ))}
+                        );
+                      })}
+                    </div>
+                  );
+                })}
               </div>
             </>
           )}
         </SheetContent>
       </Sheet>
+
+      <ConcluirTarefaDialog
+        tarefa={tarefaAConcluir}
+        observacao={observacao}
+        linkEvidencia={linkEvidencia}
+        setObservacao={setObservacao}
+        setLinkEvidencia={setLinkEvidencia}
+        onClose={() => setTarefaAConcluir(null)}
+        onConfirm={confirmarConclusao}
+        loading={!!updatingTask}
+      />
     </div>
+    </TooltipProvider>
+  );
+}
+
+// ── Dialog de conclusão ──
+function ConcluirTarefaDialog({
+  tarefa,
+  observacao,
+  linkEvidencia,
+  setObservacao,
+  setLinkEvidencia,
+  onClose,
+  onConfirm,
+  loading,
+}: {
+  tarefa: Tarefa | null;
+  observacao: string;
+  linkEvidencia: string;
+  setObservacao: (v: string) => void;
+  setLinkEvidencia: (v: string) => void;
+  onClose: () => void;
+  onConfirm: () => void;
+  loading: boolean;
+}) {
+  return (
+    <Dialog open={!!tarefa} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Concluir: {tarefa?.titulo}</DialogTitle>
+          <DialogDescription>
+            Registre a evidência da conclusão para auditoria.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="obs">Observação de conclusão *</Label>
+            <Textarea
+              id="obs"
+              value={observacao}
+              onChange={(e) => setObservacao(e.target.value)}
+              placeholder="Descreva brevemente o que foi feito. Ex: Email criado, acesso liberado, contrato assinado..."
+              rows={3}
+              required
+            />
+            <p className="text-xs text-muted-foreground">Mínimo 5 caracteres.</p>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="link">Link de evidência (opcional)</Label>
+            <Input
+              id="link"
+              type="url"
+              value={linkEvidencia}
+              onChange={(e) => setLinkEvidencia(e.target.value)}
+              placeholder="URL de comprovação (opcional)"
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose} disabled={loading}>Cancelar</Button>
+          <Button onClick={onConfirm} disabled={loading || observacao.trim().length < 5}>
+            {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+            Concluir
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
