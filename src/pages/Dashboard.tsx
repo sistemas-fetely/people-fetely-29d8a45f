@@ -126,10 +126,6 @@ function DashboardGestao() {
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Dashboard Executivo</h1>
-          <p className="text-muted-foreground text-sm mt-1">Visão gerencial de pessoas e custos</p>
-        </div>
         <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
           {Array.from({ length: 8 }).map((_, i) => (
             <Skeleton key={i} className="h-28 rounded-lg" />
