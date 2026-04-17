@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
-const TI_COLOR = "#2D6A5A";
+const TI_COLOR = "#3A7D6B";
 
 interface KPI {
   total: number;

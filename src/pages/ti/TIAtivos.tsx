@@ -18,7 +18,7 @@ import { toast } from "@/hooks/use-toast";
 import TIAtivoForm from "./TIAtivoForm";
 import { useAuth } from "@/contexts/AuthContext";
 
-const TI_COLOR = "#2D6A5A";
+const TI_COLOR = "#3A7D6B";
 
 interface Ativo {
   id: string;

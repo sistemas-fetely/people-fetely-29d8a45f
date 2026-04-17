@@ -635,7 +635,7 @@ export default function TIAtivoForm({ open, onOpenChange, ativoId, onSaved }: TI
 
         <SheetFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>Cancelar</Button>
-          <Button onClick={handleSave} disabled={saving} style={{ backgroundColor: "#2D6A5A" }} className="text-white hover:opacity-90">
+          <Button onClick={handleSave} disabled={saving} style={{ backgroundColor: "#3A7D6B" }} className="text-white hover:opacity-90">
             {saving ? "Salvando…" : "Salvar"}
           </Button>
         </SheetFooter>
