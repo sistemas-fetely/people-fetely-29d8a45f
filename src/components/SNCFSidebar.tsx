@@ -1,5 +1,5 @@
 import {
-  LayoutGrid, ClipboardList, UsersRound, UserCog, LayoutTemplate,
+  LayoutGrid, ClipboardList, UsersRound, UserCog, Workflow,
   LogOut, ArrowLeft, Network,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
@@ -32,7 +32,7 @@ const principalItems: MenuItem[] = [
 
 const adminItems: MenuItem[] = [
   { title: "Gerenciar Usuários", url: "/gerenciar-usuarios", icon: UserCog, requireRole: "admin_rh_or_super" },
-  { title: "Templates de Processos", url: "/templates", icon: LayoutTemplate, requireRole: "admin_rh_or_super" },
+  { title: "Processos", url: "/processos", icon: Workflow, requireRole: "admin_rh_or_super" },
 ];
 
 const SISTEMA_LABELS: Record<string, { label: string; path: string }> = {

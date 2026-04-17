@@ -58,7 +58,8 @@ import DocumentacaoDetalhe from "@/pages/ti/DocumentacaoDetalhe";
 import DocumentacaoForm from "@/pages/ti/DocumentacaoForm";
 import MinhasTarefas from "@/pages/MinhasTarefas";
 import TarefasDoTime from "@/pages/TarefasDoTime";
-import TemplatesProcessos from "@/pages/TemplatesProcessos";
+import Processos from "@/pages/Processos";
+import ProcessoEditor from "@/pages/ProcessoEditor";
 import DesligamentoDetalhe from "@/pages/DesligamentoDetalhe";
 
 const queryClient = new QueryClient();
@@ -93,7 +94,10 @@ const App = () => (
                   <GerenciarUsuarios />
                 </ProtectedRoute>
               } />
-              <Route path="/templates" element={<TemplatesProcessos />} />
+              <Route path="/processos" element={<Processos />} />
+              <Route path="/processos/:slug" element={<ProcessoEditor />} />
+              <Route path="/templates" element={<Navigate to="/processos" replace />} />
+              <Route path="/templates/*" element={<Navigate to="/processos" replace />} />
             </Route>
 
             {/* TI Fetely */}

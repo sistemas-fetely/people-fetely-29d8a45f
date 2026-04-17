@@ -93,7 +93,7 @@ export function NovaCategoriaDialog({ open, onOpenChange, onSaved, categoria }: 
       toast.error("Erro: " + error.message);
       return;
     }
-    toast.success(isEdit ? "Categoria atualizada" : "Categoria criada");
+    toast.success(isEdit ? "Processo atualizado" : "Processo criado");
     onSaved();
     onOpenChange(false);
   };
@@ -102,15 +102,17 @@ export function NovaCategoriaDialog({ open, onOpenChange, onSaved, categoria }: 
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-xl">
         <DialogHeader>
-          <DialogTitle>{isEdit ? "Editar" : "Nova"} categoria de processo</DialogTitle>
+          <DialogTitle>{isEdit ? "Editar processo" : "Cadastrar novo processo"}</DialogTitle>
           <DialogDescription>
-            Categorias agrupam tipos de processo (ex.: Onboarding, Aprovação de Compra).
+            {isEdit
+              ? "Edite os dados do processo."
+              : "Crie um novo tipo de processo da empresa. Depois você adiciona as tarefas que ele deve gerar."}
           </DialogDescription>
         </DialogHeader>
 
         <div className="grid gap-3">
           <div>
-            <Label>Nome *</Label>
+            <Label>Nome do processo (ex: Onboarding, Aprovação de Compra) *</Label>
             <Input
               value={nome}
               onChange={(e) => setNome(e.target.value)}
@@ -119,7 +121,7 @@ export function NovaCategoriaDialog({ open, onOpenChange, onSaved, categoria }: 
           </div>
 
           <div>
-            <Label>Slug *</Label>
+            <Label>Identificador (gerado automaticamente) *</Label>
             <Input
               value={slug}
               onChange={(e) => {
@@ -144,7 +146,7 @@ export function NovaCategoriaDialog({ open, onOpenChange, onSaved, categoria }: 
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label>Módulo de origem</Label>
+              <Label>A qual área esse processo pertence?</Label>
               <Select value={moduloOrigem} onValueChange={setModuloOrigem}>
                 <SelectTrigger>
                   <SelectValue />
@@ -177,7 +179,7 @@ export function NovaCategoriaDialog({ open, onOpenChange, onSaved, categoria }: 
           </div>
 
           <div>
-            <Label>Natureza</Label>
+            <Label>Que tipo de processo é esse?</Label>
             <div className="grid gap-2 mt-1.5">
               {NATUREZAS.map((n) => {
                 const selected = natureza === n.value;
@@ -242,8 +244,8 @@ export function NovaCategoriaDialog({ open, onOpenChange, onSaved, categoria }: 
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
             Cancelar
           </Button>
-          <Button onClick={salvar} disabled={saving} className="gap-2">
-            <Save className="h-4 w-4" /> {isEdit ? "Salvar" : "Criar"}
+          <Button onClick={salvar} disabled={saving} className="gap-2" style={{ backgroundColor: "#1A4A3A" }}>
+            <Save className="h-4 w-4" /> {isEdit ? "Salvar" : "Criar processo"}
           </Button>
         </DialogFooter>
       </DialogContent>
