@@ -90,6 +90,16 @@ export function DashboardOperacional() {
   const [novaOpen, setNovaOpen] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
   const [tarefasLegaisAtrasadas, setTarefasLegaisAtrasadas] = useState<{ nome: string }[]>([]);
+  // Métricas brutas para o card de Insights IA
+  const [insightsData, setInsightsData] = useState({
+    convitesPendentes: 0,
+    onboardingsAtrasados: 0,
+    vagasAbertas: 0,
+    candidatosTriagem: 0,
+    contratosVencendo: 0,
+    tarefasBloqueantes: 0,
+    tempoMedioContratacao: 0,
+  });
 
   const dashData = useDashboardData();
 
