@@ -2759,6 +2759,54 @@ export type Database = {
           },
         ]
       }
+      sncf_processos_categorias: {
+        Row: {
+          ativo: boolean
+          cor: string | null
+          created_at: string
+          criado_por: string | null
+          descricao: string | null
+          icone: string | null
+          id: string
+          modulo_origem: string
+          natureza: string
+          nome: string
+          ordem: number
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          cor?: string | null
+          created_at?: string
+          criado_por?: string | null
+          descricao?: string | null
+          icone?: string | null
+          id?: string
+          modulo_origem?: string
+          natureza?: string
+          nome: string
+          ordem?: number
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          cor?: string | null
+          created_at?: string
+          criado_por?: string | null
+          descricao?: string | null
+          icone?: string | null
+          id?: string
+          modulo_origem?: string
+          natureza?: string
+          nome?: string
+          ordem?: number
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       sncf_sistemas: {
         Row: {
           ativo: boolean
@@ -2900,6 +2948,7 @@ export type Database = {
       sncf_templates_processos: {
         Row: {
           ativo: boolean
+          categoria_id: string | null
           created_at: string
           descricao: string | null
           id: string
@@ -2910,6 +2959,7 @@ export type Database = {
         }
         Insert: {
           ativo?: boolean
+          categoria_id?: string | null
           created_at?: string
           descricao?: string | null
           id?: string
@@ -2920,6 +2970,7 @@ export type Database = {
         }
         Update: {
           ativo?: boolean
+          categoria_id?: string | null
           created_at?: string
           descricao?: string | null
           id?: string
@@ -2928,7 +2979,15 @@ export type Database = {
           tipo_processo?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "sncf_templates_processos_categoria_id_fkey"
+            columns: ["categoria_id"]
+            isOneToOne: false
+            referencedRelation: "sncf_processos_categorias"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       sncf_templates_tarefas: {
         Row: {
