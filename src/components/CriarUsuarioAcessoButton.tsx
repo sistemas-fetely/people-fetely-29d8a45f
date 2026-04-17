@@ -43,12 +43,12 @@ export function CriarUsuarioAcessoButton({
   userId,
   onChange,
 }: CriarUsuarioAcessoButtonProps) {
-  const { hasAnyRole } = usePermissions();
+  const { isSuperAdmin, isAdminRH } = usePermissions();
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [banConfirmOpen, setBanConfirmOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const isAdmin = hasAnyRole(["super_admin", "admin_rh"]);
+  const isAdmin = isSuperAdmin || isAdminRH;
   if (!isAdmin) return null;
 
   // Já tem usuário vinculado → mostra badge + menu
