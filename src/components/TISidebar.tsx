@@ -4,6 +4,8 @@ import { cn } from "@/lib/utils";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Badge } from "@/components/ui/badge";
+import { SNCFQuickAccess } from "@/components/SNCFQuickAccess";
+import { getHighestRoleLabel } from "@/lib/user-role";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent,
   SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem,
@@ -22,7 +24,8 @@ const items = [
 export function TISidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
-  const { user, profile, signOut } = useAuth();
+  const { user, profile, signOut, roles } = useAuth();
+  const primaryRole = getHighestRoleLabel(roles);
   const location = useLocation();
 
   const initials = profile?.full_name
@@ -65,9 +68,12 @@ export function TISidebar() {
                     className="flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-all duration-200"
                   >
                     <LayoutGrid className="h-[18px] w-[18px] shrink-0" />
-                    {!collapsed && <span>SNCF</span>}
+                    {!collapsed && <span>Portal SNCF</span>}
                   </NavLink>
                 </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SNCFQuickAccess />
               </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
@@ -121,7 +127,7 @@ export function TISidebar() {
               <div className="flex flex-col min-w-0">
                 <span className="text-xs font-medium text-sidebar-foreground truncate">{displayName}</span>
                 <Badge variant="outline" className="text-[10px] w-fit border-sidebar-border/60 text-sidebar-muted mt-0.5">
-                  TI Fetély
+                  {primaryRole}
                 </Badge>
               </div>
             </div>
