@@ -13,7 +13,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription,
   AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, MoreHorizontal, Search, Pencil, UserPlus, UserMinus, Wrench, Trash2, Package } from "lucide-react";
+import { Plus, MoreHorizontal, Search, Pencil, UserPlus, UserMinus, Trash2, Package } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import TIAtivoForm from "./TIAtivoForm";
 import { useAuth } from "@/contexts/AuthContext";
