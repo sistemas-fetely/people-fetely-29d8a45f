@@ -46,7 +46,7 @@ export function CadastroColaboradorCLT() {
   const [saving, setSaving] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
 
   const conviteId = (location.state as any)?.conviteId || null;
   const initialData = (location.state as any)?.initialData || null;
@@ -159,6 +159,8 @@ export function CadastroColaboradorCLT() {
             colaborador_id: inserted.id,
             colaborador_tipo: "clt",
             convite_id: conviteId || null,
+            coordenador_user_id: user?.id || null,
+            coordenador_nome: profile?.full_name || null,
           } as any)
           .select("id")
           .single();
@@ -198,6 +200,18 @@ export function CadastroColaboradorCLT() {
 
           if (tarefas.length > 0) {
             await supabase.from("sncf_tarefas").insert(tarefas as any);
+
+            // Notificar responsáveis das tarefas
+            const responsaveisUnicos = [...new Set(tarefas.filter((t) => t.responsavel_user_id).map((t) => t.responsavel_user_id as string))];
+            for (const userId of responsaveisUnicos) {
+              await supabase.from("notificacoes_rh").insert({
+                tipo: "onboarding_tarefa_atribuida",
+                titulo: `Novas tarefas de onboarding atribuídas`,
+                mensagem: `Você tem tarefas pendentes no onboarding de ${data.nome_completo}. Acesse o módulo de Onboarding para verificar.`,
+                link: "/onboarding",
+                user_id: userId,
+              });
+            }
           }
         }
       } catch (onbErr) {
