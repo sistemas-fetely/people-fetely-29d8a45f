@@ -2217,6 +2217,8 @@ export type Database = {
           colaborador_tipo: string
           concluido_em: string | null
           convite_id: string | null
+          coordenador_nome: string | null
+          coordenador_user_id: string | null
           created_at: string
           id: string
           status: string
@@ -2227,6 +2229,8 @@ export type Database = {
           colaborador_tipo: string
           concluido_em?: string | null
           convite_id?: string | null
+          coordenador_nome?: string | null
+          coordenador_user_id?: string | null
           created_at?: string
           id?: string
           status?: string
@@ -2237,6 +2241,8 @@ export type Database = {
           colaborador_tipo?: string
           concluido_em?: string | null
           convite_id?: string | null
+          coordenador_nome?: string | null
+          coordenador_user_id?: string | null
           created_at?: string
           id?: string
           status?: string
