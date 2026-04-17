@@ -2,6 +2,7 @@ import {
   LayoutDashboard, Users, FileText, Calendar, ClipboardList, Award,
   GraduationCap, GitBranch, BarChart3, Settings, UserCircle, CreditCard,
   Briefcase, LogOut, ArrowUpDown, Send, UserCheck, ClipboardCheck, LayoutGrid,
+  UsersRound, Workflow,
 } from "lucide-react";
 
 import { NavLink } from "@/components/NavLink";
@@ -49,6 +50,7 @@ interface MenuItem {
 const mainItems: MenuItem[] = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard, permModule: "dashboard" },
   { title: "Minhas Tarefas", url: "/tarefas", icon: ClipboardList },
+  { title: "Tarefas do Time", url: "/tarefas/time", icon: UsersRound, requireRole: "__gestor_or_rh__" },
   { title: "Pessoas", url: "/pessoas", icon: Users, permModule: "colaboradores" },
   { title: "Organograma", url: "/organograma", icon: GitBranch, permModule: "organograma" },
   { title: "Férias", url: "/ferias", icon: Calendar, permModule: "ferias" },
@@ -80,6 +82,7 @@ const rhItems: MenuItem[] = [
 const adminItems: MenuItem[] = [
   { title: "Cargos e Salários", url: "/cargos", icon: Briefcase, permModule: "parametros" },
   { title: "Parâmetros", url: "/parametros", icon: Settings, permModule: "parametros" },
+  { title: "Templates de Processos", url: "/templates", icon: Workflow, requireRole: "__admin_rh_or_super__" },
   { title: "Configurações", url: "/configuracoes", icon: Settings, permModule: "usuarios" },
   { title: "Gerenciar Usuários", url: "/gerenciar-usuarios", icon: UserCheck, permModule: "usuarios" },
 ];
@@ -95,7 +98,16 @@ interface MenuGroupProps {
 function MenuGroup({ label, items, collapsed, canViewModule, userRoles = [] }: MenuGroupProps) {
   const location = useLocation();
   const visibleItems = items.filter((item) => {
-    if (item.requireRole && !userRoles.includes(item.requireRole)) return false;
+    if (item.requireRole) {
+      // Pseudo-roles compostas
+      if (item.requireRole === "__gestor_or_rh__") {
+        if (!userRoles.some((r) => ["gestor_direto", "super_admin", "admin_rh", "gestor_rh"].includes(r))) return false;
+      } else if (item.requireRole === "__admin_rh_or_super__") {
+        if (!userRoles.some((r) => ["super_admin", "admin_rh"].includes(r))) return false;
+      } else if (!userRoles.includes(item.requireRole)) {
+        return false;
+      }
+    }
     if (!item.permModule) return true;
     return canViewModule(item.permModule);
   });

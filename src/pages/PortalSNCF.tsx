@@ -118,12 +118,42 @@ export default function PortalSNCF() {
 
       {/* Main */}
       <main className="flex-1 max-w-6xl mx-auto w-full px-6 py-12">
-        <div className="mb-10">
+        <div className="mb-8">
           <h1 className="text-3xl font-bold tracking-tight mb-2">Bem-vindo ao SNCF</h1>
           <p className="text-muted-foreground">
             Selecione um sistema para entrar. Você só pode acessar os sistemas em que tem permissão.
           </p>
         </div>
+
+        {/* Centro de Trabalho — destaque */}
+        <button
+          onClick={() => navigate("/tarefas")}
+          className="group w-full mb-8 rounded-2xl border-2 bg-card p-6 hover:shadow-lg transition-all text-left flex items-center gap-5"
+          style={{ borderColor: "#1A4A3A" }}
+        >
+          <div
+            className="flex h-16 w-16 items-center justify-center rounded-2xl flex-shrink-0"
+            style={{ backgroundColor: "#1A4A3A" }}
+          >
+            <ClipboardList className="h-8 w-8 text-white" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs uppercase tracking-wider font-semibold text-muted-foreground mb-1">
+              Centro de Trabalho
+            </p>
+            <h2 className="text-xl font-bold mb-1" style={{ color: "#1A4A3A" }}>Minhas Tarefas</h2>
+            {totalPendentes > 0 ? (
+              <p className="text-sm text-muted-foreground">
+                Você tem <span className="font-semibold text-foreground">{totalPendentes}</span> tarefa(s) ativa(s)
+              </p>
+            ) : (
+              <p className="text-sm text-emerald-600 font-medium">Tudo em dia!</p>
+            )}
+          </div>
+          <div className="flex items-center gap-2 text-sm font-medium" style={{ color: "#1A4A3A" }}>
+            Ver tarefas <ExternalLink className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
+          </div>
+        </button>
 
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -188,33 +218,6 @@ export default function PortalSNCF() {
             })}
           </div>
         )}
-
-        {/* Ações rápidas */}
-        <div className="mt-12">
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
-            Ações rápidas
-          </h2>
-          <button
-            onClick={() => navigate("/tarefas")}
-            className="group flex items-center gap-3 rounded-xl border border-border bg-card px-5 py-4 hover:shadow-md transition-all w-full md:w-auto"
-          >
-            <div
-              className="flex h-10 w-10 items-center justify-center rounded-lg"
-              style={{ backgroundColor: "#1A4A3A15" }}
-            >
-              <ClipboardList className="h-5 w-5" style={{ color: "#1A4A3A" }} />
-            </div>
-            <div className="flex-1 text-left">
-              <p className="text-sm font-semibold">Minhas Tarefas</p>
-              <p className="text-xs text-muted-foreground">Inbox unificado de pendências</p>
-            </div>
-            {totalPendentes > 0 && (
-              <Badge style={{ backgroundColor: "#1A4A3A" }} className="text-white">
-                {totalPendentes}
-              </Badge>
-            )}
-          </button>
-        </div>
       </main>
 
       {/* Footer */}

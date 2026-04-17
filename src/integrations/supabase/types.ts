@@ -2213,6 +2213,7 @@ export type Database = {
       }
       onboarding_checklists: {
         Row: {
+          aviso_previo: boolean | null
           colaborador_id: string | null
           colaborador_tipo: string
           concluido_em: string | null
@@ -2220,11 +2221,16 @@ export type Database = {
           coordenador_nome: string | null
           coordenador_user_id: string | null
           created_at: string
+          data_efetivacao: string | null
           id: string
+          motivo: string | null
+          observacoes: string | null
           status: string
+          tipo_processo: string | null
           updated_at: string
         }
         Insert: {
+          aviso_previo?: boolean | null
           colaborador_id?: string | null
           colaborador_tipo: string
           concluido_em?: string | null
@@ -2232,11 +2238,16 @@ export type Database = {
           coordenador_nome?: string | null
           coordenador_user_id?: string | null
           created_at?: string
+          data_efetivacao?: string | null
           id?: string
+          motivo?: string | null
+          observacoes?: string | null
           status?: string
+          tipo_processo?: string | null
           updated_at?: string
         }
         Update: {
+          aviso_previo?: boolean | null
           colaborador_id?: string | null
           colaborador_tipo?: string
           concluido_em?: string | null
@@ -2244,8 +2255,12 @@ export type Database = {
           coordenador_nome?: string | null
           coordenador_user_id?: string | null
           created_at?: string
+          data_efetivacao?: string | null
           id?: string
+          motivo?: string | null
+          observacoes?: string | null
           status?: string
+          tipo_processo?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -2780,6 +2795,104 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      sncf_templates_processos: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          descricao: string | null
+          id: string
+          nome: string
+          tipo_colaborador: string | null
+          tipo_processo: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome: string
+          tipo_colaborador?: string | null
+          tipo_processo: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome?: string
+          tipo_colaborador?: string | null
+          tipo_processo?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      sncf_templates_tarefas: {
+        Row: {
+          accountable_role: string | null
+          area_destino: string | null
+          bloqueante: boolean | null
+          chave_jsonb: string | null
+          condicao_aplicacao: string | null
+          created_at: string
+          descricao: string | null
+          id: string
+          motivo_bloqueio: string | null
+          ordem: number
+          prazo_dias: number
+          prioridade: string | null
+          responsavel_role: string | null
+          sistema_origem: string | null
+          template_id: string
+          titulo: string
+        }
+        Insert: {
+          accountable_role?: string | null
+          area_destino?: string | null
+          bloqueante?: boolean | null
+          chave_jsonb?: string | null
+          condicao_aplicacao?: string | null
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          motivo_bloqueio?: string | null
+          ordem?: number
+          prazo_dias?: number
+          prioridade?: string | null
+          responsavel_role?: string | null
+          sistema_origem?: string | null
+          template_id: string
+          titulo: string
+        }
+        Update: {
+          accountable_role?: string | null
+          area_destino?: string | null
+          bloqueante?: boolean | null
+          chave_jsonb?: string | null
+          condicao_aplicacao?: string | null
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          motivo_bloqueio?: string | null
+          ordem?: number
+          prazo_dias?: number
+          prioridade?: string | null
+          responsavel_role?: string | null
+          sistema_origem?: string | null
+          template_id?: string
+          titulo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sncf_templates_tarefas_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "sncf_templates_processos"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       sncf_user_systems: {
         Row: {
