@@ -1,5 +1,5 @@
 import {
-  Settings2, ClipboardList, UsersRound, UserCog, LayoutTemplate, ChevronDown, Sparkles,
+  Settings2, ClipboardList, UsersRound, UserCog, LayoutTemplate, ChevronDown, Sparkles, BookOpen,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
@@ -90,6 +90,14 @@ export function SNCFQuickAccess() {
                 onClick={() => navigate("/processos")}
               >
                 <LayoutTemplate className="h-4 w-4" /> Processos
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full justify-start gap-2 text-sm"
+                onClick={() => navigate("/fala-fetely/conhecimento")}
+              >
+                <BookOpen className="h-4 w-4" /> Base de Conhecimento
               </Button>
             </>
           )}

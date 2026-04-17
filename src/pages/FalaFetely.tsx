@@ -37,6 +37,16 @@ const FRASES_MOTIVACIONAIS = [
   "Bora descobrir algo novo? 🌸",
 ];
 
+const FRASES_PENSANDO = [
+  "Buscando no que sei...",
+  "Consultando a base de conhecimento...",
+  "Juntando as ideias...",
+  "Formulando a resposta...",
+  "Só mais um segundinho...",
+  "Celebrando sua pergunta 🌷",
+  "Pensando com carinho...",
+];
+
 const SUGESTOES = [
   { categoria: "Sistemas", icone: Globe, cor: "#3A7D6B", texto: "Como peço acesso a um sistema corporativo?" },
   { categoria: "Benefícios", icone: Gift, cor: "#E91E63", texto: "Quais são os meus benefícios?" },
@@ -62,6 +72,7 @@ export default function FalaFetely() {
   const [mensagens, setMensagens] = useState<Mensagem[]>([]);
   const [input, setInput] = useState("");
   const [pensando, setPensando] = useState(false);
+  const [estadoPensando, setEstadoPensando] = useState(FRASES_PENSANDO[0]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const fraseMotivacional = useMemo(
@@ -84,6 +95,18 @@ export default function FalaFetely() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [mensagens]);
+
+  // Rotaciona frases de "pensando" enquanto aguarda primeiro token
+  useEffect(() => {
+    if (!pensando) return;
+    setEstadoPensando(FRASES_PENSANDO[0]);
+    let idx = 0;
+    const interval = setInterval(() => {
+      idx = (idx + 1) % FRASES_PENSANDO.length;
+      setEstadoPensando(FRASES_PENSANDO[idx]);
+    }, 1200);
+    return () => clearInterval(interval);
+  }, [pensando]);
 
   async function carregarConversas() {
     const { data } = await supabase
@@ -416,10 +439,14 @@ export default function FalaFetely() {
                         }`}
                       >
                         {msg.pendente && !msg.conteudo ? (
-                          <div className="flex gap-1 py-1">
-                            <span className="w-2 h-2 bg-[#1A4A3A] rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
-                            <span className="w-2 h-2 bg-[#E91E63] rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
-                            <span className="w-2 h-2 bg-[#1A4A3A] rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+                          <div className="flex items-center gap-3 min-w-[240px] py-1">
+                            <div className="relative w-2.5 h-2.5">
+                              <span className="absolute inset-0 rounded-full bg-[#1A4A3A] animate-ping opacity-60" />
+                              <span className="absolute inset-0 rounded-full bg-[#1A4A3A]" />
+                            </div>
+                            <p className="text-sm text-muted-foreground transition-opacity duration-300">
+                              {estadoPensando}
+                            </p>
                           </div>
                         ) : (
                           <div className="prose prose-sm max-w-none prose-p:my-2 prose-ul:my-2 prose-ol:my-2 prose-headings:my-2">

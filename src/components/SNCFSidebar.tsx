@@ -1,6 +1,6 @@
 import {
   LayoutGrid, ClipboardList, UsersRound, UserCog, Workflow,
-  LogOut, ArrowLeft, Network, Sparkles,
+  LogOut, ArrowLeft, Network, Sparkles, BookOpen,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { cn } from "@/lib/utils";
@@ -35,6 +35,7 @@ const principalItems: MenuItem[] = [
 const adminItems: MenuItem[] = [
   { title: "Gerenciar Usuários", url: "/gerenciar-usuarios", icon: UserCog, requireRole: "admin_rh_or_super" },
   { title: "Processos", url: "/processos", icon: Workflow, requireRole: "admin_rh_or_super" },
+  { title: "Base de Conhecimento", url: "/fala-fetely/conhecimento", icon: BookOpen, requireRole: "admin_rh_or_super" },
 ];
 
 const SISTEMA_LABELS: Record<string, { label: string; path: string }> = {
