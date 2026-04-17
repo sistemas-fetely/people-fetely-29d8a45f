@@ -53,6 +53,9 @@ import TILayout from "@/layouts/TILayout";
 import TIDashboard from "@/pages/ti/TIDashboard";
 import TIAtivos from "@/pages/ti/TIAtivos";
 import MinhasTarefas from "@/pages/MinhasTarefas";
+import TarefasDoTime from "@/pages/TarefasDoTime";
+import TemplatesProcessos from "@/pages/TemplatesProcessos";
+import DesligamentoDetalhe from "@/pages/DesligamentoDetalhe";
 
 const queryClient = new QueryClient();
 
@@ -90,6 +93,9 @@ const App = () => (
               <Route path="/" element={<Navigate to="/sncf" replace />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/tarefas" element={<MinhasTarefas />} />
+              <Route path="/tarefas/time" element={<TarefasDoTime />} />
+              <Route path="/templates" element={<TemplatesProcessos />} />
+              <Route path="/desligamento/:id" element={<DesligamentoDetalhe />} />
               <Route path="/pessoas" element={<Pessoas />} />
               <Route path="/colaboradores" element={
                 <ProtectedRoute permModule="colaboradores">
