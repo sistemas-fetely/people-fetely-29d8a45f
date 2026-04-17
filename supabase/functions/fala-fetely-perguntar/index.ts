@@ -209,8 +209,9 @@ Deno.serve(async (req) => {
       })
       .join("\n") || "(nenhum cadastrado)";
 
+    // Documentação completa (não truncada) — são apenas 2 documentos vivos: Estado & Roadmap + RunBook Técnico
     const blocoDocs = (docsRes.data || [])
-      .map((d: any) => `### ${d.titulo}\n${d.descricao ? clipText(d.descricao, 200) + "\n" : ""}${clipText(d.conteudo, 800)}`)
+      .map((d: any) => `### ${d.titulo}\n${d.descricao ? clipText(d.descricao, 300) + "\n\n" : ""}${clipText(d.conteudo, 6000)}`)
       .join("\n\n---\n\n") || "(nenhuma documentação cadastrada)";
 
     const blocoBeneficios = (beneficiosRes.data || [])
@@ -279,7 +280,15 @@ ${blocoCargos}
 [BENEFÍCIOS CADASTRADOS]
 ${blocoBeneficios}
 
-[DOCUMENTAÇÃO VIVA]
+[DOCUMENTAÇÃO DO PROJETO]
+Você tem acesso ao RunBook Técnico e ao Estado & Roadmap do projeto. Use esses documentos como fonte de verdade para responder:
+- Como um módulo funciona tecnicamente
+- O que foi construído recentemente
+- O que está no roadmap
+- Quais decisões arquiteturais foram tomadas
+
+Se o usuário pergunta sobre arquitetura, tabelas, ou decisões de projeto, consulte essa documentação. Se a pergunta é prática do dia a dia (como usar), você já tem os dados de processos, sistemas, cargos — responda com eles.
+
 ${blocoDocs}
 
 INSTRUÇÕES DE RESPOSTA — SEJA DIRETO E CONCISO

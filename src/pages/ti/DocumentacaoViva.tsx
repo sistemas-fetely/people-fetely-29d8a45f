@@ -85,14 +85,14 @@ export default function DocumentacaoViva() {
             Documentação Viva
           </h1>
           <p className="text-muted-foreground text-sm mt-1">
-            Compilação viva dos documentos do projeto SNCF
+            Apenas 2 documentos vivos: <strong>RunBook Técnico</strong> e <strong>Estado & Roadmap</strong>. Para dúvidas operacionais, use o <strong>Fala Fetely</strong>.
           </p>
         </div>
         {isAdmin && (
           <Button
             onClick={() => navigate("/ti/documentacao/novo")}
-            className="gap-2 text-white"
-            style={{ backgroundColor: TI_COLOR }}
+            variant="outline"
+            className="gap-2"
           >
             <Plus className="h-4 w-4" />
             Novo Documento
