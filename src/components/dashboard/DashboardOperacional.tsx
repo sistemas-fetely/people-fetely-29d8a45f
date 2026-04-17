@@ -821,6 +821,9 @@ export function DashboardOperacional() {
         </div>
       )}
 
+      {/* Seção: Insights IA — análise contextual + notícias do setor */}
+      <InsightsIA {...insightsData} />
+
       {/* Seção 3: Velocidade */}
       {velocidade.length > 0 && (
         <div>
