@@ -1,0 +1,520 @@
+import { useEffect, useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  CheckCircle2, AlertCircle, AlertTriangle, Clock, Users, FileText,
+  Briefcase, UserPlus, ClipboardCheck, Mail, FileSignature, Receipt,
+  TrendingUp, Calendar, Gauge,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+
+type Prioridade = "urgente" | "atencao" | "normal";
+
+interface TarefaItem {
+  id: string;
+  prioridade: Prioridade;
+  icone: React.ElementType;
+  titulo: string;
+  detalhe: string;
+  acao: string;
+  rota: string;
+  ordem: number; // antiguidade em dias (maior = mais antigo)
+}
+
+interface KpiItem {
+  label: string;
+  valor: number;
+  icone: React.ElementType;
+  cor: string;
+  rota?: string;
+}
+
+interface VelocidadeItem {
+  label: string;
+  valor: string;
+  icone: React.ElementType;
+  detalhe?: string;
+}
+
+const FETELY_GREEN = "#1A4A3A";
+
+const prioridadeColor: Record<Prioridade, string> = {
+  urgente: "bg-destructive/10 text-destructive",
+  atencao: "bg-warning/10 text-warning",
+  normal: "bg-success/10 text-success",
+};
+
+const prioridadeIcon: Record<Prioridade, React.ElementType> = {
+  urgente: AlertCircle,
+  atencao: AlertTriangle,
+  normal: Clock,
+};
+
+function diasDesde(dateStr: string): number {
+  const d = new Date(dateStr);
+  return Math.floor((Date.now() - d.getTime()) / (1000 * 60 * 60 * 24));
+}
+
+export function DashboardOperacional() {
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [tarefas, setTarefas] = useState<TarefaItem[]>([]);
+  const [kpis, setKpis] = useState<KpiItem[]>([]);
+  const [velocidade, setVelocidade] = useState<VelocidadeItem[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function load() {
+      setLoading(true);
+      try {
+        const hoje = new Date();
+        const em30d = new Date();
+        em30d.setDate(em30d.getDate() + 30);
+        const hojeStr = hoje.toISOString().slice(0, 10);
+        const em30dStr = em30d.toISOString().slice(0, 10);
+
+        const [
+          convitesRes,
+          tarefasRes,
+          vagasRes,
+          candidatosRes,
+          contratosVencRes,
+          colabExpRes,
+          folhaRes,
+          nfRes,
+        ] = await Promise.all([
+          supabase
+            .from("convites_cadastro")
+            .select("id, nome, status, tipo, created_at, preenchido_em, updated_at"),
+          supabase
+            .from("onboarding_tarefas")
+            .select("id, titulo, status, prazo_data, checklist_id")
+            .in("status", ["pendente", "atrasada"]),
+          supabase
+            .from("vagas" as any)
+            .select("id, titulo, status, created_at")
+            .eq("status", "aberta"),
+          supabase
+            .from("candidatos")
+            .select("id, nome, status, created_at")
+            .in("status", ["recebido", "triagem", "entrevista"]),
+          supabase
+            .from("contratos_pj")
+            .select("id, contato_nome, razao_social, data_fim, status")
+            .eq("status", "ativo")
+            .not("data_fim", "is", null)
+            .gte("data_fim", hojeStr)
+            .lte("data_fim", em30dStr),
+          supabase
+            .from("colaboradores_clt")
+            .select("id, nome_completo, data_admissao, fim_periodo_experiencia_1, fim_periodo_experiencia_2, status")
+            .eq("status", "ativo"),
+          supabase
+            .from("folha_competencias")
+            .select("id, competencia, status")
+            .eq("status", "aberta"),
+          supabase
+            .from("notas_fiscais_pj")
+            .select("id, status, contrato_id")
+            .eq("status", "pendente"),
+        ]);
+
+        if (cancelled) return;
+
+        const convites = convitesRes.data || [];
+        const tarefasOnb = tarefasRes.data || [];
+        const vagas = (vagasRes.data || []) as any[];
+        const candidatos = candidatosRes.data || [];
+        const contratosVenc = contratosVencRes.data || [];
+        const colabExp = colabExpRes.data || [];
+        const folhasAbertas = folhaRes.data || [];
+        const nfs = nfRes.data || [];
+
+        // ─── Construir tarefas priorizadas ───
+        const novasTarefas: TarefaItem[] = [];
+
+        // Convites preenchidos aguardando aprovação
+        const aguardandoAprov = convites.filter((c) => c.status === "preenchido");
+        if (aguardandoAprov.length > 0) {
+          const maisAntigo = Math.max(
+            ...aguardandoAprov.map((c) => diasDesde(c.preenchido_em || c.updated_at))
+          );
+          novasTarefas.push({
+            id: "aprov",
+            prioridade: maisAntigo > 3 ? "urgente" : "atencao",
+            icone: ClipboardCheck,
+            titulo: `${aguardandoAprov.length} cadastro${aguardandoAprov.length > 1 ? "s" : ""} aguardando aprovação`,
+            detalhe: aguardandoAprov.slice(0, 3).map((c) => c.nome).join(", ") +
+              (aguardandoAprov.length > 3 ? "..." : ""),
+            acao: "Aprovar",
+            rota: "/convites-cadastro?filter=preenchido",
+            ordem: maisAntigo,
+          });
+        }
+
+        // Convites aprovados aguardando criação
+        const aprovados = convites.filter((c) => c.status === "aprovado");
+        if (aprovados.length > 0) {
+          const maisAntigo = Math.max(
+            ...aprovados.map((c) => diasDesde(c.updated_at))
+          );
+          novasTarefas.push({
+            id: "criar",
+            prioridade: "urgente",
+            icone: UserPlus,
+            titulo: `${aprovados.length} colaborador${aprovados.length > 1 ? "es" : ""} aprovado${aprovados.length > 1 ? "s" : ""} aguardando criação`,
+            detalhe: aprovados.slice(0, 3).map((c) => c.nome).join(", ") +
+              (aprovados.length > 3 ? "..." : ""),
+            acao: "Criar",
+            rota: "/convites-cadastro?filter=aprovado",
+            ordem: maisAntigo,
+          });
+        }
+
+        // Convites devolvidos
+        const devolvidos = convites.filter((c) => c.status === "devolvido");
+        if (devolvidos.length > 0) {
+          novasTarefas.push({
+            id: "devolvidos",
+            prioridade: "atencao",
+            icone: AlertTriangle,
+            titulo: `${devolvidos.length} convite${devolvidos.length > 1 ? "s" : ""} devolvido${devolvidos.length > 1 ? "s" : ""}`,
+            detalhe: devolvidos.slice(0, 3).map((c) => c.nome).join(", ") +
+              (devolvidos.length > 3 ? "..." : ""),
+            acao: "Revisar",
+            rota: "/convites-cadastro?filter=devolvido",
+            ordem: Math.max(...devolvidos.map((c) => diasDesde(c.updated_at))),
+          });
+        }
+
+        // Convites enviados aguardando preenchimento (lembrete se > 5 dias)
+        const enviadosVelhos = convites.filter(
+          (c) => c.status === "email_enviado" && diasDesde(c.created_at) > 5
+        );
+        if (enviadosVelhos.length > 0) {
+          novasTarefas.push({
+            id: "lembrar",
+            prioridade: "normal",
+            icone: Mail,
+            titulo: `${enviadosVelhos.length} convite${enviadosVelhos.length > 1 ? "s" : ""} sem preenchimento há +5 dias`,
+            detalhe: enviadosVelhos.slice(0, 3).map((c) => c.nome).join(", ") +
+              (enviadosVelhos.length > 3 ? "..." : ""),
+            acao: "Ver",
+            rota: "/convites-cadastro?filter=email_enviado",
+            ordem: Math.max(...enviadosVelhos.map((c) => diasDesde(c.created_at))),
+          });
+        }
+
+        // Onboarding tarefas atrasadas
+        const tarefasAtrasadas = tarefasOnb.filter((t) => {
+          if (t.status === "atrasada") return true;
+          if (t.prazo_data && t.prazo_data < hojeStr) return true;
+          return false;
+        });
+        if (tarefasAtrasadas.length > 0) {
+          novasTarefas.push({
+            id: "onb-atraso",
+            prioridade: "urgente",
+            icone: ClipboardCheck,
+            titulo: `${tarefasAtrasadas.length} tarefa${tarefasAtrasadas.length > 1 ? "s" : ""} de onboarding atrasada${tarefasAtrasadas.length > 1 ? "s" : ""}`,
+            detalhe: "Resolva antes que afete a integração",
+            acao: "Resolver",
+            rota: "/onboarding",
+            ordem: 999,
+          });
+        }
+
+        // Contratos PJ vencendo em 30 dias
+        if (contratosVenc.length > 0) {
+          novasTarefas.push({
+            id: "contratos-venc",
+            prioridade: "atencao",
+            icone: FileSignature,
+            titulo: `${contratosVenc.length} contrato${contratosVenc.length > 1 ? "s" : ""} PJ vencendo em 30 dias`,
+            detalhe: contratosVenc.slice(0, 3).map((c) => c.contato_nome || c.razao_social).join(", ") +
+              (contratosVenc.length > 3 ? "..." : ""),
+            acao: "Renovar",
+            rota: "/contratos-pj",
+            ordem: 30,
+          });
+        }
+
+        // Períodos de experiência vencendo (45 e 90 dias)
+        const expVencendo: any[] = [];
+        colabExp.forEach((c: any) => {
+          if (c.fim_periodo_experiencia_1) {
+            const dias = Math.floor(
+              (new Date(c.fim_periodo_experiencia_1).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+            );
+            if (dias >= 0 && dias <= 7) expVencendo.push({ nome: c.nome_completo, dias, marco: 45 });
+          }
+          if (c.fim_periodo_experiencia_2) {
+            const dias = Math.floor(
+              (new Date(c.fim_periodo_experiencia_2).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+            );
+            if (dias >= 0 && dias <= 7) expVencendo.push({ nome: c.nome_completo, dias, marco: 90 });
+          }
+        });
+        if (expVencendo.length > 0) {
+          novasTarefas.push({
+            id: "exp",
+            prioridade: "urgente",
+            icone: Calendar,
+            titulo: `${expVencendo.length} período${expVencendo.length > 1 ? "s" : ""} de experiência vencendo`,
+            detalhe: expVencendo.slice(0, 3).map((e) => `${e.nome} (${e.marco}d)`).join(", "),
+            acao: "Avaliar",
+            rota: "/colaboradores",
+            ordem: 100,
+          });
+        }
+
+        // Folha aberta
+        if (folhasAbertas.length > 0) {
+          novasTarefas.push({
+            id: "folha",
+            prioridade: "atencao",
+            icone: Receipt,
+            titulo: `Folha ${folhasAbertas[0].competencia} em aberto`,
+            detalhe: "Fechar antes do prazo",
+            acao: "Abrir",
+            rota: "/folha-pagamento",
+            ordem: 15,
+          });
+        }
+
+        // NFs pendentes
+        if (nfs.length > 0) {
+          novasTarefas.push({
+            id: "nfs",
+            prioridade: "atencao",
+            icone: FileText,
+            titulo: `${nfs.length} nota${nfs.length > 1 ? "s" : ""} fiscal${nfs.length > 1 ? "is" : ""} pendente${nfs.length > 1 ? "s" : ""}`,
+            detalhe: "Aguardando processamento financeiro",
+            acao: "Processar",
+            rota: "/notas-fiscais",
+            ordem: 10,
+          });
+        }
+
+        // Vagas com candidatos para triagem
+        const candidatosNovos = candidatos.filter((c) => c.status === "recebido");
+        if (candidatosNovos.length > 0) {
+          novasTarefas.push({
+            id: "triagem",
+            prioridade: "normal",
+            icone: Users,
+            titulo: `${candidatosNovos.length} candidato${candidatosNovos.length > 1 ? "s" : ""} para triagem`,
+            detalhe: candidatosNovos.slice(0, 3).map((c) => c.nome).join(", ") +
+              (candidatosNovos.length > 3 ? "..." : ""),
+            acao: "Ver",
+            rota: "/recrutamento",
+            ordem: Math.max(...candidatosNovos.map((c) => diasDesde(c.created_at))),
+          });
+        }
+
+        // Ordenar: urgente > atencao > normal, e por antiguidade dentro de cada nível
+        const prioOrder: Record<Prioridade, number> = { urgente: 0, atencao: 1, normal: 2 };
+        novasTarefas.sort((a, b) => {
+          if (prioOrder[a.prioridade] !== prioOrder[b.prioridade]) {
+            return prioOrder[a.prioridade] - prioOrder[b.prioridade];
+          }
+          return b.ordem - a.ordem;
+        });
+
+        setTarefas(novasTarefas);
+
+        // ─── KPIs (só os com valor > 0) ───
+        const novosKpis: KpiItem[] = [];
+        const convitesPend = convites.filter((c) =>
+          ["pendente", "email_enviado"].includes(c.status)
+        ).length;
+        const onbAndamento = tarefasOnb.length;
+        const vagasAbertas = vagas.length;
+        const candProcesso = candidatos.length;
+        const contratosVencCount = contratosVenc.length;
+
+        if (convitesPend > 0)
+          novosKpis.push({ label: "Convites pendentes", valor: convitesPend, icone: Mail, cor: "text-info", rota: "/convites-cadastro" });
+        if (onbAndamento > 0)
+          novosKpis.push({ label: "Onboardings em andamento", valor: onbAndamento, icone: ClipboardCheck, cor: "text-primary", rota: "/onboarding" });
+        if (vagasAbertas > 0)
+          novosKpis.push({ label: "Vagas abertas", valor: vagasAbertas, icone: Briefcase, cor: "text-warning", rota: "/recrutamento" });
+        if (candProcesso > 0)
+          novosKpis.push({ label: "Candidatos em processo", valor: candProcesso, icone: Users, cor: "text-info", rota: "/recrutamento" });
+        if (contratosVencCount > 0)
+          novosKpis.push({ label: "Contratos PJ vencendo (30d)", valor: contratosVencCount, icone: FileSignature, cor: "text-warning", rota: "/contratos-pj" });
+
+        setKpis(novosKpis);
+
+        // ─── Velocidade (só com 5+ registros) ───
+        const novasVelocidades: VelocidadeItem[] = [];
+        const convitesPreenchidosComData = convites.filter(
+          (c) => c.preenchido_em && c.created_at
+        );
+        if (convitesPreenchidosComData.length >= 5) {
+          const tempos = convitesPreenchidosComData.map((c) => {
+            const ms = new Date(c.preenchido_em!).getTime() - new Date(c.created_at).getTime();
+            return ms / (1000 * 60 * 60 * 24);
+          });
+          const medio = tempos.reduce((a, b) => a + b, 0) / tempos.length;
+          novasVelocidades.push({
+            label: "Tempo médio de preenchimento de convite",
+            valor: `${medio.toFixed(1)} dias`,
+            icone: Clock,
+            detalhe: `Baseado em ${convitesPreenchidosComData.length} convites`,
+          });
+        }
+
+        const tarefasConcluidasNoPrazo = tarefasOnb.filter(
+          (t: any) => t.status === "concluida" && (!t.prazo_data || t.prazo_data >= hojeStr)
+        );
+        // Se quiser: comparar concluídas total vs no prazo. Mas só temos pendentes/atrasadas aqui — pular se vazio
+        // Buscar tudo de onboarding seria query extra; manter simples por ora.
+
+        setVelocidade(novasVelocidades);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <Skeleton className="h-64 rounded-lg" />
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-24 rounded-lg" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6 mt-4">
+      {/* Seção 1: O que fazer agora */}
+      <Card className="card-shadow animate-fade-in">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Gauge className="h-4 w-4" style={{ color: FETELY_GREEN }} />
+            O que fazer agora
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {tarefas.length === 0 ? (
+            <div className="text-center py-12">
+              <CheckCircle2 className="h-12 w-12 mx-auto mb-3" style={{ color: FETELY_GREEN }} />
+              <p className="text-lg font-semibold" style={{ color: FETELY_GREEN }}>
+                Tudo em dia!
+              </p>
+              <p className="text-sm text-muted-foreground">Nenhuma pendência no momento.</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {tarefas.map((t) => {
+                const PrioIcon = prioridadeIcon[t.prioridade];
+                const ModuloIcon = t.icone;
+                return (
+                  <div
+                    key={t.id}
+                    className="flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-accent/30 transition-colors"
+                  >
+                    <div className={cn("flex h-9 w-9 items-center justify-center rounded-lg shrink-0", prioridadeColor[t.prioridade])}>
+                      <PrioIcon className="h-4 w-4" />
+                    </div>
+                    <ModuloIcon className="h-4 w-4 text-muted-foreground shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{t.titulo}</p>
+                      <p className="text-xs text-muted-foreground truncate">{t.detalhe}</p>
+                    </div>
+                    <Button
+                      size="sm"
+                      onClick={() => navigate(t.rota)}
+                      style={{ backgroundColor: FETELY_GREEN }}
+                      className="shrink-0 text-white hover:opacity-90"
+                    >
+                      {t.acao}
+                    </Button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Seção 2: Números do momento */}
+      {kpis.length > 0 && (
+        <div>
+          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+            Números do momento
+          </h3>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+            {kpis.map((kpi) => {
+              const Icon = kpi.icone;
+              return (
+                <Card
+                  key={kpi.label}
+                  className={cn("card-shadow animate-fade-in", kpi.rota && "cursor-pointer hover:shadow-md transition-shadow")}
+                  onClick={kpi.rota ? () => navigate(kpi.rota!) : undefined}
+                >
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <p className="text-2xl font-bold tracking-tight">{kpi.valor}</p>
+                        <p className="text-xs text-muted-foreground mt-1">{kpi.label}</p>
+                      </div>
+                      <Icon className={cn("h-5 w-5", kpi.cor)} />
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Seção 3: Velocidade */}
+      {velocidade.length > 0 && (
+        <div>
+          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+            Velocidade
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {velocidade.map((v) => {
+              const Icon = v.icone;
+              return (
+                <Card key={v.label} className="card-shadow animate-fade-in">
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                        <Icon className="h-5 w-5 text-primary" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-lg font-bold">{v.valor}</p>
+                        <p className="text-xs text-muted-foreground">{v.label}</p>
+                        {v.detalhe && (
+                          <p className="text-xs text-muted-foreground/70 mt-0.5">{v.detalhe}</p>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

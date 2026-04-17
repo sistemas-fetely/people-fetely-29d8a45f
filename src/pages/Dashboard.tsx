@@ -2,8 +2,10 @@ import { useMemo } from "react";
 import {
   Users, Briefcase, Calendar, AlertTriangle, FileText, CreditCard, Gift,
   TrendingUp, TrendingDown, DollarSign, ArrowUpRight, ArrowDownRight, Minus,
-  Building2,
+  Building2, ClipboardList, BarChart3,
 } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { DashboardOperacional } from "@/components/dashboard/DashboardOperacional";
 import { StatCard } from "@/components/StatCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -83,7 +85,7 @@ function FinancialKpiCard({
 
 const tooltipStyle = { borderRadius: 8, border: "1px solid hsl(var(--border))", background: "hsl(var(--card))", fontSize: 12 };
 
-export default function Dashboard() {
+function DashboardGestao() {
   const {
     clt, pj, headcount, ferias, aniversariantes,
     statusClt, turnover, folha, nfPendentes, pagPjPendentes,
@@ -124,10 +126,6 @@ export default function Dashboard() {
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Dashboard Executivo</h1>
-          <p className="text-muted-foreground text-sm mt-1">Visão gerencial de pessoas e custos</p>
-        </div>
         <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
           {Array.from({ length: 8 }).map((_, i) => (
             <Skeleton key={i} className="h-28 rounded-lg" />
@@ -173,21 +171,14 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Dashboard Executivo</h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            Visão gerencial · <span className="capitalize">{mesAtualLabel}</span>
-          </p>
-        </div>
-        {alertas.filter((a) => a.prioridade === "alta").length > 0 && (
-          <Badge variant="outline" className="bg-destructive/10 text-destructive border-0 gap-1 self-start sm:self-auto">
+      {alertas.filter((a) => a.prioridade === "alta").length > 0 && (
+        <div className="flex justify-end">
+          <Badge variant="outline" className="bg-destructive/10 text-destructive border-0 gap-1">
             <AlertTriangle className="h-3 w-3" />
             {alertas.filter((a) => a.prioridade === "alta").length} alerta(s) crítico(s)
           </Badge>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Row 1: Financial KPIs */}
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
@@ -509,6 +500,35 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
+    </div>
+  );
+}
+
+export default function Dashboard() {
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
+          <p className="text-muted-foreground text-sm mt-1">People Fetely</p>
+        </div>
+      </div>
+      <Tabs defaultValue="operacional">
+        <TabsList>
+          <TabsTrigger value="operacional" className="gap-1.5">
+            <ClipboardList className="h-4 w-4" /> Operacional
+          </TabsTrigger>
+          <TabsTrigger value="gestao" className="gap-1.5">
+            <BarChart3 className="h-4 w-4" /> Gestão
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value="operacional">
+          <DashboardOperacional />
+        </TabsContent>
+        <TabsContent value="gestao">
+          <DashboardGestao />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
