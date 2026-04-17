@@ -181,7 +181,14 @@ export default function ContratoPJDetalhe() {
                   const prazoDate = new Date(dataInicioPj);
                   prazoDate.setDate(prazoDate.getDate() + t.prazo_dias);
                   return {
-                    checklist_id: newChecklist.id,
+                    tipo_processo: "onboarding",
+                    sistema_origem: t.sistema_origem || "people",
+                    area_destino: t.area_destino || null,
+                    prioridade: t.prioridade || "normal",
+                    processo_id: newChecklist.id,
+                    colaborador_id: id,
+                    colaborador_tipo: "pj",
+                    colaborador_nome: (contrato as any).contato_nome || null,
                     titulo: t.titulo,
                     descricao: t.descricao || null,
                     responsavel_role: t.responsavel_role,
@@ -193,7 +200,7 @@ export default function ContratoPJDetalhe() {
                     prazo_data: prazoDate.toISOString().slice(0, 10),
                   };
                 });
-                await supabase.from("onboarding_tarefas").insert(tarefas as any);
+                await supabase.from("sncf_tarefas").insert(tarefas as any);
               }
             }
           } catch (onbErr) {

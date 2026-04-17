@@ -167,8 +167,9 @@ export function DashboardOperacional() {
             .from("convites_cadastro")
             .select("id, nome, status, tipo, created_at, preenchido_em, updated_at"),
           supabase
-            .from("onboarding_tarefas")
-            .select("id, titulo, status, prazo_data, checklist_id")
+            .from("sncf_tarefas")
+            .select("id, titulo, status, prazo_data, processo_id")
+            .eq("tipo_processo", "onboarding")
             .in("status", ["pendente", "atrasada"]),
           supabase
             .from("vagas" as any)

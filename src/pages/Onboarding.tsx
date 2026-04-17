@@ -100,14 +100,17 @@ export default function Onboarding() {
     let tarefasMap: Record<string, Tarefa[]> = {};
     if (ids.length > 0) {
       const { data: tarefas } = await supabase
-        .from("onboarding_tarefas")
+        .from("sncf_tarefas")
         .select("*")
-        .in("checklist_id", ids)
+        .eq("tipo_processo", "onboarding")
+        .in("processo_id", ids)
         .order("prazo_dias", { ascending: true });
 
       (tarefas || []).forEach((t: any) => {
-        if (!tarefasMap[t.checklist_id]) tarefasMap[t.checklist_id] = [];
-        tarefasMap[t.checklist_id].push(t);
+        // Compat: expor checklist_id no objeto pra UI existente
+        const item = { ...t, checklist_id: t.processo_id };
+        if (!tarefasMap[t.processo_id]) tarefasMap[t.processo_id] = [];
+        tarefasMap[t.processo_id].push(item);
       });
     }
 
@@ -170,7 +173,7 @@ export default function Onboarding() {
       concluida_em: newStatus === "concluida" ? new Date().toISOString() : null,
       concluida_por: newStatus === "concluida" ? user.id : null,
     };
-    const { error } = await supabase.from("onboarding_tarefas").update(updateData).eq("id", tarefa.id);
+    const { error } = await supabase.from("sncf_tarefas").update(updateData).eq("id", tarefa.id);
     if (error) {
       toast.error("Erro ao atualizar tarefa");
     } else {

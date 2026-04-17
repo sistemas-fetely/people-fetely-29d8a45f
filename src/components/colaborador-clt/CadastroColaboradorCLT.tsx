@@ -178,7 +178,14 @@ export function CadastroColaboradorCLT() {
             const prazoDate = new Date(dataAdmissao);
             prazoDate.setDate(prazoDate.getDate() + t.prazo_dias);
             return {
-              checklist_id: newChecklist.id,
+              tipo_processo: "onboarding",
+              sistema_origem: t.sistema_origem || "people",
+              area_destino: t.area_destino || null,
+              prioridade: t.prioridade || "normal",
+              processo_id: newChecklist.id,
+              colaborador_id: inserted.id,
+              colaborador_tipo: "clt",
+              colaborador_nome: data.nome_completo || null,
               titulo: t.titulo,
               descricao: t.descricao || null,
               responsavel_role: t.responsavel_role,
@@ -190,7 +197,7 @@ export function CadastroColaboradorCLT() {
           });
 
           if (tarefas.length > 0) {
-            await supabase.from("onboarding_tarefas").insert(tarefas as any);
+            await supabase.from("sncf_tarefas").insert(tarefas as any);
           }
         }
       } catch (onbErr) {
