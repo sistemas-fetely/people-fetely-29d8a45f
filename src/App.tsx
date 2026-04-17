@@ -52,6 +52,9 @@ import PortalSNCF from "@/pages/PortalSNCF";
 import TILayout from "@/layouts/TILayout";
 import TIDashboard from "@/pages/ti/TIDashboard";
 import TIAtivos from "@/pages/ti/TIAtivos";
+import DocumentacaoViva from "@/pages/ti/DocumentacaoViva";
+import DocumentacaoDetalhe from "@/pages/ti/DocumentacaoDetalhe";
+import DocumentacaoForm from "@/pages/ti/DocumentacaoForm";
 import MinhasTarefas from "@/pages/MinhasTarefas";
 import TarefasDoTime from "@/pages/TarefasDoTime";
 import TemplatesProcessos from "@/pages/TemplatesProcessos";
@@ -86,6 +89,9 @@ const App = () => (
             <Route path="/ti" element={<ProtectedRoute><TILayout /></ProtectedRoute>}>
               <Route index element={<TIDashboard />} />
               <Route path="ativos" element={<TIAtivos />} />
+              <Route path="documentacao" element={<DocumentacaoViva />} />
+              <Route path="documentacao/novo" element={<DocumentacaoForm />} />
+              <Route path="documentacao/:slug" element={<DocumentacaoDetalhe />} />
             </Route>
 
             {/* Protected routes */}
