@@ -1545,6 +1545,72 @@ export type Database = {
           },
         ]
       }
+      fala_fetely_conhecimento: {
+        Row: {
+          aprovado_em: string | null
+          aprovado_por: string | null
+          ativo: boolean
+          cargos_aplicaveis: Json | null
+          categoria: string
+          conteudo: string
+          created_at: string
+          criado_por: string | null
+          departamentos_aplicaveis: Json | null
+          fonte: string | null
+          id: string
+          niveis_aplicaveis: Json | null
+          origem: string
+          publico_alvo: string
+          sugerido_por: string | null
+          tags: string[] | null
+          titulo: string
+          updated_at: string
+          versao: number
+        }
+        Insert: {
+          aprovado_em?: string | null
+          aprovado_por?: string | null
+          ativo?: boolean
+          cargos_aplicaveis?: Json | null
+          categoria: string
+          conteudo: string
+          created_at?: string
+          criado_por?: string | null
+          departamentos_aplicaveis?: Json | null
+          fonte?: string | null
+          id?: string
+          niveis_aplicaveis?: Json | null
+          origem?: string
+          publico_alvo?: string
+          sugerido_por?: string | null
+          tags?: string[] | null
+          titulo: string
+          updated_at?: string
+          versao?: number
+        }
+        Update: {
+          aprovado_em?: string | null
+          aprovado_por?: string | null
+          ativo?: boolean
+          cargos_aplicaveis?: Json | null
+          categoria?: string
+          conteudo?: string
+          created_at?: string
+          criado_por?: string | null
+          departamentos_aplicaveis?: Json | null
+          fonte?: string | null
+          id?: string
+          niveis_aplicaveis?: Json | null
+          origem?: string
+          publico_alvo?: string
+          sugerido_por?: string | null
+          tags?: string[] | null
+          titulo?: string
+          updated_at?: string
+          versao?: number
+        }
+        Relationships: []
+      }
       fala_fetely_conversas: {
         Row: {
           arquivada: boolean
