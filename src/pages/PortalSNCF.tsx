@@ -82,11 +82,6 @@ export default function PortalSNCF() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight mb-2">Bem-vindo ao SNCF</h1>
-        <p className="text-muted-foreground">
-          Selecione um sistema para entrar. Você só pode acessar os sistemas em que tem permissão.
-        </p>
       </div>
 
         {/* Centro de Trabalho — destaque */}
