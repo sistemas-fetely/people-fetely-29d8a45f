@@ -102,7 +102,7 @@ export default function ConviteDetalhe() {
   const [sendingEmail, setSendingEmail] = useState(false);
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [criando, setCriando] = useState(false);
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
 
   useEffect(() => {
     if (!id) return;
@@ -303,7 +303,13 @@ export default function ConviteDetalhe() {
         try {
           const { data: newChecklist } = await supabase
             .from("onboarding_checklists")
-            .insert({ colaborador_id: inserted.id, colaborador_tipo: "clt", convite_id: convite.id } as any)
+            .insert({
+              colaborador_id: inserted.id,
+              colaborador_tipo: "clt",
+              convite_id: convite.id,
+              coordenador_user_id: user?.id || null,
+              coordenador_nome: profile?.full_name || null,
+            } as any)
             .select("id")
             .single();
 
@@ -336,6 +342,18 @@ export default function ConviteDetalhe() {
             });
             if (tarefas.length > 0) {
               await supabase.from("sncf_tarefas").insert(tarefas as any);
+
+              // Notificar responsáveis das tarefas
+              const responsaveisUnicos = [...new Set(tarefas.filter((t) => t.responsavel_user_id).map((t) => t.responsavel_user_id as string))];
+              for (const userId of responsaveisUnicos) {
+                await supabase.from("notificacoes_rh").insert({
+                  tipo: "onboarding_tarefa_atribuida",
+                  titulo: `Novas tarefas de onboarding atribuídas`,
+                  mensagem: `Você tem tarefas pendentes no onboarding de ${convite.nome}. Acesse o módulo de Onboarding para verificar.`,
+                  link: "/onboarding",
+                  user_id: userId,
+                });
+              }
             }
           }
         } catch (onbErr) {
@@ -415,7 +433,13 @@ export default function ConviteDetalhe() {
         try {
           const { data: newChecklist } = await supabase
             .from("onboarding_checklists")
-            .insert({ colaborador_id: inserted.id, colaborador_tipo: "pj", convite_id: convite.id } as any)
+            .insert({
+              colaborador_id: inserted.id,
+              colaborador_tipo: "pj",
+              convite_id: convite.id,
+              coordenador_user_id: user?.id || null,
+              coordenador_nome: profile?.full_name || null,
+            } as any)
             .select("id")
             .single();
 
@@ -448,6 +472,18 @@ export default function ConviteDetalhe() {
             });
             if (tarefas.length > 0) {
               await supabase.from("sncf_tarefas").insert(tarefas as any);
+
+              // Notificar responsáveis das tarefas
+              const responsaveisUnicos = [...new Set(tarefas.filter((t) => t.responsavel_user_id).map((t) => t.responsavel_user_id as string))];
+              for (const userId of responsaveisUnicos) {
+                await supabase.from("notificacoes_rh").insert({
+                  tipo: "onboarding_tarefa_atribuida",
+                  titulo: `Novas tarefas de onboarding atribuídas`,
+                  mensagem: `Você tem tarefas pendentes no onboarding de ${convite.nome}. Acesse o módulo de Onboarding para verificar.`,
+                  link: "/onboarding",
+                  user_id: userId,
+                });
+              }
             }
           }
         } catch (onbErr) {
