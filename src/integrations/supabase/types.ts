@@ -2839,6 +2839,7 @@ export type Database = {
           created_by: string | null
           data_compra: string | null
           devolvido_em: string | null
+          em_manutencao: boolean | null
           especificacoes: Json | null
           estado: string
           fornecedor: string | null
@@ -2870,6 +2871,7 @@ export type Database = {
           created_by?: string | null
           data_compra?: string | null
           devolvido_em?: string | null
+          em_manutencao?: boolean | null
           especificacoes?: Json | null
           estado?: string
           fornecedor?: string | null
@@ -2901,6 +2903,7 @@ export type Database = {
           created_by?: string | null
           data_compra?: string | null
           devolvido_em?: string | null
+          em_manutencao?: boolean | null
           especificacoes?: Json | null
           estado?: string
           fornecedor?: string | null
