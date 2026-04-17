@@ -14,6 +14,7 @@ interface TarefaTemplate {
   link_acao?: string;
   bloqueante?: boolean;
   motivo_bloqueio?: string;
+  accountable_role?: string;
 }
 
 export const TAREFAS_PADRAO: TarefaTemplate[] = [
@@ -27,6 +28,7 @@ export const TAREFAS_PADRAO: TarefaTemplate[] = [
     area_destino: "RH",
     bloqueante: true,
     motivo_bloqueio: "Obrigação legal — eSocial deve ser registrado antes do primeiro dia",
+    accountable_role: "admin_rh",
   },
   {
     titulo: "Criar acessos nos sistemas",
@@ -35,6 +37,7 @@ export const TAREFAS_PADRAO: TarefaTemplate[] = [
     prazo_dias: 1,
     sistema_origem: "ti",
     area_destino: "TI",
+    accountable_role: "admin_rh",
   },
   {
     titulo: "Entregar equipamentos",
@@ -43,6 +46,7 @@ export const TAREFAS_PADRAO: TarefaTemplate[] = [
     prazo_dias: 1,
     sistema_origem: "ti",
     area_destino: "TI",
+    accountable_role: "admin_rh",
   },
   {
     titulo: "Agendar reunião de integração com RH",
@@ -51,6 +55,7 @@ export const TAREFAS_PADRAO: TarefaTemplate[] = [
     prazo_dias: 1,
     sistema_origem: "people",
     area_destino: "RH",
+    accountable_role: "admin_rh",
   },
   {
     titulo: "Entregar crachá e uniforme (se aplicável)",
@@ -60,6 +65,7 @@ export const TAREFAS_PADRAO: TarefaTemplate[] = [
     somente_clt: true,
     sistema_origem: "people",
     area_destino: "RH",
+    accountable_role: "admin_rh",
   },
   {
     titulo: "Apresentar colaborador ao time",
@@ -68,6 +74,7 @@ export const TAREFAS_PADRAO: TarefaTemplate[] = [
     prazo_dias: 1,
     sistema_origem: "people",
     area_destino: "Gestão",
+    accountable_role: "admin_rh",
   },
   {
     titulo: "Assinar contrato (digital ou físico)",
@@ -78,6 +85,7 @@ export const TAREFAS_PADRAO: TarefaTemplate[] = [
     area_destino: "RH",
     bloqueante: true,
     motivo_bloqueio: "Obrigatório antes do primeiro dia de trabalho",
+    accountable_role: "admin_rh",
   },
   {
     titulo: "Confirmar recebimento de equipamentos",
@@ -86,6 +94,7 @@ export const TAREFAS_PADRAO: TarefaTemplate[] = [
     prazo_dias: 3,
     sistema_origem: "people",
     area_destino: "Colaborador",
+    accountable_role: "admin_rh",
   },
   {
     titulo: "Realizar reunião 1:1 de onboarding",
@@ -94,6 +103,7 @@ export const TAREFAS_PADRAO: TarefaTemplate[] = [
     prazo_dias: 7,
     sistema_origem: "people",
     area_destino: "Gestão",
+    accountable_role: "admin_rh",
   },
 ];
 
@@ -126,6 +136,7 @@ export function getTarefasDinamicas(tipo: "clt" | "pj", provisionamento?: Provis
       prazo_dias: -2,
       sistema_origem: "ti",
       area_destino: "TI",
+      accountable_role: "admin_rh",
     });
   }
 
@@ -138,6 +149,7 @@ export function getTarefasDinamicas(tipo: "clt" | "pj", provisionamento?: Provis
       prazo_dias: -2,
       sistema_origem: "ti",
       area_destino: "TI",
+      accountable_role: "admin_rh",
     });
   }
 
@@ -154,6 +166,7 @@ export function getTarefasDinamicas(tipo: "clt" | "pj", provisionamento?: Provis
         prazo_dias: -1,
         sistema_origem: "ti",
         area_destino: "TI",
+        accountable_role: "admin_rh",
       });
     }
   }
@@ -172,6 +185,7 @@ export function getTarefasDinamicas(tipo: "clt" | "pj", provisionamento?: Provis
         prazo_dias: -2,
         sistema_origem: "ti",
         area_destino: "TI",
+        accountable_role: "admin_rh",
       });
     }
   }

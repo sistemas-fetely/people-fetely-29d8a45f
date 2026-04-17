@@ -39,6 +39,7 @@ import ConviteDetalhe from "@/pages/ConviteDetalhe";
 import Unsubscribe from "@/pages/Unsubscribe";
 import ConfigurarPerfis from "@/pages/ConfigurarPerfis";
 import Onboarding from "@/pages/Onboarding";
+import OnboardingDetalhe from "@/pages/OnboardingDetalhe";
 import Recrutamento from "@/pages/Recrutamento";
 import RecrutamentoDetalhe from "@/pages/RecrutamentoDetalhe";
 import PortalCandidatura from "@/pages/PortalCandidatura";
@@ -192,6 +193,11 @@ const App = () => (
               <Route path="/onboarding" element={
                 <ProtectedRoute permModule="convites">
                   <Onboarding />
+                </ProtectedRoute>
+              } />
+              <Route path="/onboarding/:id" element={
+                <ProtectedRoute permModule="convites">
+                  <OnboardingDetalhe />
                 </ProtectedRoute>
               } />
               <Route path="/recrutamento" element={

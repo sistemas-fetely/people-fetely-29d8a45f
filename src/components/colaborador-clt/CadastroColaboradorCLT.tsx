@@ -197,6 +197,8 @@ export function CadastroColaboradorCLT() {
               prazo_data: prazoDate.toISOString().slice(0, 10),
               bloqueante: t.bloqueante || false,
               motivo_bloqueio: t.motivo_bloqueio || null,
+              accountable_role: t.accountable_role || null,
+              accountable_user_id: t.accountable_role ? null : user?.id || null,
             };
           });
 

@@ -16,9 +16,6 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import {
-  Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription,
-} from "@/components/ui/sheet";
-import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import {
@@ -94,8 +91,6 @@ export default function Onboarding() {
   const [loading, setLoading] = useState(true);
   const [checklists, setChecklists] = useState<Checklist[]>([]);
   const [filter, setFilter] = useState("todos");
-  const [selectedChecklist, setSelectedChecklist] = useState<Checklist | null>(null);
-  const [drawerOpen, setDrawerOpen] = useState(false);
   const [updatingTask, setUpdatingTask] = useState<string | null>(null);
 
   // Dialog de conclusão com evidência
@@ -275,23 +270,8 @@ export default function Onboarding() {
       toast.error("Erro ao reabrir tarefa");
     } else {
       await loadChecklists();
-      if (selectedChecklist) {
-        const updated = await reloadChecklist(selectedChecklist.id);
-        if (updated) setSelectedChecklist(updated);
-      }
     }
     setUpdatingTask(null);
-  }
-
-  async function reloadChecklist(id: string): Promise<Checklist | null> {
-    const { data: tarefas } = await supabase
-      .from("sncf_tarefas")
-      .select("*")
-      .eq("tipo_processo", "onboarding")
-      .eq("processo_id", id)
-      .order("prazo_dias", { ascending: true });
-    const t = (tarefas || []).map((x: any) => ({ ...x, checklist_id: x.processo_id }));
-    return selectedChecklist ? { ...selectedChecklist, tarefas: t } : null;
   }
 
   async function confirmarConclusao() {
@@ -315,43 +295,7 @@ export default function Onboarding() {
       return;
     }
 
-    // Atualizar localmente
-    if (selectedChecklist) {
-      const updated = { ...selectedChecklist };
-      updated.tarefas = (updated.tarefas || []).map((t) =>
-        t.id === tarefaAConcluir.id
-          ? {
-              ...t,
-              status: "concluida",
-              concluida_em: new Date().toISOString(),
-              concluida_por: user.id,
-              evidencia_texto: observacao.trim(),
-              evidencia_url: linkEvidencia.trim() || null,
-            }
-          : t
-      );
-      const allDone = (updated.tarefas || []).every((t) => t.status === "concluida");
-      if (allDone && updated.status !== "concluido") {
-        await supabase.from("onboarding_checklists").update({
-          status: "concluido",
-          concluido_em: new Date().toISOString(),
-        } as any).eq("id", updated.id);
-        updated.status = "concluido";
-        updated.concluido_em = new Date().toISOString();
-
-        await supabase.from("notificacoes_rh").insert({
-          tipo: "onboarding_concluido",
-          titulo: `Onboarding concluído: ${updated.nome}`,
-          mensagem: `Todas as tarefas de onboarding de ${updated.nome} foram concluídas.`,
-          link: "/onboarding",
-          user_id: null,
-        });
-        toast.success("Onboarding concluído!");
-      } else {
-        toast.success("Tarefa concluída");
-      }
-      setSelectedChecklist(updated);
-    }
+    toast.success("Tarefa concluída");
     await loadChecklists();
     setTarefaAConcluir(null);
     setObservacao("");
@@ -359,10 +303,7 @@ export default function Onboarding() {
     setUpdatingTask(null);
   }
 
-  function openChecklist(cl: Checklist) {
-    setSelectedChecklist(cl);
-    setDrawerOpen(true);
-  }
+  // (removido) openChecklist — agora navegamos para /onboarding/:id
 
   // Colaborador view
   if (isColaborador) {
@@ -530,7 +471,7 @@ export default function Onboarding() {
               <Card
                 key={cl.id}
                 className="cursor-pointer hover:shadow-md transition-all"
-                onClick={() => openChecklist(cl)}
+                onClick={() => navigate(`/onboarding/${cl.id}`)}
               >
                 <CardContent className="p-4 space-y-3">
                   <div className="flex items-center justify-between gap-4">
@@ -598,157 +539,6 @@ export default function Onboarding() {
           })}
         </div>
       )}
-
-      {/* Drawer */}
-      <Sheet open={drawerOpen} onOpenChange={setDrawerOpen}>
-        <SheetContent className="sm:max-w-lg overflow-y-auto">
-          {selectedChecklist && (
-            <>
-              <SheetHeader>
-                <SheetTitle>{selectedChecklist.nome}</SheetTitle>
-                <SheetDescription>
-                  {selectedChecklist.cargo} • {selectedChecklist.departamento} • {selectedChecklist.colaborador_tipo.toUpperCase()}
-                </SheetDescription>
-                {selectedChecklist.coordenador_nome && (
-                  <p className="text-xs text-muted-foreground pt-1">
-                    Coordenado por: <span className="font-medium text-foreground">{selectedChecklist.coordenador_nome}</span>
-                  </p>
-                )}
-              </SheetHeader>
-              <div className="mt-6 space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span>Progresso</span>
-                  <span>{(selectedChecklist.tarefas || []).filter((t) => t.status === "concluida").length}/{(selectedChecklist.tarefas || []).length}</span>
-                </div>
-                <Progress value={getProgress(selectedChecklist)} className="h-3" />
-              </div>
-
-              <div className="mt-6 space-y-6">
-                {Object.entries(
-                  (selectedChecklist.tarefas || []).reduce((acc: Record<string, Tarefa[]>, t) => {
-                    const area = t.area_destino || "Geral";
-                    if (!acc[area]) acc[area] = [];
-                    acc[area].push(t);
-                    return acc;
-                  }, {})
-                ).map(([area, tarefas]) => {
-                  const tarefasOrdenadas = ordenarTarefas(tarefas);
-                  return (
-                    <div key={area} className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">{area}</h4>
-                        <span className="text-xs text-muted-foreground">
-                          {tarefas.filter((t) => t.status === "concluida").length}/{tarefas.length}
-                        </span>
-                      </div>
-                      {tarefasOrdenadas.map((t) => {
-                        const atrasada = isTarefaAtrasada(t);
-                        const atrasoLegal = atrasada && t.bloqueante;
-                        const dias = atrasada && t.prazo_data ? diasAtraso(t.prazo_data) : 0;
-                        return (
-                          <div
-                            key={t.id}
-                            className={`flex items-start gap-3 p-3 rounded-lg border ${
-                              atrasoLegal
-                                ? "border-destructive bg-destructive/5"
-                                : atrasada
-                                ? "border-warning bg-warning/5"
-                                : t.bloqueante
-                                ? "border-destructive/50"
-                                : "border-border"
-                            }`}
-                          >
-                            <Checkbox
-                              checked={t.status === "concluida"}
-                              disabled={updatingTask === t.id || (!isHR && t.responsavel_user_id !== user?.id)}
-                              onCheckedChange={() => handleClickConcluir(t)}
-                              className="mt-0.5"
-                            />
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 flex-wrap">
-                                <p className={`text-sm font-medium ${t.status === "concluida" ? "line-through text-muted-foreground" : ""}`}>
-                                  {t.titulo}
-                                </p>
-                                {t.bloqueante && (
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <Badge className="bg-destructive text-destructive-foreground text-[10px] h-5 cursor-help">
-                                        <ShieldAlert className="h-3 w-3 mr-0.5" /> Legal
-                                      </Badge>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                      <p className="max-w-xs text-xs">{t.motivo_bloqueio || "Tarefa com prazo legal"}</p>
-                                    </TooltipContent>
-                                  </Tooltip>
-                                )}
-                                {atrasada && (
-                                  <Badge
-                                    variant="outline"
-                                    className={`text-[10px] border-0 ${atrasoLegal ? "bg-destructive text-destructive-foreground animate-pulse" : "bg-warning/15 text-warning"}`}
-                                  >
-                                    {atrasoLegal && <ShieldAlert className="h-3 w-3 mr-0.5" />}
-                                    {atrasoLegal ? "LEGAL — " : ""}Atrasada há {dias} dia{dias !== 1 ? "s" : ""}
-                                  </Badge>
-                                )}
-                              </div>
-                              {t.descricao && <p className="text-xs text-muted-foreground mt-1">{t.descricao}</p>}
-                              <div className="flex items-center gap-2 mt-1 flex-wrap">
-                                <Badge variant="outline" className="text-xs">{roleLabels[t.responsavel_role] || t.responsavel_role}</Badge>
-                                {t.prazo_data && (
-                                  <span className="text-xs text-muted-foreground">
-                                    Prazo: {format(new Date(t.prazo_data), "dd/MM/yyyy")}
-                                  </span>
-                                )}
-                              </div>
-                              {t.status === "concluida" && (
-                                <div className="mt-2 p-2 rounded bg-success/5 border border-success/20 space-y-1">
-                                  {t.evidencia_texto && (
-                                    <p className="text-xs flex items-start gap-1">
-                                      <CheckCircle2 className="h-3 w-3 text-success shrink-0 mt-0.5" />
-                                      <span className="text-foreground">{t.evidencia_texto}</span>
-                                    </p>
-                                  )}
-                                  {t.evidencia_url && (
-                                    <a
-                                      href={t.evidencia_url}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="text-xs text-primary hover:underline inline-flex items-center gap-1"
-                                      onClick={(e) => e.stopPropagation()}
-                                    >
-                                      <ExternalLink className="h-3 w-3" /> Ver evidência
-                                    </a>
-                                  )}
-                                  {t.concluida_em && (
-                                    <p className="text-[10px] text-muted-foreground">
-                                      Concluída em {format(new Date(t.concluida_em), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
-                                    </p>
-                                  )}
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  );
-                })}
-              </div>
-            </>
-          )}
-        </SheetContent>
-      </Sheet>
-
-      <ConcluirTarefaDialog
-        tarefa={tarefaAConcluir}
-        observacao={observacao}
-        linkEvidencia={linkEvidencia}
-        setObservacao={setObservacao}
-        setLinkEvidencia={setLinkEvidencia}
-        onClose={() => setTarefaAConcluir(null)}
-        onConfirm={confirmarConclusao}
-        loading={!!updatingTask}
-      />
     </div>
     </TooltipProvider>
   );

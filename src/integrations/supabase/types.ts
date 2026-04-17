@@ -2684,6 +2684,8 @@ export type Database = {
       }
       sncf_tarefas: {
         Row: {
+          accountable_role: string | null
+          accountable_user_id: string | null
           area_destino: string | null
           bloqueante: boolean | null
           colaborador_id: string | null
@@ -2697,6 +2699,7 @@ export type Database = {
           evidencia_texto: string | null
           evidencia_url: string | null
           id: string
+          informar_user_ids: string[] | null
           link_acao: string | null
           motivo_bloqueio: string | null
           prazo_data: string | null
@@ -2713,6 +2716,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          accountable_role?: string | null
+          accountable_user_id?: string | null
           area_destino?: string | null
           bloqueante?: boolean | null
           colaborador_id?: string | null
@@ -2726,6 +2731,7 @@ export type Database = {
           evidencia_texto?: string | null
           evidencia_url?: string | null
           id?: string
+          informar_user_ids?: string[] | null
           link_acao?: string | null
           motivo_bloqueio?: string | null
           prazo_data?: string | null
@@ -2742,6 +2748,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          accountable_role?: string | null
+          accountable_user_id?: string | null
           area_destino?: string | null
           bloqueante?: boolean | null
           colaborador_id?: string | null
@@ -2755,6 +2763,7 @@ export type Database = {
           evidencia_texto?: string | null
           evidencia_url?: string | null
           id?: string
+          informar_user_ids?: string[] | null
           link_acao?: string | null
           motivo_bloqueio?: string | null
           prazo_data?: string | null
