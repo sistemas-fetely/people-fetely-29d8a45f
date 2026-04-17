@@ -1,0 +1,530 @@
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  ArrowLeft, Plus, Search, BookOpen, Edit2, EyeOff, X, Loader2,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { useAuth } from "@/contexts/AuthContext";
+import { usePermissions } from "@/hooks/usePermissions";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
+
+type Categoria = "politica" | "regra" | "diretriz" | "faq" | "conceito" | "manifesto" | "mercado";
+
+const CATEGORIAS: { value: Categoria; label: string; color: string; bg: string }[] = [
+  { value: "politica",  label: "Política",  color: "#92400E", bg: "#FEF3C7" },
+  { value: "regra",     label: "Regra",     color: "#991B1B", bg: "#FEE2E2" },
+  { value: "diretriz",  label: "Diretriz",  color: "#1E40AF", bg: "#DBEAFE" },
+  { value: "faq",       label: "FAQ",       color: "#374151", bg: "#E5E7EB" },
+  { value: "conceito",  label: "Conceito",  color: "#5B21B6", bg: "#EDE9FE" },
+  { value: "manifesto", label: "Manifesto", color: "#FFFFFF", bg: "#1A4A3A" },
+  { value: "mercado",   label: "Mercado",   color: "#FFFFFF", bg: "#E8833A" },
+];
+
+const PUBLICOS = [
+  { value: "todos",         label: "Todos" },
+  { value: "admin_rh",      label: "Admin RH" },
+  { value: "gestores",      label: "Gestores" },
+  { value: "colaboradores", label: "Colaboradores" },
+  { value: "financeiro",    label: "Financeiro" },
+  { value: "ti",            label: "TI" },
+];
+
+const NIVEIS = [
+  { value: "junior",       label: "Júnior" },
+  { value: "pleno",        label: "Pleno" },
+  { value: "senior",       label: "Sênior" },
+  { value: "coordenacao",  label: "Coordenação" },
+  { value: "gerencia",     label: "Gerência" },
+  { value: "c-level",      label: "C-Level" },
+];
+
+interface Conhecimento {
+  id: string;
+  categoria: Categoria;
+  titulo: string;
+  conteudo: string;
+  publico_alvo: string;
+  cargos_aplicaveis: string[];
+  departamentos_aplicaveis: string[];
+  niveis_aplicaveis: string[];
+  fonte: string | null;
+  tags: string[];
+  ativo: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+interface FormState {
+  id?: string;
+  categoria: Categoria;
+  titulo: string;
+  conteudo: string;
+  publico_alvo: string;
+  cargos_aplicaveis: string[];
+  departamentos_aplicaveis: string[];
+  niveis_aplicaveis: string[];
+  tags: string[];
+  fonte: string;
+}
+
+const FORM_INICIAL: FormState = {
+  categoria: "faq",
+  titulo: "",
+  conteudo: "",
+  publico_alvo: "todos",
+  cargos_aplicaveis: [],
+  departamentos_aplicaveis: [],
+  niveis_aplicaveis: [],
+  tags: [],
+  fonte: "",
+};
+
+function getCategoriaStyle(c: string) {
+  return CATEGORIAS.find((x) => x.value === c) ?? CATEGORIAS[3];
+}
+
+export default function Conhecimento() {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const { isSuperAdmin, isAdminRH, isLoading } = usePermissions();
+  const [itens, setItens] = useState<Conhecimento[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [busca, setBusca] = useState("");
+  const [filtroCategoria, setFiltroCategoria] = useState<string>("todas");
+  const [showForm, setShowForm] = useState(false);
+  const [salvando, setSalvando] = useState(false);
+  const [form, setForm] = useState<FormState>(FORM_INICIAL);
+  const [tagInput, setTagInput] = useState("");
+
+  const [cargos, setCargos] = useState<string[]>([]);
+  const [departamentos, setDepartamentos] = useState<string[]>([]);
+
+  const podeAcessar = isSuperAdmin || isAdminRH;
+
+  useEffect(() => {
+    if (!isLoading && !podeAcessar) {
+      navigate("/sem-permissao");
+    }
+  }, [isLoading, podeAcessar, navigate]);
+
+  useEffect(() => {
+    if (podeAcessar) {
+      void carregar();
+      void carregarMetadados();
+    }
+  }, [podeAcessar]);
+
+  async function carregar() {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from("fala_fetely_conhecimento")
+      .select("id, categoria, titulo, conteudo, publico_alvo, cargos_aplicaveis, departamentos_aplicaveis, niveis_aplicaveis, fonte, tags, ativo, created_at, updated_at")
+      .order("updated_at", { ascending: false });
+    if (error) {
+      toast({ title: "Erro", description: error.message, variant: "destructive" });
+    } else {
+      setItens(
+        (data || []).map((d: any) => ({
+          ...d,
+          cargos_aplicaveis: Array.isArray(d.cargos_aplicaveis) ? d.cargos_aplicaveis : [],
+          departamentos_aplicaveis: Array.isArray(d.departamentos_aplicaveis) ? d.departamentos_aplicaveis : [],
+          niveis_aplicaveis: Array.isArray(d.niveis_aplicaveis) ? d.niveis_aplicaveis : [],
+          tags: d.tags || [],
+        }))
+      );
+    }
+    setLoading(false);
+  }
+
+  async function carregarMetadados() {
+    const [{ data: cargosData }, { data: deptosData }] = await Promise.all([
+      supabase.from("cargos").select("nome").eq("ativo", true).order("nome"),
+      supabase.from("colaboradores_clt").select("departamento").not("departamento", "is", null),
+    ]);
+    setCargos(Array.from(new Set((cargosData || []).map((c: any) => c.nome))).sort());
+    setDepartamentos(
+      Array.from(new Set((deptosData || []).map((d: any) => d.departamento).filter(Boolean))).sort()
+    );
+  }
+
+  const filtrados = useMemo(() => {
+    const q = busca.toLowerCase().trim();
+    return itens.filter((i) => {
+      if (!i.ativo) return false;
+      if (filtroCategoria !== "todas" && i.categoria !== filtroCategoria) return false;
+      if (q && !i.titulo.toLowerCase().includes(q) && !i.conteudo.toLowerCase().includes(q)) return false;
+      return true;
+    });
+  }, [itens, busca, filtroCategoria]);
+
+  function abrirNovo() {
+    setForm(FORM_INICIAL);
+    setShowForm(true);
+  }
+
+  function abrirEditar(item: Conhecimento) {
+    setForm({
+      id: item.id,
+      categoria: item.categoria,
+      titulo: item.titulo,
+      conteudo: item.conteudo,
+      publico_alvo: item.publico_alvo,
+      cargos_aplicaveis: item.cargos_aplicaveis,
+      departamentos_aplicaveis: item.departamentos_aplicaveis,
+      niveis_aplicaveis: item.niveis_aplicaveis,
+      tags: item.tags,
+      fonte: item.fonte || "",
+    });
+    setShowForm(true);
+  }
+
+  async function salvar() {
+    if (!form.titulo.trim() || !form.conteudo.trim()) {
+      toast({ title: "Campos obrigatórios", description: "Título e conteúdo são obrigatórios", variant: "destructive" });
+      return;
+    }
+    setSalvando(true);
+    const payload = {
+      categoria: form.categoria,
+      titulo: form.titulo.trim(),
+      conteudo: form.conteudo.trim(),
+      publico_alvo: form.publico_alvo,
+      cargos_aplicaveis: form.cargos_aplicaveis,
+      departamentos_aplicaveis: form.departamentos_aplicaveis,
+      niveis_aplicaveis: form.niveis_aplicaveis,
+      tags: form.tags,
+      fonte: form.fonte.trim() || null,
+      criado_por: user?.id ?? null,
+    };
+    const { error } = form.id
+      ? await supabase.from("fala_fetely_conhecimento").update(payload).eq("id", form.id)
+      : await supabase.from("fala_fetely_conhecimento").insert(payload);
+    setSalvando(false);
+    if (error) {
+      toast({ title: "Erro ao salvar", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: form.id ? "Atualizado ✨" : "Conhecimento criado 💚" });
+    setShowForm(false);
+    void carregar();
+  }
+
+  async function desativar(item: Conhecimento) {
+    if (!confirm(`Desativar "${item.titulo}"? Ele não aparecerá mais nas respostas do Fala Fetely.`)) return;
+    const { error } = await supabase.from("fala_fetely_conhecimento").update({ ativo: false }).eq("id", item.id);
+    if (error) {
+      toast({ title: "Erro", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Desativado" });
+    void carregar();
+  }
+
+  function adicionarTag() {
+    const t = tagInput.trim().toLowerCase();
+    if (!t || form.tags.includes(t)) return;
+    setForm({ ...form, tags: [...form.tags, t] });
+    setTagInput("");
+  }
+
+  function toggleArrayItem(field: "cargos_aplicaveis" | "departamentos_aplicaveis" | "niveis_aplicaveis", value: string) {
+    const arr = form[field];
+    setForm({
+      ...form,
+      [field]: arr.includes(value) ? arr.filter((v) => v !== value) : [...arr, value],
+    });
+  }
+
+  if (isLoading || !podeAcessar) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen p-6" style={{ background: "linear-gradient(135deg, #FFF8F3 0%, #F0F7F4 100%)" }}>
+      <div className="max-w-6xl mx-auto space-y-6">
+        {/* Header */}
+        <div className="flex items-start justify-between gap-4 flex-wrap">
+          <div>
+            <Button variant="ghost" onClick={() => navigate("/fala-fetely")} className="gap-1 mb-2 -ml-3">
+              <ArrowLeft className="h-4 w-4" /> Voltar ao Fala Fetely
+            </Button>
+            <div className="flex items-center gap-2">
+              <BookOpen className="h-6 w-6" style={{ color: "#1A4A3A" }} />
+              <h1 className="text-2xl font-bold" style={{ color: "#1A4A3A" }}>Base de Conhecimento</h1>
+            </div>
+            <p className="text-sm text-muted-foreground mt-1">
+              Ensine o Fala Fetely sobre cultura, regras, mercado e diretrizes da empresa
+            </p>
+          </div>
+          <Button onClick={abrirNovo} className="gap-2 text-white hover:opacity-90" style={{ backgroundColor: "#1A4A3A" }}>
+            <Plus className="h-4 w-4" /> Novo Conhecimento
+          </Button>
+        </div>
+
+        {/* Filtros */}
+        <Card className="p-4 flex gap-3 items-center flex-wrap">
+          <div className="relative flex-1 min-w-[240px]">
+            <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Buscar por título ou conteúdo..."
+              value={busca}
+              onChange={(e) => setBusca(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+          <Select value={filtroCategoria} onValueChange={setFiltroCategoria}>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todas">Todas as categorias</SelectItem>
+              {CATEGORIAS.map((c) => (
+                <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <div className="text-sm text-muted-foreground">
+            {filtrados.length} {filtrados.length === 1 ? "item" : "itens"}
+          </div>
+        </Card>
+
+        {/* Lista */}
+        {loading ? (
+          <div className="text-center py-12">
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground mx-auto" />
+          </div>
+        ) : filtrados.length === 0 ? (
+          <Card className="p-12 text-center">
+            <BookOpen className="h-12 w-12 text-muted-foreground/40 mx-auto mb-3" />
+            <p className="text-muted-foreground">
+              {itens.length === 0 ? "Nenhum conhecimento ainda. Crie o primeiro!" : "Nada encontrado com esses filtros."}
+            </p>
+          </Card>
+        ) : (
+          <div className="grid gap-3">
+            {filtrados.map((item) => {
+              const cat = getCategoriaStyle(item.categoria);
+              return (
+                <Card key={item.id} className="p-5 hover:shadow-md transition-shadow">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 min-w-0 space-y-2">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Badge style={{ backgroundColor: cat.bg, color: cat.color, border: 0 }} className="text-[10px] uppercase tracking-wide">
+                          {cat.label}
+                        </Badge>
+                        {item.publico_alvo !== "todos" && (
+                          <Badge variant="outline" className="text-[10px]">
+                            👥 {PUBLICOS.find((p) => p.value === item.publico_alvo)?.label || item.publico_alvo}
+                          </Badge>
+                        )}
+                        {item.niveis_aplicaveis.length > 0 && (
+                          <Badge variant="outline" className="text-[10px]">
+                            {item.niveis_aplicaveis.length} nível(is)
+                          </Badge>
+                        )}
+                        {item.cargos_aplicaveis.length > 0 && (
+                          <Badge variant="outline" className="text-[10px]">
+                            {item.cargos_aplicaveis.length} cargo(s)
+                          </Badge>
+                        )}
+                      </div>
+                      <h3 className="font-semibold text-base">{item.titulo}</h3>
+                      <p className="text-sm text-muted-foreground line-clamp-2">
+                        {item.conteudo.length > 220 ? item.conteudo.slice(0, 220) + "..." : item.conteudo}
+                      </p>
+                      {item.tags.length > 0 && (
+                        <div className="flex gap-1 flex-wrap">
+                          {item.tags.map((t) => (
+                            <span key={t} className="text-[10px] bg-muted px-2 py-0.5 rounded-full">#{t}</span>
+                          ))}
+                        </div>
+                      )}
+                      {item.fonte && (
+                        <p className="text-[10px] text-muted-foreground italic">Fonte: {item.fonte}</p>
+                      )}
+                    </div>
+                    <div className="flex flex-col gap-1 shrink-0">
+                      <Button variant="ghost" size="sm" onClick={() => abrirEditar(item)} className="gap-1">
+                        <Edit2 className="h-3.5 w-3.5" /> Editar
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => void desativar(item)} className="gap-1 text-muted-foreground hover:text-destructive">
+                        <EyeOff className="h-3.5 w-3.5" /> Desativar
+                      </Button>
+                    </div>
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Dialog formulário */}
+      <Dialog open={showForm} onOpenChange={setShowForm}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{form.id ? "Editar Conhecimento" : "Novo Conhecimento"}</DialogTitle>
+            <DialogDescription>
+              Conteúdo que o Fala Fetely usará como fonte de verdade ao responder.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Categoria *</Label>
+                <Select value={form.categoria} onValueChange={(v) => setForm({ ...form, categoria: v as Categoria })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {CATEGORIAS.map((c) => (
+                      <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Público alvo</Label>
+                <Select value={form.publico_alvo} onValueChange={(v) => setForm({ ...form, publico_alvo: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {PUBLICOS.map((p) => (
+                      <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div>
+              <Label>Título *</Label>
+              <Input
+                value={form.titulo}
+                onChange={(e) => setForm({ ...form, titulo: e.target.value })}
+                placeholder="Ex: Celular corporativo — quem tem direito"
+              />
+            </div>
+
+            <div>
+              <Label>Conteúdo * (suporta markdown)</Label>
+              <Textarea
+                value={form.conteudo}
+                onChange={(e) => setForm({ ...form, conteudo: e.target.value })}
+                rows={8}
+                placeholder="Descreva o conhecimento de forma clara e completa..."
+              />
+            </div>
+
+            <div>
+              <Label>Níveis aplicáveis (opcional)</Label>
+              <div className="flex flex-wrap gap-2 mt-1">
+                {NIVEIS.map((n) => (
+                  <label key={n.value} className="flex items-center gap-1.5 text-sm bg-muted/40 px-2.5 py-1 rounded-md cursor-pointer hover:bg-muted">
+                    <Checkbox
+                      checked={form.niveis_aplicaveis.includes(n.value)}
+                      onCheckedChange={() => toggleArrayItem("niveis_aplicaveis", n.value)}
+                    />
+                    {n.label}
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {cargos.length > 0 && (
+              <div>
+                <Label>Cargos aplicáveis (opcional)</Label>
+                <div className="flex flex-wrap gap-2 mt-1 max-h-32 overflow-y-auto p-2 bg-muted/20 rounded-md">
+                  {cargos.map((c) => (
+                    <label key={c} className="flex items-center gap-1.5 text-xs bg-background px-2 py-1 rounded cursor-pointer hover:bg-muted">
+                      <Checkbox
+                        checked={form.cargos_aplicaveis.includes(c)}
+                        onCheckedChange={() => toggleArrayItem("cargos_aplicaveis", c)}
+                      />
+                      {c}
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {departamentos.length > 0 && (
+              <div>
+                <Label>Departamentos aplicáveis (opcional)</Label>
+                <div className="flex flex-wrap gap-2 mt-1">
+                  {departamentos.map((d) => (
+                    <label key={d} className="flex items-center gap-1.5 text-xs bg-muted/40 px-2 py-1 rounded cursor-pointer hover:bg-muted">
+                      <Checkbox
+                        checked={form.departamentos_aplicaveis.includes(d)}
+                        onCheckedChange={() => toggleArrayItem("departamentos_aplicaveis", d)}
+                      />
+                      {d}
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div>
+              <Label>Tags</Label>
+              <div className="flex gap-2">
+                <Input
+                  value={tagInput}
+                  onChange={(e) => setTagInput(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); adicionarTag(); } }}
+                  placeholder="Pressione Enter para adicionar"
+                  className="flex-1"
+                />
+                <Button type="button" variant="outline" size="sm" onClick={adicionarTag}>Adicionar</Button>
+              </div>
+              {form.tags.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  {form.tags.map((t) => (
+                    <span key={t} className="text-xs bg-muted px-2 py-1 rounded-full flex items-center gap-1">
+                      #{t}
+                      <button onClick={() => setForm({ ...form, tags: form.tags.filter((x) => x !== t) })} className="hover:text-destructive">
+                        <X className="h-3 w-3" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div>
+              <Label>Fonte</Label>
+              <Input
+                value={form.fonte}
+                onChange={(e) => setForm({ ...form, fonte: e.target.value })}
+                placeholder="Ex: Definido por Flavio em DD/MM/AAAA"
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowForm(false)} disabled={salvando}>Cancelar</Button>
+            <Button onClick={salvar} disabled={salvando} style={{ backgroundColor: "#1A4A3A" }} className="text-white hover:opacity-90 gap-2">
+              {salvando && <Loader2 className="h-4 w-4 animate-spin" />}
+              {form.id ? "Salvar alterações" : "Criar conhecimento"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
