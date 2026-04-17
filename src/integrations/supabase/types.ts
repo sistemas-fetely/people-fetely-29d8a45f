@@ -2866,6 +2866,7 @@ export type Database = {
           informar_user_ids: string[] | null
           link_acao: string | null
           motivo_bloqueio: string | null
+          origem_extensao_id: string | null
           prazo_data: string | null
           prazo_dias: number | null
           prioridade: string
@@ -2898,6 +2899,7 @@ export type Database = {
           informar_user_ids?: string[] | null
           link_acao?: string | null
           motivo_bloqueio?: string | null
+          origem_extensao_id?: string | null
           prazo_data?: string | null
           prazo_dias?: number | null
           prioridade?: string
@@ -2930,6 +2932,7 @@ export type Database = {
           informar_user_ids?: string[] | null
           link_acao?: string | null
           motivo_bloqueio?: string | null
+          origem_extensao_id?: string | null
           prazo_data?: string | null
           prazo_dias?: number | null
           prioridade?: string
@@ -2943,7 +2946,127 @@ export type Database = {
           titulo?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "sncf_tarefas_origem_extensao_id_fkey"
+            columns: ["origem_extensao_id"]
+            isOneToOne: false
+            referencedRelation: "sncf_template_extensoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sncf_template_extensoes: {
+        Row: {
+          ativo: boolean
+          categoria_id: string
+          created_at: string
+          criado_por: string | null
+          descricao: string | null
+          dimensao: string
+          id: string
+          nome: string
+          referencia_id: string | null
+          referencia_label: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          categoria_id: string
+          created_at?: string
+          criado_por?: string | null
+          descricao?: string | null
+          dimensao: string
+          id?: string
+          nome: string
+          referencia_id?: string | null
+          referencia_label: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          categoria_id?: string
+          created_at?: string
+          criado_por?: string | null
+          descricao?: string | null
+          dimensao?: string
+          id?: string
+          nome?: string
+          referencia_id?: string | null
+          referencia_label?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sncf_template_extensoes_categoria_id_fkey"
+            columns: ["categoria_id"]
+            isOneToOne: false
+            referencedRelation: "sncf_processos_categorias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sncf_template_extensoes_tarefas: {
+        Row: {
+          accountable_role: string | null
+          area_destino: string | null
+          bloqueante: boolean | null
+          created_at: string
+          descricao: string | null
+          extensao_id: string
+          id: string
+          link_acao: string | null
+          motivo_bloqueio: string | null
+          ordem: number
+          prazo_dias: number
+          prioridade: string | null
+          responsavel_role: string | null
+          sistema_origem: string | null
+          titulo: string
+        }
+        Insert: {
+          accountable_role?: string | null
+          area_destino?: string | null
+          bloqueante?: boolean | null
+          created_at?: string
+          descricao?: string | null
+          extensao_id: string
+          id?: string
+          link_acao?: string | null
+          motivo_bloqueio?: string | null
+          ordem?: number
+          prazo_dias?: number
+          prioridade?: string | null
+          responsavel_role?: string | null
+          sistema_origem?: string | null
+          titulo: string
+        }
+        Update: {
+          accountable_role?: string | null
+          area_destino?: string | null
+          bloqueante?: boolean | null
+          created_at?: string
+          descricao?: string | null
+          extensao_id?: string
+          id?: string
+          link_acao?: string | null
+          motivo_bloqueio?: string | null
+          ordem?: number
+          prazo_dias?: number
+          prioridade?: string | null
+          responsavel_role?: string | null
+          sistema_origem?: string | null
+          titulo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sncf_template_extensoes_tarefas_extensao_id_fkey"
+            columns: ["extensao_id"]
+            isOneToOne: false
+            referencedRelation: "sncf_template_extensoes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       sncf_templates_processos: {
         Row: {
