@@ -623,6 +623,14 @@ export default function TIAtivoForm({ open, onOpenChange, ativoId, onSaved }: TI
               </div>
               <p className="text-xs text-muted-foreground">Máximo 5 fotos · JPG ou PNG · até 5MB cada</p>
             </div>
+
+            {ativoId && (
+              <ManutencoesSection
+                ativoId={ativoId}
+                ativoStatus={form.status}
+                onStatusChange={(s) => setForm((f) => ({ ...f, status: s }))}
+              />
+            )}
           </div>
         </div>
 
