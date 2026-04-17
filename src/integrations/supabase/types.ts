@@ -3128,6 +3128,7 @@ export type Database = {
           prioridade: string | null
           responsavel_role: string | null
           sistema_origem: string | null
+          somente_clt: boolean
           template_id: string
           titulo: string
         }
@@ -3146,6 +3147,7 @@ export type Database = {
           prioridade?: string | null
           responsavel_role?: string | null
           sistema_origem?: string | null
+          somente_clt?: boolean
           template_id: string
           titulo: string
         }
@@ -3164,6 +3166,7 @@ export type Database = {
           prioridade?: string | null
           responsavel_role?: string | null
           sistema_origem?: string | null
+          somente_clt?: boolean
           template_id?: string
           titulo?: string
         }
