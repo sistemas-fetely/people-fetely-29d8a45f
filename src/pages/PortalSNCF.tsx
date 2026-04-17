@@ -82,109 +82,106 @@ export default function PortalSNCF() {
 
   return (
     <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight mb-2">Bem-vindo ao SNCF</h1>
+        <p className="text-muted-foreground">
+          Selecione um sistema para entrar. Você só pode acessar os sistemas em que tem permissão.
+        </p>
       </div>
 
-        {/* Centro de Trabalho — destaque */}
-        <button
-          onClick={() => navigate("/tarefas")}
-          className="group w-full mb-8 rounded-2xl border-2 bg-card p-6 hover:shadow-lg transition-all text-left flex items-center gap-5"
-          style={{ borderColor: "#1A4A3A" }}
+      {/* Centro de Trabalho — destaque */}
+      <button
+        onClick={() => navigate("/tarefas")}
+        className="group w-full rounded-2xl border-2 bg-card p-6 hover:shadow-lg transition-all text-left flex items-center gap-5"
+        style={{ borderColor: "#1A4A3A" }}
+      >
+        <div
+          className="flex h-16 w-16 items-center justify-center rounded-2xl flex-shrink-0"
+          style={{ backgroundColor: "#1A4A3A" }}
         >
-          <div
-            className="flex h-16 w-16 items-center justify-center rounded-2xl flex-shrink-0"
-            style={{ backgroundColor: "#1A4A3A" }}
-          >
-            <ClipboardList className="h-8 w-8 text-white" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-xs uppercase tracking-wider font-semibold text-muted-foreground mb-1">
-              Centro de Trabalho
-            </p>
-            <h2 className="text-xl font-bold mb-1" style={{ color: "#1A4A3A" }}>Minhas Tarefas</h2>
-            {totalPendentes > 0 ? (
-              <p className="text-sm text-muted-foreground">
-                Você tem <span className="font-semibold text-foreground">{totalPendentes}</span> tarefa(s) ativa(s)
-              </p>
-            ) : (
-              <p className="text-sm text-emerald-600 font-medium">Tudo em dia!</p>
-            )}
-          </div>
-          <div className="flex items-center gap-2 text-sm font-medium" style={{ color: "#1A4A3A" }}>
-            Ver tarefas <ExternalLink className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
-          </div>
-        </button>
-
-        {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {[1, 2].map((i) => (
-              <div key={i} className="h-48 rounded-xl border border-border bg-card animate-pulse" />
-            ))}
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {sistemas.map((sistema) => {
-              const Icon = getIcon(sistema.icone);
-              const accessible = hasAccess(sistema.id);
-              return (
-                <button
-                  key={sistema.id}
-                  onClick={() => handleEnter(sistema)}
-                  disabled={!accessible}
-                  className={cn(
-                    "group relative overflow-hidden rounded-xl border border-border bg-card text-left transition-all duration-200",
-                    accessible
-                      ? "hover:shadow-lg hover:-translate-y-0.5 cursor-pointer"
-                      : "opacity-50 cursor-not-allowed"
-                  )}
-                >
-                  {/* Top color bar */}
-                  <div className="h-1.5 w-full" style={{ backgroundColor: sistema.cor }} />
-                  <div className="p-6">
-                    <div className="flex items-start justify-between mb-4">
-                      <div
-                        className="flex h-14 w-14 items-center justify-center rounded-xl"
-                        style={{ backgroundColor: `${sistema.cor}15` }}
-                      >
-                        <Icon className="h-7 w-7" style={{ color: sistema.cor }} />
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {isExternal(sistema) && accessible && (
-                          <ExternalLink className="h-4 w-4 text-muted-foreground" aria-label="Link externo" />
-                        )}
-                        {!accessible && (
-                          <Badge variant="outline" className="gap-1">
-                            <Lock className="h-3 w-3" />
-                            Sem acesso
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                    <h2 className="text-xl font-bold mb-1">{sistema.nome}</h2>
-                    {sistema.descricao && (
-                      <p className="text-sm text-muted-foreground">{sistema.descricao}</p>
-                    )}
-                    {accessible && (
-                      <div
-                        className="mt-4 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1"
-                        style={{ color: sistema.cor }}
-                      >
-                        {isExternal(sistema) ? "Abrir" : "Entrar"} →
-                      </div>
-                    )}
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        )}
-      </main>
-
-      {/* Footer */}
-      <footer className="border-t border-border py-4">
-        <div className="max-w-6xl mx-auto px-6 text-center text-xs text-muted-foreground">
-          SNCF — Sistema Nervoso Central Fetely
+          <ClipboardList className="h-8 w-8 text-white" />
         </div>
-      </footer>
+        <div className="flex-1 min-w-0">
+          <p className="text-xs uppercase tracking-wider font-semibold text-muted-foreground mb-1">
+            Centro de Trabalho
+          </p>
+          <h2 className="text-xl font-bold mb-1" style={{ color: "#1A4A3A" }}>Minhas Tarefas</h2>
+          {totalPendentes > 0 ? (
+            <p className="text-sm text-muted-foreground">
+              Você tem <span className="font-semibold text-foreground">{totalPendentes}</span> tarefa(s) ativa(s)
+            </p>
+          ) : (
+            <p className="text-sm text-success font-medium">Tudo em dia!</p>
+          )}
+        </div>
+        <div className="flex items-center gap-2 text-sm font-medium" style={{ color: "#1A4A3A" }}>
+          Ver tarefas <ExternalLink className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
+        </div>
+      </button>
+
+      {loading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {[1, 2].map((i) => (
+            <div key={i} className="h-48 rounded-xl border border-border bg-card animate-pulse" />
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {sistemas.map((sistema) => {
+            const Icon = getIcon(sistema.icone);
+            const accessible = hasAccess(sistema.id);
+            return (
+              <button
+                key={sistema.id}
+                onClick={() => handleEnter(sistema)}
+                disabled={!accessible}
+                className={cn(
+                  "group relative overflow-hidden rounded-xl border border-border bg-card text-left transition-all duration-200",
+                  accessible
+                    ? "hover:shadow-lg hover:-translate-y-0.5 cursor-pointer"
+                    : "opacity-50 cursor-not-allowed"
+                )}
+              >
+                <div className="h-1.5 w-full" style={{ backgroundColor: sistema.cor }} />
+                <div className="p-6">
+                  <div className="flex items-start justify-between mb-4">
+                    <div
+                      className="flex h-14 w-14 items-center justify-center rounded-xl"
+                      style={{ backgroundColor: `${sistema.cor}15` }}
+                    >
+                      <Icon className="h-7 w-7" style={{ color: sistema.cor }} />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {isExternal(sistema) && accessible && (
+                        <ExternalLink className="h-4 w-4 text-muted-foreground" aria-label="Link externo" />
+                      )}
+                      {!accessible && (
+                        <Badge variant="outline" className="gap-1">
+                          <Lock className="h-3 w-3" />
+                          Sem acesso
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                  <h2 className="text-xl font-bold mb-1">{sistema.nome}</h2>
+                  {sistema.descricao && (
+                    <p className="text-sm text-muted-foreground">{sistema.descricao}</p>
+                  )}
+                  {accessible && (
+                    <div
+                      className="mt-4 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1"
+                      style={{ color: sistema.cor }}
+                    >
+                      {isExternal(sistema) ? "Abrir" : "Entrar"} →
+                    </div>
+                  )}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
+
