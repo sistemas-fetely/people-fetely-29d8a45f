@@ -568,6 +568,27 @@ export function DashboardOperacional() {
         // Buscar tudo de onboarding seria query extra; manter simples por ora.
 
         setVelocidade(novasVelocidades);
+
+        // ─── Métricas para card Insights IA ───
+        const tempoMedioContratacao =
+          convitesPreenchidosComData.length >= 1
+            ? Math.round(
+                convitesPreenchidosComData.reduce((acc, c) => {
+                  const ms = new Date(c.preenchido_em!).getTime() - new Date(c.created_at).getTime();
+                  return acc + ms / (1000 * 60 * 60 * 24);
+                }, 0) / convitesPreenchidosComData.length,
+              )
+            : 0;
+
+        setInsightsData({
+          convitesPendentes: convitesPend,
+          onboardingsAtrasados: tarefasAtrasadas.length,
+          vagasAbertas,
+          candidatosTriagem: candidatosNovos.length,
+          contratosVencendo: contratosVenc.length,
+          tarefasBloqueantes: atrasadasBloqueantes.length,
+          tempoMedioContratacao,
+        });
       } finally {
         if (!cancelled) setLoading(false);
       }
