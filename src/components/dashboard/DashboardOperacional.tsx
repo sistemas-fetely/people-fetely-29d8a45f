@@ -183,7 +183,7 @@ export function DashboardOperacional() {
             .select("id, nome, status, tipo, created_at, preenchido_em, updated_at"),
           supabase
             .from("sncf_tarefas")
-            .select("id, titulo, status, prazo_data, processo_id")
+            .select("id, titulo, status, prazo_data, processo_id, bloqueante")
             .eq("tipo_processo", "onboarding")
             .in("status", ["pendente", "atrasada"]),
           supabase
@@ -338,18 +338,32 @@ export function DashboardOperacional() {
           });
         }
 
-        // Onboarding tarefas atrasadas
-        const tarefasAtrasadas = tarefasOnb.filter((t) => {
+        // Onboarding tarefas atrasadas — separar bloqueantes (legais) das normais
+        const tarefasAtrasadas = tarefasOnb.filter((t: any) => {
           if (t.status === "atrasada") return true;
           if (t.prazo_data && t.prazo_data < hojeStr) return true;
           return false;
         });
-        if (tarefasAtrasadas.length > 0) {
+        const atrasadasBloqueantes = tarefasAtrasadas.filter((t: any) => t.bloqueante);
+        const atrasadasNormais = tarefasAtrasadas.filter((t: any) => !t.bloqueante);
+        if (atrasadasBloqueantes.length > 0) {
+          novasTarefas.push({
+            id: "onb-legal-atraso",
+            prioridade: "urgente",
+            icone: AlertCircle,
+            titulo: `${atrasadasBloqueantes.length} tarefa${atrasadasBloqueantes.length > 1 ? "s" : ""} LEGAIS de onboarding atrasada${atrasadasBloqueantes.length > 1 ? "s" : ""} — risco de multa`,
+            detalhe: "Prazo legal ultrapassado — resolver imediatamente",
+            acao: "Resolver",
+            rota: "/onboarding",
+            ordem: 9999,
+          });
+        }
+        if (atrasadasNormais.length > 0) {
           novasTarefas.push({
             id: "onb-atraso",
             prioridade: "urgente",
             icone: ClipboardCheck,
-            titulo: `${tarefasAtrasadas.length} tarefa${tarefasAtrasadas.length > 1 ? "s" : ""} de onboarding atrasada${tarefasAtrasadas.length > 1 ? "s" : ""}`,
+            titulo: `${atrasadasNormais.length} tarefa${atrasadasNormais.length > 1 ? "s" : ""} de onboarding atrasada${atrasadasNormais.length > 1 ? "s" : ""}`,
             detalhe: "Resolva antes que afete a integração",
             acao: "Resolver",
             rota: "/onboarding",
