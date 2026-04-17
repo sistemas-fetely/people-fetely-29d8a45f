@@ -188,7 +188,7 @@ export function DashboardOperacional() {
             .in("status", ["pendente", "atrasada"]),
           supabase
             .from("sncf_tarefas")
-            .select("id, titulo, descricao, status, prazo_data, prioridade, area_destino, link_acao, colaborador_nome, created_at")
+            .select("id, titulo, descricao, status, prazo_data, prioridade, area_destino, link_acao, colaborador_id, colaborador_tipo, colaborador_nome, created_at")
             .eq("tipo_processo", "manual")
             .in("status", ["pendente", "em_andamento", "atrasada"]),
           supabase
@@ -243,6 +243,15 @@ export function DashboardOperacional() {
           const ordem = t.prazo_data
             ? Math.floor((Date.now() - new Date(t.prazo_data).getTime()) / 86400000)
             : diasDesde(t.created_at);
+          // Rota: prioriza colaborador, fallback link_acao
+          let rotaManual = "";
+          if (t.colaborador_id && t.colaborador_tipo === "clt") {
+            rotaManual = `/colaboradores/${t.colaborador_id}`;
+          } else if (t.colaborador_id && t.colaborador_tipo === "pj") {
+            rotaManual = `/contratos-pj/${t.colaborador_id}`;
+          } else if (t.link_acao) {
+            rotaManual = t.link_acao;
+          }
           novasTarefas.push({
             id: `manual-${t.id}`,
             sncfId: t.id,
@@ -251,8 +260,8 @@ export function DashboardOperacional() {
             icone: Pin,
             titulo: t.titulo,
             detalhe: [t.area_destino, t.colaborador_nome, t.descricao].filter(Boolean).join(" · ") || "Tarefa manual",
-            acao: t.link_acao ? "Abrir" : "Concluir",
-            rota: t.link_acao || "",
+            acao: rotaManual ? "Abrir" : "Concluir",
+            rota: rotaManual,
             ordem,
           });
         });
