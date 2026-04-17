@@ -397,6 +397,7 @@ Próximo e profissional, sem ser robotizado. Levemente caloroso, NÃO efusivo. V
       cargos: (cargosRes.data || []).length,
       documentacao: (docsRes.data || []).length,
       beneficios: (beneficiosRes.data || []).length,
+      conhecimentos: ((conhecimentosRes as any).data || []).length,
     };
 
     // 4) Chamada ao Lovable AI Gateway com streaming
