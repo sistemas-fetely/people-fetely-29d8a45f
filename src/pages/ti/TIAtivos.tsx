@@ -296,7 +296,10 @@ export default function TIAtivos() {
 
       <TIAtivoForm
         open={formOpen}
-        onOpenChange={setFormOpen}
+        onOpenChange={(o) => {
+          setFormOpen(o);
+          if (!o) void load();
+        }}
         ativoId={editingId}
         onSaved={() => {
           setFormOpen(false);
