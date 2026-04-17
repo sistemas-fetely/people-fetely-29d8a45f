@@ -75,6 +75,72 @@ export function DashboardOperacional() {
   const [kpis, setKpis] = useState<KpiItem[]>([]);
   const [velocidade, setVelocidade] = useState<VelocidadeItem[]>([]);
 
+  const dashData = useDashboardData();
+
+  const alertas = useMemo<AlertaItem[]>(() => {
+    const list: AlertaItem[] = [];
+    const { pj, ferias, nfPendentes, pagPjPendentes, folha, experienciaVencendo, docsVencendo, aniversariosEmpresa, semBeneficio, contratosPendentes } = dashData;
+
+    if (ferias?.periodoVencido > 0) {
+      list.push({ id: "ferias-venc", titulo: `${ferias.periodoVencido} período(s) de férias vencido(s)`, detalhe: "Saldo pendente", prioridade: "alta", rota: "/ferias" });
+    }
+    if (pj?.vencendo > 0) {
+      list.push({ id: "pj-venc", titulo: `${pj.vencendo} contrato(s) PJ vencendo`, detalhe: "Próximos 30 dias", prioridade: "alta", rota: "/contratos-pj" });
+    }
+    (experienciaVencendo || []).forEach((e: any, i: number) => {
+      list.push({
+        id: `exp-${i}`,
+        titulo: `${e.nome} — experiência ${e.marco} dias`,
+        detalhe: e.diasRestantes > 0 ? `${e.diasRestantes} dia(s) restante(s) · ${e.depto}` : `Vence hoje · ${e.depto}`,
+        prioridade: "alta",
+        rota: "/colaboradores",
+      });
+    });
+    (docsVencendo || []).forEach((d: any, i: number) => {
+      list.push({
+        id: `doc-${i}`,
+        titulo: `${d.documento} de ${d.nome} ${d.vencido ? "vencida" : "vencendo"}`,
+        detalhe: `Validade: ${new Date(d.validade + "T00:00:00").toLocaleDateString("pt-BR")} · ${d.depto}`,
+        prioridade: d.vencido ? "alta" : "media",
+        rota: "/colaboradores",
+      });
+    });
+    if (contratosPendentes && contratosPendentes.length > 0) {
+      list.push({
+        id: "contratos-pend",
+        titulo: `${contratosPendentes.length} contrato(s) PJ pendente(s) de assinatura`,
+        detalhe: contratosPendentes.slice(0, 3).map((c: any) => c.nome).join(", ") + (contratosPendentes.length > 3 ? "..." : ""),
+        prioridade: "alta",
+        rota: "/contratos-pj",
+      });
+    }
+    if (semBeneficio && semBeneficio.length > 0) {
+      list.push({
+        id: "sem-benef",
+        titulo: `${semBeneficio.length} colaborador(es) sem benefícios`,
+        detalhe: semBeneficio.slice(0, 3).map((s: any) => s.nome).join(", ") + (semBeneficio.length > 3 ? "..." : ""),
+        prioridade: "media",
+        rota: "/beneficios",
+      });
+    }
+    if (folha?.atual && folha.atual.status === "aberta") {
+      list.push({ id: "folha", titulo: `Folha ${folha.atual.competencia} em aberto`, detalhe: "Fechar folha", prioridade: "media", rota: "/folha-pagamento" });
+    }
+    if (nfPendentes > 0) {
+      list.push({ id: "nf", titulo: `${nfPendentes} nota(s) fiscal(is) pendente(s)`, detalhe: "Aguardando processamento", prioridade: "media", rota: "/notas-fiscais" });
+    }
+    if (pagPjPendentes > 0) {
+      list.push({ id: "pag-pj", titulo: `${pagPjPendentes} pagamento(s) PJ pendente(s)`, detalhe: "Aguardando pagamento", prioridade: "media", rota: "/pagamentos-pj" });
+    }
+    (aniversariosEmpresa || []).forEach((a: any, i: number) => {
+      list.push({ id: `aniv-${i}`, titulo: `${a.nome} completa ${a.anos} ano(s) de empresa`, detalhe: `${a.data} · ${a.depto}`, prioridade: "baixa" });
+    });
+
+    const order = { alta: 0, media: 1, baixa: 2 };
+    list.sort((a, b) => order[a.prioridade] - order[b.prioridade]);
+    return list;
+  }, [dashData]);
+
   useEffect(() => {
     let cancelled = false;
 
