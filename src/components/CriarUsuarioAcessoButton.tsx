@@ -57,7 +57,7 @@ export function CriarUsuarioAcessoButton({
       <>
         <div className="flex items-center gap-1">
           <Badge variant="outline" className="gap-1.5">
-            <CheckCircle2 className="h-3 w-3 text-emerald-600" />
+            <CheckCircle2 className="h-3 w-3 text-success" />
             Acesso ativo
           </Badge>
           <DropdownMenu>
