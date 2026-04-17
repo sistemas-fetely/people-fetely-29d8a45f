@@ -242,7 +242,14 @@ export default function TIAtivos() {
                       <TableCell className="font-mono text-xs">{a.numero_serie || "—"}</TableCell>
                       <TableCell className="font-mono text-xs">{a.numero_patrimonio || "—"}</TableCell>
                       <TableCell>
-                        <Badge variant="secondary" className={v.className}>{v.label}</Badge>
+                        <div className="flex flex-wrap items-center gap-1">
+                          <Badge variant="outline" className={v.className}>{v.label}</Badge>
+                          {a.em_manutencao && (
+                            <Badge variant="outline" className="bg-yellow-100 text-yellow-700 border-0 text-[10px]">
+                              🔧 Manutenção
+                            </Badge>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell>
                         <Badge variant="outline" className={c.className}>{c.label}</Badge>
@@ -270,11 +277,7 @@ export default function TIAtivos() {
                                 <UserMinus className="h-4 w-4 mr-2" /> Devolver
                               </DropdownMenuItem>
                             )}
-                            {a.status !== "manutencao" && a.status !== "descartado" && (
-                              <DropdownMenuItem onClick={() => handleManutencao(a)}>
-                                <Wrench className="h-4 w-4 mr-2" /> Enviar para manutenção
-                              </DropdownMenuItem>
-                            )}
+                            {/* Manutenção é gerenciada na ficha do ativo (seção Manutenções) */}
                             <DropdownMenuSeparator />
                             <DropdownMenuItem onClick={() => setDeleteId(a.id)} className="text-destructive">
                               <Trash2 className="h-4 w-4 mr-2" /> Descartar
