@@ -690,6 +690,15 @@ function ListaTarefas({
               {t.bloqueante && <Badge variant="destructive" className="text-[10px]">⚠ Legal</Badge>}
               {t.prioridade === "urgente" && <Badge variant="destructive" className="text-[10px]">Urgente</Badge>}
               {t.area_destino && <Badge variant="outline" className="text-[10px]">{t.area_destino}</Badge>}
+              {t.somente_clt && (
+                <Badge
+                  variant="outline"
+                  className="text-[10px] bg-primary/10 text-primary border-primary/30"
+                  title="Esta tarefa é gerada apenas para colaboradores CLT"
+                >
+                  CLT
+                </Badge>
+              )}
             </div>
             {t.descricao && <p className="text-xs text-muted-foreground mt-1">{t.descricao}</p>}
             <div className="flex gap-3 text-xs text-muted-foreground mt-1.5 flex-wrap">
@@ -822,7 +831,7 @@ function TarefaDialog({
           <div className="flex items-center gap-2">
             <Switch
               checked={tarefa?.bloqueante ?? false}
-              onCheckedChange={(v) => setTarefa({ ...tarefa, bloqueante: v })}
+              onCheckedChange={(v) => setTarea({ ...tarefa, bloqueante: v })}
             />
             <Label className="cursor-pointer">Tarefa bloqueante / legal</Label>
           </div>
@@ -836,6 +845,15 @@ function TarefaDialog({
               />
             </div>
           )}
+          <div className="flex items-center gap-2">
+            <Switch
+              checked={tarefa?.somente_clt ?? false}
+              onCheckedChange={(v) => setTarefa({ ...tarefa, somente_clt: v })}
+            />
+            <Label className="cursor-pointer" title="Quando ativada, esta tarefa será gerada apenas para colaboradores CLT (não para PJ)">
+              Apenas para colaboradores CLT
+            </Label>
+          </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
