@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useParametros } from "@/hooks/useParametros";
 import { Sparkles, Loader2, Camera, X } from "lucide-react";
+import ManutencoesSection from "@/components/ti/ManutencoesSection";
 
 interface TIAtivoFormProps {
   open: boolean;
