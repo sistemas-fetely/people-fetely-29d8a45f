@@ -165,7 +165,7 @@ export function DashboardOperacional() {
     const order = { alta: 0, media: 1, baixa: 2 };
     list.sort((a, b) => order[a.prioridade] - order[b.prioridade]);
     return list;
-  }, [dashData]);
+  }, [dashData, tarefasLegaisAtrasadas]);
 
   useEffect(() => {
     let cancelled = false;
@@ -358,6 +358,32 @@ export function DashboardOperacional() {
         });
         const atrasadasBloqueantes = tarefasAtrasadas.filter((t: any) => t.bloqueante);
         const atrasadasNormais = tarefasAtrasadas.filter((t: any) => !t.bloqueante);
+
+        // Buscar nomes dos colaboradores das tarefas legais atrasadas para alertas críticos
+        if (atrasadasBloqueantes.length > 0) {
+          const checklistIds = [...new Set(atrasadasBloqueantes.map((t: any) => t.processo_id).filter(Boolean))];
+          if (checklistIds.length > 0) {
+            const { data: cls } = await supabase
+              .from("onboarding_checklists")
+              .select("id, colaborador_id, colaborador_tipo")
+              .in("id", checklistIds);
+            const cltIds = (cls || []).filter((c: any) => c.colaborador_tipo === "clt" && c.colaborador_id).map((c: any) => c.colaborador_id);
+            const pjIds = (cls || []).filter((c: any) => c.colaborador_tipo === "pj" && c.colaborador_id).map((c: any) => c.colaborador_id);
+            const nomes: { nome: string }[] = [];
+            if (cltIds.length > 0) {
+              const { data } = await supabase.from("colaboradores_clt").select("id, nome_completo").in("id", cltIds);
+              (data || []).forEach((c: any) => nomes.push({ nome: c.nome_completo }));
+            }
+            if (pjIds.length > 0) {
+              const { data } = await supabase.from("contratos_pj").select("id, contato_nome").in("id", pjIds);
+              (data || []).forEach((c: any) => nomes.push({ nome: c.contato_nome }));
+            }
+            if (!cancelled) setTarefasLegaisAtrasadas(nomes);
+          }
+        } else if (!cancelled) {
+          setTarefasLegaisAtrasadas([]);
+        }
+
         if (atrasadasBloqueantes.length > 0) {
           novasTarefas.push({
             id: "onb-legal-atraso",
