@@ -188,6 +188,33 @@ export default function PortalSNCF() {
             })}
           </div>
         )}
+
+        {/* Ações rápidas */}
+        <div className="mt-12">
+          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+            Ações rápidas
+          </h2>
+          <button
+            onClick={() => navigate("/tarefas")}
+            className="group flex items-center gap-3 rounded-xl border border-border bg-card px-5 py-4 hover:shadow-md transition-all w-full md:w-auto"
+          >
+            <div
+              className="flex h-10 w-10 items-center justify-center rounded-lg"
+              style={{ backgroundColor: "#1A4A3A15" }}
+            >
+              <ClipboardList className="h-5 w-5" style={{ color: "#1A4A3A" }} />
+            </div>
+            <div className="flex-1 text-left">
+              <p className="text-sm font-semibold">Minhas Tarefas</p>
+              <p className="text-xs text-muted-foreground">Inbox unificado de pendências</p>
+            </div>
+            {totalPendentes > 0 && (
+              <Badge style={{ backgroundColor: "#1A4A3A" }} className="text-white">
+                {totalPendentes}
+              </Badge>
+            )}
+          </button>
+        </div>
       </main>
 
       {/* Footer */}
