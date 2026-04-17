@@ -88,6 +88,7 @@ export default function OnboardingDetalhe() {
   const { userRoles: roles } = usePermissions();
   const [loading, setLoading] = useState(true);
   const [checklist, setChecklist] = useState<Checklist | null>(null);
+  const [extensoesMap, setExtensoesMap] = useState<Record<string, ExtensaoMeta>>({});
   const [updatingTask, setUpdatingTask] = useState<string | null>(null);
 
   // Dialog conclusão
