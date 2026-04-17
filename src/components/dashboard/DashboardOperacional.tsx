@@ -554,10 +554,21 @@ export function DashboardOperacional() {
         <div className="lg:col-span-3">
           <Card className="card-shadow animate-fade-in h-full">
             <CardHeader className="pb-3">
-              <CardTitle className="text-base flex items-center gap-2">
-                <ClipboardList className="h-4 w-4" style={{ color: FETELY_GREEN }} />
-                O que fazer agora
-              </CardTitle>
+              <div className="flex items-center justify-between gap-2">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <ClipboardList className="h-4 w-4" style={{ color: FETELY_GREEN }} />
+                  O que fazer agora
+                </CardTitle>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setNovaOpen(true)}
+                  className="gap-1.5"
+                >
+                  <Plus className="h-4 w-4" />
+                  Nova tarefa
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               {tarefas.length === 0 ? (
@@ -581,19 +592,63 @@ export function DashboardOperacional() {
                         <div className={cn("flex h-9 w-9 items-center justify-center rounded-lg shrink-0", prioridadeColor[t.prioridade])}>
                           <PrioIcon className="h-4 w-4" />
                         </div>
-                        <ModuloIcon className="h-4 w-4 text-muted-foreground shrink-0" />
+                        <ModuloIcon className={cn("h-4 w-4 shrink-0", t.manual ? "text-primary" : "text-muted-foreground")} />
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium truncate">{t.titulo}</p>
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm font-medium truncate">{t.titulo}</p>
+                            {t.manual && (
+                              <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 shrink-0">
+                                Manual
+                              </Badge>
+                            )}
+                          </div>
                           <p className="text-xs text-muted-foreground truncate">{t.detalhe}</p>
                         </div>
-                        <Button
-                          size="sm"
-                          onClick={() => navigate(t.rota)}
-                          style={{ backgroundColor: FETELY_GREEN }}
-                          className="shrink-0 text-white hover:opacity-90"
-                        >
-                          {t.acao}
-                        </Button>
+                        {t.manual ? (
+                          <div className="flex items-center gap-1 shrink-0">
+                            {t.rota && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => navigate(t.rota)}
+                              >
+                                Abrir
+                              </Button>
+                            )}
+                            <Button
+                              size="sm"
+                              onClick={() => handleConcluirManual(t.sncfId!)}
+                              style={{ backgroundColor: FETELY_GREEN }}
+                              className="text-white hover:opacity-90"
+                            >
+                              <Check className="h-4 w-4" />
+                            </Button>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
+                                  <MoreVertical className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => handleConcluirManual(t.sncfId!)}>
+                                  <Check className="h-4 w-4 mr-2" /> Concluir
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleCancelarManual(t.sncfId!)}>
+                                  <X className="h-4 w-4 mr-2" /> Cancelar
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+                        ) : (
+                          <Button
+                            size="sm"
+                            onClick={() => navigate(t.rota)}
+                            style={{ backgroundColor: FETELY_GREEN }}
+                            className="shrink-0 text-white hover:opacity-90"
+                          >
+                            {t.acao}
+                          </Button>
+                        )}
                       </div>
                     );
                   })}
