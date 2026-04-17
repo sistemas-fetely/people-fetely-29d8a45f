@@ -122,14 +122,14 @@ export default function ManutencoesSection({ ativoId, ativoStatus, onStatusChang
         return;
       }
 
-      // Se manutenção em andamento (sem data_fim), atualizar status do ativo
-      if (!form.data_fim && ativoStatus !== "manutencao") {
+      // Se manutenção em andamento (sem data_fim), marcar flag em_manutencao
+      if (!form.data_fim) {
         const { error: upErr } = await supabase
           .from("ti_ativos")
-          .update({ status: "manutencao" })
+          .update({ em_manutencao: true } as any)
           .eq("id", ativoId);
         if (!upErr) {
-          onStatusChange?.("manutencao");
+          onStatusChange?.(ativoStatus);
         }
       }
 
@@ -155,15 +155,13 @@ export default function ManutencoesSection({ ativoId, ativoStatus, onStatusChang
         return;
       }
 
-      // Se ativo está em manutenção, voltar para o status anterior
-      if (ativoStatus === "manutencao" && concluirTarget.status_anterior) {
-        const { error: upErr } = await supabase
-          .from("ti_ativos")
-          .update({ status: concluirTarget.status_anterior })
-          .eq("id", ativoId);
-        if (!upErr) {
-          onStatusChange?.(concluirTarget.status_anterior);
-        }
+      // Limpar a flag em_manutencao do ativo
+      const { error: upErr } = await supabase
+        .from("ti_ativos")
+        .update({ em_manutencao: false } as any)
+        .eq("id", ativoId);
+      if (!upErr) {
+        onStatusChange?.(ativoStatus);
       }
 
       toast.success("Manutenção concluída");
@@ -300,7 +298,7 @@ export default function ManutencoesSection({ ativoId, ativoStatus, onStatusChang
             </div>
             {!form.data_fim && (
               <p className="text-xs text-muted-foreground">
-                Sem data fim → o status do ativo será alterado para "Em Manutenção".
+                Sem data fim → o ativo será marcado como "Em Manutenção" (sem alterar o status atual).
               </p>
             )}
           </div>

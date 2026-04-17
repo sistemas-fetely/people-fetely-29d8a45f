@@ -41,10 +41,10 @@ export default function TIDashboard() {
   useEffect(() => {
     const load = async () => {
       const [{ data: ativos }, { data: ultimos }] = await Promise.all([
-        supabase.from("ti_ativos").select("status"),
+        supabase.from("ti_ativos").select("status, em_manutencao" as any),
         supabase
           .from("ti_ativos")
-          .select("id, tipo, marca, modelo, status, colaborador_nome, updated_at")
+          .select("id, tipo, marca, modelo, status, colaborador_nome, updated_at, em_manutencao" as any)
           .order("updated_at", { ascending: false })
           .limit(8),
       ]);
@@ -52,9 +52,9 @@ export default function TIDashboard() {
       if (ativos) {
         setKpi({
           total: ativos.length,
-          disponivel: ativos.filter((a) => a.status === "disponivel").length,
-          atribuido: ativos.filter((a) => a.status === "atribuido").length,
-          manutencao: ativos.filter((a) => a.status === "manutencao").length,
+          disponivel: ativos.filter((a: any) => a.status === "disponivel").length,
+          atribuido: ativos.filter((a: any) => a.status === "atribuido").length,
+          manutencao: ativos.filter((a: any) => a.em_manutencao === true).length,
         });
       }
       if (ultimos) setRecentes(ultimos as AtivoRecente[]);

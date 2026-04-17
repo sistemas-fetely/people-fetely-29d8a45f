@@ -388,7 +388,6 @@ export default function TIAtivoForm({ open, onOpenChange, ativoId, onSaved }: TI
                 <SelectContent>
                   <SelectItem value="disponivel">Disponível</SelectItem>
                   <SelectItem value="atribuido">Atribuído</SelectItem>
-                  <SelectItem value="manutencao">Em Manutenção</SelectItem>
                   <SelectItem value="descartado">Descartado</SelectItem>
                 </SelectContent>
               </Select>
