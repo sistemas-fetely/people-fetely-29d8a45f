@@ -1,8 +1,7 @@
 import {
-  LayoutDashboard, Users, FileText, Calendar, ClipboardList, Award,
-  GraduationCap, GitBranch, BarChart3, Settings, UserCircle, CreditCard,
-  Briefcase, LogOut, ArrowUpDown, Send, UserCheck, ClipboardCheck, LayoutGrid,
-  UsersRound, Workflow,
+  LayoutDashboard, Users, GitBranch, UserSearch, MailPlus, Rocket,
+  ArrowLeftRight, Award, BookOpen, Receipt, Clock, CreditCard, FileText,
+  Palmtree, Gift, BarChart3, Banknote, Sliders, Settings, LogOut, LayoutGrid,
 } from "lucide-react";
 
 import { NavLink } from "@/components/NavLink";
@@ -47,44 +46,38 @@ interface MenuItem {
   requireRole?: string;
 }
 
-const mainItems: MenuItem[] = [
+const principalItems: MenuItem[] = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard, permModule: "dashboard" },
-  { title: "Minhas Tarefas", url: "/tarefas", icon: ClipboardList },
-  { title: "Tarefas do Time", url: "/tarefas/time", icon: UsersRound, requireRole: "__gestor_or_rh__" },
   { title: "Pessoas", url: "/pessoas", icon: Users, permModule: "colaboradores" },
   { title: "Organograma", url: "/organograma", icon: GitBranch, permModule: "organograma" },
-  { title: "Férias", url: "/ferias", icon: Calendar, permModule: "ferias" },
-  { title: "Benefícios", url: "/beneficios", icon: Award, permModule: "beneficios" },
-  { title: "Movimentações", url: "/movimentacoes", icon: ArrowUpDown, permModule: "movimentacoes" },
 ];
 
-const cltItems: MenuItem[] = [
-  { title: "Colaboradores CLT", url: "/colaboradores", icon: Users, permModule: "colaboradores" },
-  { title: "Folha de Pagamento", url: "/folha-pagamento", icon: FileText, permModule: "folha_pagamento" },
-  { title: "Ponto", url: "/ponto", icon: ClipboardList, permModule: "folha_pagamento" },
-];
-
-const pjItems: MenuItem[] = [
-  { title: "Colaboradores PJ", url: "/contratos-pj", icon: Briefcase, permModule: "contratos_pj" },
-  { title: "Notas Fiscais", url: "/notas-fiscais", icon: FileText, permModule: "notas_fiscais" },
-  { title: "Pagamentos PJ", url: "/pagamentos-pj", icon: CreditCard, permModule: "pagamentos_pj" },
-];
-
-const rhItems: MenuItem[] = [
-  { title: "Convites Cadastro", url: "/convites-cadastro", icon: Send, permModule: "convites" },
-  { title: "Onboarding", url: "/onboarding", icon: ClipboardCheck, permModule: "convites" },
-  { title: "Recrutamento", url: "/recrutamento", icon: UserCircle, permModule: "recrutamento" },
+const jornadaItems: MenuItem[] = [
+  { title: "Recrutamento", url: "/recrutamento", icon: UserSearch, permModule: "recrutamento" },
+  { title: "Convites de Cadastro", url: "/convites-cadastro", icon: MailPlus, permModule: "convites" },
+  { title: "Onboarding", url: "/onboarding", icon: Rocket, permModule: "convites" },
+  { title: "Movimentações", url: "/movimentacoes", icon: ArrowLeftRight, permModule: "movimentacoes" },
   { title: "Avaliações", url: "/avaliacoes", icon: Award, permModule: "avaliacoes" },
-  { title: "Treinamentos", url: "/treinamentos", icon: GraduationCap, permModule: "treinamentos" },
+  { title: "Treinamentos", url: "/treinamentos", icon: BookOpen, permModule: "treinamentos" },
+];
+
+const operacaoItems: MenuItem[] = [
+  { title: "Folha de Pagamento", url: "/folha-pagamento", icon: Receipt, permModule: "folha_pagamento" },
+  { title: "Ponto", url: "/ponto", icon: Clock, permModule: "folha_pagamento" },
+  { title: "Pagamentos PJ", url: "/pagamentos-pj", icon: CreditCard, permModule: "pagamentos_pj" },
+  { title: "Notas Fiscais PJ", url: "/notas-fiscais", icon: FileText, permModule: "notas_fiscais" },
+  { title: "Férias", url: "/ferias", icon: Palmtree, permModule: "ferias" },
+  { title: "Benefícios", url: "/beneficios", icon: Gift, permModule: "beneficios" },
+];
+
+const relatoriosItems: MenuItem[] = [
   { title: "Relatórios", url: "/relatorios", icon: BarChart3, permModule: "relatorios" },
 ];
 
-const adminItems: MenuItem[] = [
-  { title: "Cargos e Salários", url: "/cargos", icon: Briefcase, permModule: "parametros" },
-  { title: "Parâmetros", url: "/parametros", icon: Settings, permModule: "parametros" },
-  { title: "Templates de Processos", url: "/templates", icon: Workflow, requireRole: "__admin_rh_or_super__" },
-  { title: "Configurações", url: "/configuracoes", icon: Settings, permModule: "usuarios" },
-  { title: "Gerenciar Usuários", url: "/gerenciar-usuarios", icon: UserCheck, permModule: "usuarios" },
+const configItems: MenuItem[] = [
+  { title: "Cargos e Salários", url: "/cargos", icon: Banknote, permModule: "parametros", requireRole: "__admin_rh_or_super__" },
+  { title: "Parâmetros", url: "/parametros", icon: Sliders, permModule: "parametros", requireRole: "__admin_rh_or_super__" },
+  { title: "Configurações", url: "/configuracoes", icon: Settings, permModule: "usuarios", requireRole: "__admin_rh_or_super__" },
 ];
 
 interface MenuGroupProps {
@@ -99,7 +92,6 @@ function MenuGroup({ label, items, collapsed, canViewModule, userRoles = [] }: M
   const location = useLocation();
   const visibleItems = items.filter((item) => {
     if (item.requireRole) {
-      // Pseudo-roles compostas
       if (item.requireRole === "__gestor_or_rh__") {
         if (!userRoles.some((r) => ["gestor_direto", "super_admin", "admin_rh", "gestor_rh"].includes(r))) return false;
       } else if (item.requireRole === "__admin_rh_or_super__") {
@@ -190,7 +182,7 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent className="px-2 space-y-1">
-        {/* Voltar ao Portal SNCF */}
+        {/* Atalho ao Portal SNCF */}
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
@@ -201,7 +193,7 @@ export function AppSidebar() {
                     className="flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-all duration-200"
                   >
                     <LayoutGrid className="h-[18px] w-[18px] shrink-0" />
-                    {!collapsed && <span>SNCF</span>}
+                    {!collapsed && <span>Portal SNCF</span>}
                   </NavLink>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -209,15 +201,15 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
         <div className="mx-4 border-t border-sidebar-border/40" />
-        <MenuGroup label="Principal" items={mainItems} collapsed={collapsed} canViewModule={canView} userRoles={roles} />
+        <MenuGroup label="Principal" items={principalItems} collapsed={collapsed} canViewModule={canView} userRoles={roles} />
         <div className="mx-4 border-t border-sidebar-border/40" />
-        <MenuGroup label="CLT" items={cltItems} collapsed={collapsed} canViewModule={canView} userRoles={roles} />
+        <MenuGroup label="Jornada do Colaborador" items={jornadaItems} collapsed={collapsed} canViewModule={canView} userRoles={roles} />
         <div className="mx-4 border-t border-sidebar-border/40" />
-        <MenuGroup label="PJ" items={pjItems} collapsed={collapsed} canViewModule={canView} userRoles={roles} />
+        <MenuGroup label="Operação RH" items={operacaoItems} collapsed={collapsed} canViewModule={canView} userRoles={roles} />
         <div className="mx-4 border-t border-sidebar-border/40" />
-        <MenuGroup label="RH" items={rhItems} collapsed={collapsed} canViewModule={canView} userRoles={roles} />
+        <MenuGroup label="Relatórios" items={relatoriosItems} collapsed={collapsed} canViewModule={canView} userRoles={roles} />
         <div className="mx-4 border-t border-sidebar-border/40" />
-        <MenuGroup label="Admin" items={adminItems} collapsed={collapsed} canViewModule={canView} userRoles={roles} />
+        <MenuGroup label="Configurações" items={configItems} collapsed={collapsed} canViewModule={canView} userRoles={roles} />
       </SidebarContent>
 
       <SidebarFooter className="p-4">

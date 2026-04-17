@@ -1,0 +1,188 @@
+import {
+  LayoutGrid, ClipboardList, UsersRound, UserCog, LayoutTemplate,
+  LogOut, ArrowLeft, Network,
+} from "lucide-react";
+import { NavLink } from "@/components/NavLink";
+import { cn } from "@/lib/utils";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { Badge } from "@/components/ui/badge";
+import {
+  Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent,
+  SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem,
+  SidebarHeader, SidebarFooter, useSidebar,
+} from "@/components/ui/sidebar";
+
+const SNCF_COLOR = "#1A4A3A";
+
+interface MenuItem {
+  title: string;
+  url: string;
+  icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
+  end?: boolean;
+  requireRole?: "gestor_or_rh" | "admin_rh_or_super";
+}
+
+const principalItems: MenuItem[] = [
+  { title: "Portal", url: "/sncf", icon: LayoutGrid, end: true },
+  { title: "Minhas Tarefas", url: "/tarefas", icon: ClipboardList, end: true },
+  { title: "Tarefas do Time", url: "/tarefas/time", icon: UsersRound, requireRole: "gestor_or_rh" },
+];
+
+const adminItems: MenuItem[] = [
+  { title: "Gerenciar Usuários", url: "/gerenciar-usuarios", icon: UserCog, requireRole: "admin_rh_or_super" },
+  { title: "Templates de Processos", url: "/templates", icon: LayoutTemplate, requireRole: "admin_rh_or_super" },
+];
+
+const SISTEMA_LABELS: Record<string, { label: string; path: string }> = {
+  people: { label: "People Fetely", path: "/dashboard" },
+  ti: { label: "TI Fetely", path: "/ti" },
+};
+
+export function SNCFSidebar() {
+  const { state } = useSidebar();
+  const collapsed = state === "collapsed";
+  const { user, profile, signOut, roles } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const initials = profile?.full_name
+    ? profile.full_name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()
+    : user?.email?.slice(0, 2).toUpperCase() || "??";
+  const displayName = profile?.full_name || user?.email || "Usuário";
+
+  const isItemActive = (url: string, end?: boolean) =>
+    end ? location.pathname === url : location.pathname.startsWith(url);
+
+  const lastSystem = typeof window !== "undefined" ? sessionStorage.getItem("sncf_last_system") : null;
+  const lastSystemInfo = lastSystem && SISTEMA_LABELS[lastSystem] ? SISTEMA_LABELS[lastSystem] : null;
+
+  const canSee = (req?: MenuItem["requireRole"]) => {
+    if (!req) return true;
+    if (req === "gestor_or_rh") {
+      return roles.some((r) => ["gestor_direto", "super_admin", "admin_rh", "gestor_rh"].includes(r));
+    }
+    if (req === "admin_rh_or_super") {
+      return roles.some((r) => ["super_admin", "admin_rh"].includes(r));
+    }
+    return true;
+  };
+
+  const renderGroup = (label: string, items: MenuItem[]) => {
+    const visible = items.filter((i) => canSee(i.requireRole));
+    if (!visible.length) return null;
+    return (
+      <SidebarGroup>
+        {!collapsed && (
+          <SidebarGroupLabel className="text-sidebar-muted text-[10px] uppercase tracking-widest font-semibold mb-1 px-4">
+            {label}
+          </SidebarGroupLabel>
+        )}
+        <SidebarGroupContent>
+          <SidebarMenu>
+            {visible.map((item) => {
+              const active = isItemActive(item.url, item.end);
+              return (
+                <SidebarMenuItem key={item.url}>
+                  <SidebarMenuButton asChild>
+                    <NavLink
+                      to={item.url}
+                      end={item.end}
+                      className={cn(
+                        "flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-all duration-200",
+                        active && "bg-sidebar-accent text-sidebar-foreground font-medium border-l-[3px] shadow-sm"
+                      )}
+                      style={active ? { borderLeftColor: SNCF_COLOR, color: SNCF_COLOR } : undefined}
+                    >
+                      <item.icon className="h-[18px] w-[18px] shrink-0" style={active ? { color: SNCF_COLOR } : undefined} />
+                      {!collapsed && <span>{item.title}</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              );
+            })}
+          </SidebarMenu>
+        </SidebarGroupContent>
+      </SidebarGroup>
+    );
+  };
+
+  return (
+    <Sidebar collapsible="icon" className="border-r-0">
+      <SidebarHeader className="p-5">
+        <div className="flex items-center gap-3">
+          <div
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl shadow-sm"
+            style={{ backgroundColor: SNCF_COLOR }}
+          >
+            <Network className="h-5 w-5 text-white" />
+          </div>
+          {!collapsed && (
+            <div className="flex flex-col">
+              <span className="text-sm font-bold tracking-tight" style={{ color: SNCF_COLOR }}>Fetély.</span>
+              <span className="text-[11px] text-sidebar-muted">Sistema Nervoso Central</span>
+            </div>
+          )}
+        </div>
+      </SidebarHeader>
+
+      <SidebarContent className="px-2 space-y-1">
+        {/* Voltar ao último sistema visitado */}
+        {lastSystemInfo && (
+          <>
+            <SidebarGroup>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild>
+                      <button
+                        onClick={() => navigate(lastSystemInfo.path)}
+                        className="flex w-full items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-all duration-200"
+                      >
+                        <ArrowLeft className="h-[18px] w-[18px] shrink-0" />
+                        {!collapsed && <span>{lastSystemInfo.label}</span>}
+                      </button>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+            <div className="mx-4 border-t border-sidebar-border/40" />
+          </>
+        )}
+
+        {renderGroup("Principal", principalItems)}
+        {canSee("admin_rh_or_super") && <div className="mx-4 border-t border-sidebar-border/40" />}
+        {renderGroup("Administração", adminItems)}
+      </SidebarContent>
+
+      <SidebarFooter className="p-4">
+        {!collapsed && (
+          <div className="space-y-2">
+            <div className="flex items-center gap-3 rounded-xl bg-sidebar-accent/60 p-3">
+              <div
+                className="flex h-9 w-9 items-center justify-center rounded-full text-xs font-bold text-white shadow-sm"
+                style={{ backgroundColor: SNCF_COLOR }}
+              >
+                {initials}
+              </div>
+              <div className="flex flex-col min-w-0">
+                <span className="text-xs font-medium text-sidebar-foreground truncate">{displayName}</span>
+                <Badge variant="outline" className="text-[10px] w-fit border-sidebar-border/60 text-sidebar-muted mt-0.5">
+                  SNCF
+                </Badge>
+              </div>
+            </div>
+            <button
+              onClick={signOut}
+              className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-xs text-sidebar-muted hover:bg-sidebar-accent hover:text-sidebar-foreground transition-all duration-200"
+            >
+              <LogOut className="h-3.5 w-3.5" />
+              Sair
+            </button>
+          </div>
+        )}
+      </SidebarFooter>
+    </Sidebar>
+  );
+}

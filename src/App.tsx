@@ -50,6 +50,7 @@ import CargosEnriquecimento from "@/pages/CargosEnriquecimento";
 import EntregaTeste from "@/pages/EntregaTeste";
 import PortalSNCF from "@/pages/PortalSNCF";
 import TILayout from "@/layouts/TILayout";
+import SNCFLayout from "@/layouts/SNCFLayout";
 import TIDashboard from "@/pages/ti/TIDashboard";
 import TIAtivos from "@/pages/ti/TIAtivos";
 import DocumentacaoViva from "@/pages/ti/DocumentacaoViva";
@@ -82,8 +83,18 @@ const App = () => (
             <Route path="/vagas/:id/teste" element={<EntregaTeste />} />
             <Route path="/unsubscribe" element={<Unsubscribe />} />
 
-            {/* SNCF Portal — porta de entrada (sem AppLayout) */}
-            <Route path="/sncf" element={<ProtectedRoute><PortalSNCF /></ProtectedRoute>} />
+            {/* SNCF — Portal + transversais (Tarefas, Templates, Usuários) */}
+            <Route element={<ProtectedRoute><SNCFLayout /></ProtectedRoute>}>
+              <Route path="/sncf" element={<PortalSNCF />} />
+              <Route path="/tarefas" element={<MinhasTarefas />} />
+              <Route path="/tarefas/time" element={<TarefasDoTime />} />
+              <Route path="/gerenciar-usuarios" element={
+                <ProtectedRoute permModule="usuarios">
+                  <GerenciarUsuarios />
+                </ProtectedRoute>
+              } />
+              <Route path="/templates" element={<TemplatesProcessos />} />
+            </Route>
 
             {/* TI Fetely */}
             <Route path="/ti" element={<ProtectedRoute><TILayout /></ProtectedRoute>}>
@@ -98,9 +109,6 @@ const App = () => (
             <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
               <Route path="/" element={<Navigate to="/sncf" replace />} />
               <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/tarefas" element={<MinhasTarefas />} />
-              <Route path="/tarefas/time" element={<TarefasDoTime />} />
-              <Route path="/templates" element={<TemplatesProcessos />} />
               <Route path="/desligamento/:id" element={<DesligamentoDetalhe />} />
               <Route path="/pessoas" element={<Pessoas />} />
               <Route path="/colaboradores" element={
@@ -249,11 +257,6 @@ const App = () => (
               <Route path="/configuracoes" element={
                 <ProtectedRoute permModule="usuarios">
                   <PlaceholderPage title="Configurações" description="Parâmetros do sistema e permissões" />
-                </ProtectedRoute>
-              } />
-              <Route path="/gerenciar-usuarios" element={
-                <ProtectedRoute permModule="usuarios">
-                  <GerenciarUsuarios />
                 </ProtectedRoute>
               } />
               <Route path="/configurar-perfis" element={
