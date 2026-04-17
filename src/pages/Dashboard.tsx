@@ -175,21 +175,14 @@ function DashboardGestao() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Dashboard Executivo</h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            Visão gerencial · <span className="capitalize">{mesAtualLabel}</span>
-          </p>
-        </div>
-        {alertas.filter((a) => a.prioridade === "alta").length > 0 && (
-          <Badge variant="outline" className="bg-destructive/10 text-destructive border-0 gap-1 self-start sm:self-auto">
+      {alertas.filter((a) => a.prioridade === "alta").length > 0 && (
+        <div className="flex justify-end">
+          <Badge variant="outline" className="bg-destructive/10 text-destructive border-0 gap-1">
             <AlertTriangle className="h-3 w-3" />
             {alertas.filter((a) => a.prioridade === "alta").length} alerta(s) crítico(s)
           </Badge>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Row 1: Financial KPIs */}
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
