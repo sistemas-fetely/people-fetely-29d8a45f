@@ -219,6 +219,23 @@ Deno.serve(async (req) => {
       .map((b: any) => `- ${b.beneficio} (${b.tipo})`)
       .join("\n") || "(nenhum cadastrado)";
 
+    // Conhecimentos da Base (políticas, regras, manifestos, mercado, etc)
+    const blocoConhecimentos = ((conhecimentosRes as any).data || [])
+      .map((k: any) => {
+        const aplicabilidade: string[] = [];
+        if (k.publico_alvo && k.publico_alvo !== "todos") aplicabilidade.push(`público: ${k.publico_alvo}`);
+        const cargos = Array.isArray(k.cargos_aplicaveis) ? k.cargos_aplicaveis : [];
+        if (cargos.length) aplicabilidade.push(`cargos: ${cargos.join(", ")}`);
+        const niveis = Array.isArray(k.niveis_aplicaveis) ? k.niveis_aplicaveis : [];
+        if (niveis.length) aplicabilidade.push(`níveis: ${niveis.join(", ")}`);
+        const deptos = Array.isArray(k.departamentos_aplicaveis) ? k.departamentos_aplicaveis : [];
+        if (deptos.length) aplicabilidade.push(`deptos: ${deptos.join(", ")}`);
+        const apl = aplicabilidade.length ? `\nAplicabilidade: ${aplicabilidade.join(" | ")}` : "\nAplicabilidade: todos";
+        const fonte = k.fonte ? `\nFonte: ${k.fonte}` : "";
+        return `### ${k.titulo} [${k.categoria}]${apl}\n${clipText(k.conteudo, 1500)}${fonte}`;
+      })
+      .join("\n\n") || "(nenhum conhecimento cadastrado ainda)";
+
     const systemPrompt = `Você é o Fala Fetely, assistente inteligente do SNCF (Sistema Nervoso Central da Fetely).
 
 A FETELY é uma marca de alegria com intenção — papelaria, utilidades e decoração com espírito comemorativo. DNA: "Celebre o que importa", "Gesto não se delega pro ChatGPT", autogestão com maturidade, tudo via sistema ou e-mail automático.
