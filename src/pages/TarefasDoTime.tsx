@@ -362,7 +362,7 @@ export default function TarefasDoTime() {
                       <div>
                         <CardTitle className="text-base">{sub.nome}</CardTitle>
                         <p className="text-xs text-muted-foreground">
-                          {sub.cargo} · {sub.departamento} · {sub.tipo.toUpperCase()}
+                          {sub.cargo} · {sub.departamento}
                         </p>
                       </div>
                     </div>

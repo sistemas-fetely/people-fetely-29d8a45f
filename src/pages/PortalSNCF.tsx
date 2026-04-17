@@ -126,60 +126,85 @@ export default function PortalSNCF() {
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {sistemas.map((sistema) => {
-            const Icon = getIcon(sistema.icone);
-            const accessible = hasAccess(sistema.id);
-            return (
-              <button
-                key={sistema.id}
-                onClick={() => handleEnter(sistema)}
-                disabled={!accessible}
-                className={cn(
-                  "group relative overflow-hidden rounded-xl border border-border bg-card text-left transition-all duration-200",
-                  accessible
-                    ? "hover:shadow-lg hover:-translate-y-0.5 cursor-pointer"
-                    : "opacity-50 cursor-not-allowed"
-                )}
-              >
-                <div className="h-1.5 w-full" style={{ backgroundColor: sistema.cor }} />
-                <div className="p-6">
-                  <div className="flex items-start justify-between mb-4">
-                    <div
-                      className="flex h-14 w-14 items-center justify-center rounded-xl"
-                      style={{ backgroundColor: `${sistema.cor}15` }}
-                    >
-                      <Icon className="h-7 w-7" style={{ color: sistema.cor }} />
+        <>
+          {(() => {
+            const internos = sistemas.filter((s) => !isExternal(s));
+            const externos = sistemas.filter((s) => isExternal(s));
+
+            const renderCard = (sistema: Sistema) => {
+              const Icon = getIcon(sistema.icone);
+              const accessible = hasAccess(sistema.id);
+              return (
+                <button
+                  key={sistema.id}
+                  onClick={() => handleEnter(sistema)}
+                  disabled={!accessible}
+                  className={cn(
+                    "group relative overflow-hidden rounded-xl border border-border bg-card text-left transition-all duration-200",
+                    accessible
+                      ? "hover:shadow-lg hover:-translate-y-0.5 cursor-pointer"
+                      : "opacity-50 cursor-not-allowed"
+                  )}
+                >
+                  <div className="h-1.5 w-full" style={{ backgroundColor: sistema.cor }} />
+                  <div className="p-6">
+                    <div className="flex items-start justify-between mb-4">
+                      <div
+                        className="flex h-14 w-14 items-center justify-center rounded-xl"
+                        style={{ backgroundColor: `${sistema.cor}15` }}
+                      >
+                        <Icon className="h-7 w-7" style={{ color: sistema.cor }} />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {isExternal(sistema) && accessible && (
+                          <ExternalLink className="h-4 w-4 text-muted-foreground" aria-label="Link externo" />
+                        )}
+                        {!accessible && (
+                          <Badge variant="outline" className="gap-1">
+                            <Lock className="h-3 w-3" />
+                            Sem acesso
+                          </Badge>
+                        )}
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      {isExternal(sistema) && accessible && (
-                        <ExternalLink className="h-4 w-4 text-muted-foreground" aria-label="Link externo" />
-                      )}
-                      {!accessible && (
-                        <Badge variant="outline" className="gap-1">
-                          <Lock className="h-3 w-3" />
-                          Sem acesso
-                        </Badge>
-                      )}
+                    <h2 className="text-xl font-bold mb-1">{sistema.nome}</h2>
+                    {sistema.descricao && (
+                      <p className="text-sm text-muted-foreground">{sistema.descricao}</p>
+                    )}
+                    {accessible && (
+                      <div
+                        className="mt-4 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1"
+                        style={{ color: sistema.cor }}
+                      >
+                        {isExternal(sistema) ? "Abrir" : "Entrar"} →
+                      </div>
+                    )}
+                  </div>
+                </button>
+              );
+            };
+
+            return (
+              <div className="space-y-8">
+                {internos.length > 0 && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {internos.map(renderCard)}
+                  </div>
+                )}
+                {externos.length > 0 && (
+                  <div className="space-y-3">
+                    <p className="text-xs uppercase tracking-wide text-muted-foreground font-medium">
+                      Sistemas externos
+                    </p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {externos.map(renderCard)}
                     </div>
                   </div>
-                  <h2 className="text-xl font-bold mb-1">{sistema.nome}</h2>
-                  {sistema.descricao && (
-                    <p className="text-sm text-muted-foreground">{sistema.descricao}</p>
-                  )}
-                  {accessible && (
-                    <div
-                      className="mt-4 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1"
-                      style={{ color: sistema.cor }}
-                    >
-                      {isExternal(sistema) ? "Abrir" : "Entrar"} →
-                    </div>
-                  )}
-                </div>
-              </button>
+                )}
+              </div>
             );
-          })}
-        </div>
+          })()}
+        </>
       )}
     </div>
   );

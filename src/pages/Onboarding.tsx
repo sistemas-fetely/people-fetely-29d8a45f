@@ -480,7 +480,6 @@ export default function Onboarding() {
                       <p className="text-sm text-muted-foreground truncate">{cl.cargo} · {cl.departamento}</p>
                     </div>
                     <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
-                      <Badge variant="outline" className="text-xs">{cl.colaborador_tipo?.toUpperCase()}</Badge>
                       {overdueLegal && (
                         <Badge className="bg-destructive text-destructive-foreground animate-pulse text-xs">
                           <ShieldAlert className="h-3 w-3 mr-0.5" /> Tarefa legal atrasada!
