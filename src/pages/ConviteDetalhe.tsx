@@ -23,6 +23,83 @@ import { ConviteDadosEmpresaCLT } from "@/components/convite-detalhe/ConviteDado
 import { ConviteDadosProfissionaisPJ } from "@/components/convite-detalhe/ConviteDadosProfissionaisPJ";
 import { getTarefasDinamicas } from "@/lib/onboarding-tarefas";
 import { useAuth } from "@/contexts/AuthContext";
+import { fetchExtensoesAplicaveis } from "@/hooks/useExtensoesAplicaveis";
+
+async function gerarTarefasExtensoes(params: {
+  checklistId: string;
+  colaboradorId: string;
+  colaboradorTipo: "clt" | "pj";
+  colaboradorNome: string;
+  cargoId: string | null;
+  cargoNome: string | null;
+  departamentoLabel: string | null;
+  sistemasIds: string[];
+  dataReferencia: Date;
+  gestorUserId: string | null;
+  userId: string | null;
+}) {
+  // Busca id da categoria onboarding
+  const { data: cat } = await (supabase as any)
+    .from("sncf_processos_categorias")
+    .select("id")
+    .eq("slug", "onboarding")
+    .maybeSingle();
+  if (!cat?.id) return;
+
+  // Busca cargo_id pelo nome se necessário (cargo do convite vem como string)
+  let cargoIdResolved = params.cargoId;
+  if (!cargoIdResolved && params.cargoNome) {
+    const { data: c } = await supabase
+      .from("cargos")
+      .select("id")
+      .eq("nome", params.cargoNome)
+      .maybeSingle();
+    cargoIdResolved = (c as any)?.id ?? null;
+  }
+
+  const aplicaveis = await fetchExtensoesAplicaveis({
+    categoriaId: cat.id,
+    cargoId: cargoIdResolved,
+    departamentoLabel: params.departamentoLabel,
+    sistemasIds: params.sistemasIds,
+    sistemasLabels: params.sistemasIds, // also try matching label (some are slugs)
+  });
+
+  if (aplicaveis.length === 0) return;
+
+  const inserts: any[] = [];
+  for (const { extensao, tarefas } of aplicaveis) {
+    for (const t of tarefas) {
+      const prazoDate = new Date(params.dataReferencia);
+      prazoDate.setDate(prazoDate.getDate() + (t.prazo_dias || 0));
+      inserts.push({
+        tipo_processo: "onboarding",
+        sistema_origem: t.sistema_origem || "people",
+        area_destino: t.area_destino || null,
+        prioridade: t.prioridade || "normal",
+        processo_id: params.checklistId,
+        colaborador_id: params.colaboradorId,
+        colaborador_tipo: params.colaboradorTipo,
+        colaborador_nome: params.colaboradorNome,
+        titulo: t.titulo,
+        descricao: t.descricao || null,
+        responsavel_role: t.responsavel_role,
+        responsavel_user_id: t.responsavel_role === "gestor_direto" && params.gestorUserId ? params.gestorUserId : null,
+        prazo_dias: t.prazo_dias,
+        prazo_data: prazoDate.toISOString().slice(0, 10),
+        bloqueante: t.bloqueante || false,
+        motivo_bloqueio: t.motivo_bloqueio || null,
+        accountable_role: t.accountable_role || null,
+        accountable_user_id: t.accountable_role ? null : params.userId,
+        link_acao: t.link_acao || null,
+        origem_extensao_id: extensao.id,
+      });
+    }
+  }
+  if (inserts.length > 0) {
+    await supabase.from("sncf_tarefas").insert(inserts as any);
+  }
+}
 
 interface Convite {
   id: string;
