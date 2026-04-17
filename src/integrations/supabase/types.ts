@@ -2658,6 +2658,107 @@ export type Database = {
         }
         Relationships: []
       }
+      sncf_documentacao: {
+        Row: {
+          ativo: boolean
+          autor_nome: string | null
+          autor_user_id: string | null
+          conteudo: string
+          created_at: string
+          descricao: string | null
+          editado_por: string | null
+          editado_por_nome: string | null
+          id: string
+          ordem: number
+          slug: string
+          tags: string[] | null
+          tipo: string
+          titulo: string
+          updated_at: string
+          versao: number
+        }
+        Insert: {
+          ativo?: boolean
+          autor_nome?: string | null
+          autor_user_id?: string | null
+          conteudo: string
+          created_at?: string
+          descricao?: string | null
+          editado_por?: string | null
+          editado_por_nome?: string | null
+          id?: string
+          ordem?: number
+          slug: string
+          tags?: string[] | null
+          tipo: string
+          titulo: string
+          updated_at?: string
+          versao?: number
+        }
+        Update: {
+          ativo?: boolean
+          autor_nome?: string | null
+          autor_user_id?: string | null
+          conteudo?: string
+          created_at?: string
+          descricao?: string | null
+          editado_por?: string | null
+          editado_por_nome?: string | null
+          id?: string
+          ordem?: number
+          slug?: string
+          tags?: string[] | null
+          tipo?: string
+          titulo?: string
+          updated_at?: string
+          versao?: number
+        }
+        Relationships: []
+      }
+      sncf_documentacao_versoes: {
+        Row: {
+          conteudo: string
+          created_at: string
+          documento_id: string
+          editado_por: string | null
+          editado_por_nome: string | null
+          id: string
+          observacao_mudanca: string | null
+          titulo: string
+          versao: number
+        }
+        Insert: {
+          conteudo: string
+          created_at?: string
+          documento_id: string
+          editado_por?: string | null
+          editado_por_nome?: string | null
+          id?: string
+          observacao_mudanca?: string | null
+          titulo: string
+          versao: number
+        }
+        Update: {
+          conteudo?: string
+          created_at?: string
+          documento_id?: string
+          editado_por?: string | null
+          editado_por_nome?: string | null
+          id?: string
+          observacao_mudanca?: string | null
+          titulo?: string
+          versao?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sncf_documentacao_versoes_documento_id_fkey"
+            columns: ["documento_id"]
+            isOneToOne: false
+            referencedRelation: "sncf_documentacao"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sncf_sistemas: {
         Row: {
           ativo: boolean
