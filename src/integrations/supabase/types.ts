@@ -2676,6 +2676,84 @@ export type Database = {
         }
         Relationships: []
       }
+      sncf_tarefas: {
+        Row: {
+          area_destino: string | null
+          colaborador_id: string | null
+          colaborador_nome: string | null
+          colaborador_tipo: string | null
+          concluida_em: string | null
+          concluida_por: string | null
+          created_at: string
+          criado_por: string | null
+          descricao: string | null
+          id: string
+          link_acao: string | null
+          prazo_data: string | null
+          prazo_dias: number | null
+          prioridade: string
+          processo_id: string | null
+          processo_tipo: string | null
+          responsavel_role: string | null
+          responsavel_user_id: string | null
+          sistema_origem: string
+          status: string
+          tipo_processo: string
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          area_destino?: string | null
+          colaborador_id?: string | null
+          colaborador_nome?: string | null
+          colaborador_tipo?: string | null
+          concluida_em?: string | null
+          concluida_por?: string | null
+          created_at?: string
+          criado_por?: string | null
+          descricao?: string | null
+          id?: string
+          link_acao?: string | null
+          prazo_data?: string | null
+          prazo_dias?: number | null
+          prioridade?: string
+          processo_id?: string | null
+          processo_tipo?: string | null
+          responsavel_role?: string | null
+          responsavel_user_id?: string | null
+          sistema_origem?: string
+          status?: string
+          tipo_processo?: string
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          area_destino?: string | null
+          colaborador_id?: string | null
+          colaborador_nome?: string | null
+          colaborador_tipo?: string | null
+          concluida_em?: string | null
+          concluida_por?: string | null
+          created_at?: string
+          criado_por?: string | null
+          descricao?: string | null
+          id?: string
+          link_acao?: string | null
+          prazo_data?: string | null
+          prazo_dias?: number | null
+          prioridade?: string
+          processo_id?: string | null
+          processo_tipo?: string | null
+          responsavel_role?: string | null
+          responsavel_user_id?: string | null
+          sistema_origem?: string
+          status?: string
+          tipo_processo?: string
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       sncf_user_systems: {
         Row: {
           ativo: boolean
@@ -3134,7 +3212,54 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      onboarding_tarefas_view: {
+        Row: {
+          checklist_id: string | null
+          concluida_em: string | null
+          concluida_por: string | null
+          created_at: string | null
+          descricao: string | null
+          id: string | null
+          prazo_data: string | null
+          prazo_dias: number | null
+          responsavel_role: Database["public"]["Enums"]["app_role"] | null
+          responsavel_user_id: string | null
+          status: string | null
+          titulo: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          checklist_id?: string | null
+          concluida_em?: string | null
+          concluida_por?: string | null
+          created_at?: string | null
+          descricao?: string | null
+          id?: string | null
+          prazo_data?: string | null
+          prazo_dias?: number | null
+          responsavel_role?: never
+          responsavel_user_id?: string | null
+          status?: string | null
+          titulo?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          checklist_id?: string | null
+          concluida_em?: string | null
+          concluida_por?: string | null
+          created_at?: string | null
+          descricao?: string | null
+          id?: string | null
+          prazo_data?: string | null
+          prazo_dias?: number | null
+          responsavel_role?: never
+          responsavel_user_id?: string | null
+          status?: string | null
+          titulo?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       autosave_convite_cadastro: {
