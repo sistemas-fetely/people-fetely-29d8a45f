@@ -503,3 +503,32 @@ function DashboardGestao() {
     </div>
   );
 }
+
+export default function Dashboard() {
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
+          <p className="text-muted-foreground text-sm mt-1">People Fetely</p>
+        </div>
+      </div>
+      <Tabs defaultValue="operacional">
+        <TabsList>
+          <TabsTrigger value="operacional" className="gap-1.5">
+            <ClipboardList className="h-4 w-4" /> Operacional
+          </TabsTrigger>
+          <TabsTrigger value="gestao" className="gap-1.5">
+            <BarChart3 className="h-4 w-4" /> Gestão
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value="operacional">
+          <DashboardOperacional />
+        </TabsContent>
+        <TabsContent value="gestao">
+          <DashboardGestao />
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
