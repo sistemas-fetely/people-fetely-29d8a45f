@@ -505,6 +505,32 @@ export function DashboardOperacional() {
     return () => {
       cancelled = true;
     };
+  }, [reloadKey]);
+
+  const handleConcluirManual = useCallback(async (sncfId: string) => {
+    const { error } = await supabase
+      .from("sncf_tarefas")
+      .update({ status: "concluida", concluida_em: new Date().toISOString() })
+      .eq("id", sncfId);
+    if (error) {
+      toast.error("Erro ao concluir tarefa");
+      return;
+    }
+    toast.success("Tarefa concluída");
+    setReloadKey((k) => k + 1);
+  }, []);
+
+  const handleCancelarManual = useCallback(async (sncfId: string) => {
+    const { error } = await supabase
+      .from("sncf_tarefas")
+      .update({ status: "cancelada" })
+      .eq("id", sncfId);
+    if (error) {
+      toast.error("Erro ao cancelar tarefa");
+      return;
+    }
+    toast.success("Tarefa cancelada");
+    setReloadKey((k) => k + 1);
   }, []);
 
   if (loading) {
