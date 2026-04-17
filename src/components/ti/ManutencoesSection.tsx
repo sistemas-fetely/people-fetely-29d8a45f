@@ -304,7 +304,7 @@ export default function ManutencoesSection({ ativoId, ativoStatus, onStatusChang
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)} disabled={saving}>Cancelar</Button>
-            <Button onClick={handleRegistrar} disabled={saving} style={{ backgroundColor: "#2D6A5A" }} className="text-white hover:opacity-90">
+            <Button onClick={handleRegistrar} disabled={saving} style={{ backgroundColor: "#3A7D6B" }} className="text-white hover:opacity-90">
               {saving ? "Salvando…" : "Registrar"}
             </Button>
           </DialogFooter>
@@ -324,7 +324,7 @@ export default function ManutencoesSection({ ativoId, ativoStatus, onStatusChang
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setConcluirTarget(null)} disabled={saving}>Cancelar</Button>
-            <Button onClick={handleConcluir} disabled={saving || !dataFimConcluir} style={{ backgroundColor: "#2D6A5A" }} className="text-white hover:opacity-90">
+            <Button onClick={handleConcluir} disabled={saving || !dataFimConcluir} style={{ backgroundColor: "#3A7D6B" }} className="text-white hover:opacity-90">
               {saving ? "Salvando…" : "Concluir"}
             </Button>
           </DialogFooter>

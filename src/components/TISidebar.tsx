@@ -10,7 +10,7 @@ import {
   SidebarHeader, SidebarFooter, useSidebar,
 } from "@/components/ui/sidebar";
 
-const TI_COLOR = "#2D6A5A";
+const TI_COLOR = "#3A7D6B";
 
 const items = [
   { title: "Dashboard", url: "/ti", icon: LayoutDashboard, end: true },
