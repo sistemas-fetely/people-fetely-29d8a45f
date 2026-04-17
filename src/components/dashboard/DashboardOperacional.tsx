@@ -42,6 +42,8 @@ interface TarefaItem {
   acao: string;
   rota: string;
   ordem: number; // antiguidade em dias (maior = mais antigo)
+  manual?: boolean; // se true, vem de sncf_tarefas (tarefa criada manualmente)
+  sncfId?: string; // id em sncf_tarefas, quando manual
 }
 
 interface KpiItem {
