@@ -1288,6 +1288,23 @@ export default function ConvitesCadastro() {
                   <Label>Observações para o colaborador</Label>
                   <Textarea value={form.observacoes_colaborador} onChange={(e) => setForm({ ...form, observacoes_colaborador: e.target.value })} placeholder="Instruções exibidas na ficha pública..." rows={3} />
                 </div>
+                <div className="flex items-start gap-3 rounded-lg border p-3 bg-muted/30">
+                  <Checkbox
+                    id="tera_acesso_sistema"
+                    checked={form.tera_acesso_sistema}
+                    onCheckedChange={(checked) => setForm({ ...form, tera_acesso_sistema: !!checked })}
+                    className="mt-0.5"
+                  />
+                  <div className="flex-1">
+                    <Label htmlFor="tera_acesso_sistema" className="cursor-pointer font-medium">
+                      Este colaborador terá acesso ao sistema?
+                    </Label>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Se marcado, ao aprovar o cadastro um usuário de acesso será criado automaticamente
+                      e o colaborador receberá e-mail para definir senha.
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
           </ScrollArea>
