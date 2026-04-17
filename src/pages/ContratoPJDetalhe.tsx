@@ -200,6 +200,8 @@ export default function ContratoPJDetalhe() {
                       null,
                     prazo_dias: t.prazo_dias,
                     prazo_data: prazoDate.toISOString().slice(0, 10),
+                    bloqueante: t.bloqueante || false,
+                    motivo_bloqueio: t.motivo_bloqueio || null,
                   };
                 });
                 await supabase.from("sncf_tarefas").insert(tarefas as any);
