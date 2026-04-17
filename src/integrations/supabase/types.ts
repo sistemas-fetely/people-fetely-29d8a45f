@@ -1545,6 +1545,103 @@ export type Database = {
           },
         ]
       }
+      fala_fetely_conversas: {
+        Row: {
+          arquivada: boolean
+          created_at: string
+          id: string
+          titulo: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          arquivada?: boolean
+          created_at?: string
+          id?: string
+          titulo?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          arquivada?: boolean
+          created_at?: string
+          id?: string
+          titulo?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      fala_fetely_feedback: {
+        Row: {
+          comentario: string | null
+          created_at: string
+          id: string
+          mensagem_id: string
+          user_id: string
+          util: boolean
+        }
+        Insert: {
+          comentario?: string | null
+          created_at?: string
+          id?: string
+          mensagem_id: string
+          user_id: string
+          util: boolean
+        }
+        Update: {
+          comentario?: string | null
+          created_at?: string
+          id?: string
+          mensagem_id?: string
+          user_id?: string
+          util?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fala_fetely_feedback_mensagem_id_fkey"
+            columns: ["mensagem_id"]
+            isOneToOne: false
+            referencedRelation: "fala_fetely_mensagens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fala_fetely_mensagens: {
+        Row: {
+          conteudo: string
+          conversa_id: string
+          created_at: string
+          fontes_consultadas: Json | null
+          id: string
+          papel: string
+        }
+        Insert: {
+          conteudo: string
+          conversa_id: string
+          created_at?: string
+          fontes_consultadas?: Json | null
+          id?: string
+          papel: string
+        }
+        Update: {
+          conteudo?: string
+          conversa_id?: string
+          created_at?: string
+          fontes_consultadas?: Json | null
+          id?: string
+          papel?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fala_fetely_mensagens_conversa_id_fkey"
+            columns: ["conversa_id"]
+            isOneToOne: false
+            referencedRelation: "fala_fetely_conversas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ferias_periodos: {
         Row: {
           colaborador_id: string
