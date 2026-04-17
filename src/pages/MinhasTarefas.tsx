@@ -136,6 +136,136 @@ export default function MinhasTarefas() {
     void loadTarefas();
   }, [loadTarefas]);
 
+  // Carregar "Prioridades do Dia" — ações operacionais (não-tarefa)
+  const loadPrioridadesDia = useCallback(async () => {
+    if (!user) return;
+    if (isColaboradorPuro) {
+      setPrioridadesDia([]);
+      return;
+    }
+
+    const lista: PrioridadeDia[] = [];
+    const hojeStr = new Date().toISOString().slice(0, 10);
+
+    // Tarefas legais bloqueantes atrasadas — todos os perfis (gestor direto, RH, super)
+    const { data: tarefasLegais } = await supabase
+      .from("sncf_tarefas")
+      .select("id, titulo, prazo_data, processo_id, tipo_processo, colaborador_nome")
+      .eq("bloqueante", true)
+      .in("status", ["pendente", "atrasada"])
+      .lt("prazo_data", hojeStr)
+      .or(`responsavel_user_id.eq.${user.id},accountable_user_id.eq.${user.id}`);
+
+    if (tarefasLegais && tarefasLegais.length > 0) {
+      const primeiro = tarefasLegais[0];
+      const link =
+        primeiro.tipo_processo === "onboarding" && primeiro.processo_id
+          ? `/onboarding/${primeiro.processo_id}`
+          : "/tarefas";
+      lista.push({
+        id: "legais-atrasadas",
+        titulo: `${tarefasLegais.length} tarefa${tarefasLegais.length > 1 ? "s" : ""} LEGAL${tarefasLegais.length > 1 ? "IS" : ""} atrasada${tarefasLegais.length > 1 ? "s" : ""} — risco de multa`,
+        subtitulo: "Prazo legal ultrapassado",
+        icone: AlertTriangle,
+        prioridade: "urgente",
+        botaoTexto: "Resolver",
+        link,
+      });
+    }
+
+    // Demais prioridades só para RH (super_admin, admin_rh, gestor_rh)
+    if (showPrioridadesRH) {
+      // 1. Convites aguardando aprovação
+      const { data: aguardAprov } = await supabase
+        .from("convites_cadastro")
+        .select("id, nome")
+        .eq("status", "preenchido");
+      if (aguardAprov && aguardAprov.length > 0) {
+        const primeiro = aguardAprov[0];
+        lista.push({
+          id: "convites-aprovacao",
+          titulo: `${aguardAprov.length} cadastro${aguardAprov.length > 1 ? "s" : ""} aguardando aprovação`,
+          subtitulo: aguardAprov.slice(0, 3).map((c) => c.nome).join(", ") +
+            (aguardAprov.length > 3 ? "..." : ""),
+          icone: CheckSquare,
+          prioridade: "atencao",
+          botaoTexto: "Aprovar",
+          link: aguardAprov.length === 1 ? `/convites-cadastro/${primeiro.id}` : "/convites-cadastro?filter=preenchido",
+        });
+      }
+
+      // 2. Convites aprovados aguardando criação
+      const { data: aprovados } = await supabase
+        .from("convites_cadastro")
+        .select("id, nome, tipo")
+        .eq("status", "aprovado");
+      if (aprovados && aprovados.length > 0) {
+        const primeiro = aprovados[0];
+        lista.push({
+          id: "colab-criacao",
+          titulo: `${aprovados.length} colaborador${aprovados.length > 1 ? "es" : ""} aprovado${aprovados.length > 1 ? "s" : ""} aguardando criação`,
+          subtitulo: aprovados.slice(0, 3).map((c) => c.nome).join(", ") +
+            (aprovados.length > 3 ? "..." : ""),
+          icone: UserPlus,
+          prioridade: "urgente",
+          botaoTexto: "Criar",
+          link: aprovados.length === 1 ? `/convites-cadastro/${primeiro.id}` : "/convites-cadastro?filter=aprovado",
+        });
+      }
+
+      // 3. Candidatos para triagem
+      const { data: candTriagem } = await supabase
+        .from("candidatos")
+        .select("id, nome, vaga_id")
+        .eq("status", "recebido");
+      if (candTriagem && candTriagem.length > 0) {
+        const primeiro = candTriagem[0];
+        lista.push({
+          id: "cand-triagem",
+          titulo: `${candTriagem.length} candidato${candTriagem.length > 1 ? "s" : ""} para triagem`,
+          subtitulo: candTriagem.slice(0, 3).map((c) => c.nome).join(", ") +
+            (candTriagem.length > 3 ? "..." : ""),
+          icone: Users,
+          prioridade: "atencao",
+          botaoTexto: "Triar",
+          link: candTriagem.length === 1 && primeiro.vaga_id ? `/recrutamento/${primeiro.vaga_id}` : "/recrutamento",
+        });
+      }
+
+      // 4. Convites sem preenchimento há +5 dias
+      const cincoDiasAtras = new Date();
+      cincoDiasAtras.setDate(cincoDiasAtras.getDate() - 5);
+      const { data: enviadosVelhos } = await supabase
+        .from("convites_cadastro")
+        .select("id, nome, created_at")
+        .eq("status", "email_enviado")
+        .lt("created_at", cincoDiasAtras.toISOString());
+      if (enviadosVelhos && enviadosVelhos.length > 0) {
+        lista.push({
+          id: "convites-velhos",
+          titulo: `${enviadosVelhos.length} convite${enviadosVelhos.length > 1 ? "s" : ""} sem preenchimento há +5 dias`,
+          subtitulo: enviadosVelhos.slice(0, 3).map((c) => c.nome).join(", ") +
+            (enviadosVelhos.length > 3 ? "..." : ""),
+          icone: Mail,
+          prioridade: "atencao",
+          botaoTexto: "Ver",
+          link: "/convites-cadastro?filter=email_enviado",
+        });
+      }
+    }
+
+    // Ordenar: urgente primeiro
+    lista.sort((a, b) => {
+      if (a.prioridade === b.prioridade) return 0;
+      return a.prioridade === "urgente" ? -1 : 1;
+    });
+    setPrioridadesDia(lista);
+  }, [user, isColaboradorPuro, showPrioridadesRH]);
+
+  useEffect(() => {
+    void loadPrioridadesDia();
+  }, [loadPrioridadesDia]);
+
   // Separar minhas vs acompanhamento
   const { minhasTarefas, tarefasAcompanhamento } = useMemo(() => {
     const minhas: Tarefa[] = [];
