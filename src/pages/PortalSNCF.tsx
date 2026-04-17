@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import * as LucideIcons from "lucide-react";
-import { LogOut, LayoutGrid, Lock } from "lucide-react";
+import { LogOut, LayoutGrid, Lock, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import logoFetely from "@/assets/logo_fetely.jpg";
@@ -68,8 +68,14 @@ export default function PortalSNCF() {
 
   const handleEnter = (sistema: Sistema) => {
     if (!hasAccess(sistema.id)) return;
-    navigate(sistema.rota_base);
+    if (sistema.rota_base.startsWith("http")) {
+      window.open(sistema.rota_base, "_blank");
+    } else {
+      navigate(sistema.rota_base);
+    }
   };
+
+  const isExternal = (sistema: Sistema) => sistema.rota_base.startsWith("http");
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -145,12 +151,17 @@ export default function PortalSNCF() {
                       >
                         <Icon className="h-7 w-7" style={{ color: sistema.cor }} />
                       </div>
-                      {!accessible && (
-                        <Badge variant="outline" className="gap-1">
-                          <Lock className="h-3 w-3" />
-                          Sem acesso
-                        </Badge>
-                      )}
+                      <div className="flex items-center gap-2">
+                        {isExternal(sistema) && accessible && (
+                          <ExternalLink className="h-4 w-4 text-muted-foreground" aria-label="Link externo" />
+                        )}
+                        {!accessible && (
+                          <Badge variant="outline" className="gap-1">
+                            <Lock className="h-3 w-3" />
+                            Sem acesso
+                          </Badge>
+                        )}
+                      </div>
                     </div>
                     <h2 className="text-xl font-bold mb-1">{sistema.nome}</h2>
                     {sistema.descricao && (
@@ -158,10 +169,10 @@ export default function PortalSNCF() {
                     )}
                     {accessible && (
                       <div
-                        className="mt-4 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="mt-4 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1"
                         style={{ color: sistema.cor }}
                       >
-                        Entrar →
+                        {isExternal(sistema) ? "Abrir" : "Entrar"} →
                       </div>
                     )}
                   </div>
