@@ -57,7 +57,7 @@ export default function TIDashboard() {
           manutencao: ativos.filter((a: any) => a.em_manutencao === true).length,
         });
       }
-      if (ultimos) setRecentes(ultimos as AtivoRecente[]);
+      if (ultimos) setRecentes(ultimos as unknown as AtivoRecente[]);
       setLoading(false);
     };
     void load();
