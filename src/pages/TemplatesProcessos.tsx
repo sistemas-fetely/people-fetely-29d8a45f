@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import {
   Plus, Pencil, Trash2, ChevronRight, ArrowLeft, Save, Loader2, ShieldAlert,
-  FolderPlus, ChevronDown,
+  FolderPlus, ChevronDown, ClipboardList, Briefcase, Building2, Monitor,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,8 +24,10 @@ import {
 import {
   Collapsible, CollapsibleContent, CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useProcessosCategorias, type ProcessoCategoria } from "@/hooks/useProcessosCategorias";
 import { NovaCategoriaDialog } from "@/components/templates/NovaCategoriaDialog";
+import { ExtensoesPorDimensao } from "@/components/templates/ExtensoesPorDimensao";
 
 interface Template {
   id: string;
@@ -65,6 +67,65 @@ export default function TemplatesProcessos() {
   const { roles } = useAuth();
   const podeEditar = roles?.some((r) => ["super_admin", "admin_rh"].includes(r));
 
+  if (!podeEditar) {
+    return (
+      <div className="container mx-auto py-12">
+        <Card>
+          <CardContent className="p-8 text-center">
+            <ShieldAlert className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
+            <h2 className="text-lg font-semibold">Acesso restrito</h2>
+            <p className="text-sm text-muted-foreground mt-1">Apenas Admin RH e Super Admin.</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  return (
+    <div className="container mx-auto py-6 space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight" style={{ color: "#1A4A3A" }}>
+          Templates de Processos
+        </h1>
+        <p className="text-muted-foreground mt-1">
+          Configure os fluxos de processos e extensões por cargo, departamento ou sistema
+        </p>
+      </div>
+
+      <Tabs defaultValue="base">
+        <TabsList className="mb-4">
+          <TabsTrigger value="base" className="gap-2">
+            <ClipboardList className="h-4 w-4" /> Templates Base
+          </TabsTrigger>
+          <TabsTrigger value="cargo" className="gap-2">
+            <Briefcase className="h-4 w-4" /> Por Cargo
+          </TabsTrigger>
+          <TabsTrigger value="departamento" className="gap-2">
+            <Building2 className="h-4 w-4" /> Por Departamento
+          </TabsTrigger>
+          <TabsTrigger value="sistema" className="gap-2">
+            <Monitor className="h-4 w-4" /> Por Sistema
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="base">
+          <TemplatesBaseTab />
+        </TabsContent>
+        <TabsContent value="cargo">
+          <ExtensoesPorDimensao dimensao="cargo" />
+        </TabsContent>
+        <TabsContent value="departamento">
+          <ExtensoesPorDimensao dimensao="departamento" />
+        </TabsContent>
+        <TabsContent value="sistema">
+          <ExtensoesPorDimensao dimensao="sistema" />
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
+
+function TemplatesBaseTab() {
   const { categorias, recarregar: recarregarCategorias } = useProcessosCategorias();
   const categoriasAtivas = useMemo(() => categorias.filter((c) => c.ativo), [categorias]);
   const categoriasMap = useMemo(() => {
@@ -82,18 +143,14 @@ export default function TemplatesProcessos() {
   const [tarefas, setTarefas] = useState<TemplateTarefa[]>([]);
   const [loadingTarefas, setLoadingTarefas] = useState(false);
 
-  // Dialog template
   const [openTemplate, setOpenTemplate] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<Partial<Template> | null>(null);
 
-  // Dialog tarefa
   const [openTarefa, setOpenTarefa] = useState(false);
   const [editingTarefa, setEditingTarefa] = useState<Partial<TemplateTarefa> | null>(null);
 
-  // Confirm delete
   const [deletingTarefa, setDeletingTarefa] = useState<TemplateTarefa | null>(null);
 
-  // Categorias
   const [openCategoria, setOpenCategoria] = useState(false);
   const [editingCategoria, setEditingCategoria] = useState<ProcessoCategoria | null>(null);
   const [categoriasOpen, setCategoriasOpen] = useState(false);
@@ -129,9 +186,6 @@ export default function TemplatesProcessos() {
   }, [selectedId, carregarTarefas]);
 
   const selected = useMemo(() => templates.find((t) => t.id === selectedId), [templates, selectedId]);
-  const selectedCategoria = selected
-    ? categoriasMap.get(selected.categoria_id ?? "") ?? categoriasMap.get(selected.tipo_processo) ?? null
-    : null;
 
   const salvarTemplate = async () => {
     if (!editingTemplate?.nome || !editingTemplate?.categoria_id) {
@@ -216,24 +270,10 @@ export default function TemplatesProcessos() {
     );
   };
 
-  if (!podeEditar) {
-    return (
-      <div className="container mx-auto py-12">
-        <Card>
-          <CardContent className="p-8 text-center">
-            <ShieldAlert className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
-            <h2 className="text-lg font-semibold">Acesso restrito</h2>
-            <p className="text-sm text-muted-foreground mt-1">Apenas Admin RH e Super Admin.</p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
   // Editor de template selecionado
   if (selected) {
     return (
-      <div className="container mx-auto py-6 space-y-6">
+      <div className="space-y-6">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="sm" onClick={() => setSelectedId(null)} className="gap-2">
             <ArrowLeft className="h-4 w-4" /> Voltar
@@ -484,42 +524,32 @@ export default function TemplatesProcessos() {
 
   // Lista de templates
   return (
-    <div className="container mx-auto py-6 space-y-6">
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight" style={{ color: "#1A4A3A" }}>
-            Templates de Processos
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Configure os fluxos de processos da empresa por categoria
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            onClick={() => {
-              setEditingCategoria(null);
-              setOpenCategoria(true);
-            }}
-            className="gap-2"
-          >
-            <FolderPlus className="h-4 w-4" /> Nova Categoria
-          </Button>
-          <Button
-            onClick={() => {
-              setEditingTemplate({
-                ativo: true,
-                tipo_colaborador: "ambos",
-                categoria_id: categoriasAtivas[0]?.id ?? null,
-              });
-              setOpenTemplate(true);
-            }}
-            className="gap-2"
-            style={{ backgroundColor: "#1A4A3A" }}
-          >
-            <Plus className="h-4 w-4" /> Novo template
-          </Button>
-        </div>
+    <div className="space-y-6">
+      <div className="flex items-center justify-end flex-wrap gap-2">
+        <Button
+          variant="outline"
+          onClick={() => {
+            setEditingCategoria(null);
+            setOpenCategoria(true);
+          }}
+          className="gap-2"
+        >
+          <FolderPlus className="h-4 w-4" /> Nova Categoria
+        </Button>
+        <Button
+          onClick={() => {
+            setEditingTemplate({
+              ativo: true,
+              tipo_colaborador: "ambos",
+              categoria_id: categoriasAtivas[0]?.id ?? null,
+            });
+            setOpenTemplate(true);
+          }}
+          className="gap-2"
+          style={{ backgroundColor: "#1A4A3A" }}
+        >
+          <Plus className="h-4 w-4" /> Novo template
+        </Button>
       </div>
 
       {/* Categorias colapsáveis */}
