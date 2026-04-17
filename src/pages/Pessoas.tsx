@@ -2,8 +2,9 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Users, Search, MoreHorizontal, Eye, Edit,
-  UserCheck, Briefcase, Building2, Plus, ChevronDown,
+  UserCheck, Briefcase, Building2, Plus, ChevronDown, CircleSlash, CheckCircle2,
 } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,6 +32,7 @@ interface PessoaUnificada {
   data_inicio: string;
   valor: number | null;
   foto_url: string | null;
+  user_id: string | null;
 }
 
 const statusMap: Record<string, string> = {
@@ -70,8 +72,8 @@ export default function Pessoas() {
   useEffect(() => {
     async function fetch() {
       const [{ data: clts }, { data: pjs }] = await Promise.all([
-        supabase.from("colaboradores_clt").select("id, nome_completo, cargo, departamento, status, data_admissao, salario_base, foto_url").order("nome_completo"),
-        supabase.from("contratos_pj").select("id, razao_social, nome_fantasia, tipo_servico, departamento, status, data_inicio, valor_mensal, foto_url").order("razao_social"),
+        supabase.from("colaboradores_clt").select("id, nome_completo, cargo, departamento, status, data_admissao, salario_base, foto_url, user_id").order("nome_completo"),
+        supabase.from("contratos_pj").select("id, razao_social, nome_fantasia, tipo_servico, departamento, status, data_inicio, valor_mensal, foto_url, user_id").order("razao_social"),
       ]);
 
       const unified: PessoaUnificada[] = [
@@ -85,6 +87,7 @@ export default function Pessoas() {
           data_inicio: c.data_admissao,
           valor: c.salario_base,
           foto_url: c.foto_url,
+          user_id: (c as any).user_id || null,
         })),
         ...(pjs || []).map((p) => ({
           id: p.id,
@@ -96,6 +99,7 @@ export default function Pessoas() {
           data_inicio: p.data_inicio,
           valor: p.valor_mensal,
           foto_url: p.foto_url,
+          user_id: (p as any).user_id || null,
         })),
       ].sort((a, b) => a.nome.localeCompare(b.nome));
 
@@ -243,6 +247,7 @@ export default function Pessoas() {
                   <TableHead className="font-semibold hidden md:table-cell">Cargo / Serviço</TableHead>
                   <TableHead className="font-semibold hidden lg:table-cell">Departamento</TableHead>
                   <TableHead className="font-semibold">Status</TableHead>
+                  <TableHead className="font-semibold w-16 text-center">Acesso</TableHead>
                   <TableHead className="font-semibold hidden lg:table-cell">Início</TableHead>
                   <TableHead className="w-10" />
                 </TableRow>
@@ -250,11 +255,11 @@ export default function Pessoas() {
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Carregando...</TableCell>
+                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">Carregando...</TableCell>
                   </TableRow>
                 ) : filtered.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Nenhum registro encontrado.</TableCell>
+                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">Nenhum registro encontrado.</TableCell>
                   </TableRow>
                 ) : (
                   filtered.map((p) => (
@@ -281,6 +286,24 @@ export default function Pessoas() {
                         <Badge variant="outline" className={statusStyles[p.status] || ""}>
                           {statusMap[p.status] || p.status}
                         </Badge>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <TooltipProvider delayDuration={200}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="inline-flex">
+                                {p.user_id ? (
+                                  <CheckCircle2 className="h-4 w-4 text-success" />
+                                ) : (
+                                  <CircleSlash className="h-4 w-4 text-muted-foreground" />
+                                )}
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              {p.user_id ? "Acesso ao sistema ativo" : "Sem acesso ao sistema"}
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground hidden lg:table-cell">
                         {format(parseISO(p.data_inicio), "dd/MM/yyyy")}

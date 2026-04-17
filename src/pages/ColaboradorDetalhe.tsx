@@ -44,6 +44,7 @@ import { StepDadosBancarios } from "@/components/colaborador-clt/StepDadosBancar
 import { StepDependentes } from "@/components/colaborador-clt/StepDependentes";
 import { StepDadosEmpresa } from "@/components/colaborador-clt/StepDadosEmpresa";
 import { DocumentosAnexados } from "@/components/DocumentosAnexados";
+import { CriarUsuarioAcessoButton } from "@/components/CriarUsuarioAcessoButton";
 
 import type {
   DadosPessoaisForm,
@@ -481,6 +482,15 @@ export default function ColaboradorDetalhe() {
             <ArrowLeft className="h-4 w-4" /> Voltar
           </Button>
           <div className="flex items-center gap-2">
+            <CriarUsuarioAcessoButton
+              colaboradorId={colaborador.id}
+              colaboradorTipo="clt"
+              email={colaborador.email_pessoal || colaborador.email_corporativo || ""}
+              nome={colaborador.nome_completo}
+              status={colaborador.status}
+              userId={colaborador.user_id || null}
+              onChange={() => window.location.reload()}
+            />
             <Button
               variant={isAtivo ? "outline" : "default"}
               onClick={() => setStatusDialogOpen(true)}

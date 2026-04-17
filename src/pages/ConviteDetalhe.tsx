@@ -364,7 +364,48 @@ export default function ConviteDetalhe() {
           console.error("Erro ao criar onboarding:", onbErr);
         }
 
-        toast.success("Colaborador CLT criado com sucesso!");
+        // Criar usuário de acesso se solicitado
+        const teraAcesso = dc.tera_acesso_sistema !== false; // default true
+        let acessoMsg = "";
+        if (teraAcesso && convite.email) {
+          try {
+            const emailDest = colaboradorPayload.email_pessoal || convite.email;
+            const { data: userData, error: userErr } = await supabase.functions.invoke("manage-user", {
+              body: {
+                action: "create_user_standalone",
+                email: emailDest,
+                full_name: colaboradorPayload.nome_completo,
+                roles: ["colaborador"],
+                colaborador_id: inserted.id,
+                colaborador_tipo: "clt",
+              },
+            });
+            if (userErr || (userData as any)?.error) {
+              throw new Error(userErr?.message || (userData as any)?.error);
+            }
+            acessoMsg = ` Um e-mail foi enviado para ${emailDest} para definir senha de acesso.`;
+          } catch (userCreateErr: any) {
+            console.error("Erro ao criar usuário:", userCreateErr);
+            toast.warning(
+              "Colaborador criado, mas houve erro ao criar usuário de acesso. Crie manualmente na tela do colaborador."
+            );
+          }
+        } else if (!teraAcesso) {
+          // Notificar admin_rh que colaborador foi criado sem acesso
+          try {
+            await supabase.from("notificacoes_rh").insert({
+              tipo: "colaborador_sem_acesso",
+              titulo: "Colaborador criado sem acesso ao sistema",
+              mensagem: `${colaboradorPayload.nome_completo} foi criado como CLT mas não tem usuário de acesso. Clique para revisar.`,
+              link: `/colaboradores/${inserted.id}`,
+              user_id: null,
+            });
+          } catch (notifErr) {
+            console.error("Erro ao criar notificação:", notifErr);
+          }
+        }
+
+        toast.success("Colaborador CLT criado com sucesso!" + acessoMsg);
         navigate(`/colaboradores/${inserted.id}`);
 
       } else {
@@ -498,7 +539,47 @@ export default function ConviteDetalhe() {
           console.error("Erro ao criar onboarding:", onbErr);
         }
 
-        toast.success("Contrato PJ criado com sucesso!");
+        // Criar usuário de acesso se solicitado
+        const teraAcessoPj = dc.tera_acesso_sistema !== false; // default true
+        let acessoMsgPj = "";
+        if (teraAcessoPj && convite.email) {
+          try {
+            const emailDestPj = contratoPayload.contato_email || contratoPayload.email_pessoal || convite.email;
+            const { data: userData, error: userErr } = await supabase.functions.invoke("manage-user", {
+              body: {
+                action: "create_user_standalone",
+                email: emailDestPj,
+                full_name: contratoPayload.contato_nome,
+                roles: ["colaborador"],
+                colaborador_id: inserted.id,
+                colaborador_tipo: "pj",
+              },
+            });
+            if (userErr || (userData as any)?.error) {
+              throw new Error(userErr?.message || (userData as any)?.error);
+            }
+            acessoMsgPj = ` Um e-mail foi enviado para ${emailDestPj} para definir senha de acesso.`;
+          } catch (userCreateErr: any) {
+            console.error("Erro ao criar usuário:", userCreateErr);
+            toast.warning(
+              "Contrato PJ criado, mas houve erro ao criar usuário de acesso. Crie manualmente na tela do contrato."
+            );
+          }
+        } else if (!teraAcessoPj) {
+          try {
+            await supabase.from("notificacoes_rh").insert({
+              tipo: "colaborador_sem_acesso",
+              titulo: "Prestador PJ criado sem acesso ao sistema",
+              mensagem: `${contratoPayload.contato_nome} foi criado como PJ mas não tem usuário de acesso. Clique para revisar.`,
+              link: `/contratos-pj/${inserted.id}`,
+              user_id: null,
+            });
+          } catch (notifErr) {
+            console.error("Erro ao criar notificação:", notifErr);
+          }
+        }
+
+        toast.success("Contrato PJ criado com sucesso!" + acessoMsgPj);
         navigate(`/contratos-pj/${inserted.id}`);
       }
     } catch (err: any) {
