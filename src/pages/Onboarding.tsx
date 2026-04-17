@@ -16,9 +16,6 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import {
-  Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription,
-} from "@/components/ui/sheet";
-import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import {
@@ -94,8 +91,6 @@ export default function Onboarding() {
   const [loading, setLoading] = useState(true);
   const [checklists, setChecklists] = useState<Checklist[]>([]);
   const [filter, setFilter] = useState("todos");
-  const [selectedChecklist, setSelectedChecklist] = useState<Checklist | null>(null);
-  const [drawerOpen, setDrawerOpen] = useState(false);
   const [updatingTask, setUpdatingTask] = useState<string | null>(null);
 
   // Dialog de conclusão com evidência
@@ -275,23 +270,8 @@ export default function Onboarding() {
       toast.error("Erro ao reabrir tarefa");
     } else {
       await loadChecklists();
-      if (selectedChecklist) {
-        const updated = await reloadChecklist(selectedChecklist.id);
-        if (updated) setSelectedChecklist(updated);
-      }
     }
     setUpdatingTask(null);
-  }
-
-  async function reloadChecklist(id: string): Promise<Checklist | null> {
-    const { data: tarefas } = await supabase
-      .from("sncf_tarefas")
-      .select("*")
-      .eq("tipo_processo", "onboarding")
-      .eq("processo_id", id)
-      .order("prazo_dias", { ascending: true });
-    const t = (tarefas || []).map((x: any) => ({ ...x, checklist_id: x.processo_id }));
-    return selectedChecklist ? { ...selectedChecklist, tarefas: t } : null;
   }
 
   async function confirmarConclusao() {
@@ -315,43 +295,7 @@ export default function Onboarding() {
       return;
     }
 
-    // Atualizar localmente
-    if (selectedChecklist) {
-      const updated = { ...selectedChecklist };
-      updated.tarefas = (updated.tarefas || []).map((t) =>
-        t.id === tarefaAConcluir.id
-          ? {
-              ...t,
-              status: "concluida",
-              concluida_em: new Date().toISOString(),
-              concluida_por: user.id,
-              evidencia_texto: observacao.trim(),
-              evidencia_url: linkEvidencia.trim() || null,
-            }
-          : t
-      );
-      const allDone = (updated.tarefas || []).every((t) => t.status === "concluida");
-      if (allDone && updated.status !== "concluido") {
-        await supabase.from("onboarding_checklists").update({
-          status: "concluido",
-          concluido_em: new Date().toISOString(),
-        } as any).eq("id", updated.id);
-        updated.status = "concluido";
-        updated.concluido_em = new Date().toISOString();
-
-        await supabase.from("notificacoes_rh").insert({
-          tipo: "onboarding_concluido",
-          titulo: `Onboarding concluído: ${updated.nome}`,
-          mensagem: `Todas as tarefas de onboarding de ${updated.nome} foram concluídas.`,
-          link: "/onboarding",
-          user_id: null,
-        });
-        toast.success("Onboarding concluído!");
-      } else {
-        toast.success("Tarefa concluída");
-      }
-      setSelectedChecklist(updated);
-    }
+    toast.success("Tarefa concluída");
     await loadChecklists();
     setTarefaAConcluir(null);
     setObservacao("");
@@ -359,10 +303,7 @@ export default function Onboarding() {
     setUpdatingTask(null);
   }
 
-  function openChecklist(cl: Checklist) {
-    setSelectedChecklist(cl);
-    setDrawerOpen(true);
-  }
+  // (removido) openChecklist — agora navegamos para /onboarding/:id
 
   // Colaborador view
   if (isColaborador) {
