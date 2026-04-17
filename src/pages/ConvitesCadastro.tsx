@@ -123,6 +123,7 @@ const initialForm = {
   celular_corporativo: false,
   sistemas_ids: [] as string[],
   equipamentos: [] as { tipo: string; quantidade: number }[],
+  tera_acesso_sistema: true,
 };
 
 // ─── Helper: compute display status ─────────────────────────────────
@@ -181,6 +182,7 @@ export default function ConvitesCadastro() {
         celular_corporativo: prefill.celular_corporativo || false,
         sistemas_ids: prefill.sistemas_ids || [],
         equipamentos: prefill.equipamentos || [],
+        tera_acesso_sistema: prefill.tera_acesso_sistema !== undefined ? prefill.tera_acesso_sistema : true,
       });
       setFormOpen(true);
       // Limpar o state para não reabrir ao navegar de volta
@@ -324,6 +326,7 @@ export default function ConvitesCadastro() {
         celular_corporativo: form.celular_corporativo,
         sistemas_ids: form.sistemas_ids.length > 0 ? form.sistemas_ids : null,
         equipamentos: form.equipamentos.filter(e => e.tipo).length > 0 ? form.equipamentos.filter(e => e.tipo) : null,
+        tera_acesso_sistema: form.tera_acesso_sistema,
       };
 
       const { data, error } = await supabase
