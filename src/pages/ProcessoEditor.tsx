@@ -831,7 +831,7 @@ function TarefaDialog({
           <div className="flex items-center gap-2">
             <Switch
               checked={tarefa?.bloqueante ?? false}
-              onCheckedChange={(v) => setTarea({ ...tarefa, bloqueante: v })}
+              onCheckedChange={(v) => setTarefa({ ...tarefa, bloqueante: v })}
             />
             <Label className="cursor-pointer">Tarefa bloqueante / legal</Label>
           </div>
