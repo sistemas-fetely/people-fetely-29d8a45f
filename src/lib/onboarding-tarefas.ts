@@ -12,6 +12,8 @@ interface TarefaTemplate {
   area_destino?: string;
   prioridade?: string;
   link_acao?: string;
+  bloqueante?: boolean;
+  motivo_bloqueio?: string;
 }
 
 export const TAREFAS_PADRAO: TarefaTemplate[] = [
@@ -23,6 +25,8 @@ export const TAREFAS_PADRAO: TarefaTemplate[] = [
     somente_clt: true,
     sistema_origem: "people",
     area_destino: "RH",
+    bloqueante: true,
+    motivo_bloqueio: "Obrigação legal — eSocial deve ser registrado antes do primeiro dia",
   },
   {
     titulo: "Criar acessos nos sistemas",
@@ -72,6 +76,8 @@ export const TAREFAS_PADRAO: TarefaTemplate[] = [
     prazo_dias: 1,
     sistema_origem: "people",
     area_destino: "RH",
+    bloqueante: true,
+    motivo_bloqueio: "Obrigatório antes do primeiro dia de trabalho",
   },
   {
     titulo: "Confirmar recebimento de equipamentos",
