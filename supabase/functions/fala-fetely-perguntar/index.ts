@@ -133,9 +133,66 @@ Deno.serve(async (req) => {
     const tituloTarefas = tarefasPendentes.slice(0, 3).map((t: any) => `"${t.titulo}"`).join(", ") || "nenhuma";
 
     // Montar blocos de conhecimento
-    const blocoProcessos = (processosRes.data || [])
-      .map((p: any) => `- ${p.nome}${p.descricao ? `: ${clipText(p.descricao, 150)}` : ""}`)
-      .join("\n") || "(nenhum cadastrado)";
+    // Indexar templates/tarefas/extensões por categoria
+    const templatesArr = (templatesRes as any).data || [];
+    const tarefasTemplateArr = (tarefasTemplateRes as any).data || [];
+    const extensoesArr = (extensoesRes as any).data || [];
+    const tarefasExtensoesArr = (tarefasExtensoesRes as any).data || [];
+
+    const templatePorCategoria = new Map<string, string>();
+    templatesArr.forEach((t: any) => {
+      if (!templatePorCategoria.has(t.categoria_id)) templatePorCategoria.set(t.categoria_id, t.id);
+    });
+
+    const processosArr = (processosRes.data || []) as any[];
+
+    // Cap total de tarefas em 80 — se exceder, manter apenas títulos das extras
+    const totalTarefasEstimado = tarefasTemplateArr.length + tarefasExtensoesArr.length;
+    const truncar = totalTarefasEstimado > 80;
+
+    const blocoProcessos = processosArr.map((p: any) => {
+      const linhas: string[] = [`### ${p.nome}${p.descricao ? ` — ${clipText(p.descricao, 200)}` : ""}`];
+
+      // Tarefas padrão
+      const templateId = templatePorCategoria.get(p.id);
+      if (templateId) {
+        const tarefas = tarefasTemplateArr.filter((t: any) => t.template_id === templateId);
+        if (tarefas.length) {
+          linhas.push("Tarefas padrão:");
+          tarefas.forEach((t: any) => {
+            if (truncar) {
+              linhas.push(`- ${t.titulo}`);
+            } else {
+              const meta = [
+                t.prazo_dias != null ? `${t.prazo_dias}d` : null,
+                t.responsavel_role || null,
+                t.somente_clt ? "CLT only" : null,
+              ].filter(Boolean).join(" · ");
+              linhas.push(`- ${t.titulo}${meta ? ` [${meta}]` : ""}${t.descricao ? `: ${clipText(t.descricao, 120)}` : ""}`);
+            }
+          });
+        }
+      }
+
+      // Personalizações
+      const exts = extensoesArr.filter((e: any) => e.categoria_id === p.id);
+      if (exts.length) {
+        linhas.push("Personalizações:");
+        exts.forEach((e: any) => {
+          linhas.push(`- ${e.nome} (${e.dimensao}: ${e.referencia_label})${e.descricao ? ` — ${clipText(e.descricao, 100)}` : ""}`);
+          const tExt = tarefasExtensoesArr.filter((te: any) => te.extensao_id === e.id);
+          tExt.forEach((te: any) => {
+            if (truncar) {
+              linhas.push(`  · ${te.titulo}`);
+            } else {
+              linhas.push(`  · ${te.titulo}${te.prazo_dias != null ? ` [${te.prazo_dias}d]` : ""}${te.descricao ? `: ${clipText(te.descricao, 100)}` : ""}`);
+            }
+          });
+        });
+      }
+
+      return linhas.join("\n");
+    }).join("\n\n") || "(nenhum cadastrado)";
 
     const blocoSistemas = (sistemasRes.data || [])
       .map((s: any) => `- ${s.label}${s.valor ? ` (${clipText(s.valor, 100)})` : ""}`)
