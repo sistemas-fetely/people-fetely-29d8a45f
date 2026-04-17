@@ -46,9 +46,12 @@ Use a ferramenta de busca para encontrar UMA notícia recente e relevante sobre 
   "noticia": {
     "titulo": "Título da notícia encontrada na busca",
     "resumo": "Resumo em 2 frases da notícia e por que é relevante para o RH da Fetely",
-    "fonte": "Nome da fonte (ex: Valor Econômico, Folha, Gov.br)"
+    "fonte": "Nome da fonte (ex: Valor Econômico, Folha, Gov.br)",
+    "url": "URL da matéria original"
   }
-}`;
+}
+
+Inclua a URL da matéria original no campo url. Se não encontrar a URL exata, deixe vazio ("").`;
 
     const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",

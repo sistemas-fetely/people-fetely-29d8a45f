@@ -790,10 +790,15 @@ export function DashboardOperacional() {
         </div>
       </div>
 
-      {/* Seção 2: Números do momento */}
+      {/* Seção: Insights IA — análise contextual + notícias do setor (largura total) */}
+      <div className="w-full">
+        <InsightsIA {...insightsData} />
+      </div>
+
+      {/* Seção: Números do momento */}
       {kpis.length > 0 && (
         <div>
-          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+          <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wide mb-3">
             Números do momento
           </h3>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
@@ -821,13 +826,10 @@ export function DashboardOperacional() {
         </div>
       )}
 
-      {/* Seção: Insights IA — análise contextual + notícias do setor */}
-      <InsightsIA {...insightsData} />
-
-      {/* Seção 3: Velocidade */}
+      {/* Seção: Velocidade */}
       {velocidade.length > 0 && (
         <div>
-          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+          <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wide mb-3">
             Velocidade
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">

@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Sparkles, RefreshCw } from "lucide-react";
+import { Sparkles, RefreshCw, ExternalLink } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -27,6 +27,7 @@ interface InsightsPayload {
     titulo: string;
     resumo: string;
     fonte: string;
+    url?: string;
   };
 }
 
@@ -163,12 +164,36 @@ export default function InsightsIA(props: InsightsIAProps) {
 
             {insights.noticia && (
               <div className="p-3 rounded-lg border">
-                <p className="text-sm font-medium mb-1">📰 {insights.noticia.titulo}</p>
+                {insights.noticia.url ? (
+                  <a
+                    href={insights.noticia.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm font-medium mb-1 hover:underline flex items-center gap-1"
+                    style={{ color: FETELY_GREEN }}
+                  >
+                    📰 {insights.noticia.titulo}
+                    <ExternalLink className="h-3 w-3 flex-shrink-0" />
+                  </a>
+                ) : (
+                  <p className="text-sm font-medium mb-1">📰 {insights.noticia.titulo}</p>
+                )}
                 <p className="text-xs text-muted-foreground">{insights.noticia.resumo}</p>
                 {insights.noticia.fonte && (
                   <p className="text-[10px] text-muted-foreground mt-1">
                     Fonte: {insights.noticia.fonte}
                   </p>
+                )}
+                {insights.noticia.url && (
+                  <a
+                    href={insights.noticia.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs inline-flex items-center gap-1 mt-1.5 hover:underline"
+                    style={{ color: FETELY_GREEN }}
+                  >
+                    Ler matéria completa <ExternalLink className="h-3 w-3" />
+                  </a>
                 )}
               </div>
             )}
