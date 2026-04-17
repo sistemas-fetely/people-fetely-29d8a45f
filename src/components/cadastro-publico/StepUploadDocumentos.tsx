@@ -26,16 +26,16 @@ interface StepUploadDocumentosProps {
 }
 
 const CLT_DOCUMENTS: DocumentSlot[] = [
+  { key: "foto_rosto", label: "Foto Social", required: true },
   { key: "rg_cnh_frente", label: "RG ou CNH (Frente)", required: true },
-  { key: "rg_cnh_verso", label: "RG ou CNH (Verso)", required: true },
-  { key: "comprovante_residencia", label: "Comprovante de Residência", required: true },
-  { key: "foto_rosto", label: "Foto 3x4", required: true },
+  { key: "rg_cnh_verso", label: "RG ou CNH (Verso)" },
+  { key: "comprovante_residencia", label: "Comprovante de Residência" },
 ];
 
 const PJ_DOCUMENTS: DocumentSlot[] = [
   { key: "foto_rosto", label: "Foto Social", required: true },
   { key: "rg_cnh_frente", label: "RG ou CNH (Frente)", required: true },
-  { key: "rg_cnh_verso", label: "RG ou CNH (Verso)", required: true },
+  { key: "rg_cnh_verso", label: "RG ou CNH (Verso)" },
   { key: "contrato_social", label: "Contrato Social", required: true },
   { key: "cartao_cnpj", label: "Cartão CNPJ" },
 ];

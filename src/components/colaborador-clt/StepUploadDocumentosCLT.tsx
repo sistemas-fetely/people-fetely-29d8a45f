@@ -30,6 +30,7 @@ const CLT_DOCUMENTS: DocumentSlot[] = [
   { key: "foto_rosto", label: "Foto Social", required: true },
   { key: "rg_cnh_frente", label: "RG ou CNH (Frente)" },
   { key: "rg_cnh_verso", label: "RG ou CNH (Verso)" },
+  { key: "comprovante_residencia", label: "Comprovante de Residência" },
 ];
 
 const PJ_DOCUMENTS: DocumentSlot[] = [
@@ -148,7 +149,7 @@ export function StepUploadDocumentos({ tipo, folderKey, uploadedFiles, onFilesCh
                         }}
                       >
                         <UserCircle className="h-3.5 w-3.5" />
-                        {currentFotoUrl === uploaded.url ? "Foto definida" : "Usar como foto"}
+                        {currentFotoUrl === uploaded.url ? "Foto definida" : "Usar foto no cadastro"}
                       </Button>
                     )}
                     {uploaded && (
