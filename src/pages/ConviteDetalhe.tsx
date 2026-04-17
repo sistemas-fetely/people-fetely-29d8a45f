@@ -21,6 +21,8 @@ import { ConviteDadosPessoaisPJ } from "@/components/convite-detalhe/ConviteDado
 import { ConviteDadosProfissionaisCLT } from "@/components/convite-detalhe/ConviteDadosProfissionaisCLT";
 import { ConviteDadosEmpresaCLT } from "@/components/convite-detalhe/ConviteDadosEmpresaCLT";
 import { ConviteDadosProfissionaisPJ } from "@/components/convite-detalhe/ConviteDadosProfissionaisPJ";
+import { getTarefasDinamicas } from "@/lib/onboarding-tarefas";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface Convite {
   id: string;
