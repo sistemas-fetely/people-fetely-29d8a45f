@@ -2929,31 +2929,52 @@ export type Database = {
           acao: string
           ativo_id: string
           created_at: string
+          data_fim: string | null
+          data_inicio: string | null
           de_colaborador: string | null
+          fornecedor: string | null
+          garantia_servico_ate: string | null
           id: string
           observacoes: string | null
           para_colaborador: string | null
           responsavel_id: string | null
+          status_anterior: string | null
+          tipo_manutencao: string | null
+          valor: number | null
         }
         Insert: {
           acao: string
           ativo_id: string
           created_at?: string
+          data_fim?: string | null
+          data_inicio?: string | null
           de_colaborador?: string | null
+          fornecedor?: string | null
+          garantia_servico_ate?: string | null
           id?: string
           observacoes?: string | null
           para_colaborador?: string | null
           responsavel_id?: string | null
+          status_anterior?: string | null
+          tipo_manutencao?: string | null
+          valor?: number | null
         }
         Update: {
           acao?: string
           ativo_id?: string
           created_at?: string
+          data_fim?: string | null
+          data_inicio?: string | null
           de_colaborador?: string | null
+          fornecedor?: string | null
+          garantia_servico_ate?: string | null
           id?: string
           observacoes?: string | null
           para_colaborador?: string | null
           responsavel_id?: string | null
+          status_anterior?: string | null
+          tipo_manutencao?: string | null
+          valor?: number | null
         }
         Relationships: [
           {

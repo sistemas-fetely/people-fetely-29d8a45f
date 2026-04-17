@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useParametros } from "@/hooks/useParametros";
 import { Sparkles, Loader2, Camera, X } from "lucide-react";
+import ManutencoesSection from "@/components/ti/ManutencoesSection";
 
 interface TIAtivoFormProps {
   open: boolean;
@@ -622,6 +623,14 @@ export default function TIAtivoForm({ open, onOpenChange, ativoId, onSaved }: TI
               </div>
               <p className="text-xs text-muted-foreground">Máximo 5 fotos · JPG ou PNG · até 5MB cada</p>
             </div>
+
+            {ativoId && (
+              <ManutencoesSection
+                ativoId={ativoId}
+                ativoStatus={form.status}
+                onStatusChange={(s) => setForm((f) => ({ ...f, status: s }))}
+              />
+            )}
           </div>
         </div>
 
