@@ -68,6 +68,7 @@ export function NovaTarefaDialog({ open, onOpenChange, onCreated }: NovaTarefaDi
   const [prioridade, setPrioridade] = useState<"urgente" | "normal" | "baixa">("normal");
   const [areaDestino, setAreaDestino] = useState<Area>("RH");
   const [responsavel, setResponsavel] = useState<string>("mim"); // "mim" | "area" | user_id
+  const [accountable, setAccountable] = useState<string>("mim"); // "mim" | user_id
   const [prazoData, setPrazoData] = useState<string>(defaultPrazo());
   const [colaboradorId, setColaboradorId] = useState<string>("none");
 
@@ -101,6 +102,7 @@ export function NovaTarefaDialog({ open, onOpenChange, onCreated }: NovaTarefaDi
       setPrioridade("normal");
       setAreaDestino("RH");
       setResponsavel("mim");
+      setAccountable("mim");
       setPrazoData(defaultPrazo());
       setColaboradorId("none");
     }
@@ -130,6 +132,7 @@ export function NovaTarefaDialog({ open, onOpenChange, onCreated }: NovaTarefaDi
             : responsavel;
       const responsavel_role =
         responsavel === "area" ? ROLE_BY_AREA[areaDestino] : null;
+      const accountable_user_id = accountable === "mim" ? user.id : accountable;
 
       // Link de ação gerado automaticamente: se tem colaborador, vai para o detalhe dele
       const linkAuto = colabSelecionado
@@ -147,6 +150,7 @@ export function NovaTarefaDialog({ open, onOpenChange, onCreated }: NovaTarefaDi
         area_destino: areaDestino,
         responsavel_user_id,
         responsavel_role,
+        accountable_user_id,
         prazo_data: prazoData || null,
         colaborador_id: colabSelecionado?.id || null,
         colaborador_tipo: colabSelecionado?.tipo || null,
@@ -228,12 +232,27 @@ export function NovaTarefaDialog({ open, onOpenChange, onCreated }: NovaTarefaDi
           </div>
 
           <div className="space-y-1.5">
-            <Label>Atribuir a</Label>
+            <Label>Atribuir a (Execução)</Label>
             <Select value={responsavel} onValueChange={setResponsavel}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="mim">Mim mesmo</SelectItem>
                 <SelectItem value="area">Todos da área ({areaDestino})</SelectItem>
+                {profiles.map((p) => (
+                  <SelectItem key={p.user_id} value={p.user_id}>
+                    {p.full_name || "Sem nome"}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label>Acompanhamento (quem cobra)</Label>
+            <Select value={accountable} onValueChange={setAccountable}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="mim">Mim mesmo</SelectItem>
                 {profiles.map((p) => (
                   <SelectItem key={p.user_id} value={p.user_id}>
                     {p.full_name || "Sem nome"}
