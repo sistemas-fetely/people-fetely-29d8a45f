@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import * as LucideIcons from "lucide-react";
-import { LayoutGrid, Lock, ExternalLink, ClipboardList, Sparkles } from "lucide-react";
+import { LayoutGrid, Lock, ExternalLink, ClipboardList, Sparkles, MessageCircleHeart } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -133,10 +133,10 @@ export default function PortalSNCF() {
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-4">
               <div
-                className="w-14 h-14 rounded-full flex items-center justify-center font-bold text-white text-xl shadow-sm"
+                className="w-14 h-14 rounded-full flex items-center justify-center text-white shadow-sm"
                 style={{ background: "linear-gradient(135deg, #1A4A3A 0%, #E91E63 100%)" }}
               >
-                F
+                <MessageCircleHeart className="w-8 h-8" />
               </div>
               <div>
                 <p className="text-xs text-muted-foreground uppercase tracking-wide">Assistente Fetely</p>

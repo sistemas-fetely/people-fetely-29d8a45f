@@ -4,7 +4,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import {
   ArrowLeft, Plus, Send, Sparkles, MessageCircle, ThumbsUp, ThumbsDown, Copy,
-  Globe, Gift, Workflow, Users,
+  Globe, Gift, Workflow, Users, MessageCircleHeart,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -322,31 +322,33 @@ export default function FalaFetely() {
           </Button>
           <div className="flex items-center gap-2">
             <div
-              className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-white"
+              className="w-8 h-8 rounded-full flex items-center justify-center text-white"
               style={{ background: "linear-gradient(135deg, #1A4A3A, #E91E63)" }}
             >
-              F
+              <MessageCircleHeart className="w-4 h-4" />
             </div>
             <span className="font-semibold">Fala Fetely</span>
           </div>
           <div className="w-[140px]" />
         </header>
 
-        <div className="flex-1 overflow-auto p-6">
-          {!conversaAtiva || mensagens.length === 0 ? (
-            <div className="max-w-2xl mx-auto text-center pt-12">
+        {!conversaAtiva || mensagens.length === 0 ? (
+          <div className="flex-1 overflow-auto">
+            <div className="max-w-2xl mx-auto text-center pt-12 pb-8 px-4 space-y-6">
               <div
-                className="w-20 h-20 rounded-full mx-auto mb-6 flex items-center justify-center text-3xl font-bold text-white"
+                className="w-20 h-20 rounded-full mx-auto flex items-center justify-center text-white"
                 style={{ background: "linear-gradient(135deg, #1A4A3A 0%, #E91E63 100%)" }}
               >
-                F
+                <MessageCircleHeart className="w-11 h-11" />
               </div>
-              <h1 className="text-3xl font-bold mb-2" style={{ color: "#1A4A3A" }}>
-                {fraseMotivacional}
-              </h1>
-              <p className="text-muted-foreground mb-8">
-                Pergunte qualquer coisa sobre a Fetely. Estou aqui pra te ajudar a celebrar com clareza ✨
-              </p>
+              <div>
+                <h1 className="text-3xl font-bold mb-2" style={{ color: "#1A4A3A" }}>
+                  {fraseMotivacional}
+                </h1>
+                <p className="text-muted-foreground">
+                  Pergunte qualquer coisa sobre a Fetely. Estou aqui pra te ajudar a celebrar com clareza ✨
+                </p>
+              </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {SUGESTOES.map((s) => (
@@ -366,86 +368,111 @@ export default function FalaFetely() {
                   </button>
                 ))}
               </div>
+
+              <form onSubmit={enviar} className="flex gap-2 pt-2">
+                <Input
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  placeholder="Pergunte alguma coisa..."
+                  disabled={pensando}
+                  className="flex-1"
+                />
+                <Button
+                  type="submit"
+                  disabled={!input.trim() || pensando}
+                  style={{ backgroundColor: "#1A4A3A" }}
+                  className="gap-2 text-white hover:opacity-90"
+                >
+                  <Send className="h-4 w-4" /> Enviar
+                </Button>
+              </form>
+              <p className="text-[10px] text-muted-foreground">
+                ✌️ Sou só uma IA — confirme com seu gestor antes de decisões importantes
+              </p>
             </div>
-          ) : (
-            <div className="max-w-3xl mx-auto space-y-4">
-              {mensagens.map((msg) => (
-                <div key={msg.id} className={`flex gap-3 ${msg.papel === "user" ? "flex-row-reverse" : ""}`}>
-                  <div
-                    className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center font-bold text-white text-xs"
-                    style={
-                      msg.papel === "user"
-                        ? { backgroundColor: "#E91E63" }
-                        : { background: "linear-gradient(135deg, #1A4A3A, #E91E63)" }
-                    }
-                  >
-                    {msg.papel === "user" ? userInitials : "F"}
-                  </div>
-                  <div className={`flex-1 max-w-[75%] ${msg.papel === "user" ? "text-right" : ""}`}>
+          </div>
+        ) : (
+          <>
+            <div className="flex-1 overflow-auto p-6">
+              <div className="max-w-3xl mx-auto space-y-4">
+                {mensagens.map((msg) => (
+                  <div key={msg.id} className={`flex gap-3 ${msg.papel === "user" ? "flex-row-reverse" : ""}`}>
                     <div
-                      className={`inline-block p-4 rounded-2xl text-left ${
+                      className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center font-bold text-white text-xs"
+                      style={
                         msg.papel === "user"
-                          ? "bg-[#E91E63] text-white rounded-tr-sm"
-                          : "bg-white border-l-4 border-l-[#1A4A3A] rounded-tl-sm shadow-sm"
-                      }`}
+                          ? { backgroundColor: "#E91E63" }
+                          : { background: "linear-gradient(135deg, #1A4A3A, #E91E63)" }
+                      }
                     >
-                      {msg.pendente && !msg.conteudo ? (
-                        <div className="flex gap-1 py-1">
-                          <span className="w-2 h-2 bg-[#1A4A3A] rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
-                          <span className="w-2 h-2 bg-[#E91E63] rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
-                          <span className="w-2 h-2 bg-[#1A4A3A] rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
-                        </div>
-                      ) : (
-                        <div className="prose prose-sm max-w-none prose-p:my-2 prose-ul:my-2 prose-ol:my-2 prose-headings:my-2">
-                          <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.conteudo}</ReactMarkdown>
+                      {msg.papel === "user" ? userInitials : <MessageCircleHeart className="w-4 h-4" />}
+                    </div>
+                    <div className={`flex-1 max-w-[75%] ${msg.papel === "user" ? "text-right" : ""}`}>
+                      <div
+                        className={`inline-block p-4 rounded-2xl text-left ${
+                          msg.papel === "user"
+                            ? "bg-[#E91E63] text-white rounded-tr-sm"
+                            : "bg-white border-l-4 border-l-[#1A4A3A] rounded-tl-sm shadow-sm"
+                        }`}
+                      >
+                        {msg.pendente && !msg.conteudo ? (
+                          <div className="flex gap-1 py-1">
+                            <span className="w-2 h-2 bg-[#1A4A3A] rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+                            <span className="w-2 h-2 bg-[#E91E63] rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+                            <span className="w-2 h-2 bg-[#1A4A3A] rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+                          </div>
+                        ) : (
+                          <div className="prose prose-sm max-w-none prose-p:my-2 prose-ul:my-2 prose-ol:my-2 prose-headings:my-2">
+                            <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.conteudo}</ReactMarkdown>
+                          </div>
+                        )}
+                      </div>
+                      {msg.papel === "assistant" && !msg.pendente && msg.conteudo && (
+                        <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
+                          <button onClick={() => void feedback(msg.id, true)} className="hover:text-emerald-600 transition-colors p-1">
+                            <ThumbsUp className="h-3 w-3" />
+                          </button>
+                          <button onClick={() => void feedback(msg.id, false)} className="hover:text-red-600 transition-colors p-1">
+                            <ThumbsDown className="h-3 w-3" />
+                          </button>
+                          <button onClick={() => copiar(msg.conteudo)} className="hover:text-foreground transition-colors p-1">
+                            <Copy className="h-3 w-3" />
+                          </button>
                         </div>
                       )}
                     </div>
-                    {msg.papel === "assistant" && !msg.pendente && msg.conteudo && (
-                      <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
-                        <button onClick={() => void feedback(msg.id, true)} className="hover:text-emerald-600 transition-colors p-1">
-                          <ThumbsUp className="h-3 w-3" />
-                        </button>
-                        <button onClick={() => void feedback(msg.id, false)} className="hover:text-red-600 transition-colors p-1">
-                          <ThumbsDown className="h-3 w-3" />
-                        </button>
-                        <button onClick={() => copiar(msg.conteudo)} className="hover:text-foreground transition-colors p-1">
-                          <Copy className="h-3 w-3" />
-                        </button>
-                      </div>
-                    )}
                   </div>
-                </div>
-              ))}
-              <div ref={messagesEndRef} />
+                ))}
+                <div ref={messagesEndRef} />
+              </div>
             </div>
-          )}
-        </div>
 
-        <div className="border-t bg-white/80 backdrop-blur-sm p-4">
-          <div className="max-w-3xl mx-auto">
-            <form onSubmit={enviar} className="flex gap-2">
-              <Input
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="Pergunte alguma coisa..."
-                disabled={pensando}
-                className="flex-1"
-              />
-              <Button
-                type="submit"
-                disabled={!input.trim() || pensando}
-                style={{ backgroundColor: "#1A4A3A" }}
-                className="gap-2 text-white hover:opacity-90"
-              >
-                <Send className="h-4 w-4" /> Enviar
-              </Button>
-            </form>
-            <p className="text-[10px] text-center text-muted-foreground mt-2">
-              ✌️ Sou só uma IA — confirme com seu gestor antes de decisões importantes
-            </p>
-          </div>
-        </div>
+            <div className="border-t bg-white/80 backdrop-blur-sm p-4">
+              <div className="max-w-3xl mx-auto">
+                <form onSubmit={enviar} className="flex gap-2">
+                  <Input
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    placeholder="Pergunte alguma coisa..."
+                    disabled={pensando}
+                    className="flex-1"
+                  />
+                  <Button
+                    type="submit"
+                    disabled={!input.trim() || pensando}
+                    style={{ backgroundColor: "#1A4A3A" }}
+                    className="gap-2 text-white hover:opacity-90"
+                  >
+                    <Send className="h-4 w-4" /> Enviar
+                  </Button>
+                </form>
+                <p className="text-[10px] text-center text-muted-foreground mt-2">
+                  ✌️ Sou só uma IA — confirme com seu gestor antes de decisões importantes
+                </p>
+              </div>
+            </div>
+          </>
+        )}
       </main>
     </div>
   );
