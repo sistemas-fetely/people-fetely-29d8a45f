@@ -74,9 +74,9 @@ export function SNCFQuickAccess() {
                 variant="ghost"
                 size="sm"
                 className="w-full justify-start gap-2 text-sm"
-                onClick={() => navigate("/templates")}
+                onClick={() => navigate("/processos")}
               >
-                <LayoutTemplate className="h-4 w-4" /> Templates de Processos
+                <LayoutTemplate className="h-4 w-4" /> Processos
               </Button>
             </>
           )}
