@@ -289,22 +289,26 @@ export default function Pessoas() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-center">
-                        <TooltipProvider delayDuration={200}>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <span className="inline-flex">
-                                {p.user_id ? (
-                                  <CheckCircle2 className="h-4 w-4 text-success" />
-                                ) : (
-                                  <CircleSlash className="h-4 w-4 text-muted-foreground" />
-                                )}
-                              </span>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              {p.user_id ? "Acesso ao sistema ativo" : "Sem acesso ao sistema"}
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
+                        {p.user_id ? (
+                          <Badge variant="outline" className="bg-success/10 text-success border-0 gap-1">
+                            <CheckCircle2 className="h-3 w-3" />
+                            Ativo
+                          </Badge>
+                        ) : (
+                          <TooltipProvider delayDuration={200}>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Badge variant="outline" className="bg-warning/10 text-warning border-0 gap-1 cursor-help">
+                                  <AlertCircle className="h-3 w-3" />
+                                  Sem acesso
+                                </Badge>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                Colaborador não possui usuário de acesso ao sistema. Acesse o detalhe para criar.
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground hidden lg:table-cell">
                         {format(parseISO(p.data_inicio), "dd/MM/yyyy")}
