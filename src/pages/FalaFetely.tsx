@@ -37,6 +37,16 @@ const FRASES_MOTIVACIONAIS = [
   "Bora descobrir algo novo? 🌸",
 ];
 
+const FRASES_PENSANDO = [
+  "Buscando no que sei...",
+  "Consultando a base de conhecimento...",
+  "Juntando as ideias...",
+  "Formulando a resposta...",
+  "Só mais um segundinho...",
+  "Celebrando sua pergunta 🌷",
+  "Pensando com carinho...",
+];
+
 const SUGESTOES = [
   { categoria: "Sistemas", icone: Globe, cor: "#3A7D6B", texto: "Como peço acesso a um sistema corporativo?" },
   { categoria: "Benefícios", icone: Gift, cor: "#E91E63", texto: "Quais são os meus benefícios?" },
