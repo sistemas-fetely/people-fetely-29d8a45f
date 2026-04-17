@@ -2,7 +2,9 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Package, CheckCircle2, UserCheck, Wrench, ClipboardList, Users, AlertTriangle } from "lucide-react";
+import { Package, CheckCircle2, UserCheck, Wrench, ClipboardList, Users, AlertTriangle, BookOpen, ArrowRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -63,9 +65,11 @@ const statusVariant: Record<string, { label: string; className: string }> = {
 
 export default function TIDashboard() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [kpi, setKpi] = useState<KPI>({ total: 0, disponivel: 0, atribuido: 0, manutencao: 0 });
   const [recentes, setRecentes] = useState<AtivoRecente[]>([]);
   const [tarefasTI, setTarefasTI] = useState<TarefaTI[]>([]);
+  const [docsCount, setDocsCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
   const [concluirTarefa, setConcluirTarefa] = useState<TarefaTI | null>(null);
@@ -104,13 +108,17 @@ export default function TIDashboard() {
 
   const load = async () => {
     setLoading(true);
-    const [{ data: ativos }, { data: ultimos }] = await Promise.all([
+    const [{ data: ativos }, { data: ultimos }, { count: docsTotal }] = await Promise.all([
       supabase.from("ti_ativos").select("status, em_manutencao" as any),
       supabase
         .from("ti_ativos")
         .select("id, tipo, marca, modelo, status, colaborador_nome, updated_at, em_manutencao" as any)
         .order("updated_at", { ascending: false })
         .limit(8),
+      (supabase as any)
+        .from("sncf_documentacao")
+        .select("id", { count: "exact", head: true })
+        .eq("ativo", true),
     ]);
 
     if (ativos) {
@@ -122,6 +130,7 @@ export default function TIDashboard() {
       });
     }
     if (ultimos) setRecentes(ultimos as unknown as AtivoRecente[]);
+    setDocsCount(docsTotal || 0);
 
     await loadTarefas();
     setLoading(false);
@@ -204,6 +213,34 @@ export default function TIDashboard() {
           </Card>
         ))}
       </div>
+
+      {/* Documentação Viva — atalho */}
+      <Card className="border-l-4 cursor-pointer hover:shadow-md transition-shadow" style={{ borderLeftColor: TI_COLOR }} onClick={() => navigate("/ti/documentacao")}>
+        <CardContent className="pt-6">
+          <div className="flex items-center justify-between gap-4 flex-wrap">
+            <div className="flex items-center gap-4">
+              <div
+                className="flex h-12 w-12 items-center justify-center rounded-xl flex-shrink-0"
+                style={{ backgroundColor: `${TI_COLOR}15` }}
+              >
+                <BookOpen className="h-6 w-6" style={{ color: TI_COLOR }} />
+              </div>
+              <div>
+                <p className="text-xs uppercase tracking-wider font-semibold text-muted-foreground">
+                  Documentação Viva
+                </p>
+                <h3 className="text-lg font-semibold mt-0.5">
+                  {docsCount} {docsCount === 1 ? "documento ativo" : "documentos ativos"}
+                </h3>
+                <p className="text-sm text-muted-foreground">RunBook, guias, roadmap e estado atual</p>
+              </div>
+            </div>
+            <Button variant="outline" className="gap-2">
+              Acessar <ArrowRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Tarefas Pendentes de TI */}
       <Card>

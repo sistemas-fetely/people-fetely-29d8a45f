@@ -1,4 +1,4 @@
-import { LayoutDashboard, Monitor, Package, LogOut, LayoutGrid, ClipboardList } from "lucide-react";
+import { LayoutDashboard, Monitor, Package, LogOut, LayoutGrid, ClipboardList, BookOpen } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { cn } from "@/lib/utils";
 import { useLocation } from "react-router-dom";
@@ -16,6 +16,7 @@ const items = [
   { title: "Dashboard", url: "/ti", icon: LayoutDashboard, end: true },
   { title: "Minhas Tarefas", url: "/tarefas", icon: ClipboardList, end: false },
   { title: "Ativos", url: "/ti/ativos", icon: Package, end: false },
+  { title: "Documentação", url: "/ti/documentacao", icon: BookOpen, end: false },
 ];
 
 export function TISidebar() {
