@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Users, Search, MoreHorizontal, Eye, Edit,
-  UserCheck, Briefcase, Building2, Plus, ChevronDown, CircleSlash, CheckCircle2,
+  UserCheck, Briefcase, Building2, Plus, ChevronDown, CheckCircle2, AlertCircle,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Card, CardContent } from "@/components/ui/card";
@@ -112,6 +112,7 @@ export default function Pessoas() {
   const totalCLT = pessoas.filter((p) => p.tipo === "CLT").length;
   const totalPJ = pessoas.filter((p) => p.tipo === "PJ").length;
   const totalAtivos = pessoas.filter((p) => p.status === "ativo").length;
+  const totalSemAcesso = pessoas.filter((p) => !p.user_id && p.status !== "desligado" && p.status !== "encerrado").length;
 
   const filtered = pessoas.filter((p) => {
     const matchSearch =
@@ -157,7 +158,7 @@ export default function Pessoas() {
         </DropdownMenu>
       </div>
 
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-4">
+      <div className={`grid gap-4 grid-cols-1 ${totalSemAcesso > 0 ? "sm:grid-cols-5" : "sm:grid-cols-4"}`}>
         <Card className="card-shadow">
           <CardContent className="p-4 flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
@@ -202,6 +203,19 @@ export default function Pessoas() {
             </div>
           </CardContent>
         </Card>
+        {totalSemAcesso > 0 && (
+          <Card className="card-shadow border-warning/30">
+            <CardContent className="p-4 flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-warning/10 text-warning">
+                <AlertCircle className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-warning">{totalSemAcesso}</p>
+                <p className="text-xs text-muted-foreground">Sem acesso</p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       <Card className="card-shadow">
@@ -247,7 +261,7 @@ export default function Pessoas() {
                   <TableHead className="font-semibold hidden md:table-cell">Cargo / Serviço</TableHead>
                   <TableHead className="font-semibold hidden lg:table-cell">Departamento</TableHead>
                   <TableHead className="font-semibold">Status</TableHead>
-                  <TableHead className="font-semibold w-16 text-center">Acesso</TableHead>
+                  <TableHead className="font-semibold text-center">Acesso</TableHead>
                   <TableHead className="font-semibold hidden lg:table-cell">Início</TableHead>
                   <TableHead className="w-10" />
                 </TableRow>
@@ -288,22 +302,26 @@ export default function Pessoas() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-center">
-                        <TooltipProvider delayDuration={200}>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <span className="inline-flex">
-                                {p.user_id ? (
-                                  <CheckCircle2 className="h-4 w-4 text-success" />
-                                ) : (
-                                  <CircleSlash className="h-4 w-4 text-muted-foreground" />
-                                )}
-                              </span>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              {p.user_id ? "Acesso ao sistema ativo" : "Sem acesso ao sistema"}
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
+                        {p.user_id ? (
+                          <Badge variant="outline" className="bg-success/10 text-success border-0 gap-1">
+                            <CheckCircle2 className="h-3 w-3" />
+                            Ativo
+                          </Badge>
+                        ) : (
+                          <TooltipProvider delayDuration={200}>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Badge variant="outline" className="bg-warning/10 text-warning border-0 gap-1 cursor-help">
+                                  <AlertCircle className="h-3 w-3" />
+                                  Sem acesso
+                                </Badge>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                Colaborador não possui usuário de acesso ao sistema. Acesse o detalhe para criar.
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground hidden lg:table-cell">
                         {format(parseISO(p.data_inicio), "dd/MM/yyyy")}
