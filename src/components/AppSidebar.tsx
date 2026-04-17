@@ -207,9 +207,9 @@ export function AppSidebar() {
         <div className="mx-4 border-t border-sidebar-border/40" />
         <MenuGroup label="Principal" items={principalItems} collapsed={collapsed} canViewModule={canView} userRoles={roles} />
         <div className="mx-4 border-t border-sidebar-border/40" />
-        <MenuGroup label="Jornada do Colaborador" items={jornadaItems} collapsed={collapsed} canViewModule={canView} userRoles={roles} />
-        <div className="mx-4 border-t border-sidebar-border/40" />
         <MenuGroup label="Operação RH" items={operacaoItems} collapsed={collapsed} canViewModule={canView} userRoles={roles} />
+        <div className="mx-4 border-t border-sidebar-border/40" />
+        <MenuGroup label="Jornada do Colaborador" items={jornadaItems} collapsed={collapsed} canViewModule={canView} userRoles={roles} />
         <div className="mx-4 border-t border-sidebar-border/40" />
         <MenuGroup label="Relatórios" items={relatoriosItems} collapsed={collapsed} canViewModule={canView} userRoles={roles} />
         <div className="mx-4 border-t border-sidebar-border/40" />
