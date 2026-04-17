@@ -10,6 +10,7 @@ import { useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePermissions } from "@/hooks/usePermissions";
 import { Badge } from "@/components/ui/badge";
+import { SNCFQuickAccess } from "@/components/SNCFQuickAccess";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent,
   SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem,
@@ -182,7 +183,7 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent className="px-2 space-y-1">
-        {/* Atalho ao Portal SNCF */}
+        {/* Atalho ao Portal SNCF + acesso rápido */}
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
@@ -196,6 +197,9 @@ export function AppSidebar() {
                     {!collapsed && <span>Portal SNCF</span>}
                   </NavLink>
                 </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SNCFQuickAccess />
               </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>

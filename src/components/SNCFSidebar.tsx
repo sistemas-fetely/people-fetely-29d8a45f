@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Badge } from "@/components/ui/badge";
+import { getHighestRoleLabel } from "@/lib/user-role";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent,
   SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem,
@@ -50,6 +51,7 @@ export function SNCFSidebar() {
     ? profile.full_name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()
     : user?.email?.slice(0, 2).toUpperCase() || "??";
   const displayName = profile?.full_name || user?.email || "Usuário";
+  const primaryRole = getHighestRoleLabel(roles);
 
   const isItemActive = (url: string, end?: boolean) =>
     end ? location.pathname === url : location.pathname.startsWith(url);
@@ -169,7 +171,7 @@ export function SNCFSidebar() {
               <div className="flex flex-col min-w-0">
                 <span className="text-xs font-medium text-sidebar-foreground truncate">{displayName}</span>
                 <Badge variant="outline" className="text-[10px] w-fit border-sidebar-border/60 text-sidebar-muted mt-0.5">
-                  SNCF
+                  {primaryRole}
                 </Badge>
               </div>
             </div>
