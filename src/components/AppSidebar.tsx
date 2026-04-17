@@ -48,6 +48,7 @@ interface MenuItem {
 
 const mainItems: MenuItem[] = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard, permModule: "dashboard" },
+  { title: "Minhas Tarefas", url: "/tarefas", icon: ClipboardList },
   { title: "Pessoas", url: "/pessoas", icon: Users, permModule: "colaboradores" },
   { title: "Organograma", url: "/organograma", icon: GitBranch, permModule: "organograma" },
   { title: "Férias", url: "/ferias", icon: Calendar, permModule: "ferias" },

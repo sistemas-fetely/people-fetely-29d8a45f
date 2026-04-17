@@ -52,6 +52,7 @@ import PortalSNCF from "@/pages/PortalSNCF";
 import TILayout from "@/layouts/TILayout";
 import TIDashboard from "@/pages/ti/TIDashboard";
 import TIAtivos from "@/pages/ti/TIAtivos";
+import MinhasTarefas from "@/pages/MinhasTarefas";
 
 const queryClient = new QueryClient();
 
@@ -88,6 +89,7 @@ const App = () => (
             <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
               <Route path="/" element={<Navigate to="/sncf" replace />} />
               <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/tarefas" element={<MinhasTarefas />} />
               <Route path="/pessoas" element={<Pessoas />} />
               <Route path="/colaboradores" element={
                 <ProtectedRoute permModule="colaboradores">
