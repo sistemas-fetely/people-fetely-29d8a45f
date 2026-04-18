@@ -721,7 +721,17 @@ export default function GerenciarUsuarios() {
                                 size="sm"
                                 variant="outline"
                                 className="text-red-600 hover:text-red-700 gap-1"
-                                onClick={() => toggleBan.mutate({ user_id: profile.user_id, ban: true })}
+                                onClick={() => {
+                                  if (roles.includes("super_admin" as AppRole)) {
+                                    setRemoveSuperAdminConfirm({
+                                      userId: profile.user_id,
+                                      name: profile.full_name || "Usuário",
+                                      mode: "ban",
+                                    });
+                                  } else {
+                                    toggleBan.mutate({ user_id: profile.user_id, ban: true });
+                                  }
+                                }}
                                 disabled={toggleBan.isPending}
                               >
                                 <XCircle className="h-3.5 w-3.5" />
@@ -733,7 +743,17 @@ export default function GerenciarUsuarios() {
                                 size="sm"
                                 variant="outline"
                                 className="text-destructive hover:text-destructive gap-1"
-                                onClick={() => setDeleteConfirm({ userId: profile.user_id, name: profile.full_name || "Usuário" })}
+                                onClick={() => {
+                                  if (roles.includes("super_admin" as AppRole)) {
+                                    setRemoveSuperAdminConfirm({
+                                      userId: profile.user_id,
+                                      name: profile.full_name || "Usuário",
+                                      mode: "delete",
+                                    });
+                                  } else {
+                                    setDeleteConfirm({ userId: profile.user_id, name: profile.full_name || "Usuário" });
+                                  }
+                                }}
                               >
                                 <Trash2 className="h-3.5 w-3.5" />
                                 Deletar
