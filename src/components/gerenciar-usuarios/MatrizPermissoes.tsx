@@ -107,12 +107,30 @@ interface RolePermissionRow {
 }
 
 interface MatrizPermissoesProps {
+  // mantido para compat, mas não usado mais
   onNavigateToPerfis?: () => void;
 }
 
 interface SharedCtx {
   perms: RolePermissionRow[];
   roleCounts: Record<string, number>;
+  podeEditar: boolean;
+}
+
+// Ações especiais por módulo (para popover multi-action)
+const ACOES_ESPECIAIS_POR_MODULO: Record<string, string[]> = {
+  ferias: ["aprovar"],
+  notas_fiscais: ["aprovar", "enviar_email"],
+  folha_pagamento: ["fechar", "exportar"],
+  pagamentos_pj: ["aprovar", "exportar"],
+  convites: ["enviar"],
+  relatorios: ["exportar"],
+};
+
+function getAcoesDoModulo(moduleKey: string): string[] {
+  const base = ["view", "create", "edit", "delete"];
+  const especiais = ACOES_ESPECIAIS_POR_MODULO[moduleKey] || [];
+  return [...base, ...especiais];
 }
 
 // ============================================================================
@@ -208,7 +226,7 @@ function AlertasCard({ alertas }: { alertas: string[] }) {
 // ============================================================================
 // Modo 1: Perfil Único
 // ============================================================================
-function ModoPerfilUnico({ perms, roleCounts }: SharedCtx) {
+function ModoPerfilUnico({ perms, roleCounts, podeEditar }: SharedCtx) {
   const [roleSelecionada, setRoleSelecionada] = useState<string>(MATRIX_ROLES[0].role);
   const roleInfo = MATRIX_ROLES.find((r) => r.role === roleSelecionada)!;
   const userCount = roleCounts[roleSelecionada] ?? 0;
