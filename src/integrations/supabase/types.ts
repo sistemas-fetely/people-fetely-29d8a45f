@@ -2995,6 +2995,143 @@ export type Database = {
           },
         ]
       }
+      perfil_packs: {
+        Row: {
+          criado_em: string
+          pack_id: string
+          perfil_id: string
+        }
+        Insert: {
+          criado_em?: string
+          pack_id: string
+          perfil_id: string
+        }
+        Update: {
+          criado_em?: string
+          pack_id?: string
+          perfil_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "perfil_packs_pack_id_fkey"
+            columns: ["pack_id"]
+            isOneToOne: false
+            referencedRelation: "permission_packs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "perfil_packs_perfil_id_fkey"
+            columns: ["perfil_id"]
+            isOneToOne: false
+            referencedRelation: "perfis"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      perfis: {
+        Row: {
+          area: string | null
+          ativo: boolean
+          codigo: string
+          criado_em: string
+          descricao: string | null
+          id: string
+          is_sistema: boolean
+          nivel_sugerido: string | null
+          nome: string
+          tipo: string
+        }
+        Insert: {
+          area?: string | null
+          ativo?: boolean
+          codigo: string
+          criado_em?: string
+          descricao?: string | null
+          id?: string
+          is_sistema?: boolean
+          nivel_sugerido?: string | null
+          nome: string
+          tipo: string
+        }
+        Update: {
+          area?: string | null
+          ativo?: boolean
+          codigo?: string
+          criado_em?: string
+          descricao?: string | null
+          id?: string
+          is_sistema?: boolean
+          nivel_sugerido?: string | null
+          nome?: string
+          tipo?: string
+        }
+        Relationships: []
+      }
+      permission_pack_items: {
+        Row: {
+          acao: string
+          criado_em: string
+          id: string
+          modulo: string
+          nivel_minimo: string | null
+          pack_id: string
+        }
+        Insert: {
+          acao: string
+          criado_em?: string
+          id?: string
+          modulo: string
+          nivel_minimo?: string | null
+          pack_id: string
+        }
+        Update: {
+          acao?: string
+          criado_em?: string
+          id?: string
+          modulo?: string
+          nivel_minimo?: string | null
+          pack_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "permission_pack_items_pack_id_fkey"
+            columns: ["pack_id"]
+            isOneToOne: false
+            referencedRelation: "permission_packs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      permission_packs: {
+        Row: {
+          ativo: boolean
+          codigo: string
+          criado_em: string
+          descricao: string | null
+          id: string
+          is_sistema: boolean
+          nome: string
+        }
+        Insert: {
+          ativo?: boolean
+          codigo: string
+          criado_em?: string
+          descricao?: string | null
+          id?: string
+          is_sistema?: boolean
+          nome: string
+        }
+        Update: {
+          ativo?: boolean
+          codigo?: string
+          criado_em?: string
+          descricao?: string | null
+          id?: string
+          is_sistema?: boolean
+          nome?: string
+        }
+        Relationships: []
+      }
       posicoes: {
         Row: {
           area: string | null
@@ -4090,6 +4227,93 @@ export type Database = {
             columns: ["ativo_id"]
             isOneToOne: false
             referencedRelation: "ti_ativos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      unidades: {
+        Row: {
+          ativa: boolean
+          atualizado_em: string
+          cidade: string | null
+          cnpj: string | null
+          codigo: string
+          criado_em: string
+          estado: string | null
+          id: string
+          nome: string
+          tipo: string
+        }
+        Insert: {
+          ativa?: boolean
+          atualizado_em?: string
+          cidade?: string | null
+          cnpj?: string | null
+          codigo: string
+          criado_em?: string
+          estado?: string | null
+          id?: string
+          nome: string
+          tipo: string
+        }
+        Update: {
+          ativa?: boolean
+          atualizado_em?: string
+          cidade?: string | null
+          cnpj?: string | null
+          codigo?: string
+          criado_em?: string
+          estado?: string | null
+          id?: string
+          nome?: string
+          tipo?: string
+        }
+        Relationships: []
+      }
+      user_atribuicoes: {
+        Row: {
+          criado_em: string
+          criado_por: string | null
+          id: string
+          nivel: string | null
+          perfil_id: string
+          unidade_id: string | null
+          user_id: string
+          valido_ate: string | null
+        }
+        Insert: {
+          criado_em?: string
+          criado_por?: string | null
+          id?: string
+          nivel?: string | null
+          perfil_id: string
+          unidade_id?: string | null
+          user_id: string
+          valido_ate?: string | null
+        }
+        Update: {
+          criado_em?: string
+          criado_por?: string | null
+          id?: string
+          nivel?: string | null
+          perfil_id?: string
+          unidade_id?: string | null
+          user_id?: string
+          valido_ate?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_atribuicoes_perfil_id_fkey"
+            columns: ["perfil_id"]
+            isOneToOne: false
+            referencedRelation: "perfis"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_atribuicoes_unidade_id_fkey"
+            columns: ["unidade_id"]
+            isOneToOne: false
+            referencedRelation: "unidades"
             referencedColumns: ["id"]
           },
         ]
