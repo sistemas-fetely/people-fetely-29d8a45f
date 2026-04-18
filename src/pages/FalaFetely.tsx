@@ -444,19 +444,41 @@ export default function FalaFetely() {
             </p>
           ) : (
             conversas.map((c) => (
-              <button
-                key={c.id}
-                onClick={() => abrirConversa(c)}
-                className={`w-full text-left p-2 rounded-lg text-sm hover:bg-muted transition-all ${
-                  conversaAtiva?.id === c.id ? "bg-muted" : ""
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  <MessageCircle className="h-3 w-3 flex-shrink-0 text-muted-foreground" />
-                  <span className="truncate">{c.titulo || "Conversa"}</span>
+              <div key={c.id} className="group relative">
+                <button
+                  onClick={() => abrirConversa(c)}
+                  className={`w-full text-left p-2 pr-8 rounded-lg text-sm hover:bg-muted transition-all ${
+                    conversaAtiva?.id === c.id ? "bg-muted" : ""
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <MessageCircle className="h-3 w-3 flex-shrink-0 text-muted-foreground" />
+                    <span className="truncate">{c.titulo || "Conversa"}</span>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground mt-0.5 ml-5">{formatRelativo(c.updated_at)}</p>
+                </button>
+                <div className="absolute right-1 top-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        className="p-1 hover:bg-background rounded"
+                        onClick={(e) => e.stopPropagation()}
+                        title="Ações"
+                      >
+                        <MoreHorizontal className="h-3 w-3" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem
+                        onClick={() => setConversaParaExcluir(c)}
+                        className="text-destructive focus:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" /> Excluir conversa
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
-                <p className="text-[10px] text-muted-foreground mt-0.5 ml-5">{formatRelativo(c.updated_at)}</p>
-              </button>
+              </div>
             ))
           )}
         </div>
