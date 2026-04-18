@@ -969,6 +969,12 @@ export default function GerenciarUsuarios() {
             <MatrizPermissoes />
           </TabsContent>
         )}
+
+        {isSuperAdmin && (
+          <TabsContent value="templates" className="mt-4">
+            <TemplatesTab />
+          </TabsContent>
+        )}
       </Tabs>
 
       {/* Hub da Pessoa v2 — perfis, níveis e unidades */}
