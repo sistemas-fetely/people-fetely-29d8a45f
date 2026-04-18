@@ -386,6 +386,48 @@ export default function FalaFetely() {
     toast({ title: "Copiado ✨" });
   }
 
+  async function excluirConversa() {
+    if (!conversaParaExcluir || !user) return;
+    try {
+      const { error } = await supabase
+        .from("fala_fetely_conversas")
+        .delete()
+        .eq("id", conversaParaExcluir.id)
+        .eq("user_id", user.id);
+      if (error) throw error;
+      if (conversaAtiva?.id === conversaParaExcluir.id) {
+        setConversaAtiva(null);
+        setMensagens([]);
+        setFeedbacksDados(new Map());
+      }
+      setConversas((prev) => prev.filter((c) => c.id !== conversaParaExcluir.id));
+      setConversaParaExcluir(null);
+      toast({ title: "Conversa excluída" });
+    } catch (e) {
+      toast({ title: "Erro", description: e instanceof Error ? e.message : "Erro inesperado", variant: "destructive" });
+    }
+  }
+
+  async function limparTudo() {
+    if (!user) return;
+    try {
+      const { error } = await supabase
+        .from("fala_fetely_conversas")
+        .delete()
+        .eq("user_id", user.id);
+      if (error) throw error;
+      setConversas([]);
+      setConversaAtiva(null);
+      setMensagens([]);
+      setFeedbacksDados(new Map());
+      setConfirmarLimparTudo(false);
+      setShowPrivacidade(false);
+      toast({ title: "Histórico apagado", description: "Todas as conversas foram excluídas." });
+    } catch (e) {
+      toast({ title: "Erro", description: e instanceof Error ? e.message : "Erro inesperado", variant: "destructive" });
+    }
+  }
+
   return (
     <div className="h-screen flex" style={{ background: "linear-gradient(135deg, #FFF8F3 0%, #F0F7F4 100%)" }}>
       {/* Sidebar de conversas */}
