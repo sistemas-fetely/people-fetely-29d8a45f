@@ -104,6 +104,9 @@ export default function FalaFetely() {
   const [mensagemEnsinando, setMensagemEnsinando] = useState<Mensagem | null>(null);
   const [feedbackNegativo, setFeedbackNegativo] = useState<Mensagem | null>(null);
   const [feedbacksDados, setFeedbacksDados] = useState<Map<string, boolean>>(new Map());
+  const [conversaParaExcluir, setConversaParaExcluir] = useState<Conversa | null>(null);
+  const [showPrivacidade, setShowPrivacidade] = useState(false);
+  const [confirmarLimparTudo, setConfirmarLimparTudo] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const podeEnsinar = useMemo(
