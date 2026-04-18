@@ -129,6 +129,42 @@ export type Database = {
           },
         ]
       }
+      atribuicao_origem: {
+        Row: {
+          atribuicao_id: string
+          criado_em: string
+          origem: string
+          template_id: string | null
+        }
+        Insert: {
+          atribuicao_id: string
+          criado_em?: string
+          origem: string
+          template_id?: string | null
+        }
+        Update: {
+          atribuicao_id?: string
+          criado_em?: string
+          origem?: string
+          template_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "atribuicao_origem_atribuicao_id_fkey"
+            columns: ["atribuicao_id"]
+            isOneToOne: true
+            referencedRelation: "user_atribuicoes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "atribuicao_origem_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "cargo_template"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_log: {
         Row: {
           acao: string
@@ -525,6 +561,105 @@ export type Database = {
             columns: ["vaga_id"]
             isOneToOne: false
             referencedRelation: "vagas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cargo_template: {
+        Row: {
+          area: string | null
+          ativo: boolean
+          cargo_id: string | null
+          codigo: string
+          criado_em: string
+          criado_por: string | null
+          descricao: string | null
+          id: string
+          is_sistema: boolean
+          nivel_sugerido: string | null
+          nome: string
+        }
+        Insert: {
+          area?: string | null
+          ativo?: boolean
+          cargo_id?: string | null
+          codigo: string
+          criado_em?: string
+          criado_por?: string | null
+          descricao?: string | null
+          id?: string
+          is_sistema?: boolean
+          nivel_sugerido?: string | null
+          nome: string
+        }
+        Update: {
+          area?: string | null
+          ativo?: boolean
+          cargo_id?: string | null
+          codigo?: string
+          criado_em?: string
+          criado_por?: string | null
+          descricao?: string | null
+          id?: string
+          is_sistema?: boolean
+          nivel_sugerido?: string | null
+          nome?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cargo_template_cargo_id_fkey"
+            columns: ["cargo_id"]
+            isOneToOne: false
+            referencedRelation: "cargos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cargo_template_perfis: {
+        Row: {
+          criado_em: string
+          escopo_unidade_id: string | null
+          id: string
+          nivel_override: string | null
+          perfil_id: string
+          template_id: string
+        }
+        Insert: {
+          criado_em?: string
+          escopo_unidade_id?: string | null
+          id?: string
+          nivel_override?: string | null
+          perfil_id: string
+          template_id: string
+        }
+        Update: {
+          criado_em?: string
+          escopo_unidade_id?: string | null
+          id?: string
+          nivel_override?: string | null
+          perfil_id?: string
+          template_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cargo_template_perfis_escopo_unidade_id_fkey"
+            columns: ["escopo_unidade_id"]
+            isOneToOne: false
+            referencedRelation: "unidades"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cargo_template_perfis_perfil_id_fkey"
+            columns: ["perfil_id"]
+            isOneToOne: false
+            referencedRelation: "perfis"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cargo_template_perfis_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "cargo_template"
             referencedColumns: ["id"]
           },
         ]
@@ -4516,6 +4651,21 @@ export type Database = {
       }
     }
     Functions: {
+      aplicar_template_cargo: {
+        Args: {
+          _area_perfil_codigo: string
+          _atribuidor?: string
+          _template_id: string
+          _unidade_id: string
+          _user_id: string
+        }
+        Returns: {
+          atribuicao_id: string
+          nivel: string
+          perfil_nome: string
+          unidade_nome: string
+        }[]
+      }
       autosave_convite_cadastro: {
         Args: { _dados: Json; _token: string }
         Returns: boolean
@@ -4592,6 +4742,19 @@ export type Database = {
         Returns: number
       }
       nivel_rank: { Args: { _nivel: string }; Returns: number }
+      preview_template_cargo: {
+        Args: {
+          _area_perfil_codigo: string
+          _template_id: string
+          _unidade_id: string
+        }
+        Returns: {
+          nivel: string
+          perfil_nome: string
+          perfil_tipo: string
+          unidade_nome: string
+        }[]
+      }
       processar_exclusao_dados_usuario: {
         Args: { _user_id: string }
         Returns: Json
