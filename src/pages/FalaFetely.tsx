@@ -493,6 +493,18 @@ export default function FalaFetely() {
     }
   }
 
+  // Regra 11 — Bloqueia tela inteira até consentir
+  if (precisaConsentimento === true) {
+    return (
+      <div className="h-screen flex items-center justify-center" style={{ background: "linear-gradient(135deg, #FFF8F3 0%, #F0F7F4 100%)" }}>
+        <DialogConsentimentoFalaFetely
+          open={true}
+          onAceite={() => setPrecisaConsentimento(false)}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="h-screen flex" style={{ background: "linear-gradient(135deg, #FFF8F3 0%, #F0F7F4 100%)" }}>
       {/* Sidebar de conversas */}

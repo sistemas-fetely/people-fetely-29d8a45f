@@ -24,6 +24,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 import { toast } from "sonner";
 import { useParametrosFolha } from "@/hooks/useParametrosFolha";
+import { SalarioMasked } from "@/components/SalarioMasked";
 
 type ColaboradorRow = Tables<"colaboradores_clt">;
 import { format, parseISO } from "date-fns";
@@ -279,10 +280,18 @@ export default function Colaboradores() {
                         {format(parseISO(c.data_admissao), "dd/MM/yyyy")}
                       </TableCell>
                       <TableCell className="text-sm font-mono text-right hidden lg:table-cell">
-                        {fmtBRL(c.salario_base)}
+                        <SalarioMasked
+                          valor={c.salario_base}
+                          userId={(c as any).user_id}
+                          contexto={`Listagem de colaboradores CLT — ${c.nome_completo}`}
+                        />
                       </TableCell>
                       <TableCell className="text-sm font-mono text-right hidden xl:table-cell">
-                        {fmtBRL(c.salario_base * (1 + ENCARGOS_RATE))}
+                        <SalarioMasked
+                          valor={c.salario_base * (1 + ENCARGOS_RATE)}
+                          userId={(c as any).user_id}
+                          contexto={`Listagem CLT (salário+encargos) — ${c.nome_completo}`}
+                        />
                       </TableCell>
                       <TableCell>
                         <DropdownMenu>
