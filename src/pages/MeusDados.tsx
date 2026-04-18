@@ -7,11 +7,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ConfirmacaoDupla } from "@/components/ConfirmacaoDupla";
 import { Download, Trash2, Eye, FileEdit, MessageSquare, DollarSign, ShieldCheck, AlertTriangle, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
