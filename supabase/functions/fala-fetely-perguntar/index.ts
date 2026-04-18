@@ -110,7 +110,9 @@ Deno.serve(async (req) => {
       supabase.from("parametros").select("label, valor").eq("categoria", "sistema").eq("ativo", true).limit(50),
       supabase.from("parametros").select("label").eq("categoria", "departamento").eq("ativo", true).limit(50),
       supabase.from("cargos").select("nome, departamento, missao, responsabilidades").eq("ativo", true).limit(40),
-      supabase.from("sncf_documentacao").select("titulo, descricao, conteudo").eq("ativo", true).limit(20),
+      ehAdmin
+        ? supabase.from("sncf_documentacao").select("titulo, descricao, conteudo").eq("ativo", true).limit(20)
+        : Promise.resolve({ data: [] as any[] }),
       supabase.from("beneficios_catalogo").select("beneficio, tipo").eq("ativo", true).limit(30),
       (supabase as any).from("fala_fetely_conhecimento").select("categoria, titulo, conteudo, publico_alvo, cargos_aplicaveis, niveis_aplicaveis, departamentos_aplicaveis, fonte, tags").eq("ativo", true).order("categoria").limit(100),
       (supabase as any)
