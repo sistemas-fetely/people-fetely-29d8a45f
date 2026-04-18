@@ -431,7 +431,7 @@ ${blocoCargos}
 [BENEFÍCIOS CADASTRADOS]
 ${blocoBeneficios}
 
-[DOCUMENTAÇÃO DO PROJETO]
+${ehAdmin ? `[DOCUMENTAÇÃO DO PROJETO]
 Você tem acesso ao RunBook Técnico e ao Estado & Roadmap do projeto. Use esses documentos como fonte de verdade para responder:
 - Como um módulo funciona tecnicamente
 - O que foi construído recentemente
@@ -440,7 +440,7 @@ Você tem acesso ao RunBook Técnico e ao Estado & Roadmap do projeto. Use esses
 
 Se o usuário pergunta sobre arquitetura, tabelas, ou decisões de projeto, consulte essa documentação. Se a pergunta é prática do dia a dia (como usar), você já tem os dados de processos, sistemas, cargos — responda com eles.
 
-${blocoDocs}
+${blocoDocs}` : ""}
 
 INSTRUÇÕES DE RESPOSTA — SEJA DIRETO E CONCISO
 
