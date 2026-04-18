@@ -24,6 +24,7 @@ import { ConviteDadosProfissionaisPJ } from "@/components/convite-detalhe/Convit
 import { getTarefasDinamicas } from "@/lib/onboarding-tarefas";
 import { useAuth } from "@/contexts/AuthContext";
 import { fetchExtensoesAplicaveis } from "@/hooks/useExtensoesAplicaveis";
+import { SystemReadinessBanner } from "@/components/shared/SystemReadinessBanner";
 
 async function gerarTarefasExtensoes(params: {
   checklistId: string;
@@ -108,7 +109,10 @@ interface Convite {
   nome: string;
   email: string;
   cargo: string | null;
+  cargo_id: string | null;
   departamento: string | null;
+  departamento_id: string | null;
+  unidade_id: string | null;
   status: string;
   expira_em: string;
   created_at: string;
