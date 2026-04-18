@@ -5,12 +5,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Loader2 } from "lucide-react";
 import { useParametros } from "@/hooks/useParametros";
 import { useCargos } from "@/hooks/useCargos";
+import { SelectDepartamentoHierarquico } from "@/components/shared/SelectDepartamentoHierarquico";
 import type { DadosProfissionaisForm } from "@/lib/validations/colaborador-clt";
 
 export function StepDadosProfissionais() {
   const { register, setValue, watch, formState: { errors } } = useFormContext<DadosProfissionaisForm>();
 
-  const { data: departamentos, isLoading: loadingDepts } = useParametros("departamento");
   const { data: cargos, isLoading: loadingCargos } = useCargos("clt");
   const { data: tiposContrato, isLoading: loadingTipos } = useParametros("tipo_contrato");
   const { data: jornadas, isLoading: loadingJornadas } = useParametros("jornada");
@@ -46,21 +46,14 @@ export function StepDadosProfissionais() {
         </div>
         <div>
           <Label>Departamento *</Label>
-          {loadingDepts ? (
-            <div className="flex items-center h-10"><Loader2 className="h-4 w-4 animate-spin" /></div>
-          ) : (
-            <Select
-              value={(departamentos || []).find(d => d.label.toLowerCase() === (watch("departamento") || "").toLowerCase())?.label || watch("departamento") || ""}
-              onValueChange={(v) => setValue("departamento", v)}
-            >
-              <SelectTrigger><SelectValue placeholder="Selecione o departamento" /></SelectTrigger>
-              <SelectContent>
-                {(departamentos || []).map((d) => (
-                  <SelectItem key={d.id} value={d.label}>{d.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
+          <SelectDepartamentoHierarquico
+            valueId={(watch("departamento_id") as string) || null}
+            valueTexto={watch("departamento") || ""}
+            onChange={(dep) => {
+              setValue("departamento_id", dep?.id || null);
+              setValue("departamento", dep?.label || "");
+            }}
+          />
           {errors.departamento && <p className="text-xs text-destructive mt-1">{errors.departamento.message}</p>}
         </div>
         <div>

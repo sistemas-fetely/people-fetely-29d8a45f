@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Loader2 } from "lucide-react";
 import { useParametros } from "@/hooks/useParametros";
 import { useCargos } from "@/hooks/useCargos";
+import { SelectDepartamentoHierarquico } from "@/components/shared/SelectDepartamentoHierarquico";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { DadosProfissionaisPJForm } from "@/lib/validations/contrato-pj";
@@ -26,7 +27,6 @@ function formatBRL(value: number): string {
 export function StepDadosProfissionaisPJ() {
   const { register, setValue, watch, formState: { errors } } = useFormContext<DadosProfissionaisPJForm>();
 
-  const { data: departamentos, isLoading: loadingDepts } = useParametros("departamento");
   const { data: cargos, isLoading: loadingCargos } = useCargos("pj");
   const { data: formasPagamento, isLoading: loadingFormas } = useParametros("forma_pagamento");
 
@@ -63,18 +63,14 @@ export function StepDadosProfissionaisPJ() {
         </div>
         <div>
           <Label>Departamento *</Label>
-          {loadingDepts ? (
-            <div className="flex items-center h-10"><Loader2 className="h-4 w-4 animate-spin" /></div>
-          ) : (
-            <Select value={watch("departamento") || ""} onValueChange={(v) => setValue("departamento", v)}>
-              <SelectTrigger><SelectValue placeholder="Selecione o departamento" /></SelectTrigger>
-              <SelectContent>
-                {(departamentos || []).map((d) => (
-                  <SelectItem key={d.id} value={d.label}>{d.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
+          <SelectDepartamentoHierarquico
+            valueId={(watch("departamento_id") as string) || null}
+            valueTexto={watch("departamento") || ""}
+            onChange={(dep) => {
+              setValue("departamento_id", dep?.id || null);
+              setValue("departamento", dep?.label || "");
+            }}
+          />
           {errors.departamento && <p className="text-xs text-destructive mt-1">{errors.departamento.message}</p>}
         </div>
         <div>

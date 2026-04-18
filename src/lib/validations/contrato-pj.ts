@@ -67,6 +67,7 @@ export const documentosPJSchema = z.object({
 export const dadosProfissionaisPJSchema = z.object({
   tipo_servico: z.string().min(2, "Cargo é obrigatório"),
   departamento: z.string().min(1, "Departamento é obrigatório"),
+  departamento_id: z.string().nullable().optional(),
   data_inicio: z.string().min(1, "Data de início é obrigatória"),
   data_fim: z.string().optional().or(z.literal("")),
   valor_mensal: z.coerce.number().positive("Valor mensal deve ser positivo"),
