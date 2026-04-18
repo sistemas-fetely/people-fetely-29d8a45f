@@ -166,14 +166,14 @@ function ParametroForm({
       if (parametro) {
         const { error } = await supabase
           .from("parametros")
-          .update({ valor: valorFinal, label: label.trim(), descricao: descricaoFinal, ordem } as any)
+          .update({ valor: valorFinal, label: label.trim(), descricao: descricaoFinal, ordem, pai_valor: paiValor } as any)
           .eq("id", parametro.id);
         if (error) throw error;
         toast.success("Parâmetro atualizado!");
       } else {
         const { error } = await supabase
           .from("parametros")
-          .insert({ categoria, valor: valorFinal, label: label.trim(), descricao: descricaoFinal, ordem } as any);
+          .insert({ categoria, valor: valorFinal, label: label.trim(), descricao: descricaoFinal, ordem, pai_valor: paiValor } as any);
         if (error) throw error;
         toast.success("Parâmetro adicionado!");
       }
