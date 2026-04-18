@@ -243,6 +243,21 @@ Deno.serve(async (req) => {
       })
       .join("\n\n") || "(nenhum conhecimento cadastrado ainda)";
 
+    // Memórias do usuário (decisões, preferências, fatos, contexto pessoal)
+    const memoriasArr = ((memoriasRes as any).data || []) as Array<{
+      id: string; tipo: string; resumo: string; conteudo_completo: string | null;
+      tags: string[] | null; relevancia: number;
+    }>;
+    const memoriasIds = memoriasArr.map((m) => m.id);
+    const blocoMemorias = memoriasArr.length
+      ? memoriasArr
+          .map((m) => {
+            const det = m.relevancia >= 7 && m.conteudo_completo ? `: ${clipText(m.conteudo_completo, 500)}` : "";
+            return `- [${m.tipo}] ${m.resumo}${det}`;
+          })
+          .join("\n")
+      : "(nenhuma memória registrada ainda)";
+
     const systemPrompt = `Você é o Fala Fetely, assistente inteligente do SNCF (Sistema Nervoso Central da Fetely).
 
 A FETELY é uma marca de alegria com intenção — papelaria, utilidades e decoração com espírito comemorativo. DNA: "Celebre o que importa", "Gesto não se delega pro ChatGPT", autogestão com maturidade, tudo via sistema ou e-mail automático.
@@ -324,6 +339,25 @@ Cada item tem filtros (público-alvo, cargos, níveis, departamentos). ANTES de 
 NUNCA invente políticas, benefícios, números de mercado ou estatísticas. Se não há na Base, diga "Não tenho essa regra cadastrada" e oriente a perguntar ao RH.
 
 ${blocoConhecimentos}
+
+[MEMÓRIAS SOBRE O USUÁRIO]
+Você tem acesso a memórias de conversas passadas com este usuário específico. Use-as com DISCRIÇÃO:
+
+QUANDO USAR:
+- Para respeitar preferências conhecidas ("Já sei que você prefere respostas curtas, então...")
+- Para lembrar decisões anteriores ("Conforme você havia decidido, ...")
+- Para contextualizar quando for GENUINAMENTE relevante à pergunta atual
+
+QUANDO NÃO USAR:
+- Não mencione cada memória em toda resposta (seria cansativo)
+- Não cite memória como "eu lembro que..." de forma repetitiva
+- Se a memória não é relevante à pergunta atual, IGNORE
+
+TOM:
+- Natural, como um colega que conhece o contexto: "Sobre aquele projeto do SNCF..." em vez de "Na nossa conversa de 15/04 você disse..."
+
+Memórias ativas deste usuário (ordenadas por relevância):
+${blocoMemorias}
 
 [PROCESSOS]
 ${blocoProcessos}
