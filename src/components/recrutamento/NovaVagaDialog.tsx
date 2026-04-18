@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useParametros } from "@/hooks/useParametros";
+import { SelectDepartamentoHierarquico } from "@/components/shared/SelectDepartamentoHierarquico";
 import { useCargos, type Cargo } from "@/hooks/useCargos";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useAuth } from "@/contexts/AuthContext";
@@ -72,7 +73,7 @@ export function NovaVagaDialog({ open, onOpenChange }: Props) {
   const [novaSkillObrig, setNovaSkillObrig] = useState("");
   const [novaSkillDesej, setNovaSkillDesej] = useState("");
 
-  const { data: departamentos = [] } = useParametros("departamento");
+  
   const { data: locais = [] } = useParametros("local_trabalho");
   const { data: jornadas = [] } = useParametros("jornada");
   const { data: beneficiosCatalogo = [] } = useBeneficiosCatalogo(tipoContrato || undefined);
@@ -278,15 +279,11 @@ export function NovaVagaDialog({ open, onOpenChange }: Props) {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Área *</Label>
-                <Select value={area} onValueChange={setArea}>
-                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                  <SelectContent>
-                    {departamentos.map((d) => (
-                      <SelectItem key={d.id} value={d.valor}>{d.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label>Departamento *</Label>
+                <SelectDepartamentoHierarquico
+                  valueTexto={area}
+                  onChange={(dep) => setArea(dep?.valor || "")}
+                />
               </div>
               <div className="space-y-2">
                 <Label>Tipo de contrato *</Label>

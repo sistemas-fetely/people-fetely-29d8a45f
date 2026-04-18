@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { StatCard } from "@/components/StatCard";
 import { useAuth } from "@/contexts/AuthContext";
-import { useParametros } from "@/hooks/useParametros";
+import { SelectDepartamentoHierarquico } from "@/components/shared/SelectDepartamentoHierarquico";
 import { useCargos } from "@/hooks/useCargos";
 import {
   useMovimentacoes, useColaboradoresAtivos, useContratosPJAtivos,
@@ -45,7 +45,7 @@ export default function Movimentacoes() {
   const { data: contratosPJ = [] } = useContratosPJAtivos();
   const { data: cargosRaw = [], isLoading: loadingCargos } = useCargos();
   const cargos = cargosRaw.map((c) => ({ id: c.id, label: c.nome }));
-  const { data: departamentos = [], isLoading: loadingDeptos } = useParametros("departamento");
+  
   const criarMut = useCriarMovimentacao();
   const statusMut = useAtualizarStatusMovimentacao();
   const excluirMut = useExcluirMovimentacao();
@@ -334,18 +334,10 @@ export default function Movimentacoes() {
             {(tipo === "transferencia" || tipo === "mudanca_departamento" || tipo === "promocao") && (
               <div>
                 <Label>Novo Departamento</Label>
-                {loadingDeptos ? (
-                  <div className="flex items-center h-10"><Loader2 className="h-4 w-4 animate-spin" /></div>
-                ) : (
-                  <Select value={deptoNovo} onValueChange={setDeptoNovo}>
-                    <SelectTrigger><SelectValue placeholder="Selecione o departamento" /></SelectTrigger>
-                    <SelectContent>
-                      {departamentos.map((d) => (
-                        <SelectItem key={d.id} value={d.label}>{d.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
+                <SelectDepartamentoHierarquico
+                  valueTexto={deptoNovo}
+                  onChange={(dep) => setDeptoNovo(dep?.label || "")}
+                />
               </div>
             )}
 

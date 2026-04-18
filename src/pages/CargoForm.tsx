@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Loader2, Plus, Sparkles, X } from "lucide-react";
+import { SelectDepartamentoHierarquico } from "@/components/shared/SelectDepartamentoHierarquico";
 import { toast } from "sonner";
 
 const NIVEIS = [
@@ -43,6 +44,7 @@ interface FormState {
   nome: string;
   nivel: string;
   departamento: string;
+  departamento_id: string | null;
   tipo_contrato: string;
   is_clevel: boolean;
   protege_salario: boolean;
@@ -56,7 +58,7 @@ interface FormState {
 
 function buildInitial(): FormState {
   const base: FormState = {
-    nome: "", nivel: "jr", departamento: "", tipo_contrato: "ambos",
+    nome: "", nivel: "jr", departamento: "", departamento_id: null, tipo_contrato: "ambos",
     is_clevel: false, protege_salario: false, missao: "",
     responsabilidades: [], skills_obrigatorias: [], skills_desejadas: [], ferramentas: [],
   };
@@ -189,19 +191,6 @@ export default function CargoForm() {
     }
   }
 
-  const { data: departamentos } = useQuery({
-    queryKey: ["parametros-departamentos"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("parametros")
-        .select("label, valor")
-        .eq("categoria", "departamento")
-        .eq("ativo", true)
-        .order("label");
-      if (error) throw error;
-      return data ?? [];
-    },
-  });
 
   const { data: cargo } = useQuery({
     queryKey: ["cargo", id],
@@ -219,6 +208,7 @@ export default function CargoForm() {
     state.nome = cargo.nome ?? "";
     state.nivel = cargo.nivel ?? "jr";
     state.departamento = cargo.departamento ?? "";
+    state.departamento_id = (cargo as any).departamento_id ?? null;
     state.tipo_contrato = cargo.tipo_contrato ?? "ambos";
     state.is_clevel = cargo.is_clevel ?? false;
     state.protege_salario = cargo.protege_salario ?? false;
@@ -242,6 +232,7 @@ export default function CargoForm() {
         nome: form.nome,
         nivel: form.nivel,
         departamento: form.departamento || null,
+        departamento_id: form.departamento_id,
         tipo_contrato: form.tipo_contrato,
         is_clevel: form.is_clevel,
         protege_salario: form.protege_salario,
@@ -331,14 +322,14 @@ export default function CargoForm() {
 
         <div>
           <Label>Departamento</Label>
-          <Select value={form.departamento ?? ""} onValueChange={(v) => setField("departamento", v)}>
-            <SelectTrigger><SelectValue placeholder="Selecione o departamento" /></SelectTrigger>
-            <SelectContent>
-              {(departamentos ?? []).map((d: any) => (
-                <SelectItem key={d.valor} value={d.label}>{d.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <SelectDepartamentoHierarquico
+            valueId={form.departamento_id}
+            valueTexto={form.departamento}
+            onChange={(dep) => {
+              setField("departamento_id", dep?.id || null);
+              setField("departamento", dep?.label || "");
+            }}
+          />
         </div>
 
         <div className="flex gap-6">

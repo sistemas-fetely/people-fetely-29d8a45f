@@ -29,6 +29,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { useParametros } from "@/hooks/useParametros";
+import { SelectDepartamentoHierarquico } from "@/components/shared/SelectDepartamentoHierarquico";
 import { useCargos } from "@/hooks/useCargos";
 import { toast } from "sonner";
 import { format, parseISO } from "date-fns";
@@ -64,6 +65,7 @@ interface ContratoPJ {
   objeto: string | null;
   tipo_servico: string;
   departamento: string;
+  departamento_id: string | null;
   valor_mensal: number;
   forma_pagamento: string;
   dia_vencimento: number | null;
@@ -94,7 +96,6 @@ function ContratoPJForm({
   const { data: cargosRaw, isLoading: loadingCargos } = useCargos("pj");
   const cargos = (cargosRaw || []).map((c) => ({ id: c.id, label: c.nome }));
   const { data: formasPagamento, isLoading: loadingFormas } = useParametros("forma_pagamento");
-  const { data: departamentos, isLoading: loadingDepts } = useParametros("departamento");
 
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
@@ -109,6 +110,7 @@ function ContratoPJForm({
     objeto: contrato?.objeto || "",
     tipo_servico: contrato?.tipo_servico || "",
     departamento: contrato?.departamento || "",
+    departamento_id: contrato?.departamento_id || null,
     valor_mensal: contrato?.valor_mensal?.toString() || "",
     forma_pagamento: contrato?.forma_pagamento || "transferencia",
     dia_vencimento: contrato?.dia_vencimento?.toString() || "10",
@@ -149,6 +151,7 @@ function ContratoPJForm({
       objeto: form.objeto.trim() || null,
       tipo_servico: form.tipo_servico,
       departamento: form.departamento,
+      departamento_id: form.departamento_id,
       valor_mensal: Number(form.valor_mensal),
       forma_pagamento: form.forma_pagamento,
       dia_vencimento: Number(form.dia_vencimento) || 10,
@@ -257,16 +260,14 @@ function ContratoPJForm({
               </div>
               <div>
                 <Label>Departamento *</Label>
-                {loadingDepts ? <Loader2 className="h-4 w-4 animate-spin mt-2" /> : (
-                  <Select value={form.departamento} onValueChange={(v) => set("departamento", v)}>
-                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                    <SelectContent>
-                      {(departamentos || []).map((d) => (
-                        <SelectItem key={d.id} value={d.label}>{d.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
+                <SelectDepartamentoHierarquico
+                  valueId={form.departamento_id}
+                  valueTexto={form.departamento}
+                  onChange={(dep) => {
+                    set("departamento_id", dep?.id || null);
+                    set("departamento", dep?.label || "");
+                  }}
+                />
               </div>
               <div>
                 <Label>Valor Mensal (R$) *</Label>
