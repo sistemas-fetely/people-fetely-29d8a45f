@@ -64,7 +64,7 @@ export function GruposAcessoTab() {
         .from("user_atribuicoes")
         .select(`
           id, user_id, perfil_id, unidade_id, nivel, valido_ate,
-          profiles!user_id (full_name, email),
+          profiles!user_id (full_name),
           unidades!unidade_id (nome)
         `);
       if (error) throw error;
@@ -76,7 +76,7 @@ export function GruposAcessoTab() {
         nivel: a.nivel,
         valido_ate: a.valido_ate,
         nome: a.profiles?.full_name || "Sem nome",
-        email: a.profiles?.email || "",
+        email: "",
         unidade_nome: a.unidades?.nome || null,
       })) as AtribuicaoExpandida[];
     },
@@ -88,10 +88,14 @@ export function GruposAcessoTab() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("profiles")
-        .select("user_id, full_name, email")
+        .select("user_id, full_name")
         .order("full_name");
       if (error) throw error;
-      return data || [];
+      return (data || []).map((p) => ({
+        user_id: p.user_id,
+        full_name: p.full_name || "Sem nome",
+        email: "",
+      }));
     },
     staleTime: 60 * 1000,
   });
@@ -418,7 +422,7 @@ function AtribuirDialog({
               <SelectContent>
                 {todosUsuarios.map((u) => (
                   <SelectItem key={u.user_id} value={u.user_id}>
-                    {u.full_name} · {u.email}
+                    {u.full_name}
                   </SelectItem>
                 ))}
               </SelectContent>
