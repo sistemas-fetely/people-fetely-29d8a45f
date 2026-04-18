@@ -1557,7 +1557,10 @@ export type Database = {
           criado_por: string | null
           departamentos_aplicaveis: Json | null
           fonte: string | null
+          fonte_arquivo_nome: string | null
+          fonte_arquivo_url: string | null
           id: string
+          lote_importacao_id: string | null
           niveis_aplicaveis: Json | null
           origem: string
           publico_alvo: string
@@ -1578,7 +1581,10 @@ export type Database = {
           criado_por?: string | null
           departamentos_aplicaveis?: Json | null
           fonte?: string | null
+          fonte_arquivo_nome?: string | null
+          fonte_arquivo_url?: string | null
           id?: string
+          lote_importacao_id?: string | null
           niveis_aplicaveis?: Json | null
           origem?: string
           publico_alvo?: string
@@ -1599,7 +1605,10 @@ export type Database = {
           criado_por?: string | null
           departamentos_aplicaveis?: Json | null
           fonte?: string | null
+          fonte_arquivo_nome?: string | null
+          fonte_arquivo_url?: string | null
           id?: string
+          lote_importacao_id?: string | null
           niveis_aplicaveis?: Json | null
           origem?: string
           publico_alvo?: string
@@ -1681,6 +1690,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      fala_fetely_importacoes_pdf: {
+        Row: {
+          arquivo_nome: string
+          arquivo_url: string
+          concluida_em: string | null
+          conhecimentos_criados: number | null
+          created_at: string
+          erro_mensagem: string | null
+          id: string
+          status: string
+          tamanho_bytes: number | null
+          user_id: string
+        }
+        Insert: {
+          arquivo_nome: string
+          arquivo_url: string
+          concluida_em?: string | null
+          conhecimentos_criados?: number | null
+          created_at?: string
+          erro_mensagem?: string | null
+          id?: string
+          status?: string
+          tamanho_bytes?: number | null
+          user_id: string
+        }
+        Update: {
+          arquivo_nome?: string
+          arquivo_url?: string
+          concluida_em?: string | null
+          conhecimentos_criados?: number | null
+          created_at?: string
+          erro_mensagem?: string | null
+          id?: string
+          status?: string
+          tamanho_bytes?: number | null
+          user_id?: string
+        }
+        Relationships: []
       }
       fala_fetely_memoria: {
         Row: {

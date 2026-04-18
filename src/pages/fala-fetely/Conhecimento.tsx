@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  ArrowLeft, Plus, Search, BookOpen, Edit2, EyeOff, X, Loader2, GraduationCap,
+  ArrowLeft, Plus, Search, BookOpen, Edit2, EyeOff, X, Loader2, GraduationCap, FileText,
 } from "lucide-react";
+import { UploadPdfConhecimento } from "@/components/fala-fetely/UploadPdfConhecimento";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -101,7 +102,8 @@ function getCategoriaStyle(c: string) {
 export default function Conhecimento() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { isSuperAdmin, isAdminRH, isLoading } = usePermissions();
+  const { isSuperAdmin, isAdminRH, userRoles, isLoading } = usePermissions();
+  const [mostrarUploadPdf, setMostrarUploadPdf] = useState(false);
   const [itens, setItens] = useState<Conhecimento[]>([]);
   const [sugestoes, setSugestoes] = useState<SugestaoPendente[]>([]);
   const [loading, setLoading] = useState(true);
@@ -329,10 +331,27 @@ export default function Conhecimento() {
               Ensine o Fala Fetely sobre cultura, regras, mercado e diretrizes da empresa
             </p>
           </div>
-          <Button onClick={abrirNovo} className="gap-2 text-white hover:opacity-90" style={{ backgroundColor: "#1A4A3A" }}>
-            <Plus className="h-4 w-4" /> Novo Conhecimento
-          </Button>
+          <div className="flex items-center gap-2">
+            {(isSuperAdmin || isAdminRH || (userRoles as string[]).includes("gestor_rh")) && (
+              <Button
+                variant="outline"
+                onClick={() => setMostrarUploadPdf(true)}
+                className="gap-2"
+              >
+                <FileText className="h-4 w-4" /> A partir de PDF
+              </Button>
+            )}
+            <Button onClick={abrirNovo} className="gap-2 text-white hover:opacity-90" style={{ backgroundColor: "#1A4A3A" }}>
+              <Plus className="h-4 w-4" /> Novo Conhecimento
+            </Button>
+          </div>
         </div>
+
+        <UploadPdfConhecimento
+          open={mostrarUploadPdf}
+          onOpenChange={setMostrarUploadPdf}
+          onConhecimentosCriados={() => void carregar()}
+        />
 
         {/* Filtros */}
         <Card className="p-4 flex gap-3 items-center flex-wrap">
