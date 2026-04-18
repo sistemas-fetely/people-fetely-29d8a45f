@@ -669,6 +669,7 @@ export type Database = {
           ativo: boolean | null
           created_at: string | null
           departamento: string | null
+          departamento_id: string | null
           faixa_clt_f1_max: number | null
           faixa_clt_f1_min: number | null
           faixa_clt_f2_max: number | null
@@ -706,6 +707,7 @@ export type Database = {
           ativo?: boolean | null
           created_at?: string | null
           departamento?: string | null
+          departamento_id?: string | null
           faixa_clt_f1_max?: number | null
           faixa_clt_f1_min?: number | null
           faixa_clt_f2_max?: number | null
@@ -743,6 +745,7 @@ export type Database = {
           ativo?: boolean | null
           created_at?: string | null
           departamento?: string | null
+          departamento_id?: string | null
           faixa_clt_f1_max?: number | null
           faixa_clt_f1_min?: number | null
           faixa_clt_f2_max?: number | null
@@ -776,7 +779,15 @@ export type Database = {
           tipo_contrato?: string
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "cargos_departamento_id_fkey"
+            columns: ["departamento_id"]
+            isOneToOne: false
+            referencedRelation: "parametros"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       classificacao_dados: {
         Row: {
@@ -854,6 +865,7 @@ export type Database = {
           colaborador_id: string
           created_at: string
           departamento: string
+          departamento_id: string | null
           id: string
           percentual_rateio: number
           updated_at: string
@@ -862,6 +874,7 @@ export type Database = {
           colaborador_id: string
           created_at?: string
           departamento: string
+          departamento_id?: string | null
           id?: string
           percentual_rateio?: number
           updated_at?: string
@@ -870,6 +883,7 @@ export type Database = {
           colaborador_id?: string
           created_at?: string
           departamento?: string
+          departamento_id?: string | null
           id?: string
           percentual_rateio?: number
           updated_at?: string
@@ -880,6 +894,13 @@ export type Database = {
             columns: ["colaborador_id"]
             isOneToOne: false
             referencedRelation: "colaboradores_clt"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "colaborador_departamentos_departamento_id_fkey"
+            columns: ["departamento_id"]
+            isOneToOne: false
+            referencedRelation: "parametros"
             referencedColumns: ["id"]
           },
         ]
@@ -974,6 +995,7 @@ export type Database = {
           data_integracao: string | null
           data_nascimento: string
           departamento: string
+          departamento_id: string | null
           email_corporativo: string | null
           email_pessoal: string | null
           estado_civil: string | null
@@ -1041,6 +1063,7 @@ export type Database = {
           data_integracao?: string | null
           data_nascimento: string
           departamento: string
+          departamento_id?: string | null
           email_corporativo?: string | null
           email_pessoal?: string | null
           estado_civil?: string | null
@@ -1108,6 +1131,7 @@ export type Database = {
           data_integracao?: string | null
           data_nascimento?: string
           departamento?: string
+          departamento_id?: string | null
           email_corporativo?: string | null
           email_pessoal?: string | null
           estado_civil?: string | null
@@ -1151,6 +1175,13 @@ export type Database = {
             columns: ["cargo_id"]
             isOneToOne: false
             referencedRelation: "cargos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "colaboradores_clt_departamento_id_fkey"
+            columns: ["departamento_id"]
+            isOneToOne: false
+            referencedRelation: "parametros"
             referencedColumns: ["id"]
           },
           {
@@ -1328,6 +1359,7 @@ export type Database = {
           data_inicio: string
           data_nascimento: string | null
           departamento: string
+          departamento_id: string | null
           dia_vencimento: number | null
           email_pessoal: string | null
           estado_civil: string | null
@@ -1386,6 +1418,7 @@ export type Database = {
           data_inicio: string
           data_nascimento?: string | null
           departamento: string
+          departamento_id?: string | null
           dia_vencimento?: number | null
           email_pessoal?: string | null
           estado_civil?: string | null
@@ -1444,6 +1477,7 @@ export type Database = {
           data_inicio?: string
           data_nascimento?: string | null
           departamento?: string
+          departamento_id?: string | null
           dia_vencimento?: number | null
           email_pessoal?: string | null
           estado_civil?: string | null
@@ -1482,6 +1516,13 @@ export type Database = {
             columns: ["cargo_id"]
             isOneToOne: false
             referencedRelation: "cargos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contratos_pj_departamento_id_fkey"
+            columns: ["departamento_id"]
+            isOneToOne: false
+            referencedRelation: "parametros"
             referencedColumns: ["id"]
           },
           {
@@ -3092,6 +3133,7 @@ export type Database = {
           ordem: number
           pai_valor: string | null
           parent_id: string | null
+          perfil_area_codigo: string | null
           updated_at: string
           valor: string
         }
@@ -3106,6 +3148,7 @@ export type Database = {
           ordem?: number
           pai_valor?: string | null
           parent_id?: string | null
+          perfil_area_codigo?: string | null
           updated_at?: string
           valor: string
         }
@@ -3120,6 +3163,7 @@ export type Database = {
           ordem?: number
           pai_valor?: string | null
           parent_id?: string | null
+          perfil_area_codigo?: string | null
           updated_at?: string
           valor?: string
         }
@@ -3349,6 +3393,7 @@ export type Database = {
           avatar_url: string | null
           colaborador_tipo: string | null
           created_at: string
+          departamento_id: string | null
           department: string | null
           full_name: string | null
           id: string
@@ -3361,6 +3406,7 @@ export type Database = {
           avatar_url?: string | null
           colaborador_tipo?: string | null
           created_at?: string
+          departamento_id?: string | null
           department?: string | null
           full_name?: string | null
           id?: string
@@ -3373,6 +3419,7 @@ export type Database = {
           avatar_url?: string | null
           colaborador_tipo?: string | null
           created_at?: string
+          departamento_id?: string | null
           department?: string | null
           full_name?: string | null
           id?: string
@@ -3380,7 +3427,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_departamento_id_fkey"
+            columns: ["departamento_id"]
+            isOneToOne: false
+            referencedRelation: "parametros"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       remuneracoes: {
         Row: {
@@ -4745,6 +4800,15 @@ export type Database = {
         Returns: number
       }
       nivel_rank: { Args: { _nivel: string }; Returns: number }
+      perfil_area_do_departamento: {
+        Args: { _departamento_id: string }
+        Returns: {
+          area_label: string
+          departamento_label: string
+          perfil_codigo: string
+          perfil_nome: string
+        }[]
+      }
       preview_template_cargo: {
         Args: {
           _area_perfil_codigo: string

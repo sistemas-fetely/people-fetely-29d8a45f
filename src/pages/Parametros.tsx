@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import type { Parametro } from "@/hooks/useParametros";
+import { usePerfisV2 } from "@/hooks/usePerfisV2";
 
 interface CategoriaConfig {
   value: string;
@@ -134,6 +135,12 @@ function ParametroForm({
   const [label, setLabel] = useState(parametro?.label || "");
   const [descricao, setDescricao] = useState(parametro?.descricao || "");
   const [ordem, setOrdem] = useState(parametro?.ordem ?? 0);
+  const [perfilAreaCodigo, setPerfilAreaCodigo] = useState<string | null>(
+    parametro?.perfil_area_codigo || null
+  );
+
+  const { data: perfis } = usePerfisV2();
+  const perfisArea = (perfis || []).filter((p) => p.tipo === "area");
 
   const isSistema = categoria === "sistema";
   const meta = parseSistemaMeta(isSistema ? parametro?.descricao ?? null : null);
@@ -166,14 +173,29 @@ function ParametroForm({
       if (parametro) {
         const { error } = await supabase
           .from("parametros")
-          .update({ valor: valorFinal, label: label.trim(), descricao: descricaoFinal, ordem, pai_valor: paiValor } as any)
+          .update({
+            valor: valorFinal,
+            label: label.trim(),
+            descricao: descricaoFinal,
+            ordem,
+            pai_valor: paiValor,
+            perfil_area_codigo: categoria === "departamento" ? perfilAreaCodigo : null,
+          } as any)
           .eq("id", parametro.id);
         if (error) throw error;
         toast.success("Parâmetro atualizado!");
       } else {
         const { error } = await supabase
           .from("parametros")
-          .insert({ categoria, valor: valorFinal, label: label.trim(), descricao: descricaoFinal, ordem, pai_valor: paiValor } as any);
+          .insert({
+            categoria,
+            valor: valorFinal,
+            label: label.trim(),
+            descricao: descricaoFinal,
+            ordem,
+            pai_valor: paiValor,
+            perfil_area_codigo: categoria === "departamento" ? perfilAreaCodigo : null,
+          } as any);
         if (error) throw error;
         toast.success("Parâmetro adicionado!");
       }
@@ -201,6 +223,30 @@ function ParametroForm({
           {categoria === "departamento" && paiValor && (
             <div className="rounded-md border bg-muted/30 p-2 text-xs text-muted-foreground">
               Este departamento será vinculado à área: <strong>{paiValor}</strong>
+            </div>
+          )}
+          {categoria === "departamento" && (
+            <div className="space-y-2">
+              <Label>Perfil de área aplicado automaticamente</Label>
+              <Select
+                value={perfilAreaCodigo ?? "__nenhum__"}
+                onValueChange={(v) => setPerfilAreaCodigo(v === "__nenhum__" ? null : v)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o perfil" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__nenhum__">Nenhum (só transversal)</SelectItem>
+                  {perfisArea.map((p) => (
+                    <SelectItem key={p.id} value={p.codigo}>
+                      {p.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Quando alguém for alocado neste departamento, este perfil de área será atribuído automaticamente.
+              </p>
             </div>
           )}
           <div className="space-y-2">
@@ -678,11 +724,16 @@ export default function Parametros() {
                                                     (departamentosPorArea[param.valor] || []).map((d) => (
                                                       <span
                                                         key={d.id}
-                                                        className={`text-xs px-2 py-0.5 rounded-full ${
+                                                        className={`text-xs px-2 py-0.5 rounded-full inline-flex items-center gap-1 ${
                                                           d.ativo ? "bg-muted" : "bg-muted/40 text-muted-foreground line-through"
                                                         }`}
                                                       >
                                                         {d.label}
+                                                        {d.perfil_area_codigo && (
+                                                          <span className="text-[10px] text-muted-foreground">
+                                                            · {d.perfil_area_codigo}
+                                                          </span>
+                                                        )}
                                                       </span>
                                                     ))
                                                   ) : (
@@ -703,9 +754,16 @@ export default function Parametros() {
                                                       <div key={d.id} className="flex items-center justify-between rounded px-2 py-1 bg-muted/50">
                                                         <div className="flex items-center gap-2 min-w-0">
                                                           <Switch checked={d.ativo} onCheckedChange={() => handleToggleAtivo(d)} />
-                                                          <span className={`text-xs ${!d.ativo && "text-muted-foreground line-through"}`}>
-                                                            {d.label}
-                                                          </span>
+                                                          <div className="min-w-0">
+                                                            <span className={`text-xs ${!d.ativo && "text-muted-foreground line-through"}`}>
+                                                              {d.label}
+                                                            </span>
+                                                            {d.perfil_area_codigo && (
+                                                              <p className="text-[10px] text-muted-foreground">
+                                                                Perfil aplicado: {d.perfil_area_codigo}
+                                                              </p>
+                                                            )}
+                                                          </div>
                                                         </div>
                                                         <div className="flex gap-1">
                                                           <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => openEdit(d)}>

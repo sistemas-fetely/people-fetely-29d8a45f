@@ -11,6 +11,7 @@ export interface Parametro {
   ordem: number;
   is_clevel: boolean;
   pai_valor: string | null;
+  perfil_area_codigo: string | null;
 }
 
 export function useParametros(categoria: string) {
