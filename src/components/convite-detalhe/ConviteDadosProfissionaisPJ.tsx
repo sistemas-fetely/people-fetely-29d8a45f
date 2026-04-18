@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 import { useParametros } from "@/hooks/useParametros";
 import { useCargos } from "@/hooks/useCargos";
+import { SelectDepartamentoHierarquico } from "@/components/shared/SelectDepartamentoHierarquico";
 
 interface Props {
   dados: Record<string, any>;
@@ -22,7 +23,6 @@ const statusMap: Record<string, string> = {
 };
 
 export function ConviteDadosProfissionaisPJ({ dados, editing, updateField }: Props) {
-  const { data: departamentos, isLoading: loadingDepts } = useParametros("departamento");
   const { data: cargosData, isLoading: loadingCargos } = useCargos("pj");
   const cargos = (cargosData || []).map((c) => ({ id: c.id, valor: c.nome, label: c.nome }));
   const { data: formasPagamento, isLoading: loadingFormas } = useParametros("forma_pagamento");
@@ -76,12 +76,21 @@ export function ConviteDadosProfissionaisPJ({ dados, editing, updateField }: Pro
             (cargos || []).map((c) => ({ value: c.label, label: c.label })),
             loadingCargos
           )}
-          {renderSelect(
-            "Departamento *",
-            "departamento",
-            (departamentos || []).map((d) => ({ value: d.label, label: d.label })),
-            loadingDepts
-          )}
+          <div>
+            <Label className="text-xs text-muted-foreground">Departamento *</Label>
+            {editing ? (
+              <SelectDepartamentoHierarquico
+                valueId={dados.departamento_id || null}
+                valueTexto={dados.departamento || ""}
+                onChange={(dep) => {
+                  updateField("departamento_id", dep?.id || null);
+                  updateField("departamento", dep?.label || "");
+                }}
+              />
+            ) : (
+              <p className="text-sm font-medium">{dados.departamento || "—"}</p>
+            )}
+          </div>
           {renderField("Valor Mensal (R$) *", "valor_mensal", "number", "0,00")}
           {renderSelect(
             "Forma de Pagamento",
