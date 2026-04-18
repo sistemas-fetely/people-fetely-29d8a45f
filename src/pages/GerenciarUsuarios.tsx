@@ -655,29 +655,7 @@ export default function GerenciarUsuarios() {
                           })()}
                         </TableCell>
                         <TableCell>
-                          <div className="flex flex-wrap gap-1">
-                            {roles.map((role) => {
-                              const legacy = isLegacyRole(role as AppRole);
-                              const roleRecord = getUserRoleRecord(profile.user_id, role as AppRole) as { nivel?: string | null } | undefined;
-                              return (
-                                <Badge
-                                  key={role}
-                                  variant="secondary"
-                                  className={`text-xs ${legacy ? "border border-amber-400 text-amber-700 bg-amber-50" : ""} ${role === "gestor_direto" && !isGestorManual(profile.user_id) ? "border border-dashed border-muted-foreground/40" : ""}`}
-                                  title={legacy ? "Perfil legado — recomenda-se substituir pelo equivalente novo" : (role === "gestor_direto" ? (isGestorManual(profile.user_id) ? "Atribuído manualmente" : "Atribuído automaticamente") : undefined)}
-                                >
-                                  {legacy && "⚠️ "}
-                                  {ROLE_LABELS[role as AppRole] || role}
-                                  {roleRecord?.nivel && (
-                                    <span className="ml-1 text-[10px] opacity-70">({roleRecord.nivel})</span>
-                                  )}
-                                  {role === "gestor_direto" && !isGestorManual(profile.user_id) && (
-                                    <span className="ml-1 text-[10px] text-muted-foreground">(auto)</span>
-                                  )}
-                                </Badge>
-                              );
-                            })}
-                          </div>
+                          {renderAtribuicoesV2(profile.user_id, atribuicoesV2, perfisV2, unidadesV2)}
                         </TableCell>
                         <TableCell>
                           {isBanned ? (
