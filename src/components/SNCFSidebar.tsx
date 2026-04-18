@@ -1,7 +1,8 @@
 import {
   LayoutGrid, ClipboardList, UsersRound, UserCog, Workflow,
-  LogOut, ArrowLeft, Network, Sparkles, BookOpen,
+  LogOut, ArrowLeft, Network, Sparkles, BookOpen, Shield,
 } from "lucide-react";
+import { Link } from "react-router-dom";
 import { NavLink } from "@/components/NavLink";
 import { cn } from "@/lib/utils";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -211,6 +212,13 @@ export function SNCFSidebar() {
                 </Badge>
               </div>
             </div>
+            <Link
+              to="/meus-dados"
+              className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-xs text-sidebar-muted hover:bg-sidebar-accent hover:text-sidebar-foreground transition-all duration-200"
+            >
+              <Shield className="h-3.5 w-3.5" />
+              Meus Dados
+            </Link>
             <button
               onClick={signOut}
               className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-xs text-sidebar-muted hover:bg-sidebar-accent hover:text-sidebar-foreground transition-all duration-200"
