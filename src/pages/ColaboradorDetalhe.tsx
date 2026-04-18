@@ -540,6 +540,15 @@ export default function ColaboradorDetalhe() {
           </CardContent>
         </Card>
 
+        {ehCLevel({ cargo: colaborador.cargo, nivel: (colaborador as any).nivel ?? null }) && !isSuperAdmin && (
+          <div className="flex items-start gap-2 rounded-lg border border-warning/30 bg-warning/5 px-3 py-2 text-sm text-warning-foreground">
+            <Shield className="h-4 w-4 mt-0.5 text-warning" />
+            <p className="text-muted-foreground">
+              Algumas informações são restritas por política de C-Level.
+            </p>
+          </div>
+        )}
+
         <Tabs defaultValue="pessoais">
           <TabsList className="w-full justify-start">
             <TabsTrigger value="pessoais" className="gap-1"><User className="h-3.5 w-3.5" /> Dados Pessoais</TabsTrigger>
