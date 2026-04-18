@@ -94,7 +94,16 @@ const NIVEL_SHORT: Record<string, string> = {
 // Roles que aceitam níveis (não faz sentido para super_admin / colaborador comum)
 const ROLES_COM_NIVEIS = new Set([
   "rh", "ti", "financeiro", "administrativo", "operacional", "fiscal",
-  "recrutamento", "gestao_direta", "estagiario",
+  "recrutamento", "gestao_direta",
+]);
+
+// Roles novas (substituem as legadas) e roles legadas (mantidas por compat)
+const NEW_ROLES = new Set([
+  "rh", "gestao_direta", "administrativo", "operacional",
+  "ti", "recrutamento", "estagiario",
+]);
+const LEGACY_ROLES = new Set([
+  "admin_rh", "gestor_rh", "gestor_direto", "admin_ti", "recrutador",
 ]);
 
 
@@ -526,7 +535,19 @@ export default function ConfigurarPerfisTab() {
                       <Shield className="h-4 w-4 text-muted-foreground shrink-0" />
                     )}
                     <div className="min-w-0">
-                      <p className="text-sm font-medium truncate">{ROLE_LABELS[role.name] || role.name}</p>
+                      <div className="flex items-center gap-1.5">
+                        <p className="text-sm font-medium truncate">{ROLE_LABELS[role.name] || role.name}</p>
+                        {NEW_ROLES.has(role.name) && (
+                          <Badge variant="outline" className="text-[8px] px-1 py-0 border-emerald-400 text-emerald-700 shrink-0">
+                            Nova
+                          </Badge>
+                        )}
+                        {LEGACY_ROLES.has(role.name) && (
+                          <Badge variant="outline" className="text-[8px] px-1 py-0 border-amber-400 text-amber-700 shrink-0">
+                            Legado
+                          </Badge>
+                        )}
+                      </div>
                       <p className="text-[10px] text-muted-foreground truncate">{role.description || "—"}</p>
                     </div>
                   </div>
@@ -560,8 +581,18 @@ export default function ConfigurarPerfisTab() {
                 <div className="flex items-center gap-3">
                   <Settings2 className="h-5 w-5 text-primary" />
                   <div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <h2 className="text-lg font-bold">{ROLE_LABELS[currentRole.name] || currentRole.name}</h2>
+                      {NEW_ROLES.has(currentRole.name) && (
+                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-emerald-400 text-emerald-700">
+                          Nova
+                        </Badge>
+                      )}
+                      {LEGACY_ROLES.has(currentRole.name) && (
+                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-amber-400 text-amber-700">
+                          Legado
+                        </Badge>
+                      )}
                       {isDirty && (
                         <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100 gap-1">
                           <AlertTriangle className="h-3 w-3" />
@@ -570,6 +601,11 @@ export default function ConfigurarPerfisTab() {
                       )}
                     </div>
                     <p className="text-xs text-muted-foreground">{currentRole.description}</p>
+                    {ROLES_COM_NIVEIS.has(currentRole.name) && (
+                      <p className="text-[11px] text-muted-foreground mt-1 italic">
+                        Esta role suporta níveis: Estágio, Assistente, Analista, Coordenador, Gerente, Diretor.
+                      </p>
+                    )}
                   </div>
                 </div>
                 <div className="flex items-center gap-2">

@@ -2,7 +2,7 @@ import { useState, Fragment } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { Loader2, RefreshCw, ArrowRight } from "lucide-react";
+import { Loader2, RefreshCw, ArrowRight, Info } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -231,6 +231,17 @@ export default function MatrizPermissoes({ onNavigateToPerfis }: MatrizPermissoe
         </div>
       </CardHeader>
       <CardContent>
+        <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50/60 dark:border-blue-900/50 dark:bg-blue-950/20 p-3 flex items-start gap-2">
+          <Info className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5 shrink-0" />
+          <div className="text-xs text-blue-900 dark:text-blue-200 space-y-1">
+            <p className="font-semibold">Matriz atualizada com 16 perfis e 6 níveis hierárquicos</p>
+            <ul className="list-disc list-inside space-y-0.5 text-blue-800/90 dark:text-blue-300/90">
+              <li>Perfis marcados como <span className="font-medium">Legado</span> serão substituídos pelos novos equivalentes (rh, gestao_direta, ti, recrutamento).</li>
+              <li>Perfis <span className="font-medium">Novos</span> suportam granularidade por nível (ex.: "Fechar competência" só a partir de Coordenador).</li>
+              <li>Passe o mouse nas células para ver detalhes de nível mínimo exigido.</li>
+            </ul>
+          </div>
+        </div>
         <div className="overflow-x-auto">
           <TooltipProvider delayDuration={200}>
             <table className="w-full text-sm">
@@ -246,6 +257,11 @@ export default function MatrizPermissoes({ onNavigateToPerfis }: MatrizPermissoe
                         {r.isNew && (
                           <Badge variant="outline" className="text-[8px] px-1 py-0 border-emerald-400 text-emerald-700">
                             Nova
+                          </Badge>
+                        )}
+                        {r.isLegacy && (
+                          <Badge variant="outline" className="text-[8px] px-1 py-0 border-amber-400 text-amber-700">
+                            Legado
                           </Badge>
                         )}
                         <span className="text-[10px] text-muted-foreground">
