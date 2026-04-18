@@ -716,6 +716,12 @@ export default function FalaFetely() {
                 <p className="text-[10px] text-center text-muted-foreground mt-2">
                   ✌️ Sou só uma IA — confirme com seu gestor antes de decisões importantes
                 </p>
+                <p className="text-[10px] text-center text-muted-foreground/70 mt-0.5">
+                  Suas conversas são privadas.{" "}
+                  <button className="underline hover:text-foreground" onClick={() => setShowPrivacidade(true)}>
+                    Gerenciar dados
+                  </button>
+                </p>
               </div>
             </div>
           </>
