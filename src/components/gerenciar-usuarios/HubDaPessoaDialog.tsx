@@ -342,9 +342,20 @@ export function HubDaPessoaDialog({
                         className="mt-0.5"
                       />
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold leading-tight">
-                          {p.nome}
-                        </p>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <p className="text-sm font-semibold leading-tight">
+                            {p.nome}
+                          </p>
+                          {perfisDeTemplate.has(p.id) && (
+                            <Badge
+                              variant="outline"
+                              className="text-[9px] py-0 px-1.5 h-4 gap-0.5 font-normal"
+                            >
+                              <ClipboardList className="h-2.5 w-2.5" />
+                              do template
+                            </Badge>
+                          )}
+                        </div>
                         {p.descricao && (
                           <p className="text-[11px] text-muted-foreground mt-0.5 leading-snug">
                             {p.descricao}
@@ -395,9 +406,20 @@ export function HubDaPessoaDialog({
                           className="text-left w-full"
                           onClick={() => toggleArea(p.id)}
                         >
-                          <p className="text-sm font-semibold leading-tight">
-                            {p.nome}
-                          </p>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <p className="text-sm font-semibold leading-tight">
+                              {p.nome}
+                            </p>
+                            {perfisDeTemplate.has(p.id) && (
+                              <Badge
+                                variant="outline"
+                                className="text-[9px] py-0 px-1.5 h-4 gap-0.5 font-normal"
+                              >
+                                <ClipboardList className="h-2.5 w-2.5" />
+                                do template
+                              </Badge>
+                            )}
+                          </div>
                           {p.descricao && (
                             <p className="text-[11px] text-muted-foreground mt-0.5 leading-snug">
                               {p.descricao}
