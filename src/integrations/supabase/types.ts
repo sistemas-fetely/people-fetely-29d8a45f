@@ -3090,6 +3090,7 @@ export type Database = {
           is_clevel: boolean | null
           label: string
           ordem: number
+          pai_valor: string | null
           parent_id: string | null
           updated_at: string
           valor: string
@@ -3103,6 +3104,7 @@ export type Database = {
           is_clevel?: boolean | null
           label: string
           ordem?: number
+          pai_valor?: string | null
           parent_id?: string | null
           updated_at?: string
           valor: string
@@ -3116,6 +3118,7 @@ export type Database = {
           is_clevel?: boolean | null
           label?: string
           ordem?: number
+          pai_valor?: string | null
           parent_id?: string | null
           updated_at?: string
           valor?: string
