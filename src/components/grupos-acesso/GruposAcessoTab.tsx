@@ -363,6 +363,7 @@ export function GruposAcessoTab() {
         }
         unidades={unidades || []}
         todosUsuarios={todosUsuarios || []}
+        atribuicoesExistentes={atribuicoes || []}
         onSucesso={() => {
           queryClient.invalidateQueries({ queryKey: ["atribuicoes-com-users"] });
           queryClient.invalidateQueries({ queryKey: ["minhas-atribuicoes"] });
