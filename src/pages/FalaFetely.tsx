@@ -5,6 +5,7 @@ import remarkGfm from "remark-gfm";
 import {
   ArrowLeft, Plus, Send, Sparkles, MessageCircle, ThumbsUp, ThumbsDown, Copy,
   Globe, Gift, Workflow, Users, MessageCircleHeart, GraduationCap, Brain,
+  MoreHorizontal, Trash2, Shield,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +15,29 @@ import { toast } from "@/hooks/use-toast";
 import { usePermissions } from "@/hooks/usePermissions";
 import { EnsinarDialog } from "@/components/fala-fetely/EnsinarDialog";
 import { FeedbackNegativoDialog } from "@/components/fala-fetely/FeedbackNegativoDialog";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 
 interface Conversa {
   id: string;
@@ -80,6 +104,9 @@ export default function FalaFetely() {
   const [mensagemEnsinando, setMensagemEnsinando] = useState<Mensagem | null>(null);
   const [feedbackNegativo, setFeedbackNegativo] = useState<Mensagem | null>(null);
   const [feedbacksDados, setFeedbacksDados] = useState<Map<string, boolean>>(new Map());
+  const [conversaParaExcluir, setConversaParaExcluir] = useState<Conversa | null>(null);
+  const [showPrivacidade, setShowPrivacidade] = useState(false);
+  const [confirmarLimparTudo, setConfirmarLimparTudo] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const podeEnsinar = useMemo(
@@ -359,6 +386,48 @@ export default function FalaFetely() {
     toast({ title: "Copiado ✨" });
   }
 
+  async function excluirConversa() {
+    if (!conversaParaExcluir || !user) return;
+    try {
+      const { error } = await supabase
+        .from("fala_fetely_conversas")
+        .delete()
+        .eq("id", conversaParaExcluir.id)
+        .eq("user_id", user.id);
+      if (error) throw error;
+      if (conversaAtiva?.id === conversaParaExcluir.id) {
+        setConversaAtiva(null);
+        setMensagens([]);
+        setFeedbacksDados(new Map());
+      }
+      setConversas((prev) => prev.filter((c) => c.id !== conversaParaExcluir.id));
+      setConversaParaExcluir(null);
+      toast({ title: "Conversa excluída" });
+    } catch (e) {
+      toast({ title: "Erro", description: e instanceof Error ? e.message : "Erro inesperado", variant: "destructive" });
+    }
+  }
+
+  async function limparTudo() {
+    if (!user) return;
+    try {
+      const { error } = await supabase
+        .from("fala_fetely_conversas")
+        .delete()
+        .eq("user_id", user.id);
+      if (error) throw error;
+      setConversas([]);
+      setConversaAtiva(null);
+      setMensagens([]);
+      setFeedbacksDados(new Map());
+      setConfirmarLimparTudo(false);
+      setShowPrivacidade(false);
+      toast({ title: "Histórico apagado", description: "Todas as conversas foram excluídas." });
+    } catch (e) {
+      toast({ title: "Erro", description: e instanceof Error ? e.message : "Erro inesperado", variant: "destructive" });
+    }
+  }
+
   return (
     <div className="h-screen flex" style={{ background: "linear-gradient(135deg, #FFF8F3 0%, #F0F7F4 100%)" }}>
       {/* Sidebar de conversas */}
@@ -375,19 +444,41 @@ export default function FalaFetely() {
             </p>
           ) : (
             conversas.map((c) => (
-              <button
-                key={c.id}
-                onClick={() => abrirConversa(c)}
-                className={`w-full text-left p-2 rounded-lg text-sm hover:bg-muted transition-all ${
-                  conversaAtiva?.id === c.id ? "bg-muted" : ""
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  <MessageCircle className="h-3 w-3 flex-shrink-0 text-muted-foreground" />
-                  <span className="truncate">{c.titulo || "Conversa"}</span>
+              <div key={c.id} className="group relative">
+                <button
+                  onClick={() => abrirConversa(c)}
+                  className={`w-full text-left p-2 pr-8 rounded-lg text-sm hover:bg-muted transition-all ${
+                    conversaAtiva?.id === c.id ? "bg-muted" : ""
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <MessageCircle className="h-3 w-3 flex-shrink-0 text-muted-foreground" />
+                    <span className="truncate">{c.titulo || "Conversa"}</span>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground mt-0.5 ml-5">{formatRelativo(c.updated_at)}</p>
+                </button>
+                <div className="absolute right-1 top-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        className="p-1 hover:bg-background rounded"
+                        onClick={(e) => e.stopPropagation()}
+                        title="Ações"
+                      >
+                        <MoreHorizontal className="h-3 w-3" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem
+                        onClick={() => setConversaParaExcluir(c)}
+                        className="text-destructive focus:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" /> Excluir conversa
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
-                <p className="text-[10px] text-muted-foreground mt-0.5 ml-5">{formatRelativo(c.updated_at)}</p>
-              </button>
+              </div>
             ))
           )}
         </div>
@@ -414,15 +505,26 @@ export default function FalaFetely() {
               </span>
             )}
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate("/fala-fetely/memorias")}
-            className="gap-1 text-xs"
-            title="Minhas memórias"
-          >
-            <Brain className="h-3 w-3" /> Minhas Memórias
-          </Button>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowPrivacidade(true)}
+              className="gap-1 text-xs"
+              title="Privacidade"
+            >
+              <Shield className="h-3 w-3" /> Privacidade
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate("/fala-fetely/memorias")}
+              className="gap-1 text-xs"
+              title="Minhas memórias"
+            >
+              <Brain className="h-3 w-3" /> Minhas Memórias
+            </Button>
+          </div>
         </header>
 
         {!conversaAtiva || mensagens.length === 0 ? (
@@ -481,6 +583,12 @@ export default function FalaFetely() {
               </form>
               <p className="text-[10px] text-muted-foreground">
                 ✌️ Sou só uma IA — confirme com seu gestor antes de decisões importantes
+              </p>
+              <p className="text-[10px] text-center text-muted-foreground/70 mt-0.5">
+                Suas conversas são privadas.{" "}
+                <button className="underline hover:text-foreground" onClick={() => setShowPrivacidade(true)}>
+                  Gerenciar dados
+                </button>
               </p>
             </div>
           </div>
@@ -608,6 +716,12 @@ export default function FalaFetely() {
                 <p className="text-[10px] text-center text-muted-foreground mt-2">
                   ✌️ Sou só uma IA — confirme com seu gestor antes de decisões importantes
                 </p>
+                <p className="text-[10px] text-center text-muted-foreground/70 mt-0.5">
+                  Suas conversas são privadas.{" "}
+                  <button className="underline hover:text-foreground" onClick={() => setShowPrivacidade(true)}>
+                    Gerenciar dados
+                  </button>
+                </p>
               </div>
             </div>
           </>
@@ -640,6 +754,121 @@ export default function FalaFetely() {
           }}
         />
       )}
+
+      {/* AlertDialog: confirmar exclusão de uma conversa */}
+      <AlertDialog
+        open={!!conversaParaExcluir}
+        onOpenChange={(open) => !open && setConversaParaExcluir(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir esta conversa?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Essa ação é permanente e não pode ser desfeita. Todas as mensagens, feedbacks e
+              sugestões relacionadas serão apagadas.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={excluirConversa}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Dialog: Privacidade e seus dados */}
+      <Dialog open={showPrivacidade} onOpenChange={setShowPrivacidade}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Shield className="h-5 w-5" /> Privacidade e seus dados
+            </DialogTitle>
+            <DialogDescription>
+              Pela LGPD, você tem direito de controlar os dados que o Fala Fetely guarda sobre suas
+              conversas.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="border rounded-lg p-4 space-y-2">
+              <h3 className="font-medium text-sm flex items-center gap-2">
+                <MessageCircle className="h-4 w-4" /> Suas conversas
+              </h3>
+              <p className="text-xs text-muted-foreground">
+                Você tem {conversas.length} conversa(s) salva(s). Cada conversa é privada e só você
+                pode acessar.
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setConfirmarLimparTudo(true)}
+                className="gap-2 text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
+                disabled={conversas.length === 0}
+              >
+                <Trash2 className="h-4 w-4" /> Limpar todo o histórico
+              </Button>
+            </div>
+            <div className="border rounded-lg p-4 space-y-2">
+              <h3 className="font-medium text-sm flex items-center gap-2">
+                <Brain className="h-4 w-4" /> Suas memórias
+              </h3>
+              <p className="text-xs text-muted-foreground">
+                O Fala Fetely pode lembrar de fatos sobre você para melhorar as conversas. Veja e
+                gerencie o que ele lembra.
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setShowPrivacidade(false);
+                  navigate("/fala-fetely/memorias");
+                }}
+                className="gap-2"
+              >
+                <Brain className="h-4 w-4" /> Ver minhas memórias
+              </Button>
+            </div>
+            <div className="border rounded-lg p-4 bg-muted/50">
+              <h3 className="font-medium text-sm mb-2">Como seus dados são usados?</h3>
+              <ul className="text-xs text-muted-foreground space-y-1">
+                <li>• Suas conversas são privadas — apenas você tem acesso</li>
+                <li>• O Fala Fetely processa suas perguntas para respondê-las</li>
+                <li>• Memórias extraídas ficam guardadas até você removê-las</li>
+                <li>• Você pode excluir qualquer dado a qualquer momento</li>
+              </ul>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* AlertDialog: confirmar limpeza total */}
+      <AlertDialog open={confirmarLimparTudo} onOpenChange={setConfirmarLimparTudo}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Apagar TODAS as conversas?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Essa ação vai deletar permanentemente todas as suas {conversas.length} conversa(s),
+              incluindo mensagens, feedbacks e histórico. Essa ação não pode ser desfeita.
+              <br />
+              <br />
+              <strong>Suas memórias não serão apagadas.</strong> Se quiser remover memórias também,
+              acesse a tela "Minhas Memórias".
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={limparTudo}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Sim, apagar tudo
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
