@@ -2,7 +2,7 @@ import { useState, Fragment, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { Loader2, RefreshCw, ArrowRight, Info, AlertTriangle } from "lucide-react";
+import { Loader2, RefreshCw, Info, AlertTriangle, Scale, Sparkles } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,8 +17,12 @@ import {
 import {
   Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
+} from "@/components/ui/dialog";
 import type { Database } from "@/integrations/supabase/types";
 import { MODULES, MODULE_CATEGORIES } from "@/hooks/usePermissions";
+import { CelulaPermissaoEditavel } from "./CelulaPermissaoEditavel";
 
 type AppRole = Database["public"]["Enums"]["app_role"];
 
@@ -103,12 +107,30 @@ interface RolePermissionRow {
 }
 
 interface MatrizPermissoesProps {
+  // mantido para compat, mas não usado mais
   onNavigateToPerfis?: () => void;
 }
 
 interface SharedCtx {
   perms: RolePermissionRow[];
   roleCounts: Record<string, number>;
+  podeEditar: boolean;
+}
+
+// Ações especiais por módulo (para popover multi-action)
+const ACOES_ESPECIAIS_POR_MODULO: Record<string, string[]> = {
+  ferias: ["aprovar"],
+  notas_fiscais: ["aprovar", "enviar_email"],
+  folha_pagamento: ["fechar", "exportar"],
+  pagamentos_pj: ["aprovar", "exportar"],
+  convites: ["enviar"],
+  relatorios: ["exportar"],
+};
+
+function getAcoesDoModulo(moduleKey: string): string[] {
+  const base = ["view", "create", "edit", "delete"];
+  const especiais = ACOES_ESPECIAIS_POR_MODULO[moduleKey] || [];
+  return [...base, ...especiais];
 }
 
 // ============================================================================
@@ -204,7 +226,7 @@ function AlertasCard({ alertas }: { alertas: string[] }) {
 // ============================================================================
 // Modo 1: Perfil Único
 // ============================================================================
-function ModoPerfilUnico({ perms, roleCounts }: SharedCtx) {
+function ModoPerfilUnico({ perms, roleCounts, podeEditar }: SharedCtx) {
   const [roleSelecionada, setRoleSelecionada] = useState<string>(MATRIX_ROLES[0].role);
   const roleInfo = MATRIX_ROLES.find((r) => r.role === roleSelecionada)!;
   const userCount = roleCounts[roleSelecionada] ?? 0;
@@ -255,7 +277,7 @@ function ModoPerfilUnico({ perms, roleCounts }: SharedCtx) {
             </CardHeader>
             <CardContent className="pt-0">
               {modulesComAcesso.map((m) => {
-                const acoes = ["view", "create", "edit", "delete"];
+                const acoes = getAcoesDoModulo(m.key);
                 return (
                   <div key={m.key} className="flex items-center justify-between py-2 border-b last:border-0 gap-2 flex-wrap">
                     <div className="flex items-center gap-2">
@@ -272,28 +294,44 @@ function ModoPerfilUnico({ perms, roleCounts }: SharedCtx) {
                     <div className="flex gap-1 flex-wrap">
                       {acoes.map((action) => {
                         const perm = getPermissao(perms, roleSelecionada, m.key, action);
-                        return (
+                        const actionLabel = PERMISSION_LABELS[action] || action;
+                        const pill = (
+                          <Badge
+                            variant={perm.granted ? "default" : "outline"}
+                            className={`text-[10px] ${podeEditar ? "cursor-pointer" : "cursor-default"} ${!perm.granted ? "opacity-50" : ""}`}
+                          >
+                            {action}
+                            {perm.nivel_minimo && " ⚡"}
+                          </Badge>
+                        );
+                        const tooltipBody = (
                           <Tooltip key={action}>
                             <TooltipTrigger asChild>
-                              <Badge
-                                variant={perm.granted ? "default" : "outline"}
-                                className={`text-[10px] cursor-default ${!perm.granted ? "opacity-50" : ""}`}
-                              >
-                                {action}
-                                {perm.nivel_minimo && " ⚡"}
-                              </Badge>
+                              <span>{pill}</span>
                             </TooltipTrigger>
-                            {perm.nivel_minimo && (
-                              <TooltipContent className="text-xs">
-                                Requer nível mínimo: {NIVEL_LABELS[perm.nivel_minimo] || perm.nivel_minimo}
-                              </TooltipContent>
-                            )}
-                            {!perm.nivel_minimo && (
-                              <TooltipContent className="text-xs">
-                                {perm.granted ? "Permitido" : "Sem permissão"}
-                              </TooltipContent>
-                            )}
+                            <TooltipContent className="text-xs">
+                              {perm.nivel_minimo
+                                ? `Requer nível mínimo: ${NIVEL_LABELS[perm.nivel_minimo] || perm.nivel_minimo}`
+                                : perm.granted ? "Permitido" : "Sem permissão"}
+                            </TooltipContent>
                           </Tooltip>
+                        );
+                        if (!podeEditar) return tooltipBody;
+                        return (
+                          <CelulaPermissaoEditavel
+                            key={action}
+                            roleName={roleSelecionada}
+                            roleLabel={roleInfo.label}
+                            moduleName={m.key}
+                            moduleLabel={m.label}
+                            action={action}
+                            actionLabel={actionLabel}
+                            granted={perm.granted}
+                            nivelMinimo={perm.nivel_minimo}
+                            usuariosAfetados={userCount}
+                          >
+                            {tooltipBody}
+                          </CelulaPermissaoEditavel>
                         );
                       })}
                     </div>
@@ -311,7 +349,7 @@ function ModoPerfilUnico({ perms, roleCounts }: SharedCtx) {
 // ============================================================================
 // Modo 2: Módulo Único
 // ============================================================================
-function ModoModuloUnico({ perms, roleCounts }: SharedCtx) {
+function ModoModuloUnico({ perms, roleCounts, podeEditar }: SharedCtx) {
   const [moduleSelecionado, setModuleSelecionado] = useState<string>(MODULES[0].key);
   const modInfo = MODULES.find((m) => m.key === moduleSelecionado)!;
   const sensivel = ehModuloSensivel(moduleSelecionado);
@@ -405,11 +443,39 @@ function ModoModuloUnico({ perms, roleCounts }: SharedCtx) {
                     </td>
                     <td className="p-3">
                       <div className="flex flex-wrap gap-1">
-                        {modPerms.map((p) => (
-                          <Badge key={p.permission} variant="default" className="text-[10px]">
-                            {p.permission}
-                          </Badge>
-                        ))}
+                        {getAcoesDoModulo(moduleSelecionado).map((acao) => {
+                          const perm = getPermissao(perms, r.role, moduleSelecionado, acao);
+                          const userCount = roleCounts[r.role] ?? 0;
+                          const actionLabel = PERMISSION_LABELS[acao] || acao;
+                          const pill = (
+                            <Badge
+                              variant={perm.granted ? "default" : "outline"}
+                              className={`text-[10px] ${podeEditar && r.role !== "super_admin" ? "cursor-pointer" : "cursor-default"} ${!perm.granted ? "opacity-50" : ""}`}
+                            >
+                              {acao}
+                              {perm.nivel_minimo && " ⚡"}
+                            </Badge>
+                          );
+                          if (!podeEditar || r.role === "super_admin") {
+                            return <span key={acao}>{pill}</span>;
+                          }
+                          return (
+                            <CelulaPermissaoEditavel
+                              key={acao}
+                              roleName={r.role}
+                              roleLabel={r.label}
+                              moduleName={moduleSelecionado}
+                              moduleLabel={modInfo.label}
+                              action={acao}
+                              actionLabel={actionLabel}
+                              granted={perm.granted}
+                              nivelMinimo={perm.nivel_minimo}
+                              usuariosAfetados={userCount}
+                            >
+                              {pill}
+                            </CelulaPermissaoEditavel>
+                          );
+                        })}
                       </div>
                     </td>
                     <td className="p-3 text-xs text-muted-foreground">
@@ -442,7 +508,7 @@ function ModoModuloUnico({ perms, roleCounts }: SharedCtx) {
 // ============================================================================
 // Modo 3: Comparar Perfis
 // ============================================================================
-function ModoCompararPerfis({ perms, roleCounts }: SharedCtx) {
+function ModoCompararPerfis({ perms, roleCounts }: Omit<SharedCtx, "podeEditar">) {
   const [selecionados, setSelecionados] = useState<string[]>([MATRIX_ROLES[1].role, MATRIX_ROLES[2].role]);
   const [apenasDivergentes, setApenasDivergentes] = useState(true);
   const alertas = useMemo(() => calcularAlertas(perms), [perms]);
@@ -600,7 +666,7 @@ function ModoCompararPerfis({ perms, roleCounts }: SharedCtx) {
 // ============================================================================
 // Modo 4: Matriz Completa (preserva implementação original)
 // ============================================================================
-function ModoMatrizCompleta({ perms, roleCounts }: SharedCtx) {
+function ModoMatrizCompleta({ perms, roleCounts, podeEditar }: SharedCtx) {
   const alertas = useMemo(() => calcularAlertas(perms), [perms]);
 
   const getAllModulePermNames = (moduleName: string) => {
@@ -632,6 +698,18 @@ function ModoMatrizCompleta({ perms, roleCounts }: SharedCtx) {
   return (
     <div className="space-y-4">
       <AlertasCard alertas={alertas} />
+
+      {podeEditar && (
+        <div className="rounded-lg border border-emerald-200 bg-emerald-50/60 dark:border-emerald-900/50 dark:bg-emerald-950/20 p-3 flex items-start gap-2">
+          <Sparkles className="h-4 w-4 text-emerald-600 dark:text-emerald-400 mt-0.5 shrink-0" />
+          <div className="text-xs text-emerald-900 dark:text-emerald-200">
+            <p className="font-semibold">🌷 Edição direta ativada</p>
+            <p className="text-emerald-800/90 dark:text-emerald-300/90 mt-0.5">
+              Clique em qualquer bolinha colorida para alterar a permissão. Módulos com 🔐 pedem confirmação extra.
+            </p>
+          </div>
+        </div>
+      )}
 
       <div className="rounded-lg border border-blue-200 bg-blue-50/60 dark:border-blue-900/50 dark:bg-blue-950/20 p-3 flex items-start gap-2">
         <Info className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5 shrink-0" />
@@ -710,16 +788,41 @@ function ModoMatrizCompleta({ perms, roleCounts }: SharedCtx) {
                     {MATRIX_ROLES.map((r) => {
                       const level = getLevel(perms, r.role, mod.key);
                       const tip = getTooltipContent(r.role, mod.key, r.label, mod.label);
+                      const dotEl = (
+                        <span className={`inline-block h-3.5 w-3.5 rounded-full ${podeEditar && r.role !== "super_admin" ? "cursor-pointer" : "cursor-default"} ${getDot(level)}`} />
+                      );
+                      const tooltipEl = (
+                        <Tooltip>
+                          <TooltipTrigger asChild>{dotEl}</TooltipTrigger>
+                          <TooltipContent side="top" className="max-w-[320px] whitespace-pre-line text-xs">
+                            {tip}
+                          </TooltipContent>
+                        </Tooltip>
+                      );
+                      if (!podeEditar || r.role === "super_admin") {
+                        return (
+                          <td key={r.role} className="text-center py-2.5 px-2">
+                            {tooltipEl}
+                          </td>
+                        );
+                      }
+                      const acoesDoModulo = getAcoesDoModulo(mod.key);
                       return (
                         <td key={r.role} className="text-center py-2.5 px-2">
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <span className={`inline-block h-3.5 w-3.5 rounded-full cursor-default ${getDot(level)}`} />
-                            </TooltipTrigger>
-                            <TooltipContent side="top" className="max-w-[320px] whitespace-pre-line text-xs">
-                              {tip}
-                            </TooltipContent>
-                          </Tooltip>
+                          <CelulaPermissaoEditavel
+                            roleName={r.role}
+                            roleLabel={r.label}
+                            moduleName={mod.key}
+                            moduleLabel={mod.label}
+                            granted={false}
+                            nivelMinimo={null}
+                            usuariosAfetados={roleCounts[r.role] ?? 0}
+                            multiAction
+                            acoesDisponiveis={acoesDoModulo.map((a) => ({ key: a, label: PERMISSION_LABELS[a] || a }))}
+                            getPermissaoForAction={(acao) => getPermissao(perms, r.role, mod.key, acao)}
+                          >
+                            {tooltipEl}
+                          </CelulaPermissaoEditavel>
                         </td>
                       );
                     })}
@@ -737,11 +840,13 @@ function ModoMatrizCompleta({ perms, roleCounts }: SharedCtx) {
 // ============================================================================
 // Componente principal
 // ============================================================================
-export default function MatrizPermissoes({ onNavigateToPerfis }: MatrizPermissoesProps) {
+export default function MatrizPermissoes({ onNavigateToPerfis: _onNavigateToPerfis }: MatrizPermissoesProps = {}) {
   const { roles: myRoles } = useAuth();
   const isSuperAdmin = myRoles.includes("super_admin");
+  const podeEditar = isSuperAdmin;
   const queryClient = useQueryClient();
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
+  const [mostrarComparacao, setMostrarComparacao] = useState(false);
 
   const { data: todasPermissoes, isLoading, isFetching } = useQuery({
     queryKey: ["all-role-permissions"],
@@ -785,6 +890,7 @@ export default function MatrizPermissoes({ onNavigateToPerfis }: MatrizPermissoe
   const ctx: SharedCtx = {
     perms: todasPermissoes || [],
     roleCounts: roleCounts || {},
+    podeEditar,
   };
 
   const formattedTime = lastUpdated.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
@@ -810,28 +916,45 @@ export default function MatrizPermissoes({ onNavigateToPerfis }: MatrizPermissoe
               </Button>
             </div>
           </div>
-          {isSuperAdmin && onNavigateToPerfis && (
-            <Button variant="outline" size="sm" className="gap-2" onClick={onNavigateToPerfis}>
-              Editar permissões <ArrowRight className="h-3.5 w-3.5" />
-            </Button>
-          )}
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2"
+            onClick={() => setMostrarComparacao(true)}
+          >
+            <Scale className="h-3.5 w-3.5" />
+            Comparar Perfis
+          </Button>
         </div>
       </CardHeader>
       <CardContent>
         <TooltipProvider delayDuration={200}>
           <Tabs defaultValue="perfil" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 mb-4 h-auto">
+            <TabsList className="grid w-full grid-cols-3 mb-4 h-auto">
               <TabsTrigger value="perfil" className="text-xs sm:text-sm">🔍 Perfil Único</TabsTrigger>
               <TabsTrigger value="modulo" className="text-xs sm:text-sm">📊 Módulo Único</TabsTrigger>
-              <TabsTrigger value="comparar" className="text-xs sm:text-sm">⚖️ Comparar Perfis</TabsTrigger>
               <TabsTrigger value="completa" className="text-xs sm:text-sm">🗺 Matriz Completa</TabsTrigger>
             </TabsList>
 
             <TabsContent value="perfil"><ModoPerfilUnico {...ctx} /></TabsContent>
             <TabsContent value="modulo"><ModoModuloUnico {...ctx} /></TabsContent>
-            <TabsContent value="comparar"><ModoCompararPerfis {...ctx} /></TabsContent>
             <TabsContent value="completa"><ModoMatrizCompleta {...ctx} /></TabsContent>
           </Tabs>
+
+          <Dialog open={mostrarComparacao} onOpenChange={setMostrarComparacao}>
+            <DialogContent className="max-w-[90vw] sm:max-w-[80vw] max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <Scale className="h-5 w-5" />
+                  Comparar Perfis
+                </DialogTitle>
+                <DialogDescription>
+                  Compare 2 a 4 perfis lado a lado para identificar divergências.
+                </DialogDescription>
+              </DialogHeader>
+              <ModoCompararPerfis perms={ctx.perms} roleCounts={ctx.roleCounts} />
+            </DialogContent>
+          </Dialog>
         </TooltipProvider>
       </CardContent>
     </Card>
