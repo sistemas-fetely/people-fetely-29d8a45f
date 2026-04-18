@@ -5,6 +5,7 @@ import remarkGfm from "remark-gfm";
 import {
   ArrowLeft, Plus, Send, Sparkles, MessageCircle, ThumbsUp, ThumbsDown, Copy,
   Globe, Gift, Workflow, Users, MessageCircleHeart, GraduationCap, Brain,
+  MoreHorizontal, Trash2, Shield,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +15,29 @@ import { toast } from "@/hooks/use-toast";
 import { usePermissions } from "@/hooks/usePermissions";
 import { EnsinarDialog } from "@/components/fala-fetely/EnsinarDialog";
 import { FeedbackNegativoDialog } from "@/components/fala-fetely/FeedbackNegativoDialog";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 
 interface Conversa {
   id: string;
