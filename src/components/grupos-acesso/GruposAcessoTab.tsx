@@ -60,25 +60,54 @@ export function GruposAcessoTab() {
   const { data: atribuicoes, isLoading: loadingAtrib } = useQuery({
     queryKey: ["atribuicoes-com-users"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // 1. Busca todas as atribuições (sem joins problemáticos)
+      const { data: atribs, error: errAtrib } = await supabase
         .from("user_atribuicoes")
-        .select(`
-          id, user_id, perfil_id, unidade_id, nivel, valido_ate,
-          profiles!user_id (full_name),
-          unidades!unidade_id (nome)
-        `);
-      if (error) throw error;
-      return (data || []).map((a: any) => ({
-        id: a.id,
-        user_id: a.user_id,
-        perfil_id: a.perfil_id,
-        unidade_id: a.unidade_id,
-        nivel: a.nivel,
-        valido_ate: a.valido_ate,
-        nome: a.profiles?.full_name || "Sem nome",
-        email: "",
-        unidade_nome: a.unidades?.nome || null,
-      })) as AtribuicaoExpandida[];
+        .select("id, user_id, perfil_id, unidade_id, nivel, valido_ate");
+      if (errAtrib) throw errAtrib;
+      if (!atribs || atribs.length === 0) return [] as AtribuicaoExpandida[];
+
+      // 2. Busca profiles dos usuários mencionados
+      const userIds = [...new Set(atribs.map((a) => a.user_id))];
+      const { data: profs, error: errProf } = await supabase
+        .from("profiles")
+        .select("user_id, full_name")
+        .in("user_id", userIds);
+      if (errProf) throw errProf;
+
+      // 3. Busca unidades mencionadas
+      const unidadeIds = [
+        ...new Set(atribs.map((a) => a.unidade_id).filter(Boolean)),
+      ] as string[];
+      let unids: Array<{ id: string; nome: string }> = [];
+      if (unidadeIds.length > 0) {
+        const { data: u, error: errU } = await supabase
+          .from("unidades")
+          .select("id, nome")
+          .in("id", unidadeIds);
+        if (errU) throw errU;
+        unids = u || [];
+      }
+
+      // 4. Merge no cliente
+      const profMap = new Map((profs || []).map((p) => [p.user_id, p]));
+      const unidMap = new Map(unids.map((u) => [u.id, u]));
+
+      return atribs.map((a: any) => {
+        const prof = profMap.get(a.user_id);
+        const unid = a.unidade_id ? unidMap.get(a.unidade_id) : null;
+        return {
+          id: a.id,
+          user_id: a.user_id,
+          perfil_id: a.perfil_id,
+          unidade_id: a.unidade_id,
+          nivel: a.nivel as AtribuicaoExpandida["nivel"],
+          valido_ate: a.valido_ate,
+          nome: prof?.full_name || "Sem nome",
+          email: "",
+          unidade_nome: unid?.nome || null,
+        } as AtribuicaoExpandida;
+      });
     },
     staleTime: 30 * 1000,
   });
