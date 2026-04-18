@@ -79,6 +79,7 @@ export default function FalaFetely() {
   const [estadoPensando, setEstadoPensando] = useState(FRASES_PENSANDO[0]);
   const [mensagemEnsinando, setMensagemEnsinando] = useState<Mensagem | null>(null);
   const [feedbackNegativo, setFeedbackNegativo] = useState<Mensagem | null>(null);
+  const [feedbacksDados, setFeedbacksDados] = useState<Map<string, boolean>>(new Map());
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const podeEnsinar = useMemo(
@@ -128,7 +129,7 @@ export default function FalaFetely() {
     const interval = setInterval(() => {
       idx = (idx + 1) % FRASES_PENSANDO.length;
       setEstadoPensando(FRASES_PENSANDO[idx]);
-    }, 1200);
+    }, 900);
     return () => clearInterval(interval);
   }, [pensando]);
 
@@ -149,7 +150,23 @@ export default function FalaFetely() {
       .select("id, papel, conteudo, created_at")
       .eq("conversa_id", c.id)
       .order("created_at", { ascending: true });
-    setMensagens((data as Mensagem[]) || []);
+    const msgs = (data as Mensagem[]) || [];
+    setMensagens(msgs);
+
+    // Carrega feedbacks já dados pelo usuário para essas mensagens
+    const mensagemIds = msgs.filter((m) => m.papel === "assistant").map((m) => m.id);
+    if (mensagemIds.length > 0 && user) {
+      const { data: fbs } = await supabase
+        .from("fala_fetely_feedback")
+        .select("mensagem_id, util")
+        .in("mensagem_id", mensagemIds)
+        .eq("user_id", user.id);
+      const map = new Map<string, boolean>();
+      (fbs || []).forEach((f) => map.set(f.mensagem_id, f.util));
+      setFeedbacksDados(map);
+    } else {
+      setFeedbacksDados(new Map());
+    }
   }
 
   function novaConversa() {
@@ -320,6 +337,7 @@ export default function FalaFetely() {
         toast({ title: "Não consegui registrar", description: error.message, variant: "destructive" });
         return;
       }
+      setFeedbacksDados((prev) => new Map(prev).set(mensagemId, true));
       toast({ title: "Valeu! 💚", description: "Vou seguir nessa linha" });
     } else {
       const msg = mensagens.find((m) => m.id === mensagemId);
@@ -380,6 +398,12 @@ export default function FalaFetely() {
               <MessageCircleHeart className="w-4 h-4" />
             </div>
             <span className="font-semibold">Fala Fetely</span>
+            {pensando && (
+              <span className="ml-2 text-xs text-muted-foreground flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                respondendo...
+              </span>
+            )}
           </div>
           <div className="w-[140px]" />
         </header>
@@ -468,12 +492,26 @@ export default function FalaFetely() {
                         }`}
                       >
                         {msg.pendente && !msg.conteudo ? (
-                          <div className="flex items-center gap-3 min-w-[240px] py-1">
-                            <div className="relative w-2.5 h-2.5">
-                              <span className="absolute inset-0 rounded-full bg-[#1A4A3A] animate-ping opacity-60" />
-                              <span className="absolute inset-0 rounded-full bg-[#1A4A3A]" />
+                          <div className="flex items-center gap-3 min-w-[280px] py-2">
+                            <div className="flex items-center gap-1.5">
+                              <span
+                                className="w-2.5 h-2.5 rounded-full animate-bounce"
+                                style={{ backgroundColor: "#1A4A3A", animationDelay: "0ms", animationDuration: "0.8s" }}
+                              />
+                              <span
+                                className="w-2.5 h-2.5 rounded-full animate-bounce"
+                                style={{ backgroundColor: "#E91E63", animationDelay: "150ms", animationDuration: "0.8s" }}
+                              />
+                              <span
+                                className="w-2.5 h-2.5 rounded-full animate-bounce"
+                                style={{ backgroundColor: "#1A4A3A", animationDelay: "300ms", animationDuration: "0.8s" }}
+                              />
                             </div>
-                            <p className="text-sm text-muted-foreground transition-opacity duration-300">
+                            <p
+                              key={estadoPensando}
+                              className="text-sm font-medium animate-fade-in"
+                              style={{ color: "#1A4A3A" }}
+                            >
                               {estadoPensando}
                             </p>
                           </div>
@@ -483,28 +521,47 @@ export default function FalaFetely() {
                           </div>
                         )}
                       </div>
-                      {msg.papel === "assistant" && !msg.pendente && msg.conteudo && (
-                        <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
-                          <button onClick={() => void feedback(msg.id, true)} className="hover:text-emerald-600 transition-colors p-1" title="Útil">
-                            <ThumbsUp className="h-3 w-3" />
-                          </button>
-                          <button onClick={() => void feedback(msg.id, false)} className="hover:text-red-600 transition-colors p-1" title="Não útil">
-                            <ThumbsDown className="h-3 w-3" />
-                          </button>
-                          <button onClick={() => copiar(msg.conteudo)} className="hover:text-foreground transition-colors p-1" title="Copiar">
-                            <Copy className="h-3 w-3" />
-                          </button>
-                          {podeEnsinar && (
+                      {msg.papel === "assistant" && !msg.pendente && msg.conteudo && (() => {
+                        const fbAtual = feedbacksDados.get(msg.id);
+                        return (
+                          <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
                             <button
-                              onClick={() => setMensagemEnsinando(msg)}
-                              className="hover:text-[#1A4A3A] transition-colors p-1"
-                              title="Ensinar Fala Fetely"
+                              onClick={() => void feedback(msg.id, true)}
+                              className={`transition-colors p-1 rounded ${
+                                fbAtual === true
+                                  ? "text-emerald-600 bg-emerald-50"
+                                  : "text-muted-foreground hover:text-emerald-600"
+                              }`}
+                              title="Útil"
                             >
-                              <GraduationCap className="h-3 w-3" />
+                              <ThumbsUp className="h-3 w-3" fill={fbAtual === true ? "currentColor" : "none"} />
                             </button>
-                          )}
-                        </div>
-                      )}
+                            <button
+                              onClick={() => void feedback(msg.id, false)}
+                              className={`transition-colors p-1 rounded ${
+                                fbAtual === false
+                                  ? "text-red-600 bg-red-50"
+                                  : "text-muted-foreground hover:text-red-600"
+                              }`}
+                              title="Não útil"
+                            >
+                              <ThumbsDown className="h-3 w-3" fill={fbAtual === false ? "currentColor" : "none"} />
+                            </button>
+                            <button onClick={() => copiar(msg.conteudo)} className="hover:text-foreground transition-colors p-1" title="Copiar">
+                              <Copy className="h-3 w-3" />
+                            </button>
+                            {podeEnsinar && (
+                              <button
+                                onClick={() => setMensagemEnsinando(msg)}
+                                className="hover:text-[#1A4A3A] transition-colors p-1"
+                                title="Ensinar Fala Fetely"
+                              >
+                                <GraduationCap className="h-3 w-3" />
+                              </button>
+                            )}
+                          </div>
+                        );
+                      })()}
                     </div>
                   </div>
                 ))}
@@ -559,6 +616,8 @@ export default function FalaFetely() {
           podeEnsinar={podeEnsinar}
           onClose={() => setFeedbackNegativo(null)}
           onEnviado={() => {
+            const id = feedbackNegativo.id;
+            setFeedbacksDados((prev) => new Map(prev).set(id, false));
             setFeedbackNegativo(null);
             toast({ title: "Obrigado pelo feedback!", description: "Vou usar isso pra melhorar. 💚" });
           }}
