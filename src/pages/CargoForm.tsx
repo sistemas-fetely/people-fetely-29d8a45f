@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Loader2, Plus, Sparkles, X } from "lucide-react";
 import { SelectDepartamentoHierarquico } from "@/components/shared/SelectDepartamentoHierarquico";
+import { useTemplates } from "@/hooks/useTemplates";
 import { toast } from "sonner";
 
 const NIVEIS = [
@@ -45,6 +46,7 @@ interface FormState {
   nivel: string;
   departamento: string;
   departamento_id: string | null;
+  template_id_padrao: string | null;
   tipo_contrato: string;
   is_clevel: boolean;
   protege_salario: boolean;
@@ -58,7 +60,7 @@ interface FormState {
 
 function buildInitial(): FormState {
   const base: FormState = {
-    nome: "", nivel: "jr", departamento: "", departamento_id: null, tipo_contrato: "ambos",
+    nome: "", nivel: "jr", departamento: "", departamento_id: null, template_id_padrao: null, tipo_contrato: "ambos",
     is_clevel: false, protege_salario: false, missao: "",
     responsabilidades: [], skills_obrigatorias: [], skills_desejadas: [], ferramentas: [],
   };
@@ -131,6 +133,7 @@ export default function CargoForm() {
   const qc = useQueryClient();
   const [form, setForm] = useState<FormState>(buildInitial);
   const [enriquecendo, setEnriquecendo] = useState(false);
+  const { data: templates } = useTemplates();
 
   function setField(k: string, v: any) {
     setForm((prev) => ({ ...prev, [k]: v }));
@@ -209,6 +212,7 @@ export default function CargoForm() {
     state.nivel = cargo.nivel ?? "jr";
     state.departamento = cargo.departamento ?? "";
     state.departamento_id = (cargo as any).departamento_id ?? null;
+    state.template_id_padrao = (cargo as any).template_id_padrao ?? null;
     state.tipo_contrato = cargo.tipo_contrato ?? "ambos";
     state.is_clevel = cargo.is_clevel ?? false;
     state.protege_salario = cargo.protege_salario ?? false;
@@ -233,6 +237,7 @@ export default function CargoForm() {
         nivel: form.nivel,
         departamento: form.departamento || null,
         departamento_id: form.departamento_id,
+        template_id_padrao: form.template_id_padrao,
         tipo_contrato: form.tipo_contrato,
         is_clevel: form.is_clevel,
         protege_salario: form.protege_salario,
@@ -330,6 +335,29 @@ export default function CargoForm() {
               setField("departamento", dep?.label || "");
             }}
           />
+        </div>
+
+        <div>
+          <Label>Template padrão</Label>
+          <Select
+            value={form.template_id_padrao || "__auto__"}
+            onValueChange={(v) =>
+              setField("template_id_padrao", v === "__auto__" ? null : v)
+            }
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__auto__">Derivar automaticamente do nível</SelectItem>
+              {(templates || []).map((t) => (
+                <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-muted-foreground mt-1">
+            Usado ao criar usuário automaticamente no cadastro de colaborador.
+          </p>
         </div>
 
         <div className="flex gap-6">

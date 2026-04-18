@@ -5,6 +5,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "sonner";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowLeft, ArrowRight, Save, Loader2 } from "lucide-react";
 import { StepUploadDocumentos, type UploadedFile } from "./StepUploadDocumentosCLT";
 import { supabase } from "@/integrations/supabase/client";
@@ -44,6 +45,7 @@ type AllFormData = DadosPessoaisForm & DocumentosForm & DadosProfissionaisForm &
 export function CadastroColaboradorCLT() {
   const [currentStep, setCurrentStep] = useState(1);
   const [saving, setSaving] = useState(false);
+  const [criarAcesso, setCriarAcesso] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
   const { user, profile } = useAuth();
@@ -65,6 +67,7 @@ export function CadastroColaboradorCLT() {
       tipo_conta: "corrente",
       departamento: "",
       departamento_id: null,
+      unidade_id: "",
       dependentes: [],
       ...(initialData || {}),
     },
@@ -140,6 +143,39 @@ export function CadastroColaboradorCLT() {
           .from("convites_cadastro")
           .update({ colaborador_id: inserted.id, status: "cadastrado" })
           .eq("id", conviteId);
+      }
+
+      // Criar acesso ao portal automaticamente (opt-out)
+      if (criarAcesso && inserted?.id) {
+        try {
+          const { data: accessData, error: accessError } = await supabase.functions.invoke("manage-user", {
+            body: {
+              action: "create_user_from_colaborador",
+              colaborador_id: inserted.id,
+              tipo: "clt",
+              departamento_id: (cleaned as any).departamento_id || null,
+              unidade_id: (cleaned as any).unidade_id,
+            },
+          });
+
+          if (accessError || (accessData as any)?.error) {
+            toast.warning(
+              `Colaborador criado, mas não foi possível criar acesso: ${
+                accessError?.message || (accessData as any)?.error
+              }. Você pode criar manualmente em Gerenciar Usuários.`
+            );
+          } else if ((accessData as any)?.aviso_template) {
+            toast.warning(
+              `Acesso criado, mas template não foi aplicado: ${(accessData as any).aviso_template}`
+            );
+          } else {
+            toast.success("Colaborador e acesso ao portal criados com sucesso!");
+          }
+        } catch (e: any) {
+          toast.warning(
+            `Colaborador criado, mas criação de acesso falhou: ${e.message}. Crie manualmente.`
+          );
+        }
       }
 
       // Gerar onboarding automático
@@ -270,6 +306,27 @@ export function CadastroColaboradorCLT() {
               />
             )}
           </CardContent>
+          {currentStep === TOTAL_STEPS && (
+            <div className="px-6 pb-2">
+              <div className="flex items-start gap-3 p-4 bg-muted/40 rounded-lg border">
+                <Checkbox
+                  id="criar-acesso-clt"
+                  checked={criarAcesso}
+                  onCheckedChange={(v) => setCriarAcesso(!!v)}
+                  className="mt-0.5"
+                />
+                <div className="flex-1">
+                  <label htmlFor="criar-acesso-clt" className="text-sm font-medium cursor-pointer">
+                    Criar acesso ao portal automaticamente
+                  </label>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Um usuário será criado com o cargo e unidade informados.
+                    O colaborador receberá email de boas-vindas com link de primeiro acesso.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
           <CardFooter className="flex justify-between border-t pt-6">
             <Button type="button" variant="outline" onClick={currentStep === 1 ? () => navigate("/colaboradores") : goBack} className="gap-2">
               <ArrowLeft className="h-4 w-4" />

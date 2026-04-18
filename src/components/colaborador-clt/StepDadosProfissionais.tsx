@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Loader2 } from "lucide-react";
 import { useParametros } from "@/hooks/useParametros";
 import { useCargos } from "@/hooks/useCargos";
+import { useUnidades } from "@/hooks/useUnidades";
 import { SelectDepartamentoHierarquico } from "@/components/shared/SelectDepartamentoHierarquico";
 import type { DadosProfissionaisForm } from "@/lib/validations/colaborador-clt";
 
@@ -16,6 +17,7 @@ export function StepDadosProfissionais() {
   const { data: jornadas, isLoading: loadingJornadas } = useParametros("jornada");
   const { data: locaisTrabalho, isLoading: loadingLocais } = useParametros("local_trabalho");
   const { data: horariosTrabalho, isLoading: loadingHorarios } = useParametros("horario_trabalho");
+  const { data: unidades } = useUnidades();
 
   return (
     <div className="space-y-6">
@@ -55,6 +57,23 @@ export function StepDadosProfissionais() {
             }}
           />
           {errors.departamento && <p className="text-xs text-destructive mt-1">{errors.departamento.message}</p>}
+        </div>
+        <div>
+          <Label>Unidade *</Label>
+          <Select
+            value={(watch("unidade_id") as string) || ""}
+            onValueChange={(v) => setValue("unidade_id", v)}
+          >
+            <SelectTrigger><SelectValue placeholder="Selecione a unidade" /></SelectTrigger>
+            <SelectContent>
+              {(unidades || []).map((u) => (
+                <SelectItem key={u.id} value={u.id}>{u.nome}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {(errors as any).unidade_id && (
+            <p className="text-xs text-destructive mt-1">{(errors as any).unidade_id.message}</p>
+          )}
         </div>
         <div>
           <Label htmlFor="data_admissao">Data de Admissão *</Label>
