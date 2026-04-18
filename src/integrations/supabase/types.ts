@@ -4591,6 +4591,7 @@ export type Database = {
         }
         Returns: number
       }
+      nivel_rank: { Args: { _nivel: string }; Returns: number }
       processar_exclusao_dados_usuario: {
         Args: { _user_id: string }
         Returns: Json
@@ -4632,6 +4633,40 @@ export type Database = {
       tem_consentimento_ativo: {
         Args: { _tipo: string; _user_id: string }
         Returns: boolean
+      }
+      tem_permissao: {
+        Args: {
+          _acao: string
+          _modulo: string
+          _unidade_id?: string
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      tem_qualquer_acesso_modulo: {
+        Args: { _modulo: string; _user_id: string }
+        Returns: boolean
+      }
+      user_perfis_detalhados: {
+        Args: { _user_id: string }
+        Returns: {
+          atribuicao_id: string
+          nivel: string
+          perfil_codigo: string
+          perfil_nome: string
+          perfil_tipo: string
+          unidade_id: string
+          unidade_nome: string
+          valido_ate: string
+        }[]
+      }
+      user_unidades_acessiveis: {
+        Args: { _user_id: string }
+        Returns: {
+          unidade_codigo: string
+          unidade_id: string
+          unidade_nome: string
+        }[]
       }
     }
     Enums: {
