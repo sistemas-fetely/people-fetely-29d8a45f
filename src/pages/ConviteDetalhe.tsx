@@ -503,18 +503,21 @@ export default function ConviteDetalhe() {
             const emailDest = colaboradorPayload.email_pessoal || convite.email;
             const { data: userData, error: userErr } = await supabase.functions.invoke("manage-user", {
               body: {
-                action: "create_user_standalone",
-                email: emailDest,
-                full_name: colaboradorPayload.nome_completo,
-                roles: ["colaborador"],
+                action: "create_user_from_colaborador",
                 colaborador_id: inserted.id,
-                colaborador_tipo: "clt",
+                tipo: "clt",
+                departamento_id: convite.departamento_id || null,
+                unidade_id: convite.unidade_id,
               },
             });
             if (userErr || (userData as any)?.error) {
               throw new Error(userErr?.message || (userData as any)?.error);
             }
-            acessoMsg = ` Um e-mail foi enviado para ${emailDest} para definir senha de acesso.`;
+            if ((userData as any)?.aviso_template) {
+              acessoMsg = ` Acesso criado, mas template parcial: ${(userData as any).aviso_template}`;
+            } else {
+              acessoMsg = ` Acesso ao portal criado (template aplicado). E-mail enviado para ${emailDest}.`;
+            }
           } catch (userCreateErr: any) {
             console.error("Erro ao criar usuário:", userCreateErr);
             toast.warning(
@@ -700,18 +703,21 @@ export default function ConviteDetalhe() {
             const emailDestPj = contratoPayload.contato_email || contratoPayload.email_pessoal || convite.email;
             const { data: userData, error: userErr } = await supabase.functions.invoke("manage-user", {
               body: {
-                action: "create_user_standalone",
-                email: emailDestPj,
-                full_name: contratoPayload.contato_nome,
-                roles: ["colaborador"],
+                action: "create_user_from_colaborador",
                 colaborador_id: inserted.id,
-                colaborador_tipo: "pj",
+                tipo: "pj",
+                departamento_id: convite.departamento_id || null,
+                unidade_id: convite.unidade_id,
               },
             });
             if (userErr || (userData as any)?.error) {
               throw new Error(userErr?.message || (userData as any)?.error);
             }
-            acessoMsgPj = ` Um e-mail foi enviado para ${emailDestPj} para definir senha de acesso.`;
+            if ((userData as any)?.aviso_template) {
+              acessoMsgPj = ` Acesso criado, mas template parcial: ${(userData as any).aviso_template}`;
+            } else {
+              acessoMsgPj = ` Acesso ao portal criado (template aplicado). E-mail enviado para ${emailDestPj}.`;
+            }
           } catch (userCreateErr: any) {
             console.error("Erro ao criar usuário:", userCreateErr);
             toast.warning(
