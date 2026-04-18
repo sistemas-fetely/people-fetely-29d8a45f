@@ -148,17 +148,25 @@ export default function FalaFetely() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [mensagens]);
 
+  // Detecta se a última mensagem do assistente está pendente e ainda sem conteúdo
+  const ultimaAssistantVazia = useMemo(() => {
+    const ultima = [...mensagens].reverse().find((m) => m.papel === "assistant");
+    return !!(ultima?.pendente && !ultima?.conteudo);
+  }, [mensagens]);
+
   // Rotaciona frases de "pensando" enquanto aguarda primeiro token
   useEffect(() => {
-    if (!pensando) return;
-    setEstadoPensando(FRASES_PENSANDO[0]);
+    if (!ultimaAssistantVazia) {
+      setEstadoPensando(FRASES_PENSANDO[0]);
+      return;
+    }
     let idx = 0;
     const interval = setInterval(() => {
       idx = (idx + 1) % FRASES_PENSANDO.length;
       setEstadoPensando(FRASES_PENSANDO[idx]);
     }, 900);
     return () => clearInterval(interval);
-  }, [pensando]);
+  }, [ultimaAssistantVazia]);
 
   async function carregarConversas() {
     const { data } = await supabase
