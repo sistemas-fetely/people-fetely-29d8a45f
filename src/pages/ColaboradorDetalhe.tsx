@@ -84,7 +84,7 @@ export default function ColaboradorDetalhe() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { user, profile } = useAuth();
-  const { canSeeSalary } = usePermissions();
+  const { canSeeSalary, isSuperAdmin } = usePermissions();
   const { isCargoClevel } = useCLevelCargos();
   const { data: sistemasParametros } = useParametros("sistema");
   const { data: tiposEquipParametros } = useParametros("tipo_equipamento");
