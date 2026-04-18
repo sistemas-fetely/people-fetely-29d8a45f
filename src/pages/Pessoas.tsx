@@ -21,6 +21,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { format, parseISO } from "date-fns";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useCLevelCargos } from "@/hooks/useCLevelCargos";
+import { DrawerUsuario } from "@/components/DrawerUsuario";
 
 interface PessoaUnificada {
   id: string;
@@ -68,6 +69,7 @@ export default function Pessoas() {
   const [search, setSearch] = useState("");
   const [filterTipo, setFilterTipo] = useState("todos");
   const [filterStatus, setFilterStatus] = useState("todos");
+  const [drawerUsuarioId, setDrawerUsuarioId] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetch() {
@@ -277,17 +279,25 @@ export default function Pessoas() {
                   </TableRow>
                 ) : (
                   filtered.map((p) => (
-                    <TableRow key={`${p.tipo}-${p.id}`} className="hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => handleView(p)}>
+                    <TableRow key={`${p.tipo}-${p.id}`} className="hover:bg-muted/30 transition-colors">
                       <TableCell>
-                        <div className="flex items-center gap-3">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (p.user_id) setDrawerUsuarioId(p.user_id);
+                            else handleView(p);
+                          }}
+                          className="flex items-center gap-3 text-left hover:text-primary transition-colors"
+                        >
                           <Avatar className="h-8 w-8">
                             <AvatarImage src={p.foto_url || undefined} alt={p.nome} className="object-cover" />
                             <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
                               {initials(p.nome)}
                             </AvatarFallback>
                           </Avatar>
-                          <span className="font-medium text-sm">{p.nome}</span>
-                        </div>
+                          <span className="font-medium text-sm hover:underline">{p.nome}</span>
+                        </button>
                       </TableCell>
                       <TableCell>
                         <Badge variant="outline" className={p.tipo === "CLT" ? "bg-info/10 text-info border-0" : "bg-warning/10 text-warning border-0"}>
@@ -358,6 +368,12 @@ export default function Pessoas() {
           </div>
         </CardContent>
       </Card>
+
+      <DrawerUsuario
+        userId={drawerUsuarioId}
+        open={!!drawerUsuarioId}
+        onOpenChange={(open) => !open && setDrawerUsuarioId(null)}
+      />
     </div>
   );
 }

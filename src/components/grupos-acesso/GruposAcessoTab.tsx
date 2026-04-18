@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2, Shield, Users, UserPlus, Search, X } from "lucide-react";
+import { DrawerUsuario } from "@/components/DrawerUsuario";
 
 const ROLE_LABELS: Record<string, string> = {
   super_admin: "Super Admin",
@@ -98,6 +99,7 @@ export default function GruposAcessoTab() {
   const [userRoles, setUserRoles] = useState<UserRoleRow[]>([]);
   const [profiles, setProfiles] = useState<{ user_id: string; full_name: string | null }[]>([]);
   const [busca, setBusca] = useState("");
+  const [drawerUsuarioId, setDrawerUsuarioId] = useState<string | null>(null);
 
   // Atribuição
   const [atribuirOpen, setAtribuirOpen] = useState(false);
@@ -251,7 +253,12 @@ export default function GruposAcessoTab() {
                     ) : (
                       <div className="space-y-1.5 max-h-32 overflow-y-auto">
                         {usuarios.map((u) => (
-                          <div key={u.user_id} className="flex items-center gap-2 text-xs">
+                          <button
+                            key={u.user_id}
+                            type="button"
+                            onClick={() => setDrawerUsuarioId(u.user_id)}
+                            className="w-full flex items-center gap-2 text-xs hover:text-primary hover:underline transition-colors text-left"
+                          >
                             <Avatar className="h-5 w-5">
                               <AvatarFallback className="text-[9px]">{getInitials(u.nome)}</AvatarFallback>
                             </Avatar>
@@ -259,7 +266,7 @@ export default function GruposAcessoTab() {
                             {u.nivel && (
                               <Badge variant="outline" className="text-[9px] px-1 py-0">{u.nivel}</Badge>
                             )}
-                          </div>
+                          </button>
                         ))}
                       </div>
                     )}
@@ -353,6 +360,12 @@ export default function GruposAcessoTab() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <DrawerUsuario
+        userId={drawerUsuarioId}
+        open={!!drawerUsuarioId}
+        onOpenChange={(open) => !open && setDrawerUsuarioId(null)}
+      />
     </div>
   );
 }

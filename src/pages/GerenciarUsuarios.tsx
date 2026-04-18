@@ -1114,6 +1114,12 @@ export default function GerenciarUsuarios() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <DrawerUsuario
+        userId={drawerUsuarioId}
+        open={!!drawerUsuarioId}
+        onOpenChange={(open) => !open && setDrawerUsuarioId(null)}
+      />
     </div>
   );
 }
