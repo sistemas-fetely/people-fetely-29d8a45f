@@ -41,7 +41,7 @@ interface CategoriaConfig {
 }
 
 const CATEGORIAS_GERAL: CategoriaConfig[] = [
-  { value: "departamento", label: "Departamentos", icon: Monitor, description: "Departamentos da empresa para rateio de custos" },
+  { value: "area_negocio", label: "Áreas e Departamentos", icon: Monitor, description: "Estrutura organizacional: cada área contém seus departamentos. Cada pessoa pertence a 1 área e 1 departamento." },
   { value: "local_trabalho", label: "Locais de Trabalho", icon: Monitor, description: "Locais de trabalho disponíveis para colaboradores" },
   { value: "sistema", label: "Sistemas e Ferramentas", icon: Monitor, description: "Sistemas e ferramentas utilizados pela empresa" },
   { value: "beneficio", label: "Benefícios", icon: Heart, description: "Tipos de benefícios oferecidos pela empresa" },
@@ -120,12 +120,13 @@ function parseSistemaMeta(descricao: string | null): { url: string; tipo_licenca
 }
 
 function ParametroForm({
-  open, onClose, parametro, categoria,
+  open, onClose, parametro, categoria, paiValor,
 }: {
   open: boolean;
   onClose: () => void;
   parametro: Parametro | null;
   categoria: string;
+  paiValor: string | null;
 }) {
   const queryClient = useQueryClient();
   const [saving, setSaving] = useState(false);
@@ -165,14 +166,14 @@ function ParametroForm({
       if (parametro) {
         const { error } = await supabase
           .from("parametros")
-          .update({ valor: valorFinal, label: label.trim(), descricao: descricaoFinal, ordem } as any)
+          .update({ valor: valorFinal, label: label.trim(), descricao: descricaoFinal, ordem, pai_valor: paiValor } as any)
           .eq("id", parametro.id);
         if (error) throw error;
         toast.success("Parâmetro atualizado!");
       } else {
         const { error } = await supabase
           .from("parametros")
-          .insert({ categoria, valor: valorFinal, label: label.trim(), descricao: descricaoFinal, ordem } as any);
+          .insert({ categoria, valor: valorFinal, label: label.trim(), descricao: descricaoFinal, ordem, pai_valor: paiValor } as any);
         if (error) throw error;
         toast.success("Parâmetro adicionado!");
       }
@@ -197,6 +198,11 @@ function ParametroForm({
             <Label>{isSistema ? "Nome do sistema" : "Nome"} *</Label>
             <Input value={label} onChange={(e) => setLabel(e.target.value)} placeholder={isSistema ? "Ex: Google Workspace" : "Ex: Departamento"} />
           </div>
+          {categoria === "departamento" && paiValor && (
+            <div className="rounded-md border bg-muted/30 p-2 text-xs text-muted-foreground">
+              Este departamento será vinculado à área: <strong>{paiValor}</strong>
+            </div>
+          )}
           <div className="space-y-2">
             <Label>Código (valor)</Label>
             <Input value={valor} onChange={(e) => setValor(e.target.value)} placeholder="Auto-gerado se vazio" />
@@ -336,6 +342,7 @@ export default function Parametros() {
   const [editParam, setEditParam] = useState<Parametro | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [formCategoria, setFormCategoria] = useState("");
+  const [formPaiValor, setFormPaiValor] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Parametro | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [clevelConfirm, setClevelConfirm] = useState<{ param: Parametro; enabling: boolean } | null>(null);
@@ -402,17 +409,41 @@ export default function Parametros() {
   const openNew = (cat: string) => {
     setEditParam(null);
     setFormCategoria(cat);
+    setFormPaiValor(null);
     setFormOpen(true);
   };
 
   const openEdit = (param: Parametro) => {
     setEditParam(param);
     setFormCategoria(param.categoria);
+    setFormPaiValor(param.pai_valor || null);
+    setFormOpen(true);
+  };
+
+  const openNewDepartamento = (areaValor: string) => {
+    setEditParam(null);
+    setFormCategoria("departamento");
+    setFormPaiValor(areaValor);
     setFormOpen(true);
   };
 
   const estadosEquipamento = useMemo(() => {
     return (allParams || []).filter((p) => p.categoria === "estado_equipamento" && p.ativo);
+  }, [allParams]);
+
+  const departamentosPorArea = useMemo(() => {
+    const map: Record<string, Parametro[]> = {};
+    (allParams || [])
+      .filter((p) => p.categoria === "departamento")
+      .forEach((p) => {
+        const chave = p.pai_valor || "__sem_area__";
+        if (!map[chave]) map[chave] = [];
+        map[chave].push(p);
+      });
+    Object.keys(map).forEach((k) => {
+      map[k].sort((a, b) => a.ordem - b.ordem);
+    });
+    return map;
   }, [allParams]);
 
   const grouped = useMemo(() => {
@@ -640,6 +671,64 @@ export default function Parametros() {
                                                 </Collapsible>
                                               </div>
                                             )}
+                                            {param.categoria === "area_negocio" && (
+                                              <div className="mt-2 pt-2 border-t">
+                                                <div className="flex flex-wrap gap-1 mb-1">
+                                                  {(departamentosPorArea[param.valor] || []).length > 0 ? (
+                                                    (departamentosPorArea[param.valor] || []).map((d) => (
+                                                      <span
+                                                        key={d.id}
+                                                        className={`text-xs px-2 py-0.5 rounded-full ${
+                                                          d.ativo ? "bg-muted" : "bg-muted/40 text-muted-foreground line-through"
+                                                        }`}
+                                                      >
+                                                        {d.label}
+                                                      </span>
+                                                    ))
+                                                  ) : (
+                                                    <span className="text-xs text-muted-foreground">
+                                                      Nenhum departamento cadastrado nesta área
+                                                    </span>
+                                                  )}
+                                                </div>
+                                                <Collapsible>
+                                                  <CollapsibleTrigger asChild>
+                                                    <Button variant="ghost" size="sm" className="h-6 px-2 text-xs gap-1 text-muted-foreground">
+                                                      <ChevronDown className="h-3 w-3" />
+                                                      Gerenciar departamentos
+                                                    </Button>
+                                                  </CollapsibleTrigger>
+                                                  <CollapsibleContent className="mt-2 space-y-1">
+                                                    {(departamentosPorArea[param.valor] || []).map((d) => (
+                                                      <div key={d.id} className="flex items-center justify-between rounded px-2 py-1 bg-muted/50">
+                                                        <div className="flex items-center gap-2 min-w-0">
+                                                          <Switch checked={d.ativo} onCheckedChange={() => handleToggleAtivo(d)} />
+                                                          <span className={`text-xs ${!d.ativo && "text-muted-foreground line-through"}`}>
+                                                            {d.label}
+                                                          </span>
+                                                        </div>
+                                                        <div className="flex gap-1">
+                                                          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => openEdit(d)}>
+                                                            <Pencil className="h-3 w-3" />
+                                                          </Button>
+                                                          <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive hover:text-destructive" onClick={() => setDeleteTarget(d)}>
+                                                            <Trash2 className="h-3 w-3" />
+                                                          </Button>
+                                                        </div>
+                                                      </div>
+                                                    ))}
+                                                    <Button
+                                                      variant="outline"
+                                                      size="sm"
+                                                      className="h-7 text-xs gap-1 w-full"
+                                                      onClick={() => openNewDepartamento(param.valor)}
+                                                    >
+                                                      <Plus className="h-3 w-3" /> Adicionar departamento nesta área
+                                                    </Button>
+                                                  </CollapsibleContent>
+                                                </Collapsible>
+                                              </div>
+                                            )}
                                           </div>
                                         </div>
                                         <div className="flex items-center gap-2 ml-2">
@@ -699,6 +788,7 @@ export default function Parametros() {
           onClose={() => setFormOpen(false)}
           parametro={editParam}
           categoria={formCategoria}
+          paiValor={formPaiValor}
         />
       )}
 

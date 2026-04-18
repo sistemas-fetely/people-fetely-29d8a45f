@@ -10,6 +10,7 @@ export interface Parametro {
   ativo: boolean;
   ordem: number;
   is_clevel: boolean;
+  pai_valor: string | null;
 }
 
 export function useParametros(categoria: string) {
