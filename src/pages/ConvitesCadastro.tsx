@@ -44,8 +44,10 @@ import { ptBR } from "date-fns/locale";
 import { useParametros } from "@/hooks/useParametros";
 import { SelectDepartamentoHierarquico } from "@/components/shared/SelectDepartamentoHierarquico";
 import { useCargos } from "@/hooks/useCargos";
+import { useUnidades } from "@/hooks/useUnidades";
 import { useCLevelCargos } from "@/hooks/useCLevelCargos";
 import { usePermissions } from "@/hooks/usePermissions";
+import { SystemReadinessBanner } from "@/components/shared/SystemReadinessBanner";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
@@ -78,7 +80,10 @@ interface Convite {
   nome: string;
   email: string;
   cargo: string | null;
+  cargo_id: string | null;
   departamento: string | null;
+  departamento_id: string | null;
+  unidade_id: string | null;
   status: string;
   expira_em: string;
   preenchido_em: string | null;
@@ -109,7 +114,10 @@ const initialForm = {
   email: "",
   tipo: "clt",
   cargo: "",
+  cargo_id: null as string | null,
   departamento: "",
+  departamento_id: null as string | null,
+  unidade_id: "",
   grupo_acesso_id: "",
   lider_direto_id: "",
   salario_previsto: "",
@@ -164,11 +172,15 @@ export default function ConvitesCadastro() {
     const prefill = (location.state as any)?.prefill;
     if (prefill) {
       setForm({
+        ...initialForm,
         nome: prefill.nome || "",
         email: prefill.email || "",
         tipo: prefill.tipo || "clt",
         cargo: prefill.cargo || "",
+        cargo_id: prefill.cargo_id || null,
         departamento: prefill.departamento || "",
+        departamento_id: prefill.departamento_id || null,
+        unidade_id: prefill.unidade_id || "",
         grupo_acesso_id: "",
         lider_direto_id: prefill.lider_direto_id || "",
         salario_previsto: prefill.salario_previsto || "",
@@ -206,6 +218,7 @@ export default function ConvitesCadastro() {
   const { data: tiposEquipamento = [] } = useParametros("tipo_equipamento");
   const { data: cargosRaw } = useCargos();
   const cargos = (cargosRaw || []).map((c) => ({ id: c.id, valor: c.nome, label: c.nome, is_clevel: c.is_clevel }));
+  const { data: unidades } = useUnidades();
   const { isCargoClevel } = useCLevelCargos();
   const { canSeeSalary, isSuperAdmin } = usePermissions();
 
@@ -279,7 +292,7 @@ export default function ConvitesCadastro() {
   }, [form.tipo, form.grupo_acesso_id, gruposAcesso]);
 
   
-  const canSubmit = form.nome.trim() && form.email.trim() && form.tipo && form.cargo && form.grupo_acesso_id;
+  const canSubmit = form.nome.trim() && form.email.trim() && form.tipo && form.cargo_id && form.unidade_id && form.grupo_acesso_id;
 
   const fetchConvites = async () => {
     const { data, error } = await supabase
@@ -303,7 +316,10 @@ export default function ConvitesCadastro() {
         email: form.email.trim(),
         tipo: form.tipo,
         cargo: form.cargo || null,
+        cargo_id: form.cargo_id,
         departamento: form.departamento || null,
+        departamento_id: form.departamento_id,
+        unidade_id: form.unidade_id || null,
         criado_por: user?.id || null,
         grupo_acesso_id: form.grupo_acesso_id || null,
         lider_direto_id: form.lider_direto_id && form.lider_direto_id !== "none" ? form.lider_direto_id : null,
@@ -1000,21 +1016,48 @@ export default function ConvitesCadastro() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <Label>Cargo *</Label>
-                    {cargos && cargos.length > 0 ? (
-                      <Select value={form.cargo} onValueChange={(v) => setForm({ ...form, cargo: v })}>
-                        <SelectTrigger><SelectValue placeholder="Selecione o cargo" /></SelectTrigger>
-                        <SelectContent>{cargos.map((c) => <SelectItem key={c.valor} value={c.valor}>{c.label}</SelectItem>)}</SelectContent>
-                      </Select>
-                    ) : (
-                      <Input value={form.cargo} onChange={(e) => setForm({ ...form, cargo: e.target.value })} placeholder="Cargo previsto" />
+                    <Select
+                      value={form.cargo_id || ""}
+                      onValueChange={(id) => {
+                        const cargoSel = cargos.find((c) => c.id === id);
+                        setForm({
+                          ...form,
+                          cargo_id: id || null,
+                          cargo: cargoSel?.label || "",
+                        });
+                      }}
+                      disabled={cargos.length === 0}
+                    >
+                      <SelectTrigger><SelectValue placeholder={cargos.length === 0 ? "Nenhum cargo cadastrado" : "Selecione o cargo"} /></SelectTrigger>
+                      <SelectContent>{cargos.map((c) => <SelectItem key={c.id} value={c.id}>{c.label}</SelectItem>)}</SelectContent>
+                    </Select>
+                    {cargos.length === 0 && (
+                      <p className="text-xs text-destructive mt-1">
+                        Cadastre cargos em /cargos antes de criar convites.
+                      </p>
                     )}
                   </div>
                   <div>
                     <Label>Departamento</Label>
                     <SelectDepartamentoHierarquico
                       valueTexto={form.departamento}
-                      onChange={(dep) => setForm({ ...form, departamento: dep?.label || "" })}
+                      onChange={(dep) => setForm({
+                        ...form,
+                        departamento_id: dep?.id || null,
+                        departamento: dep?.label || "",
+                      })}
                     />
+                  </div>
+                  <div>
+                    <Label>Unidade *</Label>
+                    <Select value={form.unidade_id} onValueChange={(v) => setForm({ ...form, unidade_id: v })}>
+                      <SelectTrigger><SelectValue placeholder="Selecione a unidade" /></SelectTrigger>
+                      <SelectContent>
+                        {(unidades || []).map((u) => (
+                          <SelectItem key={u.id} value={u.id}>{u.nome}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
                 {form.tipo === "clt" && (
