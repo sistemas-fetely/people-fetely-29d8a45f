@@ -700,6 +700,7 @@ export type Database = {
           responsabilidades: string[] | null
           skills_desejadas: string[] | null
           skills_obrigatorias: string[] | null
+          template_id_padrao: string | null
           tipo_contrato: string
           updated_at: string | null
         }
@@ -738,6 +739,7 @@ export type Database = {
           responsabilidades?: string[] | null
           skills_desejadas?: string[] | null
           skills_obrigatorias?: string[] | null
+          template_id_padrao?: string | null
           tipo_contrato?: string
           updated_at?: string | null
         }
@@ -776,6 +778,7 @@ export type Database = {
           responsabilidades?: string[] | null
           skills_desejadas?: string[] | null
           skills_obrigatorias?: string[] | null
+          template_id_padrao?: string | null
           tipo_contrato?: string
           updated_at?: string | null
         }
@@ -785,6 +788,13 @@ export type Database = {
             columns: ["departamento_id"]
             isOneToOne: false
             referencedRelation: "parametros"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cargos_template_id_padrao_fkey"
+            columns: ["template_id_padrao"]
+            isOneToOne: false
+            referencedRelation: "cargo_template"
             referencedColumns: ["id"]
           },
         ]
@@ -1029,6 +1039,7 @@ export type Database = {
           tipo_contrato: string
           titulo_eleitor: string | null
           uf: string | null
+          unidade_id: string | null
           updated_at: string
           user_id: string | null
           zona_eleitoral: string | null
@@ -1097,6 +1108,7 @@ export type Database = {
           tipo_contrato?: string
           titulo_eleitor?: string | null
           uf?: string | null
+          unidade_id?: string | null
           updated_at?: string
           user_id?: string | null
           zona_eleitoral?: string | null
@@ -1165,6 +1177,7 @@ export type Database = {
           tipo_contrato?: string
           titulo_eleitor?: string | null
           uf?: string | null
+          unidade_id?: string | null
           updated_at?: string
           user_id?: string | null
           zona_eleitoral?: string | null
@@ -1189,6 +1202,13 @@ export type Database = {
             columns: ["gestor_direto_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "colaboradores_clt_unidade_id_fkey"
+            columns: ["unidade_id"]
+            isOneToOne: false
+            referencedRelation: "unidades"
             referencedColumns: ["id"]
           },
         ]
@@ -1388,6 +1408,7 @@ export type Database = {
           tipo_conta: string | null
           tipo_servico: string
           uf: string | null
+          unidade_id: string | null
           updated_at: string
           user_id: string | null
           valor_mensal: number
@@ -1447,6 +1468,7 @@ export type Database = {
           tipo_conta?: string | null
           tipo_servico: string
           uf?: string | null
+          unidade_id?: string | null
           updated_at?: string
           user_id?: string | null
           valor_mensal: number
@@ -1506,6 +1528,7 @@ export type Database = {
           tipo_conta?: string | null
           tipo_servico?: string
           uf?: string | null
+          unidade_id?: string | null
           updated_at?: string
           user_id?: string | null
           valor_mensal?: number
@@ -1530,6 +1553,13 @@ export type Database = {
             columns: ["gestor_direto_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contratos_pj_unidade_id_fkey"
+            columns: ["unidade_id"]
+            isOneToOne: false
+            referencedRelation: "unidades"
             referencedColumns: ["id"]
           },
         ]
@@ -4891,6 +4921,10 @@ export type Database = {
       tem_qualquer_acesso_modulo: {
         Args: { _modulo: string; _user_id: string }
         Returns: boolean
+      }
+      template_sugerido_para_cargo: {
+        Args: { _cargo_id: string }
+        Returns: string
       }
       user_perfis_detalhados: {
         Args: { _user_id: string }
