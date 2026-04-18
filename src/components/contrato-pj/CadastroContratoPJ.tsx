@@ -5,6 +5,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "sonner";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowLeft, ArrowRight, Save, Loader2 } from "lucide-react";
 import { StepUploadDocumentos, type UploadedFile } from "@/components/colaborador-clt/StepUploadDocumentosCLT";
 import { supabase } from "@/integrations/supabase/client";
@@ -37,6 +38,7 @@ const stepSchemas = [
 export function CadastroContratoPJ() {
   const [currentStep, setCurrentStep] = useState(1);
   const [saving, setSaving] = useState(false);
+  const [criarAcesso, setCriarAcesso] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
@@ -61,6 +63,7 @@ export function CadastroContratoPJ() {
       nacionalidade: "Brasileira",
       departamento: "",
       departamento_id: null,
+      unidade_id: "",
       dependentes: [],
       ...(initialData || {}),
     },
@@ -147,6 +150,7 @@ export function CadastroContratoPJ() {
           tipo_servico: contratoData.tipo_servico,
           departamento: contratoData.departamento,
           departamento_id: contratoData.departamento_id || null,
+          unidade_id: contratoData.unidade_id || null,
           valor_mensal: Number(valor_mensal),
           forma_pagamento: contratoData.forma_pagamento,
           dia_vencimento: Number(contratoData.dia_vencimento) || 10,
@@ -177,7 +181,40 @@ export function CadastroContratoPJ() {
           .eq("id", conviteId);
       }
 
-      toast.success("Contrato PJ cadastrado com sucesso!");
+      // Criar acesso ao portal automaticamente (opt-out)
+      if (criarAcesso && inserted?.id) {
+        try {
+          const { data: accessData, error: accessError } = await supabase.functions.invoke("manage-user", {
+            body: {
+              action: "create_user_from_colaborador",
+              colaborador_id: inserted.id,
+              tipo: "pj",
+              departamento_id: (contratoData as any).departamento_id || null,
+              unidade_id: (contratoData as any).unidade_id,
+            },
+          });
+
+          if (accessError || (accessData as any)?.error) {
+            toast.warning(
+              `Contrato criado, mas não foi possível criar acesso: ${
+                accessError?.message || (accessData as any)?.error
+              }. Você pode criar manualmente em Gerenciar Usuários.`
+            );
+          } else if ((accessData as any)?.aviso_template) {
+            toast.warning(
+              `Acesso criado, mas template não foi aplicado: ${(accessData as any).aviso_template}`
+            );
+          } else {
+            toast.success("Contrato e acesso ao portal criados com sucesso!");
+          }
+        } catch (e: any) {
+          toast.warning(
+            `Contrato criado, mas criação de acesso falhou: ${e.message}. Crie manualmente.`
+          );
+        }
+      } else {
+        toast.success("Contrato PJ cadastrado com sucesso!");
+      }
       navigate(`/contratos-pj/${inserted.id}`);
     } catch (err: any) {
       console.error(err);
@@ -223,6 +260,27 @@ export function CadastroContratoPJ() {
               />
             )}
           </CardContent>
+          {currentStep === TOTAL_STEPS && (
+            <div className="px-6 pb-2">
+              <div className="flex items-start gap-3 p-4 bg-muted/40 rounded-lg border">
+                <Checkbox
+                  id="criar-acesso-pj"
+                  checked={criarAcesso}
+                  onCheckedChange={(v) => setCriarAcesso(!!v)}
+                  className="mt-0.5"
+                />
+                <div className="flex-1">
+                  <label htmlFor="criar-acesso-pj" className="text-sm font-medium cursor-pointer">
+                    Criar acesso ao portal automaticamente
+                  </label>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    O prestador PJ receberá acesso ao portal com as mesmas funcionalidades do CLT,
+                    diferindo apenas na base legal.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
           <CardFooter className="flex justify-between border-t pt-6">
             <Button type="button" variant="outline" onClick={currentStep === 1 ? () => navigate("/contratos-pj") : goBack} className="gap-2">
               <ArrowLeft className="h-4 w-4" />

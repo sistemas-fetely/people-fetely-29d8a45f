@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Loader2 } from "lucide-react";
 import { useParametros } from "@/hooks/useParametros";
 import { useCargos } from "@/hooks/useCargos";
+import { useUnidades } from "@/hooks/useUnidades";
 import { SelectDepartamentoHierarquico } from "@/components/shared/SelectDepartamentoHierarquico";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -29,6 +30,7 @@ export function StepDadosProfissionaisPJ() {
 
   const { data: cargos, isLoading: loadingCargos } = useCargos("pj");
   const { data: formasPagamento, isLoading: loadingFormas } = useParametros("forma_pagamento");
+  const { data: unidades } = useUnidades();
 
   const { data: profiles, isLoading: loadingProfiles } = useQuery({
     queryKey: ["profiles-for-gestor"],
@@ -72,6 +74,23 @@ export function StepDadosProfissionaisPJ() {
             }}
           />
           {errors.departamento && <p className="text-xs text-destructive mt-1">{errors.departamento.message}</p>}
+        </div>
+        <div>
+          <Label>Unidade *</Label>
+          <Select
+            value={(watch("unidade_id") as string) || ""}
+            onValueChange={(v) => setValue("unidade_id", v)}
+          >
+            <SelectTrigger><SelectValue placeholder="Selecione a unidade" /></SelectTrigger>
+            <SelectContent>
+              {(unidades || []).map((u) => (
+                <SelectItem key={u.id} value={u.id}>{u.nome}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {(errors as any).unidade_id && (
+            <p className="text-xs text-destructive mt-1">{(errors as any).unidade_id.message}</p>
+          )}
         </div>
         <div>
           <Label>Valor Mensal (R$) *</Label>

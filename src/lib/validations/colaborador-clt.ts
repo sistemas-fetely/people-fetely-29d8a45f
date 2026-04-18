@@ -54,6 +54,7 @@ export const dadosProfissionaisSchema = z.object({
   cargo: z.string().min(2, "Cargo é obrigatório"),
   departamento: z.string().min(1, "Departamento é obrigatório"),
   departamento_id: z.string().nullable().optional(),
+  unidade_id: z.string().uuid({ message: "Unidade é obrigatória" }),
   data_admissao: z.string().min(1, "Data de admissão é obrigatória"),
   tipo_contrato: z.string().default("indeterminado"),
   salario_base: z.coerce.number().positive("Salário deve ser positivo"),

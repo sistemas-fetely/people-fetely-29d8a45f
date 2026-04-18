@@ -210,6 +210,145 @@ Deno.serve(async (req) => {
       });
     }
 
+    if (action === "create_user_from_colaborador") {
+      const { colaborador_id, tipo, departamento_id, unidade_id, template_id } = body;
+
+      if (!colaborador_id || !tipo || !unidade_id) {
+        return new Response(JSON.stringify({ error: "colaborador_id, tipo e unidade_id são obrigatórios" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      if (tipo !== "clt" && tipo !== "pj") {
+        return new Response(JSON.stringify({ error: "tipo deve ser 'clt' ou 'pj'" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // 1. Buscar dados do colaborador
+      const tabela = tipo === "clt" ? "colaboradores_clt" : "contratos_pj";
+      const selectFields = tipo === "clt"
+        ? "id, nome_completo, email_pessoal, cargo_id"
+        : "id, contato_nome, contato_email, cargo_id";
+
+      const { data: colab, error: errColab } = await adminClient
+        .from(tabela)
+        .select(selectFields)
+        .eq("id", colaborador_id)
+        .single();
+
+      if (errColab || !colab) {
+        return new Response(JSON.stringify({ error: "Colaborador não encontrado" }), {
+          status: 404,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const email = tipo === "clt" ? (colab as any).email_pessoal : (colab as any).contato_email;
+      const full_name = tipo === "clt" ? (colab as any).nome_completo : (colab as any).contato_nome;
+
+      if (!email) {
+        return new Response(JSON.stringify({ error: "Colaborador não tem email cadastrado" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // 2. Resolver template (se não veio explícito, derivar do cargo)
+      let templateToApply: string | null = template_id || null;
+      if (!templateToApply && (colab as any).cargo_id) {
+        const { data: templRpc } = await adminClient.rpc("template_sugerido_para_cargo", {
+          _cargo_id: (colab as any).cargo_id,
+        });
+        templateToApply = templRpc as string | null;
+      }
+
+      if (!templateToApply) {
+        return new Response(JSON.stringify({ error: "Não foi possível resolver um template para este cargo" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // 3. Criar auth user
+      const { data: newUser, error: createError } = await adminClient.auth.admin.createUser({
+        email,
+        email_confirm: true,
+        user_metadata: { full_name },
+      });
+
+      if (createError) {
+        return new Response(JSON.stringify({ error: createError.message }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const novoUserId = newUser.user.id;
+
+      // 4. Criar profile
+      await adminClient.from("profiles").upsert({
+        user_id: novoUserId,
+        full_name,
+        approved: true,
+        colaborador_tipo: tipo,
+      }, { onConflict: "user_id" });
+
+      // 5. Vincular colaborador ao user
+      await adminClient.from(tabela)
+        .update({ user_id: novoUserId })
+        .eq("id", colaborador_id);
+
+      // 6. Aplicar template v3 (deriva perfil de área do departamento)
+      const { error: errTemplate } = await adminClient.rpc("aplicar_template_cargo_v3", {
+        _user_id: novoUserId,
+        _template_id: templateToApply,
+        _departamento_id: departamento_id || null,
+        _unidade_id: unidade_id,
+        _atribuidor: callerId || null,
+      });
+
+      if (errTemplate) {
+        console.error("Erro ao aplicar template v3:", errTemplate);
+      }
+
+      // 7. Gerar link de recuperação (primeiro acesso)
+      try {
+        await adminClient.auth.admin.generateLink({ type: "recovery", email });
+      } catch (e) {
+        console.error("Erro ao gerar link de recuperação:", e);
+      }
+
+      // 8. E-mail de boas-vindas
+      try {
+        await adminClient.functions.invoke("send-transactional-email", {
+          body: {
+            templateName: "boas-vindas-portal",
+            recipientEmail: email,
+            idempotencyKey: `boas-vindas-${novoUserId}-${Date.now()}`,
+            templateData: {
+              nome: full_name,
+              email,
+              link: Deno.env.get("SITE_URL") || "https://people-fetely.lovable.app",
+            },
+          },
+        });
+      } catch (e) {
+        console.error("Erro ao enviar e-mail de boas-vindas:", e);
+      }
+
+      return new Response(JSON.stringify({
+        success: true,
+        user_id: novoUserId,
+        template_aplicado: templateToApply,
+        aviso_template: errTemplate ? errTemplate.message : null,
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     if (action === "toggle_ban") {
       const { user_id, ban } = body;
       if (!user_id) {
