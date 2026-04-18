@@ -92,8 +92,8 @@ export default function MinhasMemorias() {
   const [acessarOutroOpen, setAcessarOutroOpen] = useState(false);
   const [memoriasOutro, setMemoriasOutro] = useState<Memoria[] | null>(null);
   const [titularOutro, setTitularOutro] = useState<{ user_id: string; full_name: string | null } | null>(null);
-  const [filtroTipo, setFiltroTipo] = useState<string>("todas");
-  const [apenasAtivas, setApenasAtivas] = useState(true);
+
+
 
   const [dialogAberto, setDialogAberto] = useState(false);
   const [editando, setEditando] = useState<Memoria | null>(null);
