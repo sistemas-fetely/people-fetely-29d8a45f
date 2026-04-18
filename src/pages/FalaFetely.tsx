@@ -345,11 +345,45 @@ export default function FalaFetely() {
         }
       }
 
-      // Atualiza ID real da mensagem para feedback
+      // Atualiza ID real da mensagem para feedback e marca como não pendente
       if (mensagemFinalId) {
         setMensagens((prev) =>
-          prev.map((m) => (m.id === assistantMsg.id ? { ...m, id: mensagemFinalId! } : m))
+          prev.map((m) => (m.id === assistantMsg.id ? { ...m, id: mensagemFinalId!, pendente: false } : m))
         );
+      } else {
+        // Fallback: se o evento "end" não chegou, busca a última mensagem do assistente no banco
+        const convIdFinal = novaConvId || conversaAtiva?.id;
+        if (convIdFinal) {
+          try {
+            const { data: ultimaMsg } = await supabase
+              .from("fala_fetely_mensagens")
+              .select("id")
+              .eq("conversa_id", convIdFinal)
+              .eq("papel", "assistant")
+              .order("created_at", { ascending: false })
+              .limit(1)
+              .maybeSingle();
+
+            if (ultimaMsg) {
+              setMensagens((prev) =>
+                prev.map((m) => (m.id === assistantMsg.id ? { ...m, id: ultimaMsg.id, pendente: false } : m))
+              );
+            } else {
+              setMensagens((prev) =>
+                prev.map((m) => (m.id === assistantMsg.id ? { ...m, pendente: false } : m))
+              );
+            }
+          } catch (e) {
+            console.error("Erro buscando ID real:", e);
+            setMensagens((prev) =>
+              prev.map((m) => (m.id === assistantMsg.id ? { ...m, pendente: false } : m))
+            );
+          }
+        } else {
+          setMensagens((prev) =>
+            prev.map((m) => (m.id === assistantMsg.id ? { ...m, pendente: false } : m))
+          );
+        }
       }
 
       // Se era nova conversa, atualiza o ativo e recarrega lista
