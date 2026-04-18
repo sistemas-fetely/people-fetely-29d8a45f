@@ -79,6 +79,7 @@ export default function FalaFetely() {
   const [estadoPensando, setEstadoPensando] = useState(FRASES_PENSANDO[0]);
   const [mensagemEnsinando, setMensagemEnsinando] = useState<Mensagem | null>(null);
   const [feedbackNegativo, setFeedbackNegativo] = useState<Mensagem | null>(null);
+  const [feedbacksDados, setFeedbacksDados] = useState<Map<string, boolean>>(new Map());
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const podeEnsinar = useMemo(
