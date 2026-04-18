@@ -82,8 +82,16 @@ function formatData(iso: string) {
 export default function MinhasMemorias() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { isSuperAdmin } = usePermissions();
   const [memorias, setMemorias] = useState<Memoria[]>([]);
   const [loading, setLoading] = useState(true);
+  const [filtroTipo, setFiltroTipo] = useState<string>("todas");
+  const [apenasAtivas, setApenasAtivas] = useState(true);
+
+  // Regra 5 — Super Admin acessando memórias de OUTRO usuário (com log formal)
+  const [acessarOutroOpen, setAcessarOutroOpen] = useState(false);
+  const [memoriasOutro, setMemoriasOutro] = useState<Memoria[] | null>(null);
+  const [titularOutro, setTitularOutro] = useState<{ user_id: string; full_name: string | null } | null>(null);
   const [filtroTipo, setFiltroTipo] = useState<string>("todas");
   const [apenasAtivas, setApenasAtivas] = useState(true);
 
