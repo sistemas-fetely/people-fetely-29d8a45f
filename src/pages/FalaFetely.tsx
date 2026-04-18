@@ -754,6 +754,121 @@ export default function FalaFetely() {
           }}
         />
       )}
+
+      {/* AlertDialog: confirmar exclusão de uma conversa */}
+      <AlertDialog
+        open={!!conversaParaExcluir}
+        onOpenChange={(open) => !open && setConversaParaExcluir(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir esta conversa?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Essa ação é permanente e não pode ser desfeita. Todas as mensagens, feedbacks e
+              sugestões relacionadas serão apagadas.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={excluirConversa}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Dialog: Privacidade e seus dados */}
+      <Dialog open={showPrivacidade} onOpenChange={setShowPrivacidade}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Shield className="h-5 w-5" /> Privacidade e seus dados
+            </DialogTitle>
+            <DialogDescription>
+              Pela LGPD, você tem direito de controlar os dados que o Fala Fetely guarda sobre suas
+              conversas.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="border rounded-lg p-4 space-y-2">
+              <h3 className="font-medium text-sm flex items-center gap-2">
+                <MessageCircle className="h-4 w-4" /> Suas conversas
+              </h3>
+              <p className="text-xs text-muted-foreground">
+                Você tem {conversas.length} conversa(s) salva(s). Cada conversa é privada e só você
+                pode acessar.
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setConfirmarLimparTudo(true)}
+                className="gap-2 text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
+                disabled={conversas.length === 0}
+              >
+                <Trash2 className="h-4 w-4" /> Limpar todo o histórico
+              </Button>
+            </div>
+            <div className="border rounded-lg p-4 space-y-2">
+              <h3 className="font-medium text-sm flex items-center gap-2">
+                <Brain className="h-4 w-4" /> Suas memórias
+              </h3>
+              <p className="text-xs text-muted-foreground">
+                O Fala Fetely pode lembrar de fatos sobre você para melhorar as conversas. Veja e
+                gerencie o que ele lembra.
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setShowPrivacidade(false);
+                  navigate("/fala-fetely/memorias");
+                }}
+                className="gap-2"
+              >
+                <Brain className="h-4 w-4" /> Ver minhas memórias
+              </Button>
+            </div>
+            <div className="border rounded-lg p-4 bg-muted/50">
+              <h3 className="font-medium text-sm mb-2">Como seus dados são usados?</h3>
+              <ul className="text-xs text-muted-foreground space-y-1">
+                <li>• Suas conversas são privadas — apenas você tem acesso</li>
+                <li>• O Fala Fetely processa suas perguntas para respondê-las</li>
+                <li>• Memórias extraídas ficam guardadas até você removê-las</li>
+                <li>• Você pode excluir qualquer dado a qualquer momento</li>
+              </ul>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* AlertDialog: confirmar limpeza total */}
+      <AlertDialog open={confirmarLimparTudo} onOpenChange={setConfirmarLimparTudo}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Apagar TODAS as conversas?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Essa ação vai deletar permanentemente todas as suas {conversas.length} conversa(s),
+              incluindo mensagens, feedbacks e histórico. Essa ação não pode ser desfeita.
+              <br />
+              <br />
+              <strong>Suas memórias não serão apagadas.</strong> Se quiser remover memórias também,
+              acesse a tela "Minhas Memórias".
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={limparTudo}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Sim, apagar tudo
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
