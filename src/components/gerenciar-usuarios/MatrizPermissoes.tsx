@@ -349,7 +349,7 @@ function ModoPerfilUnico({ perms, roleCounts, podeEditar }: SharedCtx) {
 // ============================================================================
 // Modo 2: Módulo Único
 // ============================================================================
-function ModoModuloUnico({ perms, roleCounts }: SharedCtx) {
+function ModoModuloUnico({ perms, roleCounts, podeEditar }: SharedCtx) {
   const [moduleSelecionado, setModuleSelecionado] = useState<string>(MODULES[0].key);
   const modInfo = MODULES.find((m) => m.key === moduleSelecionado)!;
   const sensivel = ehModuloSensivel(moduleSelecionado);
@@ -443,11 +443,39 @@ function ModoModuloUnico({ perms, roleCounts }: SharedCtx) {
                     </td>
                     <td className="p-3">
                       <div className="flex flex-wrap gap-1">
-                        {modPerms.map((p) => (
-                          <Badge key={p.permission} variant="default" className="text-[10px]">
-                            {p.permission}
-                          </Badge>
-                        ))}
+                        {getAcoesDoModulo(moduleSelecionado).map((acao) => {
+                          const perm = getPermissao(perms, r.role, moduleSelecionado, acao);
+                          const userCount = roleCounts[r.role] ?? 0;
+                          const actionLabel = PERMISSION_LABELS[acao] || acao;
+                          const pill = (
+                            <Badge
+                              variant={perm.granted ? "default" : "outline"}
+                              className={`text-[10px] ${podeEditar && r.role !== "super_admin" ? "cursor-pointer" : "cursor-default"} ${!perm.granted ? "opacity-50" : ""}`}
+                            >
+                              {acao}
+                              {perm.nivel_minimo && " ⚡"}
+                            </Badge>
+                          );
+                          if (!podeEditar || r.role === "super_admin") {
+                            return <span key={acao}>{pill}</span>;
+                          }
+                          return (
+                            <CelulaPermissaoEditavel
+                              key={acao}
+                              roleName={r.role}
+                              roleLabel={r.label}
+                              moduleName={moduleSelecionado}
+                              moduleLabel={modInfo.label}
+                              action={acao}
+                              actionLabel={actionLabel}
+                              granted={perm.granted}
+                              nivelMinimo={perm.nivel_minimo}
+                              usuariosAfetados={userCount}
+                            >
+                              {pill}
+                            </CelulaPermissaoEditavel>
+                          );
+                        })}
                       </div>
                     </td>
                     <td className="p-3 text-xs text-muted-foreground">
@@ -480,7 +508,7 @@ function ModoModuloUnico({ perms, roleCounts }: SharedCtx) {
 // ============================================================================
 // Modo 3: Comparar Perfis
 // ============================================================================
-function ModoCompararPerfis({ perms, roleCounts }: SharedCtx) {
+function ModoCompararPerfis({ perms, roleCounts }: Omit<SharedCtx, "podeEditar">) {
   const [selecionados, setSelecionados] = useState<string[]>([MATRIX_ROLES[1].role, MATRIX_ROLES[2].role]);
   const [apenasDivergentes, setApenasDivergentes] = useState(true);
   const alertas = useMemo(() => calcularAlertas(perms), [perms]);
