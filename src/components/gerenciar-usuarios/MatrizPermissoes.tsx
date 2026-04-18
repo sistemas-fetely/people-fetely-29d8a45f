@@ -225,7 +225,7 @@ function ModoPerfilUnico({ perms, roleCounts }: SharedCtx) {
                   <div className="flex items-center gap-2">
                     <span>{r.label}</span>
                     {r.isNew && <Badge variant="outline" className="text-[8px] px-1 py-0 border-emerald-400 text-emerald-700">Nova</Badge>}
-                    {r.isLegacy && <Badge variant="outline" className="text-[8px] px-1 py-0 border-amber-400 text-amber-700">Legado</Badge>}
+                    
                   </div>
                 </SelectItem>
               ))}
@@ -389,7 +389,7 @@ function ModoModuloUnico({ perms, roleCounts }: SharedCtx) {
                         <Badge variant="outline" className={`text-[10px] ${ROLE_COLORS[r.role] || ""}`}>{r.shortLabel}</Badge>
                         <span className="text-xs">{r.label}</span>
                         {r.isNew && <Badge variant="outline" className="text-[8px] px-1 py-0 border-emerald-400 text-emerald-700">Nova</Badge>}
-                        {r.isLegacy && <Badge variant="outline" className="text-[8px] px-1 py-0 border-amber-400 text-amber-700">Legado</Badge>}
+                        
                       </div>
                     </td>
                     <td className="p-3 text-xs">
@@ -490,7 +490,7 @@ function ModoCompararPerfis({ perms, roleCounts }: SharedCtx) {
                 >
                   {r.label}
                   {r.isNew && <span className="text-[8px] opacity-80">Nova</span>}
-                  {r.isLegacy && <span className="text-[8px] opacity-80">Legado</span>}
+                  
                 </button>
               );
             })}
@@ -530,7 +530,7 @@ function ModoCompararPerfis({ perms, roleCounts }: SharedCtx) {
                         <div className="flex flex-col items-center gap-1">
                           <Badge variant="outline" className={`text-[10px] ${ROLE_COLORS[r.role] || ""}`}>{r.shortLabel}</Badge>
                           {r.isNew && <Badge variant="outline" className="text-[8px] px-1 py-0 border-emerald-400 text-emerald-700">Nova</Badge>}
-                          {r.isLegacy && <Badge variant="outline" className="text-[8px] px-1 py-0 border-amber-400 text-amber-700">Legado</Badge>}
+                          
                         </div>
                       </th>
                     ))}
