@@ -1567,6 +1567,7 @@ export type Database = {
       convites_cadastro: {
         Row: {
           cargo: string | null
+          cargo_id: string | null
           colaborador_id: string | null
           contrato_pj_id: string | null
           created_at: string
@@ -1575,6 +1576,7 @@ export type Database = {
           dados_preenchidos: Json | null
           data_inicio_prevista: string | null
           departamento: string | null
+          departamento_id: string | null
           email: string
           expira_em: string
           grupo_acesso_id: string | null
@@ -1592,10 +1594,12 @@ export type Database = {
           status: string
           tipo: string
           token: string
+          unidade_id: string | null
           updated_at: string
         }
         Insert: {
           cargo?: string | null
+          cargo_id?: string | null
           colaborador_id?: string | null
           contrato_pj_id?: string | null
           created_at?: string
@@ -1604,6 +1608,7 @@ export type Database = {
           dados_preenchidos?: Json | null
           data_inicio_prevista?: string | null
           departamento?: string | null
+          departamento_id?: string | null
           email: string
           expira_em?: string
           grupo_acesso_id?: string | null
@@ -1621,10 +1626,12 @@ export type Database = {
           status?: string
           tipo: string
           token?: string
+          unidade_id?: string | null
           updated_at?: string
         }
         Update: {
           cargo?: string | null
+          cargo_id?: string | null
           colaborador_id?: string | null
           contrato_pj_id?: string | null
           created_at?: string
@@ -1633,6 +1640,7 @@ export type Database = {
           dados_preenchidos?: Json | null
           data_inicio_prevista?: string | null
           departamento?: string | null
+          departamento_id?: string | null
           email?: string
           expira_em?: string
           grupo_acesso_id?: string | null
@@ -1650,9 +1658,17 @@ export type Database = {
           status?: string
           tipo?: string
           token?: string
+          unidade_id?: string | null
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "convites_cadastro_cargo_id_fkey"
+            columns: ["cargo_id"]
+            isOneToOne: false
+            referencedRelation: "cargos"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "convites_cadastro_colaborador_id_fkey"
             columns: ["colaborador_id"]
@@ -1668,6 +1684,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "convites_cadastro_departamento_id_fkey"
+            columns: ["departamento_id"]
+            isOneToOne: false
+            referencedRelation: "parametros"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "convites_cadastro_grupo_acesso_id_fkey"
             columns: ["grupo_acesso_id"]
             isOneToOne: false
@@ -1679,6 +1702,13 @@ export type Database = {
             columns: ["lider_direto_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "convites_cadastro_unidade_id_fkey"
+            columns: ["unidade_id"]
+            isOneToOne: false
+            referencedRelation: "unidades"
             referencedColumns: ["id"]
           },
         ]
@@ -4947,6 +4977,7 @@ export type Database = {
           unidade_nome: string
         }[]
       }
+      validar_prontidao_sistema: { Args: never; Returns: Json }
     }
     Enums: {
       app_role:

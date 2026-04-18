@@ -24,6 +24,7 @@ import { ConviteDadosProfissionaisPJ } from "@/components/convite-detalhe/Convit
 import { getTarefasDinamicas } from "@/lib/onboarding-tarefas";
 import { useAuth } from "@/contexts/AuthContext";
 import { fetchExtensoesAplicaveis } from "@/hooks/useExtensoesAplicaveis";
+import { SystemReadinessBanner } from "@/components/shared/SystemReadinessBanner";
 
 async function gerarTarefasExtensoes(params: {
   checklistId: string;
@@ -108,7 +109,10 @@ interface Convite {
   nome: string;
   email: string;
   cargo: string | null;
+  cargo_id: string | null;
   departamento: string | null;
+  departamento_id: string | null;
+  unidade_id: string | null;
   status: string;
   expira_em: string;
   created_at: string;
@@ -279,6 +283,34 @@ export default function ConviteDetalhe() {
     }
 
     setCriando(true);
+
+    // Validar integridade do convite antes de importar (V3-G)
+    if (!convite.cargo_id) {
+      toast.error(
+        "Este convite não tem cargo válido vinculado (texto livre legado). Edite o convite e selecione um cargo cadastrado antes de importar."
+      );
+      setCriando(false);
+      return;
+    }
+    if (!convite.unidade_id) {
+      toast.error("Este convite não tem unidade definida. Edite o convite e escolha a unidade.");
+      setCriando(false);
+      return;
+    }
+    // Verificar se o cargo ainda existe e está ativo
+    const { data: cargoAtivo } = await supabase
+      .from("cargos")
+      .select("id, nome, ativo")
+      .eq("id", convite.cargo_id)
+      .maybeSingle();
+    if (!cargoAtivo || !cargoAtivo.ativo) {
+      toast.error(
+        `O cargo vinculado a este convite ("${convite.cargo}") não existe mais ou foi inativado. Edite o convite e escolha outro cargo.`
+      );
+      setCriando(false);
+      return;
+    }
+
     try {
       const dc = (convite as any).dados_contratacao || {};
 
@@ -325,7 +357,10 @@ export default function ConviteDetalhe() {
           tipo_conta: rest.tipo_conta || "corrente",
           chave_pix: rest.chave_pix || null,
           cargo: convite.cargo || rest.cargo || null,
+          cargo_id: convite.cargo_id,
           departamento: convite.departamento || rest.departamento || null,
+          departamento_id: convite.departamento_id,
+          unidade_id: convite.unidade_id,
           data_admissao: (convite as any).data_inicio_prevista || rest.data_admissao || new Date().toISOString().split("T")[0],
           salario_base: Number((convite as any).salario_previsto || rest.salario_base || 0),
           tipo_contrato: dc.tipo_contrato_clt || rest.tipo_contrato || "indeterminado",
@@ -468,18 +503,21 @@ export default function ConviteDetalhe() {
             const emailDest = colaboradorPayload.email_pessoal || convite.email;
             const { data: userData, error: userErr } = await supabase.functions.invoke("manage-user", {
               body: {
-                action: "create_user_standalone",
-                email: emailDest,
-                full_name: colaboradorPayload.nome_completo,
-                roles: ["colaborador"],
+                action: "create_user_from_colaborador",
                 colaborador_id: inserted.id,
-                colaborador_tipo: "clt",
+                tipo: "clt",
+                departamento_id: convite.departamento_id || null,
+                unidade_id: convite.unidade_id,
               },
             });
             if (userErr || (userData as any)?.error) {
               throw new Error(userErr?.message || (userData as any)?.error);
             }
-            acessoMsg = ` Um e-mail foi enviado para ${emailDest} para definir senha de acesso.`;
+            if ((userData as any)?.aviso_template) {
+              acessoMsg = ` Acesso criado, mas template parcial: ${(userData as any).aviso_template}`;
+            } else {
+              acessoMsg = ` Acesso ao portal criado (template aplicado). E-mail enviado para ${emailDest}.`;
+            }
           } catch (userCreateErr: any) {
             console.error("Erro ao criar usuário:", userCreateErr);
             toast.warning(
@@ -543,7 +581,10 @@ export default function ConviteDetalhe() {
           tipo_conta: rest.tipo_conta || "corrente",
           chave_pix: rest.chave_pix || null,
           tipo_servico: convite.cargo || rest.tipo_servico || null,
+          cargo_id: convite.cargo_id,
           departamento: convite.departamento || rest.departamento || null,
+          departamento_id: convite.departamento_id,
+          unidade_id: convite.unidade_id,
           valor_mensal: Number((convite as any).salario_previsto || rest.valor_mensal || 0),
           data_inicio: (convite as any).data_inicio_prevista || rest.data_inicio || new Date().toISOString().split("T")[0],
           forma_pagamento: rest.forma_pagamento || "transferencia",
@@ -662,18 +703,21 @@ export default function ConviteDetalhe() {
             const emailDestPj = contratoPayload.contato_email || contratoPayload.email_pessoal || convite.email;
             const { data: userData, error: userErr } = await supabase.functions.invoke("manage-user", {
               body: {
-                action: "create_user_standalone",
-                email: emailDestPj,
-                full_name: contratoPayload.contato_nome,
-                roles: ["colaborador"],
+                action: "create_user_from_colaborador",
                 colaborador_id: inserted.id,
-                colaborador_tipo: "pj",
+                tipo: "pj",
+                departamento_id: convite.departamento_id || null,
+                unidade_id: convite.unidade_id,
               },
             });
             if (userErr || (userData as any)?.error) {
               throw new Error(userErr?.message || (userData as any)?.error);
             }
-            acessoMsgPj = ` Um e-mail foi enviado para ${emailDestPj} para definir senha de acesso.`;
+            if ((userData as any)?.aviso_template) {
+              acessoMsgPj = ` Acesso criado, mas template parcial: ${(userData as any).aviso_template}`;
+            } else {
+              acessoMsgPj = ` Acesso ao portal criado (template aplicado). E-mail enviado para ${emailDestPj}.`;
+            }
           } catch (userCreateErr: any) {
             console.error("Erro ao criar usuário:", userCreateErr);
             toast.warning(
@@ -737,6 +781,7 @@ export default function ConviteDetalhe() {
 
   return (
     <div className="space-y-6">
+      <SystemReadinessBanner />
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center gap-4">
