@@ -39,6 +39,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { DialogConsentimentoFalaFetely } from "@/components/fala-fetely/DialogConsentimentoFalaFetely";
+import { ConfirmacaoDupla } from "@/components/ConfirmacaoDupla";
 
 interface Conversa {
   id: string;
