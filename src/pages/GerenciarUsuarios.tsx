@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import GruposAcessoTab from "@/components/grupos-acesso/GruposAcessoTab";
-import ConfigurarPerfisTab from "@/components/configurar-perfis/ConfigurarPerfisTab";
+
 import MatrizPermissoes from "@/components/gerenciar-usuarios/MatrizPermissoes";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -564,9 +564,6 @@ export default function GerenciarUsuarios() {
         <TabsList>
           <TabsTrigger value="usuarios" className="gap-2"><Users className="h-4 w-4" /> Usuários</TabsTrigger>
           <TabsTrigger value="grupos" className="gap-2"><ShieldCheck className="h-4 w-4" /> Grupos de Acesso</TabsTrigger>
-          {isSuperAdmin && (
-            <TabsTrigger value="perfis" className="gap-2"><Shield className="h-4 w-4" /> Configurar Perfis</TabsTrigger>
-          )}
           {(isSuperAdmin || isAdminRH) && (
             <TabsTrigger value="matriz" className="gap-2"><ShieldCheck className="h-4 w-4" /> Matriz de Permissões</TabsTrigger>
           )}
