@@ -627,6 +627,28 @@ export default function Conhecimento() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Confirmação dupla: desativar conhecimento (Regra 18) */}
+      <ConfirmacaoDupla
+        open={!!confirmarDesativar}
+        onOpenChange={(o) => !o && setConfirmarDesativar(null)}
+        titulo="Desativar este conhecimento?"
+        descricao={
+          <p>
+            <strong>{confirmarDesativar?.titulo}</strong> não aparecerá mais nas respostas do Fala
+            Fetely. Você pode reativar depois pela base inativa.
+          </p>
+        }
+        textoConfirmacao="APAGAR"
+        placeholder="APAGAR"
+        acaoLabel="Desativar"
+        onConfirmar={async () => {
+          if (confirmarDesativar) {
+            await desativar(confirmarDesativar);
+            setConfirmarDesativar(null);
+          }
+        }}
+      />
     </div>
   );
 }
