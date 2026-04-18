@@ -384,12 +384,18 @@ interface AtribuirDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   unidades: Array<{ id: string; nome: string }>;
-  todosUsuarios: Array<{ user_id: string; full_name: string; email: string }>;
+  todosUsuarios: Array<{
+    user_id: string;
+    full_name: string;
+    department?: string | null;
+    position?: string | null;
+  }>;
+  atribuicoesExistentes: AtribuicaoExpandida[];
   onSucesso: () => void;
 }
 
 function AtribuirDialog({
-  perfil, open, onOpenChange, unidades, todosUsuarios, onSucesso,
+  perfil, open, onOpenChange, unidades, todosUsuarios, atribuicoesExistentes, onSucesso,
 }: AtribuirDialogProps) {
   const [userId, setUserId] = useState("");
   const [unidadeId, setUnidadeId] = useState("");
@@ -397,6 +403,17 @@ function AtribuirDialog({
   const [salvando, setSalvando] = useState(false);
 
   const ehArea = perfil?.tipo === "area";
+
+  const idsJaAtribuidos = new Set(
+    atribuicoesExistentes
+      .filter((a) => {
+        if (!perfil) return false;
+        if (perfil.tipo === "transversal") return a.perfil_id === perfil.id;
+        // Área: considera duplicata se mesmo perfil + mesma unidade selecionada
+        return a.perfil_id === perfil.id && a.unidade_id === unidadeId;
+      })
+      .map((a) => a.user_id)
+  );
 
   async function salvar() {
     if (!perfil || !userId) return;
