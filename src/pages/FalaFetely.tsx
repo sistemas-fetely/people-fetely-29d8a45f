@@ -505,15 +505,26 @@ export default function FalaFetely() {
               </span>
             )}
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate("/fala-fetely/memorias")}
-            className="gap-1 text-xs"
-            title="Minhas memórias"
-          >
-            <Brain className="h-3 w-3" /> Minhas Memórias
-          </Button>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowPrivacidade(true)}
+              className="gap-1 text-xs"
+              title="Privacidade"
+            >
+              <Shield className="h-3 w-3" /> Privacidade
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate("/fala-fetely/memorias")}
+              className="gap-1 text-xs"
+              title="Minhas memórias"
+            >
+              <Brain className="h-3 w-3" /> Minhas Memórias
+            </Button>
+          </div>
         </header>
 
         {!conversaAtiva || mensagens.length === 0 ? (
