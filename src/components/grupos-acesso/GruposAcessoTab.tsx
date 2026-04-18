@@ -479,11 +479,27 @@ function AtribuirDialog({
                 <SelectValue placeholder="Selecione uma pessoa..." />
               </SelectTrigger>
               <SelectContent>
-                {todosUsuarios.map((u) => (
-                  <SelectItem key={u.user_id} value={u.user_id}>
-                    {u.full_name}
-                  </SelectItem>
-                ))}
+                {todosUsuarios.map((u) => {
+                  const jaTem = idsJaAtribuidos.has(u.user_id);
+                  const subtitulo = [u.position, u.department].filter(Boolean).join(" · ");
+                  return (
+                    <SelectItem key={u.user_id} value={u.user_id} disabled={jaTem}>
+                      <div className="flex flex-col items-start gap-0.5">
+                        <div className="flex items-center gap-2">
+                          <span>{u.full_name || "Sem nome"}</span>
+                          {jaTem && (
+                            <span className="text-[10px] text-muted-foreground italic">
+                              (já atribuído)
+                            </span>
+                          )}
+                        </div>
+                        {subtitulo && (
+                          <span className="text-xs text-muted-foreground">{subtitulo}</span>
+                        )}
+                      </div>
+                    </SelectItem>
+                  );
+                })}
               </SelectContent>
             </Select>
           </div>
