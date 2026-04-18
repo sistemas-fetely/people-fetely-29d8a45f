@@ -539,6 +539,31 @@ export default function FalaFetely() {
           </>
         )}
       </main>
+
+      {mensagemEnsinando && (
+        <EnsinarDialog
+          mensagem={mensagemEnsinando}
+          perguntaOriginal={getPerguntaAnterior(mensagemEnsinando)}
+          onClose={() => setMensagemEnsinando(null)}
+          onEnviado={() => {
+            setMensagemEnsinando(null);
+            toast({ title: "Obrigado!", description: "Sua sugestão foi enviada para o RH revisar. 💚" });
+          }}
+        />
+      )}
+
+      {feedbackNegativo && (
+        <FeedbackNegativoDialog
+          mensagem={feedbackNegativo}
+          perguntaOriginal={getPerguntaAnterior(feedbackNegativo)}
+          podeEnsinar={podeEnsinar}
+          onClose={() => setFeedbackNegativo(null)}
+          onEnviado={() => {
+            setFeedbackNegativo(null);
+            toast({ title: "Obrigado pelo feedback!", description: "Vou usar isso pra melhorar. 💚" });
+          }}
+        />
+      )}
     </div>
   );
 }
