@@ -39,6 +39,8 @@ import { TemplatesTab } from "@/components/gerenciar-usuarios/TemplatesTab";
 import { usePerfisV2 } from "@/hooks/usePerfisV2";
 import { useUnidades } from "@/hooks/useUnidades";
 import { useTemplates, usePreviewTemplate } from "@/hooks/useTemplates";
+import { useDepartamentoInfo } from "@/hooks/useEstruturaOrganizacional";
+import { SelectDepartamentoHierarquico } from "@/components/shared/SelectDepartamentoHierarquico";
 import { NIVEL_LABELS_V2 } from "@/types/permissoes-v2";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -195,16 +197,13 @@ export default function GerenciarUsuarios() {
   const [linkContratoPjId, setLinkContratoPjId] = useState("");
   const [drawerUsuarioId, setDrawerUsuarioId] = useState<string | null>(null);
 
-  // V2 — Template / Área / Unidade para Novo Usuário
+  // V3 — Template / Departamento / Unidade para Novo Usuário
   const [templateId, setTemplateId] = useState<string>("");
-  const [areaCodigo, setAreaCodigo] = useState<string>("");
+  const [departamentoId, setDepartamentoId] = useState<string>("");
+  const [departamentoLabel, setDepartamentoLabel] = useState<string>("");
   const [unidadeIdNovo, setUnidadeIdNovo] = useState<string>("");
   const { data: templates } = useTemplates();
-  const { data: previewPerfis } = usePreviewTemplate(
-    templateId || null,
-    areaCodigo || null,
-    unidadeIdNovo || null
-  );
+  const { data: departamentoInfo } = useDepartamentoInfo(departamentoId || null);
   const { data: profiles = [], isLoading } = useQuery({
     queryKey: ["admin-profiles"],
     queryFn: async () => {
@@ -321,10 +320,10 @@ export default function GerenciarUsuarios() {
       const novoUserId = result?.user_id;
       if (novoUserId && templateId) {
         const { data: authData } = await supabase.auth.getUser();
-        const { error: errTemplate } = await supabase.rpc("aplicar_template_cargo", {
+        const { error: errTemplate } = await supabase.rpc("aplicar_template_cargo_v3", {
           _user_id: novoUserId,
           _template_id: templateId,
-          _area_perfil_codigo: areaCodigo || null,
+          _departamento_id: departamentoId || null,
           _unidade_id: unidadeIdNovo || null,
           _atribuidor: authData?.user?.id || null,
         });
@@ -347,7 +346,8 @@ export default function GerenciarUsuarios() {
       setCreateOpen(false);
       setNewUser({ email: "", full_name: "", roles: ["colaborador"], tipo_acesso: "externo", colaborador_id: "", colaborador_tipo: "" });
       setTemplateId("");
-      setAreaCodigo("");
+      setDepartamentoId("");
+      setDepartamentoLabel("");
       setUnidadeIdNovo("");
     },
     onError: (err: Error) => toast.error(err.message || "Erro ao criar usuário"),
@@ -625,17 +625,31 @@ export default function GerenciarUsuarios() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-2">
-                  <Label>Área de atuação *</Label>
-                  <Select value={areaCodigo} onValueChange={setAreaCodigo}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Escolha a área" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {(perfisV2 || []).filter((p) => p.tipo === "area").map((a) => (
-                        <SelectItem key={a.id} value={a.codigo}>{a.nome}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Label>Departamento *</Label>
+                  <SelectDepartamentoHierarquico
+                    valueId={departamentoId || null}
+                    valueTexto={departamentoLabel}
+                    onChange={(dep) => {
+                      setDepartamentoId(dep?.id || "");
+                      setDepartamentoLabel(dep?.label || "");
+                    }}
+                  />
+                  {departamentoInfo && (
+                    <div className="rounded-md border border-primary/30 bg-primary/5 p-2 text-xs">
+                      <div className="flex items-center gap-1.5">
+                        <Sparkles className="h-3.5 w-3.5 text-primary" />
+                        <span className="text-muted-foreground">Receberá automaticamente:</span>
+                      </div>
+                      <div className="mt-1 ml-5">
+                        <span className="font-medium text-primary">
+                          {departamentoInfo.perfil_nome || "— (só transversal do template)"}
+                        </span>
+                        {departamentoInfo.area_label && (
+                          <span className="text-muted-foreground"> · Área: {departamentoInfo.area_label}</span>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label>Unidade *</Label>
@@ -651,33 +665,6 @@ export default function GerenciarUsuarios() {
                   </Select>
                 </div>
               </div>
-
-              {templateId && previewPerfis && previewPerfis.length > 0 && (
-                <div className="rounded-md border border-primary/30 bg-primary/5 p-3 space-y-2">
-                  <div className="flex items-center gap-1.5 text-xs font-medium text-primary">
-                    <Sparkles className="h-3.5 w-3.5" />
-                    Ao criar, esta pessoa vai receber:
-                  </div>
-                  <ul className="space-y-1">
-                    {previewPerfis.map((p, i: number) => (
-                      <li key={i} className="flex items-start gap-1.5 text-xs">
-                        <Check className="h-3 w-3 text-primary mt-0.5 shrink-0" />
-                        <span>
-                          <span className="font-medium">{p.perfil_nome}</span>
-                          {p.nivel && (
-                            <span className="text-muted-foreground">
-                              {" "}· {(NIVEL_LABELS_V2 as Record<string, string>)[p.nivel] || p.nivel}
-                            </span>
-                          )}
-                          {p.unidade_nome && (
-                            <span className="text-muted-foreground"> · {p.unidade_nome}</span>
-                          )}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setCreateOpen(false)}>Cancelar</Button>
@@ -687,7 +674,7 @@ export default function GerenciarUsuarios() {
                   !newUser.email ||
                   !newUser.full_name ||
                   !templateId ||
-                  !areaCodigo ||
+                  !departamentoId ||
                   !unidadeIdNovo ||
                   createUser.isPending
                 }
