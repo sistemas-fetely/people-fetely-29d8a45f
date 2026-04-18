@@ -4428,6 +4428,7 @@ export type Database = {
         | "recrutamento"
         | "gestao_direta"
         | "estagiario"
+        | "diretoria_executiva"
       nivel_cargo:
         | "estagio"
         | "assistente"
@@ -4579,6 +4580,7 @@ export const Constants = {
         "recrutamento",
         "gestao_direta",
         "estagiario",
+        "diretoria_executiva",
       ],
       nivel_cargo: [
         "estagio",
