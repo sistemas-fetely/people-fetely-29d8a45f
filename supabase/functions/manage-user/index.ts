@@ -227,6 +227,8 @@ Deno.serve(async (req) => {
         });
       }
 
+      console.log(`[create_user_from_colaborador] Start. colaborador_id=${colaborador_id}, tipo=${tipo}, unidade_id=${unidade_id}, departamento_id=${departamento_id || "null"}, template_id=${template_id || "derivar"}`);
+
       // 1. Buscar dados do colaborador
       const tabela = tipo === "clt" ? "colaboradores_clt" : "contratos_pj";
       const selectFields = tipo === "clt"
@@ -240,6 +242,7 @@ Deno.serve(async (req) => {
         .single();
 
       if (errColab || !colab) {
+        console.error("[create_user_from_colaborador] Colaborador não encontrado:", errColab);
         return new Response(JSON.stringify({ error: "Colaborador não encontrado" }), {
           status: 404,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -256,18 +259,42 @@ Deno.serve(async (req) => {
         });
       }
 
-      // 2. Resolver template (se não veio explícito, derivar do cargo)
+      // 2. Resolver template
+      // Prioridade: template_id explícito > template_sugerido_para_cargo > fallback "analista"
       let templateToApply: string | null = template_id || null;
       if (!templateToApply && (colab as any).cargo_id) {
-        const { data: templRpc } = await adminClient.rpc("template_sugerido_para_cargo", {
-          _cargo_id: (colab as any).cargo_id,
-        });
-        templateToApply = templRpc as string | null;
+        try {
+          const { data: templRpc, error: errTempl } = await adminClient.rpc("template_sugerido_para_cargo", {
+            _cargo_id: (colab as any).cargo_id,
+          });
+          if (errTempl) {
+            console.error("[create_user_from_colaborador] Erro ao sugerir template por cargo:", errTempl);
+          } else {
+            templateToApply = templRpc as string | null;
+          }
+        } catch (e) {
+          console.error("[create_user_from_colaborador] Exception ao sugerir template:", e);
+        }
+      }
+
+      // Fallback final: usar template "analista" do sistema
+      if (!templateToApply) {
+        console.log(`[create_user_from_colaborador] cargo_id ausente ou sem template mapeado, usando fallback 'analista'. colab_id=${colaborador_id}, tipo=${tipo}`);
+        const { data: fallback } = await adminClient
+          .from("cargo_template")
+          .select("id")
+          .eq("codigo", "analista")
+          .eq("is_sistema", true)
+          .single();
+        templateToApply = (fallback as any)?.id || null;
       }
 
       if (!templateToApply) {
-        return new Response(JSON.stringify({ error: "Não foi possível resolver um template para este cargo" }), {
-          status: 400,
+        console.error("[create_user_from_colaborador] Template 'analista' de fallback não encontrado no banco.");
+        return new Response(JSON.stringify({
+          error: "Template 'analista' de fallback não foi encontrado no banco. Contate o administrador."
+        }), {
+          status: 500,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
@@ -311,14 +338,14 @@ Deno.serve(async (req) => {
       });
 
       if (errTemplate) {
-        console.error("Erro ao aplicar template v3:", errTemplate);
+        console.error("[create_user_from_colaborador] Erro ao aplicar template v3:", errTemplate);
       }
 
       // 7. Gerar link de recuperação (primeiro acesso)
       try {
         await adminClient.auth.admin.generateLink({ type: "recovery", email });
       } catch (e) {
-        console.error("Erro ao gerar link de recuperação:", e);
+        console.error("[create_user_from_colaborador] Erro ao gerar link de recuperação:", e);
       }
 
       // 8. E-mail de boas-vindas
@@ -336,8 +363,10 @@ Deno.serve(async (req) => {
           },
         });
       } catch (e) {
-        console.error("Erro ao enviar e-mail de boas-vindas:", e);
+        console.error("[create_user_from_colaborador] Erro ao enviar e-mail de boas-vindas:", e);
       }
+
+      console.log(`[create_user_from_colaborador] Success. user_id=${novoUserId}, template_aplicado=${templateToApply}, perfil_aplicado=${errTemplate ? "FALHOU" : "OK"}`);
 
       return new Response(JSON.stringify({
         success: true,

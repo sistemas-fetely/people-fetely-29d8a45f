@@ -66,6 +66,7 @@ export const documentosPJSchema = z.object({
 // Step 3: Dados Profissionais (adaptado PJ)
 export const dadosProfissionaisPJSchema = z.object({
   tipo_servico: z.string().min(2, "Cargo é obrigatório"),
+  cargo_id: z.string().nullable().optional(),
   departamento: z.string().min(1, "Departamento é obrigatório"),
   departamento_id: z.string().nullable().optional(),
   unidade_id: z.string().uuid({ message: "Unidade é obrigatória" }),

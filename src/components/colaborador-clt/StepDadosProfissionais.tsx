@@ -33,13 +33,17 @@ export function StepDadosProfissionais() {
             <div className="flex items-center h-10"><Loader2 className="h-4 w-4 animate-spin" /></div>
           ) : (
             <Select
-              value={(cargos || []).find(c => c.nome.toLowerCase() === (watch("cargo") || "").toLowerCase())?.nome || watch("cargo") || ""}
-              onValueChange={(v) => setValue("cargo", v)}
+              value={(watch("cargo_id") as string) || ""}
+              onValueChange={(id) => {
+                const cargoSelecionado = (cargos || []).find((c) => c.id === id);
+                setValue("cargo_id", id || null);
+                setValue("cargo", cargoSelecionado?.nome || "");
+              }}
             >
               <SelectTrigger><SelectValue placeholder="Selecione o cargo" /></SelectTrigger>
               <SelectContent>
                 {(cargos || []).map((c) => (
-                  <SelectItem key={c.id} value={c.nome}>{c.nome}</SelectItem>
+                  <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
                 ))}
               </SelectContent>
             </Select>

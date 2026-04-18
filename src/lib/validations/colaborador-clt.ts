@@ -52,6 +52,7 @@ export const departamentoRateioSchema = z.object({
 export const dadosProfissionaisSchema = z.object({
   matricula: z.string().optional().or(z.literal("")),
   cargo: z.string().min(2, "Cargo é obrigatório"),
+  cargo_id: z.string().nullable().optional(),
   departamento: z.string().min(1, "Departamento é obrigatório"),
   departamento_id: z.string().nullable().optional(),
   unidade_id: z.string().uuid({ message: "Unidade é obrigatória" }),

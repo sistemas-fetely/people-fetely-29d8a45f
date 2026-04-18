@@ -67,6 +67,7 @@ export function CadastroColaboradorCLT() {
       tipo_conta: "corrente",
       departamento: "",
       departamento_id: null,
+      cargo_id: null,
       unidade_id: "",
       dependentes: [],
       ...(initialData || {}),
