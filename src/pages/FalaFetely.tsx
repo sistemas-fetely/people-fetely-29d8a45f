@@ -569,7 +569,7 @@ export default function FalaFetely() {
           </div>
         </header>
 
-        {!conversaAtiva || mensagens.length === 0 ? (
+        {mensagens.length === 0 ? (
           <div className="flex-1 overflow-auto">
             <div className="max-w-2xl mx-auto text-center pt-12 pb-8 px-4 space-y-6">
               <div
