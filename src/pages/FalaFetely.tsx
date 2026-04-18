@@ -4,7 +4,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import {
   ArrowLeft, Plus, Send, Sparkles, MessageCircle, ThumbsUp, ThumbsDown, Copy,
-  Globe, Gift, Workflow, Users, MessageCircleHeart, GraduationCap,
+  Globe, Gift, Workflow, Users, MessageCircleHeart, GraduationCap, Brain,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -170,9 +170,18 @@ export default function FalaFetely() {
   }
 
   function novaConversa() {
+    // Dispara extração de memória da conversa anterior em background (fire-and-forget)
+    if (conversaAtiva && mensagens.length >= 4) {
+      void supabase.functions
+        .invoke("fala-fetely-extrair-memoria", {
+          body: { conversa_id: conversaAtiva.id },
+        })
+        .catch((err) => console.error("Erro extração memória:", err));
+    }
     setConversaAtiva(null);
     setMensagens([]);
     setInput("");
+    setFeedbacksDados(new Map());
   }
 
   async function enviarPergunta(perguntaTexto: string) {
@@ -405,7 +414,15 @@ export default function FalaFetely() {
               </span>
             )}
           </div>
-          <div className="w-[140px]" />
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate("/fala-fetely/memorias")}
+            className="gap-1 text-xs"
+            title="Minhas memórias"
+          >
+            <Brain className="h-3 w-3" /> Minhas Memórias
+          </Button>
         </header>
 
         {!conversaAtiva || mensagens.length === 0 ? (

@@ -83,7 +83,7 @@ Deno.serve(async (req) => {
     });
 
     // 3) Coletar contexto do usuário + conhecimento + histórico (paralelo)
-    const [profileRes, colabRes, contratoPjRes, tarefasRes, processosRes, templatesRes, tarefasTemplateRes, extensoesRes, tarefasExtensoesRes, sistemasRes, departamentosRes, cargosRes, docsRes, beneficiosRes, conhecimentosRes, historicoRes] = await Promise.all([
+    const [profileRes, colabRes, contratoPjRes, tarefasRes, processosRes, templatesRes, tarefasTemplateRes, extensoesRes, tarefasExtensoesRes, sistemasRes, departamentosRes, cargosRes, docsRes, beneficiosRes, conhecimentosRes, memoriasRes, historicoRes] = await Promise.all([
       supabase.from("profiles").select("full_name, colaborador_tipo").eq("user_id", user.id).maybeSingle(),
       supabase.from("colaboradores_clt").select("id, cargo, departamento, nome_completo").eq("user_id", user.id).maybeSingle(),
       supabase.from("contratos_pj").select("tipo_servico, departamento, contato_nome").eq("user_id", user.id).maybeSingle(),
@@ -105,6 +105,13 @@ Deno.serve(async (req) => {
       supabase.from("sncf_documentacao").select("titulo, descricao, conteudo").eq("ativo", true).limit(20),
       supabase.from("beneficios_catalogo").select("beneficio, tipo").eq("ativo", true).limit(30),
       (supabase as any).from("fala_fetely_conhecimento").select("categoria, titulo, conteudo, publico_alvo, cargos_aplicaveis, niveis_aplicaveis, departamentos_aplicaveis, fonte, tags").eq("ativo", true).order("categoria").limit(100),
+      (supabase as any)
+        .from("fala_fetely_memoria")
+        .select("id, tipo, resumo, conteudo_completo, tags, relevancia")
+        .eq("user_id", user.id)
+        .eq("ativo", true)
+        .order("relevancia", { ascending: false })
+        .limit(20),
       conversa_id
         ? supabase
             .from("fala_fetely_mensagens")
