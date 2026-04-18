@@ -33,6 +33,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { ConfirmacaoDupla } from "@/components/ConfirmacaoDupla";
+import { DrawerUsuario } from "@/components/DrawerUsuario";
 import type { Database } from "@/integrations/supabase/types";
 
 type AppRole = Database["public"]["Enums"]["app_role"];
@@ -136,6 +137,7 @@ export default function GerenciarUsuarios() {
   const [linkUser, setLinkUser] = useState<{ userId: string; name: string } | null>(null);
   const [linkColaboradorId, setLinkColaboradorId] = useState("");
   const [linkContratoPjId, setLinkContratoPjId] = useState("");
+  const [drawerUsuarioId, setDrawerUsuarioId] = useState<string | null>(null);
   const { data: profiles = [], isLoading } = useQuery({
     queryKey: ["admin-profiles"],
     queryFn: async () => {
@@ -597,10 +599,14 @@ export default function GerenciarUsuarios() {
                     return (
                       <TableRow key={profile.id} className={isBanned ? "opacity-60" : ""}>
                         <TableCell>
-                          <div>
-                            <p className="font-medium">{profile.full_name || "—"}</p>
+                          <button
+                            type="button"
+                            onClick={() => setDrawerUsuarioId(profile.user_id)}
+                            className="text-left hover:text-primary transition-colors group"
+                          >
+                            <p className="font-medium group-hover:underline">{profile.full_name || "—"}</p>
                             <p className="text-xs text-muted-foreground">{authUser?.email || ""}</p>
-                          </div>
+                          </button>
                         </TableCell>
                         <TableCell>
                           {(() => {
@@ -1108,6 +1114,12 @@ export default function GerenciarUsuarios() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <DrawerUsuario
+        userId={drawerUsuarioId}
+        open={!!drawerUsuarioId}
+        onOpenChange={(open) => !open && setDrawerUsuarioId(null)}
+      />
     </div>
   );
 }
