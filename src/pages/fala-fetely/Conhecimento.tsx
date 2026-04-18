@@ -114,6 +114,7 @@ export default function Conhecimento() {
   const [form, setForm] = useState<FormState>(FORM_INICIAL);
   const [tagInput, setTagInput] = useState("");
   const [aprovandoSugestao, setAprovandoSugestao] = useState<SugestaoPendente | null>(null);
+  const [confirmarDesativar, setConfirmarDesativar] = useState<Conhecimento | null>(null);
 
   const [cargos, setCargos] = useState<string[]>([]);
   const [departamentos, setDepartamentos] = useState<string[]>([]);
@@ -281,7 +282,6 @@ export default function Conhecimento() {
   }
 
   async function desativar(item: Conhecimento) {
-    if (!confirm(`Desativar "${item.titulo}"? Ele não aparecerá mais nas respostas do Fala Fetely.`)) return;
     const { error } = await supabase.from("fala_fetely_conhecimento").update({ ativo: false }).eq("id", item.id);
     if (error) {
       toast({ title: "Erro", description: error.message, variant: "destructive" });
