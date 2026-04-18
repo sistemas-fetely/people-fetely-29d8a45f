@@ -64,6 +64,7 @@ export function CadastroColaboradorCLT() {
       jornada_semanal: "44",
       tipo_conta: "corrente",
       departamento: "",
+      departamento_id: null,
       dependentes: [],
       ...(initialData || {}),
     },

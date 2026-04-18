@@ -38,7 +38,7 @@ import { HubDaPessoaDialog } from "@/components/gerenciar-usuarios/HubDaPessoaDi
 import { TemplatesTab } from "@/components/gerenciar-usuarios/TemplatesTab";
 import { usePerfisV2 } from "@/hooks/usePerfisV2";
 import { useUnidades } from "@/hooks/useUnidades";
-import { useTemplates, usePreviewTemplate } from "@/hooks/useTemplates";
+import { useTemplates } from "@/hooks/useTemplates";
 import { useDepartamentoInfo } from "@/hooks/useEstruturaOrganizacional";
 import { SelectDepartamentoHierarquico } from "@/components/shared/SelectDepartamentoHierarquico";
 import { NIVEL_LABELS_V2 } from "@/types/permissoes-v2";

@@ -42,6 +42,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format, parseISO, addDays, differenceInDays, formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useParametros } from "@/hooks/useParametros";
+import { SelectDepartamentoHierarquico } from "@/components/shared/SelectDepartamentoHierarquico";
 import { useCargos } from "@/hooks/useCargos";
 import { useCLevelCargos } from "@/hooks/useCLevelCargos";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -196,7 +197,7 @@ export default function ConvitesCadastro() {
   const [returnDialogOpen, setReturnDialogOpen] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
 
-  const { data: departamentos } = useParametros("departamento");
+  
   const { data: tiposContrato } = useParametros("tipo_contrato");
   const { data: jornadas } = useParametros("jornada");
   const { data: locaisTrabalho } = useParametros("local_trabalho");

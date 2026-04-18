@@ -6,8 +6,9 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCreatePosicao, useUpdatePosicao, useDeletePosicao } from "@/hooks/useOrgMutations";
-import { useParametros } from "@/hooks/useParametros";
 import { useCargos } from "@/hooks/useCargos";
+import { useEstruturaOrganizacional } from "@/hooks/useEstruturaOrganizacional";
+import { SelectDepartamentoHierarquico } from "@/components/shared/SelectDepartamentoHierarquico";
 import type { PosicaoNode } from "@/types/organograma";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Trash2, Loader2 } from "lucide-react";
@@ -36,7 +37,7 @@ export function OrgPosicaoModal({ open, onClose, editNode, allNodes }: Props) {
   const deleteMutation = useDeletePosicao();
   const { data: cargosRaw, isLoading: loadingCargos } = useCargos();
   const cargosParam = (cargosRaw || []).map((c) => ({ id: c.id, label: c.nome }));
-  const { data: deptParam, isLoading: loadingDepts } = useParametros("departamento");
+  const { data: estrutura } = useEstruturaOrganizacional();
 
   const [form, setForm] = useState({
     titulo_cargo: "",
@@ -161,15 +162,21 @@ export function OrgPosicaoModal({ open, onClose, editNode, allNodes }: Props) {
           <div className="grid grid-cols-2 gap-4">
             <div className="grid gap-1.5">
               <Label>Departamento *</Label>
-              {loadingDepts ? <Loader2 className="h-4 w-4 animate-spin mt-2" /> : (
-                <Select value={form.departamento} onValueChange={(v) => setForm({ ...form, departamento: v })}>
-                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                  <SelectContent>
-                    {(deptParam || []).map((d) => (
-                      <SelectItem key={d.id} value={d.label}>{d.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <SelectDepartamentoHierarquico
+                valueTexto={form.departamento}
+                onChange={(dep) => {
+                  const areaDona = (estrutura || []).find((a) => a.valor === dep?.pai_valor);
+                  setForm({
+                    ...form,
+                    departamento: dep?.label || "",
+                    area: areaDona?.label || form.area || "",
+                  });
+                }}
+              />
+              {form.area && (
+                <p className="text-xs text-muted-foreground">
+                  Área: <strong>{form.area}</strong>
+                </p>
               )}
             </div>
 
