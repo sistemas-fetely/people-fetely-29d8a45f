@@ -745,6 +745,9 @@ export default function GerenciarUsuarios() {
           {(isSuperAdmin || isAdminRH) && (
             <TabsTrigger value="matriz" className="gap-2"><ShieldCheck className="h-4 w-4" /> Matriz de Permissões</TabsTrigger>
           )}
+          {isSuperAdmin && (
+            <TabsTrigger value="templates" className="gap-2"><FileText className="h-4 w-4" /> Templates</TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="usuarios" className="mt-4">
