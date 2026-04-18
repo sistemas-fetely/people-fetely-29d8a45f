@@ -954,7 +954,35 @@ export default function GerenciarUsuarios() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Dialog for manual linking */}
+      {/* Confirmação dupla: remover/inativar Super Admin (Regra 18) */}
+      <ConfirmacaoDupla
+        open={!!removeSuperAdminConfirm}
+        onOpenChange={(o) => !o && setRemoveSuperAdminConfirm(null)}
+        titulo="🔐 Remover privilégios de Super Admin"
+        descricao={
+          <>
+            <p>
+              Você está prestes a {removeSuperAdminConfirm?.mode === "delete" ? "deletar" : "inativar"} o
+              Super Admin <strong>{removeSuperAdminConfirm?.name}</strong>. Essa ação afeta o acesso total
+              ao sistema e é registrada em auditoria.
+            </p>
+            <p>Confirme apenas se for realmente necessário.</p>
+          </>
+        }
+        textoConfirmacao="REMOVER SUPER ADMIN"
+        placeholder="REMOVER SUPER ADMIN"
+        acaoLabel={removeSuperAdminConfirm?.mode === "delete" ? "Deletar Super Admin" : "Inativar Super Admin"}
+        onConfirmar={async () => {
+          if (!removeSuperAdminConfirm) return;
+          if (removeSuperAdminConfirm.mode === "delete") {
+            await deleteUser.mutateAsync(removeSuperAdminConfirm.userId);
+          } else {
+            await toggleBan.mutateAsync({ user_id: removeSuperAdminConfirm.userId, ban: true });
+          }
+          setRemoveSuperAdminConfirm(null);
+        }}
+      />
+
       <Dialog open={linkDialogOpen} onOpenChange={setLinkDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
