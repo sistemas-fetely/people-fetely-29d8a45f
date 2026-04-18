@@ -675,9 +675,7 @@ function ModoMatrizCompleta({ perms, roleCounts }: SharedCtx) {
                     {r.isNew && (
                       <Badge variant="outline" className="text-[8px] px-1 py-0 border-emerald-400 text-emerald-700">Nova</Badge>
                     )}
-                    {r.isLegacy && (
-                      <Badge variant="outline" className="text-[8px] px-1 py-0 border-amber-400 text-amber-700">Legado</Badge>
-                    )}
+                    {/* perfis legados removidos da matriz */}
                     <span className="text-[10px] text-muted-foreground">
                       {roleCounts?.[r.role] ?? 0} {(roleCounts?.[r.role] ?? 0) === 1 ? "usuário" : "usuários"}
                     </span>

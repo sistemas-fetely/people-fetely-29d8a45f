@@ -39,51 +39,64 @@ type AppRole = Database["public"]["Enums"]["app_role"];
 
 const ROLE_LABELS: Record<AppRole, string> = {
   super_admin: "Super Admin",
+  diretoria_executiva: "Diretoria Executiva",
+  rh: "RH",
+  gestao_direta: "Gestão Direta",
+  financeiro: "Financeiro",
+  administrativo: "Administrativo",
+  operacional: "Operacional",
+  ti: "TI",
+  recrutamento: "Recrutamento",
+  fiscal: "Fiscal",
+  estagiario: "Estagiário",
+  colaborador: "Colaborador",
+  // Legados (mantidos só por compatibilidade — não aparecem na UI nova)
   admin_rh: "Admin RH",
   admin_ti: "Admin TI",
   gestor_rh: "Gestor RH",
   gestor_direto: "Gestor Direto",
-  colaborador: "Colaborador",
-  financeiro: "Financeiro",
-  fiscal: "Fiscal",
-  operacional: "Operacional",
   recrutador: "Recrutador",
-  rh: "RH",
-  administrativo: "Administrativo",
-  ti: "TI",
-  recrutamento: "Recrutamento",
-  gestao_direta: "Gestão Direta",
-  estagiario: "Estagiário",
 };
 
 const ROLE_DESCRIPTIONS: Record<AppRole, string> = {
   super_admin: "Acesso total ao sistema. Único que vê salário C-Level e configura perfis.",
-  admin_rh: "Gestão completa de pessoas, dados sensíveis (salário não C-Level). Cria e edita usuários.",
-  admin_ti: "Gerencia acessos a sistemas e equipamentos. (Módulo TI — em breve)",
-  gestor_rh: "Gestão operacional de pessoas. Sem dados financeiros, folha, parâmetros ou usuários.",
-  gestor_direto: "Visualiza e aprova para seu time. Recebe tarefas de onboarding.",
-  colaborador: "Portal self-service. Acessa apenas seus próprios dados.",
-  financeiro: "Puramente financeiro. Folha, NF, pagamentos PJ. Sem dados operacionais de RH.",
-  fiscal: "NF-e e integração ERP. Subconjunto do financeiro. (Integração ERP — em breve)",
-  operacional: "Ponto, turnos e NRs da unidade fabril. (Unidade Fabril — em breve)",
-  recrutador: "Gestão completa de recrutamento e seleção. Sem acesso a dados financeiros ou configurações do sistema.",
-  rh: "Recursos Humanos — área unificada (substitui admin_rh/gestor_rh em fase futura).",
-  administrativo: "Administrativo geral.",
-  ti: "Tecnologia da Informação — área unificada (substitui admin_ti em fase futura).",
-  recrutamento: "Área de Recrutamento (substitui recrutador em fase futura).",
-  gestao_direta: "Liderança de time (substitui gestor_direto em fase futura).",
+  diretoria_executiva: "Visibilidade executiva total — vê tudo, inclusive todas as remunerações, mas não configura nem edita nada. Para sócios e board.",
+  rh: "Recursos Humanos. Acesso conforme nível: do Estágio ao Diretor.",
+  gestao_direta: "Liderança de time. Acessa suas informações e as do time conforme organograma.",
+  financeiro: "Financeiro. Folha, NF, pagamentos PJ. Acesso conforme nível.",
+  administrativo: "Administrativo geral. Acesso conforme nível.",
+  operacional: "Operacional (ponto, turnos, NRs). Acesso conforme nível.",
+  ti: "Tecnologia da Informação. Ativos, acessos, documentação.",
+  recrutamento: "Recrutamento e Seleção. Acesso conforme nível.",
+  fiscal: "Fiscal e tributário. NF-e e integração ERP.",
   estagiario: "Estagiário de qualquer área. Permissões reduzidas conforme nível.",
+  colaborador: "Portal self-service. Acessa apenas seus próprios dados.",
+  // Legados (não exibidos)
+  admin_rh: "[Legado] substituído por RH",
+  admin_ti: "[Legado] substituído por TI",
+  gestor_rh: "[Legado] substituído por RH",
+  gestor_direto: "[Legado] substituído por Gestão Direta",
+  recrutador: "[Legado] substituído por Recrutamento",
 };
 
 const ACTIVE_ROLES: AppRole[] = [
-  "super_admin", "admin_rh", "gestor_rh", "recrutador", "gestor_direto", "colaborador", "financeiro"
+  "super_admin", "diretoria_executiva", "rh", "gestao_direta", "financeiro",
+  "administrativo", "operacional", "ti", "recrutamento", "fiscal",
+  "estagiario", "colaborador",
 ];
-const FUTURE_ROLES: AppRole[] = [
-  "admin_ti", "fiscal", "operacional"
+const FUTURE_ROLES: AppRole[] = [];
+const LEGACY_ROLES: AppRole[] = [
+  "admin_rh", "admin_ti", "gestor_rh", "gestor_direto", "recrutador",
 ];
 const ALL_ROLES: AppRole[] = [...ACTIVE_ROLES, ...FUTURE_ROLES];
 
+const ROLES_COM_NIVEL: AppRole[] = [
+  "rh", "gestao_direta", "financeiro", "administrativo",
+  "operacional", "ti", "recrutamento", "fiscal", "estagiario",
+];
+
 const isFutureRole = (role: AppRole) => FUTURE_ROLES.includes(role);
+const isLegacyRole = (role: AppRole) => LEGACY_ROLES.includes(role);
 
 async function callManageUser(action: string, payload: Record<string, unknown>) {
   const { data, error } = await supabase.functions.invoke("manage-user", {
