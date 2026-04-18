@@ -840,11 +840,13 @@ function ModoMatrizCompleta({ perms, roleCounts, podeEditar }: SharedCtx) {
 // ============================================================================
 // Componente principal
 // ============================================================================
-export default function MatrizPermissoes({ onNavigateToPerfis }: MatrizPermissoesProps) {
+export default function MatrizPermissoes({ onNavigateToPerfis: _onNavigateToPerfis }: MatrizPermissoesProps = {}) {
   const { roles: myRoles } = useAuth();
   const isSuperAdmin = myRoles.includes("super_admin");
+  const podeEditar = isSuperAdmin;
   const queryClient = useQueryClient();
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
+  const [mostrarComparacao, setMostrarComparacao] = useState(false);
 
   const { data: todasPermissoes, isLoading, isFetching } = useQuery({
     queryKey: ["all-role-permissions"],
@@ -888,6 +890,7 @@ export default function MatrizPermissoes({ onNavigateToPerfis }: MatrizPermissoe
   const ctx: SharedCtx = {
     perms: todasPermissoes || [],
     roleCounts: roleCounts || {},
+    podeEditar,
   };
 
   const formattedTime = lastUpdated.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
@@ -913,28 +916,45 @@ export default function MatrizPermissoes({ onNavigateToPerfis }: MatrizPermissoe
               </Button>
             </div>
           </div>
-          {isSuperAdmin && onNavigateToPerfis && (
-            <Button variant="outline" size="sm" className="gap-2" onClick={onNavigateToPerfis}>
-              Editar permissões <ArrowRight className="h-3.5 w-3.5" />
-            </Button>
-          )}
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2"
+            onClick={() => setMostrarComparacao(true)}
+          >
+            <Scale className="h-3.5 w-3.5" />
+            Comparar Perfis
+          </Button>
         </div>
       </CardHeader>
       <CardContent>
         <TooltipProvider delayDuration={200}>
           <Tabs defaultValue="perfil" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 mb-4 h-auto">
+            <TabsList className="grid w-full grid-cols-3 mb-4 h-auto">
               <TabsTrigger value="perfil" className="text-xs sm:text-sm">🔍 Perfil Único</TabsTrigger>
               <TabsTrigger value="modulo" className="text-xs sm:text-sm">📊 Módulo Único</TabsTrigger>
-              <TabsTrigger value="comparar" className="text-xs sm:text-sm">⚖️ Comparar Perfis</TabsTrigger>
               <TabsTrigger value="completa" className="text-xs sm:text-sm">🗺 Matriz Completa</TabsTrigger>
             </TabsList>
 
             <TabsContent value="perfil"><ModoPerfilUnico {...ctx} /></TabsContent>
             <TabsContent value="modulo"><ModoModuloUnico {...ctx} /></TabsContent>
-            <TabsContent value="comparar"><ModoCompararPerfis {...ctx} /></TabsContent>
             <TabsContent value="completa"><ModoMatrizCompleta {...ctx} /></TabsContent>
           </Tabs>
+
+          <Dialog open={mostrarComparacao} onOpenChange={setMostrarComparacao}>
+            <DialogContent className="max-w-[90vw] sm:max-w-[80vw] max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <Scale className="h-5 w-5" />
+                  Comparar Perfis
+                </DialogTitle>
+                <DialogDescription>
+                  Compare 2 a 4 perfis lado a lado para identificar divergências.
+                </DialogDescription>
+              </DialogHeader>
+              <ModoCompararPerfis perms={ctx.perms} roleCounts={ctx.roleCounts} />
+            </DialogContent>
+          </Dialog>
         </TooltipProvider>
       </CardContent>
     </Card>
