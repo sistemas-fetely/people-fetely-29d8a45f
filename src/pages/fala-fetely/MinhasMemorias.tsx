@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Brain, Pencil, Trash2, Plus, RotateCcw } from "lucide-react";
+import { ArrowLeft, Brain, Pencil, Trash2, Plus, RotateCcw, ShieldAlert, X } from "lucide-react";
+import { usePermissions } from "@/hooks/usePermissions";
+import { AcessarMemoriasOutroDialog } from "@/components/fala-fetely/AcessarMemoriasOutroDialog";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -52,6 +55,16 @@ interface Memoria {
   ultimo_uso: string | null;
 }
 
+interface MemoriaOutro {
+  id: string;
+  resumo: string;
+  conteudo_completo: string | null;
+  tipo: string;
+  ativo: boolean;
+  created_at: string;
+  user_id: string;
+}
+
 const TIPO_LABELS: Record<TipoMemoria, string> = {
   decisao: "Decisão",
   preferencia: "Preferência",
@@ -79,10 +92,18 @@ function formatData(iso: string) {
 export default function MinhasMemorias() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { isSuperAdmin } = usePermissions();
   const [memorias, setMemorias] = useState<Memoria[]>([]);
   const [loading, setLoading] = useState(true);
   const [filtroTipo, setFiltroTipo] = useState<string>("todas");
   const [apenasAtivas, setApenasAtivas] = useState(true);
+
+  // Regra 5 — Super Admin acessando memórias de OUTRO usuário (com log formal)
+  const [acessarOutroOpen, setAcessarOutroOpen] = useState(false);
+  const [memoriasOutro, setMemoriasOutro] = useState<MemoriaOutro[] | null>(null);
+  const [titularOutro, setTitularOutro] = useState<{ user_id: string; full_name: string | null } | null>(null);
+
+
 
   const [dialogAberto, setDialogAberto] = useState(false);
   const [editando, setEditando] = useState<Memoria | null>(null);
@@ -226,9 +247,16 @@ export default function MinhasMemorias() {
               Tudo que o Fala Fetely lembra de você. Você pode editar ou esquecer qualquer memória a qualquer momento.
             </p>
           </div>
-          <Button onClick={abrirNova} style={{ backgroundColor: "#1A4A3A" }} className="text-white hover:opacity-90 gap-2">
-            <Plus className="h-4 w-4" /> Adicionar memória
-          </Button>
+          <div className="flex items-center gap-2">
+            {isSuperAdmin && (
+              <Button variant="outline" onClick={() => setAcessarOutroOpen(true)} className="gap-2">
+                <ShieldAlert className="h-4 w-4" /> Ver memórias de outro usuário
+              </Button>
+            )}
+            <Button onClick={abrirNova} style={{ backgroundColor: "#1A4A3A" }} className="text-white hover:opacity-90 gap-2">
+              <Plus className="h-4 w-4" /> Adicionar memória
+            </Button>
+          </div>
         </div>
 
         {/* Filtros */}
@@ -454,6 +482,66 @@ export default function MinhasMemorias() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Regra 5 — Dialog de acesso formal a memórias de outro usuário */}
+      <AcessarMemoriasOutroDialog
+        open={acessarOutroOpen}
+        onOpenChange={setAcessarOutroOpen}
+        onAcessoAprovado={(mems, titular) => {
+          setMemoriasOutro(mems as MemoriaOutro[]);
+          setTitularOutro(titular);
+        }}
+      />
+
+      {/* View de memórias de outro usuário (após acesso aprovado) */}
+      {memoriasOutro && titularOutro && (
+        <div className="fixed inset-0 z-50 bg-background overflow-auto p-6">
+          <div className="max-w-4xl mx-auto space-y-4">
+            <div className="flex items-center justify-between">
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setMemoriasOutro(null);
+                  setTitularOutro(null);
+                }}
+                className="gap-1"
+              >
+                <X className="h-4 w-4" /> Fechar visualização
+              </Button>
+            </div>
+            <Card className="bg-amber-50 border-amber-200">
+              <CardContent className="p-3 text-sm">
+                🔐 Você está visualizando memórias de{" "}
+                <strong>{titularOutro.full_name || titularOutro.user_id}</strong>. Esse acesso foi
+                registrado em log de auditoria e também é visível ao próprio titular.
+              </CardContent>
+            </Card>
+            <h2 className="text-xl font-bold">Memórias ({memoriasOutro.length})</h2>
+            {memoriasOutro.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Esse usuário não tem memórias armazenadas.</p>
+            ) : (
+              <div className="space-y-2">
+                {memoriasOutro.map((m) => (
+                  <Card key={m.id} className={m.ativo ? "" : "opacity-60"}>
+                    <CardContent className="p-4 space-y-1">
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className={TIPO_CORES[m.tipo as TipoMemoria]}>
+                          {TIPO_LABELS[m.tipo as TipoMemoria]}
+                        </Badge>
+                        {!m.ativo && <Badge variant="secondary">inativa</Badge>}
+                      </div>
+                      <p className="text-sm font-medium">{m.resumo}</p>
+                      {m.conteudo_completo && (
+                        <p className="text-xs text-muted-foreground whitespace-pre-wrap">{m.conteudo_completo}</p>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

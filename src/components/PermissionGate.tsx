@@ -1,5 +1,8 @@
 import { usePermissions } from "@/hooks/usePermissions";
+import { AcessoBloqueado } from "@/components/AcessoBloqueado";
 import type { ReactNode } from "react";
+
+type TipoBloqueio = "sem-permissao" | "restrito-sensivel" | "restrito-c-level" | "retencao-legal";
 
 interface PermissionGateProps {
   module: string;
@@ -8,6 +11,7 @@ interface PermissionGateProps {
   permission?: string;
   children: ReactNode;
   fallback?: ReactNode;
+  tipoBloqueio?: TipoBloqueio;
 }
 
 export function PermissionGate({
@@ -15,7 +19,8 @@ export function PermissionGate({
   action,
   permission,
   children,
-  fallback = null,
+  fallback,
+  tipoBloqueio = "sem-permissao",
 }: PermissionGateProps) {
   const { canAccess, isSuperAdmin } = usePermissions();
 
@@ -23,7 +28,9 @@ export function PermissionGate({
   if (isSuperAdmin) return <>{children}</>;
 
   const effectiveAction = action ?? permission ?? "view";
-  if (!canAccess(module, effectiveAction)) return <>{fallback}</>;
+  if (!canAccess(module, effectiveAction)) {
+    return <>{fallback ?? <AcessoBloqueado tipo={tipoBloqueio} />}</>;
+  }
 
   return <>{children}</>;
 }

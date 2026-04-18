@@ -23,6 +23,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { SugestoesPendentes, type SugestaoPendente } from "@/components/fala-fetely/SugestoesPendentes";
+import { ConfirmacaoDupla } from "@/components/ConfirmacaoDupla";
 
 type Categoria = "politica" | "regra" | "diretriz" | "faq" | "conceito" | "manifesto" | "mercado";
 
@@ -114,6 +115,7 @@ export default function Conhecimento() {
   const [form, setForm] = useState<FormState>(FORM_INICIAL);
   const [tagInput, setTagInput] = useState("");
   const [aprovandoSugestao, setAprovandoSugestao] = useState<SugestaoPendente | null>(null);
+  const [confirmarDesativar, setConfirmarDesativar] = useState<Conhecimento | null>(null);
 
   const [cargos, setCargos] = useState<string[]>([]);
   const [departamentos, setDepartamentos] = useState<string[]>([]);
@@ -281,7 +283,6 @@ export default function Conhecimento() {
   }
 
   async function desativar(item: Conhecimento) {
-    if (!confirm(`Desativar "${item.titulo}"? Ele não aparecerá mais nas respostas do Fala Fetely.`)) return;
     const { error } = await supabase.from("fala_fetely_conhecimento").update({ ativo: false }).eq("id", item.id);
     if (error) {
       toast({ title: "Erro", description: error.message, variant: "destructive" });
@@ -455,7 +456,7 @@ export default function Conhecimento() {
                           <Button variant="ghost" size="sm" onClick={() => abrirEditar(item)} className="gap-1">
                             <Edit2 className="h-3.5 w-3.5" /> Editar
                           </Button>
-                          <Button variant="ghost" size="sm" onClick={() => void desativar(item)} className="gap-1 text-muted-foreground hover:text-destructive">
+                          <Button variant="ghost" size="sm" onClick={() => setConfirmarDesativar(item)} className="gap-1 text-muted-foreground hover:text-destructive">
                             <EyeOff className="h-3.5 w-3.5" /> Desativar
                           </Button>
                         </div>
@@ -626,6 +627,28 @@ export default function Conhecimento() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Confirmação dupla: desativar conhecimento (Regra 18) */}
+      <ConfirmacaoDupla
+        open={!!confirmarDesativar}
+        onOpenChange={(o) => !o && setConfirmarDesativar(null)}
+        titulo="Desativar este conhecimento?"
+        descricao={
+          <p>
+            <strong>{confirmarDesativar?.titulo}</strong> não aparecerá mais nas respostas do Fala
+            Fetely. Você pode reativar depois pela base inativa.
+          </p>
+        }
+        textoConfirmacao="APAGAR"
+        placeholder="APAGAR"
+        acaoLabel="Desativar"
+        onConfirmar={async () => {
+          if (confirmarDesativar) {
+            await desativar(confirmarDesativar);
+            setConfirmarDesativar(null);
+          }
+        }}
+      />
     </div>
   );
 }

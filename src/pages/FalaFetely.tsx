@@ -39,6 +39,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { DialogConsentimentoFalaFetely } from "@/components/fala-fetely/DialogConsentimentoFalaFetely";
+import { ConfirmacaoDupla } from "@/components/ConfirmacaoDupla";
 
 interface Conversa {
   id: string;
@@ -921,31 +922,28 @@ export default function FalaFetely() {
         </DialogContent>
       </Dialog>
 
-      {/* AlertDialog: confirmar limpeza total */}
-      <AlertDialog open={confirmarLimparTudo} onOpenChange={setConfirmarLimparTudo}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Apagar TODAS as conversas?</AlertDialogTitle>
-            <AlertDialogDescription>
+      {/* Confirmação dupla: limpar todo o histórico (Regra 18) */}
+      <ConfirmacaoDupla
+        open={confirmarLimparTudo}
+        onOpenChange={setConfirmarLimparTudo}
+        titulo="Apagar TODAS as conversas?"
+        descricao={
+          <>
+            <p>
               Essa ação vai deletar permanentemente todas as suas {conversas.length} conversa(s),
               incluindo mensagens, feedbacks e histórico. Essa ação não pode ser desfeita.
-              <br />
-              <br />
+            </p>
+            <p>
               <strong>Suas memórias não serão apagadas.</strong> Se quiser remover memórias também,
               acesse a tela "Minhas Memórias".
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={limparTudo}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Sim, apagar tudo
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+            </p>
+          </>
+        }
+        textoConfirmacao="APAGAR TUDO"
+        placeholder="APAGAR TUDO"
+        acaoLabel="Sim, apagar tudo"
+        onConfirmar={limparTudo}
+      />
     </div>
   );
 }

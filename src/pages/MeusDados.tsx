@@ -7,11 +7,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ConfirmacaoDupla } from "@/components/ConfirmacaoDupla";
 import { Download, Trash2, Eye, FileEdit, MessageSquare, DollarSign, ShieldCheck, AlertTriangle, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
@@ -569,37 +566,34 @@ export default function MeusDados() {
         </TabsContent>
       </Tabs>
 
-      {/* Dialog de confirmação de exclusão */}
-      <AlertDialog open={mostrarConfirmExclusao} onOpenChange={setMostrarConfirmExclusao}>
-        <AlertDialogContent className="max-w-lg">
-          <AlertDialogHeader>
-            <AlertDialogTitle>🌸 Entendemos que você quer apagar seus dados</AlertDialogTitle>
-            <AlertDialogDescription asChild>
-              <div className="space-y-3 text-sm">
-                <p><strong>Algumas coisas a gente apaga agora mesmo:</strong></p>
-                <ul className="list-disc pl-5 space-y-1">
-                  <li>Suas conversas com o Fala Fetely</li>
-                  <li>Suas memórias salvas pela IA</li>
-                  <li>Suas preferências pessoais</li>
-                </ul>
-                <p><strong>Algumas coisas a lei nos pede pra guardar</strong> (você não precisa se preocupar — ficam seguras e privadas):</p>
-                <ul className="list-disc pl-5 space-y-1">
-                  <li>Seus holerites e folhas de pagamento (10 anos — obrigação trabalhista)</li>
-                  <li>Seus contratos (10 anos)</li>
-                  <li>Notas fiscais e pagamentos (5 anos — obrigação fiscal)</li>
-                </ul>
-                <p>Depois de confirmar, você vai receber um resumo de tudo que foi apagado e do que foi mantido por obrigação legal.</p>
-              </div>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={solicitarExclusao} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Sim, quero continuar
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {/* Confirmação dupla de exclusão (Regra 18) */}
+      <ConfirmacaoDupla
+        open={mostrarConfirmExclusao}
+        onOpenChange={setMostrarConfirmExclusao}
+        titulo="🌸 Entendemos que você quer apagar seus dados"
+        descricao={
+          <>
+            <p><strong>Algumas coisas a gente apaga agora mesmo:</strong></p>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>Suas conversas com o Fala Fetely</li>
+              <li>Suas memórias salvas pela IA</li>
+              <li>Suas preferências pessoais</li>
+            </ul>
+            <p><strong>Algumas coisas a lei nos pede pra guardar</strong> (ficam seguras e privadas):</p>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>Seus holerites e folhas de pagamento (10 anos — obrigação trabalhista)</li>
+              <li>Seus contratos (10 anos)</li>
+              <li>Notas fiscais e pagamentos (5 anos — obrigação fiscal)</li>
+            </ul>
+            <p>Depois de confirmar, você vai receber um resumo de tudo que foi apagado e do que foi mantido por obrigação legal.</p>
+          </>
+        }
+        textoConfirmacao="APAGAR MEUS DADOS"
+        placeholder="APAGAR MEUS DADOS"
+        acaoLabel="Sim, quero continuar"
+        onConfirmar={solicitarExclusao}
+      />
+
 
       {/* Dialog de resultado */}
       <Dialog open={mostrarResultado} onOpenChange={setMostrarResultado}>

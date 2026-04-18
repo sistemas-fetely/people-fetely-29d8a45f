@@ -32,6 +32,7 @@ import {
   ChevronDown, ChevronRight,
 } from "lucide-react";
 import { toast } from "sonner";
+import { ConfirmacaoDupla } from "@/components/ConfirmacaoDupla";
 import type { Database } from "@/integrations/supabase/types";
 
 type AppRole = Database["public"]["Enums"]["app_role"];
@@ -115,6 +116,9 @@ export default function GerenciarUsuarios() {
     colaborador_id: "", colaborador_tipo: ""
   });
   const [deleteConfirm, setDeleteConfirm] = useState<{ userId: string; name: string } | null>(null);
+  const [removeSuperAdminConfirm, setRemoveSuperAdminConfirm] = useState<
+    { userId: string; name: string; mode: "ban" | "delete" } | null
+  >(null);
   const [linkDialogOpen, setLinkDialogOpen] = useState(false);
   const [linkUser, setLinkUser] = useState<{ userId: string; name: string } | null>(null);
   const [linkColaboradorId, setLinkColaboradorId] = useState("");
@@ -717,7 +721,17 @@ export default function GerenciarUsuarios() {
                                 size="sm"
                                 variant="outline"
                                 className="text-red-600 hover:text-red-700 gap-1"
-                                onClick={() => toggleBan.mutate({ user_id: profile.user_id, ban: true })}
+                                onClick={() => {
+                                  if (roles.includes("super_admin" as AppRole)) {
+                                    setRemoveSuperAdminConfirm({
+                                      userId: profile.user_id,
+                                      name: profile.full_name || "Usuário",
+                                      mode: "ban",
+                                    });
+                                  } else {
+                                    toggleBan.mutate({ user_id: profile.user_id, ban: true });
+                                  }
+                                }}
                                 disabled={toggleBan.isPending}
                               >
                                 <XCircle className="h-3.5 w-3.5" />
@@ -729,7 +743,17 @@ export default function GerenciarUsuarios() {
                                 size="sm"
                                 variant="outline"
                                 className="text-destructive hover:text-destructive gap-1"
-                                onClick={() => setDeleteConfirm({ userId: profile.user_id, name: profile.full_name || "Usuário" })}
+                                onClick={() => {
+                                  if (roles.includes("super_admin" as AppRole)) {
+                                    setRemoveSuperAdminConfirm({
+                                      userId: profile.user_id,
+                                      name: profile.full_name || "Usuário",
+                                      mode: "delete",
+                                    });
+                                  } else {
+                                    setDeleteConfirm({ userId: profile.user_id, name: profile.full_name || "Usuário" });
+                                  }
+                                }}
                               >
                                 <Trash2 className="h-3.5 w-3.5" />
                                 Deletar
@@ -930,7 +954,35 @@ export default function GerenciarUsuarios() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Dialog for manual linking */}
+      {/* Confirmação dupla: remover/inativar Super Admin (Regra 18) */}
+      <ConfirmacaoDupla
+        open={!!removeSuperAdminConfirm}
+        onOpenChange={(o) => !o && setRemoveSuperAdminConfirm(null)}
+        titulo="🔐 Remover privilégios de Super Admin"
+        descricao={
+          <>
+            <p>
+              Você está prestes a {removeSuperAdminConfirm?.mode === "delete" ? "deletar" : "inativar"} o
+              Super Admin <strong>{removeSuperAdminConfirm?.name}</strong>. Essa ação afeta o acesso total
+              ao sistema e é registrada em auditoria.
+            </p>
+            <p>Confirme apenas se for realmente necessário.</p>
+          </>
+        }
+        textoConfirmacao="REMOVER SUPER ADMIN"
+        placeholder="REMOVER SUPER ADMIN"
+        acaoLabel={removeSuperAdminConfirm?.mode === "delete" ? "Deletar Super Admin" : "Inativar Super Admin"}
+        onConfirmar={async () => {
+          if (!removeSuperAdminConfirm) return;
+          if (removeSuperAdminConfirm.mode === "delete") {
+            await deleteUser.mutateAsync(removeSuperAdminConfirm.userId);
+          } else {
+            await toggleBan.mutateAsync({ user_id: removeSuperAdminConfirm.userId, ban: true });
+          }
+          setRemoveSuperAdminConfirm(null);
+        }}
+      />
+
       <Dialog open={linkDialogOpen} onOpenChange={setLinkDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
