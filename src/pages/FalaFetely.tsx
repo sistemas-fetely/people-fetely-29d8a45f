@@ -148,17 +148,25 @@ export default function FalaFetely() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [mensagens]);
 
+  // Detecta se a última mensagem do assistente está pendente e ainda sem conteúdo
+  const ultimaAssistantVazia = useMemo(() => {
+    const ultima = [...mensagens].reverse().find((m) => m.papel === "assistant");
+    return !!(ultima?.pendente && !ultima?.conteudo);
+  }, [mensagens]);
+
   // Rotaciona frases de "pensando" enquanto aguarda primeiro token
   useEffect(() => {
-    if (!pensando) return;
-    setEstadoPensando(FRASES_PENSANDO[0]);
+    if (!ultimaAssistantVazia) {
+      setEstadoPensando(FRASES_PENSANDO[0]);
+      return;
+    }
     let idx = 0;
     const interval = setInterval(() => {
       idx = (idx + 1) % FRASES_PENSANDO.length;
       setEstadoPensando(FRASES_PENSANDO[idx]);
     }, 900);
     return () => clearInterval(interval);
-  }, [pensando]);
+  }, [ultimaAssistantVazia]);
 
   async function carregarConversas() {
     const { data } = await supabase
@@ -325,7 +333,7 @@ export default function FalaFetely() {
               acumulado += delta;
               setMensagens((prev) =>
                 prev.map((m) =>
-                  m.id === assistantMsg.id ? { ...m, conteudo: acumulado, pendente: false } : m
+                  m.id === assistantMsg.id ? { ...m, conteudo: acumulado } : m
                 )
               );
             }
@@ -337,11 +345,45 @@ export default function FalaFetely() {
         }
       }
 
-      // Atualiza ID real da mensagem para feedback
+      // Atualiza ID real da mensagem para feedback e marca como não pendente
       if (mensagemFinalId) {
         setMensagens((prev) =>
-          prev.map((m) => (m.id === assistantMsg.id ? { ...m, id: mensagemFinalId! } : m))
+          prev.map((m) => (m.id === assistantMsg.id ? { ...m, id: mensagemFinalId!, pendente: false } : m))
         );
+      } else {
+        // Fallback: se o evento "end" não chegou, busca a última mensagem do assistente no banco
+        const convIdFinal = novaConvId || conversaAtiva?.id;
+        if (convIdFinal) {
+          try {
+            const { data: ultimaMsg } = await supabase
+              .from("fala_fetely_mensagens")
+              .select("id")
+              .eq("conversa_id", convIdFinal)
+              .eq("papel", "assistant")
+              .order("created_at", { ascending: false })
+              .limit(1)
+              .maybeSingle();
+
+            if (ultimaMsg) {
+              setMensagens((prev) =>
+                prev.map((m) => (m.id === assistantMsg.id ? { ...m, id: ultimaMsg.id, pendente: false } : m))
+              );
+            } else {
+              setMensagens((prev) =>
+                prev.map((m) => (m.id === assistantMsg.id ? { ...m, pendente: false } : m))
+              );
+            }
+          } catch (e) {
+            console.error("Erro buscando ID real:", e);
+            setMensagens((prev) =>
+              prev.map((m) => (m.id === assistantMsg.id ? { ...m, pendente: false } : m))
+            );
+          }
+        } else {
+          setMensagens((prev) =>
+            prev.map((m) => (m.id === assistantMsg.id ? { ...m, pendente: false } : m))
+          );
+        }
       }
 
       // Se era nova conversa, atualiza o ativo e recarrega lista
