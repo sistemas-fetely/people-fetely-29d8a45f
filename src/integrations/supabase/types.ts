@@ -4367,6 +4367,10 @@ export type Database = {
         }
         Returns: number
       }
+      processar_exclusao_dados_usuario: {
+        Args: { _user_id: string }
+        Returns: Json
+      }
       read_email_batch: {
         Args: { batch_size: number; queue_name: string; vt: number }
         Returns: {
@@ -4396,6 +4400,7 @@ export type Database = {
         }
         Returns: string
       }
+      revogar_acessos_ex_colaboradores: { Args: never; Returns: number }
       submit_convite_cadastro: {
         Args: { _dados: Json; _token: string }
         Returns: boolean
