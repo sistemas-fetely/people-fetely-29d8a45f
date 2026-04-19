@@ -140,6 +140,29 @@ Metodologia de trabalho do Uauuu consolidada após fechamento das 4 frentes de m
 
 Saiu do AppSidebar (People) e entrou no SNCFSidebar (Uauuu transversal). Rota `/admin/reportes` renderiza em SNCFLayout. Gerou doutrina permanente (agora cadastrada no Fala Fetely): "funcionalidade multi-sistema pertence à camada transversal". N005 Configurações quando construída nasce transversal.
 
+### FASE NF-0 · Preparação conceitual do fluxo de Emissão de NF PJ ✅
+
+**Concluído em:** 19/04/2026  
+
+Primeira aplicação oficial do padrão "código e processo nascem juntos" da Metodologia Uauuu. Duas sub-fases:
+
+**NF-0.A — Backend conceitual** (migration 20260419214919):
+- Campo `categoria_pj` em `contratos_pj` (colaborador vs prestador_servico)
+- Tabela `nf_pj_classificacoes` com RLS (permite quebrar valor de NF em categorias: contrato, extra_projeto, reembolso, ajuste_retroativo)
+- 4 categorias de valor parametrizadas (DRE correto — separa folha de despesa variável)
+- 4 parâmetros operacionais (email responsável pagamento, dias antecedência, cron dia e hora)
+- 9 status granulares cadastrados em `status_nf_pj`
+- Processo `emissao_nf_pj` cadastrado em Processos Fetely como **versão 0 / rascunho** com narrativa completa, escopo das 4 fases, tags, consultas ao board, menção ao espelho `fechamento_folha_clt`
+
+**NF-0.B — Cadastro manual emergencial**:
+- Componente `CadastroManualContratoPJ.tsx` (formulário único, não wizard)
+- Rota `/contratos-pj/novo-manual` com `ProtectedRoute permModule=contratos_pj permAction=create`
+- Botão "Manual" em `/contratos-pj` visível apenas para super_admin e admin_rh (dupla proteção: gate UI + gate rota)
+- Suporta classificação `categoria_pj` (colaborador vs prestador_servico)
+- Uso recomendado: migração de base, correção, casos emergenciais
+
+**Próximo passo:** Fase NF-1 (Portal do PJ `/minhas-notas` + cron mensal + tarefa de emissão).
+
 ---
 
 ## 🔴 ALTA PRIORIDADE
@@ -177,12 +200,31 @@ DPO mencionado em documentação mas não cadastrado formalmente. Política de r
 
 ## 🟡 MÉDIA PRIORIDADE
 
-### CICLO-NF-PJ · NF PJ com construção + mapeamento em paralelo
-**Tipo:** 🏛 Estrutural + 🚀 Novo | **Prioridade:** 🟡 Média | **Status:** 💡 Ideia
+### NF-1 · Portal do PJ + Tarefa de Emissão
+**Tipo:** 🚀 Novo | **Prioridade:** 🔴 Alta | **Status:** 📋 Planejado — próximo  
+**Responsável board:** Beatriz Lemos (UX) + Ricardo Mendes (Ops)
 
-Próximo ciclo de trabalho com **padrão novo**: código e processo (em Processos Fetely) nascem juntos. Primeiro teste do padrão — a partir dele, todas as construções seguem o mesmo modelo.
+Primeira fase com UI real do fluxo NF PJ:
+- Tela `/minhas-notas` no portal PJ (timeline visual, status por competência)
+- Cron mensal parametrizável cria tarefa "Emitir NF competência X" para cada PJ colaborador ativo
+- Tarefa permite: anexar PDF + classificar valores (contrato/extra/reembolso) + justificativa antecipada
+- Status inicial: `aguardando_validacao` (sem validação IA ainda — vem na NF-2)
+- Evolui processo `emissao_nf_pj` para versão 1 em Processos Fetely
 
-**Escopo:** retomada do desenvolvimento de NF PJ no People Fetely + mapeamento em tempo real em Processos Fetely.
+---
+
+### NF-2 · Validação Automática (IA + regras)
+**Tipo:** 🚀 Novo | **Prioridade:** 🟡 Média | **Status:** 💡 Ideia — depende da NF-1
+
+---
+
+### NF-3 · Aprovação RH + Envio Financeiro
+**Tipo:** 🚀 Novo | **Prioridade:** 🟡 Média | **Status:** 💡 Ideia — depende da NF-2
+
+---
+
+### NF-4 · Governança + KPIs
+**Tipo:** 🔧 Melhoria | **Prioridade:** 🟢 Baixa | **Status:** 💡 Ideia — depende da NF-3
 
 ---
 
@@ -391,4 +433,4 @@ Quando uma doutrina nova emergir, decidir em qual casa ela mora (geralmente Fala
 ---
 
 *Documento vivo · Fonte única de verdade do roadmap · Atualizar ao concluir item ou descobrir novo.*
-*Última atualização: 19/04/2026 22:05 — Metodologia Uauuu ✅ em 3 casas + REEMB-01 no roadmap + 2 doutrinas novas no Fala Fetely (processo espelho + revisão de permissões)*
+*Última atualização: 19/04/2026 22:30 — Fase NF-0 completa (primeira aplicação do padrão "código e processo nascem juntos")*
