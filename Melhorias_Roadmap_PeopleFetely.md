@@ -61,8 +61,28 @@ Não-super_admin vê agregados (salário médio, custo total, custo por departam
 Doc vivo em `docs/pilares/FETELY_EM_NUMEROS.md` com manifesto, 5 princípios, arquitetura futura proposta e seed de 7 KPIs do Recrutamento. Construção estrutural ativa quando houver ~5 processos mapeados.
 
 ### M-GER-01 · Report de Erros Universal ✅
+
 **Concluído em:** 19/04/2026  
+
 Canal colaborativo completo: botão flutuante global em todos os layouts (AppLayout + SNCFLayout), tabela `sistema_reportes` com RLS, tipos e status parametrizáveis, inbox admin em `/admin/reportes` com filtros e ações de tratamento. Primeiro passo do sistema colaborativo — usuários agora têm canal formal pra reportar bugs, sugestões e confusões.
+
+### M-PORT-01 a 05 · Portal reorganizado ✅
+
+**Concluído em:** 19/04/2026  
+
+Reorganização completa do PortalSNCF: Minhas Tarefas + Fala Fetely como cards gêmeos no topo (Fala Fetely virou card limpo, não mais botão grande). Atalhos personalizados baseados em uso real (tabela `navegacao_log` + função `meus_atalhos_personalizados` + hook `useRegistrarNavegacao` ativo no AppLayout). Cards de sistemas compactados. Sistemas externos em grid 3 colunas. Botão "voltar pro último sistema" removido do SNCFSidebar. Sistemas externos agora visíveis no sidebar como grupo próprio. Navegação limpa e focada.
+
+### M-DASH-01 · Dashboard unificado + Gestão à Vista ✅
+
+**Concluído em:** 19/04/2026  
+
+Resolução estratégica: Dash Operacional deixou de ser tela genérica sem dono. `/dashboard` agora abre direto na Gestão (sem Tabs). Velocidade + InsightsIA migraram para dentro da Gestão (são analíticos). Radar operacional migrou para Minhas Tarefas (é ação de quem faz). `DashboardOperacional.tsx` deletado (função redistribuída). Nova tela `/gestao-a-vista` criada como placeholder estruturado — primeiro artefato visível do pilar Fetely em Números. Cada tela com propósito e dono únicos.
+
+### RADAR OPERACIONAL em Minhas Tarefas ✅
+
+**Concluído em:** 19/04/2026  
+
+Componente `RadarOperacional` adicionado ao topo de `/tarefas` mostrando indicadores que são "ação do RH/admin" — convites aguardando importação, contratos PJ vencendo, contratos pendentes assinatura, documentos vencendo. Aparece apenas para super_admin e admin_rh. Só mostra indicadores com valor > 0. Cada card leva direto pra rota de ação.
 
 ---
 
