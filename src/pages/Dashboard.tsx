@@ -2,10 +2,9 @@ import { useMemo, useState } from "react";
 import {
   Users, Briefcase, Calendar, AlertTriangle, FileText, CreditCard, Gift,
   TrendingUp, TrendingDown, DollarSign, ArrowUpRight, ArrowDownRight, Minus,
-  Building2, ClipboardList, BarChart3, Lightbulb,
+  Building2, Clock, Lightbulb,
 } from "lucide-react";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { DashboardOperacional } from "@/components/dashboard/DashboardOperacional";
+import InsightsIA from "@/components/dashboard/InsightsIA";
 import { StatCard } from "@/components/StatCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +17,8 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { SugestoesInboxDialog, type SugestaoItem } from "@/components/dashboard/SugestoesInboxDialog";
+import { useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 const STATUS_LABELS: Record<string, string> = {
   ativo: "Ativos", inativo: "Inativos", ferias: "Férias",
@@ -85,6 +86,107 @@ function FinancialKpiCard({
 }
 
 const tooltipStyle = { borderRadius: 8, border: "1px solid hsl(var(--border))", background: "hsl(var(--card))", fontSize: 12 };
+
+interface VelocidadeMetrica {
+  tempoMedioPreenchimento: number;
+  totalConvitesComMetrica: number;
+  insightsData: {
+    convitesPendentes: number;
+    onboardingsAtrasados: number;
+    vagasAbertas: number;
+    candidatosTriagem: number;
+    contratosVencendo: number;
+    tarefasBloqueantes: number;
+    tempoMedioContratacao: number;
+  };
+}
+
+function VelocidadeInsightsSection() {
+  const [data, setData] = useState<VelocidadeMetrica | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      const hojeStr = new Date().toISOString().slice(0, 10);
+      const em30d = new Date();
+      em30d.setDate(em30d.getDate() + 30);
+      const em30dStr = em30d.toISOString().slice(0, 10);
+
+      const [convitesRes, tarefasRes, vagasRes, candidatosRes, contratosVencRes] = await Promise.all([
+        supabase.from("convites_cadastro").select("id, status, created_at, preenchido_em"),
+        supabase.from("sncf_tarefas").select("id, status, prazo_data, bloqueante").eq("tipo_processo", "onboarding").in("status", ["pendente", "atrasada"]),
+        supabase.from("vagas" as any).select("id").eq("status", "aberta"),
+        supabase.from("candidatos").select("id, status").in("status", ["recebido", "triagem", "entrevista"]),
+        supabase.from("contratos_pj").select("id").eq("status", "ativo").not("data_fim", "is", null).gte("data_fim", hojeStr).lte("data_fim", em30dStr),
+      ]);
+      if (cancelled) return;
+
+      const convites = convitesRes.data || [];
+      const tarefasOnb = tarefasRes.data || [];
+      const candidatos = candidatosRes.data || [];
+
+      const convitesPreenchidos = convites.filter((c: any) => c.preenchido_em && c.created_at);
+      const tempos = convitesPreenchidos.map((c: any) =>
+        (new Date(c.preenchido_em).getTime() - new Date(c.created_at).getTime()) / (1000 * 60 * 60 * 24)
+      );
+      const tempoMedio = tempos.length > 0 ? tempos.reduce((a, b) => a + b, 0) / tempos.length : 0;
+
+      const tarefasAtrasadas = tarefasOnb.filter((t: any) =>
+        t.status === "atrasada" || (t.prazo_data && t.prazo_data < hojeStr)
+      );
+
+      setData({
+        tempoMedioPreenchimento: tempoMedio,
+        totalConvitesComMetrica: convitesPreenchidos.length,
+        insightsData: {
+          convitesPendentes: convites.filter((c: any) => ["pendente", "email_enviado"].includes(c.status)).length,
+          onboardingsAtrasados: tarefasAtrasadas.length,
+          vagasAbertas: (vagasRes.data || []).length,
+          candidatosTriagem: candidatos.filter((c: any) => c.status === "recebido").length,
+          contratosVencendo: (contratosVencRes.data || []).length,
+          tarefasBloqueantes: tarefasAtrasadas.filter((t: any) => t.bloqueante).length,
+          tempoMedioContratacao: Math.round(tempoMedio),
+        },
+      });
+    }
+    void load();
+    return () => { cancelled = true; };
+  }, []);
+
+  if (!data) return null;
+
+  return (
+    <div className="space-y-4">
+      {data.totalConvitesComMetrica >= 5 && (
+        <div>
+          <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wide mb-3">
+            Velocidade operacional
+          </h3>
+          <div className="grid gap-3 grid-cols-1 md:grid-cols-3">
+            <Card className="card-shadow animate-fade-in">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                    <Clock className="h-5 w-5 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-lg font-bold">{data.tempoMedioPreenchimento.toFixed(1)} dias</p>
+                    <p className="text-xs text-muted-foreground">Tempo médio de preenchimento de convite</p>
+                    <p className="text-xs text-muted-foreground/70 mt-0.5">
+                      Baseado em {data.totalConvitesComMetrica} convites
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      )}
+      <InsightsIA {...data.insightsData} />
+    </div>
+  );
+}
+
 
 function DashboardGestao() {
   const {
@@ -455,6 +557,9 @@ function DashboardGestao() {
         </Card>
       </div>
 
+      {/* Velocidade + Insights IA */}
+      <VelocidadeInsightsSection />
+
       {/* Row 5: Alerts & Birthdays */}
       <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
         <Card className="card-shadow animate-fade-in">
@@ -561,25 +666,11 @@ export default function Dashboard() {
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground text-sm mt-1">People Fetely</p>
+          <p className="text-muted-foreground text-sm mt-1">People Fetely · Visão de Gestão</p>
         </div>
       </div>
-      <Tabs defaultValue="operacional">
-        <TabsList>
-          <TabsTrigger value="operacional" className="gap-1.5">
-            <ClipboardList className="h-4 w-4" /> Operacional
-          </TabsTrigger>
-          <TabsTrigger value="gestao" className="gap-1.5">
-            <BarChart3 className="h-4 w-4" /> Gestão
-          </TabsTrigger>
-        </TabsList>
-        <TabsContent value="operacional">
-          <DashboardOperacional />
-        </TabsContent>
-        <TabsContent value="gestao">
-          <DashboardGestao />
-        </TabsContent>
-      </Tabs>
+      <DashboardGestao />
     </div>
   );
 }
+

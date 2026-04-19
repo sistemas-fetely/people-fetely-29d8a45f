@@ -68,6 +68,7 @@ import MinhasMemorias from "@/pages/fala-fetely/MinhasMemorias";
 import MeusDados from "@/pages/MeusDados";
 import MeusAcessos from "@/pages/MeusAcessos";
 import SistemaReportes from "@/pages/admin/SistemaReportes";
+import GestaoAVista from "@/pages/GestaoAVista";
 
 const queryClient = new QueryClient();
 
@@ -126,6 +127,7 @@ const App = () => (
             <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
               <Route path="/" element={<Navigate to="/sncf" replace />} />
               <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/gestao-a-vista" element={<GestaoAVista />} />
               <Route path="/desligamento/:id" element={<DesligamentoDetalhe />} />
               <Route path="/pessoas" element={<Pessoas />} />
               <Route path="/colaboradores" element={

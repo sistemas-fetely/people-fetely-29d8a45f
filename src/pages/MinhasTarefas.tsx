@@ -25,6 +25,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { RadarOperacional } from "@/components/tarefas/RadarOperacional";
 
 interface Tarefa {
   id: string;
@@ -675,6 +676,9 @@ export default function MinhasTarefas() {
           <Plus className="h-4 w-4" /> Nova Tarefa
         </Button>
       </div>
+
+      {/* Radar operacional — indicadores que migraram do Dash Op */}
+      <RadarOperacional />
 
       {/* Prioridades do Dia — ações operacionais (não-tarefa) */}
       {!isColaboradorPuro && prioridadesDia.length > 0 && (

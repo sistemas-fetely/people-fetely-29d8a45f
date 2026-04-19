@@ -2,7 +2,7 @@ import {
   LayoutDashboard, Users, GitBranch, UserSearch, MailPlus, Rocket,
   ArrowLeftRight, Award, BookOpen, Receipt, Clock, CreditCard, FileText,
   Palmtree, Gift, BarChart3, Banknote, Sliders, Settings, LogOut, LayoutGrid,
-  MessageSquareWarning,
+  MessageSquareWarning, Tv,
 } from "lucide-react";
 
 import { NavLink } from "@/components/NavLink";
@@ -62,6 +62,7 @@ interface MenuItem {
 
 const principalItems: MenuItem[] = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard, permModule: "dashboard" },
+  { title: "Gestão à Vista", url: "/gestao-a-vista", icon: Tv },
   { title: "Pessoas", url: "/pessoas", icon: Users, permModule: "colaboradores" },
   { title: "Organograma", url: "/organograma", icon: GitBranch, permModule: "organograma" },
 ];

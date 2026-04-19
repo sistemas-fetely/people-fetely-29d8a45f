@@ -3,11 +3,10 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import * as LucideIcons from "lucide-react";
-import { LayoutGrid, Lock, ExternalLink, ClipboardList, Sparkles, MessageCircleHeart } from "lucide-react";
+import { LayoutGrid, Lock, ExternalLink, ClipboardList, Sparkles, MessageCircle, Star, ArrowRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { useMeusAtalhos } from "@/hooks/useRegistrarNavegacao";
 
 interface Sistema {
   id: string;
@@ -27,7 +26,6 @@ interface UserSystem {
 }
 
 function getIcon(name: string) {
-  // Convert kebab-case to PascalCase (e.g., "layout-grid" → "LayoutGrid")
   const pascal = name
     .split("-")
     .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
@@ -43,6 +41,7 @@ export default function PortalSNCF() {
   const [userSystems, setUserSystems] = useState<UserSystem[]>([]);
   const [loading, setLoading] = useState(true);
   const [totalPendentes, setTotalPendentes] = useState(0);
+  const { data: atalhos } = useMeusAtalhos(5);
 
   useEffect(() => {
     if (!user) return;
@@ -67,183 +66,200 @@ export default function PortalSNCF() {
   const hasAccess = (sistemaId: string) =>
     userSystems.some((us) => us.sistema_id === sistemaId && us.ativo);
 
+  const isExternal = (sistema: Sistema) => sistema.rota_base.startsWith("http");
+
   const handleEnter = (sistema: Sistema) => {
     if (!hasAccess(sistema.id)) return;
-    if (sistema.rota_base.startsWith("http")) {
+    if (isExternal(sistema)) {
       window.open(sistema.rota_base, "_blank");
     } else {
-      // Rastreia último sistema visitado para o botão "Voltar" do SNCFSidebar
-      if (sistema.slug === "people" || sistema.slug === "ti") {
-        sessionStorage.setItem("sncf_last_system", sistema.slug);
-      }
       navigate(sistema.rota_base);
     }
   };
 
-  const isExternal = (sistema: Sistema) => sistema.rota_base.startsWith("http");
+  // Top 4 mais acessados + 1 mais recente que não esteja nos top
+  const topQuatro = atalhos?.slice(0, 4) || [];
+  const ultimoNaoRepetido = atalhos && atalhos.length > 4
+    ? [...atalhos.slice(4)].sort((a, b) =>
+        new Date(b.ultimo_acesso).getTime() - new Date(a.ultimo_acesso).getTime()
+      )[0]
+    : null;
+
+  const renderCardCompacto = (sistema: Sistema) => {
+    const Icon = getIcon(sistema.icone);
+    const accessible = hasAccess(sistema.id);
+    return (
+      <button
+        key={sistema.id}
+        onClick={() => handleEnter(sistema)}
+        disabled={!accessible}
+        className={cn(
+          "group relative overflow-hidden rounded-xl border bg-card text-left transition-all p-4",
+          accessible
+            ? "hover:shadow-md hover:-translate-y-0.5 cursor-pointer"
+            : "opacity-50 cursor-not-allowed"
+        )}
+      >
+        <div className="h-1 absolute top-0 left-0 right-0" style={{ backgroundColor: sistema.cor }} />
+        <div className="flex items-start gap-3 mt-1">
+          <div
+            className="flex h-11 w-11 items-center justify-center rounded-lg flex-shrink-0"
+            style={{ backgroundColor: `${sistema.cor}15` }}
+          >
+            <Icon className="h-5 w-5" style={{ color: sistema.cor }} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between gap-2 mb-0.5">
+              <h3 className="text-base font-bold truncate">{sistema.nome}</h3>
+              {isExternal(sistema) && accessible && (
+                <ExternalLink className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+              )}
+              {!accessible && (
+                <Badge variant="outline" className="gap-1 text-[10px]">
+                  <Lock className="h-2.5 w-2.5" />
+                  Sem acesso
+                </Badge>
+              )}
+            </div>
+            {sistema.descricao && (
+              <p className="text-xs text-muted-foreground line-clamp-2">{sistema.descricao}</p>
+            )}
+          </div>
+        </div>
+      </button>
+    );
+  };
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold tracking-tight mb-2">Bem-vindo ao SNCF</h1>
+        <h1 className="text-3xl font-bold tracking-tight mb-2">Bem-vindo ao Uauuu</h1>
         <p className="text-muted-foreground">
           Selecione um sistema para entrar. Você só pode acessar os sistemas em que tem permissão.
         </p>
       </div>
 
-      {/* Centro de Trabalho — destaque */}
-      <button
-        onClick={() => navigate("/tarefas")}
-        className="group w-full rounded-2xl border-2 bg-card p-6 hover:shadow-lg transition-all text-left flex items-center gap-5"
-        style={{ borderColor: "#1A4A3A" }}
-      >
-        <div
-          className="flex h-16 w-16 items-center justify-center rounded-2xl flex-shrink-0"
-          style={{ backgroundColor: "#1A4A3A" }}
+      {/* TOPO: Minhas Tarefas + Fala Fetely */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Minhas Tarefas */}
+        <button
+          onClick={() => navigate("/tarefas")}
+          className="group w-full rounded-2xl border-2 bg-card p-5 hover:shadow-lg transition-all text-left"
+          style={{ borderColor: "#1A4A3A" }}
         >
-          <ClipboardList className="h-8 w-8 text-white" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-xs uppercase tracking-wider font-semibold text-muted-foreground mb-1">
-            Centro de Trabalho
-          </p>
-          <h2 className="text-xl font-bold mb-1" style={{ color: "#1A4A3A" }}>Minhas Tarefas</h2>
-          {totalPendentes > 0 ? (
-            <p className="text-sm text-muted-foreground">
-              Você tem <span className="font-semibold text-foreground">{totalPendentes}</span> tarefa(s) ativa(s)
-            </p>
-          ) : (
-            <p className="text-sm text-success font-medium">Tudo em dia!</p>
-          )}
-        </div>
-        <div className="flex items-center gap-2 text-sm font-medium" style={{ color: "#1A4A3A" }}>
-          Ver tarefas <ExternalLink className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
-        </div>
-      </button>
-
-      {/* Fala Fetely — assistente IA */}
-      <Card
-        className="border-l-4"
-        style={{
-          borderLeftColor: "#E91E63",
-          background: "linear-gradient(135deg, #FFF8F3 0%, #FFFFFF 100%)",
-        }}
-      >
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <div
-                className="w-14 h-14 rounded-full flex items-center justify-center text-white shadow-sm"
-                style={{ background: "linear-gradient(135deg, #1A4A3A 0%, #E91E63 100%)" }}
-              >
-                <MessageCircleHeart className="w-8 h-8" />
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground uppercase tracking-wide">Assistente Fetely</p>
-                <p className="text-2xl font-bold">Fala Fetely</p>
-                <p className="text-sm text-muted-foreground">Pergunte qualquer coisa sobre a Fetely 🌷</p>
-              </div>
-            </div>
-            <Button
-              size="lg"
-              className="gap-2 text-white hover:opacity-90"
-              style={{ backgroundColor: "#E91E63" }}
-              onClick={() => navigate("/fala-fetely")}
+          <div className="flex items-center gap-4">
+            <div
+              className="flex h-12 w-12 items-center justify-center rounded-xl flex-shrink-0"
+              style={{ backgroundColor: "#1A4A3A" }}
             >
-              Conversar <Sparkles className="h-4 w-4" />
-            </Button>
+              <ClipboardList className="h-6 w-6 text-white" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h2 className="text-lg font-bold" style={{ color: "#1A4A3A" }}>Minhas Tarefas</h2>
+              <p className="text-xs text-muted-foreground">
+                {totalPendentes > 0
+                  ? `${totalPendentes} pendente${totalPendentes > 1 ? "s" : ""} · radar operacional`
+                  : "Suas ações do dia + radar operacional"}
+              </p>
+            </div>
+            <ArrowRight className="h-5 w-5 group-hover:translate-x-0.5 transition-transform" style={{ color: "#1A4A3A" }} />
           </div>
-        </CardContent>
-      </Card>
+        </button>
 
+        {/* Fala Fetely — link limpo */}
+        <button
+          onClick={() => navigate("/fala-fetely")}
+          className="group w-full rounded-2xl border bg-card p-5 hover:shadow-lg transition-all text-left"
+        >
+          <div className="flex items-center gap-4">
+            <div
+              className="flex h-12 w-12 items-center justify-center rounded-xl flex-shrink-0 text-white"
+              style={{ background: "linear-gradient(135deg, #1A4A3A 0%, #E91E63 100%)" }}
+            >
+              <MessageCircle className="h-6 w-6" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h2 className="text-lg font-bold">Fala Fetely</h2>
+              <p className="text-xs text-muted-foreground">Pergunta, sugere, descobre.</p>
+            </div>
+            <Sparkles className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+          </div>
+        </button>
+      </div>
+
+      {/* ATALHOS PERSONALIZADOS */}
+      {topQuatro.length > 0 && (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <Star className="h-4 w-4 text-muted-foreground" />
+            <h3 className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">
+              Atalhos pra você
+            </h3>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2">
+            {topQuatro.map((a) => (
+              <button
+                key={a.rota}
+                onClick={() => navigate(a.rota)}
+                className="rounded-lg border bg-card p-3 text-left hover:border-primary/40 hover:shadow-sm transition-all"
+              >
+                <p className="text-sm font-medium truncate">{a.titulo}</p>
+                <p className="text-[10px] text-muted-foreground mt-0.5">{a.acessos} acessos</p>
+              </button>
+            ))}
+            {ultimoNaoRepetido && (
+              <button
+                onClick={() => navigate(ultimoNaoRepetido.rota)}
+                className="rounded-lg border border-dashed bg-muted/30 p-3 text-left hover:border-primary/40 hover:bg-card transition-all"
+              >
+                <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Último</p>
+                <p className="text-sm font-medium truncate">{ultimoNaoRepetido.titulo}</p>
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* SISTEMAS INTERNOS + EXTERNOS */}
       {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {[1, 2].map((i) => (
-            <div key={i} className="h-48 rounded-xl border border-border bg-card animate-pulse" />
+            <div key={i} className="h-24 rounded-xl border border-border bg-card animate-pulse" />
           ))}
         </div>
       ) : (
-        <>
-          {(() => {
-            const internos = sistemas.filter((s) => !isExternal(s));
-            const externos = sistemas.filter((s) => isExternal(s));
+        (() => {
+          const internos = sistemas.filter((s) => !isExternal(s));
+          const externos = sistemas.filter((s) => isExternal(s));
 
-            const renderCard = (sistema: Sistema) => {
-              const Icon = getIcon(sistema.icone);
-              const accessible = hasAccess(sistema.id);
-              return (
-                <button
-                  key={sistema.id}
-                  onClick={() => handleEnter(sistema)}
-                  disabled={!accessible}
-                  className={cn(
-                    "group relative overflow-hidden rounded-xl border border-border bg-card text-left transition-all duration-200",
-                    accessible
-                      ? "hover:shadow-lg hover:-translate-y-0.5 cursor-pointer"
-                      : "opacity-50 cursor-not-allowed"
-                  )}
-                >
-                  <div className="h-1.5 w-full" style={{ backgroundColor: sistema.cor }} />
-                  <div className="p-6">
-                    <div className="flex items-start justify-between mb-4">
-                      <div
-                        className="flex h-14 w-14 items-center justify-center rounded-xl"
-                        style={{ backgroundColor: `${sistema.cor}15` }}
-                      >
-                        <Icon className="h-7 w-7" style={{ color: sistema.cor }} />
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {isExternal(sistema) && accessible && (
-                          <ExternalLink className="h-4 w-4 text-muted-foreground" aria-label="Link externo" />
-                        )}
-                        {!accessible && (
-                          <Badge variant="outline" className="gap-1">
-                            <Lock className="h-3 w-3" />
-                            Sem acesso
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                    <h2 className="text-xl font-bold mb-1">{sistema.nome}</h2>
-                    {sistema.descricao && (
-                      <p className="text-sm text-muted-foreground">{sistema.descricao}</p>
-                    )}
-                    {accessible && (
-                      <div
-                        className="mt-4 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1"
-                        style={{ color: sistema.cor }}
-                      >
-                        {isExternal(sistema) ? "Abrir" : "Entrar"} →
-                      </div>
-                    )}
+          return (
+            <div className="space-y-6">
+              {internos.length > 0 && (
+                <div className="space-y-3">
+                  <h3 className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">
+                    Sistemas
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {internos.map(renderCardCompacto)}
                   </div>
-                </button>
-              );
-            };
-
-            return (
-              <div className="space-y-8">
-                {internos.length > 0 && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {internos.map(renderCard)}
+                </div>
+              )}
+              {externos.length > 0 && (
+                <div className="space-y-3">
+                  <h3 className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">
+                    Sistemas externos
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {externos.map(renderCardCompacto)}
                   </div>
-                )}
-                {externos.length > 0 && (
-                  <div className="space-y-3">
-                    <p className="text-xs uppercase tracking-wide text-muted-foreground font-medium">
-                      Sistemas externos
-                    </p>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {externos.map(renderCard)}
-                    </div>
-                  </div>
-                )}
-              </div>
-            );
-          })()}
-        </>
+                </div>
+              )}
+            </div>
+          );
+        })()
       )}
     </div>
   );
 }
-

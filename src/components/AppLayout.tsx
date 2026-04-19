@@ -4,8 +4,10 @@ import { AppHeader } from "@/components/AppHeader";
 import { Outlet } from "react-router-dom";
 import { SystemReadinessBanner } from "@/components/shared/SystemReadinessBanner";
 import { ReportarErroBotao } from "@/components/shared/ReportarErroBotao";
+import { useRegistrarNavegacao } from "@/hooks/useRegistrarNavegacao";
 
 export function AppLayout() {
+  useRegistrarNavegacao();
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full">

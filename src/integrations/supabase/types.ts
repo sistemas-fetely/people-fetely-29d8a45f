@@ -2851,6 +2851,30 @@ export type Database = {
           },
         ]
       }
+      navegacao_log: {
+        Row: {
+          acessado_em: string
+          id: string
+          rota: string
+          titulo: string | null
+          user_id: string
+        }
+        Insert: {
+          acessado_em?: string
+          id?: string
+          rota: string
+          titulo?: string | null
+          user_id: string
+        }
+        Update: {
+          acessado_em?: string
+          id?: string
+          rota?: string
+          titulo?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       notas_fiscais_pj: {
         Row: {
           arquivo_url: string | null
@@ -5645,6 +5669,15 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      meus_atalhos_personalizados: {
+        Args: { _limite?: number }
+        Returns: {
+          acessos: number
+          rota: string
+          titulo: string
+          ultimo_acesso: string
+        }[]
       }
       move_to_dlq: {
         Args: {
