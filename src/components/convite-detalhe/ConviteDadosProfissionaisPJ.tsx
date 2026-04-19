@@ -7,6 +7,7 @@ import { Loader2 } from "lucide-react";
 import { useParametros } from "@/hooks/useParametros";
 import { useCargos } from "@/hooks/useCargos";
 import { SelectDepartamentoHierarquico } from "@/components/shared/SelectDepartamentoHierarquico";
+import { SalarioMasked } from "@/components/SalarioMasked";
 
 interface Props {
   dados: Record<string, any>;
@@ -91,7 +92,23 @@ export function ConviteDadosProfissionaisPJ({ dados, editing, updateField }: Pro
               <p className="text-sm font-medium">{dados.departamento || "—"}</p>
             )}
           </div>
-          {renderField("Valor Mensal (R$) *", "valor_mensal", "number", "0,00")}
+          <div>
+            <Label className="text-xs text-muted-foreground">Valor Mensal (R$) *</Label>
+            {editing ? (
+              <Input
+                type="number"
+                value={dados.valor_mensal || ""}
+                onChange={(e) => updateField("valor_mensal", Number(e.target.value))}
+                placeholder="0,00"
+              />
+            ) : (
+              <p className="text-sm font-medium">
+                {dados.valor_mensal ? (
+                  <SalarioMasked valor={Number(dados.valor_mensal)} userId={null} contexto="convite" />
+                ) : "—"}
+              </p>
+            )}
+          </div>
           {renderSelect(
             "Forma de Pagamento",
             "forma_pagamento",
