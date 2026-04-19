@@ -159,7 +159,7 @@ export default function Conhecimento() {
     setLoading(true);
     const { data, error } = await supabase
       .from("fala_fetely_conhecimento")
-      .select("id, categoria, titulo, conteudo, publico_alvo, cargos_aplicaveis, departamentos_aplicaveis, niveis_aplicaveis, fonte, tags, ativo, created_at, updated_at")
+      .select("id, categoria, titulo, conteudo, area_negocio, publico_alvo, cargos_aplicaveis, departamentos_aplicaveis, niveis_aplicaveis, fonte, tags, ativo, created_at, updated_at")
       .order("updated_at", { ascending: false });
     if (error) {
       toast({ title: "Erro", description: error.message, variant: "destructive" });
