@@ -111,6 +111,7 @@ export default function FalaFetely() {
   const [showPrivacidade, setShowPrivacidade] = useState(false);
   const [confirmarLimparTudo, setConfirmarLimparTudo] = useState(false);
   const [precisaConsentimento, setPrecisaConsentimento] = useState<boolean | null>(null);
+  const [sugerirAberto, setSugerirAberto] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Regra 11 — Consentimento bloqueante no primeiro acesso
@@ -792,9 +793,20 @@ export default function FalaFetely() {
                     <Send className="h-4 w-4" /> Enviar
                   </Button>
                 </form>
-                <p className="text-[10px] text-center text-muted-foreground mt-2">
-                  ✌️ Sou só uma IA — confirme com seu gestor antes de decisões importantes
-                </p>
+                <div className="flex items-center justify-center gap-3 mt-2">
+                  <p className="text-[10px] text-muted-foreground">
+                    ✌️ Sou só uma IA — confirme com seu gestor antes de decisões importantes
+                  </p>
+                  <span className="text-muted-foreground/40">·</span>
+                  <button
+                    type="button"
+                    onClick={() => setSugerirAberto(true)}
+                    className="text-[10px] text-muted-foreground hover:text-foreground inline-flex items-center gap-1 transition-colors"
+                    title="Sugerir melhoria em processo"
+                  >
+                    <Lightbulb className="h-3 w-3" /> Sugerir melhoria de processo
+                  </button>
+                </div>
                 <p className="text-[10px] text-center text-muted-foreground/70 mt-0.5">
                   Suas conversas são privadas.{" "}
                   <button className="underline hover:text-foreground" onClick={() => setShowPrivacidade(true)}>
@@ -833,6 +845,8 @@ export default function FalaFetely() {
           }}
         />
       )}
+
+      <SugerirProcessoDialog open={sugerirAberto} onOpenChange={setSugerirAberto} />
 
       {/* AlertDialog: confirmar exclusão de uma conversa */}
       <AlertDialog
