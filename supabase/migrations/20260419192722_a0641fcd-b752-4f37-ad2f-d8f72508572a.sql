@@ -1,0 +1,1 @@
+ALTER VIEW public.revogacoes_acesso_historico SET (security_invoker = true);

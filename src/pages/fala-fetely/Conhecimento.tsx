@@ -20,6 +20,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePermissions } from "@/hooks/usePermissions";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { SugestoesPendentes, type SugestaoPendente } from "@/components/fala-fetely/SugestoesPendentes";
@@ -37,14 +38,8 @@ const CATEGORIAS: { value: Categoria; label: string; color: string; bg: string }
   { value: "mercado",   label: "Mercado",   color: "#FFFFFF", bg: "#E8833A" },
 ];
 
-const PUBLICOS = [
-  { value: "todos",         label: "Todos" },
-  { value: "admin_rh",      label: "Admin RH" },
-  { value: "gestores",      label: "Gestores" },
-  { value: "colaboradores", label: "Colaboradores" },
-  { value: "financeiro",    label: "Financeiro" },
-  { value: "ti",            label: "TI" },
-];
+// "Público-alvo" antigo (perfis) ficou conceitualmente errado.
+// Substituído por "Área de negócio" carregado dinamicamente de parametros.
 
 const NIVEIS = [
   { value: "junior",       label: "Júnior" },
@@ -60,6 +55,7 @@ interface Conhecimento {
   categoria: Categoria;
   titulo: string;
   conteudo: string;
+  area_negocio: string | null;
   publico_alvo: string;
   cargos_aplicaveis: string[];
   departamentos_aplicaveis: string[];
@@ -76,7 +72,7 @@ interface FormState {
   categoria: Categoria;
   titulo: string;
   conteudo: string;
-  publico_alvo: string;
+  area_negocio: string | null;
   cargos_aplicaveis: string[];
   departamentos_aplicaveis: string[];
   niveis_aplicaveis: string[];
@@ -88,7 +84,7 @@ const FORM_INICIAL: FormState = {
   categoria: "faq",
   titulo: "",
   conteudo: "",
-  publico_alvo: "todos",
+  area_negocio: null,
   cargos_aplicaveis: [],
   departamentos_aplicaveis: [],
   niveis_aplicaveis: [],
@@ -120,6 +116,20 @@ export default function Conhecimento() {
   const [cargos, setCargos] = useState<string[]>([]);
   const [departamentos, setDepartamentos] = useState<string[]>([]);
 
+  const { data: areas } = useQuery({
+    queryKey: ["parametros", "area_negocio"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("parametros")
+        .select("valor, label")
+        .eq("categoria", "area_negocio")
+        .eq("ativo", true)
+        .order("ordem");
+      return Array.isArray(data) ? data : [];
+    },
+    staleTime: 10 * 60 * 1000,
+  });
+
   const podeAcessar = isSuperAdmin || isAdminRH;
 
   useEffect(() => {
@@ -149,7 +159,7 @@ export default function Conhecimento() {
     setLoading(true);
     const { data, error } = await supabase
       .from("fala_fetely_conhecimento")
-      .select("id, categoria, titulo, conteudo, publico_alvo, cargos_aplicaveis, departamentos_aplicaveis, niveis_aplicaveis, fonte, tags, ativo, created_at, updated_at")
+      .select("id, categoria, titulo, conteudo, area_negocio, publico_alvo, cargos_aplicaveis, departamentos_aplicaveis, niveis_aplicaveis, fonte, tags, ativo, created_at, updated_at")
       .order("updated_at", { ascending: false });
     if (error) {
       toast({ title: "Erro", description: error.message, variant: "destructive" });
@@ -199,7 +209,7 @@ export default function Conhecimento() {
       categoria: item.categoria,
       titulo: item.titulo,
       conteudo: item.conteudo,
-      publico_alvo: item.publico_alvo,
+      area_negocio: item.area_negocio ?? null,
       cargos_aplicaveis: item.cargos_aplicaveis,
       departamentos_aplicaveis: item.departamentos_aplicaveis,
       niveis_aplicaveis: item.niveis_aplicaveis,
@@ -219,7 +229,8 @@ export default function Conhecimento() {
       categoria: form.categoria,
       titulo: form.titulo.trim(),
       conteudo: form.conteudo.trim(),
-      publico_alvo: form.publico_alvo,
+      area_negocio: form.area_negocio,
+      publico_alvo: "todos",
       cargos_aplicaveis: form.cargos_aplicaveis,
       departamentos_aplicaveis: form.departamentos_aplicaveis,
       niveis_aplicaveis: form.niveis_aplicaveis,
@@ -272,7 +283,7 @@ export default function Conhecimento() {
       categoria: (s.categoria_sugerida as Categoria) || "faq",
       titulo: s.titulo_sugerido || s.correcao_sugerida.slice(0, 60),
       conteudo: s.correcao_sugerida,
-      publico_alvo: "todos",
+      area_negocio: null,
       cargos_aplicaveis: [],
       departamentos_aplicaveis: [],
       niveis_aplicaveis: [],
@@ -421,9 +432,9 @@ export default function Conhecimento() {
                             <Badge style={{ backgroundColor: cat.bg, color: cat.color, border: 0 }} className="text-[10px] uppercase tracking-wide">
                               {cat.label}
                             </Badge>
-                            {item.publico_alvo !== "todos" && (
+                            {item.area_negocio && (
                               <Badge variant="outline" className="text-[10px]">
-                                👥 {PUBLICOS.find((p) => p.value === item.publico_alvo)?.label || item.publico_alvo}
+                                🎯 {(areas || []).find((a: any) => a.valor === item.area_negocio)?.label || item.area_negocio}
                               </Badge>
                             )}
                             {item.niveis_aplicaveis.length > 0 && (
@@ -502,15 +513,22 @@ export default function Conhecimento() {
                 </Select>
               </div>
               <div>
-                <Label>Público alvo</Label>
-                <Select value={form.publico_alvo} onValueChange={(v) => setForm({ ...form, publico_alvo: v })}>
+                <Label>Área de negócio</Label>
+                <Select
+                  value={form.area_negocio ?? "__todas__"}
+                  onValueChange={(v) => setForm({ ...form, area_negocio: v === "__todas__" ? null : v })}
+                >
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {PUBLICOS.map((p) => (
-                      <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
+                    <SelectItem value="__todas__">Todas as áreas (geral)</SelectItem>
+                    {(areas || []).map((a: any) => (
+                      <SelectItem key={a.valor} value={a.valor}>{a.label}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
+                <p className="text-[10px] text-muted-foreground mt-1">
+                  Área de negócio à qual o conhecimento se aplica. Cargos, departamentos e níveis específicos abaixo.
+                </p>
               </div>
             </div>
 
