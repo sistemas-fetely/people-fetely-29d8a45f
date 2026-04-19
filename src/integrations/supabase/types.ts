@@ -1390,6 +1390,7 @@ export type Database = {
           departamento: string
           departamento_id: string | null
           dia_vencimento: number | null
+          email_corporativo: string | null
           email_pessoal: string | null
           estado_civil: string | null
           etnia: string | null
@@ -1450,6 +1451,7 @@ export type Database = {
           departamento: string
           departamento_id?: string | null
           dia_vencimento?: number | null
+          email_corporativo?: string | null
           email_pessoal?: string | null
           estado_civil?: string | null
           etnia?: string | null
@@ -1510,6 +1512,7 @@ export type Database = {
           departamento?: string
           departamento_id?: string | null
           dia_vencimento?: number | null
+          email_corporativo?: string | null
           email_pessoal?: string | null
           estado_civil?: string | null
           etnia?: string | null
@@ -3493,6 +3496,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          acesso_ativado_em: string | null
           approved: boolean
           avatar_url: string | null
           colaborador_tipo: string | null
@@ -3502,10 +3506,13 @@ export type Database = {
           full_name: string | null
           id: string
           position: string | null
+          termo_uso_aceito_em: string | null
+          termo_uso_versao: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          acesso_ativado_em?: string | null
           approved?: boolean
           avatar_url?: string | null
           colaborador_tipo?: string | null
@@ -3515,10 +3522,13 @@ export type Database = {
           full_name?: string | null
           id?: string
           position?: string | null
+          termo_uso_aceito_em?: string | null
+          termo_uso_versao?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          acesso_ativado_em?: string | null
           approved?: boolean
           avatar_url?: string | null
           colaborador_tipo?: string | null
@@ -3528,6 +3538,8 @@ export type Database = {
           full_name?: string | null
           id?: string
           position?: string | null
+          termo_uso_aceito_em?: string | null
+          termo_uso_versao?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -5061,6 +5073,7 @@ export type Database = {
           unidade_nome: string
         }[]
       }
+      validar_email_corporativo: { Args: { _email: string }; Returns: Json }
       validar_prontidao_sistema: { Args: never; Returns: Json }
     }
     Enums: {
