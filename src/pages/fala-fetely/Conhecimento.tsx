@@ -116,6 +116,20 @@ export default function Conhecimento() {
   const [cargos, setCargos] = useState<string[]>([]);
   const [departamentos, setDepartamentos] = useState<string[]>([]);
 
+  const { data: areas } = useQuery({
+    queryKey: ["parametros", "area_negocio"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("parametros")
+        .select("valor, label")
+        .eq("categoria", "area_negocio")
+        .eq("ativo", true)
+        .order("ordem");
+      return Array.isArray(data) ? data : [];
+    },
+    staleTime: 10 * 60 * 1000,
+  });
+
   const podeAcessar = isSuperAdmin || isAdminRH;
 
   useEffect(() => {
