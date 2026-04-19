@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { Mail, Calendar, Briefcase, Users, ExternalLink, Shield, Loader2 } from "lucide-react";
+import { Mail, Phone, Calendar, Briefcase, Users, ExternalLink, Shield, Loader2 } from "lucide-react";
 
 interface Props {
   userId: string | null;
@@ -49,12 +49,12 @@ export function DrawerUsuario({ userId, open, onOpenChange }: Props) {
         supabase.from("profiles").select("*").eq("user_id", activeUserId).maybeSingle(),
         supabase
           .from("colaboradores_clt")
-          .select("id, cargo, departamento, data_admissao, gestor_direto_id, foto_url, email_corporativo, email_pessoal")
+          .select("id, cargo, departamento, data_admissao, gestor_direto_id, foto_url, email_corporativo, email_pessoal, telefone_corporativo")
           .eq("user_id", activeUserId)
           .maybeSingle(),
         supabase
           .from("contratos_pj")
-          .select("id, cargo_id, departamento, data_inicio, gestor_direto_id, foto_url, contato_email, tipo_servico")
+          .select("id, cargo_id, departamento, data_inicio, gestor_direto_id, foto_url, contato_email, tipo_servico, email_corporativo, telefone_corporativo")
           .eq("user_id", activeUserId)
           .maybeSingle(),
         supabase.from("user_roles").select("role, nivel").eq("user_id", activeUserId),
@@ -83,12 +83,14 @@ export function DrawerUsuario({ userId, open, onOpenChange }: Props) {
         gestorData = g;
       }
 
-      // Email vem prioritariamente dos cadastros; senão fica null (auth não acessível direto)
-      const email =
-        cltRes.data?.email_corporativo ||
-        cltRes.data?.email_pessoal ||
-        pjRes.data?.contato_email ||
-        null;
+      const cltData = cltRes.data as any;
+      const pjData = pjRes.data as any;
+      const email_corporativo = cltData?.email_corporativo || pjData?.email_corporativo || null;
+      const email_fallback = cltData?.email_pessoal || pjData?.contato_email || null;
+      const telefone_corporativo = cltData?.telefone_corporativo || pjData?.telefone_corporativo || null;
+
+      // Mantido para compat: email genérico (prioriza corporativo, depois fallback)
+      const email = email_corporativo || email_fallback;
 
       return {
         profile: profileRes.data,
@@ -98,6 +100,9 @@ export function DrawerUsuario({ userId, open, onOpenChange }: Props) {
         roles: rolesRes.data || [],
         gestor: gestorData,
         email,
+        email_corporativo,
+        email_fallback,
+        telefone_corporativo,
       };
     },
   });
@@ -239,6 +244,49 @@ export function DrawerUsuario({ userId, open, onOpenChange }: Props) {
 
             <Separator className="my-4" />
 
+            {/* Dados corporativos */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Mail className="h-4 w-4 text-muted-foreground" />
+                <p className="text-sm font-medium">Dados corporativos</p>
+              </div>
+              <div className="ml-6 space-y-1.5">
+                {data.email_corporativo ? (
+                  <button
+                    type="button"
+                    onClick={() => (window.location.href = `mailto:${data.email_corporativo}`)}
+                    className="flex items-center gap-2 text-xs hover:text-primary transition w-full text-left"
+                  >
+                    <Mail className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                    <span className="truncate">{data.email_corporativo}</span>
+                  </button>
+                ) : data.email_fallback ? (
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground italic">
+                    <Mail className="h-3.5 w-3.5 shrink-0" />
+                    <span className="truncate">{data.email_fallback} (pessoal)</span>
+                  </div>
+                ) : null}
+
+                {data.telefone_corporativo && (
+                  <a
+                    href={`tel:${data.telefone_corporativo}`}
+                    className="flex items-center gap-2 text-xs hover:text-primary transition"
+                  >
+                    <Phone className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                    {data.telefone_corporativo}
+                  </a>
+                )}
+
+                {!data.email_corporativo && !data.email_fallback && !data.telefone_corporativo && (
+                  <p className="text-xs text-muted-foreground italic">
+                    Sem dados corporativos cadastrados
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <Separator className="my-4" />
+
             {/* Ações */}
             <div className="space-y-2">
               {(data.clt?.id || data.pj?.id) && (
@@ -253,16 +301,6 @@ export function DrawerUsuario({ userId, open, onOpenChange }: Props) {
                 >
                   <ExternalLink className="h-4 w-4" />
                   Abrir ficha completa
-                </Button>
-              )}
-              {data.email && (
-                <Button
-                  variant="outline"
-                  className="w-full justify-start gap-2"
-                  onClick={() => (window.location.href = `mailto:${data.email}`)}
-                >
-                  <Mail className="h-4 w-4" />
-                  <span className="truncate">{data.email}</span>
                 </Button>
               )}
             </div>
