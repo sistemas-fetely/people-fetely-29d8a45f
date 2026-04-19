@@ -10,6 +10,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { SalarioMasked } from "@/components/SalarioMasked";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
 } from "recharts";
@@ -43,7 +44,7 @@ export default function PagamentoPJRelatorio() {
     if (!contratoId) return;
     const fetch = async () => {
       const [{ data: c }, { data: pags }] = await Promise.all([
-        supabase.from("contratos_pj").select("id, razao_social, nome_fantasia, cnpj, valor_mensal, status, data_inicio, data_fim").eq("id", contratoId).single(),
+        supabase.from("contratos_pj").select("id, razao_social, nome_fantasia, cnpj, valor_mensal, status, data_inicio, data_fim, user_id").eq("id", contratoId).single(),
         supabase.from("pagamentos_pj").select("*, notas_fiscais_pj(numero)").eq("contrato_id", contratoId).order("competencia", { ascending: true }),
       ]);
       setContrato(c);
@@ -123,7 +124,9 @@ export default function PagamentoPJRelatorio() {
               <TrendingUp className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-2xl font-bold">{BRL(totalPago)}</p>
+              <div className="text-2xl font-bold">
+                <SalarioMasked valor={totalPago} userId={contrato?.user_id || null} contexto="relatorio_pj" />
+              </div>
               <p className="text-xs text-muted-foreground">Total Pago</p>
             </div>
           </CardContent>
@@ -134,7 +137,9 @@ export default function PagamentoPJRelatorio() {
               <Calendar className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-2xl font-bold">{BRL(totalPendente)}</p>
+              <div className="text-2xl font-bold">
+                <SalarioMasked valor={totalPendente} userId={contrato?.user_id || null} contexto="relatorio_pj" />
+              </div>
               <p className="text-xs text-muted-foreground">A Pagar</p>
             </div>
           </CardContent>
@@ -145,7 +150,9 @@ export default function PagamentoPJRelatorio() {
               <TrendingUp className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-2xl font-bold">{BRL(mediaMensal)}</p>
+              <div className="text-2xl font-bold">
+                <SalarioMasked valor={mediaMensal} userId={contrato?.user_id || null} contexto="relatorio_pj" />
+              </div>
               <p className="text-xs text-muted-foreground">Média Mensal</p>
             </div>
           </CardContent>
