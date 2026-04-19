@@ -190,6 +190,8 @@ Plano de treinamento vinculado ao cargo e disparado automaticamente no onboardin
 
 Parâmetros avançados do sistema: notificações, integrações, customizações de fluxo. Complementa o módulo de Parâmetros existente.
 
+**Pertencimento (doutrina):** transversal — quando construída, vai em SNCFLayout + SNCFSidebar, não em AppLayout (People). Configurações de sistema servem todos os pilares.
+
 ---
 
 ### N006 · Dashboard Operacional do RH
