@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -17,17 +18,27 @@ export interface ProcessoCategoria {
   updated_at?: string;
 }
 
-export const MODULOS_ORIGEM = [
-  { value: "rh", label: "RH" },
-  { value: "people", label: "People" },
-  { value: "ti", label: "TI" },
-  { value: "compras", label: "Compras" },
-  { value: "financeiro", label: "Financeiro" },
-  { value: "comercial", label: "Comercial" },
-  { value: "operacional", label: "Operacional" },
-  { value: "estrategico", label: "Estratégico" },
-  { value: "outros", label: "Outros" },
-];
+/**
+ * Hook para listar módulos de origem de processos.
+ * Lê de `parametros.categoria='modulo_origem_processo'` (regra arquitetural:
+ * dimensões sempre via tabela, nunca array literal no código).
+ */
+export function useModulosOrigem() {
+  return useQuery({
+    queryKey: ["parametros", "modulo_origem_processo"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("parametros")
+        .select("valor, label, ordem")
+        .eq("categoria", "modulo_origem_processo")
+        .eq("ativo", true)
+        .order("ordem");
+      if (error) throw error;
+      return (data || []).map((p) => ({ value: p.valor, label: p.label }));
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+}
 
 export const NATUREZAS = [
   {
