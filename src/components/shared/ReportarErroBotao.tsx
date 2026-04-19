@@ -36,13 +36,14 @@ export function ReportarErroBotao() {
   const { data: tipos } = useQuery({
     queryKey: ["parametros", "tipo_reporte"],
     queryFn: async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("parametros")
         .select("valor, label")
         .eq("categoria", "tipo_reporte")
         .eq("ativo", true)
         .order("ordem");
-      return data || [];
+      if (error) return [];
+      return Array.isArray(data) ? data : [];
     },
     staleTime: 10 * 60 * 1000,
   });
