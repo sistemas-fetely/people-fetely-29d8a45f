@@ -1372,6 +1372,7 @@ export type Database = {
           banco_codigo: string | null
           banco_nome: string | null
           cargo_id: string | null
+          categoria_pj: string
           cep: string | null
           chave_pix: string | null
           cidade: string | null
@@ -1434,6 +1435,7 @@ export type Database = {
           banco_codigo?: string | null
           banco_nome?: string | null
           cargo_id?: string | null
+          categoria_pj?: string
           cep?: string | null
           chave_pix?: string | null
           cidade?: string | null
@@ -1496,6 +1498,7 @@ export type Database = {
           banco_codigo?: string | null
           banco_nome?: string | null
           cargo_id?: string | null
+          categoria_pj?: string
           cep?: string | null
           chave_pix?: string | null
           cidade?: string | null
@@ -2883,6 +2886,53 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      nf_pj_classificacoes: {
+        Row: {
+          categoria_valor: string
+          created_at: string
+          created_by: string | null
+          descricao_adicional: string | null
+          id: string
+          justificativa: string | null
+          nota_fiscal_id: string
+          ordem: number
+          updated_at: string
+          valor: number
+        }
+        Insert: {
+          categoria_valor: string
+          created_at?: string
+          created_by?: string | null
+          descricao_adicional?: string | null
+          id?: string
+          justificativa?: string | null
+          nota_fiscal_id: string
+          ordem?: number
+          updated_at?: string
+          valor: number
+        }
+        Update: {
+          categoria_valor?: string
+          created_at?: string
+          created_by?: string | null
+          descricao_adicional?: string | null
+          id?: string
+          justificativa?: string | null
+          nota_fiscal_id?: string
+          ordem?: number
+          updated_at?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nf_pj_classificacoes_nota_fiscal_id_fkey"
+            columns: ["nota_fiscal_id"]
+            isOneToOne: false
+            referencedRelation: "notas_fiscais_pj"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       notas_fiscais_pj: {
         Row: {
