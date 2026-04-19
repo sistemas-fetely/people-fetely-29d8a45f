@@ -4190,6 +4190,63 @@ export type Database = {
           },
         ]
       }
+      sistema_reportes: {
+        Row: {
+          atribuido_a: string | null
+          descricao: string
+          id: string
+          passos_reproduzir: string | null
+          prioridade: string | null
+          reportado_em: string
+          reportado_por: string | null
+          resolvido_em: string | null
+          resposta_admin: string | null
+          rota: string
+          status_valor: string
+          tipo_valor: string
+          titulo_tela: string | null
+          updated_at: string
+          user_agent: string | null
+          viewport_width: number | null
+        }
+        Insert: {
+          atribuido_a?: string | null
+          descricao: string
+          id?: string
+          passos_reproduzir?: string | null
+          prioridade?: string | null
+          reportado_em?: string
+          reportado_por?: string | null
+          resolvido_em?: string | null
+          resposta_admin?: string | null
+          rota: string
+          status_valor?: string
+          tipo_valor: string
+          titulo_tela?: string | null
+          updated_at?: string
+          user_agent?: string | null
+          viewport_width?: number | null
+        }
+        Update: {
+          atribuido_a?: string | null
+          descricao?: string
+          id?: string
+          passos_reproduzir?: string | null
+          prioridade?: string | null
+          reportado_em?: string
+          reportado_por?: string | null
+          resolvido_em?: string | null
+          resposta_admin?: string | null
+          rota?: string
+          status_valor?: string
+          tipo_valor?: string
+          titulo_tela?: string | null
+          updated_at?: string
+          user_agent?: string | null
+          viewport_width?: number | null
+        }
+        Relationships: []
+      }
       skills_catalogo: {
         Row: {
           area: string
