@@ -64,6 +64,18 @@ export function StepDadosEmpresa() {
               Deve ser um domínio Fetely configurado em /parametros.
             </p>
           </div>
+          <div className="space-y-1">
+            <Label htmlFor="telefone_corporativo">Telefone Corporativo</Label>
+            <Input
+              id="telefone_corporativo"
+              type="tel"
+              placeholder="(11) 91234-5678 ou ramal 123"
+              {...register("telefone_corporativo")}
+            />
+            <p className="text-[11px] text-muted-foreground">
+              Celular do ativo corporativo, ramal, ou telefone de trabalho.
+            </p>
+          </div>
           <div className="space-y-2">
             <Label htmlFor="data_integracao">Data de Integração</Label>
             <Input id="data_integracao" type="date" {...register("data_integracao")} />
@@ -71,7 +83,7 @@ export function StepDadosEmpresa() {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="celular_corporativo_info">Celular Corporativo</Label>
+          <Label htmlFor="celular_corporativo_info">Celular Corporativo (provisão)</Label>
           <div className="flex items-center gap-3">
             <Switch
               id="celular_corporativo_info"

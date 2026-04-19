@@ -1044,6 +1044,7 @@ export type Database = {
           secao_eleitoral: string | null
           status: string
           telefone: string | null
+          telefone_corporativo: string | null
           tipo_conta: string | null
           tipo_contrato: string
           titulo_eleitor: string | null
@@ -1113,6 +1114,7 @@ export type Database = {
           secao_eleitoral?: string | null
           status?: string
           telefone?: string | null
+          telefone_corporativo?: string | null
           tipo_conta?: string | null
           tipo_contrato?: string
           titulo_eleitor?: string | null
@@ -1182,6 +1184,7 @@ export type Database = {
           secao_eleitoral?: string | null
           status?: string
           telefone?: string | null
+          telefone_corporativo?: string | null
           tipo_conta?: string | null
           tipo_contrato?: string
           titulo_eleitor?: string | null
@@ -1415,6 +1418,7 @@ export type Database = {
           rg: string | null
           status: string
           telefone: string | null
+          telefone_corporativo: string | null
           tipo_conta: string | null
           tipo_servico: string
           uf: string | null
@@ -1476,6 +1480,7 @@ export type Database = {
           rg?: string | null
           status?: string
           telefone?: string | null
+          telefone_corporativo?: string | null
           tipo_conta?: string | null
           tipo_servico: string
           uf?: string | null
@@ -1537,6 +1542,7 @@ export type Database = {
           rg?: string | null
           status?: string
           telefone?: string | null
+          telefone_corporativo?: string | null
           tipo_conta?: string | null
           tipo_servico?: string
           uf?: string | null
@@ -5814,6 +5820,7 @@ export type Database = {
       }
       validar_email_corporativo: { Args: { _email: string }; Returns: Json }
       validar_prontidao_sistema: { Args: never; Returns: Json }
+      verificar_user_orfao: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
       app_role:

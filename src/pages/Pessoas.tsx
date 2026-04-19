@@ -22,10 +22,12 @@ import { format, parseISO } from "date-fns";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useCLevelCargos } from "@/hooks/useCLevelCargos";
 import { DrawerUsuario } from "@/components/DrawerUsuario";
+import { useUsuariosOrfaos } from "@/hooks/useUsuariosOrfaos";
 
 interface PessoaUnificada {
   id: string;
-  nome: string;
+  nome: string;                    // nome da PESSOA (contato_nome no PJ, nome_completo no CLT)
+  subtitulo: string | null;        // empresa/fantasia no PJ, null no CLT
   tipo: "CLT" | "PJ";
   cargo_servico: string;
   departamento: string;
@@ -34,6 +36,8 @@ interface PessoaUnificada {
   valor: number | null;
   foto_url: string | null;
   user_id: string | null;
+  email_corporativo: string | null;
+  telefone_corporativo: string | null;
 }
 
 const statusMap: Record<string, string> = {
@@ -74,14 +78,22 @@ export default function Pessoas() {
   useEffect(() => {
     async function fetch() {
       const [{ data: clts }, { data: pjs }] = await Promise.all([
-        supabase.from("colaboradores_clt").select("id, nome_completo, cargo, departamento, status, data_admissao, salario_base, foto_url, user_id").order("nome_completo"),
-        supabase.from("contratos_pj").select("id, razao_social, nome_fantasia, tipo_servico, departamento, status, data_inicio, valor_mensal, foto_url, user_id").order("razao_social"),
+        supabase.from("colaboradores_clt").select(
+          "id, nome_completo, cargo, departamento, status, data_admissao, " +
+          "salario_base, foto_url, user_id, email_corporativo, telefone_corporativo"
+        ).order("nome_completo"),
+        supabase.from("contratos_pj").select(
+          "id, contato_nome, razao_social, nome_fantasia, tipo_servico, departamento, " +
+          "status, data_inicio, valor_mensal, foto_url, user_id, " +
+          "email_corporativo, telefone_corporativo"
+        ).order("contato_nome"),
       ]);
 
       const unified: PessoaUnificada[] = [
-        ...(clts || []).map((c) => ({
+        ...(clts || []).map((c: any) => ({
           id: c.id,
           nome: c.nome_completo,
+          subtitulo: null,
           tipo: "CLT" as const,
           cargo_servico: c.cargo,
           departamento: c.departamento,
@@ -89,11 +101,14 @@ export default function Pessoas() {
           data_inicio: c.data_admissao,
           valor: c.salario_base,
           foto_url: c.foto_url,
-          user_id: (c as any).user_id || null,
+          user_id: c.user_id || null,
+          email_corporativo: c.email_corporativo || null,
+          telefone_corporativo: c.telefone_corporativo || null,
         })),
-        ...(pjs || []).map((p) => ({
+        ...(pjs || []).map((p: any) => ({
           id: p.id,
-          nome: p.nome_fantasia || p.razao_social,
+          nome: p.contato_nome,                              // pessoa física em destaque
+          subtitulo: p.nome_fantasia || p.razao_social,      // empresa vira subtítulo
           tipo: "PJ" as const,
           cargo_servico: p.tipo_servico,
           departamento: p.departamento,
@@ -101,7 +116,9 @@ export default function Pessoas() {
           data_inicio: p.data_inicio,
           valor: p.valor_mensal,
           foto_url: p.foto_url,
-          user_id: (p as any).user_id || null,
+          user_id: p.user_id || null,
+          email_corporativo: p.email_corporativo || null,
+          telefone_corporativo: p.telefone_corporativo || null,
         })),
       ].sort((a, b) => a.nome.localeCompare(b.nome));
 
@@ -111,10 +128,17 @@ export default function Pessoas() {
     fetch();
   }, []);
 
+  const { data: orfaosSet } = useUsuariosOrfaos(pessoas.map((p) => p.user_id));
+
   const totalCLT = pessoas.filter((p) => p.tipo === "CLT").length;
   const totalPJ = pessoas.filter((p) => p.tipo === "PJ").length;
   const totalAtivos = pessoas.filter((p) => p.status === "ativo").length;
-  const totalSemAcesso = pessoas.filter((p) => !p.user_id && p.status !== "desligado" && p.status !== "encerrado").length;
+  const totalSemAcesso = pessoas.filter((p) => {
+    if (p.status === "desligado" || p.status === "encerrado") return false;
+    if (!p.user_id) return true;
+    if (orfaosSet?.has(p.user_id)) return true;
+    return false;
+  }).length;
 
   const filtered = pessoas.filter((p) => {
     const matchSearch =
@@ -130,8 +154,9 @@ export default function Pessoas() {
     name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
 
   const handleView = (p: PessoaUnificada) => {
-    if (p.tipo === "CLT") navigate(`/colaboradores/${p.id}`);
-    else navigate(`/contratos-pj/${p.id}`);
+    const state = { from: "/pessoas" };
+    if (p.tipo === "CLT") navigate(`/colaboradores/${p.id}`, { state });
+    else navigate(`/contratos-pj/${p.id}`, { state });
   };
 
   return (
@@ -296,7 +321,14 @@ export default function Pessoas() {
                               {initials(p.nome)}
                             </AvatarFallback>
                           </Avatar>
-                          <span className="font-medium text-sm hover:underline">{p.nome}</span>
+                          <div className="flex flex-col min-w-0">
+                            <span className="font-medium text-sm hover:underline truncate">{p.nome}</span>
+                            {p.subtitulo && (
+                              <span className="text-[11px] text-muted-foreground truncate">
+                                {p.subtitulo}
+                              </span>
+                            )}
+                          </div>
                         </button>
                       </TableCell>
                       <TableCell>
@@ -312,7 +344,21 @@ export default function Pessoas() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-center">
-                        {p.user_id ? (
+                        {p.user_id && orfaosSet?.has(p.user_id) ? (
+                          <TooltipProvider delayDuration={200}>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Badge variant="outline" className="bg-destructive/10 text-destructive border-0 gap-1 cursor-help">
+                                  <AlertCircle className="h-3 w-3" />
+                                  Acesso inconsistente
+                                </Badge>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                Há um vínculo de usuário, mas o acesso real não foi criado. Reabra o cadastro para corrigir.
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        ) : p.user_id ? (
                           <Badge variant="outline" className="bg-success/10 text-success border-0 gap-1">
                             <CheckCircle2 className="h-3 w-3" />
                             Ativo

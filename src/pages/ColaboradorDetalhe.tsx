@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { getTarefasParaTipo } from "@/lib/onboarding-tarefas";
-import { useParams, useNavigate, useSearchParams } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
@@ -83,6 +83,8 @@ export default function ColaboradorDetalhe() {
   const { id } = useParams<{ id: string }>();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const rotaVolta = ((location.state as any)?.from as string) || "/colaboradores";
   const { user, profile } = useAuth();
   const { canSeeSalary, isSuperAdmin } = usePermissions();
   const { isCargoClevel } = useCLevelCargos();
@@ -322,7 +324,7 @@ export default function ColaboradorDetalhe() {
       ]);
       if (!col) {
         toast.error("Colaborador não encontrado");
-        navigate("/colaboradores");
+        navigate(rotaVolta);
         return;
       }
       setColaborador(col);
@@ -481,7 +483,7 @@ export default function ColaboradorDetalhe() {
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <Button variant="ghost" onClick={() => navigate("/colaboradores")} className="gap-2">
+          <Button variant="ghost" onClick={() => navigate(rotaVolta)} className="gap-2">
             <ArrowLeft className="h-4 w-4" /> Voltar
           </Button>
           <div className="flex items-center gap-2">

@@ -66,6 +66,18 @@ export function StepDadosProfissionaisPJ() {
             )}
             <p className="text-[11px] text-muted-foreground">Deve ser domínio Fetely configurado em /parametros.</p>
           </div>
+          <div className="space-y-1">
+            <Label htmlFor="telefone_corporativo">Telefone Corporativo</Label>
+            <Input
+              id="telefone_corporativo"
+              type="tel"
+              placeholder="(11) 91234-5678 ou ramal 123"
+              {...register("telefone_corporativo" as any)}
+            />
+            <p className="text-[11px] text-muted-foreground">
+              Celular corporativo, ramal ou telefone de trabalho do prestador.
+            </p>
+          </div>
         </div>
       </div>
 

@@ -102,6 +102,7 @@ export function CadastroContratoPJ() {
       const {
         dependentes,
         email_corporativo,
+        telefone_corporativo,
         ramal,
         data_integracao,
         titulo_eleitor,
@@ -146,6 +147,7 @@ export function CadastroContratoPJ() {
           telefone: contratoData.telefone || null,
           email_pessoal: contratoData.email_pessoal || null,
           email_corporativo: email_corporativo || null,
+          telefone_corporativo: telefone_corporativo || null,
           contato_emergencia_nome: contratoData.contato_emergencia_nome || null,
           contato_emergencia_telefone: contratoData.contato_emergencia_telefone || null,
           objeto: contratoData.objeto || null,

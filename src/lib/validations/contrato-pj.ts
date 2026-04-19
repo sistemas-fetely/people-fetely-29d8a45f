@@ -66,6 +66,7 @@ export const documentosPJSchema = z.object({
 // Step 3: Dados Profissionais (adaptado PJ)
 export const dadosProfissionaisPJSchema = z.object({
   email_corporativo: z.string().email("Email inválido").min(1, "Email corporativo é obrigatório"),
+  telefone_corporativo: z.string().optional().or(z.literal("")),
   tipo_servico: z.string().min(2, "Cargo é obrigatório"),
   cargo_id: z.string().nullable().optional(),
   departamento: z.string().min(1, "Departamento é obrigatório"),

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { getTarefasParaTipo } from "@/lib/onboarding-tarefas";
-import { useParams, useNavigate, useSearchParams } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { useForm, FormProvider } from "react-hook-form";
 import { toast } from "sonner";
 import { format, parseISO } from "date-fns";
@@ -91,6 +91,8 @@ export default function ContratoPJDetalhe() {
   const { id } = useParams<{ id: string }>();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const rotaVolta = ((location.state as any)?.from as string) || "/contratos-pj";
   const { user, profile } = useAuth();
   const { hasPermission, canSeeSalary, isSuperAdmin } = usePermissions();
   const { isCargoClevel } = useCLevelCargos();
@@ -241,7 +243,7 @@ export default function ContratoPJDetalhe() {
       ]);
       if (!ct) {
         toast.error("Contrato não encontrado");
-        navigate("/contratos-pj");
+        navigate(rotaVolta);
         return;
       }
       setContrato(ct);
@@ -315,7 +317,8 @@ export default function ContratoPJDetalhe() {
         conta: ct.conta || "",
         tipo_conta: ct.tipo_conta || "corrente",
         chave_pix: ct.chave_pix || "",
-        email_corporativo: "",
+        email_corporativo: (ct as any).email_corporativo || "",
+        telefone_corporativo: (ct as any).telefone_corporativo || "",
         ramal: "",
         data_integracao: "",
         acessos_sistemas: (acessos || []).map((a) => ({
@@ -347,12 +350,12 @@ export default function ContratoPJDetalhe() {
     try {
       const {
         dependentes, acessos_sistemas: formAcessos, equipamentos: formEquip,
-        email_corporativo, ramal, data_integracao,
+        email_corporativo, telefone_corporativo, ramal, data_integracao,
         titulo_eleitor, zona_eleitoral, secao_eleitoral,
         cnh_numero, cnh_categoria, cnh_validade, certificado_reservista,
         valor_mensal, gestor_direto_id,
         ...rest
-      } = data;
+      } = data as any;
 
       const { error } = await supabase
         .from("contratos_pj")
@@ -407,6 +410,8 @@ export default function ContratoPJDetalhe() {
           // Contact fields
           telefone: rest.telefone || null,
           email_pessoal: rest.email_pessoal || null,
+          email_corporativo: email_corporativo || null,
+          telefone_corporativo: telefone_corporativo || null,
           contato_emergencia_nome: rest.contato_emergencia_nome || null,
           contato_emergencia_telefone: rest.contato_emergencia_telefone || null,
         } as any)
@@ -493,7 +498,7 @@ export default function ContratoPJDetalhe() {
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <Button variant="ghost" onClick={() => navigate("/contratos-pj")} className="gap-2">
+          <Button variant="ghost" onClick={() => navigate(rotaVolta)} className="gap-2">
             <ArrowLeft className="h-4 w-4" /> Voltar
           </Button>
           <div className="flex items-center gap-2">
