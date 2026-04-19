@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 
 import { Button } from "@/components/ui/button";
+import { SalarioMasked } from "@/components/SalarioMasked";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -1574,8 +1575,8 @@ export default function RecrutamentoDetalhe() {
                                "Pretensão abaixo da faixa — avaliar"}
                             </p>
                             {(selectedCandidato as any).pretensao_salarial && (
-                              <p className="text-xs text-muted-foreground mt-0.5">
-                                Pretensão: R$ {Number((selectedCandidato as any).pretensao_salarial).toLocaleString("pt-BR")}
+                              <p className="text-xs text-muted-foreground mt-0.5 inline-flex items-center gap-1">
+                                Pretensão: <SalarioMasked valor={Number((selectedCandidato as any).pretensao_salarial)} userId={null} contexto="recrutamento" />
                                 {(vaga as any)?.faixa_max && <> · Faixa: até R$ {Number((vaga as any).faixa_max).toLocaleString("pt-BR")}</>}
                               </p>
                             )}
@@ -1874,8 +1875,8 @@ export default function RecrutamentoDetalhe() {
                                "Pretensão abaixo da faixa — avaliar"}
                             </p>
                             {(selectedCandidato as any).pretensao_salarial && (
-                              <p className="text-xs text-muted-foreground mt-1">
-                                Pretensão: R$ {Number((selectedCandidato as any).pretensao_salarial).toLocaleString("pt-BR")}
+                              <p className="text-xs text-muted-foreground mt-1 inline-flex items-center gap-1">
+                                Pretensão: <SalarioMasked valor={Number((selectedCandidato as any).pretensao_salarial)} userId={null} contexto="recrutamento" />
                                 {(vaga as any)?.faixa_max && <> · Faixa da vaga: até R$ {Number((vaga as any).faixa_max).toLocaleString("pt-BR")}</>}
                               </p>
                             )}

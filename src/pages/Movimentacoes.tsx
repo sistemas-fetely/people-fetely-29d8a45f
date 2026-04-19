@@ -12,6 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { StatCard } from "@/components/StatCard";
 import { useAuth } from "@/contexts/AuthContext";
 import { SelectDepartamentoHierarquico } from "@/components/shared/SelectDepartamentoHierarquico";
+import { SalarioMasked } from "@/components/SalarioMasked";
 import { useCargos } from "@/hooks/useCargos";
 import {
   useMovimentacoes, useColaboradoresAtivos, useContratosPJAtivos,
@@ -226,9 +227,13 @@ export default function Movimentacoes() {
                     </TableCell>
                     <TableCell className="font-medium">{m.nome}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">
-                      {m.tipo === "alteracao_salarial" || m.tipo === "promocao"
-                        ? `${fmt(m.salario_anterior)} → ${fmt(m.salario_novo)}`
-                        : m.tipo === "transferencia" || m.tipo === "mudanca_departamento"
+                      {m.tipo === "alteracao_salarial" || m.tipo === "promocao" ? (
+                        <span className="inline-flex items-center gap-1">
+                          <SalarioMasked valor={m.salario_anterior} userId={null} contexto="revisao_salarial" />
+                          {" → "}
+                          <SalarioMasked valor={m.salario_novo} userId={null} contexto="revisao_salarial" />
+                        </span>
+                      ) : m.tipo === "transferencia" || m.tipo === "mudanca_departamento"
                         ? `${m.departamento_anterior || "—"} → ${m.departamento_novo || "—"}`
                         : `${m.cargo_anterior || "—"} → ${m.cargo_novo || "—"}`}
                     </TableCell>

@@ -12,6 +12,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { differenceInMonths } from "date-fns";
 import { useMovePosicao } from "@/hooks/useOrgMutations";
+import { SalarioMasked } from "@/components/SalarioMasked";
 import type { PosicaoNode } from "@/types/organograma";
 
 interface Props {
@@ -153,7 +154,13 @@ export function OrgNodeDrawer({ node, open, onClose, allNodes, onEditPosition }:
                   <InfoRow icon={<Mail className="h-4 w-4" />} label="E-mail" value={node.colaborador.email_corporativo || "—"} />
                   <InfoRow icon={<Phone className="h-4 w-4" />} label="Telefone" value={node.colaborador.telefone || "—"} />
                   <InfoRow icon={<Briefcase className="h-4 w-4" />} label="Vínculo" value="CLT" />
-                  {canSeeSalary && <InfoRow icon={<DollarSign className="h-4 w-4" />} label="Salário" value={fmtBRL(node.colaborador.salario_base)} />}
+                  {canSeeSalary && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <span className="text-muted-foreground"><DollarSign className="h-4 w-4" /></span>
+                      <span className="text-muted-foreground min-w-[100px]">Salário:</span>
+                      <SalarioMasked valor={node.colaborador.salario_base} userId={(node.colaborador as any).user_id || null} contexto="organograma" />
+                    </div>
+                  )}
                   <Button variant="outline" size="sm" className="w-full mt-3" onClick={() => navigate(`/colaboradores/${node.colaborador!.id}`)}>
                     Ver ficha completa
                   </Button>
@@ -164,7 +171,13 @@ export function OrgNodeDrawer({ node, open, onClose, allNodes, onEditPosition }:
                   <InfoRow icon={<Mail className="h-4 w-4" />} label="E-mail" value={node.contrato_pj.contato_email || "—"} />
                   <InfoRow icon={<Phone className="h-4 w-4" />} label="Telefone" value={node.contrato_pj.contato_telefone || "—"} />
                   <InfoRow icon={<Briefcase className="h-4 w-4" />} label="Vínculo" value="PJ" />
-                  {canSeeSalary && <InfoRow icon={<DollarSign className="h-4 w-4" />} label="Valor mensal" value={fmtBRL(node.contrato_pj.valor_mensal)} />}
+                  {canSeeSalary && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <span className="text-muted-foreground"><DollarSign className="h-4 w-4" /></span>
+                      <span className="text-muted-foreground min-w-[100px]">Valor mensal:</span>
+                      <SalarioMasked valor={node.contrato_pj.valor_mensal} userId={(node.contrato_pj as any).user_id || null} contexto="organograma" />
+                    </div>
+                  )}
                   <Button variant="outline" size="sm" className="w-full mt-3" onClick={() => navigate(`/contratos-pj/${node.contrato_pj!.id}`)}>
                     Ver contrato
                   </Button>
@@ -205,7 +218,17 @@ export function OrgNodeDrawer({ node, open, onClose, allNodes, onEditPosition }:
               {node.area && <InfoRow label="Área" value={node.area} />}
               {node.filial && <InfoRow label="Filial" value={node.filial} />}
               {node.centro_custo && <InfoRow label="Centro de custo" value={node.centro_custo} />}
-              {canSeeSalary && node.salario_previsto && <InfoRow icon={<DollarSign className="h-4 w-4" />} label="Salário previsto" value={fmtBRL(node.salario_previsto)} />}
+              {canSeeSalary && node.salario_previsto && (
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="text-muted-foreground"><DollarSign className="h-4 w-4" /></span>
+                  <span className="text-muted-foreground min-w-[100px]">Salário previsto:</span>
+                  <SalarioMasked
+                    valor={node.salario_previsto}
+                    userId={(node.colaborador as any)?.user_id || (node.contrato_pj as any)?.user_id || null}
+                    contexto="organograma"
+                  />
+                </div>
+              )}
             </TabsContent>
           </Tabs>
         </SheetContent>

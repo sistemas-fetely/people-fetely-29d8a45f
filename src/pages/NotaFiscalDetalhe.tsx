@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { format, parseISO } from "date-fns";
 import { useParametros } from "@/hooks/useParametros";
 import { usePermissions } from "@/hooks/usePermissions";
+import { SalarioMasked } from "@/components/SalarioMasked";
 
 const defaultStatusMap: Record<string, string> = {
   pendente: "Pendente", aprovada: "Aprovada", enviada_pagamento: "Enviada para Pagamento", paga: "Paga", cancelada: "Cancelada", vencida: "Vencida",
@@ -157,7 +158,7 @@ export default function NotaFiscalDetalhe() {
       // Fetch contrato
       const { data: contratoData } = await supabase
         .from("contratos_pj")
-        .select("id, razao_social, nome_fantasia, cnpj, contato_nome, departamento, valor_mensal")
+        .select("id, razao_social, nome_fantasia, cnpj, contato_nome, departamento, valor_mensal, user_id")
         .eq("id", nfData.contrato_id)
         .single();
       if (contratoData) setContrato(contratoData as ContratoPJ);
@@ -669,7 +670,14 @@ export default function NotaFiscalDetalhe() {
                 <InfoItem label="CNPJ" value={contrato.cnpj} />
                 <InfoItem label="Contato" value={contrato.contato_nome} />
                 <InfoItem label="Departamento" value={contrato.departamento} />
-                <InfoItem label="Valor Mensal" value={formatCurrency(contrato.valor_mensal)} />
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-muted-foreground">Valor Mensal</span>
+                  <SalarioMasked
+                    valor={contrato.valor_mensal}
+                    userId={(contrato as any).user_id || null}
+                    contexto="relatorio_pj"
+                  />
+                </div>
                 <Separator />
                 <Button
                   variant="outline"

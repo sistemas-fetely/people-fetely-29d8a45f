@@ -7,6 +7,7 @@ import { Loader2 } from "lucide-react";
 import { useParametros } from "@/hooks/useParametros";
 import { useCargos } from "@/hooks/useCargos";
 import { SelectDepartamentoHierarquico } from "@/components/shared/SelectDepartamentoHierarquico";
+import { SalarioMasked } from "@/components/SalarioMasked";
 
 interface Props {
   dados: Record<string, any>;
@@ -119,7 +120,23 @@ export function ConviteDadosProfissionaisCLT({ dados, editing, updateField }: Pr
             (tiposContrato || []).map((t) => ({ value: t.valor, label: t.label })),
             loadingTipos
           )}
-          {renderField("Salário Base (R$) *", "salario_base", "number", "0,00")}
+          <div>
+            <Label className="text-xs text-muted-foreground">Salário Base (R$) *</Label>
+            {editing ? (
+              <Input
+                type="number"
+                value={dados.salario_base || ""}
+                onChange={(e) => updateField("salario_base", Number(e.target.value))}
+                placeholder="0,00"
+              />
+            ) : (
+              <p className="text-sm font-medium">
+                {dados.salario_base ? (
+                  <SalarioMasked valor={Number(dados.salario_base)} userId={null} contexto="convite" />
+                ) : "—"}
+              </p>
+            )}
+          </div>
           {renderSelect(
             "Jornada Semanal",
             "jornada_semanal",

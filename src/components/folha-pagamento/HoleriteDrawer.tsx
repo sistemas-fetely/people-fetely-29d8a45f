@@ -9,6 +9,7 @@ import { Pencil, Save, X } from "lucide-react";
 import { calcularFolha, type DadosCalculo } from "@/lib/calculo-folha";
 import { useEditarHolerite, type HoleriteComColaborador } from "@/hooks/useFolhaPagamento";
 import { useParametrosFolha } from "@/hooks/useParametrosFolha";
+import { SalarioMasked } from "@/components/SalarioMasked";
 
 const fmt = (v: number | null) =>
   (v ?? 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -210,7 +211,10 @@ export function HoleriteDrawer({ holerite, open, onClose, competenciaId, canEdit
           {/* Proventos */}
           <div>
             <h4 className="text-sm font-semibold text-green-700 dark:text-green-400 mb-2">Proventos</h4>
-            <Linha label="Salário Base" valor={h.salario_base} tipo="provento" />
+            <div className="flex justify-between text-sm py-1">
+              <span className="text-muted-foreground">Salário Base</span>
+              <span className="font-medium text-green-700 dark:text-green-400">+ <SalarioMasked valor={h.salario_base} userId={(h.colaborador as any)?.user_id || null} contexto="holerite" /></span>
+            </div>
             {(d.horas_extras_50 ?? 0) > 0 && (
               <Linha label={`Horas Extras 50% (${form.horasExtras50Qtd || h.horas_extras_50_qtd}h)`} valor={d.horas_extras_50} tipo="provento" />
             )}
@@ -226,7 +230,9 @@ export function HoleriteDrawer({ holerite, open, onClose, competenciaId, canEdit
             <Separator />
             <div className="flex justify-between font-semibold text-sm py-1">
               <span>Total Proventos</span>
-              <span className="text-green-700 dark:text-green-400">{fmt(d.total_proventos)}</span>
+              <span className="text-green-700 dark:text-green-400">
+                <SalarioMasked valor={d.total_proventos} userId={(h.colaborador as any)?.user_id || null} contexto="holerite" />
+              </span>
             </div>
           </div>
 
@@ -253,7 +259,7 @@ export function HoleriteDrawer({ holerite, open, onClose, competenciaId, canEdit
           <div className="rounded-lg bg-muted p-4">
             <div className="flex justify-between text-base font-bold">
               <span>Salário Líquido</span>
-              <span>{fmt(d.salario_liquido)}</span>
+              <SalarioMasked valor={d.salario_liquido} userId={(h.colaborador as any)?.user_id || null} contexto="holerite" />
             </div>
           </div>
 
