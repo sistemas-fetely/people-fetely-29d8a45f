@@ -269,7 +269,7 @@ export function TemplateFormDialog({ open, onOpenChange, templateId }: Props) {
             </div>
 
             {perfisSelecionados.length === 0 && (
-              <div className="flex items-center gap-2 text-amber-600 text-xs">
+              <div className="flex items-center gap-2 text-warning text-xs">
                 <AlertCircle className="h-3 w-3" />
                 Template sem perfis vai só registrar origem, sem aplicar nada.
               </div>
