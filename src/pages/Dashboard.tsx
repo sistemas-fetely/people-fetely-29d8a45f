@@ -476,20 +476,42 @@ function DashboardGestao() {
                   const order = { alta: 0, media: 1, baixa: 2 };
                   return order[a.prioridade] - order[b.prioridade];
                 })
-                .map((t, i) => (
-                  <div key={i} className="flex items-start gap-3">
-                    <div className={cn("mt-1 h-2 w-2 rounded-full shrink-0",
-                      t.prioridade === "alta" ? "bg-destructive" : t.prioridade === "media" ? "bg-warning" : "bg-info"
-                    )} />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{t.titulo}</p>
-                      <p className="text-xs text-muted-foreground">{t.detalhe}</p>
+                .map((t, i) => {
+                  const clickable = !!t.onClick;
+                  return (
+                    <div
+                      key={i}
+                      className={cn(
+                        "flex items-start gap-3",
+                        clickable && "cursor-pointer hover:bg-muted/50 -mx-2 px-2 py-1 rounded-md transition-colors"
+                      )}
+                      onClick={t.onClick}
+                      role={clickable ? "button" : undefined}
+                      tabIndex={clickable ? 0 : undefined}
+                      onKeyDown={(e) => {
+                        if (clickable && (e.key === "Enter" || e.key === " ")) {
+                          e.preventDefault();
+                          t.onClick?.();
+                        }
+                      }}
+                    >
+                      {t.tipo === "sugestao" ? (
+                        <Lightbulb className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
+                      ) : (
+                        <div className={cn("mt-1 h-2 w-2 rounded-full shrink-0",
+                          t.prioridade === "alta" ? "bg-destructive" : t.prioridade === "media" ? "bg-warning" : "bg-info"
+                        )} />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{t.titulo}</p>
+                        <p className="text-xs text-muted-foreground truncate">{t.detalhe}</p>
+                      </div>
+                      <Badge variant="outline" className={prioridadeStyles[t.prioridade]}>
+                        {t.prioridade}
+                      </Badge>
                     </div>
-                    <Badge variant="outline" className={prioridadeStyles[t.prioridade]}>
-                      {t.prioridade}
-                    </Badge>
-                  </div>
-                ))
+                  );
+                })
             ) : (
               <p className="text-sm text-muted-foreground text-center py-4">✅ Nenhuma pendência no momento</p>
             )}
