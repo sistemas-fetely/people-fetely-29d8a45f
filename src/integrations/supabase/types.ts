@@ -5425,6 +5425,7 @@ export type Database = {
           consultas_30d: number | null
           created_at: string | null
           descricao: string | null
+          diagrama_mermaid: string | null
           id: string | null
           narrativa: string | null
           natureza_valor: string | null
