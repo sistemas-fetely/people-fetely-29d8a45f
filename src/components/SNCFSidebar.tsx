@@ -51,17 +51,19 @@ const adminItems: MenuItem[] = [
   { title: "Base de Conhecimento", url: "/fala-fetely/conhecimento", icon: BookOpen, requireRole: "admin_rh_or_super" },
 ];
 
-const SISTEMA_LABELS: Record<string, { label: string; path: string }> = {
-  people: { label: "People Fetely", path: "/dashboard" },
-  ti: { label: "TI Fetely", path: "/ti" },
-};
+interface SistemaExterno {
+  id: string;
+  nome: string;
+  icone: string;
+  cor: string;
+  rota_base: string;
+}
 
 export function SNCFSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const { user, profile, signOut, roles } = useAuth();
   const location = useLocation();
-  const navigate = useNavigate();
 
   const initials = profile?.full_name
     ? profile.full_name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()
@@ -84,11 +86,32 @@ export function SNCFSidebar() {
     refetchInterval: 30000,
   });
 
+  // Sistemas externos para mostrar no sidebar
+  const { data: sistemasExternos = [] } = useQuery({
+    queryKey: ["sncf-sistemas-externos", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data: sistemas } = await supabase
+        .from("sncf_sistemas")
+        .select("id, nome, icone, cor, rota_base")
+        .eq("ativo", true)
+        .order("ordem");
+      const { data: userSystems } = await supabase
+        .from("sncf_user_systems")
+        .select("sistema_id, ativo")
+        .eq("user_id", user!.id);
+      const acessiveis = new Set(
+        (userSystems || []).filter((u: any) => u.ativo).map((u: any) => u.sistema_id)
+      );
+      return ((sistemas || []) as SistemaExterno[]).filter(
+        (s) => s.rota_base?.startsWith("http") && acessiveis.has(s.id)
+      );
+    },
+  });
+
   const isItemActive = (url: string, end?: boolean) =>
     end ? location.pathname === url : location.pathname.startsWith(url);
 
-  const lastSystem = typeof window !== "undefined" ? sessionStorage.getItem("sncf_last_system") : null;
-  const lastSystemInfo = lastSystem && SISTEMA_LABELS[lastSystem] ? SISTEMA_LABELS[lastSystem] : null;
 
   const canSee = (req?: MenuItem["requireRole"]) => {
     if (!req) return true;
@@ -176,34 +199,49 @@ export function SNCFSidebar() {
       </SidebarHeader>
 
       <SidebarContent className="px-2 space-y-1">
-        {/* Voltar ao último sistema visitado */}
-        {lastSystemInfo && (
-          <>
-            <SidebarGroup>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton asChild>
-                      <button
-                        onClick={() => navigate(lastSystemInfo.path)}
-                        className="flex w-full items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-all duration-200"
-                      >
-                        <ArrowLeft className="h-[18px] w-[18px] shrink-0" />
-                        {!collapsed && <span>{lastSystemInfo.label}</span>}
-                      </button>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-            <div className="mx-4 border-t border-sidebar-border/40" />
-          </>
-        )}
-
         {renderGroup("Principal", principalItems)}
         {canSee("admin_rh_or_super") && <div className="mx-4 border-t border-sidebar-border/40" />}
         {renderGroup("Administração", adminItems)}
+
+        {sistemasExternos.length > 0 && (
+          <>
+            <div className="mx-4 border-t border-sidebar-border/40" />
+            <SidebarGroup>
+              {!collapsed && (
+                <SidebarGroupLabel className="text-sidebar-muted text-[10px] uppercase tracking-widest font-semibold mb-1 px-4">
+                  Sistemas externos
+                </SidebarGroupLabel>
+              )}
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {sistemasExternos.map((s) => {
+                    const Icon = getIcon(s.icone);
+                    return (
+                      <SidebarMenuItem key={s.id}>
+                        <SidebarMenuButton asChild>
+                          <button
+                            onClick={() => window.open(s.rota_base, "_blank")}
+                            className="flex w-full items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-all duration-200"
+                          >
+                            <Icon className="h-[18px] w-[18px] shrink-0" />
+                            {!collapsed && (
+                              <span className="flex-1 flex items-center justify-between gap-2">
+                                <span>{s.nome}</span>
+                                <ExternalLink className="h-3 w-3 text-sidebar-muted" />
+                              </span>
+                            )}
+                          </button>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          </>
+        )}
       </SidebarContent>
+
 
       <SidebarFooter className="p-4">
         {!collapsed && (
