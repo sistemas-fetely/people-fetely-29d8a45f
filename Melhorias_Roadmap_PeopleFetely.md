@@ -362,7 +362,17 @@ Funcionalidade que atende **múltiplos sistemas** pertence à camada transversal
 
 **Futuro:** N005 Configurações **nasce transversal** — SNCFLayout + SNCFSidebar desde o começo.
 
+### Metodologia Uauuu é a constituição do trabalho
+
+Toda doutrina, princípio e regra de como a Fetely constrói tecnologia está codificada em três lugares:
+
+- **Visão geral e consulta dev** → `docs/METODOLOGIA_UAUUU.md`
+- **Fluxo operacional (executar uma sessão)** → Processos Fetely, processo `trabalhar_no_uauuu`
+- **Consulta pontual por tema** → Fala Fetely, cards com tag `metodologia`
+
+Quando uma doutrina nova emergir, decidir em qual casa ela mora (geralmente Fala Fetely como card individual) e registrar ANTES que vire hábito invisível.
+
 ---
 
 *Documento vivo · Fonte única de verdade do roadmap · Atualizar ao concluir item ou descobrir novo.*
-*Última atualização: 19/04/2026 — Metodologia Uauuu codificada e cadastrada em 3 lugares*
+*Última atualização: 19/04/2026 — Metodologia Uauuu codificada em 3 casas complementares*
