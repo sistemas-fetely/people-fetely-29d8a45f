@@ -274,6 +274,34 @@ Quando criarmos novos agentes/automações que leiam conteúdo externo (PRs de t
 
 ---
 
+### DT-01 · Migração de `isSuperAdmin` inline → PermissionGate
+
+**Tipo:** 🔧 Melhoria técnica | **Prioridade:** 🟢 Baixa | **Status:** 📋 Planejado
+
+~50 usos de `isSuperAdmin` espalhados em 20+ arquivos. Nem todos são equivalentes:
+
+- Alguns são **lógica de negócio legítima** (ex: `const canSeeSalary = isSuperAdmin || ...`) e devem ficar inline
+
+- Outros são **renderização condicional** (`{isSuperAdmin && <Button />}`) e ganham clareza/consistência ao migrar pra `<PermissionGate>`
+
+- Usos em `ProtectedRoute` já são gates corretos
+
+**Por que não fazer em massa:** análise caso a caso é obrigatória. Migração automática introduz risco de regressão em vários lugares simultaneamente.
+
+**Recomendação:** quando atacar, fazer em **ondas por arquivo** (um componente por vez, validar, commitar). Não é bloqueador de nada.
+
+**Arquivos com mais usos (priorizar no futuro):**
+
+- `src/pages/GerenciarUsuarios.tsx` (8 usos)
+
+- `src/pages/ContratoPJDetalhe.tsx` (6 usos)
+
+- `src/pages/RecrutamentoDetalhe.tsx` (4 usos)
+
+- demais com 2-3 usos cada
+
+---
+
 ## 🏛 DOUTRINAS PERMANENTES (não são tarefas, são posturas)
 
 Estas regras foram estabelecidas ao longo das sessões e devem ser respeitadas em todas as construções futuras:
