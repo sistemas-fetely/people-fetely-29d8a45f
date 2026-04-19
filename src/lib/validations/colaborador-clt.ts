@@ -105,7 +105,7 @@ export const equipamentoSchema = z.object({
 });
 
 export const dadosEmpresaSchema = z.object({
-  email_corporativo: z.string().email("Email corporativo inválido").optional().or(z.literal("")),
+  email_corporativo: z.string().email("Email inválido").min(1, "Email corporativo é obrigatório"),
   ramal: z.string().optional().or(z.literal("")),
   data_integracao: z.string().optional().or(z.literal("")),
   acessos_sistemas: z.array(acessoSistemaSchema).default([]),

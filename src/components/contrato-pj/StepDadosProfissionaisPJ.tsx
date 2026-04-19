@@ -45,6 +45,30 @@ export function StepDadosProfissionaisPJ() {
 
   return (
     <div className="space-y-6">
+      <div>
+        <div className="mb-4">
+          <h3 className="text-lg font-semibold flex items-center gap-2">🏢 Dados corporativos</h3>
+          <p className="text-xs text-muted-foreground mt-1">
+            O <strong>email corporativo</strong> será usado para acesso ao sistema e comunicações oficiais.
+          </p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-1">
+            <Label htmlFor="email_corporativo">Email Corporativo *</Label>
+            <Input
+              id="email_corporativo"
+              type="email"
+              placeholder="nome.sobrenome@fetely.com.br"
+              {...register("email_corporativo" as any)}
+            />
+            {(errors as any).email_corporativo && (
+              <p className="text-xs text-destructive">{(errors as any).email_corporativo.message as string}</p>
+            )}
+            <p className="text-[11px] text-muted-foreground">Deve ser domínio Fetely configurado em /parametros.</p>
+          </div>
+        </div>
+      </div>
+
       <h3 className="text-lg font-semibold mb-4">Dados do Contrato</h3>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <div>

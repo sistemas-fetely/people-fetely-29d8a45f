@@ -165,7 +165,13 @@ export function StepDadosPessoais() {
       </div>
 
       <div>
-        <h3 className="text-lg font-semibold mb-4">Contato</h3>
+        <div className="mb-4">
+          <h3 className="text-lg font-semibold">Dados pessoais de contato</h3>
+          <p className="text-xs text-muted-foreground mt-1">
+            Uso privado — para contato pessoal, emergências e comunicações não oficiais.
+            Estes dados <strong>não</strong> são usados para acesso ao sistema.
+          </p>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <Label htmlFor="telefone">Telefone</Label>

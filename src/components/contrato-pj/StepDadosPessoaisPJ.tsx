@@ -176,7 +176,13 @@ export function StepDadosPessoaisPJ() {
       </div>
 
       <div>
-        <h3 className="text-lg font-semibold mb-4">Contato</h3>
+        <div className="mb-4">
+          <h3 className="text-lg font-semibold">Contato</h3>
+          <p className="text-xs text-muted-foreground mt-1">
+            <strong>Email:</strong> contato oficial do CNPJ (para NFs, cobranças).{" "}
+            <strong>Email Pessoal:</strong> privado, para contato humano e backup.
+          </p>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <Label htmlFor="contato_telefone">Telefone</Label>

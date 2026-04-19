@@ -232,8 +232,8 @@ Deno.serve(async (req) => {
       // 1. Buscar dados do colaborador
       const tabela = tipo === "clt" ? "colaboradores_clt" : "contratos_pj";
       const selectFields = tipo === "clt"
-        ? "id, nome_completo, email_pessoal, cargo_id"
-        : "id, contato_nome, contato_email, cargo_id";
+        ? "id, nome_completo, email_pessoal, email_corporativo, cargo_id"
+        : "id, contato_nome, contato_email, email_pessoal, email_corporativo, cargo_id";
 
       const { data: colab, error: errColab } = await adminClient
         .from(tabela)
@@ -249,15 +249,33 @@ Deno.serve(async (req) => {
         });
       }
 
-      const email = tipo === "clt" ? (colab as any).email_pessoal : (colab as any).contato_email;
       const full_name = tipo === "clt" ? (colab as any).nome_completo : (colab as any).contato_nome;
+      const emailCorporativo = (colab as any).email_corporativo;
+      const emailPessoal = (colab as any).email_pessoal || (tipo === "pj" ? (colab as any).contato_email : null) || null;
 
-      if (!email) {
-        return new Response(JSON.stringify({ error: "Colaborador não tem email cadastrado" }), {
+      if (!emailCorporativo) {
+        return new Response(JSON.stringify({
+          error: "Email corporativo não cadastrado. Edite o colaborador e informe email_corporativo antes de criar acesso."
+        }), {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
+
+      // Validar domínio corporativo
+      const { data: validacao, error: errValidacao } = await adminClient.rpc("validar_email_corporativo", {
+        _email: emailCorporativo,
+      });
+      if (errValidacao || !(validacao as any)?.valido) {
+        return new Response(JSON.stringify({
+          error: `Email corporativo inválido: ${(validacao as any)?.motivo || "domínio não permitido"}. Verifique /parametros.`,
+        }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const email = emailCorporativo;
 
       // 2. Resolver template
       // Prioridade: template_id explícito > template_sugerido_para_cargo > fallback "analista"
@@ -348,22 +366,42 @@ Deno.serve(async (req) => {
         console.error("[create_user_from_colaborador] Erro ao gerar link de recuperação:", e);
       }
 
-      // 8. E-mail de boas-vindas
+      // 8. E-mail de boas-vindas (corporativo)
       try {
         await adminClient.functions.invoke("send-transactional-email", {
           body: {
             templateName: "boas-vindas-portal",
-            recipientEmail: email,
+            recipientEmail: emailCorporativo,
             idempotencyKey: `boas-vindas-${novoUserId}-${Date.now()}`,
             templateData: {
               nome: full_name,
-              email,
+              email_corporativo: emailCorporativo,
+              email_pessoal: emailPessoal,
               link: Deno.env.get("SITE_URL") || "https://people-fetely.lovable.app",
             },
           },
         });
       } catch (e) {
         console.error("[create_user_from_colaborador] Erro ao enviar e-mail de boas-vindas:", e);
+      }
+
+      // 8b. Aviso ao email pessoal (se houver e for diferente do corporativo)
+      if (emailPessoal && emailPessoal.toLowerCase() !== emailCorporativo.toLowerCase()) {
+        try {
+          await adminClient.functions.invoke("send-transactional-email", {
+            body: {
+              templateName: "aviso-email-pessoal",
+              recipientEmail: emailPessoal,
+              idempotencyKey: `aviso-pessoal-${novoUserId}-${Date.now()}`,
+              templateData: {
+                nome: full_name,
+                email_corporativo: emailCorporativo,
+              },
+            },
+          });
+        } catch (e) {
+          console.error("[create_user_from_colaborador] Aviso email pessoal falhou:", e);
+        }
       }
 
       console.log(`[create_user_from_colaborador] Success. user_id=${novoUserId}, template_aplicado=${templateToApply}, perfil_aplicado=${errTemplate ? "FALHOU" : "OK"}`);

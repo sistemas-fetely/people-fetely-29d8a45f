@@ -26,7 +26,7 @@ export function StepDadosEmpresa() {
   return (
     <div className="space-y-8">
       {/* Banner quando dados vieram do convite */}
-      {(watch("email_corporativo") || (watch("acessos_sistemas") as any[])?.length > 0 || (watch("equipamentos") as any[])?.length > 0) && (
+      {((watch("acessos_sistemas") as any[])?.length > 0 || (watch("equipamentos") as any[])?.length > 0) && (
         <div className="rounded-lg border-l-4 p-3 mb-4 bg-primary/5 border-primary">
           <p className="text-sm font-medium text-primary">
             Dados definidos na contratação — confira e ajuste se necessário
@@ -37,23 +37,32 @@ export function StepDadosEmpresa() {
         </div>
       )}
 
-      {/* Email Corporativo e Informações */}
+      {/* Dados Corporativos */}
       <div>
-        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-          📧 Informações Corporativas
-        </h3>
+        <div className="mb-4">
+          <h3 className="text-lg font-semibold flex items-center gap-2">
+            🏢 Dados corporativos
+          </h3>
+          <p className="text-xs text-muted-foreground mt-1">
+            Dados que a Fetely provê. O <strong>email corporativo</strong> será usado para acesso ao sistema e
+            comunicações oficiais.
+          </p>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="email_corporativo">Email Corporativo</Label>
+          <div className="space-y-1">
+            <Label htmlFor="email_corporativo">Email Corporativo *</Label>
             <Input
               id="email_corporativo"
               type="email"
-              placeholder="colaborador@empresa.com.br"
+              placeholder="nome.sobrenome@fetely.com.br"
               {...register("email_corporativo")}
             />
             {errors.email_corporativo && (
               <p className="text-xs text-destructive">{errors.email_corporativo?.message as string}</p>
             )}
+            <p className="text-[11px] text-muted-foreground">
+              Deve ser um domínio Fetely configurado em /parametros.
+            </p>
           </div>
           <div className="space-y-2">
             <Label htmlFor="data_integracao">Data de Integração</Label>
