@@ -277,4 +277,4 @@ Estas regras foram estabelecidas ao longo das sessões e devem ser respeitadas e
 ---
 
 *Documento vivo · Fonte única de verdade do roadmap · Atualizar ao concluir item ou descobrir novo.*
-*Última atualização: 19/04/2026 — Prompt A concluído (Portal + Dashboard + Radar)*
+*Última atualização: 19/04/2026 — Prompt B concluído (Pessoas + Navegação)*
