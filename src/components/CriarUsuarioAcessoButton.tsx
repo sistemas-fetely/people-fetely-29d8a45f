@@ -21,6 +21,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { usePermissions } from "@/hooks/usePermissions";
 import { toast } from "sonner";
+import { ReenviarLinkAcessoButton } from "@/components/auth/ReenviarLinkAcessoButton";
 
 interface CriarUsuarioAcessoButtonProps {
   colaboradorId: string;
@@ -67,6 +68,9 @@ export function CriarUsuarioAcessoButton({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              <DropdownMenuItem asChild onSelect={(e) => e.preventDefault()}>
+                <ReenviarLinkAcessoButton userId={userId} nome={nome} variant="inline" />
+              </DropdownMenuItem>
               <DropdownMenuItem
                 className="text-destructive focus:text-destructive"
                 onClick={() => setBanConfirmOpen(true)}

@@ -26,6 +26,7 @@ import { toast } from "sonner";
 import { usePerfisV2 } from "@/hooks/usePerfisV2";
 import { useUnidades } from "@/hooks/useUnidades";
 import { NIVEL_LABELS_V2, type NivelHierarquico } from "@/types/permissoes-v2";
+import { ReenviarLinkAcessoButton } from "@/components/auth/ReenviarLinkAcessoButton";
 
 interface Props {
   userId: string | null;
@@ -304,14 +305,21 @@ export function HubDaPessoaDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl max-h-[85vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Shield className="h-5 w-5 text-primary" />
-            Perfis de {userName}
-          </DialogTitle>
-          <DialogDescription>
-            Marque os papéis transversais e as áreas que essa pessoa exerce. Em
-            áreas, escolha o nível e todas as unidades de uma vez.
-          </DialogDescription>
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex-1">
+              <DialogTitle className="flex items-center gap-2">
+                <Shield className="h-5 w-5 text-primary" />
+                Perfis de {userName}
+              </DialogTitle>
+              <DialogDescription className="mt-1">
+                Marque os papéis transversais e as áreas que essa pessoa exerce. Em
+                áreas, escolha o nível e todas as unidades de uma vez.
+              </DialogDescription>
+            </div>
+            {userId && (
+              <ReenviarLinkAcessoButton userId={userId} nome={userName} variant="button" />
+            )}
+          </div>
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto space-y-6 py-2 pr-1">

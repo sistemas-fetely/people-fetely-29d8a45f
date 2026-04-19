@@ -610,6 +610,120 @@ Deno.serve(async (req) => {
       });
     }
 
+    if (action === "reenviar_link_acesso") {
+      const { user_id: target_user_id, motivo } = body;
+
+      if (!target_user_id) {
+        return new Response(JSON.stringify({ error: "user_id é obrigatório" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      console.log(
+        `[reenviar_link_acesso] Start. target_user_id=${target_user_id}, motivo=${motivo || "(sem motivo)"}, actor=${callerId}`,
+      );
+
+      // 1. Buscar auth user
+      const { data: userRecord, error: errUser } = await adminClient.auth.admin.getUserById(target_user_id);
+      if (errUser || !userRecord?.user) {
+        console.error("[reenviar_link_acesso] User não encontrado:", errUser);
+        return new Response(JSON.stringify({ error: "Usuário não encontrado no Auth." }), {
+          status: 404,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const targetEmail = userRecord.user.email;
+      if (!targetEmail) {
+        return new Response(JSON.stringify({ error: "Usuário sem email no Auth." }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // 2. Buscar profile para saber se é primeiro acesso ou reset
+      const { data: profile } = await adminClient
+        .from("profiles")
+        .select("full_name, acesso_ativado_em")
+        .eq("user_id", target_user_id)
+        .maybeSingle();
+
+      const ehPrimeiroAcesso = !(profile as any)?.acesso_ativado_em;
+      const nome = (profile as any)?.full_name || targetEmail;
+
+      // 3. Gerar novo link de recovery
+      try {
+        await adminClient.auth.admin.generateLink({ type: "recovery", email: targetEmail });
+      } catch (e) {
+        console.error("[reenviar_link_acesso] Erro ao gerar link:", e);
+        return new Response(JSON.stringify({ error: "Falha ao gerar link. Tente novamente." }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // 4. Escolher template
+      const templateName = ehPrimeiroAcesso ? "boas-vindas-portal" : "recuperacao-senha";
+      const link = Deno.env.get("SITE_URL") || "https://people-fetely.lovable.app";
+
+      try {
+        await adminClient.functions.invoke("send-transactional-email", {
+          body: {
+            templateName,
+            recipientEmail: targetEmail,
+            idempotencyKey: `reenvio-${target_user_id}-${Date.now()}`,
+            templateData: {
+              nome,
+              email_corporativo: targetEmail,
+              link,
+            },
+          },
+        });
+      } catch (e) {
+        console.error("[reenviar_link_acesso] Falha ao enviar email:", e);
+        return new Response(JSON.stringify({ error: "Link gerado mas falha ao enviar email." }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // 5. Log de auditoria
+      try {
+        const { data: actorProfile } = await adminClient
+          .from("profiles")
+          .select("full_name")
+          .eq("user_id", callerId)
+          .maybeSingle();
+
+        await adminClient.from("acesso_dados_log").insert({
+          user_id: callerId,
+          user_nome: (actorProfile as any)?.full_name || null,
+          alvo_user_id: target_user_id,
+          alvo_nome: nome,
+          tipo_dado: "acesso_reenviado",
+          tabela_origem: "auth",
+          contexto: ehPrimeiroAcesso ? "primeiro_acesso" : "reset_senha",
+          justificativa: motivo || null,
+        } as any);
+      } catch (e) {
+        console.error("[reenviar_link_acesso] Falha ao registrar log:", e);
+      }
+
+      console.log(
+        `[reenviar_link_acesso] Success. tipo=${templateName}, email=${targetEmail}`,
+      );
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          tipo: ehPrimeiroAcesso ? "primeiro_acesso" : "reset_senha",
+          email: targetEmail,
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
     if (action === "list_users") {
       const { data: { users }, error } = await adminClient.auth.admin.listUsers();
       if (error) throw error;
