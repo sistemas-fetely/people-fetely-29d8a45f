@@ -283,7 +283,7 @@ export default function Conhecimento() {
       categoria: (s.categoria_sugerida as Categoria) || "faq",
       titulo: s.titulo_sugerido || s.correcao_sugerida.slice(0, 60),
       conteudo: s.correcao_sugerida,
-      publico_alvo: "todos",
+      area_negocio: null,
       cargos_aplicaveis: [],
       departamentos_aplicaveis: [],
       niveis_aplicaveis: [],
