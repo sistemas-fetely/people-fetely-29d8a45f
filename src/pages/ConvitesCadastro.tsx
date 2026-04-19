@@ -51,6 +51,7 @@ import { SystemReadinessBanner } from "@/components/shared/SystemReadinessBanner
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { SalarioMasked } from "@/components/SalarioMasked";
 
 // ─── Status config ───────────────────────────────────────────────────
 const STATUS_CONFIG: Record<string, { label: string; badge: string; icon: typeof Send }> = {
@@ -860,7 +861,7 @@ export default function ConvitesCadastro() {
                       {reviewTarget.cargo && <div><span className="text-xs text-muted-foreground">Cargo</span><p className="font-medium">{reviewTarget.cargo}</p></div>}
                       {reviewTarget.departamento && <div><span className="text-xs text-muted-foreground">Departamento</span><p className="font-medium">{reviewTarget.departamento}</p></div>}
                       {canSeeSalary(isCargoClevel(reviewTarget.cargo)) && reviewTarget.salario_previsto && (
-                        <div><span className="text-xs text-muted-foreground flex items-center gap-1"><Lock className="h-3 w-3" /> Salário</span><p className="font-medium">R$ {Number(reviewTarget.salario_previsto).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p></div>
+                        <div><span className="text-xs text-muted-foreground flex items-center gap-1"><Lock className="h-3 w-3" /> Salário</span><p className="font-medium"><SalarioMasked valor={Number(reviewTarget.salario_previsto)} userId={null} contexto="convite" /></p></div>
                       )}
                       {reviewTarget.data_inicio_prevista && (
                         <div><span className="text-xs text-muted-foreground">Início Previsto</span><p className="font-medium">{format(parseISO(reviewTarget.data_inicio_prevista), "dd/MM/yyyy")}</p></div>
