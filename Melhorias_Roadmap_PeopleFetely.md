@@ -122,17 +122,15 @@ Campo `area_negocio` adicionado em `base_conhecimento`. Tela `/fala-fetely/conhe
 
 ### METODOLOGIA UAUUU · Documentação fundacional em 3 casas ✅
 
-**Concluído em:** 19/04/2026  
+**Concluído em:** 19/04/2026 (validado: 19/04/2026 22:00)  
 
-Metodologia de trabalho do Uauuu consolidada após fechamento das 4 frentes de mesa limpa (D→A→B→C). Organizada em **3 casas complementares sem sobreposição**:
+Metodologia de trabalho do Uauuu consolidada após fechamento das 4 frentes de mesa limpa (D→A→B→C). Organizada em **3 casas complementares sem sobreposição**, agora todas verificadas no código:
 
-1. **📁 `docs/METODOLOGIA_UAUUU.md`** — princípios (8), tipos de prompt (3), regras de ouro (10), anti-padrões (7), metodologia viva. Fonte consultada por dev/Claude em abertura de sessão.
+1. **📁 `docs/METODOLOGIA_UAUUU.md`** (276 linhas) — princípios (8), tipos de prompt (3), regras de ouro (10), anti-padrões (7). Fonte consultada por dev/Claude em abertura de sessão.
 
-2. **🔄 Processos Fetely · `trabalhar_no_uauuu`** — fluxo operacional executável (10 passos do Ciclo Uauuu) com RACI, diagrama Mermaid e KPIs candidatos. Meta-processo que governa todos os outros.
+2. **🔄 Processo `trabalhar_no_uauuu`** em Processos Fetely (migration 20260419210632) — fluxo operacional executável (10 passos do Ciclo Uauuu), narrativa completa, diagrama Mermaid, RACI, KPIs candidatos. Meta-processo que governa todos os outros.
 
-3. **🧠 Fala Fetely · 10 cards fragmentados** — diretrizes individuais (dimensão via tabela, CLT=PJ, transversal, silencioso vs mapeado, GitHub é verdade, fechar antes de abrir, neutralidade é abandono), regras (boards Jurídico e People), conceito nuclear (Uauuu = SNCF).
-
-**Princípio de organização:** sem sobreposição. Cada casa tem escopo próprio — doc fundacional para visão geral, processo para execução, conhecimento para consulta pontual.
+3. **🧠 12 cards fragmentados no Fala Fetely** (migrations 20260419212616 + card novo 19/04/2026 22:05) — 9 diretrizes, 2 regras de boards, 1 conceito nuclear.
 
 **Onde começa uma nova sessão:** `docs/METODOLOGIA_UAUUU.md` → identifica o passo do ciclo → consulta cards pontuais do Fala Fetely conforme tema surge.
 
@@ -262,6 +260,24 @@ Flavio tinha 2 conversas estratégicas pendentes após projeto Uauuuu (SNCF). A 
 
 ## 🟢 BAIXA PRIORIDADE
 
+### REEMB-01 · Processo de Reembolso de Despesas (PJ + CLT)
+
+**Tipo:** 🚀 Novo | **Prioridade:** 🟢 Baixa | **Status:** 💡 Ideia  
+**Responsável board:** Ricardo Mendes + Thiago Serrano
+
+Processo irmão da Emissão de NF PJ. Compartilha arquitetura (tarefa → anexo → validação → aprovação → pagamento), mas dados próprios (comprovante de despesa, política de reembolso, tipo de despesa). Serve tanto CLT quanto PJ.
+
+**Dependência:** esperar Emissão de NF PJ concluir (validar arquitetura de tarefas antes de replicar).
+
+**Componentes esperados:**
+- Tela `/meus-reembolsos` no portal do colaborador (análogo a `/minhas-notas`)
+- Categorias de despesa parametrizáveis
+- Política de limite por categoria
+- Aprovação em 2 níveis (gestor direto + RH/Financeiro)
+- Classificação separada no DRE (não é folha, é despesa variável)
+
+---
+
 ### M003 · Cargos e Salários — Filtros de ordenação
 **Tipo:** 🔧 Melhoria | **Prioridade:** 🟢 Baixa | **Status:** 📋 Pendente  
 **Área:** /cargos → listagem
@@ -375,4 +391,4 @@ Quando uma doutrina nova emergir, decidir em qual casa ela mora (geralmente Fala
 ---
 
 *Documento vivo · Fonte única de verdade do roadmap · Atualizar ao concluir item ou descobrir novo.*
-*Última atualização: 19/04/2026 — Metodologia Uauuu codificada em 3 casas complementares*
+*Última atualização: 19/04/2026 22:05 — Metodologia Uauuu ✅ em 3 casas + REEMB-01 no roadmap + 2 doutrinas novas no Fala Fetely (processo espelho + revisão de permissões)*
