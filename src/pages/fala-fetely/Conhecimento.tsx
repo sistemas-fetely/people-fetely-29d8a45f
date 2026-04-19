@@ -432,9 +432,9 @@ export default function Conhecimento() {
                             <Badge style={{ backgroundColor: cat.bg, color: cat.color, border: 0 }} className="text-[10px] uppercase tracking-wide">
                               {cat.label}
                             </Badge>
-                            {item.publico_alvo !== "todos" && (
+                            {item.area_negocio && (
                               <Badge variant="outline" className="text-[10px]">
-                                👥 {PUBLICOS.find((p) => p.value === item.publico_alvo)?.label || item.publico_alvo}
+                                🎯 {(areas || []).find((a: any) => a.valor === item.area_negocio)?.label || item.area_negocio}
                               </Badge>
                             )}
                             {item.niveis_aplicaveis.length > 0 && (
