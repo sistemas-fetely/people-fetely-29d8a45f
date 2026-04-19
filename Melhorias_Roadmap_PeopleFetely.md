@@ -84,6 +84,30 @@ Resolução estratégica: Dash Operacional deixou de ser tela genérica sem dono
 
 Componente `RadarOperacional` adicionado ao topo de `/tarefas` mostrando indicadores que são "ação do RH/admin" — convites aguardando importação, contratos PJ vencendo, contratos pendentes assinatura, documentos vencendo. Aparece apenas para super_admin e admin_rh. Só mostra indicadores com valor > 0. Cada card leva direto pra rota de ação.
 
+### M-PES-01 · Dados corporativos organizados ✅
+
+**Concluído em:** 19/04/2026  
+
+Campo `telefone_corporativo` adicionado a `colaboradores_clt` e `contratos_pj`. Wizards CLT (StepDadosEmpresa) e PJ (StepDadosProfissionaisPJ) com campo visível e editável. Payload de cadastro/edição persiste corretamente.
+
+### M-PES-02 · Telefone corporativo na tela lateral ✅
+
+**Concluído em:** 19/04/2026  
+
+DrawerUsuario reestruturado com seção dedicada "Dados corporativos" — email corporativo destacado em primeiro, telefone corporativo clicável (tel:), fallback para email pessoal quando corporativo não existe. Hierarquia visual respeita DNA "os de dentro primeiro".
+
+### M-PES-03 · Bug Bruna (nome/CPF + acesso órfão) ✅
+
+**Concluído em:** 19/04/2026  
+
+Pessoas.tsx agora prioriza `contato_nome` (pessoa física) em vez de `nome_fantasia`/`razao_social` (empresa). Empresa/fantasia vira subtítulo discreto. Função `verificar_user_orfao` + hook `useUsuariosOrfaos` detectam usuários referenciados mas inexistentes em auth.users. Badge "Acesso inconsistente" sinaliza visualmente. Contador "Sem acesso" agora conta órfãos também.
+
+### M-PES-04 · Navegação consistente ✅
+
+**Concluído em:** 19/04/2026  
+
+ColaboradorDetalhe e ContratoPJDetalhe aceitam `location.state.from` — quando chegada via /pessoas, voltar volta pra /pessoas; quando via /colaboradores ou /contratos-pj, mantém comportamento original. Fallback seguro garante zero regressão.
+
 ---
 
 ## 🔴 ALTA PRIORIDADE
@@ -253,4 +277,4 @@ Estas regras foram estabelecidas ao longo das sessões e devem ser respeitadas e
 ---
 
 *Documento vivo · Fonte única de verdade do roadmap · Atualizar ao concluir item ou descobrir novo.*
-*Última atualização: 19/04/2026 — Prompt A concluído (Portal + Dashboard + Radar)*
+*Última atualização: 19/04/2026 — Prompt B concluído (Pessoas + Navegação)*
