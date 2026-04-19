@@ -59,6 +59,7 @@ import DocumentacaoForm from "@/pages/ti/DocumentacaoForm";
 import MinhasTarefas from "@/pages/MinhasTarefas";
 import TarefasDoTime from "@/pages/TarefasDoTime";
 import Processos from "@/pages/Processos";
+import ProcessoDetalhe from "@/pages/ProcessoDetalhe";
 import ProcessoEditor from "@/pages/ProcessoEditor";
 import DesligamentoDetalhe from "@/pages/DesligamentoDetalhe";
 import FalaFetely from "@/pages/FalaFetely";
@@ -100,7 +101,8 @@ const App = () => (
                 </ProtectedRoute>
               } />
               <Route path="/processos" element={<Processos />} />
-              <Route path="/processos/:slug" element={<ProcessoEditor />} />
+              <Route path="/processos/:id" element={<ProcessoDetalhe />} />
+              <Route path="/processos/:id/editar" element={<ProcessoEditor />} />
               <Route path="/templates" element={<Navigate to="/processos" replace />} />
               <Route path="/templates/*" element={<Navigate to="/processos" replace />} />
               <Route path="/fala-fetely" element={<FalaFetely />} />

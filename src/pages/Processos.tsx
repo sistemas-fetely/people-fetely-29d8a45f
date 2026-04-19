@@ -1,202 +1,379 @@
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
-import { toast } from "sonner";
-import { Plus, ChevronRight, Loader2, ShieldAlert } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import {
+  Plus, Search, FileText, Users, Building2, MapPin, Briefcase,
+  Monitor, Filter, Loader2, Eye, AlertCircle,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useProcessosCategorias } from "@/hooks/useProcessosCategorias";
-import { NovaCategoriaDialog } from "@/components/templates/NovaCategoriaDialog";
-import { getProcessoIcon } from "@/lib/processo-icones";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
+import {
+  Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetDescription,
+} from "@/components/ui/sheet";
+import { Separator } from "@/components/ui/separator";
+import { useAuth } from "@/contexts/AuthContext";
+import { useProcessos, type FiltrosProcessos } from "@/hooks/useProcessos";
+import { useAllParametros } from "@/hooks/useParametros";
+import { useUnidades } from "@/hooks/useUnidades";
+import { useCargos } from "@/hooks/useCargos";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
+import { formatDistanceToNow } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
-interface CountsRow {
-  categoria_id: string;
-  tarefas_padrao: number;
-  total_personalizacoes: number;
-  por_cargo: number;
-  por_departamento: number;
-  por_sistema: number;
-}
+const STATUS_COR: Record<string, string> = {
+  vigente: "bg-green-600/10 text-green-700 border-green-600/30",
+  em_revisao: "bg-amber-500/10 text-amber-700 border-amber-500/30",
+  rascunho: "bg-muted text-muted-foreground border-muted-foreground/20",
+  arquivado: "bg-muted/50 text-muted-foreground border-muted-foreground/20",
+};
+
+const NATUREZA_LABEL: Record<string, string> = {
+  lista_tarefas: "Lista de tarefas",
+  workflow: "Workflow",
+  guia: "Guia/Norma",
+  misto: "Misto",
+};
 
 export default function Processos() {
   const navigate = useNavigate();
   const { roles } = useAuth();
   const podeEditar = roles?.some((r) => ["super_admin", "admin_rh"].includes(r));
 
-  const { categorias, loading, recarregar } = useProcessosCategorias();
-  const [counts, setCounts] = useState<Record<string, CountsRow>>({});
-  const [openNovo, setOpenNovo] = useState(false);
+  const [filtros, setFiltros] = useState<FiltrosProcessos>({});
+  const [busca, setBusca] = useState("");
+  const [filtrosAbertos, setFiltrosAbertos] = useState(false);
 
-  const carregarCounts = useCallback(async () => {
-    if (categorias.length === 0) return;
-    const ids = categorias.map((c) => c.id);
+  const { data: parametros } = useAllParametros();
+  const { data: unidades } = useUnidades();
+  const { data: cargos } = useCargos();
+  const { data: sistemas } = useQuery({
+    queryKey: ["sncf-sistemas"],
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from("sncf_sistemas")
+        .select("id, nome")
+        .eq("ativo", true)
+        .order("ordem");
+      return (data as any[]) || [];
+    },
+  });
 
-    // tarefas padrao via templates → tarefas
-    const { data: templates } = await supabase
-      .from("sncf_templates_processos")
-      .select("id, categoria_id")
-      .in("categoria_id", ids);
+  const areas = (parametros || []).filter((p) => p.categoria === "area_negocio" && p.ativo);
+  const departamentos = (parametros || []).filter((p) => p.categoria === "departamento" && p.ativo);
+  const naturezas = (parametros || []).filter((p) => p.categoria === "natureza_processo" && p.ativo);
+  const statusOpcoes = (parametros || []).filter((p) => p.categoria === "status_processo" && p.ativo);
 
-    const templatesByCat = new Map<string, string[]>();
-    (templates ?? []).forEach((t: any) => {
-      if (!t.categoria_id) return;
-      if (!templatesByCat.has(t.categoria_id)) templatesByCat.set(t.categoria_id, []);
-      templatesByCat.get(t.categoria_id)!.push(t.id);
-    });
-
-    const allTemplateIds = (templates ?? []).map((t: any) => t.id);
-    let tarefasByTemplate: Record<string, number> = {};
-    if (allTemplateIds.length > 0) {
-      const { data: ts } = await supabase
-        .from("sncf_templates_tarefas")
-        .select("template_id")
-        .in("template_id", allTemplateIds);
-      (ts ?? []).forEach((row: any) => {
-        tarefasByTemplate[row.template_id] = (tarefasByTemplate[row.template_id] || 0) + 1;
-      });
-    }
-
-    // extensoes
-    const { data: exts } = await (supabase as any)
-      .from("sncf_template_extensoes")
-      .select("id, categoria_id, dimensao")
-      .in("categoria_id", ids)
-      .eq("ativo", true);
-
-    const newCounts: Record<string, CountsRow> = {};
-    categorias.forEach((c) => {
-      const tplIds = templatesByCat.get(c.id) ?? [];
-      const tarefas = tplIds.reduce((sum, id) => sum + (tarefasByTemplate[id] || 0), 0);
-      const porCargo = (exts ?? []).filter((e: any) => e.categoria_id === c.id && e.dimensao === "cargo").length;
-      const porDepto = (exts ?? []).filter((e: any) => e.categoria_id === c.id && e.dimensao === "departamento").length;
-      const porSist = (exts ?? []).filter((e: any) => e.categoria_id === c.id && e.dimensao === "sistema").length;
-      newCounts[c.id] = {
-        categoria_id: c.id,
-        tarefas_padrao: tarefas,
-        total_personalizacoes: porCargo + porDepto + porSist,
-        por_cargo: porCargo,
-        por_departamento: porDepto,
-        por_sistema: porSist,
-      };
-    });
-    setCounts(newCounts);
-  }, [categorias]);
-
-  useEffect(() => {
-    void carregarCounts();
-  }, [carregarCounts]);
-
-  const ordenadas = useMemo(
-    () => [...categorias].sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0) || a.nome.localeCompare(b.nome)),
-    [categorias],
+  const filtrosFull: FiltrosProcessos = useMemo(
+    () => ({ ...filtros, busca: busca.trim() || undefined }),
+    [filtros, busca],
   );
 
-  if (!podeEditar) {
-    return (
-      <div className="container mx-auto py-12">
-        <Card>
-          <CardContent className="p-8 text-center">
-            <ShieldAlert className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
-            <h2 className="text-lg font-semibold">Acesso restrito</h2>
-            <p className="text-sm text-muted-foreground mt-1">Apenas Admin RH e Super Admin.</p>
-          </CardContent>
-        </Card>
-      </div>
-    );
+  const { data: processos, isLoading } = useProcessos(filtrosFull);
+
+  const filtrosAtivos = Object.entries(filtros).filter(
+    ([, v]) => v !== undefined && v !== "",
+  ).length;
+
+  function limparFiltros() {
+    setFiltros({});
+    setBusca("");
   }
 
-  const handleNovoSaved = async () => {
-    await recarregar();
-  };
-
   return (
-    <div className="container mx-auto py-6 space-y-6">
-      <div className="flex items-center justify-between gap-4 flex-wrap">
+    <div className="container mx-auto py-6 space-y-5">
+      {/* Header */}
+      <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight" style={{ color: "#1A4A3A" }}>
-            Processos da Fetely
+          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+            <FileText className="h-6 w-6 text-primary" />
+            Processos Fetely
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Configure como cada processo da empresa funciona
+            Como a Fetely faz o que faz. Vivos, versionados e de todos.
           </p>
         </div>
-        <Button
-          onClick={() => setOpenNovo(true)}
-          className="gap-2"
-          style={{ backgroundColor: "#1A4A3A" }}
-        >
-          <Plus className="h-4 w-4" /> Novo Processo
-        </Button>
+        {podeEditar && (
+          <Button onClick={() => navigate("/processos/novo/editar")} className="gap-2">
+            <Plus className="h-4 w-4" /> Novo processo
+          </Button>
+        )}
       </div>
 
-      {loading ? (
-        <div className="flex justify-center py-12">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      {/* Busca + filtros */}
+      <div className="flex gap-2 items-center flex-wrap">
+        <div className="relative flex-1 min-w-[240px]">
+          <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Buscar por nome, descrição ou conteúdo…"
+            value={busca}
+            onChange={(e) => setBusca(e.target.value)}
+            className="pl-9"
+          />
         </div>
-      ) : ordenadas.length === 0 ? (
-        <Card>
-          <CardContent className="p-12 text-center text-muted-foreground">
-            <p className="text-sm">Nenhum processo cadastrado.</p>
-            <p className="text-xs mt-1">Clique em "Novo Processo" para começar.</p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid gap-3">
-          {ordenadas.map((c) => {
-            const Icon = getProcessoIcon(c.icone);
-            const ct = counts[c.id];
-            const personalizacoesTexto =
-              ct && ct.total_personalizacoes > 0
-                ? `${ct.total_personalizacoes} personalizaç${ct.total_personalizacoes === 1 ? "ão" : "ões"} (${
-                    [
-                      ct.por_cargo > 0 ? `${ct.por_cargo} cargo${ct.por_cargo === 1 ? "" : "s"}` : null,
-                      ct.por_departamento > 0 ? `${ct.por_departamento} departamento${ct.por_departamento === 1 ? "" : "s"}` : null,
-                      ct.por_sistema > 0 ? `${ct.por_sistema} sistema${ct.por_sistema === 1 ? "" : "s"}` : null,
-                    ]
-                      .filter(Boolean)
-                      .join(", ")
-                  })`
-                : "0 personalizações";
-            const tarefasTexto = ct ? `${ct.tarefas_padrao} tarefa${ct.tarefas_padrao === 1 ? "" : "s"} padrão` : "—";
-            return (
-              <Card
-                key={c.id}
-                className="cursor-pointer hover:shadow-md transition-shadow"
-                onClick={() => navigate(`/processos/${c.slug}`)}
-              >
-                <CardContent className="p-4 flex items-center gap-4">
-                  <div
-                    className="h-12 w-12 rounded-lg flex items-center justify-center shrink-0"
-                    style={{ backgroundColor: c.cor ?? "#1A4A3A" }}
-                  >
-                    <Icon className="h-6 w-6 text-white" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold">{c.nome}</h3>
-                    {c.descricao && (
-                      <p className="text-sm text-muted-foreground truncate">{c.descricao}</p>
-                    )}
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {tarefasTexto} · {personalizacoesTexto}
-                    </p>
-                  </div>
-                  <Button variant="ghost" size="sm" className="gap-1 shrink-0">
-                    Configurar <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </CardContent>
-              </Card>
-            );
-          })}
+
+        <Sheet open={filtrosAbertos} onOpenChange={setFiltrosAbertos}>
+          <SheetTrigger asChild>
+            <Button variant="outline" className="gap-2">
+              <Filter className="h-4 w-4" />
+              Filtros
+              {filtrosAtivos > 0 && (
+                <Badge variant="secondary" className="ml-1">{filtrosAtivos}</Badge>
+              )}
+            </Button>
+          </SheetTrigger>
+          <SheetContent className="w-full sm:max-w-md overflow-y-auto">
+            <SheetHeader>
+              <SheetTitle>Filtrar processos</SheetTitle>
+              <SheetDescription>
+                Combine dimensões para encontrar o processo certo.
+              </SheetDescription>
+            </SheetHeader>
+
+            <div className="space-y-4 mt-4">
+              <FiltroSelect
+                label="Área"
+                icon={<Briefcase className="h-3.5 w-3.5" />}
+                value={filtros.area_id}
+                options={areas.map((a) => ({ id: a.id, label: a.label }))}
+                onChange={(v) => setFiltros({ ...filtros, area_id: v })}
+              />
+              <FiltroSelect
+                label="Departamento"
+                icon={<Users className="h-3.5 w-3.5" />}
+                value={filtros.departamento_id}
+                options={departamentos.map((d) => ({ id: d.id, label: d.label }))}
+                onChange={(v) => setFiltros({ ...filtros, departamento_id: v })}
+              />
+              <FiltroSelect
+                label="Unidade"
+                icon={<MapPin className="h-3.5 w-3.5" />}
+                value={filtros.unidade_id}
+                options={(unidades || []).map((u: any) => ({ id: u.id, label: u.nome }))}
+                onChange={(v) => setFiltros({ ...filtros, unidade_id: v })}
+              />
+              <FiltroSelect
+                label="Cargo"
+                icon={<Building2 className="h-3.5 w-3.5" />}
+                value={filtros.cargo_id}
+                options={(cargos || []).map((c: any) => ({ id: c.id, label: c.nome }))}
+                onChange={(v) => setFiltros({ ...filtros, cargo_id: v })}
+              />
+              <FiltroSelect
+                label="Sistema"
+                icon={<Monitor className="h-3.5 w-3.5" />}
+                value={filtros.sistema_id}
+                options={(sistemas || []).map((s: any) => ({ id: s.id, label: s.nome }))}
+                onChange={(v) => setFiltros({ ...filtros, sistema_id: v })}
+              />
+              <FiltroSelect
+                label="Tipo de colaborador"
+                value={filtros.tipo_colaborador}
+                options={[
+                  { id: "clt", label: "CLT" },
+                  { id: "pj", label: "PJ" },
+                ]}
+                onChange={(v) => setFiltros({ ...filtros, tipo_colaborador: v as any })}
+              />
+
+              <Separator />
+
+              <FiltroSelect
+                label="Natureza"
+                value={filtros.natureza}
+                options={naturezas.map((n) => ({ id: n.valor, label: n.label }))}
+                onChange={(v) => setFiltros({ ...filtros, natureza: v })}
+              />
+              <FiltroSelect
+                label="Status"
+                value={filtros.status}
+                options={statusOpcoes.map((s) => ({ id: s.valor, label: s.label }))}
+                onChange={(v) => setFiltros({ ...filtros, status: v })}
+              />
+
+              <Separator />
+
+              <div className="flex justify-between gap-2 pt-2">
+                <Button variant="ghost" size="sm" onClick={limparFiltros}>
+                  Limpar tudo
+                </Button>
+                <Button onClick={() => setFiltrosAbertos(false)} size="sm">
+                  Aplicar
+                </Button>
+              </div>
+            </div>
+          </SheetContent>
+        </Sheet>
+      </div>
+
+      {/* Contador */}
+      {processos && processos.length > 0 && (
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <span>{processos.length} processo(s)</span>
+          {filtrosAtivos > 0 && (
+            <Button variant="link" size="sm" className="h-auto p-0 text-xs" onClick={limparFiltros}>
+              Limpar {filtrosAtivos} filtro(s)
+            </Button>
+          )}
         </div>
       )}
 
-      <NovaCategoriaDialog
-        open={openNovo}
-        onOpenChange={setOpenNovo}
-        categoria={null}
-        onSaved={handleNovoSaved}
-      />
+      {/* Grid */}
+      {isLoading ? (
+        <div className="flex justify-center py-16">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </div>
+      ) : !processos || processos.length === 0 ? (
+        <Card>
+          <CardContent className="p-12 text-center space-y-3">
+            <AlertCircle className="h-10 w-10 text-muted-foreground mx-auto" />
+            <div>
+              <h3 className="font-semibold">Nenhum processo encontrado</h3>
+              <p className="text-sm text-muted-foreground mt-1">
+                {filtrosAtivos > 0
+                  ? "Tente ajustar os filtros."
+                  : "Comece criando o primeiro processo."}
+              </p>
+            </div>
+            {podeEditar && filtrosAtivos === 0 && (
+              <Button
+                onClick={() => navigate("/processos/novo/editar")}
+                className="gap-2"
+              >
+                <Plus className="h-4 w-4" /> Criar primeiro processo
+              </Button>
+            )}
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          {processos.map((p) => (
+            <Card
+              key={p.id}
+              className="cursor-pointer hover:shadow-md hover:border-primary/30 transition-all"
+              onClick={() => navigate(`/processos/${p.id}`)}
+            >
+              <CardContent className="p-4 space-y-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold leading-tight truncate">{p.nome}</h3>
+                    {p.area_nome && (
+                      <p className="text-[11px] text-muted-foreground mt-0.5">{p.area_nome}</p>
+                    )}
+                  </div>
+                  <Badge variant="outline" className={`${STATUS_COR[p.status_valor] || ""} text-[10px] shrink-0`}>
+                    {statusOpcoes.find((s) => s.valor === p.status_valor)?.label || p.status_valor}
+                  </Badge>
+                </div>
+
+                {p.descricao && (
+                  <p className="text-xs text-muted-foreground line-clamp-2">{p.descricao}</p>
+                )}
+
+                <div className="flex flex-wrap gap-1">
+                  <Badge variant="secondary" className="text-[10px]">
+                    {NATUREZA_LABEL[p.natureza_valor] || p.natureza_valor}
+                  </Badge>
+                  {p.tags_tipos_colaborador.map((tipo) => (
+                    <Badge key={tipo} variant="outline" className="text-[10px] uppercase">
+                      {tipo}
+                    </Badge>
+                  ))}
+                  {p.versao_atual > 0 && (
+                    <Badge variant="outline" className="text-[10px]">v{p.versao_atual}</Badge>
+                  )}
+                </div>
+
+                {(p.tags_departamentos.length > 0 || p.tags_unidades.length > 0) && (
+                  <div className="flex flex-wrap gap-1">
+                    {p.tags_departamentos.slice(0, 2).map((t) => (
+                      <span
+                        key={t.id}
+                        className="text-[10px] inline-flex items-center gap-0.5 text-muted-foreground"
+                      >
+                        <Users className="h-2.5 w-2.5" /> {t.label}
+                      </span>
+                    ))}
+                    {p.tags_unidades.slice(0, 2).map((t) => (
+                      <span
+                        key={t.id}
+                        className="text-[10px] inline-flex items-center gap-0.5 text-muted-foreground"
+                      >
+                        <MapPin className="h-2.5 w-2.5" /> {t.label}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                <div className="flex items-center justify-between gap-2 pt-2 border-t text-[10px] text-muted-foreground">
+                  <span className="truncate">
+                    {p.owner_nome ? `Owner: ${p.owner_nome.split(" ")[0]}` : "Sem dono"}
+                  </span>
+                  <div className="flex items-center gap-2 shrink-0">
+                    {p.sugestoes_pendentes > 0 && (
+                      <span className="inline-flex items-center gap-0.5 text-amber-700">
+                        <AlertCircle className="h-2.5 w-2.5" />
+                        {p.sugestoes_pendentes} sug.
+                      </span>
+                    )}
+                    <span className="inline-flex items-center gap-0.5">
+                      <Eye className="h-2.5 w-2.5" /> {p.consultas_30d}
+                    </span>
+                    <span>
+                      {formatDistanceToNow(new Date(p.updated_at), {
+                        locale: ptBR,
+                        addSuffix: true,
+                      })}
+                    </span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function FiltroSelect({
+  label,
+  icon,
+  value,
+  options,
+  onChange,
+}: {
+  label: string;
+  icon?: React.ReactNode;
+  value: string | undefined;
+  options: { id: string; label: string }[];
+  onChange: (v: string | undefined) => void;
+}) {
+  return (
+    <div>
+      <label className="text-xs font-medium flex items-center gap-1 mb-1">
+        {icon} {label}
+      </label>
+      <Select
+        value={value || "__all__"}
+        onValueChange={(v) => onChange(v === "__all__" ? undefined : v)}
+      >
+        <SelectTrigger>
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="__all__">Todos</SelectItem>
+          {options.map((o) => (
+            <SelectItem key={o.id} value={o.id}>
+              {o.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
     </div>
   );
 }

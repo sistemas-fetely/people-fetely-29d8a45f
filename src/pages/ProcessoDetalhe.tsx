@@ -1,0 +1,383 @@
+import { useParams, useNavigate } from "react-router-dom";
+import {
+  ArrowLeft, Edit, FileText, Users, Building2, MapPin, Briefcase,
+  Monitor, Shield, Clock, History, AlertCircle, Loader2, Lock,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useAuth } from "@/contexts/AuthContext";
+import { useProcessoDetalhe } from "@/hooks/useProcessos";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
+import { format, formatDistanceToNow } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+
+const STATUS_COR: Record<string, string> = {
+  vigente: "bg-green-600/10 text-green-700 border-green-600/30",
+  em_revisao: "bg-amber-500/10 text-amber-700 border-amber-500/30",
+  rascunho: "bg-muted text-muted-foreground",
+  arquivado: "bg-muted/50 text-muted-foreground",
+};
+
+const NATUREZA_LABEL: Record<string, string> = {
+  lista_tarefas: "Lista de tarefas",
+  workflow: "Workflow",
+  guia: "Guia/Norma",
+  misto: "Misto",
+};
+
+export default function ProcessoDetalhe() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const { user, roles } = useAuth();
+
+  const { data: processo, isLoading } = useProcessoDetalhe(id || null);
+
+  const podeEditar =
+    roles?.includes("super_admin") ||
+    roles?.includes("admin_rh") ||
+    (processo?.owner_user_id && processo.owner_user_id === user?.id);
+
+  const { data: versoes } = useQuery({
+    queryKey: ["processo-versoes", id],
+    enabled: !!id,
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from("processos_versoes")
+        .select("id, numero, publicado_em, motivo_alteracao, publicado_por")
+        .eq("processo_id", id!)
+        .order("numero", { ascending: false });
+      return (data as any[]) || [];
+    },
+  });
+
+  const { data: tarefasLegado } = useQuery({
+    queryKey: ["processo-tarefas-legado", processo?.template_sncf_id],
+    enabled: !!processo?.template_sncf_id,
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from("sncf_templates_tarefas")
+        .select(
+          "id, ordem, titulo, descricao, responsavel_role, accountable_role, prazo_dias, prioridade",
+        )
+        .eq("template_id", processo!.template_sncf_id!)
+        .order("ordem");
+      return (data as any[]) || [];
+    },
+  });
+
+  const { data: sugestoes } = useQuery({
+    queryKey: ["processo-sugestoes", id],
+    enabled: !!id,
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from("processos_sugestoes")
+        .select("id, titulo_sugerido, descricao, status, sugerido_em, origem")
+        .eq("processo_id", id!)
+        .order("sugerido_em", { ascending: false });
+      return (data as any[]) || [];
+    },
+  });
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center py-16">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (!processo) {
+    return (
+      <div className="container mx-auto py-12 text-center">
+        <p className="text-muted-foreground">Processo não encontrado.</p>
+        <Button variant="outline" onClick={() => navigate("/processos")} className="mt-4">
+          Voltar
+        </Button>
+      </div>
+    );
+  }
+
+  const sugestoesPendentes = (sugestoes || []).filter((s: any) => s.status === "pendente");
+
+  return (
+    <div className="container mx-auto py-6 space-y-5 max-w-5xl">
+      {/* Header */}
+      <div className="flex items-center justify-between gap-2">
+        <Button variant="ghost" size="sm" onClick={() => navigate("/processos")} className="gap-2">
+          <ArrowLeft className="h-4 w-4" /> Voltar
+        </Button>
+        <div className="flex items-center gap-2">
+          {processo.sensivel && (
+            <Badge variant="outline" className="gap-1 border-amber-500/40 text-amber-700">
+              <Lock className="h-3 w-3" /> Sensível
+            </Badge>
+          )}
+          {podeEditar && (
+            <Button
+              onClick={() => navigate(`/processos/${processo.id}/editar`)}
+              className="gap-2"
+              size="sm"
+            >
+              <Edit className="h-4 w-4" /> Editar
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {/* Cabeçalho */}
+      <Card>
+        <CardContent className="p-6 space-y-4">
+          <div className="flex items-start justify-between gap-3 flex-wrap">
+            <div className="flex-1 min-w-0">
+              <h1 className="text-2xl font-bold tracking-tight">{processo.nome}</h1>
+              {processo.descricao && (
+                <p className="text-sm text-muted-foreground mt-1">{processo.descricao}</p>
+              )}
+            </div>
+            <Badge variant="outline" className={STATUS_COR[processo.status_valor] || ""}>
+              {processo.status_valor}
+            </Badge>
+          </div>
+
+          <Separator />
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+            <InfoBloco
+              label="Natureza"
+              valor={NATUREZA_LABEL[processo.natureza_valor] || processo.natureza_valor}
+              icon={<FileText className="h-3.5 w-3.5" />}
+            />
+            <InfoBloco
+              label="Versão atual"
+              valor={`v${processo.versao_atual}`}
+              icon={<History className="h-3.5 w-3.5" />}
+            />
+            <InfoBloco
+              label="Owner"
+              valor={processo.owner_nome || "—"}
+              icon={<Shield className="h-3.5 w-3.5" />}
+            />
+            <InfoBloco
+              label="Atualizado"
+              valor={formatDistanceToNow(new Date(processo.updated_at), {
+                locale: ptBR,
+                addSuffix: true,
+              })}
+              icon={<Clock className="h-3.5 w-3.5" />}
+            />
+          </div>
+
+          {processo.tags_departamentos.length +
+            processo.tags_unidades.length +
+            processo.tags_cargos.length +
+            processo.tags_sistemas.length +
+            processo.tags_tipos_colaborador.length >
+            0 && (
+            <div className="flex flex-wrap gap-1.5 pt-2">
+              {processo.tags_tipos_colaborador.map((t) => (
+                <Badge key={t} variant="secondary" className="text-[10px] uppercase">
+                  {t}
+                </Badge>
+              ))}
+              {processo.tags_departamentos.map((t) => (
+                <Badge key={t.id} variant="outline" className="text-[10px] gap-1">
+                  <Users className="h-2.5 w-2.5" /> {t.label}
+                </Badge>
+              ))}
+              {processo.tags_unidades.map((t) => (
+                <Badge key={t.id} variant="outline" className="text-[10px] gap-1">
+                  <MapPin className="h-2.5 w-2.5" /> {t.label}
+                </Badge>
+              ))}
+              {processo.tags_cargos.map((t) => (
+                <Badge key={t.id} variant="outline" className="text-[10px] gap-1">
+                  <Briefcase className="h-2.5 w-2.5" /> {t.label}
+                </Badge>
+              ))}
+              {processo.tags_sistemas.map((t) => (
+                <Badge key={t.id} variant="outline" className="text-[10px] gap-1">
+                  <Monitor className="h-2.5 w-2.5" /> {t.label}
+                </Badge>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Sugestões pendentes */}
+      {sugestoesPendentes.length > 0 && (
+        <div className="flex items-start gap-2 p-3 bg-amber-500/10 border border-amber-500/30 rounded-md">
+          <AlertCircle className="h-4 w-4 text-amber-700 mt-0.5 shrink-0" />
+          <p className="text-sm text-amber-900">
+            <strong>{sugestoesPendentes.length}</strong> sugestão(ões) aguardando avaliação.
+            {podeEditar && " Abra a aba Sugestões para revisar."}
+          </p>
+        </div>
+      )}
+
+      {/* Tabs */}
+      <Tabs defaultValue="narrativa">
+        <TabsList>
+          <TabsTrigger value="narrativa">Narrativa</TabsTrigger>
+          {tarefasLegado && tarefasLegado.length > 0 && (
+            <TabsTrigger value="passos">Passos ({tarefasLegado.length})</TabsTrigger>
+          )}
+          <TabsTrigger value="versoes">Versões ({(versoes || []).length})</TabsTrigger>
+          <TabsTrigger value="sugestoes">
+            Sugestões{sugestoesPendentes.length > 0 ? ` (${sugestoesPendentes.length})` : ""}
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="narrativa" className="mt-4">
+          <Card>
+            <CardContent className="p-6">
+              {processo.narrativa ? (
+                <div className="prose prose-sm max-w-none dark:prose-invert">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{processo.narrativa}</ReactMarkdown>
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground italic">
+                  Este processo ainda não tem narrativa escrita.
+                  {podeEditar && " Clique em Editar para adicionar."}
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {tarefasLegado && tarefasLegado.length > 0 && (
+          <TabsContent value="passos" className="mt-4">
+            <Card>
+              <CardContent className="p-6 space-y-3">
+                <p className="text-xs text-muted-foreground">
+                  Estes passos vêm do workflow de tarefas (lista de tarefas automatizada).
+                </p>
+                {tarefasLegado.map((t: any, i: number) => (
+                  <div key={t.id} className="flex gap-3 pb-3 border-b last:border-b-0 last:pb-0">
+                    <div className="h-7 w-7 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-semibold shrink-0">
+                      {i + 1}
+                    </div>
+                    <div className="flex-1 space-y-1">
+                      <h4 className="font-medium text-sm">{t.titulo}</h4>
+                      {t.descricao && (
+                        <p className="text-xs text-muted-foreground">{t.descricao}</p>
+                      )}
+                      <div className="flex flex-wrap gap-2 text-[11px] text-muted-foreground">
+                        {t.responsavel_role && <span>👤 R: {t.responsavel_role}</span>}
+                        {t.accountable_role && <span>🅰 A: {t.accountable_role}</span>}
+                        {t.prazo_dias > 0 && <span>⏱ {t.prazo_dias}d</span>}
+                        {t.prioridade && t.prioridade !== "normal" && (
+                          <Badge variant="outline" className="text-[10px]">
+                            {t.prioridade}
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        )}
+
+        <TabsContent value="versoes" className="mt-4">
+          <Card>
+            <CardContent className="p-6">
+              {!versoes || versoes.length === 0 ? (
+                <p className="text-sm text-muted-foreground italic">
+                  Sem versões publicadas ainda.
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {versoes.map((v: any) => (
+                    <div key={v.id} className="flex gap-3 items-start">
+                      <Badge variant="outline" className="font-mono">
+                        v{v.numero}
+                      </Badge>
+                      <div className="flex-1 min-w-0">
+                        {v.motivo_alteracao ? (
+                          <p className="text-sm">{v.motivo_alteracao}</p>
+                        ) : (
+                          <p className="text-sm text-muted-foreground italic">
+                            Sem descrição da mudança
+                          </p>
+                        )}
+                        <p className="text-[11px] text-muted-foreground">
+                          {format(new Date(v.publicado_em), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="sugestoes" className="mt-4">
+          <Card>
+            <CardContent className="p-6">
+              {!sugestoes || sugestoes.length === 0 ? (
+                <p className="text-sm text-muted-foreground italic">Nenhuma sugestão ainda.</p>
+              ) : (
+                <div className="space-y-3">
+                  {sugestoes.map((s: any) => (
+                    <div key={s.id} className="flex gap-3 items-start pb-3 border-b last:border-b-0 last:pb-0">
+                      <Badge
+                        variant="outline"
+                        className={
+                          s.status === "pendente"
+                            ? "bg-amber-500/10 text-amber-700"
+                            : s.status === "aceita" || s.status === "aplicada"
+                              ? "bg-green-600/10 text-green-700"
+                              : "bg-muted text-muted-foreground"
+                        }
+                      >
+                        {s.status}
+                      </Badge>
+                      <div className="flex-1 min-w-0">
+                        {s.titulo_sugerido && (
+                          <h4 className="font-medium text-sm">{s.titulo_sugerido}</h4>
+                        )}
+                        <p className="text-sm text-muted-foreground">{s.descricao}</p>
+                        <p className="text-[11px] text-muted-foreground mt-1">
+                          {s.origem} ·{" "}
+                          {format(new Date(s.sugerido_em), "dd/MM/yyyy", { locale: ptBR })}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
+
+function InfoBloco({
+  label,
+  valor,
+  icon,
+}: {
+  label: string;
+  valor: string;
+  icon: React.ReactNode;
+}) {
+  return (
+    <div>
+      <p className="text-[10px] uppercase tracking-wide text-muted-foreground flex items-center gap-1">
+        {icon} {label}
+      </p>
+      <p className="text-sm font-medium mt-0.5 truncate">{valor}</p>
+    </div>
+  );
+}
