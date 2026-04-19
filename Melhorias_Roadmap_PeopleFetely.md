@@ -316,7 +316,31 @@ Estas regras foram estabelecidas ao longo das sessões e devem ser respeitadas e
 6. **CLT e PJ recebem mesmo tratamento** — mesmos processos, benefícios, onboarding, cultura. Diferença apenas nos deveres legais.
 7. **Alimentar DNA TI Fetely continuamente** — toda doutrina/diretriz relevante deve ser capturada no doc vivo do pilar TI.
 
+### Doutrina · Camada transversal (SNCF/Uauuu) vs pilar específico
+
+Funcionalidade que atende **múltiplos sistemas** pertence à camada transversal (SNCF/Uauuu), não a um pilar específico (People, TI, Marca, etc).
+
+**Sinais de pertencimento transversal:**
+
+- Qualquer usuário de qualquer sistema pode acionar (ex: Reportes, Fala Fetely, Tarefas)
+
+- É meta-funcionalidade sobre o sistema em si (ex: Configurações, Usuários, Processos)
+
+- Audita ou gerencia múltiplos pilares (ex: Auditoria, Permissões)
+
+**Na prática:**
+
+- Rota dentro do bloco SNCFLayout em `App.tsx`
+
+- Link no `SNCFSidebar`, não em AppSidebar/TISidebar
+
+- URL pode começar com `/sncf/` ou `/admin/` — ambos sinalizam transversalidade
+
+**Exemplos já aplicados:** Portal, Tarefas, Processos, Fala Fetely, Gerenciar Usuários, Meus Dados, Meus Acessos, Reportes do Sistema.
+
+**Futuro:** N005 Configurações **nasce transversal** — SNCFLayout + SNCFSidebar desde o começo.
+
 ---
 
 *Documento vivo · Fonte única de verdade do roadmap · Atualizar ao concluir item ou descobrir novo.*
-*Última atualização: 19/04/2026 — MESA LIMPA: Prompts D, A, B, C concluídos. Pronto para ciclo novo (NF PJ com construção+mapeamento paralelo)*
+*Última atualização: 19/04/2026 — Reportes movido para camada transversal + doutrina registrada*
