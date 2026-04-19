@@ -96,7 +96,7 @@ export function ReportarErroBotao() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {(tipos || []).map((t: any) => (
+                  {(Array.isArray(tipos) ? tipos : []).map((t: any) => (
                     <SelectItem key={t.valor} value={t.valor}>
                       {t.label}
                     </SelectItem>
