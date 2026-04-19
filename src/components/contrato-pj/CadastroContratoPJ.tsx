@@ -145,6 +145,7 @@ export function CadastroContratoPJ() {
           uf: contratoData.uf || null,
           telefone: contratoData.telefone || null,
           email_pessoal: contratoData.email_pessoal || null,
+          email_corporativo: email_corporativo || null,
           contato_emergencia_nome: contratoData.contato_emergencia_nome || null,
           contato_emergencia_telefone: contratoData.contato_emergencia_telefone || null,
           objeto: contratoData.objeto || null,
