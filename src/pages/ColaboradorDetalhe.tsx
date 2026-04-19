@@ -631,7 +631,7 @@ export default function ColaboradorDetalhe() {
                       <SalarioMasked
                         valor={Number(colaborador.salario_base)}
                         userId={colaborador.user_id}
-                        contexto={`Detalhe colaborador CLT — ${colaborador.nome_completo}`}
+                        contexto="admissao"
                       />
                     }
                   />

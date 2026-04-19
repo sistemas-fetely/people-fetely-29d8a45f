@@ -283,14 +283,14 @@ export default function Colaboradores() {
                         <SalarioMasked
                           valor={c.salario_base}
                           userId={(c as any).user_id}
-                          contexto={`Listagem de colaboradores CLT — ${c.nome_completo}`}
+                          contexto="admissao"
                         />
                       </TableCell>
                       <TableCell className="text-sm font-mono text-right hidden xl:table-cell">
                         <SalarioMasked
                           valor={c.salario_base * (1 + ENCARGOS_RATE)}
                           userId={(c as any).user_id}
-                          contexto={`Listagem CLT (salário+encargos) — ${c.nome_completo}`}
+                          contexto="admissao"
                         />
                       </TableCell>
                       <TableCell>

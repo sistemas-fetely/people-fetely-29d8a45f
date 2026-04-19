@@ -595,7 +595,7 @@ export default function ContratosPJ() {
                         <SalarioMasked
                           valor={Number(c.valor_mensal)}
                           userId={c.user_id}
-                          contexto={`Listagem de contratos PJ — ${c.razao_social}`}
+                          contexto="admissao"
                         />
                       </TableCell>
                       <TableCell>
@@ -687,7 +687,7 @@ export default function ContratosPJ() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   <div><p className="text-xs text-muted-foreground">Cargo</p><p className="text-sm font-medium">{viewContrato.tipo_servico}</p></div>
                   <div><p className="text-xs text-muted-foreground">Departamento</p><p className="text-sm font-medium">{viewContrato.departamento}</p></div>
-                  <div><p className="text-xs text-muted-foreground">Valor Mensal</p><p className="text-sm font-medium"><SalarioMasked valor={Number(viewContrato.valor_mensal)} userId={viewContrato.user_id} contexto={`Detalhe contrato PJ — ${viewContrato.razao_social}`} /></p></div>
+                  <div><p className="text-xs text-muted-foreground">Valor Mensal</p><p className="text-sm font-medium"><SalarioMasked valor={Number(viewContrato.valor_mensal)} userId={viewContrato.user_id} contexto="admissao" /></p></div>
                   <div><p className="text-xs text-muted-foreground">Forma de Pagamento</p><p className="text-sm font-medium">{viewContrato.forma_pagamento}</p></div>
                   <div><p className="text-xs text-muted-foreground">Dia Vencimento</p><p className="text-sm font-medium">{viewContrato.dia_vencimento}</p></div>
                   <div><p className="text-xs text-muted-foreground">Status</p><Badge variant="outline" className={statusStyles[viewContrato.status] || ""}>{statusMap[viewContrato.status] || viewContrato.status}</Badge></div>

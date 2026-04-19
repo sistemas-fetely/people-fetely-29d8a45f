@@ -20,8 +20,11 @@ export type Database = {
           alvo_user_id: string | null
           contexto: string | null
           created_at: string
+          em_lote: boolean | null
           id: string
           ip_origem: string | null
+          justificativa: string | null
+          quantidade_alvos: number | null
           registro_id: string | null
           tabela_origem: string | null
           tipo_dado: string
@@ -33,8 +36,11 @@ export type Database = {
           alvo_user_id?: string | null
           contexto?: string | null
           created_at?: string
+          em_lote?: boolean | null
           id?: string
           ip_origem?: string | null
+          justificativa?: string | null
+          quantidade_alvos?: number | null
           registro_id?: string | null
           tabela_origem?: string | null
           tipo_dado: string
@@ -46,8 +52,11 @@ export type Database = {
           alvo_user_id?: string | null
           contexto?: string | null
           created_at?: string
+          em_lote?: boolean | null
           id?: string
           ip_origem?: string | null
+          justificativa?: string | null
+          quantidade_alvos?: number | null
           registro_id?: string | null
           tabela_origem?: string | null
           tipo_dado?: string
@@ -3374,6 +3383,41 @@ export type Database = {
         }
         Relationships: []
       }
+      politica_visibilidade_salario: {
+        Row: {
+          atualizado_em: string
+          contexto: Database["public"]["Enums"]["contexto_acesso_salario"]
+          id: string
+          modo: string
+          observacao: string | null
+          perfil_codigo: string
+        }
+        Insert: {
+          atualizado_em?: string
+          contexto: Database["public"]["Enums"]["contexto_acesso_salario"]
+          id?: string
+          modo: string
+          observacao?: string | null
+          perfil_codigo: string
+        }
+        Update: {
+          atualizado_em?: string
+          contexto?: Database["public"]["Enums"]["contexto_acesso_salario"]
+          id?: string
+          modo?: string
+          observacao?: string | null
+          perfil_codigo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "politica_visibilidade_salario_perfil_codigo_fkey"
+            columns: ["perfil_codigo"]
+            isOneToOne: false
+            referencedRelation: "perfis"
+            referencedColumns: ["codigo"]
+          },
+        ]
+      }
       posicoes: {
         Row: {
           area: string | null
@@ -4719,6 +4763,19 @@ export type Database = {
       }
     }
     Views: {
+      meus_acessos_salario: {
+        Row: {
+          ator_nome: string | null
+          ator_user_id: string | null
+          contexto: string | null
+          criado_em: string | null
+          em_lote: boolean | null
+          id: string | null
+          justificativa: string | null
+          quantidade_alvos: number | null
+        }
+        Relationships: []
+      }
       onboarding_tarefas_view: {
         Row: {
           checklist_id: string | null
@@ -4802,6 +4859,24 @@ export type Database = {
       autosave_convite_cadastro: {
         Args: { _dados: Json; _token: string }
         Returns: boolean
+      }
+      decisao_salario: {
+        Args: {
+          _alvo_user_id: string
+          _contexto: Database["public"]["Enums"]["contexto_acesso_salario"]
+          _viewer_id: string
+        }
+        Returns: string
+      }
+      decisao_salario_lote: {
+        Args: {
+          _alvo_user_ids: string[]
+          _contexto: Database["public"]["Enums"]["contexto_acesso_salario"]
+        }
+        Returns: {
+          alvo_user_id: string
+          modo: string
+        }[]
       }
       delegacao_ativa_entre: {
         Args: { _gestor: string; _substituto: string }
@@ -4919,6 +4994,14 @@ export type Database = {
         }
         Returns: undefined
       }
+      registrar_acesso_salario_lote: {
+        Args: {
+          _alvo_user_ids: string[]
+          _contexto: Database["public"]["Enums"]["contexto_acesso_salario"]
+          _justificativa: string
+        }
+        Returns: number
+      }
       registrar_audit: {
         Args: {
           _acao: string
@@ -4998,6 +5081,18 @@ export type Database = {
         | "gestao_direta"
         | "estagiario"
         | "diretoria_executiva"
+      contexto_acesso_salario:
+        | "proprio"
+        | "folha"
+        | "holerite"
+        | "admissao"
+        | "convite"
+        | "revisao_salarial"
+        | "recrutamento"
+        | "dashboard_custos"
+        | "organograma"
+        | "relatorio_pj"
+        | "auditoria"
       nivel_cargo:
         | "estagio"
         | "assistente"
@@ -5150,6 +5245,19 @@ export const Constants = {
         "gestao_direta",
         "estagiario",
         "diretoria_executiva",
+      ],
+      contexto_acesso_salario: [
+        "proprio",
+        "folha",
+        "holerite",
+        "admissao",
+        "convite",
+        "revisao_salarial",
+        "recrutamento",
+        "dashboard_custos",
+        "organograma",
+        "relatorio_pj",
+        "auditoria",
       ],
       nivel_cargo: [
         "estagio",

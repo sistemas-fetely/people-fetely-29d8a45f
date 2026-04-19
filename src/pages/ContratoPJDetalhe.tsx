@@ -660,7 +660,7 @@ export default function ContratoPJDetalhe() {
                       <SalarioMasked
                         valor={Number(contrato.valor_mensal)}
                         userId={(contrato as any).user_id}
-                        contexto={`Detalhe contrato PJ — ${contrato.razao_social}`}
+                        contexto="admissao"
                       />
                     }
                   />
