@@ -120,6 +120,18 @@ Job pg_cron diário às 03:00 UTC agendado: `revogar_acessos_ex_colaboradores_di
 
 Campo `area_negocio` adicionado em `base_conhecimento`. Tela `/fala-fetely/conhecimento` agora usa dropdown que lê `parametros` categoria `area_negocio` (regra arquitetural: dimensões via tabela). Badge 🎯 exibe área na lista. Campo antigo `publico_alvo` mantido como deprecated para compatibilidade.
 
+### METODOLOGIA UAUUU · Documento fundacional ✅
+
+**Concluído em:** 19/04/2026  
+
+Captura os 8 princípios, o Ciclo Uauuu de 10 passos, os 3 tipos de prompt, as regras de ouro, os boards consultivos (Jurídico + People), o checklist de fechamento e os anti-padrões. Arquivo em `docs/METODOLOGIA_UAUUU.md`. Cadastrado como Conhecimento no Fala Fetely (categoria: diretriz, tag: metodologia). Cadastrado como processo `trabalhar_no_uauuu` em Processos Fetely — meta-processo que governa todos os outros. Toda nova sessão começa lendo esse documento.
+
+### REPORTES DO SISTEMA · Movido para camada transversal ✅
+
+**Concluído em:** 19/04/2026  
+
+Saiu do AppSidebar (People) e entrou no SNCFSidebar (Uauuu transversal). Rota `/admin/reportes` renderiza em SNCFLayout. Gerou doutrina permanente: "funcionalidade multi-sistema pertence à camada transversal (SNCF/Uauuu)". N005 Configurações quando construída nasce transversal desde o começo.
+
 ---
 
 ## 🔴 ALTA PRIORIDADE
@@ -343,4 +355,4 @@ Funcionalidade que atende **múltiplos sistemas** pertence à camada transversal
 ---
 
 *Documento vivo · Fonte única de verdade do roadmap · Atualizar ao concluir item ou descobrir novo.*
-*Última atualização: 19/04/2026 — Reportes movido para camada transversal + doutrina registrada*
+*Última atualização: 19/04/2026 — Metodologia Uauuu codificada e cadastrada em 3 lugares*
