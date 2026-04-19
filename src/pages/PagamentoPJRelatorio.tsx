@@ -221,7 +221,9 @@ export default function PagamentoPJRelatorio() {
                     <TableCell className="text-sm">{p.nf_numero || "—"}</TableCell>
                     <TableCell className="text-sm">{format(parseISO(p.data_prevista), "dd/MM/yyyy")}</TableCell>
                     <TableCell className="text-sm">{p.data_pagamento ? format(parseISO(p.data_pagamento), "dd/MM/yyyy") : "—"}</TableCell>
-                    <TableCell className="text-sm font-medium">{BRL(Number(p.valor))}</TableCell>
+                    <TableCell className="text-sm font-medium">
+                      <SalarioMasked valor={Number(p.valor)} userId={contrato?.user_id || null} contexto="relatorio_pj" />
+                    </TableCell>
                     <TableCell className="text-sm">{p.forma_pagamento}</TableCell>
                     <TableCell>
                       <Badge variant="outline" className={statusStyles[p.status] || ""}>
