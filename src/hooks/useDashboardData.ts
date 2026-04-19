@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 function getMonthRange(offset: number) {
   const now = new Date();
@@ -15,6 +16,8 @@ function getMonthRange(offset: number) {
 }
 
 export function useDashboardData() {
+  const { roles } = useAuth();
+  const ehSuperAdmin = roles?.includes("super_admin") ?? false;
   const mesAtualRange = getMonthRange(0);
   const mesAnteriorRange = getMonthRange(-1);
 
@@ -312,24 +315,31 @@ export function useDashboardData() {
 
   // Custo por departamento (CLT salários + PJ valores mensais)
   const custoDeptQuery = useQuery({
-    queryKey: ["dashboard_custo_departamento"],
+    queryKey: ["dashboard_custo_departamento", ehSuperAdmin],
     queryFn: async () => {
       const { data: cltData } = await supabase
         .from("colaboradores_clt")
-        .select("departamento, salario_base")
+        .select("departamento, salario_base, cargos:cargo_id(is_clevel)")
         .eq("status", "ativo");
 
       const { data: pjData } = await supabase
         .from("contratos_pj")
-        .select("departamento, valor_mensal")
+        .select("departamento, valor_mensal, cargos:cargo_id(is_clevel)")
         .eq("status", "ativo");
 
+      const cltFiltrado = ehSuperAdmin
+        ? (cltData || [])
+        : (cltData || []).filter((c: any) => !c.cargos?.is_clevel);
+      const pjFiltrado = ehSuperAdmin
+        ? (pjData || [])
+        : (pjData || []).filter((c: any) => !c.cargos?.is_clevel);
+
       const deptMap: Record<string, { clt: number; pj: number }> = {};
-      (cltData || []).forEach((c) => {
+      cltFiltrado.forEach((c: any) => {
         deptMap[c.departamento] = deptMap[c.departamento] || { clt: 0, pj: 0 };
         deptMap[c.departamento].clt += Number(c.salario_base);
       });
-      (pjData || []).forEach((c) => {
+      pjFiltrado.forEach((c: any) => {
         deptMap[c.departamento] = deptMap[c.departamento] || { clt: 0, pj: 0 };
         deptMap[c.departamento].pj += Number(c.valor_mensal);
       });
@@ -508,18 +518,40 @@ export function useDashboardData() {
 
   // Salário médio CLT
   const salarioMedioQuery = useQuery({
-    queryKey: ["dashboard_salario_medio"],
+    queryKey: ["dashboard_salario_medio", ehSuperAdmin],
     queryFn: async () => {
       const { data } = await supabase
         .from("colaboradores_clt")
-        .select("salario_base")
+        .select("salario_base, cargos:cargo_id(is_clevel)")
         .eq("status", "ativo");
 
-      const salarios = (data || []).map((c) => Number(c.salario_base));
+      const filtrado = ehSuperAdmin
+        ? (data || [])
+        : (data || []).filter((c: any) => !c.cargos?.is_clevel);
+
+      const salarios = filtrado.map((c: any) => Number(c.salario_base));
       if (salarios.length === 0) return { medio: 0, total: 0, count: 0 };
       const total = salarios.reduce((a, b) => a + b, 0);
       return { medio: total / salarios.length, total, count: salarios.length };
     },
+  });
+
+  // Sugestões pendentes (inbox RH)
+  const sugestoesPendentesQuery = useQuery({
+    queryKey: ["dashboard-sugestoes-pendentes"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("processos_sugestoes")
+        .select(`
+          id, titulo_sugerido, descricao, origem, sugerido_em,
+          processo_id, processos:processo_id (id, nome, codigo)
+        `)
+        .eq("status", "pendente")
+        .order("sugerido_em", { ascending: false })
+        .limit(10);
+      return data || [];
+    },
+    staleTime: 60 * 1000,
   });
 
   const isLoading = cltQuery.isLoading || pjQuery.isLoading || headcountQuery.isLoading;
@@ -545,6 +577,8 @@ export function useDashboardData() {
     custoEvolucao: custoEvolucaoQuery.data ?? [],
     custoDept: custoDeptQuery.data ?? [],
     salarioMedio: salarioMedioQuery.data ?? { medio: 0, total: 0, count: 0 },
+    sugestoesPendentes: sugestoesPendentesQuery.data ?? [],
+    agregadosExcluemClevel: !ehSuperAdmin,
     mesAtualLabel: mesAtualRange.label,
     mesAnteriorLabel: mesAnteriorRange.label,
     isLoading,

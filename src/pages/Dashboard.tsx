@@ -1,8 +1,8 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   Users, Briefcase, Calendar, AlertTriangle, FileText, CreditCard, Gift,
   TrendingUp, TrendingDown, DollarSign, ArrowUpRight, ArrowDownRight, Minus,
-  Building2, ClipboardList, BarChart3,
+  Building2, ClipboardList, BarChart3, Lightbulb,
 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { DashboardOperacional } from "@/components/dashboard/DashboardOperacional";
@@ -17,6 +17,7 @@ import { useDashboardData } from "@/hooks/useDashboardData";
 import { usePermissions } from "@/hooks/usePermissions";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { SugestoesInboxDialog, type SugestaoItem } from "@/components/dashboard/SugestoesInboxDialog";
 
 const STATUS_LABELS: Record<string, string> = {
   ativo: "Ativos", inativo: "Inativos", ferias: "Férias",
@@ -91,10 +92,12 @@ function DashboardGestao() {
     statusClt, turnover, folha, nfPendentes, pagPjPendentes,
     experienciaVencendo, docsVencendo, aniversariosEmpresa, semBeneficio,
     contratosPendentes, convitesPreenchidos, custoPj, custoEvolucao, custoDept, salarioMedio,
+    sugestoesPendentes, agregadosExcluemClevel,
     mesAtualLabel,
     isLoading,
   } = useDashboardData();
   const { isSuperAdmin } = usePermissions();
+  const [sugestoesOpen, setSugestoesOpen] = useState(false);
 
   const statusData = useMemo(() => Object.entries(statusClt).map(([status, value]) => ({
     name: STATUS_LABELS[status] || status, value,
@@ -136,7 +139,14 @@ function DashboardGestao() {
   }
 
   // Alertas
-  const alertas: { titulo: string; detalhe: string; prioridade: "alta" | "media" | "baixa" }[] = [];
+  type Alerta = {
+    titulo: string;
+    detalhe: string;
+    prioridade: "alta" | "media" | "baixa";
+    tipo?: "sugestao";
+    onClick?: () => void;
+  };
+  const alertas: Alerta[] = [];
   if (ferias.periodoVencido > 0) alertas.push({ titulo: `${ferias.periodoVencido} período(s) de férias vencido(s)`, detalhe: "Saldo pendente", prioridade: "alta" });
   if (pj.vencendo > 0) alertas.push({ titulo: `${pj.vencendo} contrato(s) PJ vencendo`, detalhe: "Próximos 30 dias", prioridade: "alta" });
   if (nfPendentes > 0) alertas.push({ titulo: `${nfPendentes} nota(s) fiscal(is) pendente(s)`, detalhe: "Aguardando processamento", prioridade: "media" });
@@ -159,6 +169,16 @@ function DashboardGestao() {
   }
   if (convitesPreenchidos.length > 0) {
     alertas.push({ titulo: `${convitesPreenchidos.length} cadastro(s) preenchido(s) aguardando aprovação`, detalhe: convitesPreenchidos.slice(0, 3).map((c) => `${c.nome} (${c.tipo.toUpperCase()})`).join(", ") + (convitesPreenchidos.length > 3 ? "..." : ""), prioridade: "alta" });
+  }
+  if (sugestoesPendentes.length > 0) {
+    const primeira = sugestoesPendentes[0] as any;
+    alertas.push({
+      titulo: `${sugestoesPendentes.length} sugestão(ões) pendente(s) de avaliação`,
+      detalhe: primeira.titulo_sugerido || (primeira.descricao || "").slice(0, 80),
+      prioridade: "media",
+      tipo: "sugestao",
+      onClick: () => setSugestoesOpen(true),
+    });
   }
 
   const prioridadeStyles: Record<string, string> = {
@@ -188,9 +208,9 @@ function DashboardGestao() {
           valorAnterior={custoTotalMesAnterior}
           icon={DollarSign}
           invertColor
-          subtitle={isSuperAdmin
-            ? `CLT ${formatBRL(custoTotalCltAtual)} + PJ ${formatBRL(custoPj.totalAtual)}`
-            : `CLT ${formatBRL(custoTotalCltAtual)} + PJ ${formatBRL(custoPj.totalAtual)} · * valores C-Level excluídos`
+          subtitle={agregadosExcluemClevel
+            ? `CLT ${formatBRL(custoTotalCltAtual)} + PJ ${formatBRL(custoPj.totalAtual)} · * C-Level excluídos`
+            : `CLT ${formatBRL(custoTotalCltAtual)} + PJ ${formatBRL(custoPj.totalAtual)}`
           }
         />
         <FinancialKpiCard
@@ -215,7 +235,10 @@ function DashboardGestao() {
               <div className="space-y-1">
                 <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Salário Médio CLT</p>
                 <p className="text-xl font-bold tracking-tight">{formatBRL(salarioMedio.medio)}</p>
-                <p className="text-xs text-muted-foreground">{salarioMedio.count} colaboradores ativos</p>
+                <p className="text-xs text-muted-foreground">
+                  {salarioMedio.count} colaboradores ativos
+                  {agregadosExcluemClevel ? " · * C-Level excluídos" : ""}
+                </p>
               </div>
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
                 <TrendingUp className="h-5 w-5" />
@@ -453,20 +476,42 @@ function DashboardGestao() {
                   const order = { alta: 0, media: 1, baixa: 2 };
                   return order[a.prioridade] - order[b.prioridade];
                 })
-                .map((t, i) => (
-                  <div key={i} className="flex items-start gap-3">
-                    <div className={cn("mt-1 h-2 w-2 rounded-full shrink-0",
-                      t.prioridade === "alta" ? "bg-destructive" : t.prioridade === "media" ? "bg-warning" : "bg-info"
-                    )} />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{t.titulo}</p>
-                      <p className="text-xs text-muted-foreground">{t.detalhe}</p>
+                .map((t, i) => {
+                  const clickable = !!t.onClick;
+                  return (
+                    <div
+                      key={i}
+                      className={cn(
+                        "flex items-start gap-3",
+                        clickable && "cursor-pointer hover:bg-muted/50 -mx-2 px-2 py-1 rounded-md transition-colors"
+                      )}
+                      onClick={t.onClick}
+                      role={clickable ? "button" : undefined}
+                      tabIndex={clickable ? 0 : undefined}
+                      onKeyDown={(e) => {
+                        if (clickable && (e.key === "Enter" || e.key === " ")) {
+                          e.preventDefault();
+                          t.onClick?.();
+                        }
+                      }}
+                    >
+                      {t.tipo === "sugestao" ? (
+                        <Lightbulb className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
+                      ) : (
+                        <div className={cn("mt-1 h-2 w-2 rounded-full shrink-0",
+                          t.prioridade === "alta" ? "bg-destructive" : t.prioridade === "media" ? "bg-warning" : "bg-info"
+                        )} />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{t.titulo}</p>
+                        <p className="text-xs text-muted-foreground truncate">{t.detalhe}</p>
+                      </div>
+                      <Badge variant="outline" className={prioridadeStyles[t.prioridade]}>
+                        {t.prioridade}
+                      </Badge>
                     </div>
-                    <Badge variant="outline" className={prioridadeStyles[t.prioridade]}>
-                      {t.prioridade}
-                    </Badge>
-                  </div>
-                ))
+                  );
+                })
             ) : (
               <p className="text-sm text-muted-foreground text-center py-4">✅ Nenhuma pendência no momento</p>
             )}
@@ -500,6 +545,12 @@ function DashboardGestao() {
           </CardContent>
         </Card>
       </div>
+
+      <SugestoesInboxDialog
+        open={sugestoesOpen}
+        onOpenChange={setSugestoesOpen}
+        sugestoes={sugestoesPendentes as SugestaoItem[]}
+      />
     </div>
   );
 }
