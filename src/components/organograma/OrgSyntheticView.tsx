@@ -4,6 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
+import { SalarioMasked } from "@/components/SalarioMasked";
 import type { PosicaoNode, OrgFilters } from "@/types/organograma";
 
 const fmtBRL = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -103,7 +104,11 @@ function TreeRow({ node, expanded, toggleExpand, onNodeClick, canSeeSalary, show
         </td>
         {canSeeSalary && showSalary && (
           <td className="py-2 px-3 text-sm text-right font-mono">
-            {node.salario_previsto ? fmtBRL(node.salario_previsto) : "—"}
+            <SalarioMasked
+              valor={node.salario_previsto}
+              userId={(node.colaborador as any)?.user_id || (node.contrato_pj as any)?.user_id || null}
+              contexto="organograma"
+            />
           </td>
         )}
       </tr>
