@@ -3501,6 +3501,7 @@ export type Database = {
           created_at: string
           criado_por: string | null
           descricao: string | null
+          diagrama_mermaid: string | null
           id: string
           narrativa: string | null
           natureza_valor: string
@@ -3520,6 +3521,7 @@ export type Database = {
           created_at?: string
           criado_por?: string | null
           descricao?: string | null
+          diagrama_mermaid?: string | null
           id?: string
           narrativa?: string | null
           natureza_valor?: string
@@ -3539,6 +3541,7 @@ export type Database = {
           created_at?: string
           criado_por?: string | null
           descricao?: string | null
+          diagrama_mermaid?: string | null
           id?: string
           narrativa?: string | null
           natureza_valor?: string
@@ -3572,6 +3575,68 @@ export type Database = {
             columns: ["template_sncf_id"]
             isOneToOne: false
             referencedRelation: "sncf_templates_processos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      processos_ligacoes: {
+        Row: {
+          criado_em: string
+          criado_por: string | null
+          descricao: string | null
+          id: string
+          ordem: number
+          processo_destino_id: string
+          processo_origem_id: string
+          tipo_ligacao: string
+        }
+        Insert: {
+          criado_em?: string
+          criado_por?: string | null
+          descricao?: string | null
+          id?: string
+          ordem?: number
+          processo_destino_id: string
+          processo_origem_id: string
+          tipo_ligacao: string
+        }
+        Update: {
+          criado_em?: string
+          criado_por?: string | null
+          descricao?: string | null
+          id?: string
+          ordem?: number
+          processo_destino_id?: string
+          processo_origem_id?: string
+          tipo_ligacao?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "processos_ligacoes_processo_destino_id_fkey"
+            columns: ["processo_destino_id"]
+            isOneToOne: false
+            referencedRelation: "processos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "processos_ligacoes_processo_destino_id_fkey"
+            columns: ["processo_destino_id"]
+            isOneToOne: false
+            referencedRelation: "processos_unificados"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "processos_ligacoes_processo_origem_id_fkey"
+            columns: ["processo_origem_id"]
+            isOneToOne: false
+            referencedRelation: "processos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "processos_ligacoes_processo_origem_id_fkey"
+            columns: ["processo_origem_id"]
+            isOneToOne: false
+            referencedRelation: "processos_unificados"
             referencedColumns: ["id"]
           },
         ]
@@ -3887,6 +3952,7 @@ export type Database = {
       processos_versoes: {
         Row: {
           descricao_snapshot: string | null
+          diagrama_snapshot: string | null
           id: string
           motivo_alteracao: string | null
           narrativa_snapshot: string | null
@@ -3901,6 +3967,7 @@ export type Database = {
         }
         Insert: {
           descricao_snapshot?: string | null
+          diagrama_snapshot?: string | null
           id?: string
           motivo_alteracao?: string | null
           narrativa_snapshot?: string | null
@@ -3915,6 +3982,7 @@ export type Database = {
         }
         Update: {
           descricao_snapshot?: string | null
+          diagrama_snapshot?: string | null
           id?: string
           motivo_alteracao?: string | null
           narrativa_snapshot?: string | null
@@ -5302,6 +5370,52 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      processos_ligacoes_expandidas: {
+        Row: {
+          criado_em: string | null
+          descricao: string | null
+          destino_codigo: string | null
+          destino_nome: string | null
+          id: string | null
+          ordem: number | null
+          origem_codigo: string | null
+          origem_nome: string | null
+          processo_destino_id: string | null
+          processo_origem_id: string | null
+          tipo_ligacao: string | null
+          tipo_ligacao_label: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "processos_ligacoes_processo_destino_id_fkey"
+            columns: ["processo_destino_id"]
+            isOneToOne: false
+            referencedRelation: "processos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "processos_ligacoes_processo_destino_id_fkey"
+            columns: ["processo_destino_id"]
+            isOneToOne: false
+            referencedRelation: "processos_unificados"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "processos_ligacoes_processo_origem_id_fkey"
+            columns: ["processo_origem_id"]
+            isOneToOne: false
+            referencedRelation: "processos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "processos_ligacoes_processo_origem_id_fkey"
+            columns: ["processo_origem_id"]
+            isOneToOne: false
+            referencedRelation: "processos_unificados"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       processos_unificados: {
         Row: {

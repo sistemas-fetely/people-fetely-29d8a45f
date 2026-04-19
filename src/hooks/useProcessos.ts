@@ -12,6 +12,7 @@ export interface ProcessoUnificado {
   nome: string;
   descricao: string | null;
   narrativa: string | null;
+  diagrama_mermaid: string | null;
   natureza_valor: string;
   status_valor: string;
   versao_atual: number;

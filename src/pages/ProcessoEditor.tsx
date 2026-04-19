@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Loader2, Save, Rocket } from "lucide-react";
+import { ArrowLeft, Loader2, Save, Rocket, Workflow, GitBranch, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -25,6 +26,7 @@ import { usePerfisV2 } from "@/hooks/usePerfisV2";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { MermaidRenderer } from "@/components/processos/MermaidRenderer";
 
 export default function ProcessoEditor() {
   const { id } = useParams();
@@ -55,6 +57,7 @@ export default function ProcessoEditor() {
   const [codigo, setCodigo] = useState("");
   const [descricao, setDescricao] = useState("");
   const [narrativa, setNarrativa] = useState("");
+  const [diagrama, setDiagrama] = useState("");
   const [areaId, setAreaId] = useState("");
   const [natureza, setNatureza] = useState("guia");
   const [statusValor, setStatusValor] = useState("rascunho");
@@ -72,10 +75,38 @@ export default function ProcessoEditor() {
   const [publicarOpen, setPublicarOpen] = useState(false);
   const [motivoPublicacao, setMotivoPublicacao] = useState("");
 
+  // Conexões
+  const [novaLigacaoDestino, setNovaLigacaoDestino] = useState("");
+  const [novaLigacaoTipo, setNovaLigacaoTipo] = useState("");
+  const [novaLigacaoDesc, setNovaLigacaoDesc] = useState("");
+
   const areas = (parametros || []).filter((p) => p.categoria === "area_negocio" && p.ativo);
   const departamentos = (parametros || []).filter((p) => p.categoria === "departamento" && p.ativo);
   const naturezas = (parametros || []).filter((p) => p.categoria === "natureza_processo" && p.ativo);
   const statusOpcoes = (parametros || []).filter((p) => p.categoria === "status_processo" && p.ativo);
+  const tiposLigacao = (parametros || []).filter((p) => p.categoria === "tipo_ligacao_processo" && p.ativo);
+
+  const { data: ligacoesAtuais, refetch: refetchLigacoes } = useQuery({
+    queryKey: ["processo-ligacoes-edicao", id],
+    enabled: !isNovo && !!id,
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from("processos_ligacoes_expandidas")
+        .select("*")
+        .or(`processo_origem_id.eq.${id},processo_destino_id.eq.${id}`);
+      return (data as any[]) || [];
+    },
+  });
+
+  const { data: outrosProcessos } = useQuery({
+    queryKey: ["processos-disponiveis", id],
+    queryFn: async () => {
+      let q = (supabase as any).from("processos").select("id, nome, codigo").order("nome");
+      if (!isNovo && id) q = q.neq("id", id);
+      const { data } = await q;
+      return (data as any[]) || [];
+    },
+  });
 
   useEffect(() => {
     if (!isNovo && processo) {
@@ -83,6 +114,7 @@ export default function ProcessoEditor() {
       setCodigo(processo.codigo);
       setDescricao(processo.descricao || "");
       setNarrativa(processo.narrativa || "");
+      setDiagrama((processo as any).diagrama_mermaid || "");
       setAreaId(processo.area_negocio_id || "");
       setNatureza(processo.natureza_valor);
       setStatusValor(processo.status_valor);
@@ -185,6 +217,7 @@ export default function ProcessoEditor() {
         nome: nome.trim(),
         descricao: descricao.trim() || null,
         narrativa: narrativa.trim() || null,
+        diagrama_mermaid: diagrama.trim() || null,
         area_negocio_id: areaId || null,
         natureza_valor: natureza,
         status_valor: statusValor,
@@ -230,6 +263,44 @@ export default function ProcessoEditor() {
     } finally {
       setSalvando(false);
       setPublicarOpen(false);
+    }
+  }
+
+  async function adicionarLigacao() {
+    if (!novaLigacaoDestino || !novaLigacaoTipo || !id || isNovo) {
+      toast.error("Selecione o processo destino e o tipo");
+      return;
+    }
+    try {
+      const { error } = await (supabase as any).from("processos_ligacoes").insert({
+        processo_origem_id: id,
+        processo_destino_id: novaLigacaoDestino,
+        tipo_ligacao: novaLigacaoTipo,
+        descricao: novaLigacaoDesc.trim() || null,
+      });
+      if (error) throw error;
+      toast.success("Ligação adicionada");
+      setNovaLigacaoDestino("");
+      setNovaLigacaoTipo("");
+      setNovaLigacaoDesc("");
+      refetchLigacoes();
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao adicionar ligação");
+    }
+  }
+
+  async function removerLigacao(ligacaoId: string) {
+    if (!confirm("Remover esta ligação?")) return;
+    try {
+      const { error } = await (supabase as any)
+        .from("processos_ligacoes")
+        .delete()
+        .eq("id", ligacaoId);
+      if (error) throw error;
+      toast.success("Ligação removida");
+      refetchLigacoes();
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao remover");
     }
   }
 
@@ -282,6 +353,12 @@ export default function ProcessoEditor() {
           <TabsTrigger value="identidade">Identidade</TabsTrigger>
           <TabsTrigger value="narrativa">Narrativa</TabsTrigger>
           <TabsTrigger value="dimensoes">Dimensões</TabsTrigger>
+          <TabsTrigger value="diagrama" className="gap-1">
+            <Workflow className="h-3.5 w-3.5" /> Diagrama
+          </TabsTrigger>
+          <TabsTrigger value="conexoes" className="gap-1">
+            <GitBranch className="h-3.5 w-3.5" /> Conexões
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="identidade" className="mt-4">
@@ -475,6 +552,155 @@ export default function ProcessoEditor() {
                 selected={tagsTiposColab}
                 onToggle={(id) => toggleTag(tagsTiposColab, setTagsTiposColab, id)}
               />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="diagrama" className="mt-4">
+          <Card>
+            <CardContent className="p-6 space-y-4">
+              <div>
+                <Label>Diagrama em Mermaid (opcional)</Label>
+                <p className="text-[11px] text-muted-foreground mb-2">
+                  Use sintaxe{" "}
+                  <a
+                    href="https://mermaid.js.org/intro/"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="underline"
+                  >
+                    Mermaid
+                  </a>
+                  . Deixe vazio se este processo não precisa de desenho.
+                </p>
+                <Textarea
+                  value={diagrama}
+                  onChange={(e) => setDiagrama(e.target.value)}
+                  rows={14}
+                  className="font-mono text-xs"
+                  placeholder={`flowchart LR\n  A[Início] --> B{Decisão?}\n  B -- Sim --> C[Ação X]\n  B -- Não --> D[Ação Y]\n  C --> E[Fim]\n  D --> E`}
+                />
+              </div>
+              {diagrama.trim() && (
+                <div className="border rounded-md p-4 bg-muted/20">
+                  <p className="text-[10px] uppercase tracking-wide text-muted-foreground mb-2">
+                    Preview
+                  </p>
+                  <MermaidRenderer codigo={diagrama} />
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="conexoes" className="mt-4">
+          <Card>
+            <CardContent className="p-6 space-y-4">
+              <p className="text-xs text-muted-foreground">
+                Mapeie como este processo se relaciona com outros. Isso alimenta a visão macro e
+                o Fala Fetely.
+              </p>
+
+              {isNovo ? (
+                <div className="text-center py-6 text-sm text-muted-foreground italic">
+                  Salve o processo primeiro para poder criar ligações.
+                </div>
+              ) : (
+                <>
+                  <div className="space-y-3 border rounded-md p-4 bg-muted/20">
+                    <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                      Adicionar ligação
+                    </p>
+                    <div className="grid md:grid-cols-2 gap-3">
+                      <div>
+                        <Label className="text-xs">Tipo</Label>
+                        <Select value={novaLigacaoTipo} onValueChange={setNovaLigacaoTipo}>
+                          <SelectTrigger className="h-9">
+                            <SelectValue placeholder="Selecione o tipo" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {tiposLigacao.map((t) => (
+                              <SelectItem key={t.valor} value={t.valor}>
+                                {t.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label className="text-xs">Processo destino</Label>
+                        <Select
+                          value={novaLigacaoDestino}
+                          onValueChange={setNovaLigacaoDestino}
+                        >
+                          <SelectTrigger className="h-9">
+                            <SelectValue placeholder="Selecione o processo" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {(outrosProcessos || []).map((p: any) => (
+                              <SelectItem key={p.id} value={p.id}>
+                                {p.nome}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <div>
+                      <Label className="text-xs">Descrição (opcional)</Label>
+                      <Input
+                        value={novaLigacaoDesc}
+                        onChange={(e) => setNovaLigacaoDesc(e.target.value)}
+                        placeholder="Ex: dispara quando status = aceito"
+                        className="h-9"
+                      />
+                    </div>
+                    <Button onClick={adicionarLigacao} size="sm" className="gap-2">
+                      <Plus className="h-3.5 w-3.5" /> Adicionar ligação
+                    </Button>
+                  </div>
+
+                  <div className="space-y-2">
+                    <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                      Ligações existentes
+                    </p>
+                    {!ligacoesAtuais || ligacoesAtuais.length === 0 ? (
+                      <p className="text-sm text-muted-foreground italic">
+                        Nenhuma ligação cadastrada.
+                      </p>
+                    ) : (
+                      ligacoesAtuais.map((l: any) => {
+                        const euSouOrigem = l.processo_origem_id === id;
+                        const outroNome = euSouOrigem ? l.destino_nome : l.origem_nome;
+                        return (
+                          <div
+                            key={l.id}
+                            className="flex items-center gap-2 p-2 border rounded-md text-sm"
+                          >
+                            <Badge variant="outline" className="text-[10px] whitespace-nowrap">
+                              {euSouOrigem ? "→" : "←"} {l.tipo_ligacao_label || l.tipo_ligacao}
+                            </Badge>
+                            <span className="flex-1 truncate font-medium">{outroNome}</span>
+                            {l.descricao && (
+                              <span className="text-xs text-muted-foreground truncate">
+                                {l.descricao}
+                              </span>
+                            )}
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => removerLigacao(l.id)}
+                              className="h-7 w-7 shrink-0"
+                            >
+                              <X className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

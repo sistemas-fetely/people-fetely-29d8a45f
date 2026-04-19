@@ -2,6 +2,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeft, Edit, FileText, Users, Building2, MapPin, Briefcase,
   Monitor, Shield, Clock, History, AlertCircle, Loader2, Lock,
+  Workflow, GitBranch,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -16,6 +17,7 @@ import { format, formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { MermaidRenderer } from "@/components/processos/MermaidRenderer";
 
 const STATUS_COR: Record<string, string> = {
   vigente: "bg-green-600/10 text-green-700 border-green-600/30",
@@ -84,6 +86,19 @@ export default function ProcessoDetalhe() {
     },
   });
 
+  const { data: ligacoes } = useQuery({
+    queryKey: ["processo-ligacoes", id],
+    enabled: !!id,
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from("processos_ligacoes_expandidas")
+        .select("*")
+        .or(`processo_origem_id.eq.${id},processo_destino_id.eq.${id}`)
+        .order("ordem");
+      return (data as any[]) || [];
+    },
+  });
+
   if (isLoading) {
     return (
       <div className="flex justify-center py-16">
@@ -104,6 +119,7 @@ export default function ProcessoDetalhe() {
   }
 
   const sugestoesPendentes = (sugestoes || []).filter((s: any) => s.status === "pendente");
+  const totalLigacoes = (ligacoes || []).length;
 
   return (
     <div className="container mx-auto py-6 space-y-5 max-w-5xl">
@@ -228,6 +244,12 @@ export default function ProcessoDetalhe() {
           {tarefasLegado && tarefasLegado.length > 0 && (
             <TabsTrigger value="passos">Passos ({tarefasLegado.length})</TabsTrigger>
           )}
+          <TabsTrigger value="diagrama" className="gap-1">
+            <Workflow className="h-3.5 w-3.5" /> Diagrama
+          </TabsTrigger>
+          <TabsTrigger value="conexoes" className="gap-1">
+            <GitBranch className="h-3.5 w-3.5" /> Conexões{totalLigacoes > 0 ? ` (${totalLigacoes})` : ""}
+          </TabsTrigger>
           <TabsTrigger value="versoes">Versões ({(versoes || []).length})</TabsTrigger>
           <TabsTrigger value="sugestoes">
             Sugestões{sugestoesPendentes.length > 0 ? ` (${sugestoesPendentes.length})` : ""}
@@ -285,6 +307,76 @@ export default function ProcessoDetalhe() {
             </Card>
           </TabsContent>
         )}
+
+        <TabsContent value="diagrama" className="mt-4">
+          <Card>
+            <CardContent className="p-6">
+              {processo.diagrama_mermaid?.trim() ? (
+                <MermaidRenderer codigo={processo.diagrama_mermaid} />
+              ) : (
+                <div className="text-center py-10 space-y-2">
+                  <Workflow className="h-8 w-8 text-muted-foreground/50 mx-auto" />
+                  <p className="text-sm text-muted-foreground">Este processo não tem diagrama.</p>
+                  <p className="text-[11px] text-muted-foreground">
+                    {podeEditar
+                      ? "Clique em Editar para adicionar um desenho em Mermaid."
+                      : "Nem todo processo precisa de um."}
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="conexoes" className="mt-4">
+          <Card>
+            <CardContent className="p-6">
+              {totalLigacoes === 0 ? (
+                <div className="text-center py-10 space-y-2">
+                  <GitBranch className="h-8 w-8 text-muted-foreground/50 mx-auto" />
+                  <p className="text-sm text-muted-foreground">
+                    Este processo não tem ligações com outros processos.
+                  </p>
+                  <p className="text-[11px] text-muted-foreground">
+                    {podeEditar
+                      ? "Clique em Editar → aba Conexões para mapear relações com outros processos."
+                      : ""}
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {(ligacoes || []).map((l: any) => {
+                    const euSouOrigem = l.processo_origem_id === id;
+                    const outroId = euSouOrigem ? l.processo_destino_id : l.processo_origem_id;
+                    const outroNome = euSouOrigem ? l.destino_nome : l.origem_nome;
+                    return (
+                      <div
+                        key={l.id}
+                        className="flex items-start gap-3 pb-3 border-b last:border-b-0 last:pb-0"
+                      >
+                        <Badge variant="outline" className="text-[10px] whitespace-nowrap">
+                          {euSouOrigem ? "→ este" : "este →"} {l.tipo_ligacao_label || l.tipo_ligacao}
+                        </Badge>
+                        <div className="flex-1 min-w-0">
+                          <button
+                            type="button"
+                            onClick={() => navigate(`/processos/${outroId}`)}
+                            className="text-sm font-medium hover:text-primary hover:underline truncate text-left"
+                          >
+                            {outroNome}
+                          </button>
+                          {l.descricao && (
+                            <p className="text-xs text-muted-foreground mt-0.5">{l.descricao}</p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         <TabsContent value="versoes" className="mt-4">
           <Card>

@@ -105,6 +105,8 @@ Deno.serve(async (req) => {
       supabase.from("sncf_processos_categorias").select("id, slug, nome, descricao").eq("ativo", true).limit(30),
       (supabase as any).from("sncf_templates_processos").select("id, categoria_id"),
       (supabase as any).from("sncf_templates_tarefas").select("template_id, titulo, descricao, prazo_dias, responsavel_role, somente_clt, ordem").order("ordem"),
+      // Fonte unificada PF1: processos vivos com narrativa, owner e área
+      (supabase as any).from("processos_unificados").select("id, codigo, nome, descricao, narrativa, area_nome, status_valor, owner_nome, versao_atual").eq("status_valor", "vigente").limit(80),
       (supabase as any).from("sncf_template_extensoes").select("id, categoria_id, dimensao, referencia_label, nome, descricao").eq("ativo", true),
       (supabase as any).from("sncf_template_extensoes_tarefas").select("extensao_id, titulo, descricao, prazo_dias, ordem").order("ordem"),
       supabase.from("parametros").select("label, valor").eq("categoria", "sistema").eq("ativo", true).limit(50),
