@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useCLevelCargos } from "@/hooks/useCLevelCargos";
+import { SalarioMasked } from "@/components/SalarioMasked";
 import type { HoleriteComColaborador } from "@/hooks/useFolhaPagamento";
 
 const fmt = (v: number | null) =>
@@ -86,12 +87,18 @@ export function HoleriteTable({ holerites, onSelect }: Props) {
                 >
                   <TableCell className="font-medium">{h.colaborador?.nome_completo}</TableCell>
                   <TableCell>{h.colaborador?.departamento}</TableCell>
-                  <TableCell className="text-right">{fmt(h.salario_base)}</TableCell>
-                  <TableCell className="text-right">{fmt(h.total_proventos)}</TableCell>
+                  <TableCell className="text-right">
+                    <SalarioMasked valor={h.salario_base} userId={(h.colaborador as any)?.user_id || null} contexto="holerite" />
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <SalarioMasked valor={h.total_proventos} userId={(h.colaborador as any)?.user_id || null} contexto="holerite" />
+                  </TableCell>
                   <TableCell className="text-right text-red-600">{fmt(h.inss)}</TableCell>
                   <TableCell className="text-right text-red-600">{fmt(h.irrf)}</TableCell>
                   <TableCell className="text-right text-red-600">{fmt(h.total_descontos)}</TableCell>
-                  <TableCell className="text-right font-semibold">{fmt(h.salario_liquido)}</TableCell>
+                  <TableCell className="text-right font-semibold">
+                    <SalarioMasked valor={h.salario_liquido} userId={(h.colaborador as any)?.user_id || null} contexto="holerite" />
+                  </TableCell>
                   <TableCell className="text-right">{fmt(h.fgts)}</TableCell>
                 </TableRow>
               ))
