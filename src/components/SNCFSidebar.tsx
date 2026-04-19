@@ -1,11 +1,12 @@
 import {
   LayoutGrid, ClipboardList, UsersRound, UserCog, Workflow,
-  LogOut, ArrowLeft, Network, Sparkles, BookOpen, Shield,
+  LogOut, Network, Sparkles, BookOpen, Shield, ExternalLink,
 } from "lucide-react";
+import * as LucideIcons from "lucide-react";
 import { Link } from "react-router-dom";
 import { NavLink } from "@/components/NavLink";
 import { cn } from "@/lib/utils";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Badge } from "@/components/ui/badge";
 import { getHighestRoleLabel } from "@/lib/user-role";
@@ -16,6 +17,15 @@ import {
   SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem,
   SidebarHeader, SidebarFooter, useSidebar,
 } from "@/components/ui/sidebar";
+
+function getIcon(name: string) {
+  const pascal = name
+    .split("-")
+    .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
+    .join("");
+  const Icon = (LucideIcons as unknown as Record<string, React.ComponentType<{ className?: string }>>)[pascal];
+  return Icon || ExternalLink;
+}
 
 const SNCF_COLOR = "#1A4A3A";
 
