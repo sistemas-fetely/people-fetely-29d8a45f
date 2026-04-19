@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import {
   Users, Briefcase, Calendar, AlertTriangle, FileText, CreditCard, Gift,
   TrendingUp, TrendingDown, DollarSign, ArrowUpRight, ArrowDownRight, Minus,
-  Building2, Clock,
+  Building2, Clock, Lightbulb,
 } from "lucide-react";
 import InsightsIA from "@/components/dashboard/InsightsIA";
 import { StatCard } from "@/components/StatCard";
