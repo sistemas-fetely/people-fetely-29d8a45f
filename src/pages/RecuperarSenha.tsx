@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Building2, Mail, ArrowLeft } from "lucide-react";
+import { Mail, ArrowLeft, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
+import { FetelyAuthLayout } from "@/components/auth/FetelyAuthLayout";
 
 export default function RecuperarSenha() {
   const [email, setEmail] = useState("");
@@ -22,63 +22,78 @@ export default function RecuperarSenha() {
       });
       if (error) throw error;
       setSent(true);
-      toast.success("E-mail de recuperação enviado!");
+      toast.success("Email enviado!");
     } catch (error: any) {
-      toast.error(error.message || "Erro ao enviar e-mail");
+      toast.error(error.message || "Erro ao enviar email");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
-      <div className="w-full max-w-md space-y-6">
-        <div className="flex flex-col items-center gap-3">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary">
-            <Building2 className="h-7 w-7 text-primary-foreground" />
+    <FetelyAuthLayout
+      title={sent ? "Verifique seu email" : "Recuperar senha"}
+      subtitle={
+        sent
+          ? "Acabamos de te mandar um link."
+          : "Tudo self-service. Sem ticket, sem espera."
+      }
+    >
+      {sent ? (
+        <div className="space-y-4 text-center">
+          <div className="flex justify-center">
+            <CheckCircle2 className="h-12 w-12 text-green-600" />
           </div>
-          <div className="text-center">
-            <h1 className="text-2xl font-bold">Recuperar Senha</h1>
-            <p className="text-sm text-muted-foreground">
-              {sent ? "Verifique sua caixa de entrada" : "Enviaremos um link para redefinir sua senha"}
+          <div className="space-y-2">
+            <p className="text-sm font-medium">
+              Enviamos um link para <strong>{email}</strong>.
+            </p>
+            <p className="text-xs text-muted-foreground">
+              O link expira em 1 hora. Se não chegar em 5 minutos, confira o spam
+              ou tente novamente.
             </p>
           </div>
+          <Button variant="outline" className="w-full" onClick={() => setSent(false)}>
+            Enviar outro link
+          </Button>
+          <Link to="/login" className="block">
+            <Button variant="ghost" className="w-full gap-2">
+              <ArrowLeft className="h-4 w-4" /> Voltar para login
+            </Button>
+          </Link>
         </div>
-        <Card className="card-shadow">
-          <CardContent className="pt-6">
-            {sent ? (
-              <div className="text-center space-y-4">
-                <p className="text-sm text-muted-foreground">
-                  Um e-mail foi enviado para <strong>{email}</strong> com instruções para redefinir sua senha.
-                </p>
-                <Link to="/login">
-                  <Button variant="outline" className="gap-2">
-                    <ArrowLeft className="h-4 w-4" /> Voltar ao login
-                  </Button>
-                </Link>
-              </div>
-            ) : (
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="email">E-mail</Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="seu@email.com" className="pl-9" required />
-                  </div>
-                </div>
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? "Enviando..." : "Enviar link de recuperação"}
-                </Button>
-              </form>
-            )}
-          </CardContent>
-        </Card>
-        {!sent && (
-          <p className="text-center text-sm text-muted-foreground">
-            <Link to="/login" className="text-primary hover:underline">← Voltar ao login</Link>
-          </p>
-        )}
-      </div>
-    </div>
+      ) : (
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="email">Email corporativo</Label>
+            <div className="relative">
+              <Mail className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="nome@fetely.com.br"
+                className="pl-9"
+                required
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Use o email corporativo que você cadastrou na Fetely.
+            </p>
+          </div>
+
+          <Button type="submit" className="w-full" disabled={loading}>
+            {loading ? "Enviando..." : "Enviar link de recuperação"}
+          </Button>
+
+          <Link to="/login" className="block">
+            <Button variant="ghost" className="w-full gap-2">
+              <ArrowLeft className="h-4 w-4" /> Voltar para login
+            </Button>
+          </Link>
+        </form>
+      )}
+    </FetelyAuthLayout>
   );
 }

@@ -21,6 +21,7 @@ import { template as testeTecnicoCandidato } from './teste-tecnico-candidato.tsx
 import { template as testeTecnicoEntregue } from './teste-tecnico-entregue.tsx'
 import { template as propostaCandidato } from './proposta-candidato.tsx'
 import { template as cadastroDevolvido } from './cadastro-devolvido.tsx'
+import { template as recuperacaoSenha } from './recuperacao-senha.tsx'
 
 export const TEMPLATES: Record<string, TemplateEntry> = {
   'convite-cadastro': conviteCadastro,
@@ -35,4 +36,5 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'teste-tecnico-entregue': testeTecnicoEntregue,
   'proposta-candidato': propostaCandidato,
   'cadastro-devolvido': cadastroDevolvido,
+  'recuperacao-senha': recuperacaoSenha,
 }

@@ -4997,6 +4997,10 @@ export type Database = {
           read_ct: number
         }[]
       }
+      registrar_aceite_termo_uso: {
+        Args: { _versao: string }
+        Returns: undefined
+      }
       registrar_acesso_dado: {
         Args: {
           _alvo_user_id: string
@@ -5052,6 +5056,7 @@ export type Database = {
         Args: { _cargo_id: string }
         Returns: string
       }
+      termo_uso_versao_vigente: { Args: never; Returns: string }
       user_perfis_detalhados: {
         Args: { _user_id: string }
         Returns: {
