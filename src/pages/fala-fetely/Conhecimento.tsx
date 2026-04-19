@@ -513,15 +513,22 @@ export default function Conhecimento() {
                 </Select>
               </div>
               <div>
-                <Label>Público alvo</Label>
-                <Select value={form.publico_alvo} onValueChange={(v) => setForm({ ...form, publico_alvo: v })}>
+                <Label>Área de negócio</Label>
+                <Select
+                  value={form.area_negocio ?? "__todas__"}
+                  onValueChange={(v) => setForm({ ...form, area_negocio: v === "__todas__" ? null : v })}
+                >
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {PUBLICOS.map((p) => (
-                      <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
+                    <SelectItem value="__todas__">Todas as áreas (geral)</SelectItem>
+                    {(areas || []).map((a: any) => (
+                      <SelectItem key={a.valor} value={a.valor}>{a.label}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
+                <p className="text-[10px] text-muted-foreground mt-1">
+                  Área de negócio à qual o conhecimento se aplica. Cargos, departamentos e níveis específicos abaixo.
+                </p>
               </div>
             </div>
 
