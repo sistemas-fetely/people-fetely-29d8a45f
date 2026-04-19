@@ -120,17 +120,27 @@ Job pg_cron diário às 03:00 UTC agendado: `revogar_acessos_ex_colaboradores_di
 
 Campo `area_negocio` adicionado em `base_conhecimento`. Tela `/fala-fetely/conhecimento` agora usa dropdown que lê `parametros` categoria `area_negocio` (regra arquitetural: dimensões via tabela). Badge 🎯 exibe área na lista. Campo antigo `publico_alvo` mantido como deprecated para compatibilidade.
 
-### METODOLOGIA UAUUU · Documento fundacional ✅
+### METODOLOGIA UAUUU · Documentação fundacional em 3 casas ✅
 
 **Concluído em:** 19/04/2026  
 
-Captura os 8 princípios, o Ciclo Uauuu de 10 passos, os 3 tipos de prompt, as regras de ouro, os boards consultivos (Jurídico + People), o checklist de fechamento e os anti-padrões. Arquivo em `docs/METODOLOGIA_UAUUU.md`. Cadastrado como Conhecimento no Fala Fetely (categoria: diretriz, tag: metodologia). Cadastrado como processo `trabalhar_no_uauuu` em Processos Fetely — meta-processo que governa todos os outros. Toda nova sessão começa lendo esse documento.
+Metodologia de trabalho do Uauuu consolidada após fechamento das 4 frentes de mesa limpa (D→A→B→C). Organizada em **3 casas complementares sem sobreposição**:
+
+1. **📁 `docs/METODOLOGIA_UAUUU.md`** — princípios (8), tipos de prompt (3), regras de ouro (10), anti-padrões (7), metodologia viva. Fonte consultada por dev/Claude em abertura de sessão.
+
+2. **🔄 Processos Fetely · `trabalhar_no_uauuu`** — fluxo operacional executável (10 passos do Ciclo Uauuu) com RACI, diagrama Mermaid e KPIs candidatos. Meta-processo que governa todos os outros.
+
+3. **🧠 Fala Fetely · 10 cards fragmentados** — diretrizes individuais (dimensão via tabela, CLT=PJ, transversal, silencioso vs mapeado, GitHub é verdade, fechar antes de abrir, neutralidade é abandono), regras (boards Jurídico e People), conceito nuclear (Uauuu = SNCF).
+
+**Princípio de organização:** sem sobreposição. Cada casa tem escopo próprio — doc fundacional para visão geral, processo para execução, conhecimento para consulta pontual.
+
+**Onde começa uma nova sessão:** `docs/METODOLOGIA_UAUUU.md` → identifica o passo do ciclo → consulta cards pontuais do Fala Fetely conforme tema surge.
 
 ### REPORTES DO SISTEMA · Movido para camada transversal ✅
 
 **Concluído em:** 19/04/2026  
 
-Saiu do AppSidebar (People) e entrou no SNCFSidebar (Uauuu transversal). Rota `/admin/reportes` renderiza em SNCFLayout. Gerou doutrina permanente: "funcionalidade multi-sistema pertence à camada transversal (SNCF/Uauuu)". N005 Configurações quando construída nasce transversal desde o começo.
+Saiu do AppSidebar (People) e entrou no SNCFSidebar (Uauuu transversal). Rota `/admin/reportes` renderiza em SNCFLayout. Gerou doutrina permanente (agora cadastrada no Fala Fetely): "funcionalidade multi-sistema pertence à camada transversal". N005 Configurações quando construída nasce transversal.
 
 ---
 
@@ -352,7 +362,17 @@ Funcionalidade que atende **múltiplos sistemas** pertence à camada transversal
 
 **Futuro:** N005 Configurações **nasce transversal** — SNCFLayout + SNCFSidebar desde o começo.
 
+### Metodologia Uauuu é a constituição do trabalho
+
+Toda doutrina, princípio e regra de como a Fetely constrói tecnologia está codificada em três lugares:
+
+- **Visão geral e consulta dev** → `docs/METODOLOGIA_UAUUU.md`
+- **Fluxo operacional (executar uma sessão)** → Processos Fetely, processo `trabalhar_no_uauuu`
+- **Consulta pontual por tema** → Fala Fetely, cards com tag `metodologia`
+
+Quando uma doutrina nova emergir, decidir em qual casa ela mora (geralmente Fala Fetely como card individual) e registrar ANTES que vire hábito invisível.
+
 ---
 
 *Documento vivo · Fonte única de verdade do roadmap · Atualizar ao concluir item ou descobrir novo.*
-*Última atualização: 19/04/2026 — Metodologia Uauuu codificada e cadastrada em 3 lugares*
+*Última atualização: 19/04/2026 — Metodologia Uauuu codificada em 3 casas complementares*
