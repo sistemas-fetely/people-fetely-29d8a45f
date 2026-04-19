@@ -5651,6 +5651,23 @@ export type Database = {
         }
         Relationships: []
       }
+      tarefas_emissao_nf_pendentes: {
+        Row: {
+          contrato_id: string | null
+          created_at: string | null
+          departamento: string | null
+          email_corporativo: string | null
+          pj_nome: string | null
+          pj_user_id: string | null
+          prazo_data: string | null
+          razao_social: string | null
+          status: string | null
+          tarefa_id: string | null
+          titulo: string | null
+          valor_mensal: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       aplicar_template_cargo: {
@@ -5688,6 +5705,11 @@ export type Database = {
         Returns: boolean
       }
       contar_uso_template: { Args: { _template_id: string }; Returns: Json }
+      criar_tarefa_emissao_nf_pj: {
+        Args: { _competencia: string; _contrato_id: string }
+        Returns: string
+      }
+      criar_tarefas_emissao_nf_pj_mensal: { Args: never; Returns: number }
       decisao_salario: {
         Args: {
           _alvo_user_id: string
