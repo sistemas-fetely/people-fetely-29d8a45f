@@ -208,9 +208,9 @@ function DashboardGestao() {
           valorAnterior={custoTotalMesAnterior}
           icon={DollarSign}
           invertColor
-          subtitle={isSuperAdmin
-            ? `CLT ${formatBRL(custoTotalCltAtual)} + PJ ${formatBRL(custoPj.totalAtual)}`
-            : `CLT ${formatBRL(custoTotalCltAtual)} + PJ ${formatBRL(custoPj.totalAtual)} · * valores C-Level excluídos`
+          subtitle={agregadosExcluemClevel
+            ? `CLT ${formatBRL(custoTotalCltAtual)} + PJ ${formatBRL(custoPj.totalAtual)} · * C-Level excluídos`
+            : `CLT ${formatBRL(custoTotalCltAtual)} + PJ ${formatBRL(custoPj.totalAtual)}`
           }
         />
         <FinancialKpiCard
@@ -235,7 +235,10 @@ function DashboardGestao() {
               <div className="space-y-1">
                 <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Salário Médio CLT</p>
                 <p className="text-xl font-bold tracking-tight">{formatBRL(salarioMedio.medio)}</p>
-                <p className="text-xs text-muted-foreground">{salarioMedio.count} colaboradores ativos</p>
+                <p className="text-xs text-muted-foreground">
+                  {salarioMedio.count} colaboradores ativos
+                  {agregadosExcluemClevel ? " · * C-Level excluídos" : ""}
+                </p>
               </div>
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
                 <TrendingUp className="h-5 w-5" />
