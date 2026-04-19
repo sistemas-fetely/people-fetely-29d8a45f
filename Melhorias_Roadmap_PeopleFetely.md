@@ -1,0 +1,236 @@
+# Melhorias & Roadmap — People Fetely
+**Documento Vivo · Atualizado em 19/04/2026 · Fonte única de verdade**
+
+> Norte de desenvolvimento do sistema. Registra tudo que ainda será feito —
+> desde ajustes pontuais até novos módulos completos.
+> Este é o roadmap oficial. Atualizar sempre que uma nova ideia surgir
+> ou um item for implementado.
+
+---
+
+## Como usar este documento
+
+**Tipo:**
+- 🔧 Melhoria — ajuste ou evolução em algo que já existe
+- 🚀 Novo — funcionalidade ou módulo novo
+- 🏛 Estrutural — regra, doutrina ou arquitetura
+- 🔒 Compliance — LGPD, segurança, auditoria
+
+**Prioridade:** 🔴 Alta · 🟡 Média · 🟢 Baixa · 💡 Ideia (a avaliar)
+
+**Status:** 💡 Ideia · 📋 Planejado · 🔧 Em andamento · ✅ Concluído
+
+---
+
+## ✅ CONCLUÍDOS (desde abr/14)
+
+### M001 · Recrutamento — Skills por área com filtro inteligente ✅
+**Concluído em:** abr/2026 (descoberto em validação 19/04)  
+Tabela `skills_catalogo` criada, hook `useSkillsCatalogo` funcionando, filtro aplicado.
+
+### M002 · Recrutamento — Drawer de perfil do candidato ✅
+**Concluído em:** abr/2026 (descoberto em validação 19/04)  
+Componente `src/components/recrutamento/CandidatoDrawer.tsx` criado e integrado ao kanban.
+
+### N007 · Importador de NF PJ via Claude API ✅
+**Concluído em:** abr/2026 (descoberto em validação 19/04)  
+Edge function `parse-nf-pdf` implementada. Extração automática de campos operacional.
+
+### PROCESSOS FETELY · Fundação completa ✅
+**Concluído em:** 19/04/2026 (PF1 → PF2 → PF3 → PF3.1)  
+Base unificada com 11 tabelas, versionamento, diagramas Mermaid, ligações, integração com Fala Fetely. 7 processos vivos cadastrados (3 fundação + 4 retroativos). Doutrina "silencioso vs mapeado" documentada.
+
+### RECRUTAMENTO · Processo piloto mapeado em Processos Fetely ✅
+**Concluído em:** 19/04/2026  
+Primeiro processo real da operação mapeado com narrativa rica, swim lanes, RACI, KPIs candidatos identificados.
+
+### ONBOARDING CLT+PJ · Processo mapeado em Processos Fetely ✅
+**Concluído em:** 19/04/2026  
+Onboarding único para CLT e PJ conforme DNA ("mesmo tratamento, deveres legais diferentes"). Descoberta "Integração & Primeiro Dia Produtivo" registrada como sugestão de processo futuro.
+
+### DASHBOARD · Sugestões do Fala Fetely integradas ao card Alertas ✅
+**Concluído em:** 19/04/2026  
+Componente `SugestoesInboxDialog` permite RH avaliar sugestões (aceitar/rejeitar/aplicada) diretamente do Dashboard. Policy ampliada para admin_rh e gestor_rh.
+
+### DASHBOARD · Visibilidade C-Level nos agregados (S1c) ✅
+**Concluído em:** 19/04/2026  
+Não-super_admin vê agregados (salário médio, custo total, custo por departamento) excluindo cargos C-Level. Disclaimer "* C-Level excluídos" aplicado.
+
+### FETELY EM NÚMEROS v0.1 · Pilar documentado ✅
+**Concluído em:** 19/04/2026  
+Doc vivo em `docs/pilares/FETELY_EM_NUMEROS.md` com manifesto, 5 princípios, arquitetura futura proposta e seed de 7 KPIs do Recrutamento. Construção estrutural ativa quando houver ~5 processos mapeados.
+
+### M-GER-01 · Report de Erros Universal ✅
+**Concluído em:** 19/04/2026  
+Canal colaborativo completo: botão flutuante global em todos os layouts (AppLayout + SNCFLayout), tabela `sistema_reportes` com RLS, tipos e status parametrizáveis, inbox admin em `/admin/reportes` com filtros e ações de tratamento. Primeiro passo do sistema colaborativo — usuários agora têm canal formal pra reportar bugs, sugestões e confusões.
+
+---
+
+## 🔴 ALTA PRIORIDADE
+
+### N001 · Controle de Ponto
+**Tipo:** 🚀 Novo | **Prioridade:** 🔴 Alta | **Status:** 📋 Planejado  
+**Responsável board:** Ricardo Mendes
+
+Obrigatório para colaboradores CLT. Impacto direto no eSocial (CAGED, RAIS). Deve suportar turnos para unidade fabril de Joinville. Nenhuma alteração neste módulo sem trilha de auditoria completa.
+
+**Dependências:** nenhuma — pode ser o próximo módulo.  
+**Atenção:** validar com Dr. Marcos (NRs) antes de ativar para chão de fábrica.
+
+---
+
+### N002 · Relatórios com Auditoria
+**Tipo:** 🚀 Novo | **Prioridade:** 🔴 Alta | **Status:** 📋 Planejado  
+**Responsável board:** Ricardo Mendes
+
+Trilha de auditoria completa para todos os módulos: folha, ponto, benefícios, admissões, movimentações. Requisito de compliance antes de escalar o sistema.
+
+**Dependências:** todos os módulos existentes precisam expor eventos auditáveis.
+
+---
+
+### C001 · DPO designado formalmente + política de retenção LGPD
+**Tipo:** 🔒 Compliance | **Prioridade:** 🔴 Alta | **Status:** 📋 Planejado  
+**Responsável board:** Dra. Renata Souza (LGPD)
+
+DPO mencionado em documentação mas não cadastrado formalmente. Política de retenção de candidatos (180 dias) mencionada no código mas sem trigger/função de expurgo. Obrigatório antes de ativar Recrutamento em produção com candidatos reais.
+
+**Bloqueia:** ativação de Recrutamento com candidatos CLT reais.
+
+---
+
+## 🟡 MÉDIA PRIORIDADE
+
+### CICLO-NF-PJ · NF PJ com construção + mapeamento em paralelo
+**Tipo:** 🏛 Estrutural + 🚀 Novo | **Prioridade:** 🟡 Média | **Status:** 💡 Ideia
+
+Próximo ciclo de trabalho com **padrão novo**: código e processo (em Processos Fetely) nascem juntos. Primeiro teste do padrão — a partir dele, todas as construções seguem o mesmo modelo.
+
+**Escopo:** retomada do desenvolvimento de NF PJ no People Fetely + mapeamento em tempo real em Processos Fetely.
+
+---
+
+### N003 · Avaliações de Desempenho
+**Tipo:** 🚀 Novo | **Prioridade:** 🟡 Média | **Status:** 💡 Ideia  
+**Responsável board:** Thiago Serrano
+
+Ciclos de avaliação vinculados ao cargo (skills obrigatórias como régua). Baseline do processo seletivo vira ponto de partida para a primeira avaliação. Período de experiência CLT (D+45 e D+90) gera alertas automáticos.
+
+**Dependências:** Cargos e Salários (skills por cargo), Recrutamento (scorecard).
+
+---
+
+### N004 · Treinamentos
+**Tipo:** 🚀 Novo | **Prioridade:** 🟡 Média | **Status:** 💡 Ideia
+
+Plano de treinamento vinculado ao cargo e disparado automaticamente no onboarding. Trilhas de desenvolvimento por nível (Jr → Pl → Sr).
+
+**Dependências:** Cargos e Salários, Onboarding estruturado.
+
+---
+
+### N005 · Configurações avançadas
+**Tipo:** 🚀 Novo | **Prioridade:** 🟡 Média | **Status:** 💡 Ideia
+
+Parâmetros avançados do sistema: notificações, integrações, customizações de fluxo. Complementa o módulo de Parâmetros existente.
+
+---
+
+### N006 · Dashboard Operacional do RH
+**Tipo:** 🚀 Novo | **Prioridade:** 🟡 Média | **Status:** 💡 Ideia  
+**Responsável board:** Ricardo Mendes + Beatriz Lemos
+
+Dashboard **operacional** do RH — diferente do Dashboard Executivo (custos/headcount). Visão do pulso das ações em andamento:
+
+- Convites pendentes, admissões em andamento, contratos vencendo
+- Funil de recrutamento: vagas abertas × candidatos × etapas
+- Onboardings em andamento com % de conclusão
+- Alertas de compliance: período de experiência, documentos pendentes
+- Indicadores: NPS interno, turnover, tempo médio de contratação
+- Visão por gestor direto: pendências do time
+
+**Dependências:** Ponto (N001), Avaliações (N003), Onboarding estruturado.
+
+---
+
+### P001 · Processo "Integração & Primeiro Dia Produtivo"
+**Tipo:** 🏛 Estrutural (Processos Fetely) | **Prioridade:** 🟡 Média | **Status:** 💡 Ideia
+
+Processo descoberto durante mapeamento do Onboarding (19/04/2026). Cobre os primeiros 30-60 dias do colaborador até atingir "integração produtiva completa". Já registrado em `processos_sugestoes` como processo futuro.
+
+**Dependências:** ciclo de vida completo do colaborador mapeado (Onboarding + NF + Folha + Desligamento).
+
+---
+
+### FEN-EST · Fetely em Números · Construção estrutural
+**Tipo:** 🏛 Estrutural | **Prioridade:** 🟡 Média | **Status:** 💡 Ideia
+
+Após ter ~5 processos reais mapeados (hoje: 2), construir estrutura completa do pilar Fetely em Números:
+- Tabelas: `kpis`, `kpis_metas`, `kpis_valores`, `kpis_processos`, `kpis_alertas`
+- Integração Processos Fetely (aba "Números" por processo)
+- Dashboards por perfil (CEO, pilar, operacional)
+- Integração Fala Fetely (responder com processo + números juntos)
+
+---
+
+### ES001 · Segunda conversa estratégica pós-Uauuuu
+**Tipo:** 🏛 Estrutural | **Prioridade:** 🟡 Média | **Status:** ⏸ Aguardando Flavio
+
+Flavio tinha 2 conversas estratégicas pendentes após projeto Uauuuu (SNCF). A primeira era KPIs (virou Fetely em Números). A segunda permanece aguardando Flavio lembrar e trazer.
+
+---
+
+## 🟢 BAIXA PRIORIDADE
+
+### M003 · Cargos e Salários — Filtros de ordenação
+**Tipo:** 🔧 Melhoria | **Prioridade:** 🟢 Baixa | **Status:** 📋 Pendente  
+**Área:** /cargos → listagem
+
+Adicionar opções de ordenação na tabela de Cargos e Salários:
+- Ordem alfabética A→Z / Z→A (padrão atual)
+- Por faixa salarial F1 CLT mín crescente ou decrescente
+- Por nível: Jr → Pl → Sr → Coordenação → Especialista → C-Level
+
+Ordenação no frontend (dados já carregados). Persistir preferência no localStorage.
+
+---
+
+### B001 · Ensinar Flavio a usar SQL Editor do Supabase
+**Tipo:** 🏛 Estrutural | **Prioridade:** 🟢 Baixa | **Status:** 💡 Ideia
+
+Quando momento estiver calmo, guiar Flavio no uso do SQL Editor para diagnósticos e fixes pontuais. Desbloqueia autonomia operacional.
+
+---
+
+### B002 · Reativar Claude for Chrome em contextos controlados
+**Tipo:** 🏛 Estrutural | **Prioridade:** 🟢 Baixa | **Status:** ⏸ Hold
+
+Extensão instalada mas desativada por estarmos em produção crítica. Primeiro uso previsto: pilar Marca (captar mensagens Instagram @fetely.oficial). Regra: nunca em produção sem Flavio assistindo.
+
+---
+
+### B003 · Diretriz de segurança — Prompt Injection via GitHub
+**Tipo:** 🔒 Compliance | **Prioridade:** 🟢 Baixa | **Status:** 💡 Ideia
+
+Quando criarmos novos agentes/automações que leiam conteúdo externo (PRs de terceiros, issues, repositórios públicos), estabelecer diretriz de sanitização e "guardrails de contexto externo" para qualquer agente novo do SNCF.
+
+**Hoje não é risco** (só Claude lê repo e só em resposta a publicação do Flavio).
+
+---
+
+## 🏛 DOUTRINAS PERMANENTES (não são tarefas, são posturas)
+
+Estas regras foram estabelecidas ao longo das sessões e devem ser respeitadas em todas as construções futuras:
+
+1. **Dimensões sempre via tabela, nunca hardcode** — área, departamento, unidade, cargo, sistema vêm de tabelas-fonte. Nunca array literal com valores de negócio.
+2. **Doutrina silencioso vs mapeado (Processos Fetely)** — "tem R humano/papel? Vai pro mapa. Não tem? Silencioso." Operações técnicas só entram se têm responsável identificável.
+3. **Responsabilidade compartilhada de mapeamento** — toda construção/feature gera ou atualiza processo correspondente em Processos Fetely.
+4. **GitHub é fonte de verdade** — `git pull` antes de qualquer afirmação sobre estado do sistema.
+5. **Protocolo processo-dentro-de-processo** — processo novo descoberto durante mapeamento vai pra `processos_sugestoes` com `processo_id=NULL` sem parar o trabalho atual.
+6. **CLT e PJ recebem mesmo tratamento** — mesmos processos, benefícios, onboarding, cultura. Diferença apenas nos deveres legais.
+7. **Alimentar DNA TI Fetely continuamente** — toda doutrina/diretriz relevante deve ser capturada no doc vivo do pilar TI.
+
+---
+
+*Documento vivo · Fonte única de verdade do roadmap · Atualizar ao concluir item ou descobrir novo.*
+*Última atualização: 19/04/2026 — M-GER-01 concluído*
