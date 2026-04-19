@@ -2001,6 +2001,7 @@ export type Database = {
         Row: {
           aprovado_em: string | null
           aprovado_por: string | null
+          area_negocio: string | null
           ativo: boolean
           cargos_aplicaveis: Json | null
           categoria: string
@@ -2025,6 +2026,7 @@ export type Database = {
         Insert: {
           aprovado_em?: string | null
           aprovado_por?: string | null
+          area_negocio?: string | null
           ativo?: boolean
           cargos_aplicaveis?: Json | null
           categoria: string
@@ -2049,6 +2051,7 @@ export type Database = {
         Update: {
           aprovado_em?: string | null
           aprovado_por?: string | null
+          area_negocio?: string | null
           ativo?: boolean
           cargos_aplicaveis?: Json | null
           categoria?: string
@@ -5558,6 +5561,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      revogacoes_acesso_historico: {
+        Row: {
+          ator_nome: string | null
+          ator_user_id: string | null
+          criado_em: string | null
+          dados_antes: Json | null
+          dados_depois: Json | null
+          id: string | null
+          justificativa: string | null
+          tabela: string | null
+          tipo_acao: string | null
+          user_id_revogado: string | null
+        }
+        Insert: {
+          ator_nome?: string | null
+          ator_user_id?: string | null
+          criado_em?: string | null
+          dados_antes?: Json | null
+          dados_depois?: Json | null
+          id?: string | null
+          justificativa?: string | null
+          tabela?: string | null
+          tipo_acao?: string | null
+          user_id_revogado?: string | null
+        }
+        Update: {
+          ator_nome?: string | null
+          ator_user_id?: string | null
+          criado_em?: string | null
+          dados_antes?: Json | null
+          dados_depois?: Json | null
+          id?: string | null
+          justificativa?: string | null
+          tabela?: string | null
+          tipo_acao?: string | null
+          user_id_revogado?: string | null
+        }
+        Relationships: []
       }
     }
     Functions: {
