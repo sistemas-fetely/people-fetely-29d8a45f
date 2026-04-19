@@ -3494,6 +3494,456 @@ export type Database = {
           },
         ]
       }
+      processos: {
+        Row: {
+          area_negocio_id: string | null
+          codigo: string
+          created_at: string
+          criado_por: string | null
+          descricao: string | null
+          id: string
+          narrativa: string | null
+          natureza_valor: string
+          nome: string
+          owner_perfil_codigo: string | null
+          owner_user_id: string | null
+          sensivel: boolean
+          status_valor: string
+          template_sncf_id: string | null
+          updated_at: string
+          versao_atual: number
+          versao_vigente_em: string | null
+        }
+        Insert: {
+          area_negocio_id?: string | null
+          codigo: string
+          created_at?: string
+          criado_por?: string | null
+          descricao?: string | null
+          id?: string
+          narrativa?: string | null
+          natureza_valor?: string
+          nome: string
+          owner_perfil_codigo?: string | null
+          owner_user_id?: string | null
+          sensivel?: boolean
+          status_valor?: string
+          template_sncf_id?: string | null
+          updated_at?: string
+          versao_atual?: number
+          versao_vigente_em?: string | null
+        }
+        Update: {
+          area_negocio_id?: string | null
+          codigo?: string
+          created_at?: string
+          criado_por?: string | null
+          descricao?: string | null
+          id?: string
+          narrativa?: string | null
+          natureza_valor?: string
+          nome?: string
+          owner_perfil_codigo?: string | null
+          owner_user_id?: string | null
+          sensivel?: boolean
+          status_valor?: string
+          template_sncf_id?: string | null
+          updated_at?: string
+          versao_atual?: number
+          versao_vigente_em?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "processos_area_negocio_id_fkey"
+            columns: ["area_negocio_id"]
+            isOneToOne: false
+            referencedRelation: "parametros"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "processos_owner_perfil_codigo_fkey"
+            columns: ["owner_perfil_codigo"]
+            isOneToOne: false
+            referencedRelation: "perfis"
+            referencedColumns: ["codigo"]
+          },
+          {
+            foreignKeyName: "processos_template_sncf_id_fkey"
+            columns: ["template_sncf_id"]
+            isOneToOne: false
+            referencedRelation: "sncf_templates_processos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      processos_log_consultas: {
+        Row: {
+          consultado_em: string
+          id: string
+          processo_id: string
+          user_id: string | null
+        }
+        Insert: {
+          consultado_em?: string
+          id?: string
+          processo_id: string
+          user_id?: string | null
+        }
+        Update: {
+          consultado_em?: string
+          id?: string
+          processo_id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "processos_log_consultas_processo_id_fkey"
+            columns: ["processo_id"]
+            isOneToOne: false
+            referencedRelation: "processos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "processos_log_consultas_processo_id_fkey"
+            columns: ["processo_id"]
+            isOneToOne: false
+            referencedRelation: "processos_unificados"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      processos_sugestoes: {
+        Row: {
+          avaliado_em: string | null
+          avaliado_por: string | null
+          descricao: string
+          id: string
+          motivo_decisao: string | null
+          origem: string | null
+          processo_id: string | null
+          status: string
+          sugerido_em: string
+          sugerido_por: string | null
+          titulo_sugerido: string | null
+        }
+        Insert: {
+          avaliado_em?: string | null
+          avaliado_por?: string | null
+          descricao: string
+          id?: string
+          motivo_decisao?: string | null
+          origem?: string | null
+          processo_id?: string | null
+          status?: string
+          sugerido_em?: string
+          sugerido_por?: string | null
+          titulo_sugerido?: string | null
+        }
+        Update: {
+          avaliado_em?: string | null
+          avaliado_por?: string | null
+          descricao?: string
+          id?: string
+          motivo_decisao?: string | null
+          origem?: string | null
+          processo_id?: string | null
+          status?: string
+          sugerido_em?: string
+          sugerido_por?: string | null
+          titulo_sugerido?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "processos_sugestoes_processo_id_fkey"
+            columns: ["processo_id"]
+            isOneToOne: false
+            referencedRelation: "processos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "processos_sugestoes_processo_id_fkey"
+            columns: ["processo_id"]
+            isOneToOne: false
+            referencedRelation: "processos_unificados"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      processos_tags_areas: {
+        Row: {
+          area_id: string
+          processo_id: string
+        }
+        Insert: {
+          area_id: string
+          processo_id: string
+        }
+        Update: {
+          area_id?: string
+          processo_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "processos_tags_areas_area_id_fkey"
+            columns: ["area_id"]
+            isOneToOne: false
+            referencedRelation: "parametros"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "processos_tags_areas_processo_id_fkey"
+            columns: ["processo_id"]
+            isOneToOne: false
+            referencedRelation: "processos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "processos_tags_areas_processo_id_fkey"
+            columns: ["processo_id"]
+            isOneToOne: false
+            referencedRelation: "processos_unificados"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      processos_tags_cargos: {
+        Row: {
+          cargo_id: string
+          processo_id: string
+        }
+        Insert: {
+          cargo_id: string
+          processo_id: string
+        }
+        Update: {
+          cargo_id?: string
+          processo_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "processos_tags_cargos_cargo_id_fkey"
+            columns: ["cargo_id"]
+            isOneToOne: false
+            referencedRelation: "cargos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "processos_tags_cargos_processo_id_fkey"
+            columns: ["processo_id"]
+            isOneToOne: false
+            referencedRelation: "processos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "processos_tags_cargos_processo_id_fkey"
+            columns: ["processo_id"]
+            isOneToOne: false
+            referencedRelation: "processos_unificados"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      processos_tags_departamentos: {
+        Row: {
+          departamento_id: string
+          processo_id: string
+        }
+        Insert: {
+          departamento_id: string
+          processo_id: string
+        }
+        Update: {
+          departamento_id?: string
+          processo_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "processos_tags_departamentos_departamento_id_fkey"
+            columns: ["departamento_id"]
+            isOneToOne: false
+            referencedRelation: "parametros"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "processos_tags_departamentos_processo_id_fkey"
+            columns: ["processo_id"]
+            isOneToOne: false
+            referencedRelation: "processos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "processos_tags_departamentos_processo_id_fkey"
+            columns: ["processo_id"]
+            isOneToOne: false
+            referencedRelation: "processos_unificados"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      processos_tags_sistemas: {
+        Row: {
+          processo_id: string
+          sistema_id: string
+        }
+        Insert: {
+          processo_id: string
+          sistema_id: string
+        }
+        Update: {
+          processo_id?: string
+          sistema_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "processos_tags_sistemas_processo_id_fkey"
+            columns: ["processo_id"]
+            isOneToOne: false
+            referencedRelation: "processos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "processos_tags_sistemas_processo_id_fkey"
+            columns: ["processo_id"]
+            isOneToOne: false
+            referencedRelation: "processos_unificados"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "processos_tags_sistemas_sistema_id_fkey"
+            columns: ["sistema_id"]
+            isOneToOne: false
+            referencedRelation: "sncf_sistemas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      processos_tags_tipos_colaborador: {
+        Row: {
+          processo_id: string
+          tipo: string
+        }
+        Insert: {
+          processo_id: string
+          tipo: string
+        }
+        Update: {
+          processo_id?: string
+          tipo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "processos_tags_tipos_colaborador_processo_id_fkey"
+            columns: ["processo_id"]
+            isOneToOne: false
+            referencedRelation: "processos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "processos_tags_tipos_colaborador_processo_id_fkey"
+            columns: ["processo_id"]
+            isOneToOne: false
+            referencedRelation: "processos_unificados"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      processos_tags_unidades: {
+        Row: {
+          processo_id: string
+          unidade_id: string
+        }
+        Insert: {
+          processo_id: string
+          unidade_id: string
+        }
+        Update: {
+          processo_id?: string
+          unidade_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "processos_tags_unidades_processo_id_fkey"
+            columns: ["processo_id"]
+            isOneToOne: false
+            referencedRelation: "processos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "processos_tags_unidades_processo_id_fkey"
+            columns: ["processo_id"]
+            isOneToOne: false
+            referencedRelation: "processos_unificados"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "processos_tags_unidades_unidade_id_fkey"
+            columns: ["unidade_id"]
+            isOneToOne: false
+            referencedRelation: "unidades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      processos_versoes: {
+        Row: {
+          descricao_snapshot: string | null
+          id: string
+          motivo_alteracao: string | null
+          narrativa_snapshot: string | null
+          natureza_snapshot: string | null
+          nome_snapshot: string
+          numero: number
+          passos_snapshot: Json | null
+          processo_id: string
+          publicado_em: string
+          publicado_por: string | null
+          tags_snapshot: Json | null
+        }
+        Insert: {
+          descricao_snapshot?: string | null
+          id?: string
+          motivo_alteracao?: string | null
+          narrativa_snapshot?: string | null
+          natureza_snapshot?: string | null
+          nome_snapshot: string
+          numero: number
+          passos_snapshot?: Json | null
+          processo_id: string
+          publicado_em?: string
+          publicado_por?: string | null
+          tags_snapshot?: Json | null
+        }
+        Update: {
+          descricao_snapshot?: string | null
+          id?: string
+          motivo_alteracao?: string | null
+          narrativa_snapshot?: string | null
+          natureza_snapshot?: string | null
+          nome_snapshot?: string
+          numero?: number
+          passos_snapshot?: Json | null
+          processo_id?: string
+          publicado_em?: string
+          publicado_por?: string | null
+          tags_snapshot?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "processos_versoes_processo_id_fkey"
+            columns: ["processo_id"]
+            isOneToOne: false
+            referencedRelation: "processos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "processos_versoes_processo_id_fkey"
+            columns: ["processo_id"]
+            isOneToOne: false
+            referencedRelation: "processos_unificados"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           acesso_ativado_em: string | null
@@ -4123,6 +4573,7 @@ export type Database = {
           descricao: string | null
           id: string
           nome: string
+          processos_id: string | null
           tipo_colaborador: string | null
           tipo_processo: string
           updated_at: string
@@ -4134,6 +4585,7 @@ export type Database = {
           descricao?: string | null
           id?: string
           nome: string
+          processos_id?: string | null
           tipo_colaborador?: string | null
           tipo_processo: string
           updated_at?: string
@@ -4145,6 +4597,7 @@ export type Database = {
           descricao?: string | null
           id?: string
           nome?: string
+          processos_id?: string | null
           tipo_colaborador?: string | null
           tipo_processo?: string
           updated_at?: string
@@ -4155,6 +4608,20 @@ export type Database = {
             columns: ["categoria_id"]
             isOneToOne: false
             referencedRelation: "sncf_processos_categorias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sncf_templates_processos_processos_id_fkey"
+            columns: ["processos_id"]
+            isOneToOne: false
+            referencedRelation: "processos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sncf_templates_processos_processos_id_fkey"
+            columns: ["processos_id"]
+            isOneToOne: false
+            referencedRelation: "processos_unificados"
             referencedColumns: ["id"]
           },
         ]
@@ -4836,6 +5303,60 @@ export type Database = {
         }
         Relationships: []
       }
+      processos_unificados: {
+        Row: {
+          area_negocio_id: string | null
+          area_nome: string | null
+          codigo: string | null
+          consultas_30d: number | null
+          created_at: string | null
+          descricao: string | null
+          id: string | null
+          narrativa: string | null
+          natureza_valor: string | null
+          nome: string | null
+          owner_nome: string | null
+          owner_perfil_codigo: string | null
+          owner_user_id: string | null
+          sensivel: boolean | null
+          status_valor: string | null
+          sugestoes_pendentes: number | null
+          tags_areas: Json | null
+          tags_cargos: Json | null
+          tags_departamentos: Json | null
+          tags_sistemas: Json | null
+          tags_tipos_colaborador: Json | null
+          tags_unidades: Json | null
+          template_sncf_id: string | null
+          total_consultas: number | null
+          updated_at: string | null
+          versao_atual: number | null
+          versao_vigente_em: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "processos_area_negocio_id_fkey"
+            columns: ["area_negocio_id"]
+            isOneToOne: false
+            referencedRelation: "parametros"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "processos_owner_perfil_codigo_fkey"
+            columns: ["owner_perfil_codigo"]
+            isOneToOne: false
+            referencedRelation: "perfis"
+            referencedColumns: ["codigo"]
+          },
+          {
+            foreignKeyName: "processos_template_sncf_id_fkey"
+            columns: ["template_sncf_id"]
+            isOneToOne: false
+            referencedRelation: "sncf_templates_processos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       aplicar_template_cargo: {
@@ -4989,6 +5510,10 @@ export type Database = {
         Args: { _user_id: string }
         Returns: Json
       }
+      processos_publicar_versao: {
+        Args: { _motivo?: string; _processo_id: string }
+        Returns: number
+      }
       read_email_batch: {
         Args: { batch_size: number; queue_name: string; vt: number }
         Returns: {
@@ -5029,6 +5554,10 @@ export type Database = {
           _tabela: string
         }
         Returns: string
+      }
+      registrar_consulta_processo: {
+        Args: { _processo_id: string }
+        Returns: undefined
       }
       revogar_acessos_ex_colaboradores: { Args: never; Returns: number }
       submit_convite_cadastro: {

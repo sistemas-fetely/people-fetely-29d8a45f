@@ -23,7 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  MODULOS_ORIGEM,
+  useModulosOrigem,
   NATUREZAS,
   ICONES_DISPONIVEIS,
   CORES_PALETA,
@@ -40,6 +40,7 @@ interface Props {
 
 export function NovaCategoriaDialog({ open, onOpenChange, onSaved, categoria }: Props) {
   const isEdit = !!categoria?.id;
+  const { data: modulosOrigem = [] } = useModulosOrigem();
   const [nome, setNome] = useState("");
   const [slug, setSlug] = useState("");
   const [slugTouched, setSlugTouched] = useState(false);
@@ -152,7 +153,7 @@ export function NovaCategoriaDialog({ open, onOpenChange, onSaved, categoria }: 
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {MODULOS_ORIGEM.map((m) => (
+                  {modulosOrigem.map((m) => (
                     <SelectItem key={m.value} value={m.value}>
                       {m.label}
                     </SelectItem>
