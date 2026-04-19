@@ -108,6 +108,18 @@ Pessoas.tsx agora prioriza `contato_nome` (pessoa física) em vez de `nome_fanta
 
 ColaboradorDetalhe e ContratoPJDetalhe aceitam `location.state.from` — quando chegada via /pessoas, voltar volta pra /pessoas; quando via /colaboradores ou /contratos-pj, mantém comportamento original. Fallback seguro garante zero regressão.
 
+### P-10 · Revogação automática de acesso D+30 (LGPD) ✅
+
+**Concluído em:** 19/04/2026  
+
+Job pg_cron diário às 03:00 UTC agendado: `revogar_acessos_ex_colaboradores_diario`. Função corrigida bônus — PJ agora usa `data_fim` (campo correto), não `data_desligamento` (bug histórico silencioso). View `revogacoes_acesso_historico` para auditoria LGPD (Dra. Renata). Execução manual feita para processar pendências acumuladas.
+
+### M-BC-01 · Conhecimento — área de negócio no lugar de perfil ✅
+
+**Concluído em:** 19/04/2026  
+
+Campo `area_negocio` adicionado em `base_conhecimento`. Tela `/fala-fetely/conhecimento` agora usa dropdown que lê `parametros` categoria `area_negocio` (regra arquitetural: dimensões via tabela). Badge 🎯 exibe área na lista. Campo antigo `publico_alvo` mantido como deprecated para compatibilidade.
+
 ---
 
 ## 🔴 ALTA PRIORIDADE
