@@ -1,6 +1,7 @@
 import { Outlet } from "react-router-dom";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { SNCFSidebar } from "@/components/SNCFSidebar";
+import { ReportarErroBotao } from "@/components/shared/ReportarErroBotao";
 
 export default function SNCFLayout() {
   return (
@@ -11,8 +12,9 @@ export default function SNCFLayout() {
           <header className="h-14 flex items-center border-b border-border bg-card px-4">
             <SidebarTrigger />
           </header>
-          <main className="flex-1 p-6 overflow-auto bg-background">
+          <main className="flex-1 p-6 overflow-auto bg-background relative">
             <Outlet />
+            <ReportarErroBotao />
           </main>
         </div>
       </div>

@@ -67,6 +67,7 @@ import FalaFetelyConhecimento from "@/pages/fala-fetely/Conhecimento";
 import MinhasMemorias from "@/pages/fala-fetely/MinhasMemorias";
 import MeusDados from "@/pages/MeusDados";
 import MeusAcessos from "@/pages/MeusAcessos";
+import SistemaReportes from "@/pages/admin/SistemaReportes";
 
 const queryClient = new QueryClient();
 
@@ -298,6 +299,11 @@ const App = () => (
               <Route path="/cargos/:id" element={
                 <ProtectedRoute permModule="parametros">
                   <CargoForm />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/reportes" element={
+                <ProtectedRoute allowedRoles={["super_admin", "admin_rh"]}>
+                  <SistemaReportes />
                 </ProtectedRoute>
               } />
               </Route>

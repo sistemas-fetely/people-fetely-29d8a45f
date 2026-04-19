@@ -2,6 +2,7 @@ import {
   LayoutDashboard, Users, GitBranch, UserSearch, MailPlus, Rocket,
   ArrowLeftRight, Award, BookOpen, Receipt, Clock, CreditCard, FileText,
   Palmtree, Gift, BarChart3, Banknote, Sliders, Settings, LogOut, LayoutGrid,
+  MessageSquareWarning,
 } from "lucide-react";
 
 import { NavLink } from "@/components/NavLink";
@@ -91,6 +92,7 @@ const configItems: MenuItem[] = [
   { title: "Cargos e Salários", url: "/cargos", icon: Banknote, permModule: "parametros", requireRole: "__admin_rh_or_super__" },
   { title: "Parâmetros", url: "/parametros", icon: Sliders, permModule: "parametros", requireRole: "__admin_rh_or_super__" },
   { title: "Configurações", url: "/configuracoes", icon: Settings, permModule: "usuarios", requireRole: "__admin_rh_or_super__" },
+  { title: "Reportes do Sistema", url: "/admin/reportes", icon: MessageSquareWarning, requireRole: "__admin_rh_or_super__" },
 ];
 
 interface MenuGroupProps {
