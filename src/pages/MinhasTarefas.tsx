@@ -330,6 +330,10 @@ export default function MinhasTarefas() {
       setSubmeterNFTarefa(t);
       return;
     }
+    if (t.tipo_processo === "aprovacao_nf") {
+      setAprovarNFTarefa(t);
+      return;
+    }
     setConcluirTarefa(t);
     setEvidenciaTexto("");
     setEvidenciaUrl("");
