@@ -3729,6 +3729,8 @@ export type Database = {
           descricao: string | null
           diagrama_mermaid: string | null
           id: string
+          importacao_pdf_id: string | null
+          importado_de_pdf: boolean | null
           narrativa: string | null
           natureza_valor: string
           nome: string
@@ -3736,6 +3738,7 @@ export type Database = {
           owner_user_id: string | null
           sensivel: boolean
           status_valor: string
+          tags: string[] | null
           template_sncf_id: string | null
           updated_at: string
           versao_atual: number
@@ -3749,6 +3752,8 @@ export type Database = {
           descricao?: string | null
           diagrama_mermaid?: string | null
           id?: string
+          importacao_pdf_id?: string | null
+          importado_de_pdf?: boolean | null
           narrativa?: string | null
           natureza_valor?: string
           nome: string
@@ -3756,6 +3761,7 @@ export type Database = {
           owner_user_id?: string | null
           sensivel?: boolean
           status_valor?: string
+          tags?: string[] | null
           template_sncf_id?: string | null
           updated_at?: string
           versao_atual?: number
@@ -3769,6 +3775,8 @@ export type Database = {
           descricao?: string | null
           diagrama_mermaid?: string | null
           id?: string
+          importacao_pdf_id?: string | null
+          importado_de_pdf?: boolean | null
           narrativa?: string | null
           natureza_valor?: string
           nome?: string
@@ -3776,6 +3784,7 @@ export type Database = {
           owner_user_id?: string | null
           sensivel?: boolean
           status_valor?: string
+          tags?: string[] | null
           template_sncf_id?: string | null
           updated_at?: string
           versao_atual?: number
@@ -3787,6 +3796,13 @@ export type Database = {
             columns: ["area_negocio_id"]
             isOneToOne: false
             referencedRelation: "parametros"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "processos_importacao_pdf_id_fkey"
+            columns: ["importacao_pdf_id"]
+            isOneToOne: false
+            referencedRelation: "processos_importacoes_pdf"
             referencedColumns: ["id"]
           },
           {

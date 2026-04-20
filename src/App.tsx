@@ -63,6 +63,7 @@ import TarefasDoTime from "@/pages/TarefasDoTime";
 import Processos from "@/pages/Processos";
 import ProcessoDetalhe from "@/pages/ProcessoDetalhe";
 import ProcessoEditor from "@/pages/ProcessoEditor";
+import ImportarProcessoPdf from "@/pages/processos/ImportarProcessoPdf";
 import DesligamentoDetalhe from "@/pages/DesligamentoDetalhe";
 import FalaFetely from "@/pages/FalaFetely";
 import FalaFetelyConhecimento from "@/pages/fala-fetely/Conhecimento";
@@ -117,6 +118,11 @@ const App = () => (
               <Route path="/gerenciar-usuarios" element={<Navigate to="/admin/usuarios" replace />} />
               <Route path="/gerenciar-usuarios/perfis" element={<Navigate to="/admin/usuarios/perfis" replace />} />
               <Route path="/processos" element={<Processos />} />
+              <Route path="/processos/importar" element={
+                <ProtectedRoute allowedRoles={["super_admin", "admin_rh"]}>
+                  <ImportarProcessoPdf />
+                </ProtectedRoute>
+              } />
               <Route path="/processos/:id" element={<ProcessoDetalhe />} />
               <Route path="/processos/:id/editar" element={<ProcessoEditor />} />
               <Route path="/templates" element={<Navigate to="/processos" replace />} />

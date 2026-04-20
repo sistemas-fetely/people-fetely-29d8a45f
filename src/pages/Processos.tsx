@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Plus, Search, FileText, Users, Building2, MapPin, Briefcase,
-  Monitor, Filter, Loader2, Eye, AlertCircle,
+  Monitor, Filter, Loader2, Eye, AlertCircle, Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -98,9 +98,19 @@ export default function Processos() {
           </p>
         </div>
         {podeEditar && (
-          <Button onClick={() => navigate("/processos/novo/editar")} className="gap-2">
-            <Plus className="h-4 w-4" /> Novo processo
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => navigate("/processos/importar")}
+              className="gap-1.5"
+            >
+              <Sparkles className="h-3.5 w-3.5 text-purple-500" />
+              Importar de PDF
+            </Button>
+            <Button onClick={() => navigate("/processos/novo/editar")} className="gap-2">
+              <Plus className="h-4 w-4" /> Novo processo
+            </Button>
+          </div>
         )}
       </div>
 
