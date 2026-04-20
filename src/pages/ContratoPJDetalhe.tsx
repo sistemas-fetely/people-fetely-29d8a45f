@@ -34,6 +34,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { useCLevelCargos } from "@/hooks/useCLevelCargos";
 import type { Tables } from "@/integrations/supabase/types";
 
+import { SmartBackButton } from "@/components/SmartBackButton";
 import { StepDadosPessoaisPJ } from "@/components/contrato-pj/StepDadosPessoaisPJ";
 import { StepDocumentosPJ } from "@/components/contrato-pj/StepDocumentosPJ";
 import { StepDadosProfissionaisPJ } from "@/components/contrato-pj/StepDadosProfissionaisPJ";

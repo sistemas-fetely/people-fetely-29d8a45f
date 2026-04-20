@@ -23,6 +23,7 @@ import { ConviteDadosEmpresaCLT } from "@/components/convite-detalhe/ConviteDado
 import { ConviteDadosProfissionaisPJ } from "@/components/convite-detalhe/ConviteDadosProfissionaisPJ";
 import { getTarefasDinamicas } from "@/lib/onboarding-tarefas";
 import { useAuth } from "@/contexts/AuthContext";
+import { SmartBackButton } from "@/components/SmartBackButton";
 import { fetchExtensoesAplicaveis } from "@/hooks/useExtensoesAplicaveis";
 import { SystemReadinessBanner } from "@/components/shared/SystemReadinessBanner";
 

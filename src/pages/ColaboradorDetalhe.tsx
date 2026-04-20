@@ -37,6 +37,7 @@ import { useParametros } from "@/hooks/useParametros";
 import { useQuery } from "@tanstack/react-query";
 import type { Tables } from "@/integrations/supabase/types";
 
+import { SmartBackButton } from "@/components/SmartBackButton";
 import { StepDadosPessoais } from "@/components/colaborador-clt/StepDadosPessoais";
 import { StepDocumentos } from "@/components/colaborador-clt/StepDocumentos";
 import { StepDadosProfissionais } from "@/components/colaborador-clt/StepDadosProfissionais";

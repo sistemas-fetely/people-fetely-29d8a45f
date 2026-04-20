@@ -22,6 +22,7 @@ import {
 import {
   Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { SmartBackButton } from "@/components/SmartBackButton";
 
 type Tarefa = {
   id: string;
