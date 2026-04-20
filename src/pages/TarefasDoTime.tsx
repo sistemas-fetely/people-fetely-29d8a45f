@@ -5,7 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import {
   Users, AlertTriangle, ChevronDown, ChevronUp, MoreVertical, CheckCircle2,
-  ArrowLeftRight, Eye, Loader2, ShieldAlert,
+  ArrowLeftRight, Eye, Loader2, ShieldAlert, UserPlus,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -18,7 +18,10 @@ import {
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { NovaTarefaDialog } from "@/components/tarefas/NovaTarefaDialog";
+import { BadgePredictor } from "@/components/tarefas/BadgePredictor";
 
 interface Subordinado {
   id: string; // profile.id ou colaborador.id
@@ -64,6 +67,7 @@ export default function TarefasDoTime() {
   const [filtro, setFiltro] = useState<Filtro>("todos");
   const [reatribuirTarefa, setReatribuirTarefa] = useState<TarefaTime | null>(null);
   const [novoResponsavel, setNovoResponsavel] = useState<string>("");
+  const [criarTarefaPara, setCriarTarefaPara] = useState<{ user_id: string; nome: string } | null>(null);
 
   const isAdminAmplo = roles?.some((r) => ["super_admin", "admin_rh", "gestor_rh"].includes(r));
   const isGestorDireto = roles?.includes("gestor_direto" as never);
