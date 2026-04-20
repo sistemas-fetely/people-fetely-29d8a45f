@@ -88,9 +88,9 @@ export function SNCFSidebar() {
   const isAdminRHOrSuper = roles.some((r) => ["super_admin", "admin_rh"].includes(r));
   const { data: contratoPJ } = useMeuContratoPJ();
 
-  const principalItemsFinal = contratoPJ
-    ? [...principalItems, minhasNotasItem]
-    : principalItems;
+  const operacionalItemsFinal = contratoPJ
+    ? [...operacionalItems, minhasNotasItem]
+    : operacionalItems;
 
   const { data: qtdSugestoesPendentes = 0 } = useQuery({
     queryKey: ["sugestoes-conhecimento-pendentes"],
@@ -218,7 +218,9 @@ export function SNCFSidebar() {
       </SidebarHeader>
 
       <SidebarContent className="px-2 space-y-1">
-        {renderGroup("Principal", principalItemsFinal)}
+        {renderGroup("Operacional", operacionalItemsFinal)}
+        <div className="mx-4 border-t border-sidebar-border/40" />
+        {renderGroup("Celebração & Conversa", celebracaoItems)}
         {canSee("admin_rh_or_super") && <div className="mx-4 border-t border-sidebar-border/40" />}
         {renderGroup("Administração", adminItems)}
 
