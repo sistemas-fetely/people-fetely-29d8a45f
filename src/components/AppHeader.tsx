@@ -12,6 +12,8 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useTrackPageVisit } from "@/hooks/useTrackPageVisit";
+import { RecentesEFavoritos } from "@/components/navegacao/RecentesEFavoritos";
 
 const routeNames: Record<string, string> = {
   "/": "Dashboard",
@@ -47,6 +49,7 @@ export function AppHeader() {
   const { user } = useAuth();
   const pageName = routeNames[location.pathname] || "Página";
   const [darkMode, setDarkMode] = useState(false);
+  useTrackPageVisit();
   const [notificacoes, setNotificacoes] = useState<Notificacao[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
 
@@ -118,6 +121,8 @@ export function AppHeader() {
         <Button variant="ghost" size="icon" className="relative h-9 w-9 rounded-xl hover:bg-accent" onClick={toggleDark}>
           {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
         </Button>
+
+        <RecentesEFavoritos />
 
         <Popover>
           <PopoverTrigger asChild>

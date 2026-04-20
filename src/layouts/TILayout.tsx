@@ -6,12 +6,15 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Loader2, Home, Monitor } from "lucide-react";
+import { useTrackPageVisit } from "@/hooks/useTrackPageVisit";
+import { RecentesEFavoritos } from "@/components/navegacao/RecentesEFavoritos";
 
 export default function TILayout() {
   const { user, roles } = useAuth();
   const navigate = useNavigate();
   const [checking, setChecking] = useState(true);
   const [hasAccess, setHasAccess] = useState(false);
+  useTrackPageVisit();
 
   useEffect(() => {
     if (!user) {
@@ -78,6 +81,9 @@ export default function TILayout() {
             <span className="text-muted-foreground/40">|</span>
             <Monitor className="h-4 w-4 text-muted-foreground" />
             <h1 className="text-sm font-semibold">TI Fetely</h1>
+            <div className="ml-auto">
+              <RecentesEFavoritos />
+            </div>
           </header>
           <main className="flex-1 p-6 overflow-auto bg-background">
             <Outlet />
