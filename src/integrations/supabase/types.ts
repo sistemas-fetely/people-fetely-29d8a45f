@@ -5545,6 +5545,69 @@ export type Database = {
         }
         Relationships: []
       }
+      usuario_paginas_favoritas: {
+        Row: {
+          criado_em: string
+          icone: string | null
+          id: string
+          ordem: number | null
+          pilar: string | null
+          rota: string
+          titulo: string
+          user_id: string
+        }
+        Insert: {
+          criado_em?: string
+          icone?: string | null
+          id?: string
+          ordem?: number | null
+          pilar?: string | null
+          rota: string
+          titulo: string
+          user_id: string
+        }
+        Update: {
+          criado_em?: string
+          icone?: string | null
+          id?: string
+          ordem?: number | null
+          pilar?: string | null
+          rota?: string
+          titulo?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      usuario_paginas_recentes: {
+        Row: {
+          acessado_em: string
+          icone: string | null
+          id: string
+          pilar: string | null
+          rota: string
+          titulo: string
+          user_id: string
+        }
+        Insert: {
+          acessado_em?: string
+          icone?: string | null
+          id?: string
+          pilar?: string | null
+          rota: string
+          titulo: string
+          user_id: string
+        }
+        Update: {
+          acessado_em?: string
+          icone?: string | null
+          id?: string
+          pilar?: string | null
+          rota?: string
+          titulo?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       vagas: {
         Row: {
           area: string
