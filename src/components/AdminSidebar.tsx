@@ -1,6 +1,7 @@
 import { useLocation } from "react-router-dom";
 import {
-  Banknote, Sliders, Settings, UserCog, MessageSquareWarning, Shield, Home, FileText,
+  Banknote, Sliders, Settings, UserCog, MessageSquareWarning, Shield, FileText,
+  LayoutGrid, Users, Monitor,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { cn } from "@/lib/utils";
@@ -108,18 +109,56 @@ export function AdminSidebar() {
         {renderGroup("Sistema", sistemaItems)}
         <div className="mx-4 border-t border-sidebar-border/40" />
         {renderGroup("Saúde do Sistema", monitoramentoItems)}
+
+        {/* Sistemas Fetely — navegação cross-pilar */}
+        <div className="mx-4 border-t border-sidebar-border/40" />
+        <SidebarGroup>
+          {!collapsed && (
+            <SidebarGroupLabel className="text-sidebar-muted text-[10px] uppercase tracking-widest font-semibold mb-1 px-4">
+              Sistemas Fetely
+            </SidebarGroupLabel>
+          )}
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <NavLink
+                    to="/sncf"
+                    className="flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-all duration-200"
+                  >
+                    <LayoutGrid className="h-[18px] w-[18px] shrink-0" />
+                    {!collapsed && <span>Portal Uauuu</span>}
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <NavLink
+                    to="/dashboard"
+                    className="flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-all duration-200"
+                  >
+                    <Users className="h-[18px] w-[18px] shrink-0" />
+                    {!collapsed && <span>People Fetely</span>}
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <NavLink
+                    to="/ti"
+                    className="flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-all duration-200"
+                  >
+                    <Monitor className="h-[18px] w-[18px] shrink-0" />
+                    {!collapsed && <span>TI Fetely</span>}
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
       </SidebarContent>
 
       <SidebarFooter className="p-4 space-y-2">
-        {/* Voltar ao Portal — link visível mesmo colapsado */}
-        <NavLink
-          to="/sncf"
-          className="flex items-center gap-2 px-2 py-1.5 rounded-md text-xs text-sidebar-muted hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors"
-        >
-          <Home className="h-3.5 w-3.5 shrink-0" />
-          {!collapsed && <span>Portal Uauuu</span>}
-        </NavLink>
-
         {!collapsed && (
           <Badge variant="outline" className="text-[10px] w-fit border-sidebar-border/60 text-sidebar-muted">
             Área restrita
