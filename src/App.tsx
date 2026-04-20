@@ -55,7 +55,7 @@ import AdminLayout from "@/layouts/AdminLayout";
 import SNCFLayout from "@/layouts/SNCFLayout";
 import TIDashboard from "@/pages/ti/TIDashboard";
 import TIAtivos from "@/pages/ti/TIAtivos";
-import DocumentacaoViva from "@/pages/ti/DocumentacaoViva";
+
 import DocumentacaoDetalhe from "@/pages/ti/DocumentacaoDetalhe";
 import DocumentacaoForm from "@/pages/ti/DocumentacaoForm";
 import MinhasTarefas from "@/pages/MinhasTarefas";
