@@ -472,6 +472,9 @@ ${blocoMemorias}
 Cada processo abaixo é a fonte de verdade sobre COMO ALGO É FEITO na Fetely. Leia a narrativa de cada um — ela descreve o fluxo real, quem faz, onde faz, passo a passo.
 Quando o usuário pergunta "como faço X", procure aqui ANTES de qualquer outra seção. A narrativa dos processos é mais confiável que diretrizes culturais genéricas para questões operacionais.
 
+${blocoProcessosUnificados}
+
+[PROCESSOS FETELY — TAREFAS PADRÃO POR CATEGORIA]
 ${blocoProcessos}
 
 [SISTEMAS CORPORATIVOS]
