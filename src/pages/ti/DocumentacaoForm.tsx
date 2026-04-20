@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { SmartBackButton } from "@/components/SmartBackButton";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -93,9 +94,7 @@ export default function DocumentacaoForm() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-3">
-        <Button variant="ghost" size="sm" onClick={() => navigate("/ti/documentacao")} className="gap-1">
-          <ArrowLeft className="h-4 w-4" /> Voltar
-        </Button>
+        <SmartBackButton fallback="/documentacao" fallbackLabel="Documentação" />
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={() => navigate("/ti/documentacao")} className="gap-2">
             <X className="h-4 w-4" /> Cancelar

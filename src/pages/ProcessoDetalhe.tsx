@@ -5,6 +5,7 @@ import {
   Workflow, GitBranch, Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { SmartBackButton } from "@/components/SmartBackButton";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -149,9 +150,7 @@ export default function ProcessoDetalhe() {
     <div className="container mx-auto py-6 space-y-5 max-w-5xl">
       {/* Header */}
       <div className="flex items-center justify-between gap-2">
-        <Button variant="ghost" size="sm" onClick={() => navigate("/processos")} className="gap-2">
-          <ArrowLeft className="h-4 w-4" /> Voltar
-        </Button>
+        <SmartBackButton fallback="/processos" fallbackLabel="Processos" />
         <div className="flex items-center gap-2">
           {processo.sensivel && (
             <Badge variant="outline" className="gap-1 border-amber-500/40 text-amber-700">

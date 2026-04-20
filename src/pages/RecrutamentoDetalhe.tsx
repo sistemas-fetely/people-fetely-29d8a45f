@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 
 import { Button } from "@/components/ui/button";
+import { SmartBackButton } from "@/components/SmartBackButton";
 import { SalarioMasked } from "@/components/SalarioMasked";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -893,9 +894,7 @@ export default function RecrutamentoDetalhe() {
       {/* HEADER */}
       <div className="flex items-center justify-between px-6 py-4 border-b flex-shrink-0">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/recrutamento")}>
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
+          <SmartBackButton fallback="/recrutamento" fallbackLabel="Recrutamento" />
           <div>
             <h1 className="text-lg font-semibold">{vaga.titulo}</h1>
             <div className="flex items-center gap-2">
