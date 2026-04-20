@@ -54,6 +54,8 @@ interface Props {
   onCriada?: () => void;
   /** Se passado, abre em modo edição dessa tarefa */
   tarefaParaEditar?: TarefaParaEditar;
+  /** Pré-seleciona o responsável (ex: ao criar a partir do card de um colaborador) */
+  responsavelInicial?: { user_id: string; nome: string };
 }
 
 export function NovaTarefaDialog({ open, onOpenChange, onCriada, tarefaParaEditar }: Props) {
