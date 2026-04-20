@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useMeusAtalhos } from "@/hooks/useRegistrarNavegacao";
 import { MuralRotativo } from "@/components/mural/MuralRotativo";
-import { FaixaAniversariantes } from "@/components/mural/FaixaAniversariantes";
+import { ListaAniversariantesMes } from "@/components/mural/ListaAniversariantesMes";
 
 interface Sistema {
   id: string;
@@ -142,14 +142,14 @@ export default function PortalSNCF() {
         </p>
       </div>
 
-      {/* Mural Fetely — celebrações rotativas */}
-      <section>
-        <MuralRotativo />
-      </section>
-
-      {/* Faixa de aniversariantes e marcos do mês */}
-      <section>
-        <FaixaAniversariantes />
+      {/* Mural Fetely + Lista de aniversariantes — layout 2 colunas no desktop */}
+      <section className="grid grid-cols-1 lg:grid-cols-[65fr_35fr] gap-4">
+        <div className="min-w-0">
+          <MuralRotativo />
+        </div>
+        <div className="min-w-0 lg:max-h-[400px]">
+          <ListaAniversariantesMes />
+        </div>
       </section>
 
       {/* TOPO: Minhas Tarefas + Fala Fetely */}
