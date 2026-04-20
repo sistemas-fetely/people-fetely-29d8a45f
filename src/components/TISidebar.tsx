@@ -1,5 +1,4 @@
 import { LayoutDashboard, Monitor, Package, LogOut, LayoutGrid, ClipboardList, Users, Shield } from "lucide-react";
-import { useAuth as _useAuth } from "@/contexts/AuthContext";
 import { NavLink } from "@/components/NavLink";
 import { cn } from "@/lib/utils";
 import { useLocation } from "react-router-dom";
