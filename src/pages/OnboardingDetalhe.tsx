@@ -322,14 +322,9 @@ export default function OnboardingDetalhe() {
         {/* Header */}
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate("/onboarding")}
-              className="gap-1 mb-2 -ml-2"
-            >
-              <ArrowLeft className="h-4 w-4" /> Voltar
-            </Button>
+            <div className="mb-2 -ml-2">
+              <SmartBackButton fallback="/onboarding" fallbackLabel="Onboarding" />
+            </div>
             <h1 className="text-2xl font-bold">{checklist.nome}</h1>
             <p className="text-muted-foreground text-sm">
               {checklist.cargo} · {checklist.departamento} · {checklist.colaborador_tipo?.toUpperCase()}
