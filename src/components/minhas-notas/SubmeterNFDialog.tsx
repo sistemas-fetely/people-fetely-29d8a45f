@@ -265,9 +265,9 @@ export function SubmeterNFDialog({ open, onOpenChange, tarefaId, competencia }: 
               </div>
 
               {precisaClassificar && (
-                <div className="space-y-3 rounded-lg border border-amber-300 bg-amber-50 dark:bg-amber-950/10 p-3">
+                <div className="space-y-3 rounded-lg border border-warning/40 bg-warning/5 p-3">
                   <div className="flex items-start gap-2">
-                    <AlertCircle className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
+                    <AlertCircle className="h-4 w-4 text-warning mt-0.5 shrink-0" />
                     <div className="text-xs space-y-1">
                       <p className="font-medium">Valor diferente do contrato detectado</p>
                       <p className="text-muted-foreground">

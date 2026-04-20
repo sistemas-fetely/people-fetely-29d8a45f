@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { RadarOperacional } from "@/components/tarefas/RadarOperacional";
+import { SubmeterNFDialog } from "@/components/minhas-notas/SubmeterNFDialog";
 
 interface Tarefa {
   id: string;
@@ -92,6 +93,9 @@ export default function MinhasTarefas() {
 
   // Cancelar
   const [cancelarTarefa, setCancelarTarefa] = useState<Tarefa | null>(null);
+
+  // Submit NF (tarefa de emissao_nf)
+  const [submeterNFTarefa, setSubmeterNFTarefa] = useState<Tarefa | null>(null);
 
   // Quem vê a seção "Prioridades do Dia"
   const isGestorRH = (userRoles as string[]).includes("gestor_rh");
@@ -318,9 +322,18 @@ export default function MinhasTarefas() {
 
   // Ações
   const handleConcluir = (t: Tarefa) => {
+    if (t.tipo_processo === "emissao_nf") {
+      setSubmeterNFTarefa(t);
+      return;
+    }
     setConcluirTarefa(t);
     setEvidenciaTexto("");
     setEvidenciaUrl("");
+  };
+
+  const extrairCompetencia = (titulo: string): string => {
+    const match = titulo.match(/(\d{4}-\d{2})/);
+    return match ? match[1] : new Date().toISOString().slice(0, 7);
   };
 
   const confirmarConclusao = async () => {
@@ -938,6 +951,21 @@ export default function MinhasTarefas() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Dialog de submissão de NF (tarefa emissao_nf) */}
+      {submeterNFTarefa && (
+        <SubmeterNFDialog
+          open={!!submeterNFTarefa}
+          onOpenChange={(o) => {
+            if (!o) {
+              setSubmeterNFTarefa(null);
+              void loadTarefas();
+            }
+          }}
+          tarefaId={submeterNFTarefa.id}
+          competencia={extrairCompetencia(submeterNFTarefa.titulo)}
+        />
+      )}
     </div>
   );
 }
