@@ -94,7 +94,7 @@ export function AdminSidebar() {
           {!collapsed && (
             <div className="flex flex-col">
               <span className="text-sm font-bold tracking-tight" style={{ color: ADMIN_COLOR }}>
-                Administração
+                ADM SNCF
               </span>
               <span className="text-[11px] text-sidebar-muted">Configurações globais</span>
             </div>

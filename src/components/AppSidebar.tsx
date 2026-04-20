@@ -239,7 +239,7 @@ export function AppSidebar() {
                 className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-xs text-sidebar-muted hover:bg-sidebar-accent hover:text-sidebar-foreground transition-all duration-200"
               >
                 <Shield className="h-3.5 w-3.5" />
-                Área Administrativa
+                ADM SNCF
               </NavLink>
             )}
             <button
