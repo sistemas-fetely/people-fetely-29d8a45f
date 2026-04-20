@@ -62,7 +62,7 @@ export function CardCelebracao({ publicacao }: Props) {
 
   return (
     <div
-      className={`relative rounded-2xl border ${tema.bg} ${tema.border} p-5 transition-all duration-500`}
+      className={`relative rounded-2xl border ${tema.bg} ${tema.border} p-5 transition-all duration-500 h-full`}
     >
       <div className={`flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wider ${tema.destaque} mb-3`}>
         <Sparkles className="h-3 w-3" />
