@@ -475,6 +475,7 @@ export default function TarefasDoTime() {
                                       tarefa.colaborador_tipo === "clt"
                                         ? `/colaboradores/${tarefa.colaborador_id}`
                                         : `/contratos-pj/${tarefa.colaborador_id}`,
+                                      { state: { from: "/tarefas/time", fromLabel: "Tarefas do Time" } },
                                     )
                                   }
                                   className="gap-2"
