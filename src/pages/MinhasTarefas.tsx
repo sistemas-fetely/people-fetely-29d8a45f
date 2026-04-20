@@ -46,6 +46,7 @@ interface Tarefa {
   responsavel_user_id: string | null;
   accountable_user_id: string | null;
   prazo_data: string | null;
+  prazo_dias: number | null;
   status: string;
   concluida_em: string | null;
   bloqueante: boolean | null;
