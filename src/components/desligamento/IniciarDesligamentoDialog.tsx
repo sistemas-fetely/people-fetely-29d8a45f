@@ -145,7 +145,7 @@ export default function IniciarDesligamentoDialog({
       toast.success("Processo de desligamento iniciado");
       onOpenChange(false);
       onSuccess?.();
-      navigate(`/desligamento/${checklist.id}`);
+      navigate(`/desligamento/${checklist.id}`, { state: { from: "/pessoas", fromLabel: "Pessoas" } });
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Erro desconhecido";
       toast.error("Erro ao iniciar: " + msg);

@@ -109,7 +109,7 @@ export default function DocumentacaoGeral() {
           </p>
         </div>
         {isAdmin && (
-          <Button onClick={() => navigate("/documentacao/novo")} className="gap-2">
+          <Button onClick={() => navigate("/documentacao/novo", { state: { from: "/documentacao", fromLabel: "Documentação" } })} className="gap-2">
             <Plus className="h-4 w-4" />
             Novo documento
           </Button>
@@ -174,7 +174,7 @@ export default function DocumentacaoGeral() {
                     <Card
                       key={doc.id}
                       className="cursor-pointer hover:shadow-md transition-shadow"
-                      onClick={() => navigate(`/documentacao/${doc.slug}`)}
+                      onClick={() => navigate(`/documentacao/${doc.slug}`, { state: { from: "/documentacao", fromLabel: "Documentação" } })}
                     >
                       <CardContent className="pt-5 pb-4">
                         <div className="flex items-start justify-between gap-3">
