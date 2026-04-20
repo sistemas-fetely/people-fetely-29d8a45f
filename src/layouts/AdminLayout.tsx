@@ -1,11 +1,13 @@
-import { Navigate, Outlet } from "react-router-dom";
+import { Navigate, Outlet, useNavigate } from "react-router-dom";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AdminSidebar } from "@/components/AdminSidebar";
 import { useAuth } from "@/contexts/AuthContext";
-import { Loader2, Shield } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Loader2, Shield, Home } from "lucide-react";
 
 export default function AdminLayout() {
   const { user, roles, loading } = useAuth();
+  const navigate = useNavigate();
 
   if (loading) {
     return (
@@ -31,6 +33,17 @@ export default function AdminLayout() {
         <div className="flex-1 flex flex-col">
           <header className="h-14 flex items-center gap-3 border-b px-4 bg-card">
             <SidebarTrigger />
+            {/* Saída pro Portal — ação de retorno sempre visível */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate("/sncf")}
+              className="gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+            >
+              <Home className="h-3.5 w-3.5" />
+              Voltar ao Portal
+            </Button>
+            <span className="text-muted-foreground/40">|</span>
             <Shield className="h-4 w-4 text-muted-foreground" />
             <h1 className="text-sm font-semibold">Administração</h1>
           </header>
