@@ -981,6 +981,21 @@ export default function MinhasTarefas() {
           }
         />
       )}
+
+      {/* Dialog de aprovação de NF (tarefa aprovacao_nf — RH) */}
+      {aprovarNFTarefa && aprovarNFTarefa.processo_id && (
+        <AprovarNFDialog
+          open={!!aprovarNFTarefa}
+          onOpenChange={(o) => {
+            if (!o) {
+              setAprovarNFTarefa(null);
+              void loadTarefas();
+            }
+          }}
+          tarefaId={aprovarNFTarefa.id}
+          notaId={aprovarNFTarefa.processo_id}
+        />
+      )}
     </div>
   );
 }
