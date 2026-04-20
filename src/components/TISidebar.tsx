@@ -1,4 +1,5 @@
-import { LayoutDashboard, Monitor, Package, LogOut, LayoutGrid, ClipboardList } from "lucide-react";
+import { LayoutDashboard, Monitor, Package, LogOut, LayoutGrid, ClipboardList, Users, Shield } from "lucide-react";
+import { useAuth as _useAuth } from "@/contexts/AuthContext";
 import { NavLink } from "@/components/NavLink";
 import { cn } from "@/lib/utils";
 import { useLocation } from "react-router-dom";
@@ -56,21 +57,9 @@ export function TISidebar() {
       </SidebarHeader>
 
       <SidebarContent className="px-2 space-y-1">
-        {/* Voltar ao Portal SNCF */}
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <NavLink
-                    to="/sncf"
-                    className="flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-all duration-200"
-                  >
-                    <LayoutGrid className="h-[18px] w-[18px] shrink-0" />
-                    {!collapsed && <span>Portal SNCF</span>}
-                  </NavLink>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
               <SidebarMenuItem>
                 <SNCFQuickAccess />
               </SidebarMenuItem>
@@ -108,6 +97,55 @@ export function TISidebar() {
                   </SidebarMenuItem>
                 );
               })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Sistemas Fetely — navegação cross-pilar */}
+        <div className="mx-4 border-t border-sidebar-border/40" />
+        <SidebarGroup>
+          {!collapsed && (
+            <SidebarGroupLabel className="text-sidebar-muted text-[10px] uppercase tracking-widest font-semibold mb-1 px-4">
+              Sistemas Fetely
+            </SidebarGroupLabel>
+          )}
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <NavLink
+                    to="/sncf"
+                    className="flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-all duration-200"
+                  >
+                    <LayoutGrid className="h-[18px] w-[18px] shrink-0" />
+                    {!collapsed && <span>Portal Uauuu</span>}
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <NavLink
+                    to="/dashboard"
+                    className="flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-all duration-200"
+                  >
+                    <Users className="h-[18px] w-[18px] shrink-0" />
+                    {!collapsed && <span>People Fetely</span>}
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              {(roles.includes("super_admin") || roles.includes("admin_rh")) && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <NavLink
+                      to="/admin"
+                      className="flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-all duration-200"
+                    >
+                      <Shield className="h-[18px] w-[18px] shrink-0" />
+                      {!collapsed && <span>ADM SNCF</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
