@@ -5,9 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ImportarPdfDialog } from "@/components/processos/ImportarPdfDialog";
 import { RevisaoProcessoIA } from "@/components/processos/RevisaoProcessoIA";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 export default function ImportarProcessoPdf() {
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const [dialogAberto, setDialogAberto] = useState(true);
   const [resultadoUnico, setResultadoUnico] = useState<any>(null);
@@ -16,7 +20,7 @@ export default function ImportarProcessoPdf() {
   const [arquivoNome, setArquivoNome] = useState("");
 
   const handleProcessoUnico = (resultado: any, impId: string) => {
-    setResultadoUnico(resultado);
+    setResultadoUnico({ ...resultado, arquivo_nome: arquivoNome || resultado.arquivo_nome });
     setImportacaoId(impId);
     setDialogAberto(false);
   };
@@ -30,6 +34,39 @@ export default function ImportarProcessoPdf() {
 
   const handleCancel = () => {
     navigate("/processos");
+  };
+
+  // Quando Flavio escolhe 1 dos múltiplos, registra os outros como sugestão
+  const handleEscolherDosMultiplos = async (escolhido: any, indiceEscolhido: number) => {
+    if (!multiplos) return;
+
+    const naoEscolhidos = multiplos.filter((_, idx) => idx !== indiceEscolhido);
+
+    if (naoEscolhidos.length > 0 && user?.id) {
+      try {
+        const sugestoes = naoEscolhidos.map((p: any) => ({
+          processo_id: null,
+          titulo_sugerido: p.nome || `Processo de ${arquivoNome}`,
+          descricao: `${p.descricao || "Processo descoberto durante importação de PDF."}\n\n[Origem: importação PDF "${arquivoNome}" — não foi o escolhido inicialmente]`,
+          origem: "descoberto_em_importacao_pdf",
+          sugerido_por: user.id,
+          status: "pendente",
+        }));
+
+        const { error: errSug } = await supabase.from("processos_sugestoes").insert(sugestoes);
+
+        if (errSug) throw errSug;
+
+        toast.success(
+          `${naoEscolhidos.length} processo${naoEscolhidos.length > 1 ? "s" : ""} extra${naoEscolhidos.length > 1 ? "s" : ""} registrado${naoEscolhidos.length > 1 ? "s" : ""} como sugestão para importação futura.`
+        );
+      } catch (e: any) {
+        console.error("Erro ao registrar sugestões:", e);
+        toast.warning("Não conseguimos registrar os outros processos como sugestão (não bloqueia o atual).");
+      }
+    }
+
+    setResultadoUnico({ ...escolhido, arquivo_nome: arquivoNome });
   };
 
   // 1 processo único → tela de revisão
@@ -68,7 +105,7 @@ export default function ImportarProcessoPdf() {
             <Card
               key={idx}
               className="cursor-pointer hover:shadow-md hover:border-primary/30 transition-all"
-              onClick={() => setResultadoUnico(p)}
+              onClick={() => handleEscolherDosMultiplos(p, idx)}
             >
               <CardContent className="p-4">
                 <div className="flex items-start gap-3">
@@ -92,7 +129,7 @@ export default function ImportarProcessoPdf() {
             <ArrowLeft className="h-3.5 w-3.5 mr-1.5" /> Descartar tudo
           </Button>
           <p className="text-[10px] text-muted-foreground">
-            Os outros processos ficam registrados como sugestões para importação futura.
+            Ao escolher um, os outros são salvos como sugestões pra você importar depois.
           </p>
         </div>
       </div>

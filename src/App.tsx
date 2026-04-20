@@ -72,6 +72,7 @@ import MeusDados from "@/pages/MeusDados";
 import MeusAcessos from "@/pages/MeusAcessos";
 import MinhasNotas from "@/pages/MinhasNotas";
 import SistemaReportes from "@/pages/admin/SistemaReportes";
+import HistoricoImportacoesPDF from "@/pages/admin/HistoricoImportacoesPDF";
 import GestaoAVista from "@/pages/GestaoAVista";
 
 const queryClient = new QueryClient();
@@ -337,6 +338,11 @@ const App = () => (
               <Route path="reportes" element={
                 <ProtectedRoute allowedRoles={["super_admin", "admin_rh"]}>
                   <SistemaReportes />
+                </ProtectedRoute>
+              } />
+              <Route path="importacoes-pdf" element={
+                <ProtectedRoute allowedRoles={["super_admin", "admin_rh"]}>
+                  <HistoricoImportacoesPDF />
                 </ProtectedRoute>
               } />
             </Route>

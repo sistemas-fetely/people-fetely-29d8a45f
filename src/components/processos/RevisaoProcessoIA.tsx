@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Loader2, Save, Trash2, Plus, Sparkles, GripVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import { MermaidRenderer } from "@/components/processos/MermaidRenderer";
 
 interface Etapa {
   ordem: number;
@@ -48,6 +49,30 @@ const NATUREZAS = [
   { value: "mantem_valor", label: "Mantém valor" },
   { value: "reduz_risco", label: "Reduz risco" },
 ];
+
+// Preview Mermaid com debounce — reaproveita MermaidRenderer
+function MermaidLivePreview({ code }: { code: string }) {
+  const [debounced, setDebounced] = useState(code);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebounced(code), 500);
+    return () => clearTimeout(timer);
+  }, [code]);
+
+  if (!code.trim()) {
+    return (
+      <div className="h-[280px] border rounded-md bg-muted/20 flex items-center justify-center text-xs text-muted-foreground italic">
+        Sem código — preview vazio
+      </div>
+    );
+  }
+
+  return (
+    <div className="h-[280px] border rounded-md bg-card p-3 overflow-auto flex items-start justify-center">
+      <MermaidRenderer codigo={debounced} className="w-full [&_svg]:max-w-full [&_svg]:h-auto" />
+    </div>
+  );
+}
 
 export function RevisaoProcessoIA({ resultadoIa, importacaoId, onCancel }: Props) {
   const navigate = useNavigate();
@@ -166,6 +191,49 @@ export function RevisaoProcessoIA({ resultadoIa, importacaoId, onCancel }: Props
             processos_criados: [processoCriado.id],
           })
           .eq("id", importacaoId);
+      }
+
+      // Criar entrada RASCUNHO no Fala Fetely para revisão admin
+      try {
+        const conteudoFalaFetely = [
+          `**${nome.trim()}**`,
+          descricao.trim() || "",
+          "",
+          "## Narrativa",
+          narrativa.trim() || "",
+          "",
+          etapas.length > 0 ? "## Etapas" : "",
+          ...etapas.map((e) => `${e.ordem}. **${e.titulo}** — ${e.descricao}${e.responsavel ? ` (resp: ${e.responsavel})` : ""}`),
+          "",
+          kpis.length > 0 ? "## KPIs candidatos" : "",
+          ...kpis.map((k) => `- ${k.nome}${k.unidade ? ` (${k.unidade})` : ""}`),
+        ].filter(Boolean).join("\n");
+
+        const tagsFalaFetely = [
+          ...tags,
+          "auto-gerado-pdf",
+          "revisar-antes-de-publicar",
+        ];
+
+        // Buscar user atual pra criado_por
+        const { data: { user: usr } } = await supabase.auth.getUser();
+
+        await supabase.from("fala_fetely_conhecimento").insert({
+          categoria: "diretriz", // categoria mais próxima de "processo" no CHECK
+          titulo: nome.trim(),
+          conteudo: conteudoFalaFetely,
+          area_negocio: area,
+          publico_alvo: "admin_rh",
+          fonte: `Importação PDF · ${(resultadoIa as any).arquivo_nome || "PDF importado"}`,
+          tags: tagsFalaFetely,
+          ativo: false, // RASCUNHO — admin precisa aprovar
+          origem: "sugestao_ia",
+          criado_por: usr?.id || null,
+          sugerido_por: usr?.id || null,
+        });
+      } catch (e: any) {
+        console.error("Erro ao criar entrada Fala Fetely:", e);
+        // Não bloqueia o fluxo do processo principal
       }
 
       toast.success("Processo criado como rascunho!");
@@ -391,20 +459,32 @@ export function RevisaoProcessoIA({ resultadoIa, importacaoId, onCancel }: Props
         </CardContent>
       </Card>
 
-      {/* Diagrama Mermaid */}
+      {/* Diagrama Mermaid com preview */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Diagrama (Mermaid)</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base">Diagrama (Mermaid)</CardTitle>
+            <p className="text-[10px] text-muted-foreground">Edite à esquerda · preview à direita</p>
+          </div>
         </CardHeader>
         <CardContent>
-          <Textarea
-            value={diagramaMermaid}
-            onChange={(e) => setDiagramaMermaid(e.target.value)}
-            rows={6}
-            className="font-mono text-xs"
-            placeholder="flowchart TD..."
-          />
-          <p className="text-[10px] text-muted-foreground mt-1">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+            <div>
+              <Label className="text-xs text-muted-foreground mb-1 block">Código</Label>
+              <Textarea
+                value={diagramaMermaid}
+                onChange={(e) => setDiagramaMermaid(e.target.value)}
+                rows={10}
+                className="font-mono text-xs h-[280px] resize-none"
+                placeholder="flowchart TD..."
+              />
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground mb-1 block">Preview</Label>
+              <MermaidLivePreview code={diagramaMermaid} />
+            </div>
+          </div>
+          <p className="text-[10px] text-muted-foreground mt-2">
             Sugestão gerada pela IA. Você pode editar ou apagar.
           </p>
         </CardContent>

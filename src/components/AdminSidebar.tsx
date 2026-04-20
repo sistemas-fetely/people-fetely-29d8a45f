@@ -1,6 +1,6 @@
 import { useLocation } from "react-router-dom";
 import {
-  Banknote, Sliders, Settings, UserCog, MessageSquareWarning, Shield, Home,
+  Banknote, Sliders, Settings, UserCog, MessageSquareWarning, Shield, Home, FileText,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { cn } from "@/lib/utils";
@@ -35,6 +35,7 @@ const sistemaItems: MenuItem[] = [
 // Grupo 3: Saúde do Sistema
 const monitoramentoItems: MenuItem[] = [
   { title: "Reportes do Sistema", url: "/admin/reportes", icon: MessageSquareWarning },
+  { title: "Importações PDF", url: "/admin/importacoes-pdf", icon: FileText },
 ];
 
 export function AdminSidebar() {
