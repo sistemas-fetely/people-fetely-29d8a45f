@@ -68,6 +68,7 @@ import FalaFetelyConhecimento from "@/pages/fala-fetely/Conhecimento";
 import MinhasMemorias from "@/pages/fala-fetely/MinhasMemorias";
 import MeusDados from "@/pages/MeusDados";
 import MeusAcessos from "@/pages/MeusAcessos";
+import MinhasNotas from "@/pages/MinhasNotas";
 import SistemaReportes from "@/pages/admin/SistemaReportes";
 import GestaoAVista from "@/pages/GestaoAVista";
 
@@ -113,6 +114,7 @@ const App = () => (
               <Route path="/fala-fetely/memorias" element={<MinhasMemorias />} />
               <Route path="/meus-dados" element={<MeusDados />} />
               <Route path="/meus-acessos" element={<MeusAcessos />} />
+              <Route path="/minhas-notas" element={<MinhasNotas />} />
             </Route>
 
             {/* TI Fetely */}
