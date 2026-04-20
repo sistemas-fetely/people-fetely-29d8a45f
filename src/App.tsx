@@ -74,8 +74,15 @@ import MinhasNotas from "@/pages/MinhasNotas";
 import SistemaReportes from "@/pages/admin/SistemaReportes";
 import HistoricoImportacoesPDF from "@/pages/admin/HistoricoImportacoesPDF";
 import GestaoAVista from "@/pages/GestaoAVista";
+import DocumentacaoGeral from "@/pages/DocumentacaoGeral";
 
 const queryClient = new QueryClient();
+
+// Redirect dinâmico: /ti/documentacao/:slug → /documentacao/:slug
+function TiDocSlugRedirect() {
+  const { slug } = useParams();
+  return <Navigate to={`/documentacao/${slug}`} replace />;
+}
 
 // Wrappers de compatibilidade: rotas antigas redirecionam pra /pessoas com filtro aplicado
 function RedirectToPessoasCLT() {
@@ -134,15 +141,20 @@ const App = () => (
               <Route path="/meus-dados" element={<MeusDados />} />
               <Route path="/meus-acessos" element={<MeusAcessos />} />
               <Route path="/minhas-notas" element={<MinhasNotas />} />
+              {/* Documentação transversal — antes ficava em /ti/documentacao */}
+              <Route path="/documentacao" element={<DocumentacaoGeral />} />
+              <Route path="/documentacao/novo" element={<DocumentacaoForm />} />
+              <Route path="/documentacao/:slug" element={<DocumentacaoDetalhe />} />
             </Route>
 
             {/* TI Fetely */}
             <Route path="/ti" element={<ProtectedRoute><TILayout /></ProtectedRoute>}>
               <Route index element={<TIDashboard />} />
               <Route path="ativos" element={<TIAtivos />} />
-              <Route path="documentacao" element={<DocumentacaoViva />} />
-              <Route path="documentacao/novo" element={<DocumentacaoForm />} />
-              <Route path="documentacao/:slug" element={<DocumentacaoDetalhe />} />
+              {/* Redirects legados — documentação migrou pra SNCF */}
+              <Route path="documentacao" element={<Navigate to="/documentacao" replace />} />
+              <Route path="documentacao/novo" element={<Navigate to="/documentacao/novo" replace />} />
+              <Route path="documentacao/:slug" element={<TiDocSlugRedirect />} />
             </Route>
 
             {/* Protected routes */}

@@ -60,6 +60,7 @@ const celebracaoItems: MenuItem[] = [
 // Grupo 3: Administrativo transversal
 const adminItems: MenuItem[] = [
   { title: "Processos", url: "/processos", icon: Workflow, requireRole: "admin_rh_or_super" },
+  { title: "Documentação", url: "/documentacao", icon: FileText },
   { title: "Base de Conhecimento", url: "/fala-fetely/conhecimento", icon: BookOpen, requireRole: "admin_rh_or_super" },
   { title: "Reportes do Sistema", url: "/admin/reportes", icon: MessageSquareWarning, requireRole: "admin_rh_or_super" },
   { title: "Gerenciar Usuários", url: "/gerenciar-usuarios", icon: UserCog, requireRole: "admin_rh_or_super" },
