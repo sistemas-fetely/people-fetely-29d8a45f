@@ -964,6 +964,13 @@ export default function MinhasTarefas() {
           }}
           tarefaId={submeterNFTarefa.id}
           competencia={extrairCompetencia(submeterNFTarefa.titulo)}
+          modoCorrecao={submeterNFTarefa.tipo_processo === "correcao_nf"}
+          notaAnteriorId={submeterNFTarefa.processo_id || undefined}
+          motivoCorrecao={
+            submeterNFTarefa.tipo_processo === "correcao_nf"
+              ? submeterNFTarefa.descricao || undefined
+              : undefined
+          }
         />
       )}
     </div>
