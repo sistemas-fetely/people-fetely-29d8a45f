@@ -902,7 +902,7 @@ function TabNotasFiscais({ contratoId }: { contratoId: string }) {
             ) : notas.length === 0 ? (
               <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Nenhuma nota fiscal cadastrada.</TableCell></TableRow>
             ) : notas.map((n) => (
-              <TableRow key={n.id} className="cursor-pointer hover:bg-muted/30" onClick={() => navigate(`/notas-fiscais/${n.id}`)}>
+              <TableRow key={n.id} className="cursor-pointer hover:bg-muted/30" onClick={() => navigate(`/notas-fiscais/${n.id}`, { state: { from: `/contratos-pj/${contratoId}`, fromLabel: "Contrato PJ" } })}>
                 <TableCell className="font-medium">{n.numero}{n.serie ? `/${n.serie}` : ""}</TableCell>
                 <TableCell>{n.competencia}</TableCell>
                 <TableCell>{format(parseISO(n.data_emissao), "dd/MM/yyyy")}</TableCell>

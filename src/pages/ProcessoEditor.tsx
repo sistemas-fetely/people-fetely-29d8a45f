@@ -159,7 +159,7 @@ export default function ProcessoEditor() {
         <p className="text-muted-foreground">
           Você não tem permissão para editar este processo.
         </p>
-        <Button variant="outline" onClick={() => navigate(`/processos/${id}`)} className="mt-4">
+        <Button variant="outline" onClick={() => navigate(`/processos/${id}`, { state: { from: "/processos", fromLabel: "Processos" } })} className="mt-4">
           Voltar ao detalhe
         </Button>
       </div>
@@ -257,7 +257,7 @@ export default function ProcessoEditor() {
 
       queryClient.invalidateQueries({ queryKey: ["processos"] });
       queryClient.invalidateQueries({ queryKey: ["processo-detalhe", processoId] });
-      navigate(`/processos/${processoId}`);
+      navigate(`/processos/${processoId}`, { state: { from: "/processos", fromLabel: "Processos" } });
     } catch (err: any) {
       toast.error(err.message || "Erro ao salvar");
     } finally {

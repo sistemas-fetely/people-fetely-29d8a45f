@@ -265,7 +265,7 @@ export default function Processos() {
             <Card
               key={p.id}
               className="cursor-pointer hover:shadow-md hover:border-primary/30 transition-all"
-              onClick={() => navigate(`/processos/${p.id}`)}
+              onClick={() => navigate(`/processos/${p.id}`, { state: { from: "/processos", fromLabel: "Processos" } })}
             >
               <CardContent className="p-4 space-y-3">
                 <div className="flex items-start justify-between gap-2">

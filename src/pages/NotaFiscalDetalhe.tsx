@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Edit, FileText, Building2, Calendar, DollarSign, Hash, Clock, ExternalLink, Mail, Send, CheckCircle2, ChevronRight, Upload, Download, Eye, Trash2, Loader2 as Loader2Icon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { SmartBackButton } from "@/components/SmartBackButton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -284,9 +285,7 @@ export default function NotaFiscalDetalhe() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/notas-fiscais")}>
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
+          <SmartBackButton fallback="/notas-fiscais" fallbackLabel="Notas Fiscais" />
           <div>
             <div className="flex items-center gap-3">
               <h1 className="text-2xl font-bold tracking-tight">
