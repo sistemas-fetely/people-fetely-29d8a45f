@@ -4,10 +4,13 @@ import { AdminSidebar } from "@/components/AdminSidebar";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Loader2, Shield, Home } from "lucide-react";
+import { useTrackPageVisit } from "@/hooks/useTrackPageVisit";
+import { RecentesEFavoritos } from "@/components/navegacao/RecentesEFavoritos";
 
 export default function AdminLayout() {
   const { user, roles, loading } = useAuth();
   const navigate = useNavigate();
+  useTrackPageVisit();
 
   if (loading) {
     return (
@@ -46,6 +49,9 @@ export default function AdminLayout() {
             <span className="text-muted-foreground/40">|</span>
             <Shield className="h-4 w-4 text-muted-foreground" />
             <h1 className="text-sm font-semibold">ADM SNCF</h1>
+            <div className="ml-auto">
+              <RecentesEFavoritos />
+            </div>
           </header>
           <main className="flex-1 overflow-auto">
             <Outlet />
