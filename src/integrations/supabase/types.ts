@@ -4572,14 +4572,17 @@ export type Database = {
           ativo: boolean
           autor_nome: string | null
           autor_user_id: string | null
+          categoria: string | null
           conteudo: string
           created_at: string
           descricao: string | null
           editado_por: string | null
           editado_por_nome: string | null
+          fala_fetely_conhecimento_id: string | null
           id: string
           ordem: number
           slug: string
+          sync_fala_fetely: boolean | null
           tags: string[] | null
           tipo: string
           titulo: string
@@ -4590,14 +4593,17 @@ export type Database = {
           ativo?: boolean
           autor_nome?: string | null
           autor_user_id?: string | null
+          categoria?: string | null
           conteudo: string
           created_at?: string
           descricao?: string | null
           editado_por?: string | null
           editado_por_nome?: string | null
+          fala_fetely_conhecimento_id?: string | null
           id?: string
           ordem?: number
           slug: string
+          sync_fala_fetely?: boolean | null
           tags?: string[] | null
           tipo: string
           titulo: string
@@ -4608,14 +4614,17 @@ export type Database = {
           ativo?: boolean
           autor_nome?: string | null
           autor_user_id?: string | null
+          categoria?: string | null
           conteudo?: string
           created_at?: string
           descricao?: string | null
           editado_por?: string | null
           editado_por_nome?: string | null
+          fala_fetely_conhecimento_id?: string | null
           id?: string
           ordem?: number
           slug?: string
+          sync_fala_fetely?: boolean | null
           tags?: string[] | null
           tipo?: string
           titulo?: string
