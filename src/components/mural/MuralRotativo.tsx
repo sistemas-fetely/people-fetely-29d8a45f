@@ -50,11 +50,13 @@ export function MuralRotativo({ intervalo = 8000, controlesManuais = true }: Pro
 
   return (
     <div
-      className="relative group"
+      className="relative group h-full flex flex-col"
       onMouseEnter={() => setPausado(true)}
       onMouseLeave={() => setPausado(false)}
     >
-      <CardCelebracao publicacao={atual} />
+      <div className="flex-1 min-h-0">
+        <CardCelebracao publicacao={atual} />
+      </div>
 
       {controlesManuais && publicacoes.length > 1 && (
         <>
