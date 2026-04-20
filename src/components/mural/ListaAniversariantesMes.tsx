@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Cake, Sparkles, Crown } from "lucide-react";
+import { Cake, Sparkles } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAniversariantesDoMes, type EventoDoMes } from "@/hooks/useAniversariantesDoMes";
@@ -14,33 +14,34 @@ const MESES_PT = [
   "julho", "agosto", "setembro", "outubro", "novembro", "dezembro",
 ];
 
-// ═══ Item de hoje — destaque dourado grande ═══
+// ═══ Item de hoje — destaque dourado compacto ═══
 function ItemDestaqueHoje({ evento, onClick }: { evento: EventoDoMes; onClick: () => void }) {
-  const Icon = evento.tipo_evento === "aniversario" ? Cake : Sparkles;
   return (
     <button
+      type="button"
       onClick={onClick}
-      className="relative w-full rounded-xl border-2 border-amber-400 bg-gradient-to-br from-amber-50 to-amber-100/50 dark:from-amber-950/30 dark:to-amber-900/20 p-3 text-left hover:shadow-md transition-all"
+      className="w-full relative rounded-lg bg-gradient-to-br from-amber-100 to-amber-50 dark:from-amber-900/40 dark:to-amber-950/30 border border-amber-300 dark:border-amber-700 p-2.5 hover:shadow-sm transition-all hover:-translate-y-0.5 text-left"
     >
-      <div className="absolute -top-2 -right-2 text-2xl drop-shadow-sm" aria-hidden>
-        👑
-      </div>
-      <div className="flex items-center gap-3">
-        <Avatar className="h-14 w-14 ring-2 ring-amber-400 ring-offset-2 ring-offset-background flex-shrink-0">
-          <AvatarImage src={evento.foto_url ?? undefined} alt={evento.nome} />
-          <AvatarFallback className="bg-amber-200 text-amber-900 font-semibold">
+      <div className="absolute -top-2 left-3 text-base leading-none">👑</div>
+      <div className="flex items-center gap-2.5">
+        <Avatar className="h-10 w-10 ring-2 ring-amber-400 ring-offset-2 ring-offset-background shrink-0">
+          <AvatarImage src={evento.foto_url ?? undefined} alt={evento.nome} className="object-cover" />
+          <AvatarFallback className="bg-amber-200 text-amber-900 font-semibold text-xs">
             {initials(evento.nome)}
           </AvatarFallback>
         </Avatar>
-        <div className="min-w-0 flex-1">
-          <p className="font-semibold text-sm truncate text-foreground">{evento.nome}</p>
-          <p className="text-xs flex items-center gap-1 text-amber-700 dark:text-amber-400 font-medium mt-0.5">
-            <Icon className="h-3.5 w-3.5" />
+        <div className="flex-1 min-w-0">
+          <p className="text-[13px] font-semibold text-amber-900 dark:text-amber-100 truncate leading-tight">
+            {evento.nome}
+          </p>
+          <p className="text-[11px] text-amber-800 dark:text-amber-200 font-medium flex items-center gap-1 leading-tight mt-0.5">
+            {evento.tipo_evento === "aniversario" ? (
+              <Cake className="h-2.5 w-2.5" />
+            ) : (
+              <Sparkles className="h-2.5 w-2.5" />
+            )}
             {evento.label_destaque}
           </p>
-          {evento.tipo_evento === "tempo_casa" && (
-            <p className="text-[11px] text-muted-foreground mt-0.5 truncate">{evento.subtitulo}</p>
-          )}
         </div>
       </div>
     </button>
@@ -52,17 +53,22 @@ function ItemCompacto({ evento, onClick }: { evento: EventoDoMes; onClick: () =>
   const Icon = evento.tipo_evento === "aniversario" ? Cake : Sparkles;
   return (
     <button
+      type="button"
       onClick={onClick}
-      className="w-full flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-muted/60 transition-colors text-left"
+      className="w-full flex items-center gap-2 py-1.5 px-1.5 rounded-md hover:bg-muted/50 transition-colors text-left"
     >
-      <Avatar className="h-9 w-9 flex-shrink-0">
-        <AvatarImage src={evento.foto_url ?? undefined} alt={evento.nome} />
-        <AvatarFallback className="text-xs bg-muted">{initials(evento.nome)}</AvatarFallback>
+      <Avatar className="h-7 w-7 shrink-0">
+        <AvatarImage src={evento.foto_url ?? undefined} alt={evento.nome} className="object-cover" />
+        <AvatarFallback className="bg-primary/10 text-primary text-[10px] font-medium">
+          {initials(evento.nome)}
+        </AvatarFallback>
       </Avatar>
-      <div className="min-w-0 flex-1">
-        <p className="text-sm font-medium truncate text-foreground">{evento.nome}</p>
-        <p className="text-xs text-muted-foreground flex items-center gap-1 truncate">
-          <Icon className="h-3 w-3 flex-shrink-0" />
+      <div className="flex-1 min-w-0">
+        <p className="text-[12px] font-medium truncate leading-tight">
+          {evento.nome}
+        </p>
+        <p className="text-[10px] text-muted-foreground flex items-center gap-1 leading-tight mt-0.5">
+          <Icon className="h-2.5 w-2.5 shrink-0" />
           <span className="truncate">
             dia {evento.dia} · {evento.tipo_evento === "aniversario" ? "aniversário" : evento.subtitulo}
           </span>
@@ -80,12 +86,10 @@ export function ListaAniversariantesMes() {
 
   if (isLoading) {
     return (
-      <div className="rounded-xl border bg-card p-4 space-y-3 h-full">
-        <Skeleton className="h-5 w-40" />
-        <div className="space-y-2">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <Skeleton key={i} className="h-12 w-full" />
-          ))}
+      <div className="h-full min-h-[220px] rounded-xl border border-border bg-card p-3">
+        <Skeleton className="h-5 w-36 mb-3" />
+        <div className="space-y-1.5">
+          {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-10" />)}
         </div>
       </div>
     );
@@ -93,9 +97,9 @@ export function ListaAniversariantesMes() {
 
   if (!eventos || eventos.length === 0) {
     return (
-      <div className="rounded-xl border bg-card p-4 h-full flex flex-col items-center justify-center text-center gap-2 min-h-[200px]">
-        <Cake className="h-8 w-8 text-muted-foreground/40" />
-        <p className="text-sm text-muted-foreground">
+      <div className="h-full min-h-[220px] rounded-xl border border-dashed border-muted-foreground/30 bg-card/50 p-4 flex flex-col items-center justify-center text-center">
+        <Cake className="h-5 w-5 text-muted-foreground/60 mb-2" />
+        <p className="text-[11px] text-muted-foreground">
           Sem aniversariantes em {mesAtual} — mas sempre tem algo pra comemorar.
         </p>
       </div>
@@ -107,16 +111,18 @@ export function ListaAniversariantesMes() {
 
   return (
     <>
-      <div className="rounded-xl border bg-card p-4 h-full flex flex-col gap-3 overflow-hidden">
+      <div className="h-full min-h-[220px] rounded-xl border border-border bg-gradient-to-br from-amber-50/40 via-card to-pink-50/20 dark:from-amber-950/10 dark:to-pink-950/5 p-3 flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <Cake className="h-4 w-4 text-primary" />
-          <h3 className="text-sm font-semibold">Aniversariantes de {mesAtual}</h3>
+        <div className="flex items-center gap-1.5 mb-2 shrink-0">
+          <Cake className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
+          <h3 className="text-[13px] font-semibold">
+            Aniversariantes de {mesAtual}
+          </h3>
         </div>
 
         {/* Destaque hoje */}
         {deHoje.length > 0 && (
-          <div className="space-y-2 flex-shrink-0">
+          <div className="mb-2 space-y-1.5 shrink-0">
             {deHoje.map((ev) => (
               <ItemDestaqueHoje
                 key={ev.key}
@@ -129,16 +135,16 @@ export function ListaAniversariantesMes() {
 
         {/* Separador sutil se tiver ambos */}
         {deHoje.length > 0 && demais.length > 0 && (
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <div className="h-px bg-border flex-1" />
-            <span className="text-[10px] uppercase tracking-wide text-muted-foreground">outros do mês</span>
-            <div className="h-px bg-border flex-1" />
+          <div className="flex items-center gap-2 my-1.5 shrink-0">
+            <div className="flex-1 h-px bg-border" />
+            <span className="text-[9px] text-muted-foreground uppercase tracking-wider">outros do mês</span>
+            <div className="flex-1 h-px bg-border" />
           </div>
         )}
 
         {/* Lista vertical com scroll interno */}
         {demais.length > 0 && (
-          <div className="flex-1 overflow-y-auto space-y-0.5 -mx-2 px-1">
+          <div className="flex-1 overflow-y-auto space-y-0.5 -mx-1 px-1 min-h-0">
             {demais.map((ev) => (
               <ItemCompacto
                 key={ev.key}
