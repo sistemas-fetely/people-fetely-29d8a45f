@@ -201,6 +201,59 @@ Primeira tela real do fluxo NF PJ. PJ colaborador agora tem portal funcional e a
 
 **Próximo passo:** Fase NF-2 (validação automática: IA + regras cadastrais + regras de valor).
 
+### FASE NF-2 · Validação automática de NF PJ ✅
+
+**Concluído em:** 20/04/2026 (migration 20260420003218)  
+
+Trigger `trg_nf_pj_auto` AFTER INSERT em `notas_fiscais_pj` roteia automaticamente:
+
+- NF válida (CNPJ+valor contrato+justificativas OK) → status `aguardando_aprovacao` + tarefa `aprovacao_nf` pro RH
+- NF inválida → status `precisa_correcao` + tarefa `correcao_nf` volta pro PJ com motivo inline
+- Função `validar_nf_pj` retorna JSONB puro com erros + warnings
+- `SubmeterNFDialog` ganhou props `modoCorrecao`, `motivoCorrecao` — mostra alert vermelho quando PJ reabre tarefa de correção
+- Processo `emissao_nf_pj` evoluiu para v2
+
+### FASE NF-3 + NF-4 (FECHAMENTO) · Aprovação RH + email + governança + KPIs ✅
+
+**Concluído em:** 20/04/2026 (migration 20260420004044)  
+
+Módulo NF PJ **completo** em 7 fases (NF-0.A → NF-4). Último prompt fecha o ciclo.
+
+**Entregues:**
+
+- Tabela `nf_pj_log_fiscal` dedicada (retenção perpétua, 3 RLS policies) — Dra. Renata
+- 5 funções SQL: `aprovar_nf_pj`, `rejeitar_nf_pj`, `marcar_nf_enviada_pagamento`, `reabrir_nf_pj` (só super_admin — mecanismo de disputa do Thiago), `registrar_log_fiscal_nf`
+- View `kpis_nf_pj_mensal` — folha contratual, despesa variável, taxa aprovação 1ª tentativa (base pro Fetely em Números)
+- Componente `AprovarNFDialog` (317 linhas) — RH vê resumo completo + classificações + PDF + decide aprovar ou rejeitar
+- Integração com template `nf-pagamento` (já existente!) para envio automático pro responsável pelo pagamento
+- Processo `emissao_nf_pj` chega à **versão 3 (FINAL)** em Processos Fetely
+
+**Fluxo completo ativo:**
+
+1. Cron dia 25 cria tarefa `emissao_nf` pro PJ
+2. PJ submete via `/minhas-notas`
+3. Trigger valida automaticamente
+4. Se OK → tarefa `aprovacao_nf` pro RH
+5. RH aprova → email pro financeiro parametrizável
+6. Status `enviada_pagamento` = FIM do fluxo Uauuu
+7. Retorno de pagamento permanece manual (fora do escopo — confirmado)
+
+**Governança ativa:**
+
+- Log fiscal dedicado (separado de email genérico)
+- Disputa formal via `reabrir_nf_pj` (só super admin)
+- 6 KPIs expostos na view mensal
+- Auditoria perpétua — NF paga nunca é deletada
+
+**Doutrinas aplicadas neste módulo:**
+
+- Código e processo nascem juntos (primeiro teste oficial) ✅
+- Portal é orquestrador, email é auxiliar ✅
+- Dimensão via tabela (4 categorias parametrizadas) ✅
+- CLT = PJ mesmo tratamento (processo espelho) ✅
+- Tem R humano? Vai pro mapa ✅
+- Permissões revistas (PJ, admin_rh, super_admin) ✅
+
 ---
 
 ## 🔴 ALTA PRIORIDADE
@@ -471,4 +524,4 @@ Quando uma doutrina nova emergir, decidir em qual casa ela mora (geralmente Fala
 ---
 
 *Documento vivo · Fonte única de verdade do roadmap · Atualizar ao concluir item ou descobrir novo.*
-*Última atualização: 20/04/2026 — Fase NF-1 completa (A + B). Processos silenciosos mapeados. Mesa produtiva, pronto pra NF-2.*
+*Última atualização: 20/04/2026 — MÓDULO NF PJ COMPLETO (7 fases). Primeiro teste oficial da Metodologia Uauuu + padrão "código e processo nascem juntos" — funcionou bonito. Mesa limpa, pronto pra próximo pilar.*
