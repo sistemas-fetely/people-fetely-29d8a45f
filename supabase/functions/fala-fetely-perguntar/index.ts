@@ -159,6 +159,22 @@ Deno.serve(async (req) => {
     const extensoesArr = (extensoesRes as any).data || [];
     const tarefasExtensoesArr = (tarefasExtensoesRes as any).data || [];
 
+    // NOTA: por desalinhamento histórico no destructure, `extensoesRes` aqui contém
+    // a fonte unificada `processos_unificados` (com narrativa, código e versão).
+    // Usamos esses dados como FONTE DE VERDADE OPERACIONAL.
+    const processosUnificadosArr = (extensoesRes as any).data || [];
+    const blocoProcessosUnificados = processosUnificadosArr
+      .filter((p: any) => p && (p.narrativa || p.descricao))
+      .map((p: any) => {
+        const cabecalho = `### ${p.nome} [codigo: ${p.codigo || "sem-codigo"} · v${p.versao_atual || "?"}${p.area_nome ? ` · área: ${p.area_nome}` : ""}${p.owner_nome ? ` · owner: ${p.owner_nome}` : ""}]`;
+        const desc = p.descricao ? `\n${clipText(p.descricao, 300)}` : "";
+        const narrativa = p.narrativa
+          ? `\n\n**Como funciona (narrativa vigente v${p.versao_atual || "?"}):**\n${clipText(p.narrativa, 3000)}`
+          : "";
+        return `${cabecalho}${desc}${narrativa}`;
+      })
+      .join("\n\n---\n\n") || "(nenhum processo unificado vigente)";
+
     const templatePorCategoria = new Map<string, string>();
     templatesArr.forEach((t: any) => {
       if (!templatePorCategoria.has(t.categoria_id)) templatePorCategoria.set(t.categoria_id, t.id);
@@ -171,7 +187,13 @@ Deno.serve(async (req) => {
     const truncar = totalTarefasEstimado > 80;
 
     const blocoProcessos = processosArr.map((p: any) => {
-      const linhas: string[] = [`### ${p.nome}${p.descricao ? ` — ${clipText(p.descricao, 200)}` : ""}`];
+      const linhas: string[] = [`### ${p.nome} [codigo: ${p.codigo || "sem-codigo"} · v${p.versao_atual || "?"}]${p.descricao ? ` — ${clipText(p.descricao, 200)}` : ""}`];
+
+      // Narrativa do processo — ESSA É A FONTE DE VERDADE OPERACIONAL
+      if (p.narrativa && p.narrativa.length > 0) {
+        linhas.push(`**Como funciona (narrativa vigente v${p.versao_atual || "?"}):**`);
+        linhas.push(clipText(p.narrativa, 3000));
+      }
 
       // Tarefas padrão
       const templateId = templatePorCategoria.get(p.id);
@@ -383,6 +405,34 @@ Cada item tem filtros (público-alvo, cargos, níveis, departamentos). ANTES de 
 
 NUNCA invente políticas, benefícios, números de mercado ou estatísticas. Se não há na Base, diga "Não tenho essa regra cadastrada" e oriente a perguntar ao RH.
 
+REGRA CRÍTICA — PROCESSOS OPERACIONAIS:
+Quando o usuário pergunta sobre UM PROCESSO ESPECÍFICO (ex: "como envio NF?", "como pedir férias?", "como desligar alguém?"), siga este protocolo rigoroso:
+
+1. PROCURE na seção [PROCESSOS] pelo processo que melhor corresponde à pergunta — busque pelo nome, descrição E na narrativa completa de cada processo.
+2. SE encontrou processo específico com narrativa:
+   - Responda baseado na narrativa desse processo E SOMENTE nela
+   - Cite o código do processo ao final (ex: "Processo: emissao_nf_pj v3")
+   - Se a narrativa menciona um portal, URL, tela ou sistema específico, mencione-o literalmente
+3. SE encontrou processo mas a narrativa não cobre a pergunta exata:
+   - Responda o que cobre
+   - Diga explicitamente "a narrativa não detalha esse passo específico — me dê mais contexto ou confirme com o RH"
+4. SE NÃO encontrou nenhum processo específico que corresponda:
+   - DIGA CLARAMENTE: "Não encontrei processo mapeado para essa pergunta. Pode me dar mais contexto? Estou procurando sobre [assunto]."
+   - OU faça perguntas investigativas para refinar
+   - NÃO invente o processo baseado em diretrizes culturais genéricas (ex: "CLT e PJ são iguais") — diretrizes culturais NÃO definem fluxo operacional
+   - NÃO costure fragmentos de outros processos para formar uma resposta plausível
+5. HIERARQUIA DE CONFIABILIDADE:
+   - Narrativa de processo vigente (v≥1) = FONTE PRIMÁRIA, use literalmente
+   - Diretrizes culturais da BASE DE CONHECIMENTO = contexto, NÃO determina passo operacional
+   - Se há conflito entre diretriz cultural e narrativa de processo, NARRATIVA DE PROCESSO VENCE para responder "como fazer"
+6. RISCO TRABALHISTA ESPECÍFICO:
+   A diretriz "CLT e PJ recebem o mesmo tratamento" é CULTURAL (pessoas são tratadas igual) — NUNCA aplicar isso a processos operacionais sem checar narrativa específica. Processos operacionais de CLT e PJ PODEM e FREQUENTEMENTE divergem (ex: folha CLT vs emissão NF PJ). Afirmar incorretamente que "processo PJ é igual CLT" gera risco de vínculo empregatício — isso é crítico.
+
+SOBRE ADMITIR QUE NÃO SABE:
+- "Não sei" é uma resposta VÁLIDA e PREFERÍVEL a inventar
+- Melhor perguntar de volta do que assumir — a Fetely prefere clareza a aparência de competência
+- "Me dá mais contexto", "Você poderia confirmar com [área]", "Não tenho essa info cadastrada" são respostas legítimas
+
 IMPORTANTE — FILTROS DE APLICABILIDADE (reforço):
 Cada conhecimento tem campos que definem aplicabilidade:
 - publico_alvo: define qual tipo de usuário pode receber essa informação
@@ -418,7 +468,13 @@ TOM:
 Memórias ativas deste usuário (ordenadas por relevância):
 ${blocoMemorias}
 
-[PROCESSOS]
+[PROCESSOS FETELY — FONTE DE VERDADE OPERACIONAL]
+Cada processo abaixo é a fonte de verdade sobre COMO ALGO É FEITO na Fetely. Leia a narrativa de cada um — ela descreve o fluxo real, quem faz, onde faz, passo a passo.
+Quando o usuário pergunta "como faço X", procure aqui ANTES de qualquer outra seção. A narrativa dos processos é mais confiável que diretrizes culturais genéricas para questões operacionais.
+
+${blocoProcessosUnificados}
+
+[PROCESSOS FETELY — TAREFAS PADRÃO POR CATEGORIA]
 ${blocoProcessos}
 
 [SISTEMAS CORPORATIVOS]
