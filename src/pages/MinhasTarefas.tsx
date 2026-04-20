@@ -322,7 +322,7 @@ export default function MinhasTarefas() {
 
   // Ações
   const handleConcluir = (t: Tarefa) => {
-    if (t.tipo_processo === "emissao_nf") {
+    if (t.tipo_processo === "emissao_nf" || t.tipo_processo === "correcao_nf") {
       setSubmeterNFTarefa(t);
       return;
     }
