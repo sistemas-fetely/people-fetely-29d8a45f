@@ -271,11 +271,16 @@ export default function TarefasDoTime() {
   return (
     <div className="container mx-auto py-6 space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight" style={{ color: "#1A4A3A" }}>
-          Tarefas do Time
-        </h1>
-        <p className="text-muted-foreground mt-1">Visão das tarefas dos seus subordinados</p>
+      <div className="flex items-start justify-between gap-3 flex-wrap">
+        <div>
+          <div className="flex items-center gap-3 flex-wrap">
+            <h1 className="text-3xl font-bold tracking-tight" style={{ color: "#1A4A3A" }}>
+              Tarefas do Time
+            </h1>
+            <BadgePredictor tamanho="md" />
+          </div>
+          <p className="text-muted-foreground mt-1">Visão das tarefas dos seus subordinados</p>
+        </div>
       </div>
 
       {/* KPIs */}
@@ -363,8 +368,33 @@ export default function TarefasDoTime() {
                       >
                         {initials(sub.nome)}
                       </div>
-                      <div>
-                        <CardTitle className="text-base">{sub.nome}</CardTitle>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <CardTitle className="text-base">{sub.nome}</CardTitle>
+                          {sub.user_id && (
+                            <TooltipProvider delayDuration={200}>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                                    onClick={() =>
+                                      setCriarTarefaPara({ user_id: sub.user_id!, nome: sub.nome })
+                                    }
+                                    aria-label={`Criar tarefa para ${sub.nome}`}
+                                  >
+                                    <UserPlus className="h-3.5 w-3.5" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent side="top">
+                                  Criar tarefa para {sub.nome}
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          )}
+                          <BadgePredictor />
+                        </div>
                         <p className="text-xs text-muted-foreground">
                           {sub.cargo} · {sub.departamento}
                         </p>
