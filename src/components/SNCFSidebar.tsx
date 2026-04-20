@@ -53,7 +53,7 @@ const minhasNotasItem: MenuItem = {
 
 // Grupo 2: Celebração & Conversa
 const celebracaoItems: MenuItem[] = [
-  { title: "Mural Fetely", url: "/mural", icon: PartyPopper, end: true, badge: "Novo" },
+  { title: "Mural Fetely", url: "/sncf", icon: PartyPopper, end: true, badge: "Novo" },
   { title: "Fala Fetely", url: "/fala-fetely", icon: Sparkles, end: true },
 ];
 
