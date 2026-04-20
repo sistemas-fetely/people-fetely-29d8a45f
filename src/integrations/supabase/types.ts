@@ -2863,6 +2863,105 @@ export type Database = {
           },
         ]
       }
+      mural_preferencias_usuario: {
+        Row: {
+          aparecer_no_mural: boolean
+          atualizado_em: string
+          user_id: string
+        }
+        Insert: {
+          aparecer_no_mural?: boolean
+          atualizado_em?: string
+          user_id: string
+        }
+        Update: {
+          aparecer_no_mural?: boolean
+          atualizado_em?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      mural_publicacoes: {
+        Row: {
+          aprovado_por: string | null
+          area_alvo: string | null
+          cor_tema: string | null
+          created_at: string
+          criado_por: string | null
+          data_evento: string | null
+          emoji: string | null
+          expira_em: string | null
+          fixado: boolean | null
+          foto_url: string | null
+          id: string
+          kpi_id: string | null
+          mensagem: string | null
+          origem: string
+          pessoa_alvo_id: string | null
+          pessoa_alvo_nome: string | null
+          pessoa_alvo_tipo: string | null
+          publicado_em: string | null
+          segmentacao: Json | null
+          status: string
+          subtipo: string | null
+          tipo: string
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          aprovado_por?: string | null
+          area_alvo?: string | null
+          cor_tema?: string | null
+          created_at?: string
+          criado_por?: string | null
+          data_evento?: string | null
+          emoji?: string | null
+          expira_em?: string | null
+          fixado?: boolean | null
+          foto_url?: string | null
+          id?: string
+          kpi_id?: string | null
+          mensagem?: string | null
+          origem?: string
+          pessoa_alvo_id?: string | null
+          pessoa_alvo_nome?: string | null
+          pessoa_alvo_tipo?: string | null
+          publicado_em?: string | null
+          segmentacao?: Json | null
+          status?: string
+          subtipo?: string | null
+          tipo: string
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          aprovado_por?: string | null
+          area_alvo?: string | null
+          cor_tema?: string | null
+          created_at?: string
+          criado_por?: string | null
+          data_evento?: string | null
+          emoji?: string | null
+          expira_em?: string | null
+          fixado?: boolean | null
+          foto_url?: string | null
+          id?: string
+          kpi_id?: string | null
+          mensagem?: string | null
+          origem?: string
+          pessoa_alvo_id?: string | null
+          pessoa_alvo_nome?: string | null
+          pessoa_alvo_tipo?: string | null
+          publicado_em?: string | null
+          segmentacao?: Json | null
+          status?: string
+          subtipo?: string | null
+          tipo?: string
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       navegacao_log: {
         Row: {
           acessado_em: string
@@ -5810,6 +5909,8 @@ export type Database = {
         Args: { payload: Json; queue_name: string }
         Returns: number
       }
+      gerar_celebracoes_aniversario_mural: { Args: never; Returns: number }
+      gerar_celebracoes_tempo_casa_mural: { Args: never; Returns: number }
       gerar_periodos_ferias_pendentes: { Args: never; Returns: undefined }
       get_convite_by_token: { Args: { _token: string }; Returns: Json }
       get_organograma_tree: {
@@ -5907,6 +6008,7 @@ export type Database = {
           perfil_nome: string
         }[]
       }
+      pessoa_aparece_no_mural: { Args: { _user_id: string }; Returns: boolean }
       preview_template_cargo: {
         Args: {
           _area_perfil_codigo: string
@@ -5924,6 +6026,7 @@ export type Database = {
         Args: { _user_id: string }
         Returns: Json
       }
+      processar_mural_fetely_diario: { Args: never; Returns: Json }
       processos_publicar_versao: {
         Args: { _motivo?: string; _processo_id: string }
         Returns: number
