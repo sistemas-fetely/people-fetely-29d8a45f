@@ -2,7 +2,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeft, Edit, FileText, Users, Building2, MapPin, Briefcase,
   Monitor, Shield, Clock, History, AlertCircle, Loader2, Lock,
-  Workflow, GitBranch,
+  Workflow, GitBranch, Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -96,6 +96,30 @@ export default function ProcessoDetalhe() {
         .or(`processo_origem_id.eq.${id},processo_destino_id.eq.${id}`)
         .order("ordem");
       return (data as any[]) || [];
+    },
+  });
+
+  // Info de importação PDF (se este processo veio de PDF)
+  const { data: importacaoInfo } = useQuery({
+    queryKey: ["processo-importacao-pdf", id],
+    enabled: !!id,
+    queryFn: async () => {
+      // Primeiro verifica se o processo tem flag importado_de_pdf
+      const { data: proc } = await (supabase as any)
+        .from("processos")
+        .select("importado_de_pdf, importacao_pdf_id")
+        .eq("id", id!)
+        .maybeSingle();
+
+      if (!proc?.importado_de_pdf || !proc?.importacao_pdf_id) return null;
+
+      const { data: imp } = await (supabase as any)
+        .from("processos_importacoes_pdf")
+        .select("arquivo_nome, importado_por_nome, created_at")
+        .eq("id", proc.importacao_pdf_id)
+        .maybeSingle();
+
+      return imp || null;
     },
   });
 
