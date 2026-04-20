@@ -2934,6 +2934,50 @@ export type Database = {
           },
         ]
       }
+      nf_pj_log_fiscal: {
+        Row: {
+          ator_papel: string | null
+          ator_user_id: string | null
+          detalhes: Json | null
+          email_destinatario: string | null
+          hash_arquivo: string | null
+          id: string
+          nota_fiscal_id: string
+          registrado_em: string
+          tipo_evento: string
+        }
+        Insert: {
+          ator_papel?: string | null
+          ator_user_id?: string | null
+          detalhes?: Json | null
+          email_destinatario?: string | null
+          hash_arquivo?: string | null
+          id?: string
+          nota_fiscal_id: string
+          registrado_em?: string
+          tipo_evento: string
+        }
+        Update: {
+          ator_papel?: string | null
+          ator_user_id?: string | null
+          detalhes?: Json | null
+          email_destinatario?: string | null
+          hash_arquivo?: string | null
+          id?: string
+          nota_fiscal_id?: string
+          registrado_em?: string
+          tipo_evento?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nf_pj_log_fiscal_nota_fiscal_id_fkey"
+            columns: ["nota_fiscal_id"]
+            isOneToOne: false
+            referencedRelation: "notas_fiscais_pj"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notas_fiscais_pj: {
         Row: {
           arquivo_url: string | null
@@ -5450,6 +5494,20 @@ export type Database = {
       }
     }
     Views: {
+      kpis_nf_pj_mensal: {
+        Row: {
+          despesa_variavel: number | null
+          folha_contratual: number | null
+          mes_submissao: string | null
+          taxa_aprovacao_1a_tentativa_pct: number | null
+          total_aprovadas: number | null
+          total_em_disputa: number | null
+          total_rejeitadas: number | null
+          total_submetidas: number | null
+          valor_medio: number | null
+        }
+        Relationships: []
+      }
       meus_acessos_salario: {
         Row: {
           ator_nome: string | null
@@ -5700,6 +5758,10 @@ export type Database = {
           unidade_nome: string
         }[]
       }
+      aprovar_nf_pj: {
+        Args: { _nota_id: string; _observacao_rh?: string }
+        Returns: Json
+      }
       autosave_convite_cadastro: {
         Args: { _dados: Json; _token: string }
         Returns: boolean
@@ -5798,6 +5860,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      marcar_nf_enviada_pagamento: {
+        Args: { _email_destinatario: string; _nota_id: string }
+        Returns: Json
+      }
       meu_contrato_pj_ativo: {
         Args: never
         Returns: {
@@ -5862,6 +5928,10 @@ export type Database = {
         Args: { _motivo?: string; _processo_id: string }
         Returns: number
       }
+      reabrir_nf_pj: {
+        Args: { _motivo: string; _nota_id: string }
+        Returns: Json
+      }
       read_email_batch: {
         Args: { batch_size: number; queue_name: string; vt: number }
         Returns: {
@@ -5906,6 +5976,20 @@ export type Database = {
       registrar_consulta_processo: {
         Args: { _processo_id: string }
         Returns: undefined
+      }
+      registrar_log_fiscal_nf: {
+        Args: {
+          _ator_papel?: string
+          _detalhes?: Json
+          _email_destinatario?: string
+          _nota_id: string
+          _tipo_evento: string
+        }
+        Returns: string
+      }
+      rejeitar_nf_pj: {
+        Args: { _motivo: string; _nota_id: string }
+        Returns: Json
       }
       revogar_acessos_ex_colaboradores: { Args: never; Returns: number }
       submit_convite_cadastro: {

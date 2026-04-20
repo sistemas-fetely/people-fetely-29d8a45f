@@ -27,6 +27,7 @@ import {
 import { cn } from "@/lib/utils";
 import { RadarOperacional } from "@/components/tarefas/RadarOperacional";
 import { SubmeterNFDialog } from "@/components/minhas-notas/SubmeterNFDialog";
+import { AprovarNFDialog } from "@/components/minhas-notas/AprovarNFDialog";
 
 interface Tarefa {
   id: string;
@@ -96,6 +97,9 @@ export default function MinhasTarefas() {
 
   // Submit NF (tarefa de emissao_nf)
   const [submeterNFTarefa, setSubmeterNFTarefa] = useState<Tarefa | null>(null);
+
+  // Aprovar NF (tarefa de aprovacao_nf — RH)
+  const [aprovarNFTarefa, setAprovarNFTarefa] = useState<Tarefa | null>(null);
 
   // Quem vê a seção "Prioridades do Dia"
   const isGestorRH = (userRoles as string[]).includes("gestor_rh");
@@ -324,6 +328,10 @@ export default function MinhasTarefas() {
   const handleConcluir = (t: Tarefa) => {
     if (t.tipo_processo === "emissao_nf" || t.tipo_processo === "correcao_nf") {
       setSubmeterNFTarefa(t);
+      return;
+    }
+    if (t.tipo_processo === "aprovacao_nf") {
+      setAprovarNFTarefa(t);
       return;
     }
     setConcluirTarefa(t);
@@ -971,6 +979,21 @@ export default function MinhasTarefas() {
               ? submeterNFTarefa.descricao || undefined
               : undefined
           }
+        />
+      )}
+
+      {/* Dialog de aprovação de NF (tarefa aprovacao_nf — RH) */}
+      {aprovarNFTarefa && aprovarNFTarefa.processo_id && (
+        <AprovarNFDialog
+          open={!!aprovarNFTarefa}
+          onOpenChange={(o) => {
+            if (!o) {
+              setAprovarNFTarefa(null);
+              void loadTarefas();
+            }
+          }}
+          tarefaId={aprovarNFTarefa.id}
+          notaId={aprovarNFTarefa.processo_id}
         />
       )}
     </div>
