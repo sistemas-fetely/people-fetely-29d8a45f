@@ -37,6 +37,7 @@ import { useParametros } from "@/hooks/useParametros";
 import { useQuery } from "@tanstack/react-query";
 import type { Tables } from "@/integrations/supabase/types";
 
+import { SmartBackButton } from "@/components/SmartBackButton";
 import { StepDadosPessoais } from "@/components/colaborador-clt/StepDadosPessoais";
 import { StepDocumentos } from "@/components/colaborador-clt/StepDocumentos";
 import { StepDadosProfissionais } from "@/components/colaborador-clt/StepDadosProfissionais";
@@ -483,9 +484,7 @@ export default function ColaboradorDetalhe() {
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <Button variant="ghost" onClick={() => navigate(rotaVolta)} className="gap-2">
-            <ArrowLeft className="h-4 w-4" /> Voltar
-          </Button>
+          <SmartBackButton fallback={rotaVolta} fallbackLabel="Voltar" />
           <div className="flex items-center gap-2">
             <CriarUsuarioAcessoButton
               colaboradorId={colaborador.id}

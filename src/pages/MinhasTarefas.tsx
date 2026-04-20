@@ -637,6 +637,7 @@ export default function MinhasTarefas() {
                     tarefa.colaborador_tipo === "clt"
                       ? `/colaboradores/${tarefa.colaborador_id}`
                       : `/contratos-pj/${tarefa.colaborador_id}`,
+                    { state: { from: "/tarefas", fromLabel: "Minhas Tarefas" } },
                   )
                 }
                 className="gap-2"
@@ -646,7 +647,7 @@ export default function MinhasTarefas() {
             )}
             {tarefa.processo_id && tarefa.tipo_processo === "onboarding" && (
               <DropdownMenuItem
-                onClick={() => navigate(`/onboarding/${tarefa.processo_id}`)}
+                onClick={() => navigate(`/onboarding/${tarefa.processo_id}`, { state: { from: "/tarefas", fromLabel: "Minhas Tarefas" } })}
                 className="gap-2"
               >
                 <Eye className="h-4 w-4" /> Ver onboarding

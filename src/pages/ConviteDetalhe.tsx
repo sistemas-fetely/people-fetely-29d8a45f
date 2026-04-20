@@ -23,6 +23,7 @@ import { ConviteDadosEmpresaCLT } from "@/components/convite-detalhe/ConviteDado
 import { ConviteDadosProfissionaisPJ } from "@/components/convite-detalhe/ConviteDadosProfissionaisPJ";
 import { getTarefasDinamicas } from "@/lib/onboarding-tarefas";
 import { useAuth } from "@/contexts/AuthContext";
+import { SmartBackButton } from "@/components/SmartBackButton";
 import { fetchExtensoesAplicaveis } from "@/hooks/useExtensoesAplicaveis";
 import { SystemReadinessBanner } from "@/components/shared/SystemReadinessBanner";
 
@@ -785,9 +786,7 @@ export default function ConviteDetalhe() {
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/convites-cadastro")}>
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
+          <SmartBackButton fallback="/convites-cadastro" fallbackLabel="Convites" />
           <div>
             <div className="flex items-center gap-3 flex-wrap">
               <h1 className="text-2xl font-bold">{convite.nome}</h1>

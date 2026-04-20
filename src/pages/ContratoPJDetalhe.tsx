@@ -34,6 +34,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { useCLevelCargos } from "@/hooks/useCLevelCargos";
 import type { Tables } from "@/integrations/supabase/types";
 
+import { SmartBackButton } from "@/components/SmartBackButton";
 import { StepDadosPessoaisPJ } from "@/components/contrato-pj/StepDadosPessoaisPJ";
 import { StepDocumentosPJ } from "@/components/contrato-pj/StepDocumentosPJ";
 import { StepDadosProfissionaisPJ } from "@/components/contrato-pj/StepDadosProfissionaisPJ";
@@ -498,9 +499,7 @@ export default function ContratoPJDetalhe() {
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <Button variant="ghost" onClick={() => navigate(rotaVolta)} className="gap-2">
-            <ArrowLeft className="h-4 w-4" /> Voltar
-          </Button>
+          <SmartBackButton fallback={rotaVolta} fallbackLabel="Voltar" />
           <div className="flex items-center gap-2">
             <CriarUsuarioAcessoButton
               colaboradorId={contrato.id}

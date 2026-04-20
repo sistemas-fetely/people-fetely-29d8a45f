@@ -5,7 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import {
   Users, AlertTriangle, ChevronDown, ChevronUp, MoreVertical, CheckCircle2,
-  ArrowLeftRight, Eye, Loader2, ShieldAlert,
+  ArrowLeftRight, Eye, Loader2, ShieldAlert, UserPlus,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -18,7 +18,10 @@ import {
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { NovaTarefaDialog } from "@/components/tarefas/NovaTarefaDialog";
+import { BadgePredictor } from "@/components/tarefas/BadgePredictor";
 
 interface Subordinado {
   id: string; // profile.id ou colaborador.id
@@ -64,6 +67,7 @@ export default function TarefasDoTime() {
   const [filtro, setFiltro] = useState<Filtro>("todos");
   const [reatribuirTarefa, setReatribuirTarefa] = useState<TarefaTime | null>(null);
   const [novoResponsavel, setNovoResponsavel] = useState<string>("");
+  const [criarTarefaPara, setCriarTarefaPara] = useState<{ user_id: string; nome: string } | null>(null);
 
   const isAdminAmplo = roles?.some((r) => ["super_admin", "admin_rh", "gestor_rh"].includes(r));
   const isGestorDireto = roles?.includes("gestor_direto" as never);
@@ -267,11 +271,16 @@ export default function TarefasDoTime() {
   return (
     <div className="container mx-auto py-6 space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight" style={{ color: "#1A4A3A" }}>
-          Tarefas do Time
-        </h1>
-        <p className="text-muted-foreground mt-1">Visão das tarefas dos seus subordinados</p>
+      <div className="flex items-start justify-between gap-3 flex-wrap">
+        <div>
+          <div className="flex items-center gap-3 flex-wrap">
+            <h1 className="text-3xl font-bold tracking-tight" style={{ color: "#1A4A3A" }}>
+              Tarefas do Time
+            </h1>
+            <BadgePredictor tamanho="md" />
+          </div>
+          <p className="text-muted-foreground mt-1">Visão das tarefas dos seus subordinados</p>
+        </div>
       </div>
 
       {/* KPIs */}
@@ -359,8 +368,33 @@ export default function TarefasDoTime() {
                       >
                         {initials(sub.nome)}
                       </div>
-                      <div>
-                        <CardTitle className="text-base">{sub.nome}</CardTitle>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <CardTitle className="text-base">{sub.nome}</CardTitle>
+                          {sub.user_id && (
+                            <TooltipProvider delayDuration={200}>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                                    onClick={() =>
+                                      setCriarTarefaPara({ user_id: sub.user_id!, nome: sub.nome })
+                                    }
+                                    aria-label={`Criar tarefa para ${sub.nome}`}
+                                  >
+                                    <UserPlus className="h-3.5 w-3.5" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent side="top">
+                                  Criar tarefa para {sub.nome}
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          )}
+                          <BadgePredictor />
+                        </div>
                         <p className="text-xs text-muted-foreground">
                           {sub.cargo} · {sub.departamento}
                         </p>
@@ -441,6 +475,7 @@ export default function TarefasDoTime() {
                                       tarefa.colaborador_tipo === "clt"
                                         ? `/colaboradores/${tarefa.colaborador_id}`
                                         : `/contratos-pj/${tarefa.colaborador_id}`,
+                                      { state: { from: "/tarefas/time", fromLabel: "Tarefas do Time" } },
                                     )
                                   }
                                   className="gap-2"
@@ -511,6 +546,19 @@ export default function TarefasDoTime() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Dialog criar tarefa pré-preenchida com responsável */}
+      {criarTarefaPara && (
+        <NovaTarefaDialog
+          open={!!criarTarefaPara}
+          onOpenChange={(open) => !open && setCriarTarefaPara(null)}
+          responsavelInicial={criarTarefaPara}
+          onCriada={() => {
+            setCriarTarefaPara(null);
+            void carregar();
+          }}
+        />
+      )}
     </div>
   );
 }
