@@ -98,6 +98,9 @@ export default function MinhasTarefas() {
   // Submit NF (tarefa de emissao_nf)
   const [submeterNFTarefa, setSubmeterNFTarefa] = useState<Tarefa | null>(null);
 
+  // Aprovar NF (tarefa de aprovacao_nf — RH)
+  const [aprovarNFTarefa, setAprovarNFTarefa] = useState<Tarefa | null>(null);
+
   // Quem vê a seção "Prioridades do Dia"
   const isGestorRH = (userRoles as string[]).includes("gestor_rh");
   const isGestorDireto = (userRoles as string[]).includes("gestor_direto");
