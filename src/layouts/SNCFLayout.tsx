@@ -4,6 +4,7 @@ import { SNCFSidebar } from "@/components/SNCFSidebar";
 import { ReportarErroBotao } from "@/components/shared/ReportarErroBotao";
 import { useTrackPageVisit } from "@/hooks/useTrackPageVisit";
 import { RecentesEFavoritos } from "@/components/navegacao/RecentesEFavoritos";
+import { CommandPaletteProvider } from "@/components/navegacao/CommandPaletteProvider";
 
 export default function SNCFLayout() {
   useTrackPageVisit();
@@ -24,6 +25,8 @@ export default function SNCFLayout() {
           </main>
         </div>
       </div>
+      <CommandPaletteProvider />
     </SidebarProvider>
   );
 }
+

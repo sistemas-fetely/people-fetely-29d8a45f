@@ -1,4 +1,4 @@
-import { Bell, Moon, Sun } from "lucide-react";
+import { Bell, Moon, Sun, Search } from "lucide-react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -116,8 +116,17 @@ export function AppHeader() {
         <span className="font-medium text-primary">{pageName}</span>
       </div>
       <div className="ml-auto flex items-center gap-2">
-        {/* Busca global desativada — Fetely usa Fala Fetely como interface principal de descoberta.
-            Quando reativarmos, virá como ⌘K integrado a Recentes + Favoritos no Projeto Navegação Transversal. */}
+        <button
+          onClick={() => {
+            // Dispara o mesmo atalho que o CommandPaletteProvider escuta
+            window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true }));
+          }}
+          className="hidden md:flex items-center gap-2 h-9 px-3 rounded-xl bg-muted/50 hover:bg-muted text-muted-foreground text-xs transition-colors"
+        >
+          <Search className="h-3.5 w-3.5" />
+          <span>Buscar...</span>
+          <kbd className="ml-2 rounded border px-1.5 py-0.5 text-[10px] font-mono bg-background">⌘K</kbd>
+        </button>
         <Button variant="ghost" size="icon" className="relative h-9 w-9 rounded-xl hover:bg-accent" onClick={toggleDark}>
           {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
         </Button>
