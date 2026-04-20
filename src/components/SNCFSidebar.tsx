@@ -175,7 +175,7 @@ export function SNCFSidebar() {
                           <span>{item.title}</span>
                           <span className="flex items-center gap-1">
                             {item.badge && (
-                              <Badge className="text-[9px] px-1.5 py-0 h-4 border-0" style={{ backgroundColor: "#E91E63", color: "white" }}>
+                              <Badge className="badge-novo text-[9px] px-1.5 py-0 h-4 border-0" style={{ backgroundColor: "#E91E63", color: "white" }}>
                                 {item.badge}
                               </Badge>
                             )}
