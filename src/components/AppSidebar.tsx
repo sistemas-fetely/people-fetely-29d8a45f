@@ -1,8 +1,7 @@
 import {
   LayoutDashboard, Users, GitBranch, UserSearch, MailPlus, Rocket,
   ArrowLeftRight, Award, BookOpen, Receipt, Clock, CreditCard, FileText,
-  Palmtree, Gift, BarChart3, Banknote, Sliders, Settings, LogOut, LayoutGrid,
-  MessageSquareWarning, Tv,
+  Palmtree, Gift, BarChart3, LogOut, LayoutGrid, Tv,
 } from "lucide-react";
 
 import { NavLink } from "@/components/NavLink";
@@ -60,14 +59,17 @@ interface MenuItem {
   requireRole?: string;
 }
 
-const principalItems: MenuItem[] = [
+// Grupo 1: Dashboards & Análise (topo)
+const analiseItems: MenuItem[] = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard, permModule: "dashboard" },
   { title: "Gestão à Vista", url: "/gestao-a-vista", icon: Tv },
-  { title: "Pessoas", url: "/pessoas", icon: Users, permModule: "colaboradores" },
-  { title: "Organograma", url: "/organograma", icon: GitBranch, permModule: "organograma" },
+  { title: "Relatórios", url: "/relatorios", icon: BarChart3, permModule: "relatorios" },
 ];
 
-const jornadaItems: MenuItem[] = [
+// Grupo 2: Pessoas (núcleo operacional)
+const pessoasItems: MenuItem[] = [
+  { title: "Pessoas", url: "/pessoas", icon: Users, permModule: "colaboradores" },
+  { title: "Organograma", url: "/organograma", icon: GitBranch, permModule: "organograma" },
   { title: "Recrutamento", url: "/recrutamento", icon: UserSearch, permModule: "recrutamento" },
   { title: "Convites de Cadastro", url: "/convites-cadastro", icon: MailPlus, permModule: "convites" },
   { title: "Onboarding", url: "/onboarding", icon: Rocket, permModule: "convites" },
@@ -76,24 +78,14 @@ const jornadaItems: MenuItem[] = [
   { title: "Treinamentos", url: "/treinamentos", icon: BookOpen, permModule: "treinamentos" },
 ];
 
-const operacaoItems: MenuItem[] = [
+// Grupo 3: Benefícios & Financeiro
+const beneficiosItems: MenuItem[] = [
   { title: "Folha de Pagamento", url: "/folha-pagamento", icon: Receipt, permModule: "folha_pagamento" },
   { title: "Ponto", url: "/ponto", icon: Clock, permModule: "folha_pagamento" },
-  { title: "Pagamentos PJ", url: "/pagamentos-pj", icon: CreditCard, permModule: "pagamentos_pj" },
-  { title: "Notas Fiscais PJ", url: "/notas-fiscais", icon: FileText, permModule: "notas_fiscais" },
   { title: "Férias", url: "/ferias", icon: Palmtree, permModule: "ferias" },
   { title: "Benefícios", url: "/beneficios", icon: Gift, permModule: "beneficios" },
-];
-
-const relatoriosItems: MenuItem[] = [
-  { title: "Relatórios", url: "/relatorios", icon: BarChart3, permModule: "relatorios" },
-];
-
-const configItems: MenuItem[] = [
-  { title: "Cargos e Salários", url: "/cargos", icon: Banknote, permModule: "parametros", requireRole: "__admin_rh_or_super__" },
-  { title: "Parâmetros", url: "/parametros", icon: Sliders, permModule: "parametros", requireRole: "__admin_rh_or_super__" },
-  { title: "Configurações", url: "/configuracoes", icon: Settings, permModule: "usuarios", requireRole: "__admin_rh_or_super__" },
-  { title: "Reportes do Sistema", url: "/admin/reportes", icon: MessageSquareWarning, requireRole: "__admin_rh_or_super__" },
+  { title: "Pagamentos PJ", url: "/pagamentos-pj", icon: CreditCard, permModule: "pagamentos_pj" },
+  { title: "Notas Fiscais PJ", url: "/notas-fiscais", icon: FileText, permModule: "notas_fiscais" },
 ];
 
 interface MenuGroupProps {
@@ -220,15 +212,11 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
         <div className="mx-4 border-t border-sidebar-border/40" />
-        <MenuGroup label="Principal" items={principalItems} collapsed={collapsed} canViewModule={canView} userRoles={roles} />
+        <MenuGroup label="Análise" items={analiseItems} collapsed={collapsed} canViewModule={canView} userRoles={roles} />
         <div className="mx-4 border-t border-sidebar-border/40" />
-        <MenuGroup label="Operação RH" items={operacaoItems} collapsed={collapsed} canViewModule={canView} userRoles={roles} />
+        <MenuGroup label="Pessoas" items={pessoasItems} collapsed={collapsed} canViewModule={canView} userRoles={roles} />
         <div className="mx-4 border-t border-sidebar-border/40" />
-        <MenuGroup label="Jornada do Colaborador" items={jornadaItems} collapsed={collapsed} canViewModule={canView} userRoles={roles} />
-        <div className="mx-4 border-t border-sidebar-border/40" />
-        <MenuGroup label="Relatórios" items={relatoriosItems} collapsed={collapsed} canViewModule={canView} userRoles={roles} />
-        <div className="mx-4 border-t border-sidebar-border/40" />
-        <MenuGroup label="Configurações" items={configItems} collapsed={collapsed} canViewModule={canView} userRoles={roles} />
+        <MenuGroup label="Benefícios & Financeiro" items={beneficiosItems} collapsed={collapsed} canViewModule={canView} userRoles={roles} />
       </SidebarContent>
 
       <SidebarFooter className="p-4">
