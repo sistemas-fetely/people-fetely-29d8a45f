@@ -31,6 +31,7 @@ const manualSchema = z.object({
   contato_nome: z.string().min(3, "Nome do contato obrigatório"),
   contato_email: z.string().email("Email válido").optional().or(z.literal("")),
   contato_telefone: z.string().optional(),
+  data_nascimento: z.string().optional().or(z.literal("")),
 
   // Dados corporativos (opcionais)
   email_corporativo: z.string().email().optional().or(z.literal("")),
@@ -88,6 +89,7 @@ export function CadastroManualContratoPJ() {
         contato_nome: data.contato_nome,
         contato_email: data.contato_email || null,
         contato_telefone: data.contato_telefone || null,
+        data_nascimento: data.data_nascimento || null,
         email_corporativo: data.email_corporativo || null,
         telefone_corporativo: data.telefone_corporativo || null,
         categoria_pj: data.categoria_pj,
@@ -255,6 +257,13 @@ export function CadastroManualContratoPJ() {
             <div>
               <Label>Telefone de contato</Label>
               <Input {...register("contato_telefone")} />
+            </div>
+            <div>
+              <Label>Data de nascimento</Label>
+              <Input type="date" {...register("data_nascimento")} />
+              <p className="text-[10px] text-muted-foreground mt-1">
+                Opcional — para celebrações no Mural Fetely.
+              </p>
             </div>
           </CardContent>
         </Card>
