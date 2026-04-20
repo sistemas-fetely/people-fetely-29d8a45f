@@ -2,7 +2,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeft, Edit, FileText, Users, Building2, MapPin, Briefcase,
   Monitor, Shield, Clock, History, AlertCircle, Loader2, Lock,
-  Workflow, GitBranch,
+  Workflow, GitBranch, Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -99,6 +99,30 @@ export default function ProcessoDetalhe() {
     },
   });
 
+  // Info de importação PDF (se este processo veio de PDF)
+  const { data: importacaoInfo } = useQuery({
+    queryKey: ["processo-importacao-pdf", id],
+    enabled: !!id,
+    queryFn: async () => {
+      // Primeiro verifica se o processo tem flag importado_de_pdf
+      const { data: proc } = await (supabase as any)
+        .from("processos")
+        .select("importado_de_pdf, importacao_pdf_id")
+        .eq("id", id!)
+        .maybeSingle();
+
+      if (!proc?.importado_de_pdf || !proc?.importacao_pdf_id) return null;
+
+      const { data: imp } = await (supabase as any)
+        .from("processos_importacoes_pdf")
+        .select("arquivo_nome, importado_por_nome, created_at")
+        .eq("id", proc.importacao_pdf_id)
+        .maybeSingle();
+
+      return imp || null;
+    },
+  });
+
   if (isLoading) {
     return (
       <div className="flex justify-center py-16">
@@ -154,6 +178,17 @@ export default function ProcessoDetalhe() {
               <h1 className="text-2xl font-bold tracking-tight">{processo.nome}</h1>
               {processo.descricao && (
                 <p className="text-sm text-muted-foreground mt-1">{processo.descricao}</p>
+              )}
+              {importacaoInfo && (
+                <Badge
+                  variant="outline"
+                  className="mt-2 gap-1 border-purple-500/40 bg-purple-500/5 text-purple-700"
+                >
+                  <Sparkles className="h-3 w-3" />
+                  Importado de PDF · {importacaoInfo.arquivo_nome}
+                  {importacaoInfo.importado_por_nome && <> · por {importacaoInfo.importado_por_nome}</>}
+                  <> · em {new Date(importacaoInfo.created_at).toLocaleDateString("pt-BR")}</>
+                </Badge>
               )}
             </div>
             <Badge variant="outline" className={STATUS_COR[processo.status_valor] || ""}>
