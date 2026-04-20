@@ -171,7 +171,13 @@ Deno.serve(async (req) => {
     const truncar = totalTarefasEstimado > 80;
 
     const blocoProcessos = processosArr.map((p: any) => {
-      const linhas: string[] = [`### ${p.nome}${p.descricao ? ` — ${clipText(p.descricao, 200)}` : ""}`];
+      const linhas: string[] = [`### ${p.nome} [codigo: ${p.codigo || "sem-codigo"} · v${p.versao_atual || "?"}]${p.descricao ? ` — ${clipText(p.descricao, 200)}` : ""}`];
+
+      // Narrativa do processo — ESSA É A FONTE DE VERDADE OPERACIONAL
+      if (p.narrativa && p.narrativa.length > 0) {
+        linhas.push(`**Como funciona (narrativa vigente v${p.versao_atual || "?"}):**`);
+        linhas.push(clipText(p.narrativa, 3000));
+      }
 
       // Tarefas padrão
       const templateId = templatePorCategoria.get(p.id);
