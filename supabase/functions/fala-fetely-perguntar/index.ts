@@ -159,6 +159,22 @@ Deno.serve(async (req) => {
     const extensoesArr = (extensoesRes as any).data || [];
     const tarefasExtensoesArr = (tarefasExtensoesRes as any).data || [];
 
+    // NOTA: por desalinhamento histórico no destructure, `extensoesRes` aqui contém
+    // a fonte unificada `processos_unificados` (com narrativa, código e versão).
+    // Usamos esses dados como FONTE DE VERDADE OPERACIONAL.
+    const processosUnificadosArr = (extensoesRes as any).data || [];
+    const blocoProcessosUnificados = processosUnificadosArr
+      .filter((p: any) => p && (p.narrativa || p.descricao))
+      .map((p: any) => {
+        const cabecalho = `### ${p.nome} [codigo: ${p.codigo || "sem-codigo"} · v${p.versao_atual || "?"}${p.area_nome ? ` · área: ${p.area_nome}` : ""}${p.owner_nome ? ` · owner: ${p.owner_nome}` : ""}]`;
+        const desc = p.descricao ? `\n${clipText(p.descricao, 300)}` : "";
+        const narrativa = p.narrativa
+          ? `\n\n**Como funciona (narrativa vigente v${p.versao_atual || "?"}):**\n${clipText(p.narrativa, 3000)}`
+          : "";
+        return `${cabecalho}${desc}${narrativa}`;
+      })
+      .join("\n\n---\n\n") || "(nenhum processo unificado vigente)";
+
     const templatePorCategoria = new Map<string, string>();
     templatesArr.forEach((t: any) => {
       if (!templatePorCategoria.has(t.categoria_id)) templatePorCategoria.set(t.categoria_id, t.id);
