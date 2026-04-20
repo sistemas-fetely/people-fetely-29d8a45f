@@ -471,4 +471,4 @@ Quando uma doutrina nova emergir, decidir em qual casa ela mora (geralmente Fala
 ---
 
 *Documento vivo · Fonte única de verdade do roadmap · Atualizar ao concluir item ou descobrir novo.*
-*Última atualização: 19/04/2026 22:30 — Fase NF-0 completa (primeira aplicação do padrão "código e processo nascem juntos")*
+*Última atualização: 20/04/2026 — Fase NF-1 completa (A + B). Processos silenciosos mapeados. Mesa produtiva, pronto pra NF-2.*
