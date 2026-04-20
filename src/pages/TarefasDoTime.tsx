@@ -546,6 +546,19 @@ export default function TarefasDoTime() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Dialog criar tarefa pré-preenchida com responsável */}
+      {criarTarefaPara && (
+        <NovaTarefaDialog
+          open={!!criarTarefaPara}
+          onOpenChange={(open) => !open && setCriarTarefaPara(null)}
+          responsavelInicial={criarTarefaPara}
+          onCriada={() => {
+            setCriarTarefaPara(null);
+            void carregar();
+          }}
+        />
+      )}
     </div>
   );
 }
