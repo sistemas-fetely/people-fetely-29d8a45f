@@ -163,6 +163,44 @@ Primeira aplicação oficial do padrão "código e processo nascem juntos" da Me
 
 **Próximo passo:** Fase NF-1 (Portal do PJ `/minhas-notas` + cron mensal + tarefa de emissão).
 
+### PROCESSOS SILENCIOSOS MAPEADOS · Revogação D+30 + Triagem Reportes ✅
+
+**Concluído em:** 19/04/2026 (migration 20260420000911)  
+
+Aplicação da doutrina "tem R humano? vai pro mapa". Dois processos que rodavam silenciosos no banco ganharam casa em Processos Fetely:
+
+- **`revogacao_acesso_d30`** — automação LGPD com supervisão humana (R = Dra. Renata). Marcado como sensível.
+- **`triagem_reportes_sistema`** — canal colaborativo Uauuu, inbox de reportes (R = Admin RH).
+
+Total de processos em Processos Fetely agora: 11.
+
+### FASE NF-1.B · Portal do PJ + submit via tarefa ✅
+
+**Concluído em:** 19/04/2026 (migrations 20260420001822 + commit c6860a4)  
+
+Primeira tela real do fluxo NF PJ. PJ colaborador agora tem portal funcional e autônomo.
+
+**Entregues:**
+
+- Bucket storage `notas-fiscais-pj` privado (15MB, PDFs) com policies por contrato
+- Policies INSERT/SELECT em `notas_fiscais_pj` para PJ autor
+- Função `meu_contrato_pj_ativo()` para portal
+- Hook `useMinhasNotas` (187 linhas) com 3 sub-hooks (contrato, notas, submit)
+- Página `/minhas-notas` com timeline vertical por competência
+- Componente `SubmeterNFDialog` (388 linhas) — upload PDF → parse via IA → classificação inteligente → submit
+- Card do contrato ativo
+- Rota SNCF + link no sidebar (só visível se PJ tem contrato ativo)
+- Integração em `/tarefas`: tarefa `tipo_processo=emissao_nf` abre dialog especial
+
+**Filosofias aplicadas:**
+
+- Timeline vertical (Beatriz) — visão temporal carinhosa
+- Dialog inline na tarefa (reforça "tarefa é o centro")
+- Classificação só quando valor não bate com contrato (reduz fricção — 90% dos casos)
+- Competência vem da tarefa (cron criou)
+
+**Próximo passo:** Fase NF-2 (validação automática: IA + regras cadastrais + regras de valor).
+
 ---
 
 ## 🔴 ALTA PRIORIDADE
@@ -433,4 +471,4 @@ Quando uma doutrina nova emergir, decidir em qual casa ela mora (geralmente Fala
 ---
 
 *Documento vivo · Fonte única de verdade do roadmap · Atualizar ao concluir item ou descobrir novo.*
-*Última atualização: 19/04/2026 22:30 — Fase NF-0 completa (primeira aplicação do padrão "código e processo nascem juntos")*
+*Última atualização: 20/04/2026 — Fase NF-1 completa (A + B). Processos silenciosos mapeados. Mesa produtiva, pronto pra NF-2.*
