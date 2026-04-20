@@ -1022,7 +1022,7 @@ export default function MinhasTarefas() {
           id: editarTarefa.id,
           titulo: editarTarefa.titulo,
           descricao: editarTarefa.descricao,
-          prazo_dias: 7,
+          prazo_dias: editarTarefa.prazo_dias || 7,
           prioridade: editarTarefa.prioridade as "urgente" | "normal" | "baixa",
           responsavel_user_id: editarTarefa.responsavel_user_id,
           colaborador_id: editarTarefa.colaborador_id,
