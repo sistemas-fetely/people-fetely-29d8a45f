@@ -1,13 +1,15 @@
 import { useEffect, useState } from "react";
-import { Navigate, Outlet } from "react-router-dom";
+import { Navigate, Outlet, useNavigate } from "react-router-dom";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { TISidebar } from "@/components/TISidebar";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Loader2, Home, Monitor } from "lucide-react";
 
 export default function TILayout() {
   const { user, roles } = useAuth();
+  const navigate = useNavigate();
   const [checking, setChecking] = useState(true);
   const [hasAccess, setHasAccess] = useState(false);
 
@@ -61,8 +63,21 @@ export default function TILayout() {
       <div className="min-h-screen flex w-full">
         <TISidebar />
         <div className="flex-1 flex flex-col">
-          <header className="h-14 flex items-center border-b border-border bg-card px-4">
+          <header className="h-14 flex items-center gap-3 border-b border-border bg-card px-4">
             <SidebarTrigger />
+            {/* Saída pro Portal */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate("/sncf")}
+              className="gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+            >
+              <Home className="h-3.5 w-3.5" />
+              Voltar ao Portal
+            </Button>
+            <span className="text-muted-foreground/40">|</span>
+            <Monitor className="h-4 w-4 text-muted-foreground" />
+            <h1 className="text-sm font-semibold">TI Fetely</h1>
           </header>
           <main className="flex-1 p-6 overflow-auto bg-background">
             <Outlet />

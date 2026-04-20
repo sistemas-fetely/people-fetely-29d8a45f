@@ -1,6 +1,6 @@
 import { useLocation } from "react-router-dom";
 import {
-  Banknote, Sliders, Settings, UserCog, MessageSquareWarning, Shield,
+  Banknote, Sliders, Settings, UserCog, MessageSquareWarning, Shield, Home,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { cn } from "@/lib/utils";
@@ -109,7 +109,16 @@ export function AdminSidebar() {
         {renderGroup("Saúde do Sistema", monitoramentoItems)}
       </SidebarContent>
 
-      <SidebarFooter className="p-4">
+      <SidebarFooter className="p-4 space-y-2">
+        {/* Voltar ao Portal — link visível mesmo colapsado */}
+        <NavLink
+          to="/sncf"
+          className="flex items-center gap-2 px-2 py-1.5 rounded-md text-xs text-sidebar-muted hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors"
+        >
+          <Home className="h-3.5 w-3.5 shrink-0" />
+          {!collapsed && <span>Portal Uauuu</span>}
+        </NavLink>
+
         {!collapsed && (
           <Badge variant="outline" className="text-[10px] w-fit border-sidebar-border/60 text-sidebar-muted">
             Área restrita
