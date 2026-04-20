@@ -45,7 +45,7 @@ export default function AdminLayout() {
             </Button>
             <span className="text-muted-foreground/40">|</span>
             <Shield className="h-4 w-4 text-muted-foreground" />
-            <h1 className="text-sm font-semibold">Administração</h1>
+            <h1 className="text-sm font-semibold">ADM SNCF</h1>
           </header>
           <main className="flex-1 overflow-auto">
             <Outlet />

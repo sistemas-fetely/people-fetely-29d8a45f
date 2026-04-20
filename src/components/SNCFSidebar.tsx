@@ -222,7 +222,7 @@ export function SNCFSidebar() {
         <div className="mx-4 border-t border-sidebar-border/40" />
         {renderGroup("Celebração & Conversa", celebracaoItems)}
         {canSee("admin_rh_or_super") && <div className="mx-4 border-t border-sidebar-border/40" />}
-        {renderGroup("Administração", adminItems)}
+        {renderGroup("Curadoria", adminItems)}
 
         {sistemasExternos.length > 0 && (
           <>
@@ -301,7 +301,7 @@ export function SNCFSidebar() {
                 className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-xs text-sidebar-muted hover:bg-sidebar-accent hover:text-sidebar-foreground transition-all duration-200"
               >
                 <Shield className="h-3.5 w-3.5" />
-                Área Administrativa
+                ADM SNCF
               </Link>
             )}
             <button
