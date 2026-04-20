@@ -7,6 +7,7 @@ import { LayoutGrid, Lock, ExternalLink, ClipboardList, Sparkles, MessageCircle,
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useMeusAtalhos } from "@/hooks/useRegistrarNavegacao";
+import { MuralRotativo } from "@/components/mural/MuralRotativo";
 
 interface Sistema {
   id: string;
@@ -139,6 +140,11 @@ export default function PortalSNCF() {
           Selecione um sistema para entrar. Você só pode acessar os sistemas em que tem permissão.
         </p>
       </div>
+
+      {/* Mural Fetely — celebrações rotativas */}
+      <section>
+        <MuralRotativo />
+      </section>
 
       {/* TOPO: Minhas Tarefas + Fala Fetely */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
