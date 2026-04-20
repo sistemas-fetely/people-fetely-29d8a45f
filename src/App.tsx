@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes, useParams } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -51,6 +51,7 @@ import CargosEnriquecimento from "@/pages/CargosEnriquecimento";
 import EntregaTeste from "@/pages/EntregaTeste";
 import PortalSNCF from "@/pages/PortalSNCF";
 import TILayout from "@/layouts/TILayout";
+import AdminLayout from "@/layouts/AdminLayout";
 import SNCFLayout from "@/layouts/SNCFLayout";
 import TIDashboard from "@/pages/ti/TIDashboard";
 import TIAtivos from "@/pages/ti/TIAtivos";
@@ -82,6 +83,12 @@ function RedirectToPessoasPJ() {
   return <Navigate to="/pessoas?tipo=PJ" replace />;
 }
 
+// Redirects para rotas legadas migradas para /admin
+function CargosIdRedirect() {
+  const { id } = useParams();
+  return <Navigate to={`/admin/cargos/${id}`} replace />;
+}
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -107,11 +114,8 @@ const App = () => (
               <Route path="/sncf" element={<PortalSNCF />} />
               <Route path="/tarefas" element={<MinhasTarefas />} />
               <Route path="/tarefas/time" element={<TarefasDoTime />} />
-              <Route path="/gerenciar-usuarios" element={
-                <ProtectedRoute permModule="usuarios">
-                  <GerenciarUsuarios />
-                </ProtectedRoute>
-              } />
+              <Route path="/gerenciar-usuarios" element={<Navigate to="/admin/usuarios" replace />} />
+              <Route path="/gerenciar-usuarios/perfis" element={<Navigate to="/admin/usuarios/perfis" replace />} />
               <Route path="/processos" element={<Processos />} />
               <Route path="/processos/:id" element={<ProcessoDetalhe />} />
               <Route path="/processos/:id/editar" element={<ProcessoEditor />} />
@@ -283,48 +287,53 @@ const App = () => (
                 </ProtectedRoute>
               } />
 
-              {/* Admin */}
-              <Route path="/parametros" element={
-                <ProtectedRoute permModule="parametros">
-                  <Parametros />
-                </ProtectedRoute>
+              {/* Redirects legados → Admin */}
+              <Route path="/parametros" element={<Navigate to="/admin/parametros" replace />} />
+              <Route path="/configuracoes" element={<Navigate to="/admin/configuracoes" replace />} />
+              <Route path="/configurar-perfis" element={<Navigate to="/admin/usuarios/perfis" replace />} />
+              <Route path="/cargos" element={<Navigate to="/admin/cargos" replace />} />
+              <Route path="/cargos/enriquecimento" element={<Navigate to="/admin/cargos/enriquecimento" replace />} />
+              <Route path="/cargos/novo" element={<Navigate to="/admin/cargos/novo" replace />} />
+              <Route path="/cargos/:id" element={<CargosIdRedirect />} />
+              </Route>
+
+            {/* ═══════════════════════════════════════════════
+                Administração (zona restrita: super_admin + admin_rh)
+                ═══════════════════════════════════════════════ */}
+            <Route path="/admin" element={<AdminLayout />}>
+              <Route index element={<Navigate to="/admin/cargos" replace />} />
+              <Route path="cargos" element={
+                <ProtectedRoute permModule="parametros"><Cargos /></ProtectedRoute>
               } />
-              <Route path="/configuracoes" element={
+              <Route path="cargos/novo" element={
+                <ProtectedRoute permModule="parametros"><CargoForm /></ProtectedRoute>
+              } />
+              <Route path="cargos/enriquecimento" element={
+                <ProtectedRoute permModule="parametros"><CargosEnriquecimento /></ProtectedRoute>
+              } />
+              <Route path="cargos/:id" element={
+                <ProtectedRoute permModule="parametros"><CargoForm /></ProtectedRoute>
+              } />
+              <Route path="parametros" element={
+                <ProtectedRoute permModule="parametros"><Parametros /></ProtectedRoute>
+              } />
+              <Route path="configuracoes" element={
                 <ProtectedRoute permModule="usuarios">
                   <PlaceholderPage title="Configurações" description="Parâmetros do sistema e permissões" />
                 </ProtectedRoute>
               } />
-              <Route path="/configurar-perfis" element={
-                <ProtectedRoute permModule="usuarios">
-                  <ConfigurarPerfis />
-                </ProtectedRoute>
+              <Route path="usuarios" element={
+                <ProtectedRoute permModule="usuarios"><GerenciarUsuarios /></ProtectedRoute>
               } />
-              <Route path="/cargos" element={
-                <ProtectedRoute permModule="parametros">
-                  <Cargos />
-                </ProtectedRoute>
+              <Route path="usuarios/perfis" element={
+                <ProtectedRoute permModule="usuarios"><ConfigurarPerfis /></ProtectedRoute>
               } />
-              <Route path="/cargos/enriquecimento" element={
-                <ProtectedRoute permModule="parametros">
-                  <CargosEnriquecimento />
-                </ProtectedRoute>
-              } />
-              <Route path="/cargos/novo" element={
-                <ProtectedRoute permModule="parametros">
-                  <CargoForm />
-                </ProtectedRoute>
-              } />
-              <Route path="/cargos/:id" element={
-                <ProtectedRoute permModule="parametros">
-                  <CargoForm />
-                </ProtectedRoute>
-              } />
-              <Route path="/admin/reportes" element={
+              <Route path="reportes" element={
                 <ProtectedRoute allowedRoles={["super_admin", "admin_rh"]}>
                   <SistemaReportes />
                 </ProtectedRoute>
               } />
-              </Route>
+            </Route>
 
             <Route path="*" element={<NotFound />} />
           </Routes>

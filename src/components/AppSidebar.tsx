@@ -1,7 +1,7 @@
 import {
   LayoutDashboard, Users, GitBranch, UserSearch, MailPlus, Rocket,
   ArrowLeftRight, Award, BookOpen, Receipt, Clock, CreditCard, FileText,
-  Palmtree, Gift, BarChart3, LogOut, LayoutGrid, Tv,
+  Palmtree, Gift, BarChart3, LogOut, LayoutGrid, Tv, Shield,
 } from "lucide-react";
 
 import { NavLink } from "@/components/NavLink";
@@ -233,6 +233,15 @@ export function AppSidebar() {
                 </Badge>
               </div>
             </div>
+            {(roles.includes("super_admin") || roles.includes("admin_rh")) && (
+              <NavLink
+                to="/admin"
+                className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-xs text-sidebar-muted hover:bg-sidebar-accent hover:text-sidebar-foreground transition-all duration-200"
+              >
+                <Shield className="h-3.5 w-3.5" />
+                Área Administrativa
+              </NavLink>
+            )}
             <button
               onClick={signOut}
               className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-xs text-sidebar-muted hover:bg-sidebar-accent hover:text-sidebar-foreground transition-all duration-200"
