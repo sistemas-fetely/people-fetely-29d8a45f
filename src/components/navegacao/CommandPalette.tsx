@@ -1,0 +1,288 @@
+import { useEffect, useState, useRef, useCallback, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  LayoutGrid, Users, Monitor, Star, Search,
+  FileText, Briefcase, UserPlus, ClipboardList, Workflow,
+  BookOpen, MessageSquare, Settings, Sliders,
+  Receipt, Calendar, Heart, Building2, ChevronRight,
+} from "lucide-react";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { useRecentes } from "@/hooks/useRecentes";
+import { useFavoritos } from "@/hooks/useFavoritos";
+
+type Pilar = "sncf" | "people" | "ti" | "admin";
+
+interface PageItem {
+  rota: string;
+  titulo: string;
+  pilar: Pilar;
+  icon: typeof LayoutGrid;
+  tags: string[];
+}
+
+const ALL_PAGES: PageItem[] = [
+  // SNCF
+  { rota: "/sncf", titulo: "Portal Uauuu", pilar: "sncf", icon: LayoutGrid, tags: ["portal", "home", "início"] },
+  { rota: "/tarefas", titulo: "Minhas Tarefas", pilar: "sncf", icon: ClipboardList, tags: ["tarefas", "pendências"] },
+  { rota: "/tarefas/time", titulo: "Tarefas do Time", pilar: "sncf", icon: ClipboardList, tags: ["tarefas", "time", "equipe"] },
+  { rota: "/processos", titulo: "Processos", pilar: "sncf", icon: Workflow, tags: ["processos", "mapeamento"] },
+  { rota: "/documentacao", titulo: "Documentação", pilar: "sncf", icon: FileText, tags: ["docs", "documentação", "manual"] },
+  { rota: "/fala-fetely", titulo: "Fala Fetely", pilar: "sncf", icon: MessageSquare, tags: ["fala", "chat", "ia", "perguntar"] },
+  { rota: "/fala-fetely/conhecimento", titulo: "Base de Conhecimento", pilar: "sncf", icon: BookOpen, tags: ["conhecimento", "base"] },
+  { rota: "/mural", titulo: "Mural Fetely", pilar: "sncf", icon: MessageSquare, tags: ["mural", "comunicação"] },
+
+  // People
+  { rota: "/dashboard", titulo: "Dashboard People", pilar: "people", icon: Users, tags: ["dashboard", "rh", "resumo"] },
+  { rota: "/pessoas", titulo: "Pessoas", pilar: "people", icon: Users, tags: ["pessoas", "colaboradores", "lista"] },
+  { rota: "/recrutamento", titulo: "Recrutamento", pilar: "people", icon: UserPlus, tags: ["recrutamento", "vagas", "candidatos"] },
+  { rota: "/convites-cadastro", titulo: "Convites de Cadastro", pilar: "people", icon: UserPlus, tags: ["convites", "cadastro"] },
+  { rota: "/onboarding", titulo: "Onboarding", pilar: "people", icon: ClipboardList, tags: ["onboarding", "integração"] },
+  { rota: "/movimentacoes", titulo: "Movimentações", pilar: "people", icon: ChevronRight, tags: ["movimentações", "transferências"] },
+  { rota: "/folha-pagamento", titulo: "Folha de Pagamento", pilar: "people", icon: Receipt, tags: ["folha", "pagamento", "holerite"] },
+  { rota: "/pagamentos-pj", titulo: "Pagamentos PJ", pilar: "people", icon: Receipt, tags: ["pagamentos", "pj"] },
+  { rota: "/notas-fiscais", titulo: "Notas Fiscais PJ", pilar: "people", icon: Receipt, tags: ["notas", "fiscais", "nf"] },
+  { rota: "/ferias", titulo: "Férias", pilar: "people", icon: Calendar, tags: ["férias", "descanso"] },
+  { rota: "/beneficios", titulo: "Benefícios", pilar: "people", icon: Heart, tags: ["benefícios"] },
+  { rota: "/organograma", titulo: "Organograma", pilar: "people", icon: Building2, tags: ["organograma", "estrutura"] },
+
+  // TI
+  { rota: "/ti", titulo: "Dashboard TI", pilar: "ti", icon: Monitor, tags: ["ti", "tecnologia", "dashboard"] },
+
+  // Admin
+  { rota: "/admin/cargos", titulo: "Cargos e Salários", pilar: "admin", icon: Briefcase, tags: ["cargos", "salários", "ppr"] },
+  { rota: "/admin/parametros", titulo: "Parâmetros", pilar: "admin", icon: Sliders, tags: ["parâmetros", "configuração"] },
+  { rota: "/admin/configuracoes", titulo: "Configurações", pilar: "admin", icon: Settings, tags: ["configurações", "sistema"] },
+  { rota: "/admin/usuarios", titulo: "Gerenciar Usuários", pilar: "admin", icon: Users, tags: ["usuários", "acessos", "roles"] },
+  { rota: "/admin/reportes", titulo: "Reportes do Sistema", pilar: "admin", icon: FileText, tags: ["reportes", "alertas"] },
+  { rota: "/admin/importacoes-pdf", titulo: "Importações PDF", pilar: "admin", icon: FileText, tags: ["importações", "pdf", "ia"] },
+];
+
+const PILAR_COLORS: Record<string, string> = {
+  sncf: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20",
+  people: "bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/20",
+  ti: "bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-500/20",
+  admin: "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20",
+};
+
+const PILAR_LABELS: Record<string, string> = {
+  sncf: "SNCF",
+  people: "People",
+  ti: "TI",
+  admin: "ADM",
+};
+
+interface Props {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
+type ListItem =
+  | { type: "header"; label: string }
+  | { type: "item"; page: PageItem };
+
+export function CommandPalette({ open, onOpenChange }: Props) {
+  const navigate = useNavigate();
+  const [query, setQuery] = useState("");
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+
+  const { recentes } = useRecentes(5);
+  const { favoritos, isFavorito, toggleFavorito } = useFavoritos();
+
+  useEffect(() => {
+    if (open) {
+      setQuery("");
+      setSelectedIndex(0);
+      setTimeout(() => inputRef.current?.focus(), 50);
+    }
+  }, [open]);
+
+  const filtered = useMemo(() => {
+    if (!query.trim()) return [];
+    const q = query.toLowerCase();
+    return ALL_PAGES.filter(
+      (p) =>
+        p.titulo.toLowerCase().includes(q) ||
+        p.tags.some((t) => t.includes(q)) ||
+        p.pilar.includes(q)
+    );
+  }, [query]);
+
+  const items = useMemo<ListItem[]>(() => {
+    const result: ListItem[] = [];
+
+    if (!query.trim()) {
+      if (favoritos.length > 0) {
+        result.push({ type: "header", label: "⭐ Favoritos" });
+        favoritos.forEach((f) => {
+          const page = ALL_PAGES.find((p) => p.rota === f.rota);
+          if (page) result.push({ type: "item", page });
+        });
+      }
+      if (recentes.length > 0) {
+        const recentItems = recentes
+          .map((r) => ALL_PAGES.find((p) => p.rota === r.rota))
+          .filter((p): p is PageItem => !!p && !favoritos.some((f) => f.rota === p.rota));
+        if (recentItems.length > 0) {
+          result.push({ type: "header", label: "🕐 Recentes" });
+          recentItems.forEach((page) => result.push({ type: "item", page }));
+        }
+      }
+      if (result.filter((r) => r.type === "item").length === 0) {
+        result.push({ type: "header", label: "📋 Todas as páginas" });
+        ALL_PAGES.slice(0, 10).forEach((page) => result.push({ type: "item", page }));
+      }
+    } else {
+      result.push({ type: "header", label: `🔍 Resultados para "${query}"` });
+      filtered.forEach((page) => result.push({ type: "item", page }));
+    }
+
+    return result;
+  }, [query, favoritos, recentes, filtered]);
+
+  const selectableItems = useMemo(
+    () => items.filter((i): i is { type: "item"; page: PageItem } => i.type === "item"),
+    [items]
+  );
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setSelectedIndex((prev) => Math.min(prev + 1, selectableItems.length - 1));
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setSelectedIndex((prev) => Math.max(prev - 1, 0));
+      } else if (e.key === "Enter") {
+        e.preventDefault();
+        const selected = selectableItems[selectedIndex];
+        if (selected) {
+          navigate(selected.page.rota);
+          onOpenChange(false);
+        }
+      }
+    },
+    [selectableItems, selectedIndex, navigate, onOpenChange]
+  );
+
+  useEffect(() => {
+    const el = listRef.current?.querySelector(`[data-index="${selectedIndex}"]`);
+    el?.scrollIntoView({ block: "nearest" });
+  }, [selectedIndex]);
+
+  const handleSelect = (rota: string) => {
+    navigate(rota);
+    onOpenChange(false);
+  };
+
+  let itemIndex = -1;
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="p-0 max-w-2xl overflow-hidden gap-0">
+        {/* Input de busca */}
+        <div className="flex items-center gap-2 px-4 py-3 border-b">
+          <Search className="h-4 w-4 text-muted-foreground shrink-0" />
+          <input
+            ref={inputRef}
+            value={query}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setSelectedIndex(0);
+            }}
+            onKeyDown={handleKeyDown}
+            placeholder="Buscar página, módulo ou atalho..."
+            className="flex-1 bg-transparent outline-none text-sm placeholder:text-muted-foreground"
+          />
+          <kbd className="rounded border px-1.5 py-0.5 text-[10px] font-mono bg-muted text-muted-foreground">
+            ESC
+          </kbd>
+        </div>
+
+        {/* Lista de resultados */}
+        <div ref={listRef} className="max-h-[420px] overflow-y-auto">
+          {items.map((item, i) => {
+            if (item.type === "header") {
+              return (
+                <div
+                  key={`h-${i}`}
+                  className="px-4 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground bg-muted/30"
+                >
+                  {item.label}
+                </div>
+              );
+            }
+
+            itemIndex++;
+            const isSelected = itemIndex === selectedIndex;
+            const page = item.page;
+            const Icon = page.icon;
+            const fav = isFavorito(page.rota);
+            const currentItemIndex = itemIndex;
+
+            return (
+              <button
+                key={`${page.rota}-${i}`}
+                data-index={currentItemIndex}
+                onMouseEnter={() => setSelectedIndex(currentItemIndex)}
+                onClick={() => handleSelect(page.rota)}
+                className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors ${
+                  isSelected ? "bg-muted" : "hover:bg-muted/50"
+                }`}
+              >
+                <div className={`shrink-0 h-8 w-8 rounded-lg flex items-center justify-center ${PILAR_COLORS[page.pilar]}`}>
+                  <Icon className="h-4 w-4" />
+                </div>
+                <span className="flex-1 text-sm font-medium truncate">{page.titulo}</span>
+                <Badge variant="outline" className={`text-[10px] px-1.5 py-0 h-4 ${PILAR_COLORS[page.pilar]}`}>
+                  {PILAR_LABELS[page.pilar] || page.pilar}
+                </Badge>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    void toggleFavorito(page.rota, page.titulo, page.pilar);
+                  }}
+                  className={`shrink-0 p-1 rounded hover:bg-background/80 ${
+                    fav ? "text-amber-400" : "text-muted-foreground/20 hover:text-amber-400"
+                  }`}
+                  aria-label={fav ? "Remover dos favoritos" : "Adicionar aos favoritos"}
+                >
+                  <Star className={`h-3.5 w-3.5 ${fav ? "fill-amber-400" : ""}`} />
+                </button>
+              </button>
+            );
+          })}
+
+          {query.trim() && filtered.length === 0 && (
+            <div className="text-center py-12 px-4">
+              <p className="text-sm text-muted-foreground">
+                Nenhuma página encontrada para "{query}"
+              </p>
+              <p className="text-xs text-muted-foreground/60 mt-1">
+                Tente "tarefas", "pessoas", "processos"...
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Footer com dicas */}
+        <div className="flex items-center gap-3 px-4 py-2 border-t bg-muted/20 text-[10px] text-muted-foreground">
+          <span className="flex items-center gap-1">
+            <kbd className="rounded border px-1 py-0.5 font-mono bg-background">↑↓</kbd>
+            navegar
+          </span>
+          <span className="flex items-center gap-1">
+            <kbd className="rounded border px-1 py-0.5 font-mono bg-background">↵</kbd>
+            abrir
+          </span>
+          <span className="flex items-center gap-1">
+            <kbd className="rounded border px-1 py-0.5 font-mono bg-background">esc</kbd>
+            fechar
+          </span>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}

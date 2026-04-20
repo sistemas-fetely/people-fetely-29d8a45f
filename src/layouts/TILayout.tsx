@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2, Home, Monitor } from "lucide-react";
 import { useTrackPageVisit } from "@/hooks/useTrackPageVisit";
 import { RecentesEFavoritos } from "@/components/navegacao/RecentesEFavoritos";
+import { CommandPaletteProvider } from "@/components/navegacao/CommandPaletteProvider";
 
 export default function TILayout() {
   const { user, roles } = useAuth();
@@ -90,6 +91,7 @@ export default function TILayout() {
           </main>
         </div>
       </div>
+      <CommandPaletteProvider />
     </SidebarProvider>
   );
 }

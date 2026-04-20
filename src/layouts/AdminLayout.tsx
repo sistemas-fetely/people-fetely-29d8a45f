@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2, Shield, Home } from "lucide-react";
 import { useTrackPageVisit } from "@/hooks/useTrackPageVisit";
 import { RecentesEFavoritos } from "@/components/navegacao/RecentesEFavoritos";
+import { CommandPaletteProvider } from "@/components/navegacao/CommandPaletteProvider";
 
 export default function AdminLayout() {
   const { user, roles, loading } = useAuth();
@@ -58,6 +59,7 @@ export default function AdminLayout() {
           </main>
         </div>
       </div>
+      <CommandPaletteProvider />
     </SidebarProvider>
   );
 }

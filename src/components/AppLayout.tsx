@@ -5,6 +5,7 @@ import { Outlet } from "react-router-dom";
 import { SystemReadinessBanner } from "@/components/shared/SystemReadinessBanner";
 import { ReportarErroBotao } from "@/components/shared/ReportarErroBotao";
 import { useRegistrarNavegacao } from "@/hooks/useRegistrarNavegacao";
+import { CommandPaletteProvider } from "@/components/navegacao/CommandPaletteProvider";
 
 export function AppLayout() {
   useRegistrarNavegacao();
@@ -21,6 +22,7 @@ export function AppLayout() {
           </main>
         </div>
       </div>
+      <CommandPaletteProvider />
     </SidebarProvider>
   );
 }
