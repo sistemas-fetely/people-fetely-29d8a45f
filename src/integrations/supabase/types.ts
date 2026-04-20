@@ -3805,6 +3805,51 @@ export type Database = {
           },
         ]
       }
+      processos_importacoes_pdf: {
+        Row: {
+          arquivo_nome: string
+          arquivo_paginas: number | null
+          arquivo_tamanho_kb: number | null
+          created_at: string
+          erro_mensagem: string | null
+          id: string
+          importado_por: string | null
+          importado_por_nome: string | null
+          processos_criados: string[] | null
+          resultado_ia: Json | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          arquivo_nome: string
+          arquivo_paginas?: number | null
+          arquivo_tamanho_kb?: number | null
+          created_at?: string
+          erro_mensagem?: string | null
+          id?: string
+          importado_por?: string | null
+          importado_por_nome?: string | null
+          processos_criados?: string[] | null
+          resultado_ia?: Json | null
+          status: string
+          updated_at?: string
+        }
+        Update: {
+          arquivo_nome?: string
+          arquivo_paginas?: number | null
+          arquivo_tamanho_kb?: number | null
+          created_at?: string
+          erro_mensagem?: string | null
+          id?: string
+          importado_por?: string | null
+          importado_por_nome?: string | null
+          processos_criados?: string[] | null
+          resultado_ia?: Json | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       processos_ligacoes: {
         Row: {
           criado_em: string
