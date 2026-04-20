@@ -179,6 +179,17 @@ export default function ProcessoDetalhe() {
               {processo.descricao && (
                 <p className="text-sm text-muted-foreground mt-1">{processo.descricao}</p>
               )}
+              {importacaoInfo && (
+                <Badge
+                  variant="outline"
+                  className="mt-2 gap-1 border-purple-500/40 bg-purple-500/5 text-purple-700"
+                >
+                  <Sparkles className="h-3 w-3" />
+                  Importado de PDF · {importacaoInfo.arquivo_nome}
+                  {importacaoInfo.importado_por_nome && <> · por {importacaoInfo.importado_por_nome}</>}
+                  <> · em {new Date(importacaoInfo.created_at).toLocaleDateString("pt-BR")}</>
+                </Badge>
+              )}
             </div>
             <Badge variant="outline" className={STATUS_COR[processo.status_valor] || ""}>
               {processo.status_valor}
