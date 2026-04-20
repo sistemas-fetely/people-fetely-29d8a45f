@@ -28,6 +28,7 @@ import { cn } from "@/lib/utils";
 import { RadarOperacional } from "@/components/tarefas/RadarOperacional";
 import { SubmeterNFDialog } from "@/components/minhas-notas/SubmeterNFDialog";
 import { AprovarNFDialog } from "@/components/minhas-notas/AprovarNFDialog";
+import { NovaTarefaDialog } from "@/components/tarefas/NovaTarefaDialog";
 
 interface Tarefa {
   id: string;
@@ -45,6 +46,7 @@ interface Tarefa {
   responsavel_user_id: string | null;
   accountable_user_id: string | null;
   prazo_data: string | null;
+  prazo_dias: number | null;
   status: string;
   concluida_em: string | null;
   bloqueante: boolean | null;
@@ -100,6 +102,10 @@ export default function MinhasTarefas() {
 
   // Aprovar NF (tarefa de aprovacao_nf — RH)
   const [aprovarNFTarefa, setAprovarNFTarefa] = useState<Tarefa | null>(null);
+
+  // Nova tarefa / editar tarefa manual
+  const [novaTarefaOpen, setNovaTarefaOpen] = useState(false);
+  const [editarTarefa, setEditarTarefa] = useState<Tarefa | null>(null);
 
   // Quem vê a seção "Prioridades do Dia"
   const isGestorRH = (userRoles as string[]).includes("gestor_rh");
@@ -607,8 +613,12 @@ export default function MinhasTarefas() {
                 <Play className="h-4 w-4" /> Iniciar
               </DropdownMenuItem>
             )}
-            {tarefa.tipo_processo === "manual" && tarefa.criado_por === user?.id && (
-              <DropdownMenuItem className="gap-2" disabled>
+            {tarefa.tipo_processo === "manual" && tarefa.criado_por === user?.id
+              && tarefa.status !== "concluida" && tarefa.status !== "cancelada" && (
+              <DropdownMenuItem
+                className="gap-2"
+                onClick={() => setEditarTarefa(tarefa)}
+              >
                 <Pencil className="h-4 w-4" /> Editar
               </DropdownMenuItem>
             )}
@@ -693,7 +703,7 @@ export default function MinhasTarefas() {
             Visão unificada de todas as suas pendências
           </p>
         </div>
-        <Button className="gap-2" disabled>
+        <Button className="gap-2" onClick={() => setNovaTarefaOpen(true)}>
           <Plus className="h-4 w-4" /> Nova Tarefa
         </Button>
       </div>
@@ -996,6 +1006,31 @@ export default function MinhasTarefas() {
           notaId={aprovarNFTarefa.processo_id}
         />
       )}
+
+      {/* Dialog criar nova tarefa */}
+      <NovaTarefaDialog
+        open={novaTarefaOpen}
+        onOpenChange={setNovaTarefaOpen}
+        onCriada={() => void loadTarefas()}
+      />
+
+      {/* Dialog editar tarefa manual */}
+      <NovaTarefaDialog
+        open={!!editarTarefa}
+        onOpenChange={(open) => !open && setEditarTarefa(null)}
+        tarefaParaEditar={editarTarefa ? {
+          id: editarTarefa.id,
+          titulo: editarTarefa.titulo,
+          descricao: editarTarefa.descricao,
+          prazo_dias: editarTarefa.prazo_dias || 7,
+          prioridade: editarTarefa.prioridade as "urgente" | "normal" | "baixa",
+          responsavel_user_id: editarTarefa.responsavel_user_id,
+          colaborador_id: editarTarefa.colaborador_id,
+          colaborador_tipo: editarTarefa.colaborador_tipo as "clt" | "pj" | null,
+          colaborador_nome: editarTarefa.colaborador_nome,
+        } : undefined}
+        onCriada={() => void loadTarefas()}
+      />
     </div>
   );
 }
