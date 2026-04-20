@@ -372,26 +372,18 @@ export default function TarefasDoTime() {
                         <div className="flex items-center gap-2 flex-wrap">
                           <CardTitle className="text-base">{sub.nome}</CardTitle>
                           {sub.user_id && (
-                            <TooltipProvider delayDuration={200}>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-7 w-7 text-muted-foreground hover:text-foreground"
-                                    onClick={() =>
-                                      setCriarTarefaPara({ user_id: sub.user_id!, nome: sub.nome })
-                                    }
-                                    aria-label={`Criar tarefa para ${sub.nome}`}
-                                  >
-                                    <UserPlus className="h-3.5 w-3.5" />
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent side="top">
-                                  Criar tarefa para {sub.nome}
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-8 gap-1.5 text-xs font-medium border-primary/30 text-primary hover:bg-primary/5 hover:border-primary/50 hover:text-primary"
+                              onClick={() =>
+                                setCriarTarefaPara({ user_id: sub.user_id!, nome: sub.nome })
+                              }
+                              aria-label={`Criar tarefa para ${sub.nome}`}
+                            >
+                              <UserPlus className="h-3.5 w-3.5" />
+                              <span>Tarefa</span>
+                            </Button>
                           )}
                           <BadgePredictor />
                         </div>

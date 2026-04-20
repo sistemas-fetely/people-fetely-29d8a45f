@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Loader2, Plus, Check, ChevronsUpDown } from "lucide-react";
+import { Loader2, Plus, Check, ChevronsUpDown, UserPlus } from "lucide-react";
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter,
   DialogHeader, DialogTitle,
@@ -84,6 +84,16 @@ export function NovaTarefaDialog({ open, onOpenChange, onCriada, tarefaParaEdita
   const [responsavelPopoverOpen, setResponsavelPopoverOpen] = useState(false);
   const [colaboradorPopoverOpen, setColaboradorPopoverOpen] = useState(false);
 
+  // Modo "delegação": quando true, expande autocomplete pra atribuir a outra pessoa.
+  // Default: false — dialog inicia em "criar pra mim".
+  // Exceção: se veio com responsavelInicial (fluxo /tarefas/time), já trata como delegação.
+  const [modoDelegacao, setModoDelegacao] = useState(false);
+
+  // Reset ao fechar
+  useEffect(() => {
+    if (!open) setModoDelegacao(false);
+  }, [open]);
+
   // ═══ Determinar nível do usuário ═══
   useEffect(() => {
     if (!user) return;
@@ -120,10 +130,13 @@ export function NovaTarefaDialog({ open, onOpenChange, onCriada, tarefaParaEdita
   useEffect(() => {
     if (!open || !user) return;
 
+    // Só carrega lista completa se o usuário expandiu OU se veio pré-preenchido
+    const precisaCarregarLista = modoDelegacao || !!responsavelInicial;
+
     void (async () => {
       let pessoas: PessoaOption[] = [];
 
-      // Próprio profile
+      // Próprio profile (sempre busca pra ter user_id)
       const { data: meuProfile } = await supabase
         .from("profiles")
         .select("id, user_id, full_name, position")
@@ -145,6 +158,12 @@ export function NovaTarefaDialog({ open, onOpenChange, onCriada, tarefaParaEdita
             setResponsavelUserId(meuProfile.user_id);
           }
         }
+      }
+
+      if (!precisaCarregarLista) {
+        // Modo "pra mim" — só o próprio usuário na lista
+        setPessoasDisponiveis(pessoas);
+        return;
       }
 
       if (meuNivel === "admin") {
@@ -184,7 +203,7 @@ export function NovaTarefaDialog({ open, onOpenChange, onCriada, tarefaParaEdita
 
       setPessoasDisponiveis(pessoas);
     })();
-  }, [open, user, meuNivel, isEdicao, responsavelInicial]);
+  }, [open, user, meuNivel, isEdicao, responsavelInicial, modoDelegacao]);
 
   // ═══ Carregar colaboradores (CLT + PJ) ═══
   useEffect(() => {
@@ -393,74 +412,127 @@ export function NovaTarefaDialog({ open, onOpenChange, onCriada, tarefaParaEdita
           {/* Responsável (só em modo criação) */}
           {!isEdicao && (
             <div className="space-y-2">
-              <Label>Responsável *</Label>
-              <Popover open={responsavelPopoverOpen} onOpenChange={setResponsavelPopoverOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    role="combobox"
-                    className="w-full justify-between font-normal"
+              {/* Modo "pra mim" — gestor/admin: card discreto + atalho pra delegar */}
+              {!modoDelegacao && !responsavelInicial && meuNivel !== "colaborador" && (
+                <div className="rounded-md border border-dashed bg-muted/30 p-3">
+                  <p className="text-xs text-muted-foreground leading-tight">
+                    Essa tarefa será criada{" "}
+                    <span className="font-medium text-foreground">pra você</span>.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setModoDelegacao(true)}
+                    className="text-xs text-primary hover:underline mt-1.5 inline-flex items-center gap-1"
                   >
-                    {responsavelSelecionado ? (
-                      <span className="truncate">
-                        {responsavelSelecionado.nome}
-                        {responsavelSelecionado.cargo && (
-                          <span className="text-muted-foreground ml-1">
-                            · {responsavelSelecionado.cargo}
-                          </span>
-                        )}
-                      </span>
-                    ) : (
-                      <span className="text-muted-foreground">Selecione...</span>
-                    )}
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                  <Command>
-                    <CommandInput placeholder="Buscar pessoa..." />
-                    <CommandList>
-                      <CommandEmpty>Ninguém encontrado.</CommandEmpty>
-                      <CommandGroup>
-                        {pessoasDisponiveis.map((p) => (
-                          <CommandItem
-                            key={p.user_id}
-                            value={p.nome}
-                            onSelect={() => {
-                              setResponsavelUserId(p.user_id);
-                              setResponsavelPopoverOpen(false);
-                            }}
-                          >
-                            <Check
-                              className={cn(
-                                "mr-2 h-4 w-4",
-                                responsavelUserId === p.user_id ? "opacity-100" : "opacity-0",
-                              )}
-                            />
-                            <span className="flex-1 truncate">
-                              {p.nome}
-                              {p.cargo && (
-                                <span className="text-muted-foreground text-xs ml-1">
-                                  · {p.cargo}
-                                </span>
-                              )}
-                            </span>
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
-              {meuNivel === "colaborador" && (
-                <p className="text-[10px] text-muted-foreground">
-                  Você pode criar tarefas apenas para si. Para atribuir a outros, fale com seu gestor.
-                </p>
+                    <UserPlus className="h-3 w-3" />
+                    Atribuir a outra pessoa
+                  </button>
+                </div>
               )}
-              {meuNivel === "gestor" && (
-                <p className="text-[10px] text-muted-foreground">
-                  Você pode atribuir tarefas a você mesmo ou aos liderados do seu time.
-                </p>
+
+              {/* Modo "pra mim" — colaborador puro: explicação sem link */}
+              {!modoDelegacao && !responsavelInicial && meuNivel === "colaborador" && (
+                <div className="rounded-md border border-dashed bg-muted/30 p-3">
+                  <p className="text-xs text-muted-foreground leading-tight">
+                    Essa tarefa será criada{" "}
+                    <span className="font-medium text-foreground">pra você</span>.
+                  </p>
+                  <p className="text-[10px] text-muted-foreground/80 mt-1">
+                    Para atribuir a outra pessoa, fale com seu gestor.
+                  </p>
+                </div>
+              )}
+
+              {/* Modo delegação OU veio pré-preenchido: autocomplete completo */}
+              {(modoDelegacao || responsavelInicial) && (
+                <>
+                  <div className="flex items-center justify-between">
+                    <Label>Responsável *</Label>
+                    {modoDelegacao && !responsavelInicial && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setModoDelegacao(false);
+                          const me = pessoasDisponiveis.find((p) => p.nome.includes("(você)"));
+                          if (me) setResponsavelUserId(me.user_id);
+                        }}
+                        className="text-[11px] text-muted-foreground hover:text-foreground"
+                      >
+                        ← criar pra mim
+                      </button>
+                    )}
+                  </div>
+
+                  <Popover open={responsavelPopoverOpen} onOpenChange={setResponsavelPopoverOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        className="w-full justify-between font-normal"
+                      >
+                        {responsavelSelecionado ? (
+                          <span className="truncate">
+                            {responsavelSelecionado.nome}
+                            {responsavelSelecionado.cargo && (
+                              <span className="text-muted-foreground ml-1">
+                                · {responsavelSelecionado.cargo}
+                              </span>
+                            )}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground">Selecione...</span>
+                        )}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                      <Command>
+                        <CommandInput placeholder="Buscar pessoa..." />
+                        <CommandList>
+                          <CommandEmpty>Ninguém encontrado.</CommandEmpty>
+                          <CommandGroup>
+                            {pessoasDisponiveis.map((p) => (
+                              <CommandItem
+                                key={p.user_id}
+                                value={p.nome}
+                                onSelect={() => {
+                                  setResponsavelUserId(p.user_id);
+                                  setResponsavelPopoverOpen(false);
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    responsavelUserId === p.user_id ? "opacity-100" : "opacity-0",
+                                  )}
+                                />
+                                <span className="flex-1 truncate">
+                                  {p.nome}
+                                  {p.cargo && (
+                                    <span className="text-muted-foreground text-xs ml-1">
+                                      · {p.cargo}
+                                    </span>
+                                  )}
+                                </span>
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+
+                  {meuNivel === "gestor" && (
+                    <p className="text-[10px] text-muted-foreground">
+                      Você pode atribuir tarefas a você mesmo ou aos liderados do seu time.
+                    </p>
+                  )}
+                  {meuNivel === "admin" && (
+                    <p className="text-[10px] text-muted-foreground">
+                      Você pode atribuir tarefas a qualquer pessoa da empresa.
+                    </p>
+                  )}
+                </>
               )}
             </div>
           )}
