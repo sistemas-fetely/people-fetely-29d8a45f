@@ -1,7 +1,6 @@
-import { Bell, Search, Moon, Sun } from "lucide-react";
+import { Bell, Moon, Sun } from "lucide-react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
@@ -114,13 +113,8 @@ export function AppHeader() {
         <span className="font-medium text-primary">{pageName}</span>
       </div>
       <div className="ml-auto flex items-center gap-2">
-        <div className="relative hidden md:block">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar..."
-            className="w-64 pl-8 h-9 bg-muted/50 border-0 rounded-xl"
-          />
-        </div>
+        {/* Busca global desativada — Fetely usa Fala Fetely como interface principal de descoberta.
+            Quando reativarmos, virá como ⌘K integrado a Recentes + Favoritos no Projeto Navegação Transversal. */}
         <Button variant="ghost" size="icon" className="relative h-9 w-9 rounded-xl hover:bg-accent" onClick={toggleDark}>
           {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
         </Button>
