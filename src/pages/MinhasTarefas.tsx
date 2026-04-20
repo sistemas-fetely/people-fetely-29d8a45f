@@ -27,6 +27,7 @@ import {
 import { cn } from "@/lib/utils";
 import { RadarOperacional } from "@/components/tarefas/RadarOperacional";
 import { SubmeterNFDialog } from "@/components/minhas-notas/SubmeterNFDialog";
+import { AprovarNFDialog } from "@/components/minhas-notas/AprovarNFDialog";
 
 interface Tarefa {
   id: string;
