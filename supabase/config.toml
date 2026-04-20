@@ -16,4 +16,4 @@ project_id = "vaxzorhqzvsnkutrlvfr"
   [functions.process-invite-reminders]
     verify_jwt = true
   [functions.importar-processo-pdf]
-    verify_jwt = true
+    verify_jwt = false
