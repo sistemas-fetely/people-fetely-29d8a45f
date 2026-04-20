@@ -85,3 +85,4 @@ export function MermaidRenderer({ codigo, className }: Props) {
       <div ref={containerRef} className="overflow-x-auto" />
     </div>
   );
+}
