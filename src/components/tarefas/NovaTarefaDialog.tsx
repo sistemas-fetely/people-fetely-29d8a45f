@@ -58,7 +58,7 @@ interface Props {
   responsavelInicial?: { user_id: string; nome: string };
 }
 
-export function NovaTarefaDialog({ open, onOpenChange, onCriada, tarefaParaEditar }: Props) {
+export function NovaTarefaDialog({ open, onOpenChange, onCriada, tarefaParaEditar, responsavelInicial }: Props) {
   const { user } = useAuth();
   const { isSuperAdmin, isAdminRH } = usePermissions();
 
@@ -137,9 +137,13 @@ export function NovaTarefaDialog({ open, onOpenChange, onCriada, tarefaParaEdita
           cargo: meuProfile.position,
         });
 
-        // Default: responsável é você (apenas em criação)
+        // Default: pré-selecionado tem prioridade; senão o próprio (apenas em criação)
         if (!isEdicao) {
-          setResponsavelUserId(meuProfile.user_id);
+          if (responsavelInicial?.user_id) {
+            setResponsavelUserId(responsavelInicial.user_id);
+          } else {
+            setResponsavelUserId(meuProfile.user_id);
+          }
         }
       }
 
@@ -180,7 +184,7 @@ export function NovaTarefaDialog({ open, onOpenChange, onCriada, tarefaParaEdita
 
       setPessoasDisponiveis(pessoas);
     })();
-  }, [open, user, meuNivel, isEdicao]);
+  }, [open, user, meuNivel, isEdicao, responsavelInicial]);
 
   // ═══ Carregar colaboradores (CLT + PJ) ═══
   useEffect(() => {
