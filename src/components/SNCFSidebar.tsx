@@ -1,6 +1,6 @@
 import {
   LayoutGrid, ClipboardList, UsersRound, UserCog, Workflow,
-  LogOut, Network, Sparkles, BookOpen, Shield, ExternalLink,
+  LogOut, Network, Sparkles, BookOpen, Shield, ExternalLink, FileText,
 } from "lucide-react";
 import * as LucideIcons from "lucide-react";
 import { Link } from "react-router-dom";
@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { getHighestRoleLabel } from "@/lib/user-role";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useMeuContratoPJ } from "@/hooks/useMinhasNotas";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent,
   SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem,
@@ -45,6 +46,10 @@ const principalItems: MenuItem[] = [
   { title: "Fala Fetely", url: "/fala-fetely", icon: Sparkles, end: true, badge: "Novo" },
 ];
 
+const minhasNotasItem: MenuItem = {
+  title: "Minhas Notas", url: "/minhas-notas", icon: FileText, end: true,
+};
+
 const adminItems: MenuItem[] = [
   { title: "Gerenciar Usuários", url: "/gerenciar-usuarios", icon: UserCog, requireRole: "admin_rh_or_super" },
   { title: "Processos", url: "/processos", icon: Workflow, requireRole: "admin_rh_or_super" },
@@ -72,6 +77,11 @@ export function SNCFSidebar() {
   const primaryRole = getHighestRoleLabel(roles);
 
   const isAdminRHOrSuper = roles.some((r) => ["super_admin", "admin_rh"].includes(r));
+  const { data: contratoPJ } = useMeuContratoPJ();
+
+  const principalItemsFinal = contratoPJ
+    ? [...principalItems, minhasNotasItem]
+    : principalItems;
 
   const { data: qtdSugestoesPendentes = 0 } = useQuery({
     queryKey: ["sugestoes-conhecimento-pendentes"],
@@ -199,7 +209,7 @@ export function SNCFSidebar() {
       </SidebarHeader>
 
       <SidebarContent className="px-2 space-y-1">
-        {renderGroup("Principal", principalItems)}
+        {renderGroup("Principal", principalItemsFinal)}
         {canSee("admin_rh_or_super") && <div className="mx-4 border-t border-sidebar-border/40" />}
         {renderGroup("Administração", adminItems)}
 

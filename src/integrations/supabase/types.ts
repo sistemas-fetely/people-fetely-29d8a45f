@@ -5790,6 +5790,21 @@ export type Database = {
         }
         Returns: boolean
       }
+      meu_contrato_pj_ativo: {
+        Args: never
+        Returns: {
+          categoria_pj: string
+          cnpj: string
+          contato_nome: string
+          data_fim: string
+          data_inicio: string
+          id: string
+          nome_fantasia: string
+          razao_social: string
+          status: string
+          valor_mensal: number
+        }[]
+      }
       meus_atalhos_personalizados: {
         Args: { _limite?: number }
         Returns: {
