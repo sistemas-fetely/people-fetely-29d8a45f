@@ -21,6 +21,9 @@ interface Props {
   onOpenChange: (open: boolean) => void;
   tarefaId?: string;
   competencia: string;
+  modoCorrecao?: boolean;
+  notaAnteriorId?: string;
+  motivoCorrecao?: string;
 }
 
 interface Classificacao {
@@ -30,7 +33,7 @@ interface Classificacao {
   justificativa: string;
 }
 
-export function SubmeterNFDialog({ open, onOpenChange, tarefaId, competencia }: Props) {
+export function SubmeterNFDialog({ open, onOpenChange, tarefaId, competencia, modoCorrecao, motivoCorrecao }: Props) {
   const { data: contrato } = useMeuContratoPJ();
   const submeter = useSubmeterNF();
 
@@ -192,14 +195,25 @@ export function SubmeterNFDialog({ open, onOpenChange, tarefaId, competencia }: 
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5" />
-            Emitir NF · competência {competencia}
+            {modoCorrecao ? "Corrigir NF" : "Emitir NF"} · competência {competencia}
           </DialogTitle>
           <DialogDescription>
-            Anexe o PDF da sua nota fiscal. A gente preenche os campos pra você. 💚
+            {modoCorrecao
+              ? "Reenvie uma NF corrigida ou ajuste a classificação dos valores."
+              : "Anexe o PDF da sua nota fiscal. A gente preenche os campos pra você. 💚"}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-2">
+          {modoCorrecao && motivoCorrecao && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription className="text-xs whitespace-pre-wrap">
+                <strong>Sua NF anterior precisa de correção:</strong>
+                {"\n" + motivoCorrecao}
+              </AlertDescription>
+            </Alert>
+          )}
           {contrato && (
             <Card className="bg-muted/30">
               <CardContent className="p-3 text-xs space-y-1">

@@ -5705,6 +5705,14 @@ export type Database = {
         Returns: boolean
       }
       contar_uso_template: { Args: { _template_id: string }; Returns: Json }
+      criar_tarefa_aprovacao_nf_pj: {
+        Args: { _nota_id: string }
+        Returns: string
+      }
+      criar_tarefa_correcao_nf_pj: {
+        Args: { _erros: Json; _nota_id: string }
+        Returns: string
+      }
       criar_tarefa_emissao_nf_pj: {
         Args: { _competencia: string; _contrato_id: string }
         Returns: string
@@ -5948,6 +5956,7 @@ export type Database = {
         }[]
       }
       validar_email_corporativo: { Args: { _email: string }; Returns: Json }
+      validar_nf_pj: { Args: { _nota_id: string }; Returns: Json }
       validar_prontidao_sistema: { Args: never; Returns: Json }
       verificar_user_orfao: { Args: { _user_id: string }; Returns: boolean }
     }
