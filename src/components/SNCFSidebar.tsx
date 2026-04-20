@@ -1,6 +1,7 @@
 import {
   LayoutGrid, ClipboardList, UsersRound, UserCog, Workflow,
   LogOut, Network, Sparkles, BookOpen, Shield, ExternalLink, FileText,
+  PartyPopper, MessageSquareWarning,
 } from "lucide-react";
 import * as LucideIcons from "lucide-react";
 import { Link } from "react-router-dom";
@@ -39,21 +40,29 @@ interface MenuItem {
   badge?: string;
 }
 
-const principalItems: MenuItem[] = [
+// Grupo 1: Operacional diário
+const operacionalItems: MenuItem[] = [
   { title: "Portal", url: "/sncf", icon: LayoutGrid, end: true },
   { title: "Minhas Tarefas", url: "/tarefas", icon: ClipboardList, end: true },
   { title: "Tarefas do Time", url: "/tarefas/time", icon: UsersRound, requireRole: "gestor_or_rh" },
-  { title: "Fala Fetely", url: "/fala-fetely", icon: Sparkles, end: true, badge: "Novo" },
 ];
 
 const minhasNotasItem: MenuItem = {
   title: "Minhas Notas", url: "/minhas-notas", icon: FileText, end: true,
 };
 
+// Grupo 2: Celebração & Conversa
+const celebracaoItems: MenuItem[] = [
+  { title: "Mural Fetely", url: "/mural", icon: PartyPopper, end: true, badge: "Novo" },
+  { title: "Fala Fetely", url: "/fala-fetely", icon: Sparkles, end: true },
+];
+
+// Grupo 3: Administrativo transversal
 const adminItems: MenuItem[] = [
-  { title: "Gerenciar Usuários", url: "/gerenciar-usuarios", icon: UserCog, requireRole: "admin_rh_or_super" },
   { title: "Processos", url: "/processos", icon: Workflow, requireRole: "admin_rh_or_super" },
   { title: "Base de Conhecimento", url: "/fala-fetely/conhecimento", icon: BookOpen, requireRole: "admin_rh_or_super" },
+  { title: "Reportes do Sistema", url: "/admin/reportes", icon: MessageSquareWarning, requireRole: "admin_rh_or_super" },
+  { title: "Gerenciar Usuários", url: "/gerenciar-usuarios", icon: UserCog, requireRole: "admin_rh_or_super" },
 ];
 
 interface SistemaExterno {
@@ -79,9 +88,9 @@ export function SNCFSidebar() {
   const isAdminRHOrSuper = roles.some((r) => ["super_admin", "admin_rh"].includes(r));
   const { data: contratoPJ } = useMeuContratoPJ();
 
-  const principalItemsFinal = contratoPJ
-    ? [...principalItems, minhasNotasItem]
-    : principalItems;
+  const operacionalItemsFinal = contratoPJ
+    ? [...operacionalItems, minhasNotasItem]
+    : operacionalItems;
 
   const { data: qtdSugestoesPendentes = 0 } = useQuery({
     queryKey: ["sugestoes-conhecimento-pendentes"],
@@ -209,7 +218,9 @@ export function SNCFSidebar() {
       </SidebarHeader>
 
       <SidebarContent className="px-2 space-y-1">
-        {renderGroup("Principal", principalItemsFinal)}
+        {renderGroup("Operacional", operacionalItemsFinal)}
+        <div className="mx-4 border-t border-sidebar-border/40" />
+        {renderGroup("Celebração & Conversa", celebracaoItems)}
         {canSee("admin_rh_or_super") && <div className="mx-4 border-t border-sidebar-border/40" />}
         {renderGroup("Administração", adminItems)}
 
