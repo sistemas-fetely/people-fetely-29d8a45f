@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { toast } from "sonner";
 import {
-  Users, Search, MoreHorizontal, Eye, Edit,
+  Users, Search, MoreHorizontal, Eye, Edit, Mail, Phone, Shield,
   UserCheck, Briefcase, Building2, Plus, ChevronDown, CheckCircle2, AlertCircle,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -68,10 +69,14 @@ export default function Pessoas() {
   const navigate = useNavigate();
   const { canSeeSalary } = usePermissions();
   const { isCargoClevel } = useCLevelCargos();
+  const [searchParams] = useSearchParams();
+  const tipoFromQuery = searchParams.get("tipo");
   const [pessoas, setPessoas] = useState<PessoaUnificada[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [filterTipo, setFilterTipo] = useState("todos");
+  const [filterTipo, setFilterTipo] = useState<string>(
+    tipoFromQuery === "CLT" || tipoFromQuery === "PJ" ? tipoFromQuery : "todos"
+  );
   const [filterStatus, setFilterStatus] = useState("todos");
   const [drawerUsuarioId, setDrawerUsuarioId] = useState<string | null>(null);
 
@@ -306,30 +311,81 @@ export default function Pessoas() {
                   filtered.map((p) => (
                     <TableRow key={`${p.tipo}-${p.id}`} className="hover:bg-muted/30 transition-colors">
                       <TableCell>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (p.user_id) setDrawerUsuarioId(p.user_id);
-                            else handleView(p);
-                          }}
-                          className="flex items-center gap-3 text-left hover:text-primary transition-colors"
-                        >
-                          <Avatar className="h-8 w-8">
-                            <AvatarImage src={p.foto_url || undefined} alt={p.nome} className="object-cover" />
-                            <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
-                              {initials(p.nome)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="flex flex-col min-w-0">
-                            <span className="font-medium text-sm hover:underline truncate">{p.nome}</span>
-                            {p.subtitulo && (
-                              <span className="text-[11px] text-muted-foreground truncate">
-                                {p.subtitulo}
-                              </span>
+                        <div className="flex items-center gap-3">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleView(p);
+                            }}
+                            className="flex items-center gap-3 text-left hover:text-primary transition-colors"
+                          >
+                            <Avatar className="h-8 w-8">
+                              <AvatarImage src={p.foto_url || undefined} alt={p.nome} className="object-cover" />
+                              <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
+                                {initials(p.nome)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex flex-col min-w-0">
+                              <span className="font-medium text-sm hover:underline truncate">{p.nome}</span>
+                              {p.subtitulo && (
+                                <span className="text-[11px] text-muted-foreground truncate">
+                                  {p.subtitulo}
+                                </span>
+                              )}
+                            </div>
+                          </button>
+
+                          <div className="flex items-center gap-0.5 ml-auto">
+                            {p.email_corporativo && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 text-muted-foreground hover:text-primary"
+                                title={`Enviar email para ${p.email_corporativo}`}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  window.location.href = `mailto:${p.email_corporativo}`;
+                                }}
+                              >
+                                <Mail className="h-3.5 w-3.5" />
+                              </Button>
+                            )}
+                            {p.user_id && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 text-muted-foreground hover:text-primary"
+                                title="Ver acessos e perfil de usuário"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setDrawerUsuarioId(p.user_id);
+                                }}
+                              >
+                                <Shield className="h-3.5 w-3.5" />
+                              </Button>
+                            )}
+                            {p.telefone_corporativo && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 text-muted-foreground hover:text-primary"
+                                title={`Telefone: ${p.telefone_corporativo}`}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (/Mobi|Android|iPhone/i.test(navigator.userAgent)) {
+                                    window.location.href = `tel:${p.telefone_corporativo}`;
+                                  } else {
+                                    navigator.clipboard.writeText(p.telefone_corporativo!);
+                                    toast.success(`Telefone copiado: ${p.telefone_corporativo}`);
+                                  }
+                                }}
+                              >
+                                <Phone className="h-3.5 w-3.5" />
+                              </Button>
                             )}
                           </div>
-                        </button>
+                        </div>
                       </TableCell>
                       <TableCell>
                         <Badge variant="outline" className={p.tipo === "CLT" ? "bg-info/10 text-info border-0" : "bg-warning/10 text-warning border-0"}>
@@ -393,11 +449,16 @@ export default function Pessoas() {
                             <DropdownMenuItem onClick={() => handleView(p)}>
                               <Eye className="mr-2 h-4 w-4" /> Visualizar
                             </DropdownMenuItem>
-                            {p.tipo === "CLT" && (
-                              <DropdownMenuItem onClick={() => navigate(`/colaboradores/${p.id}?edit=true`)}>
-                                <Edit className="mr-2 h-4 w-4" /> Editar
-                              </DropdownMenuItem>
-                            )}
+                            <DropdownMenuItem
+                              onClick={() => {
+                                const rota = p.tipo === "CLT"
+                                  ? `/colaboradores/${p.id}?edit=true`
+                                  : `/contratos-pj/${p.id}?edit=true`;
+                                navigate(rota, { state: { from: "/pessoas" } });
+                              }}
+                            >
+                              <Edit className="mr-2 h-4 w-4" /> Editar
+                            </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>

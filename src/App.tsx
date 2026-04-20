@@ -74,6 +74,14 @@ import GestaoAVista from "@/pages/GestaoAVista";
 
 const queryClient = new QueryClient();
 
+// Wrappers de compatibilidade: rotas antigas redirecionam pra /pessoas com filtro aplicado
+function RedirectToPessoasCLT() {
+  return <Navigate to="/pessoas?tipo=CLT" replace />;
+}
+function RedirectToPessoasPJ() {
+  return <Navigate to="/pessoas?tipo=PJ" replace />;
+}
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -135,7 +143,7 @@ const App = () => (
               <Route path="/pessoas" element={<Pessoas />} />
               <Route path="/colaboradores" element={
                 <ProtectedRoute permModule="colaboradores">
-                  <Colaboradores />
+                  <RedirectToPessoasCLT />
                 </ProtectedRoute>
               } />
               <Route path="/colaboradores/novo" element={
@@ -189,7 +197,7 @@ const App = () => (
               {/* PJ */}
               <Route path="/contratos-pj" element={
                 <ProtectedRoute permModule="contratos_pj">
-                  <ContratosPJ />
+                  <RedirectToPessoasPJ />
                 </ProtectedRoute>
               } />
               <Route path="/contratos-pj/novo" element={
