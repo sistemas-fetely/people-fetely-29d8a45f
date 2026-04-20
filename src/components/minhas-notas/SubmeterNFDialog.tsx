@@ -21,6 +21,9 @@ interface Props {
   onOpenChange: (open: boolean) => void;
   tarefaId?: string;
   competencia: string;
+  modoCorrecao?: boolean;
+  notaAnteriorId?: string;
+  motivoCorrecao?: string;
 }
 
 interface Classificacao {
@@ -30,7 +33,7 @@ interface Classificacao {
   justificativa: string;
 }
 
-export function SubmeterNFDialog({ open, onOpenChange, tarefaId, competencia }: Props) {
+export function SubmeterNFDialog({ open, onOpenChange, tarefaId, competencia, modoCorrecao, motivoCorrecao }: Props) {
   const { data: contrato } = useMeuContratoPJ();
   const submeter = useSubmeterNF();
 
