@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Loader2, AlertCircle } from "lucide-react";
+import DOMPurify from "dompurify";
 
 interface Props {
   codigo: string | null | undefined;
@@ -14,7 +15,8 @@ async function loadMermaid() {
       mod.default.initialize({
         startOnLoad: false,
         theme: "default",
-        securityLevel: "loose",
+        // SECURITY: 'strict' sandboxes SVG output and strips dangerous HTML to prevent stored XSS
+        securityLevel: "strict",
         fontFamily: "inherit",
       });
       return mod.default;
@@ -44,7 +46,10 @@ export function MermaidRenderer({ codigo, className }: Props) {
         const id = `mermaid-${Math.random().toString(36).slice(2, 9)}`;
         const { svg } = await mermaid.render(id, codigo.trim());
         if (!cancelado && containerRef.current) {
-          containerRef.current.innerHTML = svg;
+          // SECURITY: defense-in-depth — sanitize SVG before injecting
+          containerRef.current.innerHTML = DOMPurify.sanitize(svg, {
+            USE_PROFILES: { svg: true, svgFilters: true },
+          });
         }
       } catch (e: any) {
         if (!cancelado) setErro(e?.message || "Erro ao renderizar diagrama");
@@ -80,4 +85,3 @@ export function MermaidRenderer({ codigo, className }: Props) {
       <div ref={containerRef} className="overflow-x-auto" />
     </div>
   );
-}
