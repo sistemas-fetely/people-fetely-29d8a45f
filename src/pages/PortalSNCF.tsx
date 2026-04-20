@@ -143,11 +143,11 @@ export default function PortalSNCF() {
       </div>
 
       {/* Mural Fetely + Lista de aniversariantes — layout 2 colunas no desktop */}
-      <section className="grid grid-cols-1 lg:grid-cols-[65fr_35fr] gap-4 items-stretch">
-        <div className="min-w-0">
+      <section className="grid grid-cols-1 lg:grid-cols-[65fr_35fr] gap-4 items-stretch lg:h-[280px]">
+        <div className="min-w-0 h-full">
           <MuralRotativo />
         </div>
-        <div className="min-w-0">
+        <div className="min-w-0 h-full">
           <ListaAniversariantesMes />
         </div>
       </section>

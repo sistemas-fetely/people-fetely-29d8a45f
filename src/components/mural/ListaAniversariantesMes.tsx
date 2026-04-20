@@ -55,23 +55,22 @@ function ItemCompacto({ evento, onClick }: { evento: EventoDoMes; onClick: () =>
     <button
       type="button"
       onClick={onClick}
-      className="w-full flex items-center gap-2 py-1.5 px-1.5 rounded-md hover:bg-muted/50 transition-colors text-left"
+      className="w-full flex items-center gap-1.5 py-1 px-1 rounded-md hover:bg-muted/50 transition-colors text-left"
+      title={`${evento.nome} · dia ${evento.dia} · ${evento.tipo_evento === "aniversario" ? "aniversário" : evento.subtitulo}`}
     >
-      <Avatar className="h-7 w-7 shrink-0">
+      <Avatar className="h-6 w-6 shrink-0">
         <AvatarImage src={evento.foto_url ?? undefined} alt={evento.nome} className="object-cover" />
-        <AvatarFallback className="bg-primary/10 text-primary text-[10px] font-medium">
+        <AvatarFallback className="bg-primary/10 text-primary text-[9px] font-medium">
           {initials(evento.nome)}
         </AvatarFallback>
       </Avatar>
       <div className="flex-1 min-w-0">
-        <p className="text-[12px] font-medium truncate leading-tight">
-          {evento.nome}
+        <p className="text-[11px] font-medium truncate leading-tight">
+          {evento.nome.split(" ")[0]}
         </p>
-        <p className="text-[10px] text-muted-foreground flex items-center gap-1 leading-tight mt-0.5">
-          <Icon className="h-2.5 w-2.5 shrink-0" />
-          <span className="truncate">
-            dia {evento.dia} · {evento.tipo_evento === "aniversario" ? "aniversário" : evento.subtitulo}
-          </span>
+        <p className="text-[9px] text-muted-foreground flex items-center gap-0.5 leading-tight mt-0.5">
+          <Icon className="h-2 w-2 shrink-0" />
+          <span className="truncate">dia {evento.dia}</span>
         </p>
       </div>
     </button>
@@ -142,16 +141,18 @@ export function ListaAniversariantesMes() {
           </div>
         )}
 
-        {/* Lista vertical com scroll interno */}
+        {/* Grid adaptável: 1-2-3 colunas conforme largura. Scroll só se não couber. */}
         {demais.length > 0 && (
-          <div className="flex-1 overflow-y-auto space-y-0.5 -mx-1 px-1 min-h-0">
-            {demais.map((ev) => (
-              <ItemCompacto
-                key={ev.key}
-                evento={ev}
-                onClick={() => ev.user_id && setDrawerUserId(ev.user_id)}
-              />
-            ))}
+          <div className="flex-1 overflow-y-auto -mx-1 px-1 min-h-0" style={{ scrollbarWidth: "thin" }}>
+            <div className="grid gap-x-2 gap-y-1" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))" }}>
+              {demais.map((ev) => (
+                <ItemCompacto
+                  key={ev.key}
+                  evento={ev}
+                  onClick={() => ev.user_id && setDrawerUserId(ev.user_id)}
+                />
+              ))}
+            </div>
           </div>
         )}
       </div>
