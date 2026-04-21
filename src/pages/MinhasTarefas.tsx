@@ -300,7 +300,7 @@ export default function MinhasTarefas() {
   const aplicarFiltros = (lista: Tarefa[]) =>
     lista.filter((t) => {
       // status
-      if (statusFilter === "ativas" && !["pendente", "atrasada"].includes(t.status)) return false;
+      if (statusFilter === "ativas" && !["pendente", "atrasada", "em_andamento"].includes(t.status)) return false;
       if (["pendente", "atrasada", "em_andamento", "concluida"].includes(statusFilter) && t.status !== statusFilter) return false;
       // tipo
       if (tipoFilter !== "todos" && t.tipo_processo !== tipoFilter) return false;
@@ -351,10 +351,7 @@ export default function MinhasTarefas() {
   };
 
   const confirmarConclusao = async () => {
-    if (!concluirTarefa || evidenciaTexto.trim().length < 5) {
-      toast.error("Descreva brevemente o que foi feito (mínimo 5 caracteres)");
-      return;
-    }
+    if (!concluirTarefa) return;
     setSalvando(true);
     const { error } = await supabase
       .from("sncf_tarefas")
@@ -362,8 +359,8 @@ export default function MinhasTarefas() {
         status: "concluida",
         concluida_em: new Date().toISOString(),
         concluida_por: user?.id,
-        evidencia_texto: evidenciaTexto.trim(),
-        evidencia_url: evidenciaUrl.trim() || null,
+        evidencia_texto: evidenciaTexto.trim() || null,
+        evidencia_url: null,
       })
       .eq("id", concluirTarefa.id);
 
@@ -383,7 +380,7 @@ export default function MinhasTarefas() {
       .eq("id", t.id);
     if (error) toast.error("Erro: " + error.message);
     else {
-      toast.success("Tarefa iniciada");
+      toast.success("Tarefa iniciada! Ela agora aparece em 'Ativas' como 'Em andamento'.");
       void loadTarefas();
     }
   };
@@ -608,7 +605,7 @@ export default function MinhasTarefas() {
                 <CheckCircle2 className="h-4 w-4" /> Concluir
               </DropdownMenuItem>
             )}
-            {tarefa.status === "pendente" && (
+            {["pendente", "atrasada"].includes(tarefa.status) && (
               <DropdownMenuItem onClick={() => handleIniciar(tarefa)} className="gap-2">
                 <Play className="h-4 w-4" /> Iniciar
               </DropdownMenuItem>
@@ -628,21 +625,6 @@ export default function MinhasTarefas() {
                 className="gap-2 text-destructive focus:text-destructive"
               >
                 <X className="h-4 w-4" /> Cancelar
-              </DropdownMenuItem>
-            )}
-            {tarefa.colaborador_id && (
-              <DropdownMenuItem
-                onClick={() =>
-                  navigate(
-                    tarefa.colaborador_tipo === "clt"
-                      ? `/colaboradores/${tarefa.colaborador_id}`
-                      : `/contratos-pj/${tarefa.colaborador_id}`,
-                    { state: { from: "/tarefas", fromLabel: "Minhas Tarefas" } },
-                  )
-                }
-                className="gap-2"
-              >
-                <Eye className="h-4 w-4" /> Ver colaborador
               </DropdownMenuItem>
             )}
             {tarefa.processo_id && tarefa.tipo_processo === "onboarding" && (
@@ -921,20 +903,12 @@ export default function MinhasTarefas() {
           </AlertDialogHeader>
           <div className="space-y-3 py-2">
             <div className="space-y-1">
-              <Label className="text-sm">O que foi feito? *</Label>
+              <Label className="text-sm">Comentário de conclusão (opcional)</Label>
               <Textarea
                 value={evidenciaTexto}
                 onChange={(e) => setEvidenciaTexto(e.target.value)}
-                placeholder="Ex: Acesso criado, documento enviado, equipamento entregue..."
+                placeholder="Se quiser, registre brevemente o que foi feito..."
                 rows={3}
-              />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-sm">Link de evidência (opcional)</Label>
-              <Input
-                value={evidenciaUrl}
-                onChange={(e) => setEvidenciaUrl(e.target.value)}
-                placeholder="URL de comprovação"
               />
             </div>
           </div>
@@ -942,7 +916,7 @@ export default function MinhasTarefas() {
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmarConclusao}
-              disabled={salvando || evidenciaTexto.trim().length < 5}
+              disabled={salvando}
             >
               {salvando ? "Salvando..." : "Concluir"}
             </AlertDialogAction>

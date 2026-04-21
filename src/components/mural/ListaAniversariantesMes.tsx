@@ -115,7 +115,7 @@ export function ListaAniversariantesMes() {
         <div className="flex items-center gap-1.5 mb-2 shrink-0">
           <Cake className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
           <h3 className="text-[13px] font-semibold">
-            Aniversariantes de {mesAtual}
+            Venha Celebrar Comigo! 🎂
           </h3>
         </div>
 

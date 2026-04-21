@@ -44,7 +44,8 @@ export default function Login() {
         toast.success("Solicitação enviada! Verifique seu e-mail corporativo.");
       }
     } catch (error: any) {
-      toast.error(error.message || "Erro ao processar solicitação");
+      const { humanizeError } = await import("@/lib/errorMessages");
+      toast.error(humanizeError(error?.message));
     } finally {
       setLoading(false);
     }
@@ -94,7 +95,7 @@ export default function Login() {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="password">Senha</Label>
+          <Label htmlFor="password">{mode === "register" ? "Crie sua senha de acesso" : "Senha"}</Label>
           <div className="relative">
             <Lock className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
@@ -105,7 +106,7 @@ export default function Login() {
               placeholder="••••••••"
               className="pl-9 pr-9"
               required
-              minLength={6}
+              minLength={mode === "register" ? 10 : 6}
             />
             <button
               type="button"
@@ -115,6 +116,11 @@ export default function Login() {
               {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
           </div>
+          {mode === "register" && (
+            <p className="text-xs text-muted-foreground mt-1">
+              Mínimo 10 caracteres, com pelo menos 1 maiúscula, 1 número e 1 caractere especial.
+            </p>
+          )}
         </div>
 
         {mode === "login" && (
@@ -132,7 +138,7 @@ export default function Login() {
         <p className="text-center text-sm text-muted-foreground pt-2">
           {mode === "login" ? (
             <>
-              Não tem conta?{" "}
+              Quer celebrar com a gente?{" "}
               <button
                 type="button"
                 onClick={() => setMode("register")}
