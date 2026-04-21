@@ -647,50 +647,71 @@ export default function MinhasTarefas() {
           )}
         </div>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0">
-              <MoreVertical className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {tarefa.status !== "concluida" && (
-              <DropdownMenuItem onClick={() => handleConcluir(tarefa)} className="gap-2">
-                <CheckCircle2 className="h-4 w-4" /> Concluir
-              </DropdownMenuItem>
-            )}
-            {["pendente", "atrasada"].includes(tarefa.status) && (
-              <DropdownMenuItem onClick={() => handleIniciar(tarefa)} className="gap-2">
-                <Play className="h-4 w-4" /> Iniciar
-              </DropdownMenuItem>
-            )}
-            {tarefa.tipo_processo === "manual" && tarefa.criado_por === user?.id
-              && tarefa.status !== "concluida" && tarefa.status !== "cancelada" && (
-              <DropdownMenuItem
-                className="gap-2"
-                onClick={() => setEditarTarefa(tarefa)}
-              >
-                <Pencil className="h-4 w-4" /> Editar
-              </DropdownMenuItem>
-            )}
-            {tarefa.status !== "concluida" && tarefa.status !== "cancelada" && (
-              <DropdownMenuItem
-                onClick={() => setCancelarTarefa(tarefa)}
-                className="gap-2 text-destructive focus:text-destructive"
-              >
-                <X className="h-4 w-4" /> Cancelar
-              </DropdownMenuItem>
-            )}
-            {tarefa.processo_id && tarefa.tipo_processo === "onboarding" && (
-              <DropdownMenuItem
-                onClick={() => navigate(`/onboarding/${tarefa.processo_id}`, { state: { from: "/tarefas", fromLabel: "Minhas Tarefas" } })}
-                className="gap-2"
-              >
-                <Eye className="h-4 w-4" /> Ver onboarding
-              </DropdownMenuItem>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <div onClick={(e) => e.stopPropagation()} className="flex flex-col items-end gap-2">
+          {/* Barra de ações rápidas */}
+          {!["concluida", "cancelada"].includes(tarefa.status) && (
+            <div className="flex gap-1 flex-wrap justify-end">
+              {["pendente", "atrasada"].includes(tarefa.status) && (
+                <Button size="sm" variant="outline" className="h-7 gap-1 text-xs border-emerald-500/40 text-emerald-700 hover:bg-emerald-500/10"
+                  onClick={() => handleIniciar(tarefa)}>
+                  <Play className="h-3 w-3" /> Iniciar
+                </Button>
+              )}
+              {tarefa.status === "em_andamento" && (
+                <>
+                  <Button size="sm" className="h-7 gap-1 text-xs bg-emerald-600 hover:bg-emerald-700 text-white"
+                    onClick={() => handleConcluir(tarefa)}>
+                    <CheckCircle2 className="h-3 w-3" /> Concluir
+                  </Button>
+                  <Button size="sm" variant="outline" className="h-7 gap-1 text-xs border-amber-500/40 text-amber-700 hover:bg-amber-500/10"
+                    onClick={() => handleAguardando(tarefa)}>
+                    <PauseCircle className="h-3 w-3" /> Aguardando
+                  </Button>
+                </>
+              )}
+              {tarefa.status === "aguardando_terceiro" && (
+                <>
+                  <Button size="sm" variant="outline" className="h-7 gap-1 text-xs border-blue-500/40 text-blue-700 hover:bg-blue-500/10"
+                    onClick={() => handleRetomar(tarefa)}>
+                    <Play className="h-3 w-3" /> Retomar
+                  </Button>
+                  <Button size="sm" className="h-7 gap-1 text-xs bg-emerald-600 hover:bg-emerald-700 text-white"
+                    onClick={() => handleConcluir(tarefa)}>
+                    <CheckCircle2 className="h-3 w-3" /> Concluir
+                  </Button>
+                </>
+              )}
+            </div>
+          )}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0">
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {tarefa.tipo_processo === "manual" && tarefa.criado_por === user?.id
+                && tarefa.status !== "concluida" && tarefa.status !== "cancelada" && (
+                <DropdownMenuItem className="gap-2" onClick={() => setEditarTarefa(tarefa)}>
+                  <Pencil className="h-4 w-4" /> Editar
+                </DropdownMenuItem>
+              )}
+              {tarefa.status !== "concluida" && tarefa.status !== "cancelada" && (
+                <DropdownMenuItem onClick={() => setCancelarTarefa(tarefa)}
+                  className="gap-2 text-destructive focus:text-destructive">
+                  <X className="h-4 w-4" /> Cancelar
+                </DropdownMenuItem>
+              )}
+              {tarefa.processo_id && tarefa.tipo_processo === "onboarding" && (
+                <DropdownMenuItem
+                  onClick={() => navigate(`/onboarding/${tarefa.processo_id}`, { state: { from: "/tarefas", fromLabel: "Minhas Tarefas" } })}
+                  className="gap-2">
+                  <Eye className="h-4 w-4" /> Ver onboarding
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
     );
   };
