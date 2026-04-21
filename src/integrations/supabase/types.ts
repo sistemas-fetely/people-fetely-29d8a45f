@@ -4777,11 +4777,15 @@ export type Database = {
           concluida_por: string | null
           created_at: string
           criado_por: string | null
+          delegado_de_user_id: string | null
+          delegado_em: string | null
+          delegado_por_user_id: string | null
           descricao: string | null
           evidencia_texto: string | null
           evidencia_url: string | null
           id: string
           informar_user_ids: string[] | null
+          iniciada_em: string | null
           link_acao: string | null
           motivo_bloqueio: string | null
           origem_extensao_id: string | null
@@ -4810,11 +4814,15 @@ export type Database = {
           concluida_por?: string | null
           created_at?: string
           criado_por?: string | null
+          delegado_de_user_id?: string | null
+          delegado_em?: string | null
+          delegado_por_user_id?: string | null
           descricao?: string | null
           evidencia_texto?: string | null
           evidencia_url?: string | null
           id?: string
           informar_user_ids?: string[] | null
+          iniciada_em?: string | null
           link_acao?: string | null
           motivo_bloqueio?: string | null
           origem_extensao_id?: string | null
@@ -4843,11 +4851,15 @@ export type Database = {
           concluida_por?: string | null
           created_at?: string
           criado_por?: string | null
+          delegado_de_user_id?: string | null
+          delegado_em?: string | null
+          delegado_por_user_id?: string | null
           descricao?: string | null
           evidencia_texto?: string | null
           evidencia_url?: string | null
           id?: string
           informar_user_ids?: string[] | null
+          iniciada_em?: string | null
           link_acao?: string | null
           motivo_bloqueio?: string | null
           origem_extensao_id?: string | null
@@ -4871,6 +4883,67 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "sncf_template_extensoes"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      sncf_tarefas_historico: {
+        Row: {
+          created_at: string
+          dados_extras: Json | null
+          descricao: string
+          id: string
+          status_anterior: string | null
+          status_novo: string | null
+          tarefa_id: string
+          tipo: string
+          user_id: string
+          user_nome: string
+        }
+        Insert: {
+          created_at?: string
+          dados_extras?: Json | null
+          descricao: string
+          id?: string
+          status_anterior?: string | null
+          status_novo?: string | null
+          tarefa_id: string
+          tipo: string
+          user_id: string
+          user_nome: string
+        }
+        Update: {
+          created_at?: string
+          dados_extras?: Json | null
+          descricao?: string
+          id?: string
+          status_anterior?: string | null
+          status_novo?: string | null
+          tarefa_id?: string
+          tipo?: string
+          user_id?: string
+          user_nome?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sncf_tarefas_historico_tarefa_id_fkey"
+            columns: ["tarefa_id"]
+            isOneToOne: false
+            referencedRelation: "onboarding_tarefas_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sncf_tarefas_historico_tarefa_id_fkey"
+            columns: ["tarefa_id"]
+            isOneToOne: false
+            referencedRelation: "sncf_tarefas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sncf_tarefas_historico_tarefa_id_fkey"
+            columns: ["tarefa_id"]
+            isOneToOne: false
+            referencedRelation: "tarefas_emissao_nf_pendentes"
+            referencedColumns: ["tarefa_id"]
           },
         ]
       }
