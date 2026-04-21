@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import {
   ClipboardList, CheckCircle2, AlertTriangle, Clock, Eye, Inbox, Plus,
   Play, Pencil, X, MoreVertical, Users, ExternalLink, Filter,
-  Flame, CheckSquare, UserPlus, Mail,
+  Flame, CheckSquare, UserPlus, Mail, PauseCircle,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -29,6 +29,8 @@ import { RadarOperacional } from "@/components/tarefas/RadarOperacional";
 import { SubmeterNFDialog } from "@/components/minhas-notas/SubmeterNFDialog";
 import { AprovarNFDialog } from "@/components/minhas-notas/AprovarNFDialog";
 import { NovaTarefaDialog } from "@/components/tarefas/NovaTarefaDialog";
+import { TarefaDetalheDrawer, type TarefaDrawer } from "@/components/tarefas/TarefaDetalheDrawer";
+import { useRegistrarHistorico } from "@/hooks/useTarefaHistorico";
 
 interface Tarefa {
   id: string;
@@ -56,7 +58,7 @@ interface Tarefa {
   created_at: string;
 }
 
-type StatusFilter = "ativas" | "pendente" | "atrasada" | "em_andamento" | "concluida" | "todas";
+type StatusFilter = "ativas" | "pendente" | "atrasada" | "em_andamento" | "aguardando_terceiro" | "concluida" | "todas";
 type AgrupamentoTipo = "prioridade" | "area" | "prazo" | "processo" | "nenhum";
 
 interface PrioridadeDia {
@@ -106,6 +108,12 @@ export default function MinhasTarefas() {
   // Nova tarefa / editar tarefa manual
   const [novaTarefaOpen, setNovaTarefaOpen] = useState(false);
   const [editarTarefa, setEditarTarefa] = useState<Tarefa | null>(null);
+
+  // Drawer de detalhe
+  const [drawerTarefa, setDrawerTarefa] = useState<Tarefa | null>(null);
+
+  // Histórico
+  const { registrar } = useRegistrarHistorico();
 
   // Quem vê a seção "Prioridades do Dia"
   const isGestorRH = (userRoles as string[]).includes("gestor_rh");
@@ -300,8 +308,8 @@ export default function MinhasTarefas() {
   const aplicarFiltros = (lista: Tarefa[]) =>
     lista.filter((t) => {
       // status
-      if (statusFilter === "ativas" && !["pendente", "atrasada", "em_andamento"].includes(t.status)) return false;
-      if (["pendente", "atrasada", "em_andamento", "concluida"].includes(statusFilter) && t.status !== statusFilter) return false;
+      if (statusFilter === "ativas" && !["pendente", "atrasada", "em_andamento", "aguardando_terceiro"].includes(t.status)) return false;
+      if (["pendente", "atrasada", "em_andamento", "aguardando_terceiro", "concluida"].includes(statusFilter) && t.status !== statusFilter) return false;
       // tipo
       if (tipoFilter !== "todos" && t.tipo_processo !== tipoFilter) return false;
       // sistema
@@ -353,6 +361,7 @@ export default function MinhasTarefas() {
   const confirmarConclusao = async () => {
     if (!concluirTarefa) return;
     setSalvando(true);
+    const statusAnterior = concluirTarefa.status;
     const { error } = await supabase
       .from("sncf_tarefas")
       .update({
@@ -366,6 +375,12 @@ export default function MinhasTarefas() {
 
     if (error) toast.error("Erro: " + error.message);
     else {
+      await registrar(
+        concluirTarefa.id,
+        "conclusao",
+        evidenciaTexto.trim() || "Tarefa concluída",
+        { status_anterior: statusAnterior, status_novo: "concluida" },
+      );
       toast.success("Tarefa concluída!");
       setConcluirTarefa(null);
       void loadTarefas();
@@ -376,11 +391,44 @@ export default function MinhasTarefas() {
   const handleIniciar = async (t: Tarefa) => {
     const { error } = await supabase
       .from("sncf_tarefas")
+      .update({ status: "em_andamento", iniciada_em: new Date().toISOString() })
+      .eq("id", t.id);
+    if (error) toast.error("Erro: " + error.message);
+    else {
+      await registrar(t.id, "status_change", "Iniciou a tarefa", {
+        status_anterior: t.status, status_novo: "em_andamento",
+      });
+      toast.success("Tarefa iniciada! Agora aparece em 'Ativas' como 'Em andamento'.");
+      void loadTarefas();
+    }
+  };
+
+  const handleAguardando = async (t: Tarefa) => {
+    const { error } = await supabase
+      .from("sncf_tarefas")
+      .update({ status: "aguardando_terceiro" })
+      .eq("id", t.id);
+    if (error) toast.error("Erro: " + error.message);
+    else {
+      await registrar(t.id, "status_change", "Moveu para aguardando terceiro", {
+        status_anterior: t.status, status_novo: "aguardando_terceiro",
+      });
+      toast.success("Tarefa em espera.");
+      void loadTarefas();
+    }
+  };
+
+  const handleRetomar = async (t: Tarefa) => {
+    const { error } = await supabase
+      .from("sncf_tarefas")
       .update({ status: "em_andamento" })
       .eq("id", t.id);
     if (error) toast.error("Erro: " + error.message);
     else {
-      toast.success("Tarefa iniciada! Ela agora aparece em 'Ativas' como 'Em andamento'.");
+      await registrar(t.id, "status_change", "Retomou a tarefa", {
+        status_anterior: t.status, status_novo: "em_andamento",
+      });
+      toast.success("Tarefa retomada!");
       void loadTarefas();
     }
   };
