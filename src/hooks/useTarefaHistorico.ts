@@ -27,7 +27,8 @@ export function useTarefaHistorico(tarefaId: string | null) {
       return;
     }
     setLoading(true);
-    const { data, error } = await supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (supabase as any)
       .from("sncf_tarefas_historico")
       .select("*")
       .eq("tarefa_id", tarefaId)
@@ -67,7 +68,8 @@ export function useRegistrarHistorico() {
       },
     ) => {
       if (!user?.id) return;
-      const { error } = await supabase.from("sncf_tarefas_historico").insert({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase as any).from("sncf_tarefas_historico").insert({
         tarefa_id: tarefaId,
         user_id: user.id,
         user_nome: profile?.full_name || user.email || "Sistema",
