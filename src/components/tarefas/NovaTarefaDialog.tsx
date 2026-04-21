@@ -22,6 +22,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useRegistrarHistorico } from "@/hooks/useTarefaHistorico";
 import { toast } from "sonner";
+import { humanizeError } from "@/lib/errorMessages";
 import { cn } from "@/lib/utils";
 
 interface PessoaOption {

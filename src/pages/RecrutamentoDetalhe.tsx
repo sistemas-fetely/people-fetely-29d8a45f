@@ -7,6 +7,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { useParametros } from "@/hooks/useParametros";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { humanizeError } from "@/lib/errorMessages";
 import { format } from "date-fns";
 
 import { Button } from "@/components/ui/button";
@@ -3005,7 +3006,7 @@ function TesteTecnico({
         },
       });
       if (emailResult.error) {
-        toast.error("Erro ao reenviar e-mail: " + emailResult.error.message);
+        toast.error("Erro ao reenviar e-mail: " + humanizeError(emailResult.error.message));
       } else {
         toast.success(`Teste reenviado para ${candidato.email}!`);
       }

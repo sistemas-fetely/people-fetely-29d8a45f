@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePermissions } from "@/hooks/usePermissions";
 import { toast } from "sonner";
+import { humanizeError } from "@/lib/errorMessages";
 import {
   ClipboardList, CheckCircle2, AlertTriangle, Clock, Eye, Inbox, Plus,
   Play, Pencil, X, MoreVertical, Users, ExternalLink, Filter,
@@ -147,7 +148,7 @@ export default function MinhasTarefas() {
       .order("prazo_data", { ascending: true, nullsFirst: false });
 
     if (error) {
-      toast.error("Erro ao carregar tarefas: " + error.message);
+      toast.error("Erro ao carregar tarefas: " + humanizeError(error.message));
       setTarefas([]);
     } else {
       setTarefas((data ?? []) as Tarefa[]);
@@ -373,7 +374,7 @@ export default function MinhasTarefas() {
       })
       .eq("id", concluirTarefa.id);
 
-    if (error) toast.error("Erro: " + error.message);
+    if (error) toast.error("Erro: " + humanizeError(error.message));
     else {
       await registrar(
         concluirTarefa.id,
@@ -393,7 +394,7 @@ export default function MinhasTarefas() {
       .from("sncf_tarefas")
       .update({ status: "em_andamento", iniciada_em: new Date().toISOString() })
       .eq("id", t.id);
-    if (error) toast.error("Erro: " + error.message);
+    if (error) toast.error("Erro: " + humanizeError(error.message));
     else {
       await registrar(t.id, "status_change", "Iniciou a tarefa", {
         status_anterior: t.status, status_novo: "em_andamento",
@@ -408,7 +409,7 @@ export default function MinhasTarefas() {
       .from("sncf_tarefas")
       .update({ status: "aguardando_terceiro" })
       .eq("id", t.id);
-    if (error) toast.error("Erro: " + error.message);
+    if (error) toast.error("Erro: " + humanizeError(error.message));
     else {
       await registrar(t.id, "status_change", "Moveu para aguardando terceiro", {
         status_anterior: t.status, status_novo: "aguardando_terceiro",
@@ -423,7 +424,7 @@ export default function MinhasTarefas() {
       .from("sncf_tarefas")
       .update({ status: "em_andamento" })
       .eq("id", t.id);
-    if (error) toast.error("Erro: " + error.message);
+    if (error) toast.error("Erro: " + humanizeError(error.message));
     else {
       await registrar(t.id, "status_change", "Retomou a tarefa", {
         status_anterior: t.status, status_novo: "em_andamento",
@@ -439,7 +440,7 @@ export default function MinhasTarefas() {
       .from("sncf_tarefas")
       .update({ status: "cancelada" })
       .eq("id", cancelarTarefa.id);
-    if (error) toast.error("Erro: " + error.message);
+    if (error) toast.error("Erro: " + humanizeError(error.message));
     else {
       toast.success("Tarefa cancelada");
       setCancelarTarefa(null);

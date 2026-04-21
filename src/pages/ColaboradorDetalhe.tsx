@@ -4,6 +4,7 @@ import { useParams, useNavigate, useSearchParams, useLocation } from "react-rout
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
+import { humanizeError } from "@/lib/errorMessages";
 import { format, parseISO, isValid } from "date-fns";
 
 function safeFormatDate(dateStr: string | null | undefined, fmt = "dd/MM/yyyy"): string {
@@ -122,7 +123,7 @@ export default function ColaboradorDetalhe() {
       .update(updateData)
       .eq("id", id);
     if (error) {
-      toast.error(error.message);
+      toast.error(humanizeError(error.message));
     } else {
       setColaborador({ ...colaborador, status: newStatus });
       toast.success(newStatus === "desligado" ? "Colaborador inativado" : "Colaborador reativado");
