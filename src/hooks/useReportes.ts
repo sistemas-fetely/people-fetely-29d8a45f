@@ -28,6 +28,7 @@ export interface ReporteInput {
   descricao: string;
   passos_reproduzir?: string;
   titulo_tela?: string;
+  imagem_url?: string;
 }
 
 export function useCriarReporte() {
@@ -48,6 +49,7 @@ export function useCriarReporte() {
         tipo_valor: input.tipo_valor,
         descricao: input.descricao.trim(),
         passos_reproduzir: input.passos_reproduzir?.trim() || null,
+        imagem_url: input.imagem_url || null,
       });
 
       if (error) throw error;

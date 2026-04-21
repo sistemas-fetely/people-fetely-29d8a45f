@@ -2082,6 +2082,7 @@ export type Database = {
         Row: {
           arquivada: boolean
           created_at: string
+          favorita: boolean
           id: string
           memorias_extraidas: boolean
           titulo: string | null
@@ -2091,6 +2092,7 @@ export type Database = {
         Insert: {
           arquivada?: boolean
           created_at?: string
+          favorita?: boolean
           id?: string
           memorias_extraidas?: boolean
           titulo?: string | null
@@ -2100,6 +2102,7 @@ export type Database = {
         Update: {
           arquivada?: boolean
           created_at?: string
+          favorita?: boolean
           id?: string
           memorias_extraidas?: boolean
           titulo?: string | null
@@ -4482,6 +4485,7 @@ export type Database = {
           atribuido_a: string | null
           descricao: string
           id: string
+          imagem_url: string | null
           passos_reproduzir: string | null
           prioridade: string | null
           reportado_em: string
@@ -4500,6 +4504,7 @@ export type Database = {
           atribuido_a?: string | null
           descricao: string
           id?: string
+          imagem_url?: string | null
           passos_reproduzir?: string | null
           prioridade?: string | null
           reportado_em?: string
@@ -4518,6 +4523,7 @@ export type Database = {
           atribuido_a?: string | null
           descricao?: string
           id?: string
+          imagem_url?: string | null
           passos_reproduzir?: string | null
           prioridade?: string | null
           reportado_em?: string

@@ -5,7 +5,7 @@ import remarkGfm from "remark-gfm";
 import {
   ArrowLeft, Plus, Send, Sparkles, MessageCircle, ThumbsUp, ThumbsDown, Copy,
   Globe, Gift, Workflow, Users, MessageCircleHeart, GraduationCap, Brain,
-  MoreHorizontal, Trash2, Shield, Lightbulb,
+  MoreHorizontal, Trash2, Shield, Lightbulb, Star,
 } from "lucide-react";
 import { SugerirProcessoDialog } from "@/components/fala-fetely/SugerirProcessoDialog";
 import { Button } from "@/components/ui/button";
@@ -46,6 +46,7 @@ interface Conversa {
   id: string;
   titulo: string | null;
   updated_at: string;
+  favorita?: boolean;
 }
 
 interface Mensagem {
@@ -57,31 +58,31 @@ interface Mensagem {
 }
 
 const FRASES_MOTIVACIONAIS = [
-  "Celebre a curiosidade ✨",
-  "Pergunte sem medo, dúvida aqui é presente 🌷",
-  "Cada pergunta é um gesto de cuidado 💚",
-  "Que tal celebrar uma conquista hoje? 🎉",
-  "Saber é o primeiro passo pra celebrar 🌿",
-  "Aqui dúvida vira clareza — bora? ✨",
-  "A gente celebra quem busca aprender 💚",
-  "Bora descobrir algo novo? 🌸",
+  "Me pergunta que te dou um bolo? 🎂",
+  "O que você quer celebrar hoje? 🎉",
+  "Dúvida boa é dúvida perguntada 💚",
+  "Gesto não se delega — mas pergunta, sim! ✨",
+  "Bora descobrir algo que vale a pena? 🌿",
+  "Aqui ninguém fica sem resposta 🌷",
+  "Curiosidade é o melhor presente 🎁",
+  "Pergunta vai, conhecimento vem ✨",
 ];
 
 const FRASES_PENSANDO = [
-  "Buscando no que sei...",
-  "Consultando a base de conhecimento...",
-  "Juntando as ideias...",
-  "Formulando a resposta...",
-  "Só mais um segundinho...",
-  "Celebrando sua pergunta 🌷",
-  "Pensando com carinho...",
+  "Vasculhando a base secreta... 🔍",
+  "Juntando as peças do quebra-cabeça...",
+  "Preparando uma resposta caprichada 💚",
+  "Quase lá, só polindo os detalhes...",
+  "Consultando os sábios da Fetely... ✨",
+  "Isso vai ser bom, espera só...",
+  "Montando a resposta com carinho 🌿",
 ];
 
 const SUGESTOES = [
-  { categoria: "Sistemas", icone: Globe, cor: "#3A7D6B", texto: "Como peço acesso a um sistema corporativo?" },
-  { categoria: "Benefícios", icone: Gift, cor: "#E91E63", texto: "Quais são os meus benefícios?" },
-  { categoria: "Processos", icone: Workflow, cor: "#1A4A3A", texto: "Como funciona o onboarding na Fetely?" },
-  { categoria: "Pessoas", icone: Users, cor: "#FF9800", texto: "Quem é meu gestor direto?" },
+  { categoria: "Descubra", icone: Sparkles, cor: "#E91E63", texto: "O que a Fetely tem que nenhuma outra empresa tem?" },
+  { categoria: "Explore", icone: Globe, cor: "#3A7D6B", texto: "Me conta um segredo sobre como as coisas funcionam aqui" },
+  { categoria: "Celebre", icone: Gift, cor: "#FF9800", texto: "Qual benefício da Fetely eu ainda não estou usando?" },
+  { categoria: "Aprenda", icone: Workflow, cor: "#1A4A3A", texto: "O que eu deveria saber nos meus primeiros 30 dias?" },
 ];
 
 function formatRelativo(iso: string) {
@@ -197,11 +198,34 @@ export default function FalaFetely() {
   async function carregarConversas() {
     const { data } = await supabase
       .from("fala_fetely_conversas")
-      .select("id, titulo, updated_at")
+      .select("id, titulo, updated_at, favorita")
       .eq("arquivada", false)
+      .order("favorita", { ascending: false })
       .order("updated_at", { ascending: false })
       .limit(50);
-    setConversas(data || []);
+    setConversas((data as Conversa[]) || []);
+  }
+
+  async function toggleFavorita(id: string, novoValor: boolean) {
+    // Atualização otimista
+    setConversas((prev) =>
+      [...prev]
+        .map((c) => (c.id === id ? { ...c, favorita: novoValor } : c))
+        .sort((a, b) => {
+          if ((b.favorita ? 1 : 0) !== (a.favorita ? 1 : 0)) {
+            return (b.favorita ? 1 : 0) - (a.favorita ? 1 : 0);
+          }
+          return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
+        }),
+    );
+    const { error } = await supabase
+      .from("fala_fetely_conversas")
+      .update({ favorita: novoValor })
+      .eq("id", id);
+    if (error) {
+      toast({ title: "Erro ao favoritar", description: error.message, variant: "destructive" });
+      void carregarConversas();
+    }
   }
 
   async function abrirConversa(c: Conversa) {
@@ -527,36 +551,40 @@ export default function FalaFetely() {
               <div key={c.id} className="group relative">
                 <button
                   onClick={() => abrirConversa(c)}
-                  className={`w-full text-left p-2 pr-8 rounded-lg text-sm hover:bg-muted transition-all ${
+                  className={`w-full text-left p-2 pr-16 rounded-lg text-sm hover:bg-muted transition-all ${
                     conversaAtiva?.id === c.id ? "bg-muted" : ""
                   }`}
                 >
                   <div className="flex items-center gap-2">
+                    {c.favorita && <Star className="h-3 w-3 flex-shrink-0 fill-amber-400 text-amber-400" />}
                     <MessageCircle className="h-3 w-3 flex-shrink-0 text-muted-foreground" />
                     <span className="truncate">{c.titulo || "Conversa"}</span>
                   </div>
                   <p className="text-[10px] text-muted-foreground mt-0.5 ml-5">{formatRelativo(c.updated_at)}</p>
                 </button>
-                <div className="absolute right-1 top-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <button
-                        className="p-1 hover:bg-background rounded"
-                        onClick={(e) => e.stopPropagation()}
-                        title="Ações"
-                      >
-                        <MoreHorizontal className="h-3 w-3" />
-                      </button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem
-                        onClick={() => setConversaParaExcluir(c)}
-                        className="text-destructive focus:text-destructive"
-                      >
-                        <Trash2 className="h-4 w-4 mr-2" /> Excluir conversa
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                <div className="absolute right-1 top-1 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button
+                    type="button"
+                    className="p-1 hover:bg-background rounded"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      void toggleFavorita(c.id, !c.favorita);
+                    }}
+                    title={c.favorita ? "Remover dos favoritos" : "Fixar conversa"}
+                  >
+                    <Star className={`h-3.5 w-3.5 ${c.favorita ? "fill-amber-400 text-amber-400" : "text-muted-foreground"}`} />
+                  </button>
+                  <button
+                    type="button"
+                    className="p-1 hover:bg-background rounded text-destructive"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setConversaParaExcluir(c);
+                    }}
+                    title="Excluir conversa"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
                 </div>
               </div>
             ))
