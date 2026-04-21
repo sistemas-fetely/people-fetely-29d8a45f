@@ -196,7 +196,11 @@ export default function TarefasDoTime() {
       const sa = stats(a);
       const sb = stats(b);
       if (ordenacao === "sobrecarga") return sb.ativas.length - sa.ativas.length;
-      if (ordenacao === "atraso") return sb.atrasadas.length - sa.atrasadas.length;
+      if (ordenacao === "atraso") {
+        const diff = sb.atrasadas.length - sa.atrasadas.length;
+        if (diff !== 0) return diff;
+        return sb.ativas.length - sa.ativas.length;
+      }
       return a.nome.localeCompare(b.nome);
     });
     return lista;
@@ -460,21 +464,6 @@ export default function TarefasDoTime() {
                               <DropdownMenuItem onClick={() => handleReatribuir(tarefa)} className="gap-2">
                                 <ArrowLeftRight className="h-4 w-4" /> Reatribuir
                               </DropdownMenuItem>
-                              {tarefa.colaborador_id && (
-                                <DropdownMenuItem
-                                  onClick={() =>
-                                    navigate(
-                                      tarefa.colaborador_tipo === "clt"
-                                        ? `/colaboradores/${tarefa.colaborador_id}`
-                                        : `/contratos-pj/${tarefa.colaborador_id}`,
-                                      { state: { from: "/tarefas/time", fromLabel: "Tarefas do Time" } },
-                                    )
-                                  }
-                                  className="gap-2"
-                                >
-                                  <Eye className="h-4 w-4" /> Ver colaborador
-                                </DropdownMenuItem>
-                              )}
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </div>
