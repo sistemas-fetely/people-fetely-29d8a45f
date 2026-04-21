@@ -11,3 +11,5 @@ All monetary values in BRL (R$). Brazilian labor law compliance (CLT, Lei 13.467
 - [Grupos de acesso](mem://features/grupos-acesso) — Access groups that auto-assign roles on portal activation
 - [Super admin bypass](mem://features/super-admin-bypass) — super_admin bypasses all permission checks
 - [Onboarding checklist](mem://features/onboarding-checklist) — Auto-created checklist on activation with role-based views
+- [Fala Fetely favoritas](mem://features/fala-fetely-favoritas) — Conversas fixáveis (favorita), tom de marca nas frases/sugestões
+- [Sistema reportes imagem](mem://features/sistema-reportes-imagem) — Upload opcional de print no botão Reportar (bucket sistema-reportes)
