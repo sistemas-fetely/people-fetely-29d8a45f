@@ -529,19 +529,20 @@ export default function MinhasTarefas() {
     return (
       <div
         key={tarefa.id}
+        onClick={() => setDrawerTarefa(tarefa)}
         className={cn(
-          "flex items-start gap-3 p-3 rounded-lg border transition-colors",
+          "flex items-start gap-3 p-3 rounded-lg border transition-colors cursor-pointer",
           tarefa.status === "atrasada"
-            ? "bg-destructive/5 border-destructive/30"
+            ? "bg-destructive/5 border-destructive/30 hover:bg-destructive/10"
             : tarefa.bloqueante
-            ? "bg-amber-50 border-amber-200 dark:bg-amber-950/20 dark:border-amber-900"
+            ? "bg-amber-50 border-amber-200 dark:bg-amber-950/20 dark:border-amber-900 hover:bg-amber-100/50"
             : tarefa.status === "concluida"
             ? "bg-muted/30 border-border"
             : "hover:bg-muted/50 border-border",
         )}
       >
         <button
-          onClick={() => handleConcluir(tarefa)}
+          onClick={(e) => { e.stopPropagation(); handleConcluir(tarefa); }}
           disabled={tarefa.status === "concluida"}
           className={cn(
             "mt-1 flex-shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors",
@@ -585,6 +586,11 @@ export default function MinhasTarefas() {
             )}
             {tarefa.status === "em_andamento" && (
               <Badge className="text-[10px] bg-blue-500 hover:bg-blue-500/90">Em andamento</Badge>
+            )}
+            {tarefa.status === "aguardando_terceiro" && (
+              <Badge className="text-[10px] bg-amber-500 hover:bg-amber-500/90 gap-1">
+                <PauseCircle className="h-2.5 w-2.5" /> Aguardando
+              </Badge>
             )}
           </div>
 
