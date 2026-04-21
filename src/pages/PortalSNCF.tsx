@@ -136,9 +136,11 @@ export default function PortalSNCF() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold tracking-tight mb-2">Bem-vindo ao Uauuu</h1>
-        <p className="text-muted-foreground">
-          Selecione um sistema para entrar. Você só pode acessar os sistemas em que tem permissão.
+        <h1 className="text-3xl font-bold tracking-tight mb-2" style={{ color: "#1a3d2b" }}>
+          Gesto não se delega. 💚
+        </h1>
+        <p className="text-muted-foreground text-base">
+          Celebre o que importa — comece por aqui.
         </p>
       </div>
 
@@ -182,7 +184,8 @@ export default function PortalSNCF() {
         {/* Fala Fetely — link limpo */}
         <button
           onClick={() => navigate("/fala-fetely")}
-          className="group w-full rounded-2xl border bg-card p-5 hover:shadow-lg transition-all text-left"
+          className="group w-full rounded-2xl border-2 bg-card p-5 hover:shadow-lg transition-all text-left"
+          style={{ borderColor: "#E91E63" }}
         >
           <div className="flex items-center gap-4">
             <div

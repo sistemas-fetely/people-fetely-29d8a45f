@@ -2,6 +2,7 @@ import {
   LayoutDashboard, Users, GitBranch, UserSearch, MailPlus, Rocket,
   ArrowLeftRight, Award, BookOpen, Receipt, Clock, CreditCard, FileText,
   Palmtree, Gift, BarChart3, LogOut, LayoutGrid, Tv, Shield, Monitor,
+  ClipboardList, UsersRound, Banknote,
 } from "lucide-react";
 
 import { NavLink } from "@/components/NavLink";
@@ -69,6 +70,7 @@ const analiseItems: MenuItem[] = [
 // Grupo 2: Pessoas (núcleo operacional)
 const pessoasItems: MenuItem[] = [
   { title: "Pessoas", url: "/pessoas", icon: Users, permModule: "colaboradores" },
+  { title: "Cargos e Salários", url: "/admin/cargos", icon: Banknote, permModule: "cargos" },
   { title: "Organograma", url: "/organograma", icon: GitBranch, permModule: "organograma" },
   { title: "Recrutamento", url: "/recrutamento", icon: UserSearch, permModule: "recrutamento" },
   { title: "Convites de Cadastro", url: "/convites-cadastro", icon: MailPlus, permModule: "convites" },
@@ -190,10 +192,44 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent className="px-2 space-y-1">
-        {/* Atalho ao Portal SNCF + acesso rápido */}
+        {/* Tarefas — acesso direto, ferramenta do dia-a-dia */}
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <NavLink
+                    to="/tarefas"
+                    end
+                    className={cn(
+                      "flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-all duration-200",
+                      location.pathname === "/tarefas" && "bg-sidebar-primary/20 text-sidebar-primary font-medium border-l-[3px] border-sidebar-primary shadow-sm"
+                    )}
+                  >
+                    {({ isActive }) => (
+                      <>
+                        <ClipboardList className="h-[18px] w-[18px] shrink-0" />
+                        {!collapsed && <span>Minhas Tarefas</span>}
+                      </>
+                    )}
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              {roles.some((r) => ["gestor_direto", "gestor_rh", "admin_rh", "super_admin"].includes(r)) && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <NavLink
+                      to="/tarefas/time"
+                      className={cn(
+                        "flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-all duration-200"
+                      )}
+                    >
+                      <UsersRound className="h-[18px] w-[18px] shrink-0" />
+                      {!collapsed && <span>Tarefas do Time</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
                   <NavLink
@@ -204,9 +240,6 @@ export function AppSidebar() {
                     {!collapsed && <span>Portal SNCF</span>}
                   </NavLink>
                 </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SNCFQuickAccess />
               </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>

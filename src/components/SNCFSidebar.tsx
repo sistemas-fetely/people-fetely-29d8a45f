@@ -212,7 +212,7 @@ export function SNCFSidebar() {
           {!collapsed && (
             <div className="flex flex-col">
               <span className="text-sm font-bold tracking-tight" style={{ color: SNCF_COLOR }}>Fetély.</span>
-              <span className="text-[11px] text-sidebar-muted">Sistema Nervoso Central</span>
+              <span className="text-[11px] text-sidebar-muted">#celebreoqueimporta</span>
             </div>
           )}
         </div>

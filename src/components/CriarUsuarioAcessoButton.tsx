@@ -21,6 +21,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { usePermissions } from "@/hooks/usePermissions";
 import { toast } from "sonner";
+import { humanizeError } from "@/lib/errorMessages";
 import { ReenviarLinkAcessoButton } from "@/components/auth/ReenviarLinkAcessoButton";
 
 interface CriarUsuarioAcessoButtonProps {
@@ -107,7 +108,7 @@ export function CriarUsuarioAcessoButton({
                     setBanConfirmOpen(false);
                     onChange?.();
                   } catch (err: any) {
-                    toast.error("Erro: " + (err.message || "desconhecido"));
+                    toast.error("Erro ao inativar acesso: " + humanizeError(err?.message));
                   } finally {
                     setLoading(false);
                   }
@@ -184,7 +185,7 @@ export function CriarUsuarioAcessoButton({
                   setConfirmOpen(false);
                   onChange?.();
                 } catch (err: any) {
-                  toast.error("Erro ao criar usuário: " + (err.message || "desconhecido"));
+                  toast.error("Erro ao criar usuário: " + humanizeError(err?.message));
                 } finally {
                   setLoading(false);
                 }

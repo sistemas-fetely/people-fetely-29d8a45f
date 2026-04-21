@@ -22,7 +22,7 @@ export default function RecuperarSenha() {
       });
       if (error) throw error;
       setSent(true);
-      toast.success("Email enviado!");
+      toast.info("Verifique seu e-mail corporativo.");
     } catch (error: any) {
       toast.error(error.message || "Erro ao enviar email");
     } finally {
@@ -46,7 +46,7 @@ export default function RecuperarSenha() {
           </div>
           <div className="space-y-2">
             <p className="text-sm font-medium">
-              Enviamos um link para <strong>{email}</strong>.
+              Se <strong>{email}</strong> estiver cadastrado no sistema, você receberá um link de recuperação.
             </p>
             <p className="text-xs text-muted-foreground">
               O link expira em 1 hora. Se não chegar em 5 minutos, confira o spam
