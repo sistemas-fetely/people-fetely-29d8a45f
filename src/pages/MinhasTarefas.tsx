@@ -888,6 +888,7 @@ export default function MinhasTarefas() {
                   <SelectItem value="pendente">Pendentes</SelectItem>
                   <SelectItem value="atrasada">Atrasadas</SelectItem>
                   <SelectItem value="em_andamento">Em andamento</SelectItem>
+                  <SelectItem value="aguardando_terceiro">Aguardando terceiro</SelectItem>
                   <SelectItem value="concluida">Concluídas</SelectItem>
                   <SelectItem value="todas">Todas</SelectItem>
                 </SelectContent>
