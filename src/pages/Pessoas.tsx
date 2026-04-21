@@ -388,7 +388,13 @@ export default function Pessoas() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline" className={p.tipo === "CLT" ? "bg-info/10 text-info border-0" : "bg-warning/10 text-warning border-0"}>
+                        <Badge
+                          className={
+                            p.tipo === "CLT"
+                              ? "bg-info text-info-foreground hover:bg-info/90 font-bold border-0"
+                              : "bg-warning text-warning-foreground hover:bg-warning/90 font-bold border-0"
+                          }
+                        >
                           {p.tipo}
                         </Badge>
                       </TableCell>

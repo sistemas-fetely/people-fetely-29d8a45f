@@ -761,7 +761,17 @@ export default function ConvitesCadastro() {
                             )}
                           </div>
                         </TableCell>
-                        <TableCell><Badge variant="outline" className="text-xs">{c.tipo.toUpperCase()}</Badge></TableCell>
+                        <TableCell>
+                          <Badge
+                            className={
+                              c.tipo?.toLowerCase() === "clt"
+                                ? "bg-info text-info-foreground hover:bg-info/90 font-bold border-0 text-xs"
+                                : "bg-warning text-warning-foreground hover:bg-warning/90 font-bold border-0 text-xs"
+                            }
+                          >
+                            {c.tipo.toUpperCase()}
+                          </Badge>
+                        </TableCell>
                         <TableCell className="text-sm hidden lg:table-cell">{c.cargo || "—"}</TableCell>
                         <TableCell className="text-sm hidden lg:table-cell">{c.departamento || "—"}</TableCell>
                         {!isGestorDireto && <TableCell className="text-sm hidden xl:table-cell">{c.lider_direto_id ? (liderMap.get(c.lider_direto_id) || "—") : "—"}</TableCell>}

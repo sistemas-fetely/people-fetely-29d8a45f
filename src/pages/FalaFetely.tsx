@@ -5,7 +5,7 @@ import remarkGfm from "remark-gfm";
 import {
   ArrowLeft, Plus, Send, Sparkles, MessageCircle, ThumbsUp, ThumbsDown, Copy,
   Globe, Gift, Workflow, Users, MessageCircleHeart, GraduationCap, Brain,
-  MoreHorizontal, Trash2, Shield, Lightbulb,
+  MoreHorizontal, Trash2, Shield, Lightbulb, Star,
 } from "lucide-react";
 import { SugerirProcessoDialog } from "@/components/fala-fetely/SugerirProcessoDialog";
 import { Button } from "@/components/ui/button";
@@ -46,6 +46,7 @@ interface Conversa {
   id: string;
   titulo: string | null;
   updated_at: string;
+  favorita?: boolean;
 }
 
 interface Mensagem {
@@ -57,31 +58,31 @@ interface Mensagem {
 }
 
 const FRASES_MOTIVACIONAIS = [
-  "Celebre a curiosidade ✨",
-  "Pergunte sem medo, dúvida aqui é presente 🌷",
-  "Cada pergunta é um gesto de cuidado 💚",
-  "Que tal celebrar uma conquista hoje? 🎉",
-  "Saber é o primeiro passo pra celebrar 🌿",
-  "Aqui dúvida vira clareza — bora? ✨",
-  "A gente celebra quem busca aprender 💚",
-  "Bora descobrir algo novo? 🌸",
+  "Me pergunta que te dou um bolo? 🎂",
+  "O que você quer celebrar hoje? 🎉",
+  "Dúvida boa é dúvida perguntada 💚",
+  "Gesto não se delega — mas pergunta, sim! ✨",
+  "Bora descobrir algo que vale a pena? 🌿",
+  "Aqui ninguém fica sem resposta 🌷",
+  "Curiosidade é o melhor presente 🎁",
+  "Pergunta vai, conhecimento vem ✨",
 ];
 
 const FRASES_PENSANDO = [
-  "Buscando no que sei...",
-  "Consultando a base de conhecimento...",
-  "Juntando as ideias...",
-  "Formulando a resposta...",
-  "Só mais um segundinho...",
-  "Celebrando sua pergunta 🌷",
-  "Pensando com carinho...",
+  "Vasculhando a base secreta... 🔍",
+  "Juntando as peças do quebra-cabeça...",
+  "Preparando uma resposta caprichada 💚",
+  "Quase lá, só polindo os detalhes...",
+  "Consultando os sábios da Fetely... ✨",
+  "Isso vai ser bom, espera só...",
+  "Montando a resposta com carinho 🌿",
 ];
 
 const SUGESTOES = [
-  { categoria: "Sistemas", icone: Globe, cor: "#3A7D6B", texto: "Como peço acesso a um sistema corporativo?" },
-  { categoria: "Benefícios", icone: Gift, cor: "#E91E63", texto: "Quais são os meus benefícios?" },
-  { categoria: "Processos", icone: Workflow, cor: "#1A4A3A", texto: "Como funciona o onboarding na Fetely?" },
-  { categoria: "Pessoas", icone: Users, cor: "#FF9800", texto: "Quem é meu gestor direto?" },
+  { categoria: "Descubra", icone: Sparkles, cor: "#E91E63", texto: "O que a Fetely tem que nenhuma outra empresa tem?" },
+  { categoria: "Explore", icone: Globe, cor: "#3A7D6B", texto: "Me conta um segredo sobre como as coisas funcionam aqui" },
+  { categoria: "Celebre", icone: Gift, cor: "#FF9800", texto: "Qual benefício da Fetely eu ainda não estou usando?" },
+  { categoria: "Aprenda", icone: Workflow, cor: "#1A4A3A", texto: "O que eu deveria saber nos meus primeiros 30 dias?" },
 ];
 
 function formatRelativo(iso: string) {
