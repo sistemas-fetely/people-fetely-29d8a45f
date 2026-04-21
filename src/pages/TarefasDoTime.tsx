@@ -22,6 +22,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { cn } from "@/lib/utils";
 import { NovaTarefaDialog } from "@/components/tarefas/NovaTarefaDialog";
 import { BadgePredictor } from "@/components/tarefas/BadgePredictor";
+import { TarefaDetalheDrawer, type TarefaDrawer } from "@/components/tarefas/TarefaDetalheDrawer";
 
 interface Subordinado {
   id: string; // profile.id ou colaborador.id
@@ -68,6 +69,7 @@ export default function TarefasDoTime() {
   const [reatribuirTarefa, setReatribuirTarefa] = useState<TarefaTime | null>(null);
   const [novoResponsavel, setNovoResponsavel] = useState<string>("");
   const [criarTarefaPara, setCriarTarefaPara] = useState<{ user_id: string; nome: string } | null>(null);
+  const [drawerTarefa, setDrawerTarefa] = useState<TarefaTime | null>(null);
 
   const isAdminAmplo = roles?.some((r) => ["super_admin", "admin_rh", "gestor_rh"].includes(r));
   const isGestorDireto = roles?.includes("gestor_direto" as never);
@@ -422,8 +424,9 @@ export default function TarefasDoTime() {
                       {visiveis.map((tarefa) => (
                         <div
                           key={tarefa.id}
+                          onClick={() => setDrawerTarefa(tarefa)}
                           className={cn(
-                            "flex items-start gap-2 p-2.5 rounded-lg border text-sm",
+                            "flex items-start gap-2 p-2.5 rounded-lg border text-sm cursor-pointer hover:bg-accent/40 transition-colors",
                             tarefa.status === "atrasada"
                               ? "bg-destructive/5 border-destructive/30"
                               : tarefa.bloqueante
@@ -453,11 +456,16 @@ export default function TarefasDoTime() {
                           </div>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-7 w-7 flex-shrink-0">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 flex-shrink-0"
+                                onClick={(e) => e.stopPropagation()}
+                              >
                                 <MoreVertical className="h-3.5 w-3.5" />
                               </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
+                            <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
                               <DropdownMenuItem onClick={() => handleConcluirRapido(tarefa)} className="gap-2">
                                 <CheckCircle2 className="h-4 w-4" /> Marcar concluída
                               </DropdownMenuItem>
@@ -540,6 +548,15 @@ export default function TarefasDoTime() {
           }}
         />
       )}
+
+      {/* Drawer de detalhe (gestor visualiza, sem editar/concluir) */}
+      <TarefaDetalheDrawer
+        tarefa={drawerTarefa as unknown as TarefaDrawer | null}
+        open={!!drawerTarefa}
+        onOpenChange={(open) => { if (!open) setDrawerTarefa(null); }}
+        onAtualizada={() => void carregar()}
+        readonly
+      />
     </div>
   );
 }

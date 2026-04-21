@@ -1082,6 +1082,14 @@ export default function MinhasTarefas() {
         } : undefined}
         onCriada={() => void loadTarefas()}
       />
+
+      {/* Drawer de detalhe da tarefa com timeline */}
+      <TarefaDetalheDrawer
+        tarefa={drawerTarefa as TarefaDrawer | null}
+        open={!!drawerTarefa}
+        onOpenChange={(open) => { if (!open) setDrawerTarefa(null); }}
+        onAtualizada={() => void loadTarefas()}
+      />
     </div>
   );
 }

@@ -20,6 +20,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePermissions } from "@/hooks/usePermissions";
+import { useRegistrarHistorico } from "@/hooks/useTarefaHistorico";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -61,6 +62,7 @@ interface Props {
 export function NovaTarefaDialog({ open, onOpenChange, onCriada, tarefaParaEditar, responsavelInicial }: Props) {
   const { user } = useAuth();
   const { isSuperAdmin, isAdminRH } = usePermissions();
+  const { registrar } = useRegistrarHistorico();
 
   const isEdicao = !!tarefaParaEditar;
 
@@ -299,6 +301,7 @@ export function NovaTarefaDialog({ open, onOpenChange, onCriada, tarefaParaEdita
           .eq("id", tarefaParaEditar.id);
 
         if (error) throw error;
+        await registrar(tarefaParaEditar.id, "edicao", "Editou os dados da tarefa");
         toast.success("Tarefa atualizada");
       } else {
         // Criação — calcula prazo_data
@@ -323,11 +326,16 @@ export function NovaTarefaDialog({ open, onOpenChange, onCriada, tarefaParaEdita
           status: "pendente",
         };
 
-        const { error } = await supabase
+        const { data: novaTarefa, error } = await supabase
           .from("sncf_tarefas")
-          .insert(payload);
+          .insert(payload)
+          .select("id")
+          .single();
 
         if (error) throw error;
+        if (novaTarefa?.id) {
+          await registrar(novaTarefa.id, "criacao", `Tarefa criada: ${titulo.trim()}`);
+        }
         toast.success("Tarefa criada");
       }
 
