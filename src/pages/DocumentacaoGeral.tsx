@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Loader2, FileText, Plus, Search, BookOpen, ChevronRight } from "lucide-react";
+import { Loader2, FileText, Search, BookOpen, ChevronRight } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -38,8 +38,6 @@ const SNCF_COLOR = "#1A4A3A";
 
 export default function DocumentacaoGeral() {
   const navigate = useNavigate();
-  const { isSuperAdmin, isAdminRH } = usePermissions();
-  const isAdmin = isSuperAdmin || isAdminRH;
 
   const [docs, setDocs] = useState<Documento[]>([]);
   const [loading, setLoading] = useState(true);
@@ -108,12 +106,6 @@ export default function DocumentacaoGeral() {
             Tudo que a Fetely sabe, em um lugar só. Documentos vivos — atualizados a cada sessão.
           </p>
         </div>
-        {isAdmin && (
-          <Button onClick={() => navigate("/documentacao/novo", { state: { from: "/documentacao", fromLabel: "Documentação" } })} className="gap-2">
-            <Plus className="h-4 w-4" />
-            Novo documento
-          </Button>
-        )}
       </div>
 
       {/* Filtros */}

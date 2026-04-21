@@ -139,7 +139,7 @@ export default function PortalSNCF() {
         <h1 className="text-3xl font-bold tracking-tight mb-2" style={{ color: "#1a3d2b" }}>
           Gesto não se delega. 💚
         </h1>
-        <p className="text-muted-foreground text-base">
+        <p className="text-lg md:text-xl font-medium text-foreground/80">
           Celebre o que importa — comece por aqui.
         </p>
       </div>

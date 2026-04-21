@@ -37,11 +37,12 @@ export function RecentesEFavoritos() {
       <PopoverTrigger asChild>
         <Button
           variant="ghost"
-          size="icon"
-          className="relative h-9 w-9 rounded-xl hover:bg-accent"
+          size="sm"
+          className="relative h-9 gap-2 rounded-xl px-2 md:px-3 hover:bg-accent"
           title="Recentes e favoritos"
         >
           <Clock className="h-4 w-4" />
+          <span className="hidden md:inline text-sm font-medium">Recentes</span>
           {favoritos.length > 0 && (
             <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-amber-400" />
           )}
