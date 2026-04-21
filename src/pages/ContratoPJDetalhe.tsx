@@ -3,6 +3,7 @@ import { getTarefasParaTipo } from "@/lib/onboarding-tarefas";
 import { useParams, useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { useForm, FormProvider } from "react-hook-form";
 import { toast } from "sonner";
+import { humanizeError } from "@/lib/errorMessages";
 import { format, parseISO } from "date-fns";
 import {
   ArrowLeft, Edit, Save, Loader2, X, User, FileText, Briefcase,
@@ -122,7 +123,7 @@ export default function ContratoPJDetalhe() {
     }
     const { error } = await supabase.from("contratos_pj").update(updateData).eq("id", id);
     if (error) {
-      toast.error(error.message);
+      toast.error(humanizeError(error.message));
     } else {
       setContrato({ ...contrato, status: newStatus });
       toast.success(newStatus === "encerrado" ? "Contrato encerrado" : "Contrato reativado");
@@ -871,7 +872,7 @@ function TabNotasFiscais({ contratoId }: { contratoId: string }) {
   const handleDelete = async () => {
     if (!deleteTarget) return;
     const { error } = await supabase.from("notas_fiscais_pj").delete().eq("id", deleteTarget.id);
-    if (error) toast.error(error.message);
+    if (error) toast.error(humanizeError(error.message));
     else { toast.success("Nota fiscal excluída"); fetchNotas(); }
     setDeleteTarget(null);
   };
@@ -977,7 +978,7 @@ function NotaFiscalForm({ open, onClose, nota, contratoId, onSaved }: {
         toast.success("Nota fiscal cadastrada!");
       }
       onSaved(); onClose();
-    } catch (err: any) { toast.error(err.message); } finally { setSaving(false); }
+    } catch (err: any) { toast.error(humanizeError(err.message)); } finally { setSaving(false); }
   };
 
   return (
@@ -1030,7 +1031,7 @@ function TabPagamentos({ contratoId }: { contratoId: string }) {
   const handleDelete = async () => {
     if (!deleteTarget) return;
     const { error } = await supabase.from("pagamentos_pj").delete().eq("id", deleteTarget.id);
-    if (error) toast.error(error.message);
+    if (error) toast.error(humanizeError(error.message));
     else { toast.success("Pagamento excluído"); fetchPagamentos(); }
     setDeleteTarget(null);
   };
@@ -1140,7 +1141,7 @@ function PagamentoForm({ open, onClose, pagamento, contratoId, onSaved }: {
         toast.success("Pagamento cadastrado!");
       }
       onSaved(); onClose();
-    } catch (err: any) { toast.error(err.message); } finally { setSaving(false); }
+    } catch (err: any) { toast.error(humanizeError(err.message)); } finally { setSaving(false); }
   };
 
   return (

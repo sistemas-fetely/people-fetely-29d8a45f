@@ -18,6 +18,8 @@ async function loadMermaid() {
         // SECURITY: 'strict' sandboxes SVG output and strips dangerous HTML to prevent stored XSS
         securityLevel: "strict",
         fontFamily: "inherit",
+        maxTextSize: 90000,
+        flowchart: { useMaxWidth: true, htmlLabels: true },
       });
       return mod.default;
     });
@@ -82,7 +84,7 @@ export function MermaidRenderer({ codigo, className }: Props) {
           </div>
         </div>
       )}
-      <div ref={containerRef} className="overflow-x-auto" />
+      <div ref={containerRef} className="overflow-x-auto [&_svg]:max-w-full [&_svg]:h-auto" />
     </div>
   );
 }

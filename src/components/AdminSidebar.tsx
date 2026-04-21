@@ -1,6 +1,6 @@
 import { useLocation } from "react-router-dom";
 import {
-  Banknote, Sliders, Settings, UserCog, MessageSquareWarning, Shield, FileText,
+  Banknote, Sliders, Settings, UserCog, MessageSquareWarning, Shield,
   LayoutGrid, Users, Monitor, ClipboardList, UsersRound,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
@@ -37,7 +37,7 @@ const sistemaItems: MenuItem[] = [
 // Grupo 3: Saúde do Sistema
 const monitoramentoItems: MenuItem[] = [
   { title: "Reportes do Sistema", url: "/admin/reportes", icon: MessageSquareWarning },
-  { title: "Importações PDF", url: "/admin/importacoes-pdf", icon: FileText },
+  // { title: "Importações PDF", url: "/admin/importacoes-pdf", icon: FileText }, // Oculto V1: tela apenas histórica, reabilitar quando ganhar status/reprocessamento
 ];
 
 export function AdminSidebar() {
