@@ -11,7 +11,6 @@ import { useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePermissions } from "@/hooks/usePermissions";
 import { Badge } from "@/components/ui/badge";
-import { SNCFQuickAccess } from "@/components/SNCFQuickAccess";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent,
   SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem,
@@ -162,6 +161,7 @@ function MenuGroup({ label, items, collapsed, canViewModule, userRoles = [] }: M
 export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
+  const location = useLocation();
   const { user, roles, profile, signOut } = useAuth();
   const { canView } = usePermissions();
 
