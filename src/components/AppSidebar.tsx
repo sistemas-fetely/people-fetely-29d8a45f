@@ -206,12 +206,8 @@ export function AppSidebar() {
                       location.pathname === "/tarefas" && "bg-sidebar-primary/20 text-sidebar-primary font-medium border-l-[3px] border-sidebar-primary shadow-sm"
                     )}
                   >
-                    {({ isActive }) => (
-                      <>
-                        <ClipboardList className="h-[18px] w-[18px] shrink-0" />
-                        {!collapsed && <span>Minhas Tarefas</span>}
-                      </>
-                    )}
+                    <ClipboardList className="h-[18px] w-[18px] shrink-0" />
+                    {!collapsed && <span>Minhas Tarefas</span>}
                   </NavLink>
                 </SidebarMenuButton>
               </SidebarMenuItem>
