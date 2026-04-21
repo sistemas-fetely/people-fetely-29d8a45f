@@ -198,11 +198,34 @@ export default function FalaFetely() {
   async function carregarConversas() {
     const { data } = await supabase
       .from("fala_fetely_conversas")
-      .select("id, titulo, updated_at")
+      .select("id, titulo, updated_at, favorita")
       .eq("arquivada", false)
+      .order("favorita", { ascending: false })
       .order("updated_at", { ascending: false })
       .limit(50);
-    setConversas(data || []);
+    setConversas((data as Conversa[]) || []);
+  }
+
+  async function toggleFavorita(id: string, novoValor: boolean) {
+    // Atualização otimista
+    setConversas((prev) =>
+      [...prev]
+        .map((c) => (c.id === id ? { ...c, favorita: novoValor } : c))
+        .sort((a, b) => {
+          if ((b.favorita ? 1 : 0) !== (a.favorita ? 1 : 0)) {
+            return (b.favorita ? 1 : 0) - (a.favorita ? 1 : 0);
+          }
+          return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
+        }),
+    );
+    const { error } = await supabase
+      .from("fala_fetely_conversas")
+      .update({ favorita: novoValor })
+      .eq("id", id);
+    if (error) {
+      toast({ title: "Erro ao favoritar", description: error.message, variant: "destructive" });
+      void carregarConversas();
+    }
   }
 
   async function abrirConversa(c: Conversa) {
@@ -528,36 +551,40 @@ export default function FalaFetely() {
               <div key={c.id} className="group relative">
                 <button
                   onClick={() => abrirConversa(c)}
-                  className={`w-full text-left p-2 pr-8 rounded-lg text-sm hover:bg-muted transition-all ${
+                  className={`w-full text-left p-2 pr-16 rounded-lg text-sm hover:bg-muted transition-all ${
                     conversaAtiva?.id === c.id ? "bg-muted" : ""
                   }`}
                 >
                   <div className="flex items-center gap-2">
+                    {c.favorita && <Star className="h-3 w-3 flex-shrink-0 fill-amber-400 text-amber-400" />}
                     <MessageCircle className="h-3 w-3 flex-shrink-0 text-muted-foreground" />
                     <span className="truncate">{c.titulo || "Conversa"}</span>
                   </div>
                   <p className="text-[10px] text-muted-foreground mt-0.5 ml-5">{formatRelativo(c.updated_at)}</p>
                 </button>
-                <div className="absolute right-1 top-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <button
-                        className="p-1 hover:bg-background rounded"
-                        onClick={(e) => e.stopPropagation()}
-                        title="Ações"
-                      >
-                        <MoreHorizontal className="h-3 w-3" />
-                      </button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem
-                        onClick={() => setConversaParaExcluir(c)}
-                        className="text-destructive focus:text-destructive"
-                      >
-                        <Trash2 className="h-4 w-4 mr-2" /> Excluir conversa
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                <div className="absolute right-1 top-1 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button
+                    type="button"
+                    className="p-1 hover:bg-background rounded"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      void toggleFavorita(c.id, !c.favorita);
+                    }}
+                    title={c.favorita ? "Remover dos favoritos" : "Fixar conversa"}
+                  >
+                    <Star className={`h-3.5 w-3.5 ${c.favorita ? "fill-amber-400 text-amber-400" : "text-muted-foreground"}`} />
+                  </button>
+                  <button
+                    type="button"
+                    className="p-1 hover:bg-background rounded text-destructive"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setConversaParaExcluir(c);
+                    }}
+                    title="Excluir conversa"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
                 </div>
               </div>
             ))

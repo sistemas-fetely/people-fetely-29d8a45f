@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { MessageSquareWarning, Loader2 } from "lucide-react";
+import { MessageSquareWarning, Loader2, ImagePlus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -23,6 +24,9 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCriarReporte } from "@/hooks/useReportes";
+import { toast } from "sonner";
+
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024; // 5 MB
 
 export function ReportarErroBotao() {
   const { user } = useAuth();
@@ -31,6 +35,9 @@ export function ReportarErroBotao() {
   const [tipo, setTipo] = useState("bug");
   const [descricao, setDescricao] = useState("");
   const [passos, setPassos] = useState("");
+  const [imagem, setImagem] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
   const criar = useCriarReporte();
 
   const { data: tipos } = useQuery({
@@ -50,18 +57,73 @@ export function ReportarErroBotao() {
 
   if (!user) return null;
 
+  function resetImagem() {
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setImagem(null);
+    setPreviewUrl(null);
+  }
+
+  function handleSelectImagem(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0] || null;
+    if (!f) {
+      resetImagem();
+      return;
+    }
+    if (!f.type.startsWith("image/")) {
+      toast.error("Arquivo precisa ser uma imagem");
+      e.target.value = "";
+      return;
+    }
+    if (f.size > MAX_IMAGE_BYTES) {
+      toast.error("Imagem maior que 5 MB");
+      e.target.value = "";
+      return;
+    }
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setImagem(f);
+    setPreviewUrl(URL.createObjectURL(f));
+  }
+
   async function handleEnviar() {
     if (descricao.trim().length < 5) return;
+
+    let imagemUrl: string | undefined;
+
+    if (imagem && user) {
+      setUploading(true);
+      try {
+        const ext = imagem.name.split(".").pop() || "png";
+        const fileName = `reportes/${user.id}/${Date.now()}.${ext}`;
+        const { error: uploadErr } = await supabase.storage
+          .from("sistema-reportes")
+          .upload(fileName, imagem, { contentType: imagem.type });
+        if (uploadErr) {
+          toast.error("Falha no upload da imagem — enviando report sem ela");
+        } else {
+          const { data: urlData } = supabase.storage
+            .from("sistema-reportes")
+            .getPublicUrl(fileName);
+          imagemUrl = urlData.publicUrl;
+        }
+      } finally {
+        setUploading(false);
+      }
+    }
+
     await criar.mutateAsync({
       tipo_valor: tipo,
       descricao,
       passos_reproduzir: passos || undefined,
+      imagem_url: imagemUrl,
     });
     setDescricao("");
     setPassos("");
     setTipo("bug");
+    resetImagem();
     setOpen(false);
   }
+
+  const enviando = criar.isPending || uploading;
 
   return (
     <>
@@ -76,7 +138,13 @@ export function ReportarErroBotao() {
         Reportar
       </Button>
 
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog
+        open={open}
+        onOpenChange={(o) => {
+          if (!o) resetImagem();
+          setOpen(o);
+        }}
+      >
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -97,7 +165,7 @@ export function ReportarErroBotao() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {(Array.isArray(tipos) ? tipos : []).map((t: any) => (
+                  {(Array.isArray(tipos) ? tipos : []).map((t: { valor: string; label: string }) => (
                     <SelectItem key={t.valor} value={t.valor}>
                       {t.label}
                     </SelectItem>
@@ -129,6 +197,40 @@ export function ReportarErroBotao() {
               />
             </div>
 
+            <div>
+              <Label className="text-xs flex items-center gap-1.5">
+                <ImagePlus className="h-3.5 w-3.5" />
+                Captura de tela (opcional)
+              </Label>
+              <Input
+                type="file"
+                accept="image/*"
+                onChange={handleSelectImagem}
+                className="text-xs cursor-pointer"
+                disabled={enviando}
+              />
+              {previewUrl && (
+                <div className="mt-2 relative inline-block">
+                  <img
+                    src={previewUrl}
+                    alt="Pré-visualização"
+                    className="max-h-40 rounded-md border"
+                  />
+                  <button
+                    type="button"
+                    onClick={resetImagem}
+                    className="absolute -top-2 -right-2 bg-background border rounded-full p-1 shadow hover:bg-accent"
+                    aria-label="Remover imagem"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              )}
+              <p className="text-[10px] text-muted-foreground mt-1">
+                Máx. 5 MB. PNG, JPG ou similares.
+              </p>
+            </div>
+
             <div className="rounded-md border bg-muted/30 p-3 space-y-1 text-[11px] text-muted-foreground">
               <p>
                 <strong>Contexto automático que vai junto:</strong>
@@ -142,15 +244,15 @@ export function ReportarErroBotao() {
           </div>
 
           <DialogFooter>
-            <Button variant="ghost" onClick={() => setOpen(false)} disabled={criar.isPending}>
+            <Button variant="ghost" onClick={() => setOpen(false)} disabled={enviando}>
               Cancelar
             </Button>
             <Button
               onClick={handleEnviar}
-              disabled={criar.isPending || descricao.trim().length < 5}
+              disabled={enviando || descricao.trim().length < 5}
               className="gap-2"
             >
-              {criar.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+              {enviando && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
               Enviar report
             </Button>
           </DialogFooter>
