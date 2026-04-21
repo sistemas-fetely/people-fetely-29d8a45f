@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import {
   ClipboardList, CheckCircle2, AlertTriangle, Clock, Eye, Inbox, Plus,
   Play, Pencil, X, MoreVertical, Users, ExternalLink, Filter,
-  Flame, CheckSquare, UserPlus, Mail,
+  Flame, CheckSquare, UserPlus, Mail, PauseCircle,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -29,6 +29,8 @@ import { RadarOperacional } from "@/components/tarefas/RadarOperacional";
 import { SubmeterNFDialog } from "@/components/minhas-notas/SubmeterNFDialog";
 import { AprovarNFDialog } from "@/components/minhas-notas/AprovarNFDialog";
 import { NovaTarefaDialog } from "@/components/tarefas/NovaTarefaDialog";
+import { TarefaDetalheDrawer, type TarefaDrawer } from "@/components/tarefas/TarefaDetalheDrawer";
+import { useRegistrarHistorico } from "@/hooks/useTarefaHistorico";
 
 interface Tarefa {
   id: string;
@@ -56,7 +58,7 @@ interface Tarefa {
   created_at: string;
 }
 
-type StatusFilter = "ativas" | "pendente" | "atrasada" | "em_andamento" | "concluida" | "todas";
+type StatusFilter = "ativas" | "pendente" | "atrasada" | "em_andamento" | "aguardando_terceiro" | "concluida" | "todas";
 type AgrupamentoTipo = "prioridade" | "area" | "prazo" | "processo" | "nenhum";
 
 interface PrioridadeDia {
@@ -106,6 +108,12 @@ export default function MinhasTarefas() {
   // Nova tarefa / editar tarefa manual
   const [novaTarefaOpen, setNovaTarefaOpen] = useState(false);
   const [editarTarefa, setEditarTarefa] = useState<Tarefa | null>(null);
+
+  // Drawer de detalhe
+  const [drawerTarefa, setDrawerTarefa] = useState<Tarefa | null>(null);
+
+  // Histórico
+  const { registrar } = useRegistrarHistorico();
 
   // Quem vê a seção "Prioridades do Dia"
   const isGestorRH = (userRoles as string[]).includes("gestor_rh");
@@ -300,8 +308,8 @@ export default function MinhasTarefas() {
   const aplicarFiltros = (lista: Tarefa[]) =>
     lista.filter((t) => {
       // status
-      if (statusFilter === "ativas" && !["pendente", "atrasada", "em_andamento"].includes(t.status)) return false;
-      if (["pendente", "atrasada", "em_andamento", "concluida"].includes(statusFilter) && t.status !== statusFilter) return false;
+      if (statusFilter === "ativas" && !["pendente", "atrasada", "em_andamento", "aguardando_terceiro"].includes(t.status)) return false;
+      if (["pendente", "atrasada", "em_andamento", "aguardando_terceiro", "concluida"].includes(statusFilter) && t.status !== statusFilter) return false;
       // tipo
       if (tipoFilter !== "todos" && t.tipo_processo !== tipoFilter) return false;
       // sistema
@@ -353,6 +361,7 @@ export default function MinhasTarefas() {
   const confirmarConclusao = async () => {
     if (!concluirTarefa) return;
     setSalvando(true);
+    const statusAnterior = concluirTarefa.status;
     const { error } = await supabase
       .from("sncf_tarefas")
       .update({
@@ -366,6 +375,12 @@ export default function MinhasTarefas() {
 
     if (error) toast.error("Erro: " + error.message);
     else {
+      await registrar(
+        concluirTarefa.id,
+        "conclusao",
+        evidenciaTexto.trim() || "Tarefa concluída",
+        { status_anterior: statusAnterior, status_novo: "concluida" },
+      );
       toast.success("Tarefa concluída!");
       setConcluirTarefa(null);
       void loadTarefas();
@@ -376,11 +391,44 @@ export default function MinhasTarefas() {
   const handleIniciar = async (t: Tarefa) => {
     const { error } = await supabase
       .from("sncf_tarefas")
+      .update({ status: "em_andamento", iniciada_em: new Date().toISOString() })
+      .eq("id", t.id);
+    if (error) toast.error("Erro: " + error.message);
+    else {
+      await registrar(t.id, "status_change", "Iniciou a tarefa", {
+        status_anterior: t.status, status_novo: "em_andamento",
+      });
+      toast.success("Tarefa iniciada! Agora aparece em 'Ativas' como 'Em andamento'.");
+      void loadTarefas();
+    }
+  };
+
+  const handleAguardando = async (t: Tarefa) => {
+    const { error } = await supabase
+      .from("sncf_tarefas")
+      .update({ status: "aguardando_terceiro" })
+      .eq("id", t.id);
+    if (error) toast.error("Erro: " + error.message);
+    else {
+      await registrar(t.id, "status_change", "Moveu para aguardando terceiro", {
+        status_anterior: t.status, status_novo: "aguardando_terceiro",
+      });
+      toast.success("Tarefa em espera.");
+      void loadTarefas();
+    }
+  };
+
+  const handleRetomar = async (t: Tarefa) => {
+    const { error } = await supabase
+      .from("sncf_tarefas")
       .update({ status: "em_andamento" })
       .eq("id", t.id);
     if (error) toast.error("Erro: " + error.message);
     else {
-      toast.success("Tarefa iniciada! Ela agora aparece em 'Ativas' como 'Em andamento'.");
+      await registrar(t.id, "status_change", "Retomou a tarefa", {
+        status_anterior: t.status, status_novo: "em_andamento",
+      });
+      toast.success("Tarefa retomada!");
       void loadTarefas();
     }
   };
@@ -481,19 +529,20 @@ export default function MinhasTarefas() {
     return (
       <div
         key={tarefa.id}
+        onClick={() => setDrawerTarefa(tarefa)}
         className={cn(
-          "flex items-start gap-3 p-3 rounded-lg border transition-colors",
+          "flex items-start gap-3 p-3 rounded-lg border transition-colors cursor-pointer",
           tarefa.status === "atrasada"
-            ? "bg-destructive/5 border-destructive/30"
+            ? "bg-destructive/5 border-destructive/30 hover:bg-destructive/10"
             : tarefa.bloqueante
-            ? "bg-amber-50 border-amber-200 dark:bg-amber-950/20 dark:border-amber-900"
+            ? "bg-amber-50 border-amber-200 dark:bg-amber-950/20 dark:border-amber-900 hover:bg-amber-100/50"
             : tarefa.status === "concluida"
             ? "bg-muted/30 border-border"
             : "hover:bg-muted/50 border-border",
         )}
       >
         <button
-          onClick={() => handleConcluir(tarefa)}
+          onClick={(e) => { e.stopPropagation(); handleConcluir(tarefa); }}
           disabled={tarefa.status === "concluida"}
           className={cn(
             "mt-1 flex-shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors",
@@ -537,6 +586,11 @@ export default function MinhasTarefas() {
             )}
             {tarefa.status === "em_andamento" && (
               <Badge className="text-[10px] bg-blue-500 hover:bg-blue-500/90">Em andamento</Badge>
+            )}
+            {tarefa.status === "aguardando_terceiro" && (
+              <Badge className="text-[10px] bg-amber-500 hover:bg-amber-500/90 gap-1">
+                <PauseCircle className="h-2.5 w-2.5" /> Aguardando
+              </Badge>
             )}
           </div>
 
@@ -593,50 +647,71 @@ export default function MinhasTarefas() {
           )}
         </div>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0">
-              <MoreVertical className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {tarefa.status !== "concluida" && (
-              <DropdownMenuItem onClick={() => handleConcluir(tarefa)} className="gap-2">
-                <CheckCircle2 className="h-4 w-4" /> Concluir
-              </DropdownMenuItem>
-            )}
-            {["pendente", "atrasada"].includes(tarefa.status) && (
-              <DropdownMenuItem onClick={() => handleIniciar(tarefa)} className="gap-2">
-                <Play className="h-4 w-4" /> Iniciar
-              </DropdownMenuItem>
-            )}
-            {tarefa.tipo_processo === "manual" && tarefa.criado_por === user?.id
-              && tarefa.status !== "concluida" && tarefa.status !== "cancelada" && (
-              <DropdownMenuItem
-                className="gap-2"
-                onClick={() => setEditarTarefa(tarefa)}
-              >
-                <Pencil className="h-4 w-4" /> Editar
-              </DropdownMenuItem>
-            )}
-            {tarefa.status !== "concluida" && tarefa.status !== "cancelada" && (
-              <DropdownMenuItem
-                onClick={() => setCancelarTarefa(tarefa)}
-                className="gap-2 text-destructive focus:text-destructive"
-              >
-                <X className="h-4 w-4" /> Cancelar
-              </DropdownMenuItem>
-            )}
-            {tarefa.processo_id && tarefa.tipo_processo === "onboarding" && (
-              <DropdownMenuItem
-                onClick={() => navigate(`/onboarding/${tarefa.processo_id}`, { state: { from: "/tarefas", fromLabel: "Minhas Tarefas" } })}
-                className="gap-2"
-              >
-                <Eye className="h-4 w-4" /> Ver onboarding
-              </DropdownMenuItem>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <div onClick={(e) => e.stopPropagation()} className="flex flex-col items-end gap-2">
+          {/* Barra de ações rápidas */}
+          {!["concluida", "cancelada"].includes(tarefa.status) && (
+            <div className="flex gap-1 flex-wrap justify-end">
+              {["pendente", "atrasada"].includes(tarefa.status) && (
+                <Button size="sm" variant="outline" className="h-7 gap-1 text-xs border-emerald-500/40 text-emerald-700 hover:bg-emerald-500/10"
+                  onClick={() => handleIniciar(tarefa)}>
+                  <Play className="h-3 w-3" /> Iniciar
+                </Button>
+              )}
+              {tarefa.status === "em_andamento" && (
+                <>
+                  <Button size="sm" className="h-7 gap-1 text-xs bg-emerald-600 hover:bg-emerald-700 text-white"
+                    onClick={() => handleConcluir(tarefa)}>
+                    <CheckCircle2 className="h-3 w-3" /> Concluir
+                  </Button>
+                  <Button size="sm" variant="outline" className="h-7 gap-1 text-xs border-amber-500/40 text-amber-700 hover:bg-amber-500/10"
+                    onClick={() => handleAguardando(tarefa)}>
+                    <PauseCircle className="h-3 w-3" /> Aguardando
+                  </Button>
+                </>
+              )}
+              {tarefa.status === "aguardando_terceiro" && (
+                <>
+                  <Button size="sm" variant="outline" className="h-7 gap-1 text-xs border-blue-500/40 text-blue-700 hover:bg-blue-500/10"
+                    onClick={() => handleRetomar(tarefa)}>
+                    <Play className="h-3 w-3" /> Retomar
+                  </Button>
+                  <Button size="sm" className="h-7 gap-1 text-xs bg-emerald-600 hover:bg-emerald-700 text-white"
+                    onClick={() => handleConcluir(tarefa)}>
+                    <CheckCircle2 className="h-3 w-3" /> Concluir
+                  </Button>
+                </>
+              )}
+            </div>
+          )}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0">
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {tarefa.tipo_processo === "manual" && tarefa.criado_por === user?.id
+                && tarefa.status !== "concluida" && tarefa.status !== "cancelada" && (
+                <DropdownMenuItem className="gap-2" onClick={() => setEditarTarefa(tarefa)}>
+                  <Pencil className="h-4 w-4" /> Editar
+                </DropdownMenuItem>
+              )}
+              {tarefa.status !== "concluida" && tarefa.status !== "cancelada" && (
+                <DropdownMenuItem onClick={() => setCancelarTarefa(tarefa)}
+                  className="gap-2 text-destructive focus:text-destructive">
+                  <X className="h-4 w-4" /> Cancelar
+                </DropdownMenuItem>
+              )}
+              {tarefa.processo_id && tarefa.tipo_processo === "onboarding" && (
+                <DropdownMenuItem
+                  onClick={() => navigate(`/onboarding/${tarefa.processo_id}`, { state: { from: "/tarefas", fromLabel: "Minhas Tarefas" } })}
+                  className="gap-2">
+                  <Eye className="h-4 w-4" /> Ver onboarding
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
     );
   };
@@ -813,6 +888,7 @@ export default function MinhasTarefas() {
                   <SelectItem value="pendente">Pendentes</SelectItem>
                   <SelectItem value="atrasada">Atrasadas</SelectItem>
                   <SelectItem value="em_andamento">Em andamento</SelectItem>
+                  <SelectItem value="aguardando_terceiro">Aguardando terceiro</SelectItem>
                   <SelectItem value="concluida">Concluídas</SelectItem>
                   <SelectItem value="todas">Todas</SelectItem>
                 </SelectContent>

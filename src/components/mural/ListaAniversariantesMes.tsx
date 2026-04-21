@@ -68,6 +68,11 @@ function ItemCompacto({ evento, onClick }: { evento: EventoDoMes; onClick: () =>
         <p className="text-[11px] font-medium truncate leading-tight">
           {evento.nome.split(" ")[0]}
         </p>
+        {evento.departamento && (
+          <p className="text-[9px] text-muted-foreground/80 truncate leading-tight">
+            {evento.departamento}
+          </p>
+        )}
         <p className="text-[9px] text-muted-foreground flex items-center gap-0.5 leading-tight mt-0.5">
           <Icon className="h-2 w-2 shrink-0" />
           <span className="truncate">dia {evento.dia}</span>

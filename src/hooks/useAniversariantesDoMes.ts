@@ -12,6 +12,8 @@ export interface EventoDoMes {
   nome: string;
   foto_url: string | null;
   tipo_colaborador: "clt" | "pj";
+  /** Departamento da pessoa */
+  departamento: string | null;
   /** Evento */
   tipo_evento: TipoEventoMes;
   /** Dia do mês (1-31) */
@@ -52,13 +54,13 @@ export function useAniversariantesDoMes() {
       // Busca CLT ativos
       const { data: clts } = await supabase
         .from("colaboradores_clt")
-        .select("id, nome_completo, foto_url, user_id, data_nascimento, data_admissao")
+        .select("id, nome_completo, foto_url, user_id, data_nascimento, data_admissao, departamento")
         .eq("status", "ativo");
 
       // Busca PJ colaboradores ativos
       const { data: pjs } = await supabase
         .from("contratos_pj")
-        .select("id, contato_nome, foto_url, user_id, data_nascimento, data_inicio, categoria_pj")
+        .select("id, contato_nome, foto_url, user_id, data_nascimento, data_inicio, categoria_pj, departamento")
         .eq("status", "ativo")
         .eq("categoria_pj", "colaborador");
 
@@ -85,6 +87,7 @@ export function useAniversariantesDoMes() {
             nome: c.nome_completo,
             foto_url: c.foto_url,
             tipo_colaborador: "clt",
+            departamento: c.departamento ?? null,
             tipo_evento: "aniversario",
             dia: diaAniv,
             label_destaque: ehHoje ? "🎂 hoje!" : `dia ${diaAniv}`,
@@ -105,6 +108,7 @@ export function useAniversariantesDoMes() {
               nome: c.nome_completo,
               foto_url: c.foto_url,
               tipo_colaborador: "clt",
+              departamento: c.departamento ?? null,
               tipo_evento: "tempo_casa",
               dia: diaAdm,
               label_destaque: ehHoje ? `🌟 ${anosCasa} anos hoje!` : `dia ${diaAdm}`,
@@ -128,6 +132,7 @@ export function useAniversariantesDoMes() {
             nome: p.contato_nome,
             foto_url: p.foto_url,
             tipo_colaborador: "pj",
+            departamento: p.departamento ?? null,
             tipo_evento: "aniversario",
             dia: diaAniv,
             label_destaque: ehHoje ? "🎂 hoje!" : `dia ${diaAniv}`,
@@ -148,6 +153,7 @@ export function useAniversariantesDoMes() {
               nome: p.contato_nome,
               foto_url: p.foto_url,
               tipo_colaborador: "pj",
+              departamento: p.departamento ?? null,
               tipo_evento: "tempo_casa",
               dia: diaInicio,
               label_destaque: ehHoje ? `🌟 ${anosCasa} anos hoje!` : `dia ${diaInicio}`,
