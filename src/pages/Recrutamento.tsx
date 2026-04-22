@@ -7,10 +7,17 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Briefcase, Users, Search, UserCheck, Plus } from "lucide-react";
+import { Briefcase, Users, Search, UserCheck, Plus, Trash2 } from "lucide-react";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { usePermissions } from "@/hooks/usePermissions";
 import { format } from "date-fns";
 import { NovaVagaDialog } from "@/components/recrutamento/NovaVagaDialog";
+import { toast } from "sonner";
+import { humanizeError } from "@/lib/errorMessages";
+import { useQueryClient } from "@tanstack/react-query";
 
 const statusConfig: Record<string, { label: string; className: string }> = {
   rascunho: { label: "Rascunho", className: "bg-muted text-muted-foreground" },
@@ -28,9 +35,24 @@ const tipoContratoLabel: Record<string, string> = {
 
 export default function Recrutamento() {
   const navigate = useNavigate();
-  const { hasPermission } = usePermissions();
+  const { hasPermission, isSuperAdmin } = usePermissions();
   const canCreate = hasPermission("recrutamento", "create");
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<any | null>(null);
+  const queryClient = useQueryClient();
+
+  const handleDeleteVaga = async () => {
+    if (!deleteTarget) return;
+    await supabase.from("candidatos").delete().eq("vaga_id", deleteTarget.id);
+    const { error } = await supabase.from("vagas").delete().eq("id", deleteTarget.id);
+    if (error) toast.error(humanizeError(error.message));
+    else {
+      toast.success("Vaga excluída");
+      queryClient.invalidateQueries({ queryKey: ["vagas"] });
+      queryClient.invalidateQueries({ queryKey: ["candidatos-count"] });
+    }
+    setDeleteTarget(null);
+  };
 
   const { data: vagas = [], isLoading: loadingVagas } = useQuery({
     queryKey: ["vagas"],
@@ -148,6 +170,7 @@ export default function Recrutamento() {
                    <TableHead className="text-center">Candidatos</TableHead>
                   <TableHead>Abertura</TableHead>
                   <TableHead>Gestor</TableHead>
+                  {isSuperAdmin && <TableHead className="w-10"></TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -184,6 +207,18 @@ export default function Recrutamento() {
                       <TableCell className="text-sm text-muted-foreground">
                         {gestoresMap[(vaga as any).gestor_id] ?? "—"}
                       </TableCell>
+                      {isSuperAdmin && (
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                            onClick={(e) => { e.stopPropagation(); setDeleteTarget(vaga); }}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      )}
                     </TableRow>
                   );
                 })}
@@ -193,6 +228,23 @@ export default function Recrutamento() {
         </CardContent>
       </Card>
       <NovaVagaDialog open={dialogOpen} onOpenChange={setDialogOpen} />
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={(o) => { if (!o) setDeleteTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir vaga permanentemente?</AlertDialogTitle>
+            <AlertDialogDescription>
+              A vaga "{deleteTarget?.titulo}" e todos os candidatos vinculados serão excluídos. Essa ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteVaga} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
