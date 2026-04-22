@@ -5,11 +5,20 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Pencil, Save, X } from "lucide-react";
+import { Pencil, Save, X, Trash2 } from "lucide-react";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { calcularFolha, type DadosCalculo } from "@/lib/calculo-folha";
 import { useEditarHolerite, type HoleriteComColaborador } from "@/hooks/useFolhaPagamento";
 import { useParametrosFolha } from "@/hooks/useParametrosFolha";
 import { SalarioMasked } from "@/components/SalarioMasked";
+import { usePermissions } from "@/hooks/usePermissions";
+import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { humanizeError } from "@/lib/errorMessages";
 
 const fmt = (v: number | null) =>
   (v ?? 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
