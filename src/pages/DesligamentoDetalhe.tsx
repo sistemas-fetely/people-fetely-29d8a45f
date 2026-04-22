@@ -419,6 +419,25 @@ export default function DesligamentoDetalhe() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Excluir desligamento (super_admin) */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir desligamento permanentemente?</AlertDialogTitle>
+            <AlertDialogDescription>
+              O processo de desligamento de "{colabNome}" e todas as tarefas vinculadas serão excluídos.
+              O status do colaborador será revertido para "ativo". Essa ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteDesligamento} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
