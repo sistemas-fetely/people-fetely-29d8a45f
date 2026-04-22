@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import {
-  ArrowLeft, UserX, CheckCircle2, AlertTriangle, Loader2, ExternalLink, Clock,
+  ArrowLeft, UserX, CheckCircle2, AlertTriangle, Loader2, ExternalLink, Clock, Trash2,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -17,6 +17,12 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { usePermissions } from "@/hooks/usePermissions";
+import { humanizeError } from "@/lib/errorMessages";
 import { cn } from "@/lib/utils";
 
 interface Tarefa {
@@ -67,6 +73,7 @@ export default function DesligamentoDetalhe() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { isSuperAdmin } = usePermissions();
   const [loading, setLoading] = useState(true);
   const [checklist, setChecklist] = useState<Checklist | null>(null);
   const [tarefas, setTarefas] = useState<Tarefa[]>([]);
@@ -77,6 +84,40 @@ export default function DesligamentoDetalhe() {
   const [evidenciaTexto, setEvidenciaTexto] = useState("");
   const [evidenciaUrl, setEvidenciaUrl] = useState("");
   const [salvando, setSalvando] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+
+  const handleDeleteDesligamento = async () => {
+    if (!checklist) return;
+    const { data: tarefasIds } = await supabase
+      .from("sncf_tarefas")
+      .select("id")
+      .eq("processo_id", checklist.id);
+    const ids = (tarefasIds || []).map((t: any) => t.id);
+    if (ids.length > 0) {
+      await supabase.from("sncf_tarefas_historico").delete().in("tarefa_id", ids);
+    }
+    await supabase.from("sncf_tarefas").delete().eq("processo_id", checklist.id);
+    const { error } = await supabase.from("onboarding_checklists").delete().eq("id", checklist.id);
+    if (error) {
+      toast.error(humanizeError(error.message));
+      return;
+    }
+    // Reverter status do colaborador
+    if (checklist.colaborador_id) {
+      if (checklist.colaborador_tipo === "clt") {
+        await supabase.from("colaboradores_clt")
+          .update({ status: "ativo", data_desligamento: null })
+          .eq("id", checklist.colaborador_id);
+      } else {
+        await supabase.from("contratos_pj")
+          .update({ status: "ativo", data_fim: null })
+          .eq("id", checklist.colaborador_id);
+      }
+    }
+    toast.success("Desligamento excluído");
+    setShowDeleteDialog(false);
+    navigate("/pessoas");
+  };
 
   const carregar = useCallback(async () => {
     if (!id) return;
@@ -167,8 +208,18 @@ export default function DesligamentoDetalhe() {
   return (
     <div className="container mx-auto py-6 space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
         <SmartBackButton fallback="/pessoas" fallbackLabel="Pessoas" />
+        {isSuperAdmin && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-destructive border-destructive/30 hover:bg-destructive/10 gap-2"
+            onClick={() => setShowDeleteDialog(true)}
+          >
+            <Trash2 className="h-4 w-4" /> Excluir desligamento
+          </Button>
+        )}
       </div>
 
       <Card className="border-destructive/30 bg-destructive/5">
