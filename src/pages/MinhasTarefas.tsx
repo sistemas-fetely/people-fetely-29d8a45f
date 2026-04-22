@@ -1046,6 +1046,27 @@ export default function MinhasTarefas() {
         </AlertDialogContent>
       </AlertDialog>
 
+      {/* Dialog de exclusão permanente (super_admin) */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir tarefa permanentemente?</AlertDialogTitle>
+            <AlertDialogDescription>
+              A tarefa "{deleteTarget?.titulo}" e todo seu histórico serão excluídos. Essa ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteTarefa}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {/* Dialog de submissão de NF (tarefa emissao_nf) */}
       {submeterNFTarefa && (
         <SubmeterNFDialog
