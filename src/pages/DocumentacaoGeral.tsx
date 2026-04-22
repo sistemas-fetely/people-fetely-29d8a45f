@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Loader2, FileText, Search, BookOpen, ChevronRight } from "lucide-react";
+import { Loader2, FileText, Search, BookOpen, ChevronRight, Trash2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -8,8 +8,14 @@ import { Input } from "@/components/ui/input";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { usePermissions } from "@/hooks/usePermissions";
+import { toast } from "sonner";
+import { humanizeError } from "@/lib/errorMessages";
 
 interface Documento {
   id: string;
@@ -38,15 +44,29 @@ const SNCF_COLOR = "#1A4A3A";
 
 export default function DocumentacaoGeral() {
   const navigate = useNavigate();
+  const { isSuperAdmin } = usePermissions();
 
   const [docs, setDocs] = useState<Documento[]>([]);
   const [loading, setLoading] = useState(true);
   const [filtroCategoria, setFiltroCategoria] = useState("todos");
   const [buscaTexto, setBuscaTexto] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<Documento | null>(null);
 
   useEffect(() => {
     void carregar();
   }, []);
+
+  const handleDeleteDoc = async () => {
+    if (!deleteTarget) return;
+    await (supabase as any).from("sncf_documentacao_versoes").delete().eq("documento_id", deleteTarget.id);
+    const { error } = await (supabase as any).from("sncf_documentacao").delete().eq("id", deleteTarget.id);
+    if (error) toast.error("Erro ao excluir: " + humanizeError(error.message));
+    else {
+      toast.success("Documento excluído");
+      void carregar();
+    }
+    setDeleteTarget(null);
+  };
 
   const carregar = async () => {
     setLoading(true);
@@ -197,7 +217,20 @@ export default function DocumentacaoGeral() {
                               </span>
                             </div>
                           </div>
-                          <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-1" />
+                          <div className="flex items-center gap-1 flex-shrink-0">
+                            {isSuperAdmin && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                                onClick={(e) => { e.stopPropagation(); setDeleteTarget(doc); }}
+                                aria-label="Excluir documento"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            )}
+                            <ChevronRight className="h-4 w-4 text-muted-foreground mt-1" />
+                          </div>
                         </div>
                       </CardContent>
                     </Card>
@@ -208,6 +241,23 @@ export default function DocumentacaoGeral() {
           })}
         </div>
       )}
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={(o) => { if (!o) setDeleteTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir documento permanentemente?</AlertDialogTitle>
+            <AlertDialogDescription>
+              O documento "{deleteTarget?.titulo}" e suas versões serão excluídos. Essa ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteDoc} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

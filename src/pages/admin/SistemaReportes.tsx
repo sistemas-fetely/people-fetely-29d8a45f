@@ -1,5 +1,12 @@
 import { useState } from "react";
-import { MessageSquareWarning, Clock, AlertCircle, Loader2 } from "lucide-react";
+import { MessageSquareWarning, Clock, AlertCircle, Loader2, Trash2 } from "lucide-react";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
+import { humanizeError } from "@/lib/errorMessages";
+import { usePermissions } from "@/hooks/usePermissions";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -47,11 +54,25 @@ const STATUS_COR: Record<string, string> = {
 };
 
 export default function SistemaReportes() {
+  const { isSuperAdmin } = usePermissions();
   const [filtroStatus, setFiltroStatus] = useState("");
   const { data: reportes, isLoading } = useReportesInbox(filtroStatus || undefined);
   const [selecionado, setSelecionado] = useState<Reporte | null>(null);
   const [respostaAdmin, setRespostaAdmin] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<Reporte | null>(null);
   const atualizar = useAtualizarReporte();
+
+  const handleDeleteReport = async () => {
+    if (!deleteTarget) return;
+    const { error } = await supabase.from("sistema_reportes").delete().eq("id", deleteTarget.id);
+    if (error) toast.error("Erro ao excluir: " + humanizeError(error.message));
+    else {
+      toast.success("Report excluído");
+      // refetch via query invalidation
+      window.location.reload();
+    }
+    setDeleteTarget(null);
+  };
 
   const { data: statusOpcoes } = useQuery({
     queryKey: ["parametros", "status_reporte"],
@@ -194,25 +215,38 @@ export default function SistemaReportes() {
                       <code className="text-foreground/70">{r.rota}</code>
                     </div>
                   </div>
-                  <div className="flex flex-col items-end gap-1.5 shrink-0">
-                    <Badge variant="outline" className="text-[10px]">
-                      {(tipoLabels as any)?.[r.tipo_valor] || r.tipo_valor}
-                    </Badge>
-                    {r.prioridade !== "normal" && (
+                  <div className="flex items-start gap-2 shrink-0">
+                    <div className="flex flex-col items-end gap-1.5">
+                      <Badge variant="outline" className="text-[10px]">
+                        {(tipoLabels as any)?.[r.tipo_valor] || r.tipo_valor}
+                      </Badge>
+                      {r.prioridade !== "normal" && (
+                        <Badge
+                          variant="outline"
+                          className={cn("text-[10px]", PRIORIDADE_COR[r.prioridade])}
+                        >
+                          {r.prioridade}
+                        </Badge>
+                      )}
                       <Badge
                         variant="outline"
-                        className={cn("text-[10px]", PRIORIDADE_COR[r.prioridade])}
+                        className={cn("text-[10px]", STATUS_COR[r.status_valor])}
                       >
-                        {r.prioridade}
+                        {(statusOpcoes as any)?.find((s: any) => s.valor === r.status_valor)
+                          ?.label || r.status_valor}
                       </Badge>
+                    </div>
+                    {isSuperAdmin && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                        onClick={(e) => { e.stopPropagation(); setDeleteTarget(r); }}
+                        aria-label="Excluir report"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
                     )}
-                    <Badge
-                      variant="outline"
-                      className={cn("text-[10px]", STATUS_COR[r.status_valor])}
-                    >
-                      {(statusOpcoes as any)?.find((s: any) => s.valor === r.status_valor)
-                        ?.label || r.status_valor}
-                    </Badge>
                   </div>
                 </div>
               </CardContent>

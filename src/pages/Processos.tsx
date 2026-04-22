@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Plus, Search, FileText, Users, Building2, MapPin, Briefcase,
-  Monitor, Filter, Loader2, Eye, AlertCircle, Sparkles,
+  Monitor, Filter, Loader2, Eye, AlertCircle, Sparkles, Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,14 +14,21 @@ import {
 import {
   Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetDescription,
 } from "@/components/ui/sheet";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePermissions } from "@/hooks/usePermissions";
 import { useProcessos, type FiltrosProcessos } from "@/hooks/useProcessos";
 import { useAllParametros } from "@/hooks/useParametros";
 import { useUnidades } from "@/hooks/useUnidades";
 import { useCargos } from "@/hooks/useCargos";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { humanizeError } from "@/lib/errorMessages";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -42,11 +49,34 @@ const NATUREZA_LABEL: Record<string, string> = {
 export default function Processos() {
   const navigate = useNavigate();
   const { roles } = useAuth();
+  const { isSuperAdmin } = usePermissions();
+  const queryClient = useQueryClient();
   const podeEditar = roles?.some((r) => ["super_admin", "admin_rh"].includes(r));
 
   const [filtros, setFiltros] = useState<FiltrosProcessos>({});
   const [busca, setBusca] = useState("");
   const [filtrosAbertos, setFiltrosAbertos] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<any | null>(null);
+
+  const handleDeleteProcesso = async () => {
+    if (!deleteTarget) return;
+    const id = deleteTarget.id;
+    // Cascade: filhos primeiro
+    await supabase.from("processos_versoes").delete().eq("processo_id", id);
+    await supabase.from("processos_tags_tipos_colaborador").delete().eq("processo_id", id);
+    await supabase.from("processos_tags_areas").delete().eq("processo_id", id);
+    await supabase.from("processos_tags_departamentos").delete().eq("processo_id", id);
+    await supabase.from("processos_ligacoes").delete().or(`origem_id.eq.${id},destino_id.eq.${id}`);
+    await supabase.from("processos_sugestoes").delete().eq("processo_id", id);
+    await supabase.from("processos_log_consultas").delete().eq("processo_id", id);
+    const { error } = await supabase.from("processos").delete().eq("id", id);
+    if (error) toast.error("Erro ao excluir: " + humanizeError(error.message));
+    else {
+      toast.success("Processo excluído");
+      queryClient.invalidateQueries({ queryKey: ["processos"] });
+    }
+    setDeleteTarget(null);
+  };
 
   const { data: parametros } = useAllParametros();
   const { data: unidades } = useUnidades();
@@ -275,9 +305,22 @@ export default function Processos() {
                       <p className="text-[11px] text-muted-foreground mt-0.5">{p.area_nome}</p>
                     )}
                   </div>
-                  <Badge variant="outline" className={`${STATUS_COR[p.status_valor] || ""} text-[10px] shrink-0`}>
-                    {statusOpcoes.find((s) => s.valor === p.status_valor)?.label || p.status_valor}
-                  </Badge>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <Badge variant="outline" className={`${STATUS_COR[p.status_valor] || ""} text-[10px]`}>
+                      {statusOpcoes.find((s) => s.valor === p.status_valor)?.label || p.status_valor}
+                    </Badge>
+                    {isSuperAdmin && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                        onClick={(e) => { e.stopPropagation(); setDeleteTarget(p); }}
+                        aria-label="Excluir processo"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
+                  </div>
                 </div>
 
                 {p.descricao && (
@@ -346,6 +389,27 @@ export default function Processos() {
           ))}
         </div>
       )}
+
+      {/* Dialog excluir processo (super_admin) */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir processo permanentemente?</AlertDialogTitle>
+            <AlertDialogDescription>
+              O processo "{deleteTarget?.nome}" será excluído junto com todas as versões, tags, conexões e sugestões. Essa ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteProcesso}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
