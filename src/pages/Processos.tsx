@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Plus, Search, FileText, Users, Building2, MapPin, Briefcase,
-  Monitor, Filter, Loader2, Eye, AlertCircle, Sparkles,
+  Monitor, Filter, Loader2, Eye, AlertCircle, Sparkles, Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,14 +14,21 @@ import {
 import {
   Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetDescription,
 } from "@/components/ui/sheet";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePermissions } from "@/hooks/usePermissions";
 import { useProcessos, type FiltrosProcessos } from "@/hooks/useProcessos";
 import { useAllParametros } from "@/hooks/useParametros";
 import { useUnidades } from "@/hooks/useUnidades";
 import { useCargos } from "@/hooks/useCargos";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { humanizeError } from "@/lib/errorMessages";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -42,11 +49,34 @@ const NATUREZA_LABEL: Record<string, string> = {
 export default function Processos() {
   const navigate = useNavigate();
   const { roles } = useAuth();
+  const { isSuperAdmin } = usePermissions();
+  const queryClient = useQueryClient();
   const podeEditar = roles?.some((r) => ["super_admin", "admin_rh"].includes(r));
 
   const [filtros, setFiltros] = useState<FiltrosProcessos>({});
   const [busca, setBusca] = useState("");
   const [filtrosAbertos, setFiltrosAbertos] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<any | null>(null);
+
+  const handleDeleteProcesso = async () => {
+    if (!deleteTarget) return;
+    const id = deleteTarget.id;
+    // Cascade: filhos primeiro
+    await supabase.from("processos_versoes").delete().eq("processo_id", id);
+    await supabase.from("processos_tags_tipos_colaborador").delete().eq("processo_id", id);
+    await supabase.from("processos_tags_areas").delete().eq("processo_id", id);
+    await supabase.from("processos_tags_departamentos").delete().eq("processo_id", id);
+    await supabase.from("processos_ligacoes").delete().or(`origem_id.eq.${id},destino_id.eq.${id}`);
+    await supabase.from("processos_sugestoes").delete().eq("processo_id", id);
+    await supabase.from("processos_log_consultas").delete().eq("processo_id", id);
+    const { error } = await supabase.from("processos").delete().eq("id", id);
+    if (error) toast.error("Erro ao excluir: " + humanizeError(error.message));
+    else {
+      toast.success("Processo excluído");
+      queryClient.invalidateQueries({ queryKey: ["processos"] });
+    }
+    setDeleteTarget(null);
+  };
 
   const { data: parametros } = useAllParametros();
   const { data: unidades } = useUnidades();
