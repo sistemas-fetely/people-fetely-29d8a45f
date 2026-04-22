@@ -66,11 +66,26 @@ export function HoleriteDrawer({ holerite, open, onClose, competenciaId, canEdit
   const [editing, setEditing] = useState(false);
   const editMut = useEditarHolerite();
   const { data: parametrosFolha } = useParametrosFolha();
+  const { isSuperAdmin } = usePermissions();
+  const queryClient = useQueryClient();
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [form, setForm] = useState<EditForm>({
     horasExtras50Qtd: 0, horasExtras100Qtd: 0, faltasDias: 0,
     descontoVT: true, descontoVR: 0, descontoPlanoSaude: 0,
     outrosProventos: 0, outrosDescontos: 0,
   });
+
+  const handleDeleteHolerite = async () => {
+    if (!holerite) return;
+    const { error } = await supabase.from("holerites").delete().eq("id", holerite.id);
+    if (error) toast.error(humanizeError(error.message));
+    else {
+      toast.success("Holerite excluído");
+      queryClient.invalidateQueries({ queryKey: ["holerites"] });
+      setShowDeleteDialog(false);
+      onClose();
+    }
+  };
 
   // Reset form when holerite changes
   useEffect(() => {
@@ -172,9 +187,21 @@ export function HoleriteDrawer({ holerite, open, onClose, competenciaId, canEdit
               </p>
             </div>
             {canEdit && !editing && (
-              <Button variant="outline" size="sm" onClick={() => setEditing(true)}>
-                <Pencil className="h-3.5 w-3.5 mr-1" /> Editar
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={() => setEditing(true)}>
+                  <Pencil className="h-3.5 w-3.5 mr-1" /> Editar
+                </Button>
+                {isSuperAdmin && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-destructive border-destructive/30 hover:bg-destructive/10"
+                    onClick={() => setShowDeleteDialog(true)}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                )}
+              </div>
             )}
           </div>
         </SheetHeader>
