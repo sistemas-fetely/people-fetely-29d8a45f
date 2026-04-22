@@ -1,8 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  ArrowLeft, Plus, Search, BookOpen, Edit2, EyeOff, X, Loader2, GraduationCap, FileText,
+  ArrowLeft, Plus, Search, BookOpen, Edit2, EyeOff, X, Loader2, GraduationCap, FileText, Trash2,
 } from "lucide-react";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { humanizeError } from "@/lib/errorMessages";
 import { UploadPdfConhecimento } from "@/components/fala-fetely/UploadPdfConhecimento";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -112,6 +117,7 @@ export default function Conhecimento() {
   const [tagInput, setTagInput] = useState("");
   const [aprovandoSugestao, setAprovandoSugestao] = useState<SugestaoPendente | null>(null);
   const [confirmarDesativar, setConfirmarDesativar] = useState<Conhecimento | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Conhecimento | null>(null);
 
   const [cargos, setCargos] = useState<string[]>([]);
   const [departamentos, setDepartamentos] = useState<string[]>([]);
@@ -293,6 +299,18 @@ export default function Conhecimento() {
     setShowForm(true);
   }
 
+  async function handleDeleteConhecimento() {
+    if (!deleteTarget) return;
+    const { error } = await supabase.from("fala_fetely_conhecimento").delete().eq("id", deleteTarget.id);
+    if (error) {
+      toast({ title: "Erro ao excluir", description: humanizeError(error.message), variant: "destructive" });
+    } else {
+      toast({ title: "Conhecimento excluído permanentemente" });
+      void carregar();
+    }
+    setDeleteTarget(null);
+  }
+
   async function desativar(item: Conhecimento) {
     const { error } = await supabase.from("fala_fetely_conhecimento").update({ ativo: false }).eq("id", item.id);
     if (error) {
@@ -470,6 +488,11 @@ export default function Conhecimento() {
                           <Button variant="ghost" size="sm" onClick={() => setConfirmarDesativar(item)} className="gap-1 text-muted-foreground hover:text-destructive">
                             <EyeOff className="h-3.5 w-3.5" /> Desativar
                           </Button>
+                          {isSuperAdmin && (
+                            <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(item)} className="gap-1 text-destructive hover:text-destructive">
+                              <Trash2 className="h-3.5 w-3.5" /> Excluir
+                            </Button>
+                          )}
                         </div>
                       </div>
                     </Card>
@@ -667,6 +690,24 @@ export default function Conhecimento() {
           }
         }}
       />
+
+      {/* Excluir permanentemente (super_admin) */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={(o) => { if (!o) setDeleteTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir conhecimento permanentemente?</AlertDialogTitle>
+            <AlertDialogDescription>
+              "{deleteTarget?.titulo}" será removido permanentemente da base. Essa ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteConhecimento} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

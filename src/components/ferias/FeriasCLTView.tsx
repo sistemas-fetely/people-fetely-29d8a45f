@@ -8,6 +8,10 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -60,6 +64,8 @@ export function FeriasCLTView({ canManage, isAdmin }: Props) {
   const [selectedPeriodo, setSelectedPeriodo] = useState<PeriodoComColaborador | null>(null);
   const [editingProg, setEditingProg] = useState<Tables<"ferias_programacoes"> | null>(null);
   const [busca, setBusca] = useState("");
+  const [deleteProgId, setDeleteProgId] = useState<string | null>(null);
+  const [deletePeriodoId, setDeletePeriodoId] = useState<string | null>(null);
 
   // Form state - novo período
   const [novoColaboradorId, setNovoColaboradorId] = useState("");
@@ -266,7 +272,7 @@ export function FeriasCLTView({ canManage, isAdmin }: Props) {
                                   </Button>
                                 )}
                                 {isAdmin && (
-                                  <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => excluirProgMut.mutate(pr.id)}>
+                                  <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => setDeleteProgId(pr.id)}>
                                     <Trash2 className="h-3 w-3 text-destructive" />
                                   </Button>
                                 )}
@@ -287,7 +293,7 @@ export function FeriasCLTView({ canManage, isAdmin }: Props) {
                           <Plus className="h-3.5 w-3.5 mr-1" /> Programar
                         </Button>
                         {isAdmin && (
-                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => excluirPeriodoMut.mutate(p.id)}>
+                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setDeletePeriodoId(p.id)}>
                             <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>
                         )}

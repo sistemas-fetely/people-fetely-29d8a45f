@@ -5,11 +5,20 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Pencil, Save, X } from "lucide-react";
+import { Pencil, Save, X, Trash2 } from "lucide-react";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { calcularFolha, type DadosCalculo } from "@/lib/calculo-folha";
 import { useEditarHolerite, type HoleriteComColaborador } from "@/hooks/useFolhaPagamento";
 import { useParametrosFolha } from "@/hooks/useParametrosFolha";
 import { SalarioMasked } from "@/components/SalarioMasked";
+import { usePermissions } from "@/hooks/usePermissions";
+import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { humanizeError } from "@/lib/errorMessages";
 
 const fmt = (v: number | null) =>
   (v ?? 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -66,11 +75,26 @@ export function HoleriteDrawer({ holerite, open, onClose, competenciaId, canEdit
   const [editing, setEditing] = useState(false);
   const editMut = useEditarHolerite();
   const { data: parametrosFolha } = useParametrosFolha();
+  const { isSuperAdmin } = usePermissions();
+  const queryClient = useQueryClient();
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [form, setForm] = useState<EditForm>({
     horasExtras50Qtd: 0, horasExtras100Qtd: 0, faltasDias: 0,
     descontoVT: true, descontoVR: 0, descontoPlanoSaude: 0,
     outrosProventos: 0, outrosDescontos: 0,
   });
+
+  const handleDeleteHolerite = async () => {
+    if (!holerite) return;
+    const { error } = await supabase.from("holerites").delete().eq("id", holerite.id);
+    if (error) toast.error(humanizeError(error.message));
+    else {
+      toast.success("Holerite excluído");
+      queryClient.invalidateQueries({ queryKey: ["holerites"] });
+      setShowDeleteDialog(false);
+      onClose();
+    }
+  };
 
   // Reset form when holerite changes
   useEffect(() => {
@@ -172,9 +196,21 @@ export function HoleriteDrawer({ holerite, open, onClose, competenciaId, canEdit
               </p>
             </div>
             {canEdit && !editing && (
-              <Button variant="outline" size="sm" onClick={() => setEditing(true)}>
-                <Pencil className="h-3.5 w-3.5 mr-1" /> Editar
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={() => setEditing(true)}>
+                  <Pencil className="h-3.5 w-3.5 mr-1" /> Editar
+                </Button>
+                {isSuperAdmin && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-destructive border-destructive/30 hover:bg-destructive/10"
+                    onClick={() => setShowDeleteDialog(true)}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                )}
+              </div>
             )}
           </div>
         </SheetHeader>
@@ -276,6 +312,23 @@ export function HoleriteDrawer({ holerite, open, onClose, competenciaId, canEdit
           </div>
         </div>
       </SheetContent>
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir holerite permanentemente?</AlertDialogTitle>
+            <AlertDialogDescription>
+              O holerite de "{h.colaborador?.nome_completo}" será excluído. Essa ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteHolerite} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Sheet>
   );
 }
