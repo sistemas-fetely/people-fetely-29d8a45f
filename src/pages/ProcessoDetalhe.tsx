@@ -194,6 +194,16 @@ export default function ProcessoDetalhe() {
               <Edit className="h-4 w-4" /> Editar
             </Button>
           )}
+          {isSuperAdmin && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-destructive border-destructive/30 hover:bg-destructive/10 gap-2"
+              onClick={() => setShowDeleteDialog(true)}
+            >
+              <Trash2 className="h-4 w-4" /> Excluir
+            </Button>
+          )}
         </div>
       </div>
 
