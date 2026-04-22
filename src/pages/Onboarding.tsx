@@ -6,7 +6,12 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { CheckCircle2, Clock, AlertTriangle, Loader2, TrendingUp, ShieldAlert, ExternalLink } from "lucide-react";
+import { CheckCircle2, Clock, AlertTriangle, Loader2, TrendingUp, ShieldAlert, ExternalLink, Trash2 } from "lucide-react";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { humanizeError } from "@/lib/errorMessages";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -86,12 +91,13 @@ function diasAtraso(prazoData: string): number {
 
 export default function Onboarding() {
   const { user } = useAuth();
-  const { userRoles: roles } = usePermissions();
+  const { userRoles: roles, isSuperAdmin } = usePermissions();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [checklists, setChecklists] = useState<Checklist[]>([]);
   const [filter, setFilter] = useState("todos");
   const [updatingTask, setUpdatingTask] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Checklist | null>(null);
 
   // Dialog de conclusão com evidência
   const [tarefaAConcluir, setTarefaAConcluir] = useState<Tarefa | null>(null);
@@ -305,6 +311,26 @@ export default function Onboarding() {
 
   // (removido) openChecklist — agora navegamos para /onboarding/:id
 
+  async function handleDeleteOnboarding() {
+    if (!deleteTarget) return;
+    const { data: tarefasIds } = await supabase
+      .from("sncf_tarefas")
+      .select("id")
+      .eq("processo_id", deleteTarget.id);
+    const ids = (tarefasIds || []).map((t: any) => t.id);
+    if (ids.length > 0) {
+      await supabase.from("sncf_tarefas_historico").delete().in("tarefa_id", ids);
+    }
+    await supabase.from("sncf_tarefas").delete().eq("processo_id", deleteTarget.id);
+    const { error } = await supabase.from("onboarding_checklists").delete().eq("id", deleteTarget.id);
+    if (error) toast.error(humanizeError(error.message));
+    else {
+      toast.success("Onboarding excluído");
+      void loadChecklists();
+    }
+    setDeleteTarget(null);
+  }
+
   // Colaborador view
   if (isColaborador) {
     const myChecklists = checklists.filter((cl) => cl.tarefas?.some((t) => t.responsavel_user_id === user?.id));
@@ -497,6 +523,16 @@ export default function Onboarding() {
                       >
                         {cl.status === "concluido" ? "Concluído" : overdue ? "Com atrasos" : "Em andamento"}
                       </Badge>
+                      {isSuperAdmin && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                          onClick={(e) => { e.stopPropagation(); setDeleteTarget(cl); }}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      )}
                     </div>
                   </div>
 
