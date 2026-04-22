@@ -1,5 +1,12 @@
 import { useState } from "react";
-import { MessageSquareWarning, Clock, AlertCircle, Loader2 } from "lucide-react";
+import { MessageSquareWarning, Clock, AlertCircle, Loader2, Trash2 } from "lucide-react";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
+import { humanizeError } from "@/lib/errorMessages";
+import { usePermissions } from "@/hooks/usePermissions";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -47,11 +54,25 @@ const STATUS_COR: Record<string, string> = {
 };
 
 export default function SistemaReportes() {
+  const { isSuperAdmin } = usePermissions();
   const [filtroStatus, setFiltroStatus] = useState("");
   const { data: reportes, isLoading } = useReportesInbox(filtroStatus || undefined);
   const [selecionado, setSelecionado] = useState<Reporte | null>(null);
   const [respostaAdmin, setRespostaAdmin] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<Reporte | null>(null);
   const atualizar = useAtualizarReporte();
+
+  const handleDeleteReport = async () => {
+    if (!deleteTarget) return;
+    const { error } = await supabase.from("sistema_reportes").delete().eq("id", deleteTarget.id);
+    if (error) toast.error("Erro ao excluir: " + humanizeError(error.message));
+    else {
+      toast.success("Report excluído");
+      // refetch via query invalidation
+      window.location.reload();
+    }
+    setDeleteTarget(null);
+  };
 
   const { data: statusOpcoes } = useQuery({
     queryKey: ["parametros", "status_reporte"],
