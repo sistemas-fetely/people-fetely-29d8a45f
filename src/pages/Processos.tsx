@@ -389,6 +389,27 @@ export default function Processos() {
           ))}
         </div>
       )}
+
+      {/* Dialog excluir processo (super_admin) */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir processo permanentemente?</AlertDialogTitle>
+            <AlertDialogDescription>
+              O processo "{deleteTarget?.nome}" será excluído junto com todas as versões, tags, conexões e sugestões. Essa ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteProcesso}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
