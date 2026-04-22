@@ -1,8 +1,9 @@
+import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeft, Edit, FileText, Users, Building2, MapPin, Briefcase,
   Monitor, Shield, Clock, History, AlertCircle, Loader2, Lock,
-  Workflow, GitBranch, Sparkles,
+  Workflow, GitBranch, Sparkles, Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SmartBackButton } from "@/components/SmartBackButton";
@@ -10,10 +11,17 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePermissions } from "@/hooks/usePermissions";
 import { useProcessoDetalhe } from "@/hooks/useProcessos";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { humanizeError } from "@/lib/errorMessages";
 import { format, formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import ReactMarkdown from "react-markdown";
@@ -38,6 +46,8 @@ export default function ProcessoDetalhe() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user, roles } = useAuth();
+  const { isSuperAdmin } = usePermissions();
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const { data: processo, isLoading } = useProcessoDetalhe(id || null);
 
@@ -45,6 +55,24 @@ export default function ProcessoDetalhe() {
     roles?.includes("super_admin") ||
     roles?.includes("admin_rh") ||
     (processo?.owner_user_id && processo.owner_user_id === user?.id);
+
+  const handleDeleteProcesso = async () => {
+    if (!id) return;
+    await supabase.from("processos_versoes").delete().eq("processo_id", id);
+    await supabase.from("processos_tags_tipos_colaborador").delete().eq("processo_id", id);
+    await supabase.from("processos_tags_areas").delete().eq("processo_id", id);
+    await supabase.from("processos_tags_departamentos").delete().eq("processo_id", id);
+    await supabase.from("processos_ligacoes").delete().or(`origem_id.eq.${id},destino_id.eq.${id}`);
+    await supabase.from("processos_sugestoes").delete().eq("processo_id", id);
+    await supabase.from("processos_log_consultas").delete().eq("processo_id", id);
+    const { error } = await supabase.from("processos").delete().eq("id", id);
+    if (error) {
+      toast.error("Erro ao excluir: " + humanizeError(error.message));
+      return;
+    }
+    toast.success("Processo excluído");
+    navigate("/processos");
+  };
 
   const { data: versoes } = useQuery({
     queryKey: ["processo-versoes", id],
