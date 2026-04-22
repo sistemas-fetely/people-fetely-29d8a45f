@@ -305,9 +305,22 @@ export default function Processos() {
                       <p className="text-[11px] text-muted-foreground mt-0.5">{p.area_nome}</p>
                     )}
                   </div>
-                  <Badge variant="outline" className={`${STATUS_COR[p.status_valor] || ""} text-[10px] shrink-0`}>
-                    {statusOpcoes.find((s) => s.valor === p.status_valor)?.label || p.status_valor}
-                  </Badge>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <Badge variant="outline" className={`${STATUS_COR[p.status_valor] || ""} text-[10px]`}>
+                      {statusOpcoes.find((s) => s.valor === p.status_valor)?.label || p.status_valor}
+                    </Badge>
+                    {isSuperAdmin && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                        onClick={(e) => { e.stopPropagation(); setDeleteTarget(p); }}
+                        aria-label="Excluir processo"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
+                  </div>
                 </div>
 
                 {p.descricao && (
