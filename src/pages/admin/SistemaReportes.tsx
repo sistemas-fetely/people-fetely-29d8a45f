@@ -215,25 +215,38 @@ export default function SistemaReportes() {
                       <code className="text-foreground/70">{r.rota}</code>
                     </div>
                   </div>
-                  <div className="flex flex-col items-end gap-1.5 shrink-0">
-                    <Badge variant="outline" className="text-[10px]">
-                      {(tipoLabels as any)?.[r.tipo_valor] || r.tipo_valor}
-                    </Badge>
-                    {r.prioridade !== "normal" && (
+                  <div className="flex items-start gap-2 shrink-0">
+                    <div className="flex flex-col items-end gap-1.5">
+                      <Badge variant="outline" className="text-[10px]">
+                        {(tipoLabels as any)?.[r.tipo_valor] || r.tipo_valor}
+                      </Badge>
+                      {r.prioridade !== "normal" && (
+                        <Badge
+                          variant="outline"
+                          className={cn("text-[10px]", PRIORIDADE_COR[r.prioridade])}
+                        >
+                          {r.prioridade}
+                        </Badge>
+                      )}
                       <Badge
                         variant="outline"
-                        className={cn("text-[10px]", PRIORIDADE_COR[r.prioridade])}
+                        className={cn("text-[10px]", STATUS_COR[r.status_valor])}
                       >
-                        {r.prioridade}
+                        {(statusOpcoes as any)?.find((s: any) => s.valor === r.status_valor)
+                          ?.label || r.status_valor}
                       </Badge>
+                    </div>
+                    {isSuperAdmin && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                        onClick={(e) => { e.stopPropagation(); setDeleteTarget(r); }}
+                        aria-label="Excluir report"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
                     )}
-                    <Badge
-                      variant="outline"
-                      className={cn("text-[10px]", STATUS_COR[r.status_valor])}
-                    >
-                      {(statusOpcoes as any)?.find((s: any) => s.valor === r.status_valor)
-                        ?.label || r.status_valor}
-                    </Badge>
                   </div>
                 </div>
               </CardContent>
