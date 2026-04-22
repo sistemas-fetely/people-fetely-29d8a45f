@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Loader2, FileText, Search, BookOpen, ChevronRight } from "lucide-react";
+import { Loader2, FileText, Search, BookOpen, ChevronRight, Trash2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -8,8 +8,14 @@ import { Input } from "@/components/ui/input";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { usePermissions } from "@/hooks/usePermissions";
+import { toast } from "sonner";
+import { humanizeError } from "@/lib/errorMessages";
 
 interface Documento {
   id: string;
@@ -38,15 +44,29 @@ const SNCF_COLOR = "#1A4A3A";
 
 export default function DocumentacaoGeral() {
   const navigate = useNavigate();
+  const { isSuperAdmin } = usePermissions();
 
   const [docs, setDocs] = useState<Documento[]>([]);
   const [loading, setLoading] = useState(true);
   const [filtroCategoria, setFiltroCategoria] = useState("todos");
   const [buscaTexto, setBuscaTexto] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<Documento | null>(null);
 
   useEffect(() => {
     void carregar();
   }, []);
+
+  const handleDeleteDoc = async () => {
+    if (!deleteTarget) return;
+    await (supabase as any).from("sncf_documentacao_versoes").delete().eq("documento_id", deleteTarget.id);
+    const { error } = await (supabase as any).from("sncf_documentacao").delete().eq("id", deleteTarget.id);
+    if (error) toast.error("Erro ao excluir: " + humanizeError(error.message));
+    else {
+      toast.success("Documento excluído");
+      void carregar();
+    }
+    setDeleteTarget(null);
+  };
 
   const carregar = async () => {
     setLoading(true);
