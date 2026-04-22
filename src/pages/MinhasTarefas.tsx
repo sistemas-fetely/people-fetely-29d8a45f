@@ -8,7 +8,7 @@ import { humanizeError } from "@/lib/errorMessages";
 import {
   ClipboardList, CheckCircle2, AlertTriangle, Clock, Eye, Inbox, Plus,
   Play, Pencil, X, MoreVertical, Users, ExternalLink, Filter,
-  Flame, CheckSquare, UserPlus, Mail, PauseCircle,
+  Flame, CheckSquare, UserPlus, Mail, PauseCircle, Trash2,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -99,6 +99,9 @@ export default function MinhasTarefas() {
 
   // Cancelar
   const [cancelarTarefa, setCancelarTarefa] = useState<Tarefa | null>(null);
+
+  // Excluir permanentemente (super_admin)
+  const [deleteTarget, setDeleteTarget] = useState<Tarefa | null>(null);
 
   // Submit NF (tarefa de emissao_nf)
   const [submeterNFTarefa, setSubmeterNFTarefa] = useState<Tarefa | null>(null);
@@ -448,6 +451,19 @@ export default function MinhasTarefas() {
     }
   };
 
+  const handleDeleteTarefa = async () => {
+    if (!deleteTarget) return;
+    // Cascade: histórico primeiro (FK ON DELETE CASCADE, mas garantimos)
+    await supabase.from("sncf_tarefas_historico").delete().eq("tarefa_id", deleteTarget.id);
+    const { error } = await supabase.from("sncf_tarefas").delete().eq("id", deleteTarget.id);
+    if (error) toast.error("Erro ao excluir: " + humanizeError(error.message));
+    else {
+      toast.success("Tarefa excluída permanentemente");
+      void loadTarefas();
+    }
+    setDeleteTarget(null);
+  };
+
   // Agrupamento
   const agrupar = (lista: Tarefa[]): Array<{ nome: string; tarefas: Tarefa[] }> => {
     if (agrupamento === "nenhum") {
@@ -708,6 +724,14 @@ export default function MinhasTarefas() {
                   onClick={() => navigate(`/onboarding/${tarefa.processo_id}`, { state: { from: "/tarefas", fromLabel: "Minhas Tarefas" } })}
                   className="gap-2">
                   <Eye className="h-4 w-4" /> Ver onboarding
+                </DropdownMenuItem>
+              )}
+              {isSuperAdmin && (
+                <DropdownMenuItem
+                  className="gap-2 text-destructive focus:text-destructive"
+                  onClick={() => setDeleteTarget(tarefa)}
+                >
+                  <Trash2 className="h-4 w-4" /> Excluir permanentemente
                 </DropdownMenuItem>
               )}
             </DropdownMenuContent>
