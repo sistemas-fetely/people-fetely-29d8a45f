@@ -217,7 +217,20 @@ export default function DocumentacaoGeral() {
                               </span>
                             </div>
                           </div>
-                          <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-1" />
+                          <div className="flex items-center gap-1 flex-shrink-0">
+                            {isSuperAdmin && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                                onClick={(e) => { e.stopPropagation(); setDeleteTarget(doc); }}
+                                aria-label="Excluir documento"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            )}
+                            <ChevronRight className="h-4 w-4 text-muted-foreground mt-1" />
+                          </div>
                         </div>
                       </CardContent>
                     </Card>
@@ -228,6 +241,23 @@ export default function DocumentacaoGeral() {
           })}
         </div>
       )}
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={(o) => { if (!o) setDeleteTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir documento permanentemente?</AlertDialogTitle>
+            <AlertDialogDescription>
+              O documento "{deleteTarget?.titulo}" e suas versões serão excluídos. Essa ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteDoc} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
