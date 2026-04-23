@@ -194,7 +194,14 @@ export function StepDadosPessoaisPJ() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <Label htmlFor="contato_telefone">Telefone</Label>
-            <Input id="contato_telefone" {...register("contato_telefone")} placeholder="(00) 00000-0000" />
+            <Input
+              id="contato_telefone"
+              value={watch("contato_telefone") || ""}
+              onChange={(e) => setValue("contato_telefone", formatTelefone(e.target.value), { shouldValidate: true })}
+              placeholder="(00) 00000-0000"
+              maxLength={15}
+              inputMode="tel"
+            />
           </div>
           <div>
             <Label htmlFor="contato_email">Email</Label>
@@ -207,7 +214,14 @@ export function StepDadosPessoaisPJ() {
           </div>
           <div>
             <Label htmlFor="telefone">Telefone Pessoal</Label>
-            <Input id="telefone" {...register("telefone")} placeholder="(00) 00000-0000" />
+            <Input
+              id="telefone"
+              value={watch("telefone") || ""}
+              onChange={(e) => setValue("telefone", formatTelefone(e.target.value), { shouldValidate: true })}
+              placeholder="(00) 00000-0000"
+              maxLength={15}
+              inputMode="tel"
+            />
           </div>
           <div>
             <Label htmlFor="contato_emergencia_nome">Contato de Emergência</Label>
@@ -215,7 +229,14 @@ export function StepDadosPessoaisPJ() {
           </div>
           <div>
             <Label htmlFor="contato_emergencia_telefone">Telefone Emergência</Label>
-            <Input id="contato_emergencia_telefone" {...register("contato_emergencia_telefone")} placeholder="(00) 00000-0000" />
+            <Input
+              id="contato_emergencia_telefone"
+              value={watch("contato_emergencia_telefone") || ""}
+              onChange={(e) => setValue("contato_emergencia_telefone", formatTelefone(e.target.value), { shouldValidate: true })}
+              placeholder="(00) 00000-0000"
+              maxLength={15}
+              inputMode="tel"
+            />
           </div>
         </div>
       </div>
