@@ -87,7 +87,13 @@ export function DrawerUsuario({ userId, open, onOpenChange }: Props) {
       const pjData = pjRes.data as any;
       const email_corporativo = cltData?.email_corporativo || pjData?.email_corporativo || null;
       const email_fallback = cltData?.email_pessoal || pjData?.contato_email || null;
-      const telefone_corporativo = cltData?.telefone_corporativo || pjData?.telefone_corporativo || null;
+      const telefone_corporativo =
+        cltData?.telefone_corporativo ||
+        pjData?.telefone_corporativo ||
+        cltData?.telefone ||
+        pjData?.telefone ||
+        pjData?.contato_telefone ||
+        null;
 
       // Mantido para compat: email genérico (prioriza corporativo, depois fallback)
       const email = email_corporativo || email_fallback;
