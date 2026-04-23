@@ -86,7 +86,7 @@ export function StepDadosEmpresa() {
             </span>
           </div>
 
-          {watch("celular_corporativo") && (
+          {watch("celular_corporativo") ? (
             <div className="space-y-1 max-w-md mt-3">
               <Label htmlFor="telefone_corporativo">Número do Celular Corporativo</Label>
               <Input
@@ -97,6 +97,22 @@ export function StepDadosEmpresa() {
               />
               <p className="text-[11px] text-muted-foreground">
                 Número da linha corporativa provisionada para o colaborador.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-1 max-w-md mt-3">
+              <Label htmlFor="telefone_pessoal_auto">Telefone do colaborador (automático)</Label>
+              <Input
+                id="telefone_pessoal_auto"
+                type="tel"
+                value={watch("telefone") || watch("contato_telefone") || ""}
+                readOnly
+                disabled
+                placeholder="Sem telefone pessoal cadastrado"
+                className="bg-muted/50"
+              />
+              <p className="text-[11px] text-muted-foreground">
+                Como não há celular corporativo, o telefone pessoal cadastrado em Dados Pessoais será exibido no perfil do colaborador.
               </p>
             </div>
           )}
