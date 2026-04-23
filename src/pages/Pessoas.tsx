@@ -119,7 +119,7 @@ export default function Pessoas() {
       ...(pjs || []).map((p: any) => ({
         id: p.id,
         nome: p.contato_nome,                              // pessoa física em destaque
-        subtitulo: p.nome_fantasia || p.razao_social,      // empresa vira subtítulo
+        subtitulo: p.email_corporativo || p.contato_email || p.email_pessoal || null, // email vira subtítulo
         tipo: "PJ" as const,
         cargo_servico: p.tipo_servico,
         departamento: p.departamento,
