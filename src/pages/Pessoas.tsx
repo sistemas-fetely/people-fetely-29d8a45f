@@ -79,64 +79,113 @@ export default function Pessoas() {
   const [pessoas, setPessoas] = useState<PessoaUnificada[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+export default function Pessoas() {
+  const navigate = useNavigate();
+  const { canSeeSalary, isSuperAdmin } = usePermissions();
+  const { isCargoClevel } = useCLevelCargos();
+  const [searchParams] = useSearchParams();
+  const tipoFromQuery = searchParams.get("tipo");
+  const [pessoas, setPessoas] = useState<PessoaUnificada[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
   const [filterTipo, setFilterTipo] = useState<string>(
     tipoFromQuery === "CLT" || tipoFromQuery === "PJ" ? tipoFromQuery : "todos"
   );
   const [filterStatus, setFilterStatus] = useState("todos");
   const [drawerUsuarioId, setDrawerUsuarioId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<PessoaUnificada | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  async function fetchPessoas() {
+    const [{ data: clts }, { data: pjs }] = await Promise.all([
+      supabase.from("colaboradores_clt").select(
+        "id, nome_completo, cargo, departamento, status, data_admissao, " +
+        "salario_base, foto_url, user_id, email_corporativo, telefone_corporativo"
+      ).order("nome_completo"),
+      supabase.from("contratos_pj").select(
+        "id, contato_nome, razao_social, nome_fantasia, tipo_servico, departamento, " +
+        "status, data_inicio, valor_mensal, foto_url, user_id, " +
+        "email_corporativo, telefone_corporativo"
+      ).order("contato_nome"),
+    ]);
+
+    const unified: PessoaUnificada[] = [
+      ...(clts || []).map((c: any) => ({
+        id: c.id,
+        nome: c.nome_completo,
+        subtitulo: null,
+        tipo: "CLT" as const,
+        cargo_servico: c.cargo,
+        departamento: c.departamento,
+        status: c.status,
+        data_inicio: c.data_admissao,
+        valor: c.salario_base,
+        foto_url: c.foto_url,
+        user_id: c.user_id || null,
+        email_corporativo: c.email_corporativo || null,
+        telefone_corporativo: c.telefone_corporativo || null,
+      })),
+      ...(pjs || []).map((p: any) => ({
+        id: p.id,
+        nome: p.contato_nome,                              // pessoa física em destaque
+        subtitulo: p.nome_fantasia || p.razao_social,      // empresa vira subtítulo
+        tipo: "PJ" as const,
+        cargo_servico: p.tipo_servico,
+        departamento: p.departamento,
+        status: p.status,
+        data_inicio: p.data_inicio,
+        valor: p.valor_mensal,
+        foto_url: p.foto_url,
+        user_id: p.user_id || null,
+        email_corporativo: p.email_corporativo || null,
+        telefone_corporativo: p.telefone_corporativo || null,
+      })),
+    ].sort((a, b) => a.nome.localeCompare(b.nome));
+
+    setPessoas(unified);
+    setLoading(false);
+  }
 
   useEffect(() => {
-    async function fetch() {
-      const [{ data: clts }, { data: pjs }] = await Promise.all([
-        supabase.from("colaboradores_clt").select(
-          "id, nome_completo, cargo, departamento, status, data_admissao, " +
-          "salario_base, foto_url, user_id, email_corporativo, telefone_corporativo"
-        ).order("nome_completo"),
-        supabase.from("contratos_pj").select(
-          "id, contato_nome, razao_social, nome_fantasia, tipo_servico, departamento, " +
-          "status, data_inicio, valor_mensal, foto_url, user_id, " +
-          "email_corporativo, telefone_corporativo"
-        ).order("contato_nome"),
-      ]);
-
-      const unified: PessoaUnificada[] = [
-        ...(clts || []).map((c: any) => ({
-          id: c.id,
-          nome: c.nome_completo,
-          subtitulo: null,
-          tipo: "CLT" as const,
-          cargo_servico: c.cargo,
-          departamento: c.departamento,
-          status: c.status,
-          data_inicio: c.data_admissao,
-          valor: c.salario_base,
-          foto_url: c.foto_url,
-          user_id: c.user_id || null,
-          email_corporativo: c.email_corporativo || null,
-          telefone_corporativo: c.telefone_corporativo || null,
-        })),
-        ...(pjs || []).map((p: any) => ({
-          id: p.id,
-          nome: p.contato_nome,                              // pessoa física em destaque
-          subtitulo: p.nome_fantasia || p.razao_social,      // empresa vira subtítulo
-          tipo: "PJ" as const,
-          cargo_servico: p.tipo_servico,
-          departamento: p.departamento,
-          status: p.status,
-          data_inicio: p.data_inicio,
-          valor: p.valor_mensal,
-          foto_url: p.foto_url,
-          user_id: p.user_id || null,
-          email_corporativo: p.email_corporativo || null,
-          telefone_corporativo: p.telefone_corporativo || null,
-        })),
-      ].sort((a, b) => a.nome.localeCompare(b.nome));
-
-      setPessoas(unified);
-      setLoading(false);
-    }
-    fetch();
+    fetchPessoas();
   }, []);
+
+  const handleDeletePessoa = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      const id = deleteTarget.id;
+      if (deleteTarget.tipo === "CLT") {
+        // Cascade filhos do CLT
+        await supabase.from("beneficios_colaborador").delete().eq("colaborador_id", id);
+        await supabase.from("colaborador_acessos_sistemas").delete().eq("colaborador_id", id);
+        await supabase.from("colaborador_departamentos").delete().eq("colaborador_id", id);
+        await supabase.from("colaborador_equipamentos").delete().eq("colaborador_id", id);
+        await supabase.from("dependentes").delete().eq("colaborador_id", id);
+        await supabase.from("alertas_agendados").delete().eq("colaborador_id", id);
+        await supabase.from("convites_cadastro").update({ colaborador_id: null }).eq("colaborador_id", id);
+        const { error } = await supabase.from("colaboradores_clt").delete().eq("id", id);
+        if (error) throw error;
+      } else {
+        // Cascade filhos do PJ
+        await supabase.from("beneficios_pj").delete().eq("contrato_id", id);
+        await supabase.from("contrato_pj_acessos_sistemas").delete().eq("contrato_pj_id", id);
+        await supabase.from("contrato_pj_equipamentos").delete().eq("contrato_pj_id", id);
+        await supabase.from("alertas_agendados").delete().eq("contrato_pj_id", id);
+        await supabase.from("convites_cadastro").update({ contrato_pj_id: null }).eq("contrato_pj_id", id);
+        const { error } = await supabase.from("contratos_pj").delete().eq("id", id);
+        if (error) throw error;
+      }
+      toast.success(`${deleteTarget.tipo === "CLT" ? "Colaborador" : "Contrato PJ"} excluído permanentemente`);
+      setDeleteTarget(null);
+      void fetchPessoas();
+    } catch (err: any) {
+      toast.error(humanizeError(err?.message));
+    } finally {
+      setDeleting(false);
+    }
+  };
+
 
   const { data: orfaosSet } = useUsuariosOrfaos(pessoas.map((p) => p.user_id));
 
