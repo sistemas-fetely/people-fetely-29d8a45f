@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import {
   Users, Search, MoreHorizontal, Eye, Edit, Mail, Phone, Shield,
-  UserCheck, Briefcase, Building2, Plus, ChevronDown, CheckCircle2, AlertCircle,
+  UserCheck, Briefcase, Building2, Plus, ChevronDown, CheckCircle2, AlertCircle, Trash2,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Card, CardContent } from "@/components/ui/card";
@@ -16,14 +16,19 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { format, parseISO } from "date-fns";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useCLevelCargos } from "@/hooks/useCLevelCargos";
 import { DrawerUsuario } from "@/components/DrawerUsuario";
 import { useUsuariosOrfaos } from "@/hooks/useUsuariosOrfaos";
+import { humanizeError } from "@/lib/errorMessages";
 
 interface PessoaUnificada {
   id: string;
@@ -67,7 +72,7 @@ const statusStyles: Record<string, string> = {
 
 export default function Pessoas() {
   const navigate = useNavigate();
-  const { canSeeSalary } = usePermissions();
+  const { canSeeSalary, isSuperAdmin } = usePermissions();
   const { isCargoClevel } = useCLevelCargos();
   const [searchParams] = useSearchParams();
   const tipoFromQuery = searchParams.get("tipo");
@@ -79,59 +84,99 @@ export default function Pessoas() {
   );
   const [filterStatus, setFilterStatus] = useState("todos");
   const [drawerUsuarioId, setDrawerUsuarioId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<PessoaUnificada | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  async function fetchPessoas() {
+    const [{ data: clts }, { data: pjs }] = await Promise.all([
+      supabase.from("colaboradores_clt").select(
+        "id, nome_completo, cargo, departamento, status, data_admissao, " +
+        "salario_base, foto_url, user_id, email_corporativo, telefone_corporativo"
+      ).order("nome_completo"),
+      supabase.from("contratos_pj").select(
+        "id, contato_nome, razao_social, nome_fantasia, tipo_servico, departamento, " +
+        "status, data_inicio, valor_mensal, foto_url, user_id, " +
+        "email_corporativo, telefone_corporativo"
+      ).order("contato_nome"),
+    ]);
+
+    const unified: PessoaUnificada[] = [
+      ...(clts || []).map((c: any) => ({
+        id: c.id,
+        nome: c.nome_completo,
+        subtitulo: null,
+        tipo: "CLT" as const,
+        cargo_servico: c.cargo,
+        departamento: c.departamento,
+        status: c.status,
+        data_inicio: c.data_admissao,
+        valor: c.salario_base,
+        foto_url: c.foto_url,
+        user_id: c.user_id || null,
+        email_corporativo: c.email_corporativo || null,
+        telefone_corporativo: c.telefone_corporativo || null,
+      })),
+      ...(pjs || []).map((p: any) => ({
+        id: p.id,
+        nome: p.contato_nome,                              // pessoa física em destaque
+        subtitulo: p.nome_fantasia || p.razao_social,      // empresa vira subtítulo
+        tipo: "PJ" as const,
+        cargo_servico: p.tipo_servico,
+        departamento: p.departamento,
+        status: p.status,
+        data_inicio: p.data_inicio,
+        valor: p.valor_mensal,
+        foto_url: p.foto_url,
+        user_id: p.user_id || null,
+        email_corporativo: p.email_corporativo || null,
+        telefone_corporativo: p.telefone_corporativo || null,
+      })),
+    ].sort((a, b) => a.nome.localeCompare(b.nome));
+
+    setPessoas(unified);
+    setLoading(false);
+  }
 
   useEffect(() => {
-    async function fetch() {
-      const [{ data: clts }, { data: pjs }] = await Promise.all([
-        supabase.from("colaboradores_clt").select(
-          "id, nome_completo, cargo, departamento, status, data_admissao, " +
-          "salario_base, foto_url, user_id, email_corporativo, telefone_corporativo"
-        ).order("nome_completo"),
-        supabase.from("contratos_pj").select(
-          "id, contato_nome, razao_social, nome_fantasia, tipo_servico, departamento, " +
-          "status, data_inicio, valor_mensal, foto_url, user_id, " +
-          "email_corporativo, telefone_corporativo"
-        ).order("contato_nome"),
-      ]);
-
-      const unified: PessoaUnificada[] = [
-        ...(clts || []).map((c: any) => ({
-          id: c.id,
-          nome: c.nome_completo,
-          subtitulo: null,
-          tipo: "CLT" as const,
-          cargo_servico: c.cargo,
-          departamento: c.departamento,
-          status: c.status,
-          data_inicio: c.data_admissao,
-          valor: c.salario_base,
-          foto_url: c.foto_url,
-          user_id: c.user_id || null,
-          email_corporativo: c.email_corporativo || null,
-          telefone_corporativo: c.telefone_corporativo || null,
-        })),
-        ...(pjs || []).map((p: any) => ({
-          id: p.id,
-          nome: p.contato_nome,                              // pessoa física em destaque
-          subtitulo: p.nome_fantasia || p.razao_social,      // empresa vira subtítulo
-          tipo: "PJ" as const,
-          cargo_servico: p.tipo_servico,
-          departamento: p.departamento,
-          status: p.status,
-          data_inicio: p.data_inicio,
-          valor: p.valor_mensal,
-          foto_url: p.foto_url,
-          user_id: p.user_id || null,
-          email_corporativo: p.email_corporativo || null,
-          telefone_corporativo: p.telefone_corporativo || null,
-        })),
-      ].sort((a, b) => a.nome.localeCompare(b.nome));
-
-      setPessoas(unified);
-      setLoading(false);
-    }
-    fetch();
+    fetchPessoas();
   }, []);
+
+  const handleDeletePessoa = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      const id = deleteTarget.id;
+      if (deleteTarget.tipo === "CLT") {
+        // Cascade filhos do CLT
+        await supabase.from("beneficios_colaborador").delete().eq("colaborador_id", id);
+        await supabase.from("colaborador_acessos_sistemas").delete().eq("colaborador_id", id);
+        await supabase.from("colaborador_departamentos").delete().eq("colaborador_id", id);
+        await supabase.from("colaborador_equipamentos").delete().eq("colaborador_id", id);
+        await supabase.from("dependentes").delete().eq("colaborador_id", id);
+        await supabase.from("alertas_agendados").delete().eq("colaborador_id", id);
+        await supabase.from("convites_cadastro").update({ colaborador_id: null }).eq("colaborador_id", id);
+        const { error } = await supabase.from("colaboradores_clt").delete().eq("id", id);
+        if (error) throw error;
+      } else {
+        // Cascade filhos do PJ
+        await supabase.from("beneficios_pj").delete().eq("contrato_id", id);
+        await supabase.from("contrato_pj_acessos_sistemas").delete().eq("contrato_pj_id", id);
+        await supabase.from("contrato_pj_equipamentos").delete().eq("contrato_pj_id", id);
+        await supabase.from("alertas_agendados").delete().eq("contrato_pj_id", id);
+        await supabase.from("convites_cadastro").update({ contrato_pj_id: null }).eq("contrato_pj_id", id);
+        const { error } = await supabase.from("contratos_pj").delete().eq("id", id);
+        if (error) throw error;
+      }
+      toast.success(`${deleteTarget.tipo === "CLT" ? "Colaborador" : "Contrato PJ"} excluído permanentemente`);
+      setDeleteTarget(null);
+      void fetchPessoas();
+    } catch (err: any) {
+      toast.error(humanizeError(err?.message));
+    } finally {
+      setDeleting(false);
+    }
+  };
+
 
   const { data: orfaosSet } = useUsuariosOrfaos(pessoas.map((p) => p.user_id));
 
@@ -465,6 +510,17 @@ export default function Pessoas() {
                             >
                               <Edit className="mr-2 h-4 w-4" /> Editar
                             </DropdownMenuItem>
+                            {isSuperAdmin && (
+                              <>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  className="text-destructive focus:text-destructive gap-2"
+                                  onClick={() => setDeleteTarget(p)}
+                                >
+                                  <Trash2 className="h-4 w-4" /> Excluir permanentemente
+                                </DropdownMenuItem>
+                              </>
+                            )}
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>
@@ -487,6 +543,32 @@ export default function Pessoas() {
         open={!!drawerUsuarioId}
         onOpenChange={(open) => !open && setDrawerUsuarioId(null)}
       />
+
+      <AlertDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => { if (!open && !deleting) setDeleteTarget(null); }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir {deleteTarget?.tipo === "CLT" ? "colaborador" : "contrato PJ"} permanentemente?</AlertDialogTitle>
+            <AlertDialogDescription>
+              <strong>{deleteTarget?.nome}</strong>{deleteTarget?.subtitulo ? ` (${deleteTarget.subtitulo})` : ""} e todos os dados vinculados
+              (benefícios, dependentes, equipamentos, acessos a sistemas, alertas) serão excluídos.
+              Esta ação não pode ser desfeita. O usuário de acesso (login) <em>não</em> é removido por aqui — gerencie em "Gerenciar Usuários".
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); void handleDeletePessoa(); }}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? "Excluindo..." : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
