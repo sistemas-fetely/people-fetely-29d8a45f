@@ -71,11 +71,14 @@ export function StepDadosProfissionaisPJ() {
             <Input
               id="telefone_corporativo"
               type="tel"
-              placeholder="(11) 91234-5678 ou ramal 123"
-              {...register("telefone_corporativo" as any)}
+              value={(watch("telefone_corporativo" as any) as string) || ""}
+              readOnly
+              disabled
+              placeholder="Não preenchido na aba Empresa"
+              className="bg-muted/50"
             />
             <p className="text-[11px] text-muted-foreground">
-              Celular corporativo, ramal ou telefone de trabalho do prestador.
+              Definido automaticamente na aba <strong>Empresa</strong> (Celular Corporativo). Não editável aqui.
             </p>
           </div>
         </div>
