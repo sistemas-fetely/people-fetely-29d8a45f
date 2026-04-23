@@ -64,36 +64,42 @@ export function StepDadosEmpresa() {
               Deve ser um domínio Fetely configurado em /parametros.
             </p>
           </div>
-          <div className="space-y-1">
-            <Label htmlFor="telefone_corporativo">Telefone Corporativo</Label>
-            <Input
-              id="telefone_corporativo"
-              type="tel"
-              placeholder="(11) 91234-5678 ou ramal 123"
-              {...register("telefone_corporativo")}
-            />
-            <p className="text-[11px] text-muted-foreground">
-              Celular do ativo corporativo, ramal, ou telefone de trabalho.
-            </p>
-          </div>
           <div className="space-y-2">
             <Label htmlFor="data_integracao">Data de Integração</Label>
             <Input id="data_integracao" type="date" {...register("data_integracao")} />
           </div>
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-2 mt-4">
           <Label htmlFor="celular_corporativo_info">Celular Corporativo (provisão)</Label>
           <div className="flex items-center gap-3">
             <Switch
               id="celular_corporativo_info"
               checked={watch("celular_corporativo") || false}
-              onCheckedChange={(checked) => setValue("celular_corporativo", checked)}
+              onCheckedChange={(checked) => {
+                setValue("celular_corporativo", checked);
+                if (!checked) setValue("telefone_corporativo", "");
+              }}
             />
             <span className="text-sm text-muted-foreground">
-              {watch("celular_corporativo") ? "Sim — aparelho + linha" : "Não necessário"}
+              {watch("celular_corporativo") ? "Sim — aparelho + linha" : "Não necessário — usar celular pessoal"}
             </span>
           </div>
+
+          {watch("celular_corporativo") && (
+            <div className="space-y-1 max-w-md mt-3">
+              <Label htmlFor="telefone_corporativo">Número do Celular Corporativo</Label>
+              <Input
+                id="telefone_corporativo"
+                type="tel"
+                placeholder="(11) 91234-5678 ou ramal 123"
+                {...register("telefone_corporativo")}
+              />
+              <p className="text-[11px] text-muted-foreground">
+                Número da linha corporativa provisionada para o colaborador.
+              </p>
+            </div>
+          )}
         </div>
       </div>
 
