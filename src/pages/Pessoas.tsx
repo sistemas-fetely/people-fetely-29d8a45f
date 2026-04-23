@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import {
   Users, Search, MoreHorizontal, Eye, Edit, Mail, Phone, Shield,
-  UserCheck, Briefcase, Building2, Plus, ChevronDown, CheckCircle2, AlertCircle,
+  UserCheck, Briefcase, Building2, Plus, ChevronDown, CheckCircle2, AlertCircle, Trash2,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Card, CardContent } from "@/components/ui/card";
@@ -16,14 +16,19 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { format, parseISO } from "date-fns";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useCLevelCargos } from "@/hooks/useCLevelCargos";
 import { DrawerUsuario } from "@/components/DrawerUsuario";
 import { useUsuariosOrfaos } from "@/hooks/useUsuariosOrfaos";
+import { humanizeError } from "@/lib/errorMessages";
 
 interface PessoaUnificada {
   id: string;
