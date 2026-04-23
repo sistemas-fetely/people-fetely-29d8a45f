@@ -671,6 +671,10 @@ export default function ContratoPJDetalhe() {
                   />
                 )}
                 <InfoField label="Forma de Pagamento" value={contrato.forma_pagamento} />
+                <InfoField
+                  label="Telefone Corporativo"
+                  value={(contrato as any).telefone_corporativo || contrato.telefone || contrato.contato_telefone || "—"}
+                />
                 <InfoField label="Dia do Vencimento" value={contrato.dia_vencimento?.toString()} />
                 <InfoField label="Data de Início" value={format(parseISO(contrato.data_inicio), "dd/MM/yyyy")} />
                 <InfoField label="Data de Fim" value={contrato.data_fim ? format(parseISO(contrato.data_fim), "dd/MM/yyyy") : "Indeterminado"} />
