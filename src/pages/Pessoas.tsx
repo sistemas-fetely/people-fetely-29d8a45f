@@ -510,6 +510,17 @@ export default function Pessoas() {
                             >
                               <Edit className="mr-2 h-4 w-4" /> Editar
                             </DropdownMenuItem>
+                            {isSuperAdmin && (
+                              <>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  className="text-destructive focus:text-destructive gap-2"
+                                  onClick={() => setDeleteTarget(p)}
+                                >
+                                  <Trash2 className="h-4 w-4" /> Excluir permanentemente
+                                </DropdownMenuItem>
+                              </>
+                            )}
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>
@@ -532,6 +543,32 @@ export default function Pessoas() {
         open={!!drawerUsuarioId}
         onOpenChange={(open) => !open && setDrawerUsuarioId(null)}
       />
+
+      <AlertDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => { if (!open && !deleting) setDeleteTarget(null); }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir {deleteTarget?.tipo === "CLT" ? "colaborador" : "contrato PJ"} permanentemente?</AlertDialogTitle>
+            <AlertDialogDescription>
+              <strong>{deleteTarget?.nome}</strong>{deleteTarget?.subtitulo ? ` (${deleteTarget.subtitulo})` : ""} e todos os dados vinculados
+              (benefícios, dependentes, equipamentos, acessos a sistemas, alertas) serão excluídos.
+              Esta ação não pode ser desfeita. O usuário de acesso (login) <em>não</em> é removido por aqui — gerencie em "Gerenciar Usuários".
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); void handleDeletePessoa(); }}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? "Excluindo..." : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
