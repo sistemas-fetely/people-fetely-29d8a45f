@@ -72,15 +72,6 @@ const statusStyles: Record<string, string> = {
 
 export default function Pessoas() {
   const navigate = useNavigate();
-  const { canSeeSalary } = usePermissions();
-  const { isCargoClevel } = useCLevelCargos();
-  const [searchParams] = useSearchParams();
-  const tipoFromQuery = searchParams.get("tipo");
-  const [pessoas, setPessoas] = useState<PessoaUnificada[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
-export default function Pessoas() {
-  const navigate = useNavigate();
   const { canSeeSalary, isSuperAdmin } = usePermissions();
   const { isCargoClevel } = useCLevelCargos();
   const [searchParams] = useSearchParams();
