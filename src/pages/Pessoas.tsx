@@ -96,7 +96,7 @@ export default function Pessoas() {
       supabase.from("contratos_pj").select(
         "id, contato_nome, razao_social, nome_fantasia, tipo_servico, departamento, " +
         "status, data_inicio, valor_mensal, foto_url, user_id, " +
-        "email_corporativo, telefone_corporativo"
+        "email_corporativo, contato_email, email_pessoal, telefone_corporativo"
       ).order("contato_nome"),
     ]);
 
@@ -119,7 +119,7 @@ export default function Pessoas() {
       ...(pjs || []).map((p: any) => ({
         id: p.id,
         nome: p.contato_nome,                              // pessoa física em destaque
-        subtitulo: p.nome_fantasia || p.razao_social,      // empresa vira subtítulo
+        subtitulo: p.email_corporativo || p.contato_email || p.email_pessoal || null, // email vira subtítulo
         tipo: "PJ" as const,
         cargo_servico: p.tipo_servico,
         departamento: p.departamento,
