@@ -49,12 +49,12 @@ export function DrawerUsuario({ userId, open, onOpenChange }: Props) {
         supabase.from("profiles").select("*").eq("user_id", activeUserId).maybeSingle(),
         supabase
           .from("colaboradores_clt")
-          .select("id, cargo, departamento, data_admissao, gestor_direto_id, foto_url, email_corporativo, email_pessoal, telefone_corporativo")
+          .select("id, cargo, departamento, data_admissao, gestor_direto_id, foto_url, email_corporativo, email_pessoal, telefone_corporativo, telefone")
           .eq("user_id", activeUserId)
           .maybeSingle(),
         supabase
           .from("contratos_pj")
-          .select("id, cargo_id, departamento, data_inicio, gestor_direto_id, foto_url, contato_email, tipo_servico, email_corporativo, telefone_corporativo")
+          .select("id, cargo_id, departamento, data_inicio, gestor_direto_id, foto_url, contato_email, tipo_servico, email_corporativo, telefone_corporativo, telefone, contato_telefone")
           .eq("user_id", activeUserId)
           .maybeSingle(),
         supabase.from("user_roles").select("role, nivel").eq("user_id", activeUserId),
