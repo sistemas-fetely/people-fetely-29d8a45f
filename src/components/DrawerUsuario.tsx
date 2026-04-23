@@ -49,12 +49,12 @@ export function DrawerUsuario({ userId, open, onOpenChange }: Props) {
         supabase.from("profiles").select("*").eq("user_id", activeUserId).maybeSingle(),
         supabase
           .from("colaboradores_clt")
-          .select("id, cargo, departamento, data_admissao, gestor_direto_id, foto_url, email_corporativo, email_pessoal, telefone_corporativo")
+          .select("id, cargo, departamento, data_admissao, gestor_direto_id, foto_url, email_corporativo, email_pessoal, telefone_corporativo, telefone")
           .eq("user_id", activeUserId)
           .maybeSingle(),
         supabase
           .from("contratos_pj")
-          .select("id, cargo_id, departamento, data_inicio, gestor_direto_id, foto_url, contato_email, tipo_servico, email_corporativo, telefone_corporativo")
+          .select("id, cargo_id, departamento, data_inicio, gestor_direto_id, foto_url, contato_email, tipo_servico, email_corporativo, telefone_corporativo, telefone, contato_telefone")
           .eq("user_id", activeUserId)
           .maybeSingle(),
         supabase.from("user_roles").select("role, nivel").eq("user_id", activeUserId),
@@ -87,7 +87,13 @@ export function DrawerUsuario({ userId, open, onOpenChange }: Props) {
       const pjData = pjRes.data as any;
       const email_corporativo = cltData?.email_corporativo || pjData?.email_corporativo || null;
       const email_fallback = cltData?.email_pessoal || pjData?.contato_email || null;
-      const telefone_corporativo = cltData?.telefone_corporativo || pjData?.telefone_corporativo || null;
+      const telefone_corporativo =
+        cltData?.telefone_corporativo ||
+        pjData?.telefone_corporativo ||
+        cltData?.telefone ||
+        pjData?.telefone ||
+        pjData?.contato_telefone ||
+        null;
 
       // Mantido para compat: email genérico (prioriza corporativo, depois fallback)
       const email = email_corporativo || email_fallback;
