@@ -89,7 +89,6 @@ import AdminImoveis from "@/pages/administrativo/Imoveis";
 import AdminSeguros from "@/pages/administrativo/Seguros";
 import AdminGED from "@/pages/administrativo/GED";
 import ConfiguracaoIntegracao from "@/pages/administrativo/ConfiguracaoIntegracao";
-import BlingCallback from "@/pages/administrativo/BlingCallback";
 
 const queryClient = new QueryClient();
 
@@ -378,7 +377,6 @@ const App = () => (
                 Pilar Administrativo (Financeiro, Contratos, Imóveis, Seguros, GED)
                 Acesso restrito a super_admin (Fase 1)
                 ═══════════════════════════════════════════════ */}
-            <Route path="/administrativo/bling-callback" element={<BlingCallback />} />
             <Route path="/administrativo" element={<AdminFinanceiroLayout />}>
               <Route index element={<DashboardFinanceiro />} />
               <Route path="plano-contas" element={<PlanoDeContas />} />
