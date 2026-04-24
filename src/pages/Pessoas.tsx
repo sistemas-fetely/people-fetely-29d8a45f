@@ -231,7 +231,7 @@ export default function Pessoas() {
             <DropdownMenuItem onClick={() => navigate("/colaboradores/novo")}>
               <Building2 className="mr-2 h-4 w-4" /> Colaborador CLT
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => navigate("/contratos-pj?novo=true")}>
+            <DropdownMenuItem onClick={() => navigate("/contratos-pj/novo")}>
               <Briefcase className="mr-2 h-4 w-4" /> Contrato PJ
             </DropdownMenuItem>
           </DropdownMenuContent>
