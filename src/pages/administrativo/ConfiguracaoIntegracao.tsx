@@ -408,24 +408,24 @@ export default function ConfiguracaoIntegracao() {
             </Button>
             <Button
               variant="outline"
-              onClick={() => sincronizar("categorias")}
-              disabled={!!syncing || !form.access_token}
-            >
-              Só categorias
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => sincronizar("contas_pagar")}
-              disabled={!!syncing || !form.access_token}
-            >
-              Só contas a pagar
-            </Button>
-            <Button
-              variant="outline"
               onClick={() => sincronizar("contas_receber")}
               disabled={!!syncing || !form.access_token}
             >
-              Só contas a receber
+              Contas a receber
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => sincronizar("pedidos")}
+              disabled={!!syncing || !form.access_token}
+            >
+              Pedidos de venda
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => sincronizar("produtos")}
+              disabled={!!syncing || !form.access_token}
+            >
+              Produtos
             </Button>
           </div>
 
