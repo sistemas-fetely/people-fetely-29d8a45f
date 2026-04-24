@@ -1,0 +1,146 @@
+/**
+ * Pipeline compartilhado para importar NFs (de qualquer fonte) como contas a pagar.
+ * - Anti-duplicata por chave de acesso.
+ * - Auto-cadastro de parceiro por CNPJ.
+ * - Insert de itens quando disponíveis.
+ */
+
+import { supabase } from "@/integrations/supabase/client";
+import type { NFParsed } from "./types";
+
+export async function verificarDuplicatas(nfs: NFParsed[]): Promise<NFParsed[]> {
+  const chaves = nfs.map((n) => n.nf_chave_acesso).filter((c): c is string => !!c);
+  if (chaves.length === 0) return nfs.map((n) => ({ ...n, _duplicata: false }));
+
+  const { data } = await supabase
+    .from("contas_pagar_receber")
+    .select("nf_chave_acesso")
+    .in("nf_chave_acesso", chaves);
+
+  const existentes = new Set((data || []).map((r: any) => r.nf_chave_acesso as string));
+  return nfs.map((n) => ({
+    ...n,
+    _duplicata: !!n.nf_chave_acesso && existentes.has(n.nf_chave_acesso),
+  }));
+}
+
+export interface ImportResult {
+  sucesso: number;
+  erros: number;
+  errosDetalhe: string[];
+}
+
+export async function importarNFs(nfs: NFParsed[]): Promise<ImportResult> {
+  let sucesso = 0;
+  let erros = 0;
+  const errosDetalhe: string[] = [];
+
+  for (const nf of nfs) {
+    try {
+      // 1. Upsert parceiro por CNPJ
+      let parceiro_id: string | null = null;
+      if (nf.fornecedor_cnpj) {
+        const { data: parceiro } = await supabase
+          .from("parceiros_comerciais")
+          .select("id")
+          .eq("cnpj", nf.fornecedor_cnpj)
+          .maybeSingle();
+
+        if (parceiro) {
+          parceiro_id = parceiro.id;
+        } else {
+          const { data: novoParceiro, error: pErr } = await supabase
+            .from("parceiros_comerciais")
+            .insert({
+              cnpj: nf.fornecedor_cnpj,
+              razao_social: nf.fornecedor_nome,
+              tipo: "pj",
+              tipos: ["fornecedor"],
+              origem: nf._source === "csv_qive" ? "qive" : "nf_import",
+            } as any)
+            .select("id")
+            .single();
+          if (pErr) throw pErr;
+          parceiro_id = novoParceiro?.id || null;
+        }
+      }
+
+      // 2. Forma de pagamento
+      let forma_id: string | null = null;
+      if (nf.meio_pagamento) {
+        const { data: forma } = await supabase
+          .from("formas_pagamento")
+          .select("id")
+          .eq("codigo", nf.meio_pagamento)
+          .maybeSingle();
+        forma_id = forma?.id || null;
+      }
+
+      // 3. Insert conta a pagar
+      const { data: contaCriada, error: contaErr } = await supabase
+        .from("contas_pagar_receber")
+        .insert({
+          tipo: "pagar",
+          descricao: `${nf.fornecedor_nome} — NF ${nf.nf_numero || "s/n"}`,
+          valor: nf.valor,
+          data_vencimento: nf.nf_data_emissao || new Date().toISOString().substring(0, 10),
+          status: "rascunho",
+          conta_id: nf._categoria_id || null,
+          centro_custo: nf._centro_custo || null,
+          fornecedor_cliente: nf.fornecedor_nome,
+          parceiro_id,
+          fornecedor_id: parceiro_id,
+          forma_pagamento_id: forma_id,
+          origem: nf._source,
+          nf_chave_acesso: nf.nf_chave_acesso || null,
+          nf_numero: nf.nf_numero || null,
+          nf_serie: nf.nf_serie || null,
+          nf_data_emissao: nf.nf_data_emissao || null,
+          nf_cnpj_emitente: nf.fornecedor_cnpj || null,
+          nf_valor_produtos: nf.nf_valor_produtos || nf.valor,
+          nf_valor_impostos: nf.nf_valor_impostos || 0,
+          nf_natureza_operacao: nf.nf_natureza_operacao || null,
+          nf_cfop: nf.nf_cfop || null,
+          nf_ncm: nf.nf_ncm || null,
+          categoria_sugerida_ia: !!nf._categoria_id,
+          categoria_confirmada: false,
+        } as any)
+        .select("id")
+        .single();
+
+      if (contaErr) throw contaErr;
+
+      // 4. Itens (se existirem)
+      if (nf.itens && nf.itens.length > 0 && contaCriada) {
+        const itensInsert = nf.itens.map((item) => ({
+          conta_id: contaCriada.id,
+          codigo_produto: item.codigo_produto || null,
+          descricao: item.descricao,
+          ncm: item.ncm || null,
+          cfop: item.cfop || null,
+          unidade: item.unidade || null,
+          quantidade: item.quantidade ?? null,
+          valor_unitario: item.valor_unitario ?? null,
+          valor_total: item.valor_total ?? null,
+          valor_icms: item.valor_icms ?? 0,
+          valor_pis: item.valor_pis ?? 0,
+          valor_cofins: item.valor_cofins ?? 0,
+        }));
+        const { error: itErr } = await supabase
+          .from("contas_pagar_itens")
+          .insert(itensInsert as any);
+        if (itErr) {
+          // Não falhar a NF inteira por causa de itens, mas registrar
+          errosDetalhe.push(`Itens da NF ${nf.nf_numero}: ${itErr.message}`);
+        }
+      }
+
+      sucesso++;
+    } catch (e: any) {
+      erros++;
+      errosDetalhe.push(`${nf.fornecedor_nome} (NF ${nf.nf_numero}): ${e.message || e}`);
+    }
+  }
+
+  return { sucesso, erros, errosDetalhe };
+}
