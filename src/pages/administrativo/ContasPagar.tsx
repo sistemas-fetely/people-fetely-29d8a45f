@@ -253,7 +253,16 @@ export default function ContasPagar() {
                           onClick={() => setContaIdSelecionada(c.id)}
                         >
                           <TableCell className="whitespace-nowrap">{formatDateBR(c.data_vencimento)}</TableCell>
-                          <TableCell className="max-w-xs truncate" title={c.descricao}>{c.descricao}</TableCell>
+                          <TableCell className="max-w-xs" title={c.descricao}>
+                            <div className="flex items-center gap-2 min-w-0">
+                              <span className="truncate">{c.descricao}</span>
+                              {c.origem === "nf_pj_interno" && (
+                                <Badge variant="outline" className="gap-1 text-[10px] py-0 px-1.5 shrink-0">
+                                  <UserCheck className="h-2.5 w-2.5" /> NF PJ
+                                </Badge>
+                              )}
+                            </div>
+                          </TableCell>
                           <TableCell>{c.parceiros_comerciais?.razao_social || c.fornecedor_cliente || "—"}</TableCell>
                           <TableCell className="text-muted-foreground text-xs">
                             {c.plano_contas?.nome || "—"}
