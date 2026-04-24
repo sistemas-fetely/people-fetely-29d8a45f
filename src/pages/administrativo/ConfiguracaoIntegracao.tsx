@@ -24,6 +24,8 @@ export default function ConfiguracaoIntegracao() {
   const [saving, setSaving] = useState(false);
   const [syncing, setSyncing] = useState<string | null>(null);
   const [syncResult, setSyncResult] = useState<any>(null);
+  const [manualCode, setManualCode] = useState("");
+  const [processingCode, setProcessingCode] = useState(false);
 
   const [form, setForm] = useState({
     client_id: "",
@@ -110,6 +112,29 @@ export default function ConfiguracaoIntegracao() {
     toast.success(`Sync concluída: ${data?.criados || 0} novos, ${data?.atualizados || 0} atualizados`);
     qc.invalidateQueries({ queryKey: ["integracao-bling"] });
     qc.invalidateQueries({ queryKey: ["integracao-bling-logs"] });
+  }
+
+  async function processarCodeManual() {
+    setProcessingCode(true);
+    try {
+      const code = manualCode.trim();
+      if (!code) throw new Error("Cole o código de autorização");
+
+      const { data, error } = await supabase.functions.invoke("sync-bling-financeiro", {
+        body: { tipo: "token_exchange", code, redirect_uri: CALLBACK_URL },
+      });
+
+      if (error) throw new Error(error.message || "Erro no servidor");
+      if (data?.sucesso === false) throw new Error(data.erro || "Erro desconhecido");
+
+      toast.success("Bling conectado com sucesso!");
+      setManualCode("");
+      qc.invalidateQueries({ queryKey: ["integracao-bling"] });
+    } catch (e: any) {
+      toast.error("Erro: " + (e?.message || String(e)));
+    } finally {
+      setProcessingCode(false);
+    }
   }
 
   function autorizarBling() {
@@ -261,6 +286,28 @@ export default function ConfiguracaoIntegracao() {
               )}
               Testar conexão
             </Button>
+          </div>
+
+          <div className="mt-4 p-4 rounded-lg border border-dashed space-y-2">
+            <p className="text-xs text-muted-foreground">
+              Após autorizar no Bling, copie o <code>code=</code> da URL e cole aqui:
+            </p>
+            <div className="flex gap-2">
+              <Input
+                placeholder="Cole o code aqui"
+                value={manualCode}
+                onChange={(e) => setManualCode(e.target.value)}
+                className="flex-1 text-xs font-mono"
+              />
+              <Button
+                size="sm"
+                onClick={processarCodeManual}
+                disabled={!manualCode.trim() || processingCode}
+                className="bg-admin hover:bg-admin-accent text-admin-foreground"
+              >
+                {processingCode ? <Loader2 className="h-4 w-4 animate-spin" /> : "Conectar"}
+              </Button>
+            </div>
           </div>
 
         </CardContent>
