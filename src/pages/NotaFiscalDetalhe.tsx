@@ -187,6 +187,22 @@ export default function NotaFiscalDetalhe() {
     fetchData();
   }, [id, navigate]);
 
+  // Verifica se já existe Conta a Pagar gerada automaticamente para esta NF (cross-módulo)
+  const { data: cpGerada } = useQuery({
+    queryKey: ["cp-from-nf-pj", nota?.numero, nota?.id],
+    enabled: !!nota?.numero,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("contas_pagar_receber")
+        .select("id, status")
+        .eq("origem", "nf_pj_interno")
+        .eq("nf_numero", nota!.numero!)
+        .limit(1)
+        .maybeSingle();
+      return data;
+    },
+  });
+
   if (loading) {
     return (
       <div className="flex justify-center items-center py-20">
