@@ -69,6 +69,7 @@ const MODULO_MAP: Record<string, { label: string; categorias: CategoriaConfig[] 
   geral: { label: "Geral", categorias: CATEGORIAS_GERAL },
   clt: { label: "CLT", categorias: CATEGORIAS_CLT },
   pj: { label: "PJ", categorias: CATEGORIAS_PJ },
+  financeiro: { label: "Financeiro", categorias: [] },
 };
 
 /* ── Usage counts hook ── */
