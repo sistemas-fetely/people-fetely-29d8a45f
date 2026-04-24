@@ -419,6 +419,45 @@ export default function ConfiguracaoIntegracao() {
               Testar conexão
             </Button>
           </div>
+
+          {showManualAuth && (
+            <div className="mt-2 p-4 rounded-lg border border-amber-300 bg-amber-50/60 dark:bg-amber-950/20 dark:border-amber-900 space-y-3">
+              <h4 className="text-sm font-semibold">Autorização manual</h4>
+              <ol className="text-xs text-muted-foreground space-y-1 list-decimal list-inside">
+                <li>O link de autorização foi copiado. Cole em uma nova aba do navegador.</li>
+                <li>Autorize o aplicativo no Bling.</li>
+                <li>
+                  O Bling vai redirecionar para uma página que pode dar erro —{" "}
+                  <strong>isso é normal</strong>.
+                </li>
+                <li>
+                  Copie o valor de <code>code=</code> da barra de endereço (texto entre{" "}
+                  <code>code=</code> e <code>&amp;</code>).
+                </li>
+                <li>Cole abaixo e clique "Conectar".</li>
+              </ol>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Cole o code aqui (ex: abc123def456...)"
+                  value={manualCode}
+                  onChange={(e) => setManualCode(e.target.value)}
+                  className="flex-1 text-xs"
+                />
+                <Button
+                  size="sm"
+                  onClick={processarCodeManual}
+                  disabled={!manualCode.trim() || processingCode}
+                  className="bg-admin hover:bg-admin/90 text-admin-foreground"
+                >
+                  {processingCode ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    "Conectar"
+                  )}
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
