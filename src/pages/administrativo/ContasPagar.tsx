@@ -36,6 +36,7 @@ type Conta = {
   fornecedor_cliente: string | null;
   parceiro_id: string | null;
   conta_id: string | null;
+  origem: string | null;
   plano_contas?: { nome: string } | null;
   parceiros_comerciais?: { razao_social: string | null } | null;
 };
