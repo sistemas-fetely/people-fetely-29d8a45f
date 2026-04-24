@@ -140,6 +140,44 @@ export function AdminFinanceiroSidebar() {
 
         <div className="mx-4 border-t border-sidebar-border/40" />
         <SidebarGroup>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <NavLink
+                    to="/tarefas"
+                    end
+                    className={cn(
+                      "flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm transition-all duration-200",
+                      location.pathname === "/tarefas"
+                        ? "bg-admin/20 text-admin font-medium border-l-[3px] border-admin shadow-sm"
+                        : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                    )}
+                  >
+                    <ClipboardList className="h-[18px] w-[18px] shrink-0" />
+                    {!collapsed && <span>Minhas Tarefas</span>}
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              {roles.some((r) => ["gestor_direto", "gestor_rh", "admin_rh", "super_admin"].includes(r)) && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <NavLink
+                      to="/tarefas/time"
+                      className="flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-all duration-200"
+                    >
+                      <UsersRound className="h-[18px] w-[18px] shrink-0" />
+                      {!collapsed && <span>Tarefas do Time</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <div className="mx-4 border-t border-sidebar-border/40" />
+        <SidebarGroup>
           {!collapsed && (
             <SidebarGroupLabel className="text-sidebar-muted text-[10px] uppercase tracking-widest font-semibold mb-1 px-4">
               Sistemas Fetely
