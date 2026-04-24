@@ -204,7 +204,7 @@ export default function FluxoCaixa() {
                         <TableHead>Data</TableHead>
                         <TableHead>Tipo</TableHead>
                         <TableHead>Descrição</TableHead>
-                        <TableHead>Fornecedor/Cliente</TableHead>
+                        <TableHead>Parceiro</TableHead>
                         <TableHead className="text-right">Valor</TableHead>
                         <TableHead>Status</TableHead>
                       </TableRow>

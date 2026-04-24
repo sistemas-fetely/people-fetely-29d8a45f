@@ -18,6 +18,12 @@ import { Link } from "react-router-dom";
 import { ArrowDownToLine, Search, Upload } from "lucide-react";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
 
+// KPI CANDIDATO: Prazo médio de recebimento (dias entre emissão e recebimento)
+// KPI CANDIDATO: % de contas recebidas em atraso
+// KPI CANDIDATO: Concentração de clientes (top 3 = X% do total)
+// KPI CANDIDATO: Ticket médio por cliente
+// KPI CANDIDATO: Inadimplência (% atrasado / a receber)
+
 type Conta = {
   id: string;
   tipo: string;
@@ -27,8 +33,10 @@ type Conta = {
   data_pagamento: string | null;
   status: string;
   fornecedor_cliente: string | null;
+  parceiro_id: string | null;
   conta_id: string | null;
   plano_contas?: { nome: string } | null;
+  parceiros_comerciais?: { razao_social: string | null } | null;
 };
 
 const STATUS_STYLES: Record<string, string> = {
@@ -52,7 +60,7 @@ export default function ContasReceber() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("contas_pagar_receber")
-        .select("*, plano_contas:conta_id(nome)")
+        .select("*, plano_contas:conta_id(nome), parceiros_comerciais:parceiro_id(razao_social)")
         .eq("tipo", "receber")
         .order("data_vencimento", { ascending: true });
       if (error) throw error;
@@ -68,7 +76,8 @@ export default function ContasReceber() {
       list = list.filter(
         (c) =>
           c.descricao?.toLowerCase().includes(t) ||
-          c.fornecedor_cliente?.toLowerCase().includes(t)
+          c.fornecedor_cliente?.toLowerCase().includes(t) ||
+          c.parceiros_comerciais?.razao_social?.toLowerCase().includes(t)
       );
     }
     if (dataDe) list = list.filter((c) => (c.data_vencimento || "") >= dataDe);
@@ -229,7 +238,7 @@ export default function ContasReceber() {
                       <TableRow key={c.id}>
                         <TableCell className="whitespace-nowrap">{formatDateBR(c.data_vencimento)}</TableCell>
                         <TableCell className="max-w-xs truncate" title={c.descricao}>{c.descricao}</TableCell>
-                        <TableCell>{c.fornecedor_cliente || "—"}</TableCell>
+                        <TableCell>{c.parceiros_comerciais?.razao_social || c.fornecedor_cliente || "—"}</TableCell>
                         <TableCell className="text-muted-foreground text-xs">
                           {c.plano_contas?.nome || "—"}
                         </TableCell>

@@ -17,6 +17,13 @@ import {
 import { Link } from "react-router-dom";
 import { ArrowUpFromLine, Search, Upload } from "lucide-react";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
+import ContaPagarDetalheDrawer from "@/components/financeiro/ContaPagarDetalheDrawer";
+
+// KPI CANDIDATO: Prazo médio de pagamento (dias entre emissão e pagamento)
+// KPI CANDIDATO: % de contas pagas em atraso
+// KPI CANDIDATO: Concentração de parceiros (top 3 = X% do total)
+// KPI CANDIDATO: Ticket médio por parceiro
+// KPI CANDIDATO: Evolução mensal do volume de contas a pagar
 
 type Conta = {
   id: string;
@@ -27,13 +34,18 @@ type Conta = {
   data_pagamento: string | null;
   status: string;
   fornecedor_cliente: string | null;
+  parceiro_id: string | null;
   conta_id: string | null;
   plano_contas?: { nome: string } | null;
+  parceiros_comerciais?: { razao_social: string | null } | null;
 };
 
 const STATUS_STYLES: Record<string, string> = {
+  rascunho: "bg-muted text-muted-foreground",
   aberto: "bg-blue-100 text-blue-800 hover:bg-blue-100",
   atrasado: "bg-red-100 text-red-800 hover:bg-red-100",
+  aprovado: "bg-purple-100 text-purple-800 hover:bg-purple-100",
+  agendado: "bg-amber-100 text-amber-800 hover:bg-amber-100",
   pago: "bg-green-100 text-green-800 hover:bg-green-100",
   cancelado: "bg-gray-100 text-gray-700 hover:bg-gray-100",
 };
@@ -46,13 +58,14 @@ export default function ContasPagar() {
   const [dataDe, setDataDe] = useState("");
   const [dataAte, setDataAte] = useState("");
   const [page, setPage] = useState(1);
+  const [contaIdSelecionada, setContaIdSelecionada] = useState<string | null>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ["contas-pagar"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("contas_pagar_receber")
-        .select("*, plano_contas:conta_id(nome)")
+        .select("*, plano_contas:conta_id(nome), parceiros_comerciais:parceiro_id(razao_social)")
         .eq("tipo", "pagar")
         .order("data_vencimento", { ascending: true });
       if (error) throw error;
@@ -68,7 +81,8 @@ export default function ContasPagar() {
       list = list.filter(
         (c) =>
           c.descricao?.toLowerCase().includes(t) ||
-          c.fornecedor_cliente?.toLowerCase().includes(t)
+          c.fornecedor_cliente?.toLowerCase().includes(t) ||
+          c.parceiros_comerciais?.razao_social?.toLowerCase().includes(t)
       );
     }
     if (dataDe) list = list.filter((c) => (c.data_vencimento || "") >= dataDe);
@@ -101,7 +115,7 @@ export default function ContasPagar() {
           Contas a Pagar
         </h1>
         <p className="text-muted-foreground text-sm mt-1">
-          Vencimentos a fornecedores e parceiros — abertos, pagos e atrasados.
+          Vencimentos a parceiros — abertos, pagos e atrasados.
         </p>
       </div>
 
@@ -138,7 +152,7 @@ export default function ContasPagar() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Buscar descrição ou fornecedor..."
+                placeholder="Buscar descrição ou parceiro..."
                 value={busca}
                 onChange={(e) => {
                   setBusca(e.target.value);
@@ -166,7 +180,7 @@ export default function ContasPagar() {
               className="w-full lg:w-44"
             />
             <div className="flex flex-wrap gap-1">
-              {(["todos", "aberto", "atrasado", "pago", "cancelado"] as const).map((s) => (
+              {(["todos", "rascunho", "aberto", "atrasado", "pago", "cancelado"] as const).map((s) => (
                 <Button
                   key={s}
                   size="sm"
@@ -197,7 +211,7 @@ export default function ContasPagar() {
               </div>
               <p className="text-lg font-semibold">Sem contas a pagar importadas</p>
               <p className="text-sm text-muted-foreground max-w-md">
-                Sincronize com o Bling para importar contas a pagar.
+                Sincronize com o Bling ou importe NFs (Qive, XML, PDF) para começar.
               </p>
               <Button asChild className="bg-admin hover:bg-admin-accent text-admin-foreground">
                 <Link to="/administrativo/importar">
@@ -218,31 +232,62 @@ export default function ContasPagar() {
                     <TableRow>
                       <TableHead>Vencimento</TableHead>
                       <TableHead>Descrição</TableHead>
-                      <TableHead>Fornecedor</TableHead>
+                      <TableHead>Parceiro</TableHead>
                       <TableHead>Categoria</TableHead>
                       <TableHead className="text-right">Valor</TableHead>
                       <TableHead>Status</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {pageData.map((c) => (
-                      <TableRow key={c.id}>
-                        <TableCell className="whitespace-nowrap">{formatDateBR(c.data_vencimento)}</TableCell>
-                        <TableCell className="max-w-xs truncate" title={c.descricao}>{c.descricao}</TableCell>
-                        <TableCell>{c.fornecedor_cliente || "—"}</TableCell>
-                        <TableCell className="text-muted-foreground text-xs">
-                          {c.plano_contas?.nome || "—"}
-                        </TableCell>
-                        <TableCell className="text-right font-mono whitespace-nowrap">
-                          {formatBRL(c.valor)}
-                        </TableCell>
-                        <TableCell>
-                          <Badge className={STATUS_STYLES[c.status] || "bg-muted"}>
-                            {c.status}
-                          </Badge>
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                    {pageData.map((c) => {
+                      const pagoComAtraso =
+                        c.status === "pago" &&
+                        c.data_pagamento &&
+                        c.data_vencimento &&
+                        c.data_pagamento > c.data_vencimento;
+                      return (
+                        <TableRow
+                          key={c.id}
+                          className="cursor-pointer hover:bg-muted/50"
+                          onClick={() => setContaIdSelecionada(c.id)}
+                        >
+                          <TableCell className="whitespace-nowrap">{formatDateBR(c.data_vencimento)}</TableCell>
+                          <TableCell className="max-w-xs truncate" title={c.descricao}>{c.descricao}</TableCell>
+                          <TableCell>{c.parceiros_comerciais?.razao_social || c.fornecedor_cliente || "—"}</TableCell>
+                          <TableCell className="text-muted-foreground text-xs">
+                            {c.plano_contas?.nome || "—"}
+                          </TableCell>
+                          <TableCell className="text-right font-mono whitespace-nowrap">
+                            {formatBRL(c.valor)}
+                          </TableCell>
+                          <TableCell>
+                            {pagoComAtraso ? (
+                              <div className="flex flex-col gap-0.5">
+                                <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100 w-fit">
+                                  Pago c/ atraso
+                                </Badge>
+                                <span className="text-[10px] text-muted-foreground">
+                                  {formatDateBR(c.data_pagamento)}
+                                </span>
+                              </div>
+                            ) : c.status === "pago" ? (
+                              <div className="flex flex-col gap-0.5">
+                                <Badge className={STATUS_STYLES.pago + " w-fit"}>Pago</Badge>
+                                {c.data_pagamento && (
+                                  <span className="text-[10px] text-muted-foreground">
+                                    {formatDateBR(c.data_pagamento)}
+                                  </span>
+                                )}
+                              </div>
+                            ) : (
+                              <Badge className={STATUS_STYLES[c.status] || "bg-muted"}>
+                                {c.status}
+                              </Badge>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
               </div>
@@ -268,6 +313,11 @@ export default function ContasPagar() {
           )}
         </CardContent>
       </Card>
+
+      <ContaPagarDetalheDrawer
+        contaId={contaIdSelecionada}
+        onClose={() => setContaIdSelecionada(null)}
+      />
     </div>
   );
 }
