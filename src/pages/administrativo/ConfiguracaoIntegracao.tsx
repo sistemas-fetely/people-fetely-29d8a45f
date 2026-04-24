@@ -1,5 +1,4 @@
-import { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,20 +14,16 @@ import { toast } from "sonner";
 import { formatDistanceToNow, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
-const CALLBACK_URL = "https://people-fetely.lovable.app/administrativo/configuracao-integracao";
+const CALLBACK_URL = "https://people-fetely.lovable.app/administrativo/bling-callback";
 
 export default function ConfiguracaoIntegracao() {
   const qc = useQueryClient();
-  const [searchParams, setSearchParams] = useSearchParams();
   const [showSecret, setShowSecret] = useState(false);
   const [showAccess, setShowAccess] = useState(false);
   const [showRefresh, setShowRefresh] = useState(false);
   const [saving, setSaving] = useState(false);
   const [syncing, setSyncing] = useState<string | null>(null);
   const [syncResult, setSyncResult] = useState<any>(null);
-  const [showManualAuth, setShowManualAuth] = useState(false);
-  const [manualCode, setManualCode] = useState("");
-  const [processingCode, setProcessingCode] = useState(false);
 
   const [form, setForm] = useState({
     client_id: "",
@@ -127,89 +122,10 @@ export default function ConfiguracaoIntegracao() {
       url.searchParams.set("response_type", "code");
       url.searchParams.set("client_id", form.client_id);
       url.searchParams.set("redirect_uri", CALLBACK_URL);
-      url.searchParams.set("state", "manual");
-      navigator.clipboard.writeText(url.toString()).catch(() => {});
-      toast.info(
-        "Link copiado! Cole em uma nova aba, autorize no Bling, e copie o código da URL de retorno.",
-      );
-      setShowManualAuth(true);
+      url.searchParams.set("state", "oauth");
+      window.open(url.toString(), "_blank");
     });
   }
-
-  async function processarCodeManual() {
-    setProcessingCode(true);
-    try {
-      const code = manualCode.trim();
-      if (!code) throw new Error("Cole o código de autorização");
-
-      // Chama Edge Function (servidor → Bling, sem CORS)
-      const { data, error } = await supabase.functions.invoke("sync-bling-financeiro", {
-        body: {
-          tipo: "token_exchange",
-          code,
-          redirect_uri: CALLBACK_URL,
-        },
-      });
-
-      if (error) throw new Error(error.message || "Erro ao conectar com servidor");
-      if (data?.sucesso === false) throw new Error(data.erro || "Erro desconhecido");
-
-      toast.success(data?.mensagem || "Bling conectado com sucesso!");
-      setShowManualAuth(false);
-      setManualCode("");
-      qc.invalidateQueries({ queryKey: ["integracao-bling"] });
-    } catch (e: any) {
-      toast.error("Erro: " + (e?.message || String(e)));
-    } finally {
-      setProcessingCode(false);
-    }
-  }
-
-  // Processar retorno do OAuth Bling (?code=...&state=...)
-  useEffect(() => {
-    const code = searchParams.get("code");
-    const state = searchParams.get("state");
-    const erroParam = searchParams.get("error");
-
-    if (!code && !erroParam) return;
-
-    // Limpar params imediatamente para evitar reprocessamento
-    setSearchParams({}, { replace: true });
-
-    (async () => {
-      try {
-        if (erroParam) throw new Error(`Bling negou: ${erroParam}`);
-        if (!code) throw new Error("Code não recebido");
-
-        const expectedState = sessionStorage.getItem("bling_oauth_state");
-        if (state && expectedState && state !== expectedState) {
-          throw new Error("State inválido (possível ataque CSRF)");
-        }
-        sessionStorage.removeItem("bling_oauth_state");
-
-        // Chama Edge Function para trocar code por tokens (sem CORS)
-        const { data: tokenData, error: tokenError } = await supabase.functions.invoke(
-          "sync-bling-financeiro",
-          {
-            body: {
-              tipo: "token_exchange",
-              code,
-              redirect_uri: CALLBACK_URL,
-            },
-          },
-        );
-
-        if (tokenError) throw new Error(tokenError.message || "Erro ao trocar tokens");
-        if (tokenData?.sucesso === false) throw new Error(tokenData.erro || "Erro desconhecido");
-
-        toast.success(tokenData?.mensagem || "Bling conectado com sucesso!");
-        qc.invalidateQueries({ queryKey: ["integracao-bling"] });
-      } catch (e: any) {
-        toast.error("Falha na autorização: " + (e?.message || String(e)));
-      }
-    })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const statusBadge = () => {
     if (!config?.ativo) return <Badge variant="outline">Desconectado</Badge>;
@@ -347,44 +263,6 @@ export default function ConfiguracaoIntegracao() {
             </Button>
           </div>
 
-          {showManualAuth && (
-            <div className="mt-2 p-4 rounded-lg border border-amber-300 bg-amber-50/60 dark:bg-amber-950/20 dark:border-amber-900 space-y-3">
-              <h4 className="text-sm font-semibold">Autorização manual</h4>
-              <ol className="text-xs text-muted-foreground space-y-1 list-decimal list-inside">
-                <li>O link de autorização foi copiado. Cole em uma nova aba do navegador.</li>
-                <li>Autorize o aplicativo no Bling.</li>
-                <li>
-                  O Bling vai redirecionar para uma página que pode dar erro —{" "}
-                  <strong>isso é normal</strong>.
-                </li>
-                <li>
-                  Copie o valor de <code>code=</code> da barra de endereço (texto entre{" "}
-                  <code>code=</code> e <code>&amp;</code>).
-                </li>
-                <li>Cole abaixo e clique "Conectar".</li>
-              </ol>
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Cole o code aqui (ex: abc123def456...)"
-                  value={manualCode}
-                  onChange={(e) => setManualCode(e.target.value)}
-                  className="flex-1 text-xs"
-                />
-                <Button
-                  size="sm"
-                  onClick={processarCodeManual}
-                  disabled={!manualCode.trim() || processingCode}
-                  className="bg-admin hover:bg-admin/90 text-admin-foreground"
-                >
-                  {processingCode ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    "Conectar"
-                  )}
-                </Button>
-              </div>
-            </div>
-          )}
         </CardContent>
       </Card>
 
