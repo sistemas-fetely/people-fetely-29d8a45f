@@ -1,5 +1,4 @@
-import { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,20 +14,16 @@ import { toast } from "sonner";
 import { formatDistanceToNow, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
-const CALLBACK_URL = "https://people-fetely.lovable.app/administrativo/configuracao-integracao";
+const CALLBACK_URL = "https://people-fetely.lovable.app/administrativo/bling-callback";
 
 export default function ConfiguracaoIntegracao() {
   const qc = useQueryClient();
-  const [searchParams, setSearchParams] = useSearchParams();
   const [showSecret, setShowSecret] = useState(false);
   const [showAccess, setShowAccess] = useState(false);
   const [showRefresh, setShowRefresh] = useState(false);
   const [saving, setSaving] = useState(false);
   const [syncing, setSyncing] = useState<string | null>(null);
   const [syncResult, setSyncResult] = useState<any>(null);
-  const [showManualAuth, setShowManualAuth] = useState(false);
-  const [manualCode, setManualCode] = useState("");
-  const [processingCode, setProcessingCode] = useState(false);
 
   const [form, setForm] = useState({
     client_id: "",

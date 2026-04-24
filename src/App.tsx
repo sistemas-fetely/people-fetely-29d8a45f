@@ -89,6 +89,7 @@ import AdminImoveis from "@/pages/administrativo/Imoveis";
 import AdminSeguros from "@/pages/administrativo/Seguros";
 import AdminGED from "@/pages/administrativo/GED";
 import ConfiguracaoIntegracao from "@/pages/administrativo/ConfiguracaoIntegracao";
+import BlingCallback from "@/pages/administrativo/BlingCallback";
 
 const queryClient = new QueryClient();
 
@@ -372,6 +373,9 @@ const App = () => (
                 </ProtectedRoute>
               } />
             </Route>
+
+            {/* Bling OAuth callback — rota independente, fora do layout */}
+            <Route path="/administrativo/bling-callback" element={<BlingCallback />} />
 
             {/* ═══════════════════════════════════════════════
                 Pilar Administrativo (Financeiro, Contratos, Imóveis, Seguros, GED)
