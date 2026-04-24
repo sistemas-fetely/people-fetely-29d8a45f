@@ -524,7 +524,9 @@ export default function Parametros() {
 
         {Object.entries(MODULO_MAP).map(([key]) => (
           <TabsContent key={key} value={key}>
-            {isLoading ? (
+            {key === "financeiro" ? (
+              <ParametrosFinanceiroTab />
+            ) : isLoading ? (
               <div className="flex justify-center py-12">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
               </div>
