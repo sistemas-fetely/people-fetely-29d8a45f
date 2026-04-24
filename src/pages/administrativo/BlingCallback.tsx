@@ -14,6 +14,7 @@ export default function BlingCallback() {
   const ran = useRef(false);
 
   useEffect(() => {
+    if (loading || !user) return;
     if (ran.current) return;
     ran.current = true;
 
@@ -88,7 +89,20 @@ export default function BlingCallback() {
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [loading, user]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-6 w-6 animate-spin" />
+        <span className="ml-2 text-muted-foreground">Finalizando autorização...</span>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
 
   return (
     <div className="flex flex-col items-center justify-center py-20 gap-3">
