@@ -44,6 +44,7 @@ interface PessoaUnificada {
   user_id: string | null;
   email_corporativo: string | null;
   telefone_corporativo: string | null;
+  telefone_exibicao: string | null;
 }
 
 const statusMap: Record<string, string> = {
@@ -91,12 +92,12 @@ export default function Pessoas() {
     const [{ data: clts }, { data: pjs }] = await Promise.all([
       supabase.from("colaboradores_clt").select(
         "id, nome_completo, cargo, departamento, status, data_admissao, " +
-        "salario_base, foto_url, user_id, email_corporativo, telefone_corporativo"
+        "salario_base, foto_url, user_id, email_corporativo, telefone_corporativo, telefone"
       ).order("nome_completo"),
       supabase.from("contratos_pj").select(
         "id, contato_nome, razao_social, nome_fantasia, tipo_servico, departamento, " +
         "status, data_inicio, valor_mensal, foto_url, user_id, " +
-        "email_corporativo, contato_email, email_pessoal, telefone_corporativo"
+        "email_corporativo, contato_email, email_pessoal, telefone_corporativo, telefone, contato_telefone"
       ).order("contato_nome"),
     ]);
 
@@ -115,6 +116,7 @@ export default function Pessoas() {
         user_id: c.user_id || null,
         email_corporativo: c.email_corporativo || null,
         telefone_corporativo: c.telefone_corporativo || null,
+        telefone_exibicao: c.telefone_corporativo || c.telefone || null,
       })),
       ...(pjs || []).map((p: any) => ({
         id: p.id,
@@ -130,6 +132,7 @@ export default function Pessoas() {
         user_id: p.user_id || null,
         email_corporativo: p.email_corporativo || null,
         telefone_corporativo: p.telefone_corporativo || null,
+        telefone_exibicao: p.telefone_corporativo || p.telefone || p.contato_telefone || null,
       })),
     ].sort((a, b) => a.nome.localeCompare(b.nome));
 
@@ -410,19 +413,19 @@ export default function Pessoas() {
                                 <Shield className="h-3.5 w-3.5" />
                               </Button>
                             )}
-                            {p.telefone_corporativo && (
+                            {p.telefone_exibicao && (
                               <Button
                                 variant="ghost"
                                 size="icon"
                                 className="h-7 w-7 text-muted-foreground hover:text-primary"
-                                title={`Telefone: ${p.telefone_corporativo}`}
+                                title={`Telefone: ${p.telefone_exibicao}`}
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   if (/Mobi|Android|iPhone/i.test(navigator.userAgent)) {
-                                    window.location.href = `tel:${p.telefone_corporativo}`;
+                                    window.location.href = `tel:${p.telefone_exibicao}`;
                                   } else {
-                                    navigator.clipboard.writeText(p.telefone_corporativo!);
-                                    toast.success(`Telefone copiado: ${p.telefone_corporativo}`);
+                                    navigator.clipboard.writeText(p.telefone_exibicao!);
+                                    toast.success(`Telefone copiado: ${p.telefone_exibicao}`);
                                   }
                                 }}
                               >
