@@ -107,11 +107,13 @@ function FormDialog({
       if (config.hasOrdem) payload.ordem = ordem;
 
       if (registro) {
-        const { error } = await supabase.from(config.value).update(payload).eq("id", registro.id);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { error } = await (supabase.from(config.value) as any).update(payload).eq("id", registro.id);
         if (error) throw error;
         toast.success("Atualizado!");
       } else {
-        const { error } = await supabase.from(config.value).insert(payload as never);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { error } = await (supabase.from(config.value) as any).insert(payload);
         if (error) throw error;
         toast.success("Adicionado!");
       }
