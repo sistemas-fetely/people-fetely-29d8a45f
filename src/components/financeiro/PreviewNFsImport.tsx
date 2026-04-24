@@ -11,17 +11,18 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { CategoriaCombobox } from "@/components/financeiro/CategoriaCombobox";
+import { CategoriaCombobox, type CategoriaOption } from "@/components/financeiro/CategoriaCombobox";
 import type { NFParsed } from "@/lib/financeiro/types";
 
 interface Props {
   nfs: NFParsed[];
+  categorias: CategoriaOption[];
   onChange: (nfs: NFParsed[]) => void;
   onImport: () => void | Promise<void>;
   importing: boolean;
 }
 
-export function PreviewNFsImport({ nfs, onChange, onImport, importing }: Props) {
+export function PreviewNFsImport({ nfs, categorias, onChange, onImport, importing }: Props) {
   const [showOnlyMissing, setShowOnlyMissing] = useState(false);
 
   const visibleIdx = useMemo(() => {
@@ -54,11 +55,17 @@ export function PreviewNFsImport({ nfs, onChange, onImport, importing }: Props) 
     );
   }
 
-  function setCategoria(idx: number, categoriaId: string | null, label: string | null) {
+  function setCategoria(idx: number, categoriaId: string | null) {
+    const opt = categoriaId ? categorias.find((c) => c.id === categoriaId) || null : null;
     onChange(
       nfs.map((n, i) =>
         i === idx
-          ? { ...n, _categoria_id: categoriaId, _categoria_nome: label }
+          ? {
+              ...n,
+              _categoria_id: categoriaId,
+              _categoria_nome: opt ? `${opt.codigo} — ${opt.nome}` : null,
+              _regra_origem: null, // foi manual
+            }
           : n
       )
     );
@@ -71,12 +78,12 @@ export function PreviewNFsImport({ nfs, onChange, onImport, importing }: Props) 
       <div className="flex flex-wrap items-center gap-3 text-sm">
         <Badge variant="outline">{nfs.length} NFs</Badge>
         {totals.dup > 0 && (
-          <Badge variant="secondary" className="bg-amber-50 text-amber-700 border-amber-200">
+          <Badge variant="secondary">
             {totals.dup} duplicadas (já existem)
           </Badge>
         )}
         {totals.semCat > 0 && (
-          <Badge variant="secondary" className="bg-amber-50 text-amber-700 border-amber-200 gap-1">
+          <Badge variant="outline" className="gap-1 border-warning text-warning">
             <AlertTriangle className="h-3 w-3" />
             {totals.semCat} sem categoria
           </Badge>
@@ -116,7 +123,7 @@ export function PreviewNFsImport({ nfs, onChange, onImport, importing }: Props) 
                   nf._duplicata
                     ? "opacity-50"
                     : !nf._categoria_id
-                    ? "bg-amber-50/40"
+                    ? "bg-muted/40"
                     : ""
                 }
               >
@@ -152,14 +159,9 @@ export function PreviewNFsImport({ nfs, onChange, onImport, importing }: Props) 
                   <div className="flex items-center gap-1">
                     <div className="flex-1 min-w-0">
                       <CategoriaCombobox
+                        options={categorias}
                         value={nf._categoria_id || null}
-                        onChange={(id, opt) =>
-                          setCategoria(
-                            i,
-                            id,
-                            opt ? `${opt.codigo} — ${opt.nome}` : null
-                          )
-                        }
+                        onChange={(id) => setCategoria(i, id)}
                         placeholder="Definir conta"
                       />
                     </div>
@@ -178,17 +180,11 @@ export function PreviewNFsImport({ nfs, onChange, onImport, importing }: Props) 
                   {nf._duplicata ? (
                     <Badge variant="secondary">Duplicada</Badge>
                   ) : !nf._categoria_id ? (
-                    <Badge
-                      variant="outline"
-                      className="text-amber-700 border-amber-300"
-                    >
+                    <Badge variant="outline" className="border-warning text-warning">
                       Sem categoria
                     </Badge>
                   ) : (
-                    <Badge
-                      variant="outline"
-                      className="text-emerald-700 border-emerald-300"
-                    >
+                    <Badge variant="outline" className="border-success text-success">
                       Pronta
                     </Badge>
                   )}
