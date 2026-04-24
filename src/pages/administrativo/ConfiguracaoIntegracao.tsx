@@ -26,6 +26,9 @@ export default function ConfiguracaoIntegracao() {
   const [saving, setSaving] = useState(false);
   const [syncing, setSyncing] = useState<string | null>(null);
   const [syncResult, setSyncResult] = useState<any>(null);
+  const [showManualAuth, setShowManualAuth] = useState(false);
+  const [manualCode, setManualCode] = useState("");
+  const [processingCode, setProcessingCode] = useState(false);
 
   const [form, setForm] = useState({
     client_id: "",
@@ -120,15 +123,87 @@ export default function ConfiguracaoIntegracao() {
       return;
     }
     salvar().then(() => {
-      const state = crypto.randomUUID();
-      sessionStorage.setItem("bling_oauth_state", state);
       const url = new URL("https://www.bling.com.br/Api/v3/oauth/authorize");
       url.searchParams.set("response_type", "code");
       url.searchParams.set("client_id", form.client_id);
       url.searchParams.set("redirect_uri", CALLBACK_URL);
-      url.searchParams.set("state", state);
-      window.location.href = url.toString();
+      url.searchParams.set("state", "manual");
+      navigator.clipboard.writeText(url.toString()).catch(() => {});
+      toast.info(
+        "Link copiado! Cole em uma nova aba, autorize no Bling, e copie o código da URL de retorno.",
+      );
+      setShowManualAuth(true);
     });
+  }
+
+  async function processarCodeManual() {
+    setProcessingCode(true);
+    try {
+      const code = manualCode.trim();
+      if (!code) throw new Error("Cole o código de autorização");
+
+      const { data: cfg, error: cfgErr } = await supabase
+        .from("integracoes_config")
+        .select("client_id, client_secret")
+        .eq("sistema", "bling")
+        .maybeSingle();
+
+      if (cfgErr) throw cfgErr;
+      if (!cfg?.client_id || !cfg?.client_secret) {
+        throw new Error("Credenciais não cadastradas");
+      }
+
+      const res = await fetch("https://www.bling.com.br/Api/v3/oauth/token", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          Accept: "application/json",
+          Authorization: "Basic " + btoa(`${cfg.client_id}:${cfg.client_secret}`),
+        },
+        body: new URLSearchParams({
+          grant_type: "authorization_code",
+          code,
+          redirect_uri: CALLBACK_URL,
+        }),
+      });
+
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`Bling rejeitou: ${res.status} — ${text}`);
+      }
+
+      const tokens = await res.json();
+
+      const { error: upErr } = await supabase
+        .from("integracoes_config")
+        .update({
+          access_token: tokens.access_token,
+          refresh_token: tokens.refresh_token,
+          token_expires_at: new Date(
+            Date.now() + (tokens.expires_in || 3600) * 1000,
+          ).toISOString(),
+          ativo: true,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("sistema", "bling");
+
+      if (upErr) throw upErr;
+
+      toast.success("Bling conectado com sucesso!");
+      setShowManualAuth(false);
+      setManualCode("");
+      setForm((f) => ({
+        ...f,
+        access_token: tokens.access_token,
+        refresh_token: tokens.refresh_token,
+        ativo: true,
+      }));
+      qc.invalidateQueries({ queryKey: ["integracao-bling"] });
+    } catch (e: any) {
+      toast.error("Erro: " + (e?.message || String(e)));
+    } finally {
+      setProcessingCode(false);
+    }
   }
 
   // Processar retorno do OAuth Bling (?code=...&state=...)
@@ -344,6 +419,45 @@ export default function ConfiguracaoIntegracao() {
               Testar conexão
             </Button>
           </div>
+
+          {showManualAuth && (
+            <div className="mt-2 p-4 rounded-lg border border-amber-300 bg-amber-50/60 dark:bg-amber-950/20 dark:border-amber-900 space-y-3">
+              <h4 className="text-sm font-semibold">Autorização manual</h4>
+              <ol className="text-xs text-muted-foreground space-y-1 list-decimal list-inside">
+                <li>O link de autorização foi copiado. Cole em uma nova aba do navegador.</li>
+                <li>Autorize o aplicativo no Bling.</li>
+                <li>
+                  O Bling vai redirecionar para uma página que pode dar erro —{" "}
+                  <strong>isso é normal</strong>.
+                </li>
+                <li>
+                  Copie o valor de <code>code=</code> da barra de endereço (texto entre{" "}
+                  <code>code=</code> e <code>&amp;</code>).
+                </li>
+                <li>Cole abaixo e clique "Conectar".</li>
+              </ol>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Cole o code aqui (ex: abc123def456...)"
+                  value={manualCode}
+                  onChange={(e) => setManualCode(e.target.value)}
+                  className="flex-1 text-xs"
+                />
+                <Button
+                  size="sm"
+                  onClick={processarCodeManual}
+                  disabled={!manualCode.trim() || processingCode}
+                  className="bg-admin hover:bg-admin/90 text-admin-foreground"
+                >
+                  {processingCode ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    "Conectar"
+                  )}
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
