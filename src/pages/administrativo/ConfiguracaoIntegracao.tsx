@@ -380,7 +380,7 @@ export default function ConfiguracaoIntegracao() {
             <Button
               size="lg"
               className="bg-admin hover:bg-admin/90 text-admin-foreground"
-              onClick={() => sincronizar("full")}
+              onClick={handleSyncFull}
               disabled={!!syncing || !form.access_token}
             >
               {syncing === "full" ? (
