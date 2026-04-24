@@ -93,7 +93,7 @@ export default function ConfiguracaoIntegracao() {
     qc.invalidateQueries({ queryKey: ["integracao-bling"] });
   }
 
-  async function sincronizar(tipo: "full" | "categorias" | "contas_pagar" | "contas_receber") {
+  async function sincronizar(tipo: "categorias" | "contas_pagar" | "contas_receber") {
     setSyncing(tipo);
     setSyncResult(null);
     const { data, error } = await supabase.functions.invoke("sync-bling-financeiro", {
@@ -112,6 +112,55 @@ export default function ConfiguracaoIntegracao() {
     toast.success(`Sync concluída: ${data?.criados || 0} novos, ${data?.atualizados || 0} atualizados`);
     qc.invalidateQueries({ queryKey: ["integracao-bling"] });
     qc.invalidateQueries({ queryKey: ["integracao-bling-logs"] });
+  }
+
+  async function handleSyncFull() {
+    setSyncing("full");
+    setSyncResult(null);
+    let totalCriados = 0;
+    let totalAtualizados = 0;
+    let totalErros = 0;
+    const detalhes: string[] = [];
+    const startTime = Date.now();
+
+    const etapas: Array<{ tipo: "categorias" | "contas_pagar" | "contas_receber"; label: string }> = [
+      { tipo: "categorias", label: "categorias" },
+      { tipo: "contas_pagar", label: "contas a pagar" },
+      { tipo: "contas_receber", label: "contas a receber" },
+    ];
+
+    try {
+      for (const etapa of etapas) {
+        toast.info(`Sincronizando ${etapa.label}...`);
+        const { data, error } = await supabase.functions.invoke("sync-bling-financeiro", {
+          body: { tipo: etapa.tipo },
+        });
+        if (error) throw new Error(error.message);
+        if (data?.sucesso === false) throw new Error(data.erro || "Erro desconhecido");
+        if (data) {
+          totalCriados += data.criados || 0;
+          totalAtualizados += data.atualizados || 0;
+          totalErros += data.erros || 0;
+          if (data.detalhes) detalhes.push(data.detalhes);
+        }
+        qc.invalidateQueries({ queryKey: ["integracao-bling-logs"] });
+      }
+
+      setSyncResult({
+        criados: totalCriados,
+        atualizados: totalAtualizados,
+        erros: totalErros,
+        detalhes: detalhes.join(" | "),
+        duracao_ms: Date.now() - startTime,
+      });
+      toast.success(`Sync completo! ${totalCriados} novos, ${totalAtualizados} atualizados`);
+    } catch (e: any) {
+      toast.error("Erro no sync: " + (e?.message || String(e)));
+    } finally {
+      setSyncing(null);
+      qc.invalidateQueries({ queryKey: ["integracao-bling"] });
+      qc.invalidateQueries({ queryKey: ["integracao-bling-logs"] });
+    }
   }
 
   async function processarCodeManual() {
@@ -331,7 +380,7 @@ export default function ConfiguracaoIntegracao() {
             <Button
               size="lg"
               className="bg-admin hover:bg-admin/90 text-admin-foreground"
-              onClick={() => sincronizar("full")}
+              onClick={handleSyncFull}
               disabled={!!syncing || !form.access_token}
             >
               {syncing === "full" ? (
