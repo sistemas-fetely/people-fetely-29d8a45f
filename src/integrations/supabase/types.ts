@@ -1414,6 +1414,7 @@ export type Database = {
           nf_xml_url: string | null
           observacao: string | null
           origem: string | null
+          parceiro_id: string | null
           parcela_atual: number | null
           parcela_grupo_id: string | null
           parcelas: number | null
@@ -1455,6 +1456,7 @@ export type Database = {
           nf_xml_url?: string | null
           observacao?: string | null
           origem?: string | null
+          parceiro_id?: string | null
           parcela_atual?: number | null
           parcela_grupo_id?: string | null
           parcelas?: number | null
@@ -1496,6 +1498,7 @@ export type Database = {
           nf_xml_url?: string | null
           observacao?: string | null
           origem?: string | null
+          parceiro_id?: string | null
           parcela_atual?: number | null
           parcela_grupo_id?: string | null
           parcelas?: number | null
@@ -1524,7 +1527,14 @@ export type Database = {
             foreignKeyName: "contas_pagar_receber_fornecedor_id_fkey"
             columns: ["fornecedor_id"]
             isOneToOne: false
-            referencedRelation: "fornecedores"
+            referencedRelation: "parceiros_comerciais"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contas_pagar_receber_parceiro_id_fkey"
+            columns: ["parceiro_id"]
+            isOneToOne: false
+            referencedRelation: "parceiros_comerciais"
             referencedColumns: ["id"]
           },
         ]
@@ -2948,89 +2958,6 @@ export type Database = {
         }
         Relationships: []
       }
-      fornecedores: {
-        Row: {
-          ativo: boolean | null
-          bairro: string | null
-          categoria_padrao_id: string | null
-          centro_custo_padrao: string | null
-          cep: string | null
-          cidade: string | null
-          cnpj: string | null
-          cpf: string | null
-          created_at: string | null
-          email: string | null
-          id: string
-          logradouro: string | null
-          nome_fantasia: string | null
-          numero: string | null
-          observacao: string | null
-          origem: string | null
-          razao_social: string
-          tags: string[] | null
-          telefone: string | null
-          tipo: string | null
-          uf: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          ativo?: boolean | null
-          bairro?: string | null
-          categoria_padrao_id?: string | null
-          centro_custo_padrao?: string | null
-          cep?: string | null
-          cidade?: string | null
-          cnpj?: string | null
-          cpf?: string | null
-          created_at?: string | null
-          email?: string | null
-          id?: string
-          logradouro?: string | null
-          nome_fantasia?: string | null
-          numero?: string | null
-          observacao?: string | null
-          origem?: string | null
-          razao_social: string
-          tags?: string[] | null
-          telefone?: string | null
-          tipo?: string | null
-          uf?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          ativo?: boolean | null
-          bairro?: string | null
-          categoria_padrao_id?: string | null
-          centro_custo_padrao?: string | null
-          cep?: string | null
-          cidade?: string | null
-          cnpj?: string | null
-          cpf?: string | null
-          created_at?: string | null
-          email?: string | null
-          id?: string
-          logradouro?: string | null
-          nome_fantasia?: string | null
-          numero?: string | null
-          observacao?: string | null
-          origem?: string | null
-          razao_social?: string
-          tags?: string[] | null
-          telefone?: string | null
-          tipo?: string | null
-          uf?: string | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "fornecedores_categoria_padrao_id_fkey"
-            columns: ["categoria_padrao_id"]
-            isOneToOne: false
-            referencedRelation: "plano_contas"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       grupos_acesso: {
         Row: {
           ativo: boolean
@@ -4056,6 +3983,98 @@ export type Database = {
           },
         ]
       }
+      parceiros_comerciais: {
+        Row: {
+          ativo: boolean | null
+          bairro: string | null
+          canal: string | null
+          categoria_padrao_id: string | null
+          centro_custo_padrao: string | null
+          cep: string | null
+          cidade: string | null
+          cnpj: string | null
+          cpf: string | null
+          created_at: string | null
+          email: string | null
+          id: string
+          logradouro: string | null
+          nome_fantasia: string | null
+          numero: string | null
+          observacao: string | null
+          origem: string | null
+          razao_social: string
+          segmento: string | null
+          tags: string[] | null
+          telefone: string | null
+          tipo: string | null
+          tipos: string[] | null
+          uf: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          bairro?: string | null
+          canal?: string | null
+          categoria_padrao_id?: string | null
+          centro_custo_padrao?: string | null
+          cep?: string | null
+          cidade?: string | null
+          cnpj?: string | null
+          cpf?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          logradouro?: string | null
+          nome_fantasia?: string | null
+          numero?: string | null
+          observacao?: string | null
+          origem?: string | null
+          razao_social: string
+          segmento?: string | null
+          tags?: string[] | null
+          telefone?: string | null
+          tipo?: string | null
+          tipos?: string[] | null
+          uf?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          ativo?: boolean | null
+          bairro?: string | null
+          canal?: string | null
+          categoria_padrao_id?: string | null
+          centro_custo_padrao?: string | null
+          cep?: string | null
+          cidade?: string | null
+          cnpj?: string | null
+          cpf?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          logradouro?: string | null
+          nome_fantasia?: string | null
+          numero?: string | null
+          observacao?: string | null
+          origem?: string | null
+          razao_social?: string
+          segmento?: string | null
+          tags?: string[] | null
+          telefone?: string | null
+          tipo?: string | null
+          tipos?: string[] | null
+          uf?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fornecedores_categoria_padrao_id_fkey"
+            columns: ["categoria_padrao_id"]
+            isOneToOne: false
+            referencedRelation: "plano_contas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       perfil_packs: {
         Row: {
           criado_em: string
@@ -5007,6 +5026,7 @@ export type Database = {
           fornecedor_id: string | null
           id: string
           ncm_prefixo: string | null
+          parceiro_id: string | null
           prioridade: number | null
           updated_at: string | null
         }
@@ -5021,6 +5041,7 @@ export type Database = {
           fornecedor_id?: string | null
           id?: string
           ncm_prefixo?: string | null
+          parceiro_id?: string | null
           prioridade?: number | null
           updated_at?: string | null
         }
@@ -5035,6 +5056,7 @@ export type Database = {
           fornecedor_id?: string | null
           id?: string
           ncm_prefixo?: string | null
+          parceiro_id?: string | null
           prioridade?: number | null
           updated_at?: string | null
         }
@@ -5050,7 +5072,14 @@ export type Database = {
             foreignKeyName: "regras_categorizacao_fornecedor_id_fkey"
             columns: ["fornecedor_id"]
             isOneToOne: false
-            referencedRelation: "fornecedores"
+            referencedRelation: "parceiros_comerciais"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "regras_categorizacao_parceiro_id_fkey"
+            columns: ["parceiro_id"]
+            isOneToOne: false
+            referencedRelation: "parceiros_comerciais"
             referencedColumns: ["id"]
           },
         ]
