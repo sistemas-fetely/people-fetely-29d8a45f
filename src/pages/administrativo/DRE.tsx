@@ -216,12 +216,14 @@ export default function DRE() {
               <Linha label="Receita Líquida" valor={dre.receitaLiquida} kind="subtotal" sinal="=" />
               <Linha label="Custos Diretos" valor={dre.custosDir} kind="header" sinal="-" />
               <Linha label="Lucro Bruto" valor={dre.lucroBruto} kind="subtotal" sinal="=" />
-              <Linha label="Despesas Operacionais" valor={dre.despesasInd} kind="header" sinal="-" />
+              <Linha label="Despesas Operacionais" valor={dre.despesasOp} kind="header" sinal="-" />
               {dre.despesasDet.map((d) => (
                 <Linha key={d.codigo} label={`${d.codigo} ${d.nome}`} valor={d.valor} kind="detalhe" sinal="-" indent={1} />
               ))}
               <Linha label="Resultado Operacional" valor={dre.resultadoOp} kind="subtotal" sinal="=" />
-              <Linha label="Resultado Financeiro" valor={dre.resultadoFin} kind="header" sinal="+/-" />
+              <Linha label="(+) Receitas Financeiras" valor={dre.recFinanceiras} kind="detalhe" sinal="+" indent={1} />
+              <Linha label="(-) Despesas Financeiras" valor={dre.despFinanceiras} kind="detalhe" sinal="-" indent={1} />
+              <Linha label="Resultado Financeiro" valor={dre.resultadoFin} kind="subtotal" sinal="=" />
               <Linha label="Resultado antes dos impostos" valor={dre.resultadoAntesImp} kind="subtotal" sinal="=" />
               <Linha label="Impostos" valor={dre.impostos} kind="header" sinal="-" />
               <Linha label="Resultado Líquido" valor={dre.resultadoLiq} kind="subtotal" sinal="=" highlightFinal />
