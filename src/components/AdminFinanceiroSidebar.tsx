@@ -3,7 +3,7 @@ import {
   TrendingUp, ArrowDownToLine, ArrowUpFromLine, Upload,
   FileSignature, Building2, ShieldCheck, FolderArchive,
   Users, Monitor, Network, Landmark, LogOut, ClipboardList,
-  UsersRound, Settings2,
+  UsersRound, Settings2, ShoppingCart, Package,
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { NavLink } from "@/components/NavLink";
