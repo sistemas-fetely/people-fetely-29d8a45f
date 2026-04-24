@@ -337,11 +337,11 @@ async function syncCategorias(supabase: any, token: string) {
           criados++;
         }
         await new Promise((r) => setTimeout(r, 100));
-      } catch {
+      } catch (_e) {
         erros++;
       }
     }
-  } catch {
+  } catch (_e) {
     erros++;
   }
 
@@ -435,14 +435,14 @@ async function syncContasPagarReceber(
             await supabase.from("contas_pagar_receber").insert(registro);
             criados++;
           }
-        } catch {
+        } catch (_e) {
           erros++;
         }
       }
 
       pagina++;
       await new Promise((r) => setTimeout(r, 350));
-    } catch {
+    } catch (_e) {
       erros++;
       temMais = false;
     }
