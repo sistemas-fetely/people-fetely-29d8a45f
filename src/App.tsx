@@ -75,6 +75,19 @@ import SistemaReportes from "@/pages/admin/SistemaReportes";
 import HistoricoImportacoesPDF from "@/pages/admin/HistoricoImportacoesPDF";
 import GestaoAVista from "@/pages/GestaoAVista";
 import DocumentacaoGeral from "@/pages/DocumentacaoGeral";
+import AdminFinanceiroLayout from "@/layouts/AdminFinanceiroLayout";
+import DashboardFinanceiro from "@/pages/administrativo/DashboardFinanceiro";
+import PlanoDeContas from "@/pages/administrativo/PlanoDeContas";
+import LancamentosAdmin from "@/pages/administrativo/Lancamentos";
+import DRE from "@/pages/administrativo/DRE";
+import FluxoCaixa from "@/pages/administrativo/FluxoCaixa";
+import ContasPagar from "@/pages/administrativo/ContasPagar";
+import ContasReceber from "@/pages/administrativo/ContasReceber";
+import ImportarDados from "@/pages/administrativo/ImportarDados";
+import AdminContratos from "@/pages/administrativo/Contratos";
+import AdminImoveis from "@/pages/administrativo/Imoveis";
+import AdminSeguros from "@/pages/administrativo/Seguros";
+import AdminGED from "@/pages/administrativo/GED";
 
 const queryClient = new QueryClient();
 
@@ -357,6 +370,25 @@ const App = () => (
                   <HistoricoImportacoesPDF />
                 </ProtectedRoute>
               } />
+            </Route>
+
+            {/* ═══════════════════════════════════════════════
+                Pilar Administrativo (Financeiro, Contratos, Imóveis, Seguros, GED)
+                Acesso restrito a super_admin (Fase 1)
+                ═══════════════════════════════════════════════ */}
+            <Route path="/administrativo" element={<AdminFinanceiroLayout />}>
+              <Route index element={<DashboardFinanceiro />} />
+              <Route path="plano-contas" element={<PlanoDeContas />} />
+              <Route path="lancamentos" element={<LancamentosAdmin />} />
+              <Route path="dre" element={<DRE />} />
+              <Route path="fluxo-caixa" element={<FluxoCaixa />} />
+              <Route path="contas-pagar" element={<ContasPagar />} />
+              <Route path="contas-receber" element={<ContasReceber />} />
+              <Route path="importar" element={<ImportarDados />} />
+              <Route path="contratos" element={<AdminContratos />} />
+              <Route path="imoveis" element={<AdminImoveis />} />
+              <Route path="seguros" element={<AdminSeguros />} />
+              <Route path="ged" element={<AdminGED />} />
             </Route>
 
             <Route path="*" element={<NotFound />} />
