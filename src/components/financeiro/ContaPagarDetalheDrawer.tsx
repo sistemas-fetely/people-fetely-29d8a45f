@@ -5,7 +5,8 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Check, FileText } from "lucide-react";
+import { Check, FileText, UserCheck } from "lucide-react";
+import { Link } from "react-router-dom";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
 import RegistrarPagamentoDialog from "./RegistrarPagamentoDialog";
 
