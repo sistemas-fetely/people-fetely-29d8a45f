@@ -36,6 +36,7 @@ const financeiroItems: MenuItem[] = [
   { title: "Fluxo de Caixa", url: "/administrativo/fluxo-caixa", icon: TrendingUp },
   { title: "Contas a Pagar", url: "/administrativo/contas-pagar", icon: ArrowUpFromLine },
   { title: "Contas a Receber", url: "/administrativo/contas-receber", icon: ArrowDownToLine },
+  { title: "Parceiros Comerciais", url: "/administrativo/parceiros", icon: Users },
   { title: "Importar Dados", url: "/administrativo/importar", icon: Upload },
   { title: "Configuração Integração", url: "/administrativo/configuracao-integracao", icon: Settings2 },
 ];
