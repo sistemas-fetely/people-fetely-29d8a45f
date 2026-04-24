@@ -26,6 +26,9 @@ export default function ConfiguracaoIntegracao() {
   const [saving, setSaving] = useState(false);
   const [syncing, setSyncing] = useState<string | null>(null);
   const [syncResult, setSyncResult] = useState<any>(null);
+  const [showManualAuth, setShowManualAuth] = useState(false);
+  const [manualCode, setManualCode] = useState("");
+  const [processingCode, setProcessingCode] = useState(false);
 
   const [form, setForm] = useState({
     client_id: "",
