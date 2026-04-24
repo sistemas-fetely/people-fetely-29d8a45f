@@ -91,6 +91,8 @@ import AdminSeguros from "@/pages/administrativo/Seguros";
 import AdminGED from "@/pages/administrativo/GED";
 import ConfiguracaoIntegracao from "@/pages/administrativo/ConfiguracaoIntegracao";
 import BlingCallback from "@/pages/administrativo/BlingCallback";
+import PedidosVenda from "@/pages/administrativo/PedidosVenda";
+import Produtos from "@/pages/administrativo/Produtos";
 
 const queryClient = new QueryClient();
 
@@ -391,6 +393,8 @@ const App = () => (
               <Route path="contas-pagar" element={<ContasPagar />} />
               <Route path="contas-receber" element={<ContasReceber />} />
               <Route path="parceiros" element={<Parceiros />} />
+              <Route path="pedidos" element={<PedidosVenda />} />
+              <Route path="produtos" element={<Produtos />} />
               <Route path="importar" element={<ImportarDados />} />
               <Route path="configuracao-integracao" element={<ConfiguracaoIntegracao />} />
               <Route path="contratos" element={<AdminContratos />} />

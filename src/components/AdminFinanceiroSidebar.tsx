@@ -3,7 +3,7 @@ import {
   TrendingUp, ArrowDownToLine, ArrowUpFromLine, Upload,
   FileSignature, Building2, ShieldCheck, FolderArchive,
   Users, Monitor, Network, Landmark, LogOut, ClipboardList,
-  UsersRound, Settings2,
+  UsersRound, Settings2, ShoppingCart, Package,
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { NavLink } from "@/components/NavLink";
@@ -39,6 +39,11 @@ const financeiroItems: MenuItem[] = [
   { title: "Parceiros Comerciais", url: "/administrativo/parceiros", icon: Users },
   { title: "Importar Dados", url: "/administrativo/importar", icon: Upload },
   { title: "Configuração Integração", url: "/administrativo/configuracao-integracao", icon: Settings2 },
+];
+
+const vendasBlingItems: MenuItem[] = [
+  { title: "Pedidos de Venda", url: "/administrativo/pedidos", icon: ShoppingCart },
+  { title: "Produtos", url: "/administrativo/produtos", icon: Package },
 ];
 
 const futurosItems: MenuItem[] = [
@@ -127,6 +132,16 @@ export function AdminFinanceiroSidebar() {
             </SidebarGroupLabel>
           )}
           <SidebarGroupContent>{renderItems(financeiroItems)}</SidebarGroupContent>
+        </SidebarGroup>
+
+        <div className="mx-4 border-t border-sidebar-border/40" />
+        <SidebarGroup>
+          {!collapsed && (
+            <SidebarGroupLabel className="text-sidebar-muted text-[10px] uppercase tracking-widest font-semibold mb-1 px-4">
+              Vendas Bling
+            </SidebarGroupLabel>
+          )}
+          <SidebarGroupContent>{renderItems(vendasBlingItems)}</SidebarGroupContent>
         </SidebarGroup>
 
         <div className="mx-4 border-t border-sidebar-border/40" />

@@ -93,7 +93,7 @@ export default function ConfiguracaoIntegracao() {
     qc.invalidateQueries({ queryKey: ["integracao-bling"] });
   }
 
-  async function sincronizar(tipo: "categorias" | "contas_pagar" | "contas_receber") {
+  async function sincronizar(tipo: "contas_receber" | "pedidos" | "produtos") {
     setSyncing(tipo);
     setSyncResult(null);
     const { data, error } = await supabase.functions.invoke("sync-bling-financeiro", {
@@ -114,6 +114,22 @@ export default function ConfiguracaoIntegracao() {
     qc.invalidateQueries({ queryKey: ["integracao-bling-logs"] });
   }
 
+  async function testarConexao() {
+    setSyncing("ping");
+    try {
+      const { data, error } = await supabase.functions.invoke("sync-bling-financeiro", {
+        body: { tipo: "ping" },
+      });
+      if (error) throw new Error(error.message);
+      if (data?.sucesso === false) throw new Error(data.erro || "Erro");
+      toast.success("Conexão OK: " + (data?.mensagem || "Edge Function ativa"));
+    } catch (e: any) {
+      toast.error("Falha: " + (e?.message || String(e)));
+    } finally {
+      setSyncing(null);
+    }
+  }
+
   async function handleSyncFull() {
     setSyncing("full");
     setSyncResult(null);
@@ -123,10 +139,10 @@ export default function ConfiguracaoIntegracao() {
     const detalhes: string[] = [];
     const startTime = Date.now();
 
-    const etapas: Array<{ tipo: "categorias" | "contas_pagar" | "contas_receber"; label: string }> = [
-      { tipo: "categorias", label: "categorias" },
-      { tipo: "contas_pagar", label: "contas a pagar" },
+    const etapas: Array<{ tipo: "contas_receber" | "pedidos" | "produtos"; label: string }> = [
       { tipo: "contas_receber", label: "contas a receber" },
+      { tipo: "pedidos", label: "pedidos de venda" },
+      { tipo: "produtos", label: "produtos" },
     ];
 
     try {
@@ -325,10 +341,10 @@ export default function ConfiguracaoIntegracao() {
             </Button>
             <Button
               variant="outline"
-              onClick={() => sincronizar("categorias")}
-              disabled={!!syncing || !form.access_token}
+              onClick={testarConexao}
+              disabled={!!syncing}
             >
-              {syncing === "categorias" ? (
+              {syncing === "ping" ? (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
               ) : (
                 <CheckCircle2 className="h-4 w-4 mr-2" />
@@ -392,24 +408,24 @@ export default function ConfiguracaoIntegracao() {
             </Button>
             <Button
               variant="outline"
-              onClick={() => sincronizar("categorias")}
-              disabled={!!syncing || !form.access_token}
-            >
-              Só categorias
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => sincronizar("contas_pagar")}
-              disabled={!!syncing || !form.access_token}
-            >
-              Só contas a pagar
-            </Button>
-            <Button
-              variant="outline"
               onClick={() => sincronizar("contas_receber")}
               disabled={!!syncing || !form.access_token}
             >
-              Só contas a receber
+              Contas a receber
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => sincronizar("pedidos")}
+              disabled={!!syncing || !form.access_token}
+            >
+              Pedidos de venda
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => sincronizar("produtos")}
+              disabled={!!syncing || !form.access_token}
+            >
+              Produtos
             </Button>
           </div>
 

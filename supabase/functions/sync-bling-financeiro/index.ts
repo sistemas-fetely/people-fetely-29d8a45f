@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
@@ -23,17 +24,14 @@ function err(message, status) {
 }
 
 function sleep(ms) {
-  return new Promise(function(resolve) { setTimeout(resolve, ms); });
+  return new Promise(function (resolve) { setTimeout(resolve, ms); });
 }
 
 async function blingGet(endpoint, accessToken) {
   var url = BLING_BASE + endpoint;
   var res = await fetch(url, {
     method: "GET",
-    headers: {
-      "Authorization": "Bearer " + accessToken,
-      "Accept": "application/json"
-    }
+    headers: { "Authorization": "Bearer " + accessToken, "Accept": "application/json" }
   });
   if (res.status === 429) {
     await sleep(1200);
@@ -62,158 +60,83 @@ async function refreshToken(supabase, config) {
     },
     body: params
   });
-
-  if (!res.ok) {
-    throw new Error("Falha ao renovar token. Reconecte o Bling.");
-  }
+  if (!res.ok) throw new Error("Falha ao renovar token. Reconecte o Bling.");
 
   var tokens = await res.json();
-  var expiresAt = new Date(Date.now() + ((tokens.expires_in || 3600) * 1000)).toISOString();
-
   await supabase.from("integracoes_config").update({
     access_token: tokens.access_token,
     refresh_token: tokens.refresh_token,
-    token_expires_at: expiresAt,
+    token_expires_at: new Date(Date.now() + ((tokens.expires_in || 3600) * 1000)).toISOString(),
     updated_at: new Date().toISOString()
   }).eq("sistema", "bling");
 
   return tokens.access_token;
 }
 
-async function syncCategorias(supabase, accessToken) {
-  var criados = 0;
-  var atualizados = 0;
-  var erros = 0;
-
-  try {
-    var data = await blingGet("/categorias/receitas-despesas", accessToken);
-    var categorias = (data && data.data) ? data.data : [];
-
-    for (var i = 0; i < categorias.length; i++) {
-      try {
-        var cat = categorias[i];
-        var tipo = (cat.tipo === 1) ? "receita" : "despesa";
-        var blingId = String(cat.id);
-
-        var existing = await supabase
-          .from("plano_contas")
-          .select("id")
-          .eq("bling_id", blingId)
-          .maybeSingle();
-
-        if (existing.data) {
-          await supabase.from("plano_contas")
-            .update({ nome: cat.descricao, ativo: true, updated_at: new Date().toISOString() })
-            .eq("id", existing.data.id);
-          atualizados++;
-        } else {
-          var parentId = null;
-          if (cat.idCategoriaPai) {
-            var parentResult = await supabase
-              .from("plano_contas")
-              .select("id")
-              .eq("bling_id", String(cat.idCategoriaPai))
-              .maybeSingle();
-            if (parentResult.data) {
-              parentId = parentResult.data.id;
-            }
-          }
-
-          await supabase.from("plano_contas").insert({
-            codigo: blingId,
-            nome: cat.descricao,
-            nivel: parentId ? 2 : 1,
-            tipo: tipo,
-            natureza: "operacional",
-            origem: "bling",
-            bling_id: blingId,
-            parent_id: parentId
-          });
-          criados++;
-        }
-        await sleep(100);
-      } catch (e) {
-        erros++;
-      }
-    }
-  } catch (e) {
-    erros++;
-  }
-
-  return { criados: criados, atualizados: atualizados, erros: erros };
-}
-
-async function syncContas(supabase, accessToken, tipoSync, ultimaSync) {
-  var criados = 0;
-  var atualizados = 0;
-  var erros = 0;
+// === SYNC: CONTAS A RECEBER ===
+async function syncContasReceber(supabase, accessToken, ultimaSync) {
+  var criados = 0, atualizados = 0, erros = 0;
   var pagina = 1;
   var temMais = true;
-  var endpoint = (tipoSync === "pagar") ? "/contas/pagar" : "/contas/receber";
 
   while (temMais) {
     try {
-      var url = endpoint + "?limite=100&pagina=" + pagina;
+      var url = "/contas/receber?limite=100&pagina=" + pagina;
       if (ultimaSync) {
-        var dataFiltro = ultimaSync.split("T")[0];
-        url = url + "&dataEmissao[gte]=" + dataFiltro;
+        url = url + "&dataEmissao[gte]=" + ultimaSync.split("T")[0];
       }
-
       var data = await blingGet(url, accessToken);
       var contas = (data && data.data) ? data.data : [];
-
-      if (contas.length === 0) {
-        temMais = false;
-        break;
-      }
+      if (contas.length === 0) { temMais = false; break; }
 
       for (var i = 0; i < contas.length; i++) {
         try {
           var conta = contas[i];
-
           var status = "aberto";
-          if (conta.situacao === 2 || conta.situacao === 5) {
-            status = "pago";
-          } else if (conta.situacao === 3) {
-            status = "cancelado";
-          }
-          if (status === "aberto" && conta.vencimento) {
-            var venc = new Date(conta.vencimento);
-            if (venc < new Date()) {
-              status = "atrasado";
-            }
+          if (conta.situacao === 2 || conta.situacao === 5) status = "pago";
+          else if (conta.situacao === 3) status = "cancelado";
+          if (status === "aberto" && conta.vencimento && new Date(conta.vencimento) < new Date()) {
+            status = "atrasado";
           }
 
-          var contaId = null;
-          if (conta.categoria && conta.categoria.id) {
-            var planoResult = await supabase
-              .from("plano_contas")
-              .select("id")
-              .eq("bling_id", String(conta.categoria.id))
-              .maybeSingle();
-            if (planoResult.data) {
-              contaId = planoResult.data.id;
-            }
-          }
-
-          var nomeContato = null;
-          if (conta.contato && conta.contato.nome) {
-            nomeContato = conta.contato.nome;
-          }
-
-          var descricao = conta.historico || conta.nroDocumento || "Sem descricao";
-          var valor = parseFloat(conta.valor) || 0;
+          var nomeContato = (conta.contato && conta.contato.nome) ? conta.contato.nome : null;
           var blingId = String(conta.id);
 
+          var parceiro_id = null;
+          if (conta.contato && conta.contato.id) {
+            var parcResult = await supabase
+              .from("parceiros_comerciais")
+              .select("id")
+              .eq("bling_id", String(conta.contato.id))
+              .maybeSingle();
+
+            if (parcResult.data) {
+              parceiro_id = parcResult.data.id;
+            } else if (nomeContato) {
+              var novoParceiro = await supabase
+                .from("parceiros_comerciais")
+                .insert({
+                  razao_social: nomeContato,
+                  tipo: "pj",
+                  tipos: ["cliente"],
+                  origem: "bling",
+                  bling_id: String(conta.contato.id)
+                })
+                .select("id")
+                .maybeSingle();
+              parceiro_id = novoParceiro.data ? novoParceiro.data.id : null;
+            }
+          }
+
           var registro = {
-            tipo: tipoSync,
-            descricao: descricao,
-            valor: valor,
+            tipo: "receber",
+            descricao: conta.historico || conta.nroDocumento || "Sem descricao",
+            valor: parseFloat(conta.valor) || 0,
             data_vencimento: conta.vencimento || null,
             data_pagamento: conta.dataPagamento || null,
             status: status,
-            conta_id: contaId,
             fornecedor_cliente: nomeContato,
+            parceiro_id: parceiro_id,
             origem: "api_bling",
             bling_id: blingId,
             observacao: conta.ocorrencia || null
@@ -223,7 +146,7 @@ async function syncContas(supabase, accessToken, tipoSync, ultimaSync) {
             .from("contas_pagar_receber")
             .select("id")
             .eq("bling_id", blingId)
-            .eq("tipo", tipoSync)
+            .eq("tipo", "receber")
             .maybeSingle();
 
           if (existing.data) {
@@ -233,22 +156,163 @@ async function syncContas(supabase, accessToken, tipoSync, ultimaSync) {
             await supabase.from("contas_pagar_receber").insert(registro);
             criados++;
           }
-        } catch (e) {
-          erros++;
-        }
+        } catch (e) { erros++; }
       }
-
       pagina++;
       await sleep(400);
-    } catch (e) {
-      erros++;
-      temMais = false;
-    }
+    } catch (e) { erros++; temMais = false; }
   }
-
   return { criados: criados, atualizados: atualizados, erros: erros };
 }
 
+// === SYNC: PEDIDOS DE VENDA ===
+async function syncPedidos(supabase, accessToken, ultimaSync) {
+  var criados = 0, atualizados = 0, erros = 0;
+  var pagina = 1;
+  var temMais = true;
+
+  while (temMais) {
+    try {
+      var url = "/pedidos/vendas?limite=100&pagina=" + pagina;
+      if (ultimaSync) {
+        url = url + "&dataInicial=" + ultimaSync.split("T")[0];
+      }
+      var data = await blingGet(url, accessToken);
+      var pedidos = (data && data.data) ? data.data : [];
+      if (pedidos.length === 0) { temMais = false; break; }
+
+      for (var i = 0; i < pedidos.length; i++) {
+        try {
+          var ped = pedidos[i];
+          var blingId = String(ped.id);
+
+          var parceiro_id = null;
+          var clienteNome = (ped.contato && ped.contato.nome) ? ped.contato.nome : null;
+          if (ped.contato && ped.contato.id) {
+            var parcResult = await supabase
+              .from("parceiros_comerciais")
+              .select("id")
+              .eq("bling_id", String(ped.contato.id))
+              .maybeSingle();
+            if (parcResult.data) {
+              parceiro_id = parcResult.data.id;
+            } else if (clienteNome) {
+              var novoParceiro = await supabase
+                .from("parceiros_comerciais")
+                .insert({
+                  razao_social: clienteNome,
+                  tipo: "pj",
+                  tipos: ["cliente"],
+                  origem: "bling",
+                  bling_id: String(ped.contato.id)
+                })
+                .select("id")
+                .maybeSingle();
+              parceiro_id = novoParceiro.data ? novoParceiro.data.id : null;
+            }
+          }
+
+          var registro = {
+            bling_id: blingId,
+            numero: ped.numero ? String(ped.numero) : null,
+            numero_loja: ped.numeroLoja || null,
+            data_pedido: ped.data || null,
+            data_prevista_entrega: ped.dataPrevista || null,
+            data_saida: ped.dataSaida || null,
+            parceiro_id: parceiro_id,
+            cliente_nome: clienteNome,
+            valor_produtos: parseFloat(ped.totalProdutos) || 0,
+            valor_frete: parseFloat(ped.frete) || 0,
+            valor_desconto: parseFloat(ped.desconto) || 0,
+            valor_total: parseFloat(ped.total) || 0,
+            situacao: ped.situacao ? ped.situacao.valor : null,
+            observacoes: ped.observacoes || null,
+            origem: "api_bling",
+            updated_at: new Date().toISOString()
+          };
+
+          var existing = await supabase
+            .from("pedidos_venda")
+            .select("id")
+            .eq("bling_id", blingId)
+            .maybeSingle();
+
+          if (existing.data) {
+            await supabase.from("pedidos_venda").update(registro).eq("id", existing.data.id);
+            atualizados++;
+          } else {
+            await supabase.from("pedidos_venda").insert(registro);
+            criados++;
+          }
+        } catch (e) { erros++; }
+      }
+      pagina++;
+      await sleep(400);
+    } catch (e) { erros++; temMais = false; }
+  }
+  return { criados: criados, atualizados: atualizados, erros: erros };
+}
+
+// === SYNC: PRODUTOS ===
+async function syncProdutos(supabase, accessToken) {
+  var criados = 0, atualizados = 0, erros = 0;
+  var pagina = 1;
+  var temMais = true;
+
+  while (temMais) {
+    try {
+      var url = "/produtos?limite=100&pagina=" + pagina;
+      var data = await blingGet(url, accessToken);
+      var produtos = (data && data.data) ? data.data : [];
+      if (produtos.length === 0) { temMais = false; break; }
+
+      for (var i = 0; i < produtos.length; i++) {
+        try {
+          var prod = produtos[i];
+          var blingId = String(prod.id);
+
+          var registro = {
+            bling_id: blingId,
+            codigo: prod.codigo || null,
+            nome: prod.nome || "Sem nome",
+            descricao: prod.descricaoCurta || null,
+            tipo: prod.tipo === "S" ? "servico" : "produto",
+            peso_bruto: parseFloat(prod.pesoBruto) || null,
+            peso_liquido: parseFloat(prod.pesoLiquido) || null,
+            unidade: prod.unidade || "UN",
+            ncm: prod.ncm || null,
+            gtin: prod.gtin || null,
+            preco_custo: parseFloat(prod.precoCusto) || null,
+            preco_venda: parseFloat(prod.preco) || null,
+            imagem_url: (prod.midia && prod.midia.url && prod.midia.url.miniatura) ? prod.midia.url.miniatura : null,
+            ativo: prod.situacao === "A",
+            origem: "api_bling",
+            updated_at: new Date().toISOString()
+          };
+
+          var existing = await supabase
+            .from("produtos")
+            .select("id")
+            .eq("bling_id", blingId)
+            .maybeSingle();
+
+          if (existing.data) {
+            await supabase.from("produtos").update(registro).eq("id", existing.data.id);
+            atualizados++;
+          } else {
+            await supabase.from("produtos").insert(registro);
+            criados++;
+          }
+        } catch (e) { erros++; }
+      }
+      pagina++;
+      await sleep(400);
+    } catch (e) { erros++; temMais = false; }
+  }
+  return { criados: criados, atualizados: atualizados, erros: erros };
+}
+
+// === MAIN HANDLER ===
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -256,8 +320,8 @@ serve(async (req) => {
 
   try {
     var supabase = createClient(
-      Deno.env.get("SUPABASE_URL"),
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")
+      Deno.env.get("SUPABASE_URL") || "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || ""
     );
 
     var authHeader = req.headers.get("Authorization");
@@ -276,7 +340,7 @@ serve(async (req) => {
       .maybeSingle();
     if (!roleResult.data) throw new Error("Apenas super_admin");
 
-    var body = await req.json().catch(function() { return { tipo: "ping" }; });
+    var body = await req.json().catch(function () { return { tipo: "ping" }; });
     var tipo = body.tipo || "ping";
 
     if (tipo === "ping") {
@@ -296,7 +360,6 @@ serve(async (req) => {
 
       var credentials = cfgResult.data.client_id + ":" + cfgResult.data.client_secret;
       var encoded = btoa(credentials);
-
       var params = new URLSearchParams();
       params.set("grant_type", "authorization_code");
       params.set("code", body.code);
@@ -318,12 +381,10 @@ serve(async (req) => {
       }
 
       var tokens = await tokenRes.json();
-      var expiresAt = new Date(Date.now() + ((tokens.expires_in || 3600) * 1000)).toISOString();
-
       await supabase.from("integracoes_config").update({
         access_token: tokens.access_token,
         refresh_token: tokens.refresh_token,
-        token_expires_at: expiresAt,
+        token_expires_at: new Date(Date.now() + ((tokens.expires_in || 3600) * 1000)).toISOString(),
         ativo: true,
         updated_at: new Date().toISOString()
       }).eq("sistema", "bling");
@@ -331,7 +392,7 @@ serve(async (req) => {
       return ok({ sucesso: true, mensagem: "Bling conectado com sucesso!" });
     }
 
-    if (tipo === "full" || tipo === "categorias" || tipo === "contas_pagar" || tipo === "contas_receber") {
+    if (tipo === "contas_receber" || tipo === "pedidos" || tipo === "produtos") {
       var configResult = await supabase
         .from("integracoes_config")
         .select("*")
@@ -353,72 +414,44 @@ serve(async (req) => {
       }
 
       var logResult = await supabase.from("integracoes_sync_log").insert({
-        sistema: "bling",
-        tipo: tipo,
-        status: "executando",
-        iniciado_por: user.id
+        sistema: "bling", tipo: tipo, status: "executando", iniciado_por: user.id
       }).select("id").maybeSingle();
-
       var logId = logResult.data ? logResult.data.id : null;
+
       var startTime = Date.now();
-      var totalCriados = 0;
-      var totalAtualizados = 0;
-      var totalErros = 0;
-      var detalhes = [];
+      var result = { criados: 0, atualizados: 0, erros: 0 };
 
-      if (tipo === "full" || tipo === "categorias") {
-        var r = await syncCategorias(supabase, accessToken);
-        totalCriados = totalCriados + r.criados;
-        totalAtualizados = totalAtualizados + r.atualizados;
-        totalErros = totalErros + r.erros;
-        detalhes.push("Categorias: " + r.criados + " novas, " + r.atualizados + " atualizadas");
-      }
-
-      if (tipo === "full" || tipo === "contas_pagar") {
-        var r2 = await syncContas(supabase, accessToken, "pagar", config.ultima_sync_at);
-        totalCriados = totalCriados + r2.criados;
-        totalAtualizados = totalAtualizados + r2.atualizados;
-        totalErros = totalErros + r2.erros;
-        detalhes.push("Contas pagar: " + r2.criados + " novas, " + r2.atualizados + " atualizadas");
-      }
-
-      if (tipo === "full" || tipo === "contas_receber") {
-        var r3 = await syncContas(supabase, accessToken, "receber", config.ultima_sync_at);
-        totalCriados = totalCriados + r3.criados;
-        totalAtualizados = totalAtualizados + r3.atualizados;
-        totalErros = totalErros + r3.erros;
-        detalhes.push("Contas receber: " + r3.criados + " novas, " + r3.atualizados + " atualizadas");
+      if (tipo === "contas_receber") {
+        result = await syncContasReceber(supabase, accessToken, config.ultima_sync_at);
+      } else if (tipo === "pedidos") {
+        result = await syncPedidos(supabase, accessToken, config.ultima_sync_at);
+      } else if (tipo === "produtos") {
+        result = await syncProdutos(supabase, accessToken);
       }
 
       var duracao = Date.now() - startTime;
-      var statusFinal = (totalErros > 0) ? "parcial" : "sucesso";
-      var detalheStr = detalhes.join(" | ");
+      var statusFinal = (result.erros > 0) ? "parcial" : "sucesso";
+      var detalhe = tipo + ": " + result.criados + " novos, " + result.atualizados + " atualizados";
 
       if (logId) {
         await supabase.from("integracoes_sync_log").update({
-          status: statusFinal,
-          registros_criados: totalCriados,
-          registros_atualizados: totalAtualizados,
-          registros_erro: totalErros,
-          detalhes: detalheStr,
-          duracao_ms: duracao
+          status: statusFinal, registros_criados: result.criados,
+          registros_atualizados: result.atualizados, registros_erro: result.erros,
+          detalhes: detalhe, duracao_ms: duracao
         }).eq("id", logId);
       }
 
       await supabase.from("integracoes_config").update({
         ultima_sync_at: new Date().toISOString(),
         ultima_sync_status: statusFinal,
-        ultima_sync_detalhes: detalheStr,
+        ultima_sync_detalhes: detalhe,
         updated_at: new Date().toISOString()
       }).eq("sistema", "bling");
 
       return ok({
-        sucesso: true,
-        criados: totalCriados,
-        atualizados: totalAtualizados,
-        erros: totalErros,
-        detalhes: detalheStr,
-        duracao_ms: duracao
+        sucesso: true, criados: result.criados,
+        atualizados: result.atualizados, erros: result.erros,
+        detalhes: detalhe, duracao_ms: duracao
       });
     }
 

@@ -3996,6 +3996,7 @@ export type Database = {
         Row: {
           ativo: boolean | null
           bairro: string | null
+          bling_id: string | null
           canal: string | null
           categoria_padrao_id: string | null
           centro_custo_padrao: string | null
@@ -4023,6 +4024,7 @@ export type Database = {
         Insert: {
           ativo?: boolean | null
           bairro?: string | null
+          bling_id?: string | null
           canal?: string | null
           categoria_padrao_id?: string | null
           centro_custo_padrao?: string | null
@@ -4050,6 +4052,7 @@ export type Database = {
         Update: {
           ativo?: boolean | null
           bairro?: string | null
+          bling_id?: string | null
           canal?: string | null
           categoria_padrao_id?: string | null
           centro_custo_padrao?: string | null
@@ -4080,6 +4083,146 @@ export type Database = {
             columns: ["categoria_padrao_id"]
             isOneToOne: false
             referencedRelation: "plano_contas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pedidos_venda: {
+        Row: {
+          bling_id: string | null
+          canal: string | null
+          cliente_cnpj_cpf: string | null
+          cliente_nome: string | null
+          created_at: string | null
+          data_pedido: string | null
+          data_prevista_entrega: string | null
+          data_saida: string | null
+          id: string
+          nf_chave_acesso: string | null
+          nf_numero: string | null
+          nf_serie: string | null
+          numero: string | null
+          numero_loja: string | null
+          observacoes: string | null
+          origem: string | null
+          parceiro_id: string | null
+          situacao: string | null
+          updated_at: string | null
+          valor_desconto: number | null
+          valor_frete: number | null
+          valor_produtos: number | null
+          valor_total: number | null
+        }
+        Insert: {
+          bling_id?: string | null
+          canal?: string | null
+          cliente_cnpj_cpf?: string | null
+          cliente_nome?: string | null
+          created_at?: string | null
+          data_pedido?: string | null
+          data_prevista_entrega?: string | null
+          data_saida?: string | null
+          id?: string
+          nf_chave_acesso?: string | null
+          nf_numero?: string | null
+          nf_serie?: string | null
+          numero?: string | null
+          numero_loja?: string | null
+          observacoes?: string | null
+          origem?: string | null
+          parceiro_id?: string | null
+          situacao?: string | null
+          updated_at?: string | null
+          valor_desconto?: number | null
+          valor_frete?: number | null
+          valor_produtos?: number | null
+          valor_total?: number | null
+        }
+        Update: {
+          bling_id?: string | null
+          canal?: string | null
+          cliente_cnpj_cpf?: string | null
+          cliente_nome?: string | null
+          created_at?: string | null
+          data_pedido?: string | null
+          data_prevista_entrega?: string | null
+          data_saida?: string | null
+          id?: string
+          nf_chave_acesso?: string | null
+          nf_numero?: string | null
+          nf_serie?: string | null
+          numero?: string | null
+          numero_loja?: string | null
+          observacoes?: string | null
+          origem?: string | null
+          parceiro_id?: string | null
+          situacao?: string | null
+          updated_at?: string | null
+          valor_desconto?: number | null
+          valor_frete?: number | null
+          valor_produtos?: number | null
+          valor_total?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pedidos_venda_parceiro_id_fkey"
+            columns: ["parceiro_id"]
+            isOneToOne: false
+            referencedRelation: "parceiros_comerciais"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pedidos_venda_itens: {
+        Row: {
+          codigo_produto: string | null
+          created_at: string | null
+          descricao: string
+          id: string
+          pedido_id: string
+          produto_id: string | null
+          quantidade: number | null
+          valor_desconto: number | null
+          valor_total: number | null
+          valor_unitario: number | null
+        }
+        Insert: {
+          codigo_produto?: string | null
+          created_at?: string | null
+          descricao: string
+          id?: string
+          pedido_id: string
+          produto_id?: string | null
+          quantidade?: number | null
+          valor_desconto?: number | null
+          valor_total?: number | null
+          valor_unitario?: number | null
+        }
+        Update: {
+          codigo_produto?: string | null
+          created_at?: string | null
+          descricao?: string
+          id?: string
+          pedido_id?: string
+          produto_id?: string | null
+          quantidade?: number | null
+          valor_desconto?: number | null
+          valor_total?: number | null
+          valor_unitario?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pedidos_venda_itens_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
+            referencedRelation: "pedidos_venda"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pedidos_venda_itens_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "produtos"
             referencedColumns: ["id"]
           },
         ]
@@ -4963,6 +5106,84 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      produtos: {
+        Row: {
+          ativo: boolean | null
+          bling_id: string | null
+          categoria: string | null
+          codigo: string | null
+          created_at: string | null
+          descricao: string | null
+          estoque_atual: number | null
+          estoque_minimo: number | null
+          gtin: string | null
+          id: string
+          imagem_url: string | null
+          linha: string | null
+          marca: string | null
+          ncm: string | null
+          nome: string
+          origem: string | null
+          peso_bruto: number | null
+          peso_liquido: number | null
+          preco_custo: number | null
+          preco_venda: number | null
+          tipo: string | null
+          unidade: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          bling_id?: string | null
+          categoria?: string | null
+          codigo?: string | null
+          created_at?: string | null
+          descricao?: string | null
+          estoque_atual?: number | null
+          estoque_minimo?: number | null
+          gtin?: string | null
+          id?: string
+          imagem_url?: string | null
+          linha?: string | null
+          marca?: string | null
+          ncm?: string | null
+          nome: string
+          origem?: string | null
+          peso_bruto?: number | null
+          peso_liquido?: number | null
+          preco_custo?: number | null
+          preco_venda?: number | null
+          tipo?: string | null
+          unidade?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          ativo?: boolean | null
+          bling_id?: string | null
+          categoria?: string | null
+          codigo?: string | null
+          created_at?: string | null
+          descricao?: string | null
+          estoque_atual?: number | null
+          estoque_minimo?: number | null
+          gtin?: string | null
+          id?: string
+          imagem_url?: string | null
+          linha?: string | null
+          marca?: string | null
+          ncm?: string | null
+          nome?: string
+          origem?: string | null
+          peso_bruto?: number | null
+          peso_liquido?: number | null
+          preco_custo?: number | null
+          preco_venda?: number | null
+          tipo?: string | null
+          unidade?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
