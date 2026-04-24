@@ -2,7 +2,8 @@ import {
   LayoutDashboard, Wallet, ListTree, Receipt, FileBarChart2,
   TrendingUp, ArrowDownToLine, ArrowUpFromLine, Upload,
   FileSignature, Building2, ShieldCheck, FolderArchive,
-  Users, Monitor, Network, Landmark, LogOut,
+  Users, Monitor, Network, Landmark, LogOut, ClipboardList,
+  UsersRound, Settings2,
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { NavLink } from "@/components/NavLink";
@@ -36,6 +37,7 @@ const financeiroItems: MenuItem[] = [
   { title: "Contas a Pagar", url: "/administrativo/contas-pagar", icon: ArrowUpFromLine },
   { title: "Contas a Receber", url: "/administrativo/contas-receber", icon: ArrowDownToLine },
   { title: "Importar Dados", url: "/administrativo/importar", icon: Upload },
+  { title: "Configuração Integração", url: "/administrativo/configuracao-integracao", icon: Settings2 },
 ];
 
 const futurosItems: MenuItem[] = [
