@@ -8,8 +8,7 @@ import { useParametros } from "@/hooks/useParametros";
 import { useCargos } from "@/hooks/useCargos";
 import { useUnidades } from "@/hooks/useUnidades";
 import { SelectDepartamentoHierarquico } from "@/components/shared/SelectDepartamentoHierarquico";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { SelectGestorPessoa } from "@/components/shared/SelectGestorPessoa";
 import type { DadosProfissionaisPJForm } from "@/lib/validations/contrato-pj";
 
 const statusMap: Record<string, string> = {
@@ -31,17 +30,6 @@ export function StepDadosProfissionaisPJ() {
   const { data: cargos, isLoading: loadingCargos } = useCargos("pj");
   const { data: formasPagamento, isLoading: loadingFormas } = useParametros("forma_pagamento");
   const { data: unidades } = useUnidades();
-
-  const { data: profiles, isLoading: loadingProfiles } = useQuery({
-    queryKey: ["profiles-for-gestor"],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("profiles")
-        .select("id, full_name")
-        .order("full_name");
-      return data || [];
-    },
-  });
 
   return (
     <div className="space-y-6">
@@ -183,22 +171,13 @@ export function StepDadosProfissionaisPJ() {
         </div>
         <div>
           <Label>Gestor Direto / Líder</Label>
-          {loadingProfiles ? (
-            <div className="flex items-center h-10"><Loader2 className="h-4 w-4 animate-spin" /></div>
-          ) : (
-            <Select
-              value={watch("gestor_direto_id") || "none"}
-              onValueChange={(v) => setValue("gestor_direto_id", v === "none" ? "" : v)}
-            >
-              <SelectTrigger><SelectValue placeholder="Selecione o gestor" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">Nenhum</SelectItem>
-                {(profiles || []).map((p) => (
-                  <SelectItem key={p.id} value={p.id}>{p.full_name || "Sem nome"}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
+          <SelectGestorPessoa
+            value={(watch("gestor_direto_id") as string) || null}
+            onChange={(v) => setValue("gestor_direto_id", v || "")}
+          />
+          <p className="text-[11px] text-muted-foreground mt-1">
+            Lista de pessoas ativas (CLT + PJ). Sincronizado automaticamente com o organograma.
+          </p>
         </div>
         <div>
           <Label>Status</Label>
