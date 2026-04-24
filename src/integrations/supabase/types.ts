@@ -1309,20 +1309,114 @@ export type Database = {
         }
         Relationships: []
       }
+      contas_pagar_itens: {
+        Row: {
+          cfop: string | null
+          codigo_produto: string | null
+          conta_id: string
+          conta_plano_id: string | null
+          created_at: string | null
+          descricao: string
+          id: string
+          ncm: string | null
+          quantidade: number | null
+          unidade: string | null
+          valor_cofins: number | null
+          valor_icms: number | null
+          valor_ipi: number | null
+          valor_pis: number | null
+          valor_total: number | null
+          valor_unitario: number | null
+        }
+        Insert: {
+          cfop?: string | null
+          codigo_produto?: string | null
+          conta_id: string
+          conta_plano_id?: string | null
+          created_at?: string | null
+          descricao: string
+          id?: string
+          ncm?: string | null
+          quantidade?: number | null
+          unidade?: string | null
+          valor_cofins?: number | null
+          valor_icms?: number | null
+          valor_ipi?: number | null
+          valor_pis?: number | null
+          valor_total?: number | null
+          valor_unitario?: number | null
+        }
+        Update: {
+          cfop?: string | null
+          codigo_produto?: string | null
+          conta_id?: string
+          conta_plano_id?: string | null
+          created_at?: string | null
+          descricao?: string
+          id?: string
+          ncm?: string | null
+          quantidade?: number | null
+          unidade?: string | null
+          valor_cofins?: number | null
+          valor_icms?: number | null
+          valor_ipi?: number | null
+          valor_pis?: number | null
+          valor_total?: number | null
+          valor_unitario?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contas_pagar_itens_conta_id_fkey"
+            columns: ["conta_id"]
+            isOneToOne: false
+            referencedRelation: "contas_pagar_receber"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contas_pagar_itens_conta_plano_id_fkey"
+            columns: ["conta_plano_id"]
+            isOneToOne: false
+            referencedRelation: "plano_contas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contas_pagar_receber: {
         Row: {
+          aprovado_em: string | null
+          aprovado_por: string | null
           bling_id: string | null
           canal: string | null
+          categoria_confirmada: boolean | null
+          categoria_sugerida_ia: boolean | null
           centro_custo: string | null
           conta_id: string | null
           created_at: string | null
+          criado_por: string | null
           data_pagamento: string | null
           data_vencimento: string
           descricao: string
+          forma_pagamento_id: string | null
           fornecedor_cliente: string | null
+          fornecedor_id: string | null
           id: string
+          nf_cfop: string | null
+          nf_chave_acesso: string | null
+          nf_cnpj_emitente: string | null
+          nf_data_emissao: string | null
+          nf_natureza_operacao: string | null
+          nf_ncm: string | null
+          nf_numero: string | null
+          nf_pdf_url: string | null
+          nf_serie: string | null
+          nf_valor_impostos: number | null
+          nf_valor_produtos: number | null
+          nf_xml_url: string | null
           observacao: string | null
           origem: string | null
+          parcela_atual: number | null
+          parcela_grupo_id: string | null
+          parcelas: number | null
           status: string
           tipo: string
           unidade: string | null
@@ -1330,18 +1424,40 @@ export type Database = {
           valor: number
         }
         Insert: {
+          aprovado_em?: string | null
+          aprovado_por?: string | null
           bling_id?: string | null
           canal?: string | null
+          categoria_confirmada?: boolean | null
+          categoria_sugerida_ia?: boolean | null
           centro_custo?: string | null
           conta_id?: string | null
           created_at?: string | null
+          criado_por?: string | null
           data_pagamento?: string | null
           data_vencimento: string
           descricao: string
+          forma_pagamento_id?: string | null
           fornecedor_cliente?: string | null
+          fornecedor_id?: string | null
           id?: string
+          nf_cfop?: string | null
+          nf_chave_acesso?: string | null
+          nf_cnpj_emitente?: string | null
+          nf_data_emissao?: string | null
+          nf_natureza_operacao?: string | null
+          nf_ncm?: string | null
+          nf_numero?: string | null
+          nf_pdf_url?: string | null
+          nf_serie?: string | null
+          nf_valor_impostos?: number | null
+          nf_valor_produtos?: number | null
+          nf_xml_url?: string | null
           observacao?: string | null
           origem?: string | null
+          parcela_atual?: number | null
+          parcela_grupo_id?: string | null
+          parcelas?: number | null
           status?: string
           tipo: string
           unidade?: string | null
@@ -1349,18 +1465,40 @@ export type Database = {
           valor: number
         }
         Update: {
+          aprovado_em?: string | null
+          aprovado_por?: string | null
           bling_id?: string | null
           canal?: string | null
+          categoria_confirmada?: boolean | null
+          categoria_sugerida_ia?: boolean | null
           centro_custo?: string | null
           conta_id?: string | null
           created_at?: string | null
+          criado_por?: string | null
           data_pagamento?: string | null
           data_vencimento?: string
           descricao?: string
+          forma_pagamento_id?: string | null
           fornecedor_cliente?: string | null
+          fornecedor_id?: string | null
           id?: string
+          nf_cfop?: string | null
+          nf_chave_acesso?: string | null
+          nf_cnpj_emitente?: string | null
+          nf_data_emissao?: string | null
+          nf_natureza_operacao?: string | null
+          nf_ncm?: string | null
+          nf_numero?: string | null
+          nf_pdf_url?: string | null
+          nf_serie?: string | null
+          nf_valor_impostos?: number | null
+          nf_valor_produtos?: number | null
+          nf_xml_url?: string | null
           observacao?: string | null
           origem?: string | null
+          parcela_atual?: number | null
+          parcela_grupo_id?: string | null
+          parcelas?: number | null
           status?: string
           tipo?: string
           unidade?: string | null
@@ -1373,6 +1511,20 @@ export type Database = {
             columns: ["conta_id"]
             isOneToOne: false
             referencedRelation: "plano_contas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contas_pagar_receber_forma_pagamento_id_fkey"
+            columns: ["forma_pagamento_id"]
+            isOneToOne: false
+            referencedRelation: "formas_pagamento"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contas_pagar_receber_fornecedor_id_fkey"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "fornecedores"
             referencedColumns: ["id"]
           },
         ]
@@ -2769,6 +2921,116 @@ export type Database = {
         }
         Relationships: []
       }
+      formas_pagamento: {
+        Row: {
+          ativo: boolean | null
+          codigo: string
+          id: string
+          nome: string
+          ordem: number | null
+          tipo: string
+        }
+        Insert: {
+          ativo?: boolean | null
+          codigo: string
+          id?: string
+          nome: string
+          ordem?: number | null
+          tipo: string
+        }
+        Update: {
+          ativo?: boolean | null
+          codigo?: string
+          id?: string
+          nome?: string
+          ordem?: number | null
+          tipo?: string
+        }
+        Relationships: []
+      }
+      fornecedores: {
+        Row: {
+          ativo: boolean | null
+          bairro: string | null
+          categoria_padrao_id: string | null
+          centro_custo_padrao: string | null
+          cep: string | null
+          cidade: string | null
+          cnpj: string | null
+          cpf: string | null
+          created_at: string | null
+          email: string | null
+          id: string
+          logradouro: string | null
+          nome_fantasia: string | null
+          numero: string | null
+          observacao: string | null
+          origem: string | null
+          razao_social: string
+          tags: string[] | null
+          telefone: string | null
+          tipo: string | null
+          uf: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          bairro?: string | null
+          categoria_padrao_id?: string | null
+          centro_custo_padrao?: string | null
+          cep?: string | null
+          cidade?: string | null
+          cnpj?: string | null
+          cpf?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          logradouro?: string | null
+          nome_fantasia?: string | null
+          numero?: string | null
+          observacao?: string | null
+          origem?: string | null
+          razao_social: string
+          tags?: string[] | null
+          telefone?: string | null
+          tipo?: string | null
+          uf?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          ativo?: boolean | null
+          bairro?: string | null
+          categoria_padrao_id?: string | null
+          centro_custo_padrao?: string | null
+          cep?: string | null
+          cidade?: string | null
+          cnpj?: string | null
+          cpf?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          logradouro?: string | null
+          nome_fantasia?: string | null
+          numero?: string | null
+          observacao?: string | null
+          origem?: string | null
+          razao_social?: string
+          tags?: string[] | null
+          telefone?: string | null
+          tipo?: string | null
+          uf?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fornecedores_categoria_padrao_id_fkey"
+            columns: ["categoria_padrao_id"]
+            isOneToOne: false
+            referencedRelation: "plano_contas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       grupos_acesso: {
         Row: {
           ativo: boolean
@@ -3049,6 +3311,7 @@ export type Database = {
           descricao: string
           fornecedor: string | null
           id: string
+          nf_chave_acesso: string | null
           observacao: string | null
           origem: string | null
           tipo_lancamento: string
@@ -3068,6 +3331,7 @@ export type Database = {
           descricao: string
           fornecedor?: string | null
           id?: string
+          nf_chave_acesso?: string | null
           observacao?: string | null
           origem?: string | null
           tipo_lancamento: string
@@ -3087,6 +3351,7 @@ export type Database = {
           descricao?: string
           fornecedor?: string | null
           id?: string
+          nf_chave_acesso?: string | null
           observacao?: string | null
           origem?: string | null
           tipo_lancamento?: string
@@ -4726,6 +4991,66 @@ export type Database = {
             columns: ["departamento_id"]
             isOneToOne: false
             referencedRelation: "parametros"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      regras_categorizacao: {
+        Row: {
+          ativo: boolean | null
+          centro_custo: string | null
+          cnpj_emitente: string | null
+          conta_plano_id: string
+          created_at: string | null
+          criado_por: string | null
+          descricao_contem: string | null
+          fornecedor_id: string | null
+          id: string
+          ncm_prefixo: string | null
+          prioridade: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          centro_custo?: string | null
+          cnpj_emitente?: string | null
+          conta_plano_id: string
+          created_at?: string | null
+          criado_por?: string | null
+          descricao_contem?: string | null
+          fornecedor_id?: string | null
+          id?: string
+          ncm_prefixo?: string | null
+          prioridade?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          ativo?: boolean | null
+          centro_custo?: string | null
+          cnpj_emitente?: string | null
+          conta_plano_id?: string
+          created_at?: string | null
+          criado_por?: string | null
+          descricao_contem?: string | null
+          fornecedor_id?: string | null
+          id?: string
+          ncm_prefixo?: string | null
+          prioridade?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "regras_categorizacao_conta_plano_id_fkey"
+            columns: ["conta_plano_id"]
+            isOneToOne: false
+            referencedRelation: "plano_contas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "regras_categorizacao_fornecedor_id_fkey"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "fornecedores"
             referencedColumns: ["id"]
           },
         ]
