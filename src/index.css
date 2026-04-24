@@ -37,6 +37,12 @@
     --info: 200 70% 50%;
     --info-foreground: 0 0% 100%;
 
+    /* Pilar Administrativo — Bordô Fetely (#8B1A2F) */
+    --admin: 350 70% 33%;
+    --admin-foreground: 0 0% 100%;
+    --admin-muted: 350 30% 92%;
+    --admin-accent: 350 60% 28%;
+
     --border: 150 16% 86%;
     --input: 150 16% 86%;
     --ring: 156 28% 22%;
@@ -93,6 +99,12 @@
 
     --info: 200 65% 55%;
     --info-foreground: 0 0% 100%;
+
+    /* Pilar Administrativo — Bordô (dark) */
+    --admin: 350 60% 45%;
+    --admin-foreground: 0 0% 100%;
+    --admin-muted: 350 20% 18%;
+    --admin-accent: 350 55% 38%;
 
     --border: 156 14% 18%;
     --input: 156 14% 18%;
