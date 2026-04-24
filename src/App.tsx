@@ -83,6 +83,7 @@ import DRE from "@/pages/administrativo/DRE";
 import FluxoCaixa from "@/pages/administrativo/FluxoCaixa";
 import ContasPagar from "@/pages/administrativo/ContasPagar";
 import ContasReceber from "@/pages/administrativo/ContasReceber";
+import Parceiros from "@/pages/administrativo/Parceiros";
 import ImportarDados from "@/pages/administrativo/ImportarDados";
 import AdminContratos from "@/pages/administrativo/Contratos";
 import AdminImoveis from "@/pages/administrativo/Imoveis";
@@ -389,6 +390,7 @@ const App = () => (
               <Route path="fluxo-caixa" element={<FluxoCaixa />} />
               <Route path="contas-pagar" element={<ContasPagar />} />
               <Route path="contas-receber" element={<ContasReceber />} />
+              <Route path="parceiros" element={<Parceiros />} />
               <Route path="importar" element={<ImportarDados />} />
               <Route path="configuracao-integracao" element={<ConfiguracaoIntegracao />} />
               <Route path="contratos" element={<AdminContratos />} />
