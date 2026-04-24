@@ -43,8 +43,7 @@ export default function ImportarDados() {
     setSyncing(true);
     setSyncResult(null);
     try {
-      // 3 chamadas sequenciais (cada tipo individualmente)
-      const tipos = ["categorias", "contas_pagar", "contas_receber"] as const;
+      const tipos = ["contas_receber", "pedidos", "produtos"] as const;
       const totals = { criados: 0, atualizados: 0, duracao_ms: 0 };
       for (const tipo of tipos) {
         const { data, error } = await supabase.functions.invoke(
