@@ -50,6 +50,13 @@ function toISODate(d: Date) {
   return d.toISOString().slice(0, 10);
 }
 
+// KPI CANDIDATO: Margem bruta (Lucro Bruto / Receita Líquida)
+// KPI CANDIDATO: Margem operacional (Result. Operacional / Receita Líquida)
+// KPI CANDIDATO: Margem líquida (Result. Líquido / Receita Líquida)
+// KPI CANDIDATO: Burn rate (despesas mensais médias)
+// KPI CANDIDATO: Runway (caixa atual / burn rate)
+// KPI CANDIDATO: Dias de caixa (saldo / média diária de pagamentos)
+
 export default function DashboardFinanceiro() {
   const [periodo, setPeriodo] = useState<Periodo>("mes_atual");
   const range = useMemo(() => getRangeFromPeriodo(periodo), [periodo]);
@@ -86,7 +93,7 @@ export default function DashboardFinanceiro() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("contas_pagar_receber")
-        .select("tipo, status, valor, data_vencimento, fornecedor_cliente");
+        .select("tipo, status, valor, data_vencimento, fornecedor_cliente, parceiro_id, parceiros_comerciais:parceiro_id(razao_social)");
       if (error) throw error;
       return data || [];
     },
@@ -166,13 +173,14 @@ export default function DashboardFinanceiro() {
     ].filter((x) => x.value > 0);
   }, [contas]);
 
-  // Gráfico 3: top 10 fornecedores (despesas)
+  // Gráfico 3: top 10 parceiros (despesas) — unificado via parceiro_id quando disponível
   const grafico3 = useMemo(() => {
     const map = new Map<string, number>();
     (contas || [])
-      .filter((c) => c.tipo === "pagar" && c.fornecedor_cliente)
-      .forEach((c) => {
-        const k = c.fornecedor_cliente!;
+      .filter((c) => c.tipo === "pagar")
+      .forEach((c: any) => {
+        const k = c.parceiros_comerciais?.razao_social || c.fornecedor_cliente;
+        if (!k) return;
         map.set(k, (map.get(k) || 0) + Number(c.valor || 0));
       });
     return Array.from(map.entries())
@@ -379,7 +387,7 @@ export default function DashboardFinanceiro() {
 
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Top 10 fornecedores (despesas)</CardTitle>
+                <CardTitle className="text-base">Top 10 parceiros (despesas)</CardTitle>
               </CardHeader>
               <CardContent>
                 {grafico3.length === 0 ? (
