@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,10 +15,11 @@ import { toast } from "sonner";
 import { formatDistanceToNow, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
-const CALLBACK_URL = "https://people-fetely.lovable.app/administrativo/bling-callback";
+const CALLBACK_URL = "https://people-fetely.lovable.app/administrativo/configuracao-integracao";
 
 export default function ConfiguracaoIntegracao() {
   const qc = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [showSecret, setShowSecret] = useState(false);
   const [showAccess, setShowAccess] = useState(false);
   const [showRefresh, setShowRefresh] = useState(false);
@@ -123,11 +125,89 @@ export default function ConfiguracaoIntegracao() {
       const url = new URL("https://www.bling.com.br/Api/v3/oauth/authorize");
       url.searchParams.set("response_type", "code");
       url.searchParams.set("client_id", form.client_id);
-      url.searchParams.set("redirect_uri", "https://people-fetely.lovable.app/administrativo/bling-callback");
+      url.searchParams.set("redirect_uri", CALLBACK_URL);
       url.searchParams.set("state", state);
-      window.open(url.toString(), "_blank");
+      window.location.href = url.toString();
     });
   }
+
+  // Processar retorno do OAuth Bling (?code=...&state=...)
+  useEffect(() => {
+    const code = searchParams.get("code");
+    const state = searchParams.get("state");
+    const erroParam = searchParams.get("error");
+
+    if (!code && !erroParam) return;
+
+    // Limpar params imediatamente para evitar reprocessamento
+    setSearchParams({}, { replace: true });
+
+    (async () => {
+      try {
+        if (erroParam) throw new Error(`Bling negou: ${erroParam}`);
+        if (!code) throw new Error("Code não recebido");
+
+        const expectedState = sessionStorage.getItem("bling_oauth_state");
+        if (state && expectedState && state !== expectedState) {
+          throw new Error("State inválido (possível ataque CSRF)");
+        }
+        sessionStorage.removeItem("bling_oauth_state");
+
+        const { data: cfg, error: cfgErr } = await supabase
+          .from("integracoes_config")
+          .select("client_id, client_secret")
+          .eq("sistema", "bling")
+          .maybeSingle();
+
+        if (cfgErr) throw cfgErr;
+        if (!cfg?.client_id || !cfg?.client_secret) {
+          throw new Error("Client ID/Secret não cadastrados");
+        }
+
+        const res = await fetch("https://www.bling.com.br/Api/v3/oauth/token", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            Accept: "application/json",
+            Authorization: "Basic " + btoa(`${cfg.client_id}:${cfg.client_secret}`),
+          },
+          body: new URLSearchParams({
+            grant_type: "authorization_code",
+            code,
+            redirect_uri: CALLBACK_URL,
+          }),
+        });
+
+        if (!res.ok) {
+          const text = await res.text();
+          throw new Error(`Bling rejeitou: ${res.status} ${text}`);
+        }
+
+        const tokens = await res.json();
+
+        const { error: upErr } = await supabase
+          .from("integracoes_config")
+          .update({
+            access_token: tokens.access_token,
+            refresh_token: tokens.refresh_token,
+            token_expires_at: new Date(
+              Date.now() + (tokens.expires_in || 3600) * 1000,
+            ).toISOString(),
+            ativo: true,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("sistema", "bling");
+
+        if (upErr) throw upErr;
+
+        toast.success("Bling conectado com sucesso!");
+        qc.invalidateQueries({ queryKey: ["integracao-bling"] });
+      } catch (e: any) {
+        toast.error("Falha na autorização: " + (e?.message || String(e)));
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const statusBadge = () => {
     if (!config?.ativo) return <Badge variant="outline">Desconectado</Badge>;
