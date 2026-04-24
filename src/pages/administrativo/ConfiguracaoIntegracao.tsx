@@ -123,8 +123,9 @@ export default function ConfiguracaoIntegracao() {
       const url = new URL("https://www.bling.com.br/Api/v3/oauth/authorize");
       url.searchParams.set("response_type", "code");
       url.searchParams.set("client_id", form.client_id);
+      url.searchParams.set("redirect_uri", "https://people-fetely.lovable.app/administrativo/bling-callback");
       url.searchParams.set("state", state);
-      window.location.href = url.toString();
+      window.open(url.toString(), "_blank");
     });
   }
 
