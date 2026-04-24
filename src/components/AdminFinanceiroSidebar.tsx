@@ -41,6 +41,11 @@ const financeiroItems: MenuItem[] = [
   { title: "Configuração Integração", url: "/administrativo/configuracao-integracao", icon: Settings2 },
 ];
 
+const vendasBlingItems: MenuItem[] = [
+  { title: "Pedidos de Venda", url: "/administrativo/pedidos", icon: ShoppingCart },
+  { title: "Produtos", url: "/administrativo/produtos", icon: Package },
+];
+
 const futurosItems: MenuItem[] = [
   { title: "Contratos", url: "/administrativo/contratos", icon: FileSignature, badge: "Em breve" },
   { title: "Imóveis", url: "/administrativo/imoveis", icon: Building2, badge: "Em breve" },
