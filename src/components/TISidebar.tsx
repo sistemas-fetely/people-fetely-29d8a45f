@@ -1,4 +1,4 @@
-import { LayoutDashboard, Monitor, Package, LogOut, LayoutGrid, ClipboardList, Users, Shield, UsersRound } from "lucide-react";
+import { LayoutDashboard, Monitor, Package, LogOut, LayoutGrid, ClipboardList, Users, Shield, UsersRound, Landmark } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { cn } from "@/lib/utils";
 import { useLocation } from "react-router-dom";
@@ -166,6 +166,19 @@ export function TISidebar() {
                     >
                       <Shield className="h-[18px] w-[18px] shrink-0" />
                       {!collapsed && <span>ADM SNCF</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
+              {roles.includes("super_admin") && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <NavLink
+                      to="/administrativo"
+                      className="flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-all duration-200"
+                    >
+                      <Landmark className="h-[18px] w-[18px] shrink-0" style={{ color: "hsl(var(--admin))" }} />
+                      {!collapsed && <span>Administrativo</span>}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

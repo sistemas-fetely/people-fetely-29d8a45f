@@ -2,7 +2,8 @@ import {
   LayoutDashboard, Wallet, ListTree, Receipt, FileBarChart2,
   TrendingUp, ArrowDownToLine, ArrowUpFromLine, Upload,
   FileSignature, Building2, ShieldCheck, FolderArchive,
-  Users, Monitor, Network, Landmark, LogOut,
+  Users, Monitor, Network, Landmark, LogOut, ClipboardList,
+  UsersRound, Settings2,
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { NavLink } from "@/components/NavLink";
@@ -36,6 +37,7 @@ const financeiroItems: MenuItem[] = [
   { title: "Contas a Pagar", url: "/administrativo/contas-pagar", icon: ArrowUpFromLine },
   { title: "Contas a Receber", url: "/administrativo/contas-receber", icon: ArrowDownToLine },
   { title: "Importar Dados", url: "/administrativo/importar", icon: Upload },
+  { title: "Configuração Integração", url: "/administrativo/configuracao-integracao", icon: Settings2 },
 ];
 
 const futurosItems: MenuItem[] = [
@@ -134,6 +136,44 @@ export function AdminFinanceiroSidebar() {
             </SidebarGroupLabel>
           )}
           <SidebarGroupContent>{renderItems(futurosItems)}</SidebarGroupContent>
+        </SidebarGroup>
+
+        <div className="mx-4 border-t border-sidebar-border/40" />
+        <SidebarGroup>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <NavLink
+                    to="/tarefas"
+                    end
+                    className={cn(
+                      "flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm transition-all duration-200",
+                      location.pathname === "/tarefas"
+                        ? "bg-admin/20 text-admin font-medium border-l-[3px] border-admin shadow-sm"
+                        : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                    )}
+                  >
+                    <ClipboardList className="h-[18px] w-[18px] shrink-0" />
+                    {!collapsed && <span>Minhas Tarefas</span>}
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              {roles.some((r) => ["gestor_direto", "gestor_rh", "admin_rh", "super_admin"].includes(r)) && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <NavLink
+                      to="/tarefas/time"
+                      className="flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-all duration-200"
+                    >
+                      <UsersRound className="h-[18px] w-[18px] shrink-0" />
+                      {!collapsed && <span>Tarefas do Time</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
+            </SidebarMenu>
+          </SidebarGroupContent>
         </SidebarGroup>
 
         <div className="mx-4 border-t border-sidebar-border/40" />

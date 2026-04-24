@@ -2943,6 +2943,99 @@ export type Database = {
         }
         Relationships: []
       }
+      integracoes_config: {
+        Row: {
+          access_token: string | null
+          ativo: boolean | null
+          client_id: string | null
+          client_secret: string | null
+          config: Json | null
+          created_at: string | null
+          id: string
+          refresh_token: string | null
+          sistema: string
+          token_expires_at: string | null
+          ultima_sync_at: string | null
+          ultima_sync_detalhes: string | null
+          ultima_sync_status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          access_token?: string | null
+          ativo?: boolean | null
+          client_id?: string | null
+          client_secret?: string | null
+          config?: Json | null
+          created_at?: string | null
+          id?: string
+          refresh_token?: string | null
+          sistema: string
+          token_expires_at?: string | null
+          ultima_sync_at?: string | null
+          ultima_sync_detalhes?: string | null
+          ultima_sync_status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          access_token?: string | null
+          ativo?: boolean | null
+          client_id?: string | null
+          client_secret?: string | null
+          config?: Json | null
+          created_at?: string | null
+          id?: string
+          refresh_token?: string | null
+          sistema?: string
+          token_expires_at?: string | null
+          ultima_sync_at?: string | null
+          ultima_sync_detalhes?: string | null
+          ultima_sync_status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      integracoes_sync_log: {
+        Row: {
+          created_at: string | null
+          detalhes: string | null
+          duracao_ms: number | null
+          id: string
+          iniciado_por: string
+          registros_atualizados: number | null
+          registros_criados: number | null
+          registros_erro: number | null
+          sistema: string
+          status: string
+          tipo: string
+        }
+        Insert: {
+          created_at?: string | null
+          detalhes?: string | null
+          duracao_ms?: number | null
+          id?: string
+          iniciado_por: string
+          registros_atualizados?: number | null
+          registros_criados?: number | null
+          registros_erro?: number | null
+          sistema: string
+          status?: string
+          tipo: string
+        }
+        Update: {
+          created_at?: string | null
+          detalhes?: string | null
+          duracao_ms?: number | null
+          id?: string
+          iniciado_por?: string
+          registros_atualizados?: number | null
+          registros_criados?: number | null
+          registros_erro?: number | null
+          sistema?: string
+          status?: string
+          tipo?: string
+        }
+        Relationships: []
+      }
       lancamentos_financeiros: {
         Row: {
           arquivo_importacao: string | null
