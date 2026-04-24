@@ -33,6 +33,7 @@ import {
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import type { Parametro } from "@/hooks/useParametros";
 import { usePerfisV2 } from "@/hooks/usePerfisV2";
+import ParametrosFinanceiroTab from "@/components/financeiro/ParametrosFinanceiroTab";
 
 interface CategoriaConfig {
   value: string;
@@ -68,6 +69,7 @@ const MODULO_MAP: Record<string, { label: string; categorias: CategoriaConfig[] 
   geral: { label: "Geral", categorias: CATEGORIAS_GERAL },
   clt: { label: "CLT", categorias: CATEGORIAS_CLT },
   pj: { label: "PJ", categorias: CATEGORIAS_PJ },
+  financeiro: { label: "Financeiro", categorias: [] },
 };
 
 /* ── Usage counts hook ── */
@@ -522,7 +524,9 @@ export default function Parametros() {
 
         {Object.entries(MODULO_MAP).map(([key]) => (
           <TabsContent key={key} value={key}>
-            {isLoading ? (
+            {key === "financeiro" ? (
+              <ParametrosFinanceiroTab />
+            ) : isLoading ? (
               <div className="flex justify-center py-12">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
               </div>
