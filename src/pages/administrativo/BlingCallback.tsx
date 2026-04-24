@@ -1,17 +1,20 @@
 import { useEffect, useRef } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 
 const CALLBACK_URL = "https://people-fetely.lovable.app/administrativo/bling-callback";
 
 export default function BlingCallback() {
   const [params] = useSearchParams();
   const navigate = useNavigate();
+  const { user, loading } = useAuth();
   const ran = useRef(false);
 
   useEffect(() => {
+    if (loading || !user) return;
     if (ran.current) return;
     ran.current = true;
 
@@ -86,7 +89,20 @@ export default function BlingCallback() {
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [loading, user]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-6 w-6 animate-spin" />
+        <span className="ml-2 text-muted-foreground">Finalizando autorização...</span>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
 
   return (
     <div className="flex flex-col items-center justify-center py-20 gap-3">

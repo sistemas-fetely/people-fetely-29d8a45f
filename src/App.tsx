@@ -378,6 +378,7 @@ const App = () => (
                 Pilar Administrativo (Financeiro, Contratos, Imóveis, Seguros, GED)
                 Acesso restrito a super_admin (Fase 1)
                 ═══════════════════════════════════════════════ */}
+            <Route path="/administrativo/bling-callback" element={<BlingCallback />} />
             <Route path="/administrativo" element={<AdminFinanceiroLayout />}>
               <Route index element={<DashboardFinanceiro />} />
               <Route path="plano-contas" element={<PlanoDeContas />} />
@@ -388,7 +389,6 @@ const App = () => (
               <Route path="contas-receber" element={<ContasReceber />} />
               <Route path="importar" element={<ImportarDados />} />
               <Route path="configuracao-integracao" element={<ConfiguracaoIntegracao />} />
-              <Route path="bling-callback" element={<BlingCallback />} />
               <Route path="contratos" element={<AdminContratos />} />
               <Route path="imoveis" element={<AdminImoveis />} />
               <Route path="seguros" element={<AdminSeguros />} />
