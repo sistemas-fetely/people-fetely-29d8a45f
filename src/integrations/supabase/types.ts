@@ -1390,6 +1390,7 @@ export type Database = {
           categoria_confirmada: boolean | null
           categoria_sugerida_ia: boolean | null
           centro_custo: string | null
+          comprovante_url: string | null
           conta_id: string | null
           created_at: string | null
           criado_por: string | null
@@ -1413,6 +1414,7 @@ export type Database = {
           nf_valor_produtos: number | null
           nf_xml_url: string | null
           observacao: string | null
+          observacao_pagamento: string | null
           origem: string | null
           parceiro_id: string | null
           parcela_atual: number | null
@@ -1423,6 +1425,7 @@ export type Database = {
           unidade: string | null
           updated_at: string | null
           valor: number
+          valor_pago: number | null
         }
         Insert: {
           aprovado_em?: string | null
@@ -1432,6 +1435,7 @@ export type Database = {
           categoria_confirmada?: boolean | null
           categoria_sugerida_ia?: boolean | null
           centro_custo?: string | null
+          comprovante_url?: string | null
           conta_id?: string | null
           created_at?: string | null
           criado_por?: string | null
@@ -1455,6 +1459,7 @@ export type Database = {
           nf_valor_produtos?: number | null
           nf_xml_url?: string | null
           observacao?: string | null
+          observacao_pagamento?: string | null
           origem?: string | null
           parceiro_id?: string | null
           parcela_atual?: number | null
@@ -1465,6 +1470,7 @@ export type Database = {
           unidade?: string | null
           updated_at?: string | null
           valor: number
+          valor_pago?: number | null
         }
         Update: {
           aprovado_em?: string | null
@@ -1474,6 +1480,7 @@ export type Database = {
           categoria_confirmada?: boolean | null
           categoria_sugerida_ia?: boolean | null
           centro_custo?: string | null
+          comprovante_url?: string | null
           conta_id?: string | null
           created_at?: string | null
           criado_por?: string | null
@@ -1497,6 +1504,7 @@ export type Database = {
           nf_valor_produtos?: number | null
           nf_xml_url?: string | null
           observacao?: string | null
+          observacao_pagamento?: string | null
           origem?: string | null
           parceiro_id?: string | null
           parcela_atual?: number | null
@@ -1507,6 +1515,7 @@ export type Database = {
           unidade?: string | null
           updated_at?: string | null
           valor?: number
+          valor_pago?: number | null
         }
         Relationships: [
           {

@@ -20,7 +20,7 @@ type LancRow = {
   tipo_lancamento: string;
   data_competencia: string | null;
   conta_id: string | null;
-  plano_contas?: { codigo: string | null; nome: string | null } | null;
+  plano_contas?: { codigo: string | null; nome: string | null; natureza: string | null; tipo: string | null } | null;
 };
 
 type RowKind = "header" | "subtotal" | "detalhe";
@@ -33,7 +33,7 @@ export default function DRE() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("lancamentos_financeiros")
-        .select("valor, tipo_lancamento, data_competencia, conta_id, plano_contas:conta_id(codigo,nome)");
+        .select("valor, tipo_lancamento, data_competencia, conta_id, plano_contas:conta_id(codigo,nome,natureza,tipo)");
       if (error) throw error;
       return (data || []) as unknown as LancRow[];
     },
@@ -62,43 +62,77 @@ export default function DRE() {
   }, [data, periodo]);
 
   const dre = useMemo(() => {
-    const sumByCodPrefix = (prefix: string, tipo: "credito" | "debito") =>
-      filtered
-        .filter((l) => l.plano_contas?.codigo?.startsWith(prefix) && l.tipo_lancamento === tipo)
-        .reduce((s, l) => s + Number(l.valor || 0), 0);
+    const sumWhere = (pred: (l: LancRow) => boolean) =>
+      filtered.filter(pred).reduce((s, l) => s + Number(l.valor || 0), 0);
 
-    const detalhesPorPrefix = (prefix: string, tipo: "credito" | "debito") => {
+    const detalhes = (pred: (l: LancRow) => boolean) => {
       const map = new Map<string, { codigo: string; nome: string; valor: number }>();
-      filtered
-        .filter((l) => l.plano_contas?.codigo?.startsWith(prefix) && l.tipo_lancamento === tipo)
-        .forEach((l) => {
-          const cod = l.plano_contas!.codigo!;
-          const key = cod.split(".").slice(0, 2).join(".");
-          const existing = map.get(key);
-          const nome = existing?.nome || l.plano_contas!.nome || key;
-          map.set(key, { codigo: key, nome, valor: (existing?.valor || 0) + Number(l.valor || 0) });
-        });
+      filtered.filter(pred).forEach((l) => {
+        const cod = l.plano_contas?.codigo || "";
+        const key = cod.split(".").slice(0, 2).join(".");
+        const existing = map.get(key);
+        const nome = existing?.nome || l.plano_contas?.nome || key;
+        map.set(key, { codigo: key, nome, valor: (existing?.valor || 0) + Number(l.valor || 0) });
+      });
       return Array.from(map.values()).sort((a, b) => a.codigo.localeCompare(b.codigo));
     };
 
-    const receitaBruta = sumByCodPrefix("01", "credito");
-    const receitasDet = detalhesPorPrefix("01", "credito");
-    const deducoes = sumByCodPrefix("02", "debito");
+    // Receita Bruta: 01.01.* (operacional, receita)
+    const receitaBruta = sumWhere(
+      (l) => !!l.plano_contas?.codigo?.startsWith("01.01") && l.tipo_lancamento === "credito"
+    );
+    const receitasDet = detalhes(
+      (l) => !!l.plano_contas?.codigo?.startsWith("01.01") && l.tipo_lancamento === "credito"
+    );
+    // Deduções: 01.02.* (natureza='deducao')
+    const deducoes = sumWhere(
+      (l) => !!l.plano_contas?.codigo?.startsWith("01.02") && l.tipo_lancamento === "debito"
+    );
     const receitaLiquida = receitaBruta - deducoes;
-    const custosDir = sumByCodPrefix("06", "debito");
+
+    // Custos Diretos / CPV: 06.*
+    const custosDir = sumWhere(
+      (l) => !!l.plano_contas?.codigo?.startsWith("06") && l.tipo_lancamento === "debito"
+    );
     const lucroBruto = receitaLiquida - custosDir;
-    const despesasInd = sumByCodPrefix("05", "debito");
-    const despesasDet = detalhesPorPrefix("05", "debito");
-    const resultadoOp = lucroBruto - despesasInd;
-    const resultadoFin = sumByCodPrefix("04", "credito") - sumByCodPrefix("04", "debito");
+
+    // Despesas Operacionais: 05.01..05.06 (exclui 05.07 que é financeira)
+    const despOpPrefixes = ["05.01", "05.02", "05.03", "05.04", "05.05", "05.06"];
+    const despesasOp = sumWhere(
+      (l) =>
+        !!l.plano_contas?.codigo &&
+        despOpPrefixes.some((p) => l.plano_contas!.codigo!.startsWith(p)) &&
+        l.tipo_lancamento === "debito"
+    );
+    const despesasDet = detalhes(
+      (l) =>
+        !!l.plano_contas?.codigo &&
+        despOpPrefixes.some((p) => l.plano_contas!.codigo!.startsWith(p)) &&
+        l.tipo_lancamento === "debito"
+    );
+    const resultadoOp = lucroBruto - despesasOp;
+
+    // Resultado Financeiro: tudo natureza='financeira' (receitas - despesas)
+    const recFinanceiras = sumWhere(
+      (l) => l.plano_contas?.natureza === "financeira" && l.tipo_lancamento === "credito"
+    );
+    const despFinanceiras = sumWhere(
+      (l) => l.plano_contas?.natureza === "financeira" && l.tipo_lancamento === "debito"
+    );
+    const resultadoFin = recFinanceiras - despFinanceiras;
     const resultadoAntesImp = resultadoOp + resultadoFin;
-    const impostos = sumByCodPrefix("08", "debito");
+
+    // Impostos: 08.*
+    const impostos = sumWhere(
+      (l) => !!l.plano_contas?.codigo?.startsWith("08") && l.tipo_lancamento === "debito"
+    );
     const resultadoLiq = resultadoAntesImp - impostos;
 
     return {
       receitaBruta, receitasDet, deducoes, receitaLiquida,
-      custosDir, lucroBruto, despesasInd, despesasDet,
-      resultadoOp, resultadoFin, resultadoAntesImp, impostos, resultadoLiq,
+      custosDir, lucroBruto, despesasOp, despesasDet,
+      resultadoOp, recFinanceiras, despFinanceiras, resultadoFin,
+      resultadoAntesImp, impostos, resultadoLiq,
     };
   }, [filtered]);
 
@@ -182,12 +216,14 @@ export default function DRE() {
               <Linha label="Receita Líquida" valor={dre.receitaLiquida} kind="subtotal" sinal="=" />
               <Linha label="Custos Diretos" valor={dre.custosDir} kind="header" sinal="-" />
               <Linha label="Lucro Bruto" valor={dre.lucroBruto} kind="subtotal" sinal="=" />
-              <Linha label="Despesas Operacionais" valor={dre.despesasInd} kind="header" sinal="-" />
+              <Linha label="Despesas Operacionais" valor={dre.despesasOp} kind="header" sinal="-" />
               {dre.despesasDet.map((d) => (
                 <Linha key={d.codigo} label={`${d.codigo} ${d.nome}`} valor={d.valor} kind="detalhe" sinal="-" indent={1} />
               ))}
               <Linha label="Resultado Operacional" valor={dre.resultadoOp} kind="subtotal" sinal="=" />
-              <Linha label="Resultado Financeiro" valor={dre.resultadoFin} kind="header" sinal="+/-" />
+              <Linha label="(+) Receitas Financeiras" valor={dre.recFinanceiras} kind="detalhe" sinal="+" indent={1} />
+              <Linha label="(-) Despesas Financeiras" valor={dre.despFinanceiras} kind="detalhe" sinal="-" indent={1} />
+              <Linha label="Resultado Financeiro" valor={dre.resultadoFin} kind="subtotal" sinal="=" />
               <Linha label="Resultado antes dos impostos" valor={dre.resultadoAntesImp} kind="subtotal" sinal="=" />
               <Linha label="Impostos" valor={dre.impostos} kind="header" sinal="-" />
               <Linha label="Resultado Líquido" valor={dre.resultadoLiq} kind="subtotal" sinal="=" highlightFinal />
