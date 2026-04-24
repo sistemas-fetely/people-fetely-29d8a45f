@@ -413,19 +413,19 @@ export default function Pessoas() {
                                 <Shield className="h-3.5 w-3.5" />
                               </Button>
                             )}
-                            {p.telefone_corporativo && (
+                            {p.telefone_exibicao && (
                               <Button
                                 variant="ghost"
                                 size="icon"
                                 className="h-7 w-7 text-muted-foreground hover:text-primary"
-                                title={`Telefone: ${p.telefone_corporativo}`}
+                                title={`Telefone: ${p.telefone_exibicao}`}
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   if (/Mobi|Android|iPhone/i.test(navigator.userAgent)) {
-                                    window.location.href = `tel:${p.telefone_corporativo}`;
+                                    window.location.href = `tel:${p.telefone_exibicao}`;
                                   } else {
-                                    navigator.clipboard.writeText(p.telefone_corporativo!);
-                                    toast.success(`Telefone copiado: ${p.telefone_corporativo}`);
+                                    navigator.clipboard.writeText(p.telefone_exibicao!);
+                                    toast.success(`Telefone copiado: ${p.telefone_exibicao}`);
                                   }
                                 }}
                               >
