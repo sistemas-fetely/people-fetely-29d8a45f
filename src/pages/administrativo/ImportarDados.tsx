@@ -88,7 +88,7 @@ export default function ImportarDados() {
                 Sincronizar com Bling
               </CardTitle>
               <CardDescription className="mt-1">
-                Importa categorias, contas a pagar e a receber direto da API.
+                Importa contas a receber, pedidos de venda e produtos do Bling.
                 {config?.ultima_sync_at && (
                   <span className="block mt-1">
                     Última sync:{" "}
