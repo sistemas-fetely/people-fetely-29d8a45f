@@ -367,6 +367,30 @@ export type Database = {
           },
         ]
       }
+      canais_venda: {
+        Row: {
+          ativo: boolean | null
+          codigo: string
+          created_at: string | null
+          id: string
+          nome: string
+        }
+        Insert: {
+          ativo?: boolean | null
+          codigo: string
+          created_at?: string | null
+          id?: string
+          nome: string
+        }
+        Update: {
+          ativo?: boolean | null
+          codigo?: string
+          created_at?: string | null
+          id?: string
+          nome?: string
+        }
+        Relationships: []
+      }
       candidato_avaliacoes: {
         Row: {
           avaliador_id: string
@@ -807,6 +831,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      centros_custo: {
+        Row: {
+          ativo: boolean | null
+          codigo: string
+          created_at: string | null
+          id: string
+          nome: string
+        }
+        Insert: {
+          ativo?: boolean | null
+          codigo: string
+          created_at?: string | null
+          id?: string
+          nome: string
+        }
+        Update: {
+          ativo?: boolean | null
+          codigo?: string
+          created_at?: string | null
+          id?: string
+          nome?: string
+        }
+        Relationships: []
       }
       classificacao_dados: {
         Row: {
@@ -1260,6 +1308,74 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      contas_pagar_receber: {
+        Row: {
+          bling_id: string | null
+          canal: string | null
+          centro_custo: string | null
+          conta_id: string | null
+          created_at: string | null
+          data_pagamento: string | null
+          data_vencimento: string
+          descricao: string
+          fornecedor_cliente: string | null
+          id: string
+          observacao: string | null
+          origem: string | null
+          status: string
+          tipo: string
+          unidade: string | null
+          updated_at: string | null
+          valor: number
+        }
+        Insert: {
+          bling_id?: string | null
+          canal?: string | null
+          centro_custo?: string | null
+          conta_id?: string | null
+          created_at?: string | null
+          data_pagamento?: string | null
+          data_vencimento: string
+          descricao: string
+          fornecedor_cliente?: string | null
+          id?: string
+          observacao?: string | null
+          origem?: string | null
+          status?: string
+          tipo: string
+          unidade?: string | null
+          updated_at?: string | null
+          valor: number
+        }
+        Update: {
+          bling_id?: string | null
+          canal?: string | null
+          centro_custo?: string | null
+          conta_id?: string | null
+          created_at?: string | null
+          data_pagamento?: string | null
+          data_vencimento?: string
+          descricao?: string
+          fornecedor_cliente?: string | null
+          id?: string
+          observacao?: string | null
+          origem?: string | null
+          status?: string
+          tipo?: string
+          unidade?: string | null
+          updated_at?: string | null
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contas_pagar_receber_conta_id_fkey"
+            columns: ["conta_id"]
+            isOneToOne: false
+            referencedRelation: "plano_contas"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       contrato_pj_acessos_sistemas: {
         Row: {
@@ -2791,6 +2907,110 @@ export type Database = {
           },
         ]
       }
+      importacoes_financeiras: {
+        Row: {
+          arquivo_nome: string
+          created_at: string | null
+          detalhes_erro: string | null
+          id: string
+          importado_por: string
+          registros_erro: number | null
+          registros_importados: number | null
+          status: string | null
+          tipo: string
+        }
+        Insert: {
+          arquivo_nome: string
+          created_at?: string | null
+          detalhes_erro?: string | null
+          id?: string
+          importado_por: string
+          registros_erro?: number | null
+          registros_importados?: number | null
+          status?: string | null
+          tipo: string
+        }
+        Update: {
+          arquivo_nome?: string
+          created_at?: string | null
+          detalhes_erro?: string | null
+          id?: string
+          importado_por?: string
+          registros_erro?: number | null
+          registros_importados?: number | null
+          status?: string | null
+          tipo?: string
+        }
+        Relationships: []
+      }
+      lancamentos_financeiros: {
+        Row: {
+          arquivo_importacao: string | null
+          bling_id: string | null
+          canal: string | null
+          centro_custo: string | null
+          conta_id: string
+          created_at: string | null
+          data_competencia: string
+          data_pagamento: string | null
+          descricao: string
+          fornecedor: string | null
+          id: string
+          observacao: string | null
+          origem: string | null
+          tipo_lancamento: string
+          unidade: string | null
+          updated_at: string | null
+          valor: number
+        }
+        Insert: {
+          arquivo_importacao?: string | null
+          bling_id?: string | null
+          canal?: string | null
+          centro_custo?: string | null
+          conta_id: string
+          created_at?: string | null
+          data_competencia: string
+          data_pagamento?: string | null
+          descricao: string
+          fornecedor?: string | null
+          id?: string
+          observacao?: string | null
+          origem?: string | null
+          tipo_lancamento: string
+          unidade?: string | null
+          updated_at?: string | null
+          valor: number
+        }
+        Update: {
+          arquivo_importacao?: string | null
+          bling_id?: string | null
+          canal?: string | null
+          centro_custo?: string | null
+          conta_id?: string
+          created_at?: string | null
+          data_competencia?: string
+          data_pagamento?: string | null
+          descricao?: string
+          fornecedor?: string | null
+          id?: string
+          observacao?: string | null
+          origem?: string | null
+          tipo_lancamento?: string
+          unidade?: string | null
+          updated_at?: string | null
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lancamentos_financeiros_conta_id_fkey"
+            columns: ["conta_id"]
+            isOneToOne: false
+            referencedRelation: "plano_contas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       movimentacoes: {
         Row: {
           cargo_anterior: string | null
@@ -3614,6 +3834,62 @@ export type Database = {
           nome?: string
         }
         Relationships: []
+      }
+      plano_contas: {
+        Row: {
+          ativo: boolean | null
+          bling_id: string | null
+          centro_custo: string | null
+          codigo: string
+          created_at: string | null
+          id: string
+          natureza: string | null
+          nivel: number
+          nome: string
+          origem: string | null
+          parent_id: string | null
+          tipo: string
+          updated_at: string | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          bling_id?: string | null
+          centro_custo?: string | null
+          codigo: string
+          created_at?: string | null
+          id?: string
+          natureza?: string | null
+          nivel?: number
+          nome: string
+          origem?: string | null
+          parent_id?: string | null
+          tipo: string
+          updated_at?: string | null
+        }
+        Update: {
+          ativo?: boolean | null
+          bling_id?: string | null
+          centro_custo?: string | null
+          codigo?: string
+          created_at?: string | null
+          id?: string
+          natureza?: string | null
+          nivel?: number
+          nome?: string
+          origem?: string | null
+          parent_id?: string | null
+          tipo?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plano_contas_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "plano_contas"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       politica_visibilidade_salario: {
         Row: {
