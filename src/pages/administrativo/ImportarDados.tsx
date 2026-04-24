@@ -1,7 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { RefreshCw, Loader2, Settings2, Upload } from "lucide-react";
@@ -9,10 +15,15 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useCategoriasPlano } from "@/hooks/useCategoriasPlano";
+import { ImportadorCsvQive } from "@/components/financeiro/ImportadorCsvQive";
+import { ImportadorXmlNFe } from "@/components/financeiro/ImportadorXmlNFe";
+import { ImportadorPdfDanfe } from "@/components/financeiro/ImportadorPdfDanfe";
 
 export default function ImportarDados() {
   const [syncing, setSyncing] = useState(false);
   const [syncResult, setSyncResult] = useState<any>(null);
+  const { data: categorias = [] } = useCategoriasPlano();
 
   const { data: config, refetch } = useQuery({
     queryKey: ["integracao-bling-status"],
@@ -31,21 +42,29 @@ export default function ImportarDados() {
   async function sync() {
     setSyncing(true);
     setSyncResult(null);
-    const { data, error } = await supabase.functions.invoke("sync-bling-financeiro", {
-      body: { tipo: "full" },
-    });
-    setSyncing(false);
-    if (error) {
-      toast.error("Falha: " + error.message);
-      return;
+    try {
+      // 3 chamadas sequenciais (cada tipo individualmente)
+      const tipos = ["categorias", "contas_pagar", "contas_receber"] as const;
+      const totals = { criados: 0, atualizados: 0, duracao_ms: 0 };
+      for (const tipo of tipos) {
+        const { data, error } = await supabase.functions.invoke(
+          "sync-bling-financeiro",
+          { body: { tipo } }
+        );
+        if (error) throw new Error(error.message);
+        if (data?.sucesso === false) throw new Error(data.erro || `Erro em ${tipo}`);
+        totals.criados += data?.criados || 0;
+        totals.atualizados += data?.atualizados || 0;
+        totals.duracao_ms += data?.duracao_ms || 0;
+      }
+      setSyncResult(totals);
+      toast.success("Sincronização concluída");
+      refetch();
+    } catch (e: any) {
+      toast.error("Falha: " + (e.message || e));
+    } finally {
+      setSyncing(false);
     }
-    if (data?.sucesso === false) {
-      toast.error(data.erro || "Erro");
-      return;
-    }
-    setSyncResult(data);
-    toast.success("Sincronização concluída");
-    refetch();
   }
 
   return (
@@ -56,7 +75,7 @@ export default function ImportarDados() {
           Importar Dados
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Sincronize automaticamente com o Bling ou importe via CSV.
+          Sincronize com o Bling ou importe NFs por CSV (Qive), XML ou PDF.
         </p>
       </div>
 
@@ -83,7 +102,12 @@ export default function ImportarDados() {
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">
-              <Badge variant={integracaoAtiva ? "default" : "outline"} className={integracaoAtiva ? "bg-emerald-600 hover:bg-emerald-600" : ""}>
+              <Badge
+                variant={integracaoAtiva ? "default" : "outline"}
+                className={
+                  integracaoAtiva ? "bg-success hover:bg-success text-success-foreground" : ""
+                }
+              >
                 {integracaoAtiva ? "Conectado" : "Desconectado"}
               </Badge>
               <Button
@@ -112,7 +136,7 @@ export default function ImportarDados() {
           )}
 
           {syncResult && (
-            <div className="mt-3 p-3 rounded-md bg-emerald-50 dark:bg-emerald-950/30 text-sm text-emerald-900 dark:text-emerald-200">
+            <div className="mt-3 p-3 rounded-md bg-success/10 text-sm text-success">
               ✅ {syncResult.criados} novos | 🔄 {syncResult.atualizados} atualizados | ⏱{" "}
               {syncResult.duracao_ms}ms
             </div>
@@ -120,16 +144,19 @@ export default function ImportarDados() {
         </CardContent>
       </Card>
 
-      {/* CSV — placeholder fase 2 */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Importação por CSV</CardTitle>
-          <CardDescription>
-            Os 4 cards de importação CSV (plano de contas, lançamentos, contas a pagar e a receber)
-            serão implementados na próxima fase como fallback à API do Bling.
-          </CardDescription>
-        </CardHeader>
-      </Card>
+      {/* Importadores de NF */}
+      <div>
+        <h2 className="text-lg font-semibold mb-1">Importar NFs</h2>
+        <p className="text-sm text-muted-foreground mb-3">
+          Categorização automática por regras (parceiro, NCM, descrição). NFs entram como
+          rascunho — você revisa antes de aprovar.
+        </p>
+        <div className="grid gap-4 md:grid-cols-1">
+          <ImportadorCsvQive categorias={categorias} />
+          <ImportadorXmlNFe categorias={categorias} />
+          <ImportadorPdfDanfe categorias={categorias} />
+        </div>
+      </div>
     </div>
   );
 }
