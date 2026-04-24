@@ -15,7 +15,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Link } from "react-router-dom";
-import { ArrowUpFromLine, Search, Upload } from "lucide-react";
+import { ArrowUpFromLine, Search, Upload, UserCheck } from "lucide-react";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
 import ContaPagarDetalheDrawer from "@/components/financeiro/ContaPagarDetalheDrawer";
 
