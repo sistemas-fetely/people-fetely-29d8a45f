@@ -91,6 +91,8 @@ import AdminSeguros from "@/pages/administrativo/Seguros";
 import AdminGED from "@/pages/administrativo/GED";
 import ConfiguracaoIntegracao from "@/pages/administrativo/ConfiguracaoIntegracao";
 import BlingCallback from "@/pages/administrativo/BlingCallback";
+import PedidosVenda from "@/pages/administrativo/PedidosVenda";
+import Produtos from "@/pages/administrativo/Produtos";
 
 const queryClient = new QueryClient();
 
