@@ -139,7 +139,7 @@ export default function ContaPagarDetalheDrawer({ contaId, onClose }: Props) {
               <div className="text-2xl font-bold mt-2">{formatBRL(conta.valor)}</div>
               {conta.origem === "nf_pj_interno" && nfPjId && (
                 <Link
-                  to={`/minhas-notas/${nfPjId}`}
+                  to={`/notas-fiscais/${nfPjId}`}
                   className="text-sm text-admin underline mt-1 inline-block"
                 >
                   Ver NF PJ original no People →
