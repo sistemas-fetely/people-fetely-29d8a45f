@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Edit, FileText, Building2, Calendar, DollarSign, Hash, Clock, ExternalLink, Mail, Send, CheckCircle2, ChevronRight, Upload, Download, Eye, Trash2, Loader2 as Loader2Icon } from "lucide-react";
+import { useParams, useNavigate, Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { ArrowLeft, Edit, FileText, Building2, Calendar, DollarSign, Hash, Clock, ExternalLink, Mail, Send, CheckCircle2, ChevronRight, Upload, Download, Eye, Trash2, Loader2 as Loader2Icon, Landmark } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SmartBackButton } from "@/components/SmartBackButton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -186,6 +187,22 @@ export default function NotaFiscalDetalhe() {
     fetchData();
   }, [id, navigate]);
 
+  // Verifica se já existe Conta a Pagar gerada automaticamente para esta NF (cross-módulo)
+  const { data: cpGerada } = useQuery({
+    queryKey: ["cp-from-nf-pj", nota?.numero, nota?.id],
+    enabled: !!nota?.numero,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("contas_pagar_receber")
+        .select("id, status")
+        .eq("origem", "nf_pj_interno")
+        .eq("nf_numero", nota!.numero!)
+        .limit(1)
+        .maybeSingle();
+      return data;
+    },
+  });
+
   if (loading) {
     return (
       <div className="flex justify-center items-center py-20">
@@ -287,13 +304,20 @@ export default function NotaFiscalDetalhe() {
         <div className="flex items-center gap-4">
           <SmartBackButton fallback="/notas-fiscais" fallbackLabel="Notas Fiscais" />
           <div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 flex-wrap">
               <h1 className="text-2xl font-bold tracking-tight">
                 NF {nota.numero}{nota.serie ? `/${nota.serie}` : ""}
               </h1>
               <Badge variant="outline" className={`text-sm ${statusStyles[nota.status] || ""}`}>
                 {statusMap[nota.status] || nota.status}
               </Badge>
+              {cpGerada && (
+                <Link to={`/administrativo/contas-pagar?conta=${cpGerada.id}`}>
+                  <Badge className="bg-admin/10 text-admin gap-1 hover:bg-admin/20 cursor-pointer">
+                    <Landmark className="h-3 w-3" /> Conta a pagar gerada automaticamente
+                  </Badge>
+                </Link>
+              )}
             </div>
             <p className="text-muted-foreground text-sm mt-0.5">
               Competência {formatCompetencia(nota.competencia)} · Emitida em {formatDate(nota.data_emissao)}

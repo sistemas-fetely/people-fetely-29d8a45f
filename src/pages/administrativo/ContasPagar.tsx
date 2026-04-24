@@ -15,7 +15,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Link } from "react-router-dom";
-import { ArrowUpFromLine, Search, Upload } from "lucide-react";
+import { ArrowUpFromLine, Search, Upload, UserCheck } from "lucide-react";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
 import ContaPagarDetalheDrawer from "@/components/financeiro/ContaPagarDetalheDrawer";
 
@@ -36,6 +36,7 @@ type Conta = {
   fornecedor_cliente: string | null;
   parceiro_id: string | null;
   conta_id: string | null;
+  origem: string | null;
   plano_contas?: { nome: string } | null;
   parceiros_comerciais?: { razao_social: string | null } | null;
 };
@@ -252,7 +253,16 @@ export default function ContasPagar() {
                           onClick={() => setContaIdSelecionada(c.id)}
                         >
                           <TableCell className="whitespace-nowrap">{formatDateBR(c.data_vencimento)}</TableCell>
-                          <TableCell className="max-w-xs truncate" title={c.descricao}>{c.descricao}</TableCell>
+                          <TableCell className="max-w-xs" title={c.descricao}>
+                            <div className="flex items-center gap-2 min-w-0">
+                              <span className="truncate">{c.descricao}</span>
+                              {c.origem === "nf_pj_interno" && (
+                                <Badge variant="outline" className="gap-1 text-[10px] py-0 px-1.5 shrink-0">
+                                  <UserCheck className="h-2.5 w-2.5" /> NF PJ
+                                </Badge>
+                              )}
+                            </div>
+                          </TableCell>
                           <TableCell>{c.parceiros_comerciais?.razao_social || c.fornecedor_cliente || "—"}</TableCell>
                           <TableCell className="text-muted-foreground text-xs">
                             {c.plano_contas?.nome || "—"}

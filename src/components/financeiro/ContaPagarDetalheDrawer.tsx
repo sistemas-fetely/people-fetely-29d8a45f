@@ -5,7 +5,8 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Check, FileText } from "lucide-react";
+import { Check, FileText, UserCheck } from "lucide-react";
+import { Link } from "react-router-dom";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
 import RegistrarPagamentoDialog from "./RegistrarPagamentoDialog";
 
@@ -97,6 +98,20 @@ export default function ContaPagarDetalheDrawer({ contaId, onClose }: Props) {
     },
   });
 
+  const { data: nfPjId } = useQuery({
+    queryKey: ["nf-pj-by-numero", conta?.nf_numero, conta?.origem],
+    enabled: !!conta && conta.origem === "nf_pj_interno" && !!conta.nf_numero,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("notas_fiscais_pj")
+        .select("id")
+        .eq("numero", conta!.nf_numero!)
+        .limit(1)
+        .maybeSingle();
+      return data?.id || null;
+    },
+  });
+
   return (
     <Sheet open={!!contaId} onOpenChange={(v) => !v && onClose()}>
       <SheetContent className="w-full sm:max-w-md overflow-y-auto">
@@ -108,8 +123,13 @@ export default function ContaPagarDetalheDrawer({ contaId, onClose }: Props) {
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <SheetTitle className="truncate">{conta.descricao}</SheetTitle>
-                  <SheetDescription>
-                    {conta.tipo === "pagar" ? "Conta a pagar" : "Conta a receber"}
+                  <SheetDescription className="flex items-center gap-2 flex-wrap">
+                    <span>{conta.tipo === "pagar" ? "Conta a pagar" : "Conta a receber"}</span>
+                    {conta.origem === "nf_pj_interno" && (
+                      <Badge variant="outline" className="gap-1 text-xs">
+                        <UserCheck className="h-3 w-3" /> NF PJ
+                      </Badge>
+                    )}
                   </SheetDescription>
                 </div>
                 <Badge className={STATUS_STYLE[conta.status] || "bg-muted"}>
@@ -117,6 +137,14 @@ export default function ContaPagarDetalheDrawer({ contaId, onClose }: Props) {
                 </Badge>
               </div>
               <div className="text-2xl font-bold mt-2">{formatBRL(conta.valor)}</div>
+              {conta.origem === "nf_pj_interno" && nfPjId && (
+                <Link
+                  to={`/notas-fiscais/${nfPjId}`}
+                  className="text-sm text-admin underline mt-1 inline-block"
+                >
+                  Ver NF PJ original no People →
+                </Link>
+              )}
             </SheetHeader>
 
             <Separator className="my-4" />
