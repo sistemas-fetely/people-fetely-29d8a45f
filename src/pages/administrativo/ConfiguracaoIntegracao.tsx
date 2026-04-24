@@ -142,62 +142,21 @@ export default function ConfiguracaoIntegracao() {
       const code = manualCode.trim();
       if (!code) throw new Error("Cole o código de autorização");
 
-      const { data: cfg, error: cfgErr } = await supabase
-        .from("integracoes_config")
-        .select("client_id, client_secret")
-        .eq("sistema", "bling")
-        .maybeSingle();
-
-      if (cfgErr) throw cfgErr;
-      if (!cfg?.client_id || !cfg?.client_secret) {
-        throw new Error("Credenciais não cadastradas");
-      }
-
-      const res = await fetch("https://www.bling.com.br/Api/v3/oauth/token", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-          Accept: "application/json",
-          Authorization: "Basic " + btoa(`${cfg.client_id}:${cfg.client_secret}`),
-        },
-        body: new URLSearchParams({
-          grant_type: "authorization_code",
+      // Chama Edge Function (servidor → Bling, sem CORS)
+      const { data, error } = await supabase.functions.invoke("sync-bling-financeiro", {
+        body: {
+          tipo: "token_exchange",
           code,
           redirect_uri: CALLBACK_URL,
-        }),
+        },
       });
 
-      if (!res.ok) {
-        const text = await res.text();
-        throw new Error(`Bling rejeitou: ${res.status} — ${text}`);
-      }
+      if (error) throw new Error(error.message || "Erro ao conectar com servidor");
+      if (data?.sucesso === false) throw new Error(data.erro || "Erro desconhecido");
 
-      const tokens = await res.json();
-
-      const { error: upErr } = await supabase
-        .from("integracoes_config")
-        .update({
-          access_token: tokens.access_token,
-          refresh_token: tokens.refresh_token,
-          token_expires_at: new Date(
-            Date.now() + (tokens.expires_in || 3600) * 1000,
-          ).toISOString(),
-          ativo: true,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("sistema", "bling");
-
-      if (upErr) throw upErr;
-
-      toast.success("Bling conectado com sucesso!");
+      toast.success(data?.mensagem || "Bling conectado com sucesso!");
       setShowManualAuth(false);
       setManualCode("");
-      setForm((f) => ({
-        ...f,
-        access_token: tokens.access_token,
-        refresh_token: tokens.refresh_token,
-        ativo: true,
-      }));
       qc.invalidateQueries({ queryKey: ["integracao-bling"] });
     } catch (e: any) {
       toast.error("Erro: " + (e?.message || String(e)));
@@ -228,54 +187,22 @@ export default function ConfiguracaoIntegracao() {
         }
         sessionStorage.removeItem("bling_oauth_state");
 
-        const { data: cfg, error: cfgErr } = await supabase
-          .from("integracoes_config")
-          .select("client_id, client_secret")
-          .eq("sistema", "bling")
-          .maybeSingle();
-
-        if (cfgErr) throw cfgErr;
-        if (!cfg?.client_id || !cfg?.client_secret) {
-          throw new Error("Client ID/Secret não cadastrados");
-        }
-
-        const res = await fetch("https://www.bling.com.br/Api/v3/oauth/token", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
-            Accept: "application/json",
-            Authorization: "Basic " + btoa(`${cfg.client_id}:${cfg.client_secret}`),
+        // Chama Edge Function para trocar code por tokens (sem CORS)
+        const { data: tokenData, error: tokenError } = await supabase.functions.invoke(
+          "sync-bling-financeiro",
+          {
+            body: {
+              tipo: "token_exchange",
+              code,
+              redirect_uri: CALLBACK_URL,
+            },
           },
-          body: new URLSearchParams({
-            grant_type: "authorization_code",
-            code,
-            redirect_uri: CALLBACK_URL,
-          }),
-        });
+        );
 
-        if (!res.ok) {
-          const text = await res.text();
-          throw new Error(`Bling rejeitou: ${res.status} ${text}`);
-        }
+        if (tokenError) throw new Error(tokenError.message || "Erro ao trocar tokens");
+        if (tokenData?.sucesso === false) throw new Error(tokenData.erro || "Erro desconhecido");
 
-        const tokens = await res.json();
-
-        const { error: upErr } = await supabase
-          .from("integracoes_config")
-          .update({
-            access_token: tokens.access_token,
-            refresh_token: tokens.refresh_token,
-            token_expires_at: new Date(
-              Date.now() + (tokens.expires_in || 3600) * 1000,
-            ).toISOString(),
-            ativo: true,
-            updated_at: new Date().toISOString(),
-          })
-          .eq("sistema", "bling");
-
-        if (upErr) throw upErr;
-
-        toast.success("Bling conectado com sucesso!");
+        toast.success(tokenData?.mensagem || "Bling conectado com sucesso!");
         qc.invalidateQueries({ queryKey: ["integracao-bling"] });
       } catch (e: any) {
         toast.error("Falha na autorização: " + (e?.message || String(e)));
