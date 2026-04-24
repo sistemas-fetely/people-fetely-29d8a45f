@@ -122,89 +122,10 @@ export default function ConfiguracaoIntegracao() {
       url.searchParams.set("response_type", "code");
       url.searchParams.set("client_id", form.client_id);
       url.searchParams.set("redirect_uri", CALLBACK_URL);
-      url.searchParams.set("state", "manual");
-      navigator.clipboard.writeText(url.toString()).catch(() => {});
-      toast.info(
-        "Link copiado! Cole em uma nova aba, autorize no Bling, e copie o código da URL de retorno.",
-      );
-      setShowManualAuth(true);
+      url.searchParams.set("state", "oauth");
+      window.open(url.toString(), "_blank");
     });
   }
-
-  async function processarCodeManual() {
-    setProcessingCode(true);
-    try {
-      const code = manualCode.trim();
-      if (!code) throw new Error("Cole o código de autorização");
-
-      // Chama Edge Function (servidor → Bling, sem CORS)
-      const { data, error } = await supabase.functions.invoke("sync-bling-financeiro", {
-        body: {
-          tipo: "token_exchange",
-          code,
-          redirect_uri: CALLBACK_URL,
-        },
-      });
-
-      if (error) throw new Error(error.message || "Erro ao conectar com servidor");
-      if (data?.sucesso === false) throw new Error(data.erro || "Erro desconhecido");
-
-      toast.success(data?.mensagem || "Bling conectado com sucesso!");
-      setShowManualAuth(false);
-      setManualCode("");
-      qc.invalidateQueries({ queryKey: ["integracao-bling"] });
-    } catch (e: any) {
-      toast.error("Erro: " + (e?.message || String(e)));
-    } finally {
-      setProcessingCode(false);
-    }
-  }
-
-  // Processar retorno do OAuth Bling (?code=...&state=...)
-  useEffect(() => {
-    const code = searchParams.get("code");
-    const state = searchParams.get("state");
-    const erroParam = searchParams.get("error");
-
-    if (!code && !erroParam) return;
-
-    // Limpar params imediatamente para evitar reprocessamento
-    setSearchParams({}, { replace: true });
-
-    (async () => {
-      try {
-        if (erroParam) throw new Error(`Bling negou: ${erroParam}`);
-        if (!code) throw new Error("Code não recebido");
-
-        const expectedState = sessionStorage.getItem("bling_oauth_state");
-        if (state && expectedState && state !== expectedState) {
-          throw new Error("State inválido (possível ataque CSRF)");
-        }
-        sessionStorage.removeItem("bling_oauth_state");
-
-        // Chama Edge Function para trocar code por tokens (sem CORS)
-        const { data: tokenData, error: tokenError } = await supabase.functions.invoke(
-          "sync-bling-financeiro",
-          {
-            body: {
-              tipo: "token_exchange",
-              code,
-              redirect_uri: CALLBACK_URL,
-            },
-          },
-        );
-
-        if (tokenError) throw new Error(tokenError.message || "Erro ao trocar tokens");
-        if (tokenData?.sucesso === false) throw new Error(tokenData.erro || "Erro desconhecido");
-
-        toast.success(tokenData?.mensagem || "Bling conectado com sucesso!");
-        qc.invalidateQueries({ queryKey: ["integracao-bling"] });
-      } catch (e: any) {
-        toast.error("Falha na autorização: " + (e?.message || String(e)));
-      }
-    })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const statusBadge = () => {
     if (!config?.ativo) return <Badge variant="outline">Desconectado</Badge>;
