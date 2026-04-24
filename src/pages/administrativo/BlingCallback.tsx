@@ -1,14 +1,16 @@
 import { useEffect, useRef } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 
 const CALLBACK_URL = "https://people-fetely.lovable.app/administrativo/bling-callback";
 
 export default function BlingCallback() {
   const [params] = useSearchParams();
   const navigate = useNavigate();
+  const { user, loading } = useAuth();
   const ran = useRef(false);
 
   useEffect(() => {
