@@ -6146,9 +6146,14 @@ export type Database = {
           updated_at: string
         }[]
       }
+      get_profile_id_from_user: { Args: { _user_id: string }; Returns: string }
       get_user_colaborador_tipo: {
         Args: { _user_id: string }
         Returns: string[]
+      }
+      get_user_id_from_profile: {
+        Args: { _profile_id: string }
+        Returns: string
       }
       get_user_roles: {
         Args: { _user_id: string }
@@ -6211,6 +6216,7 @@ export type Database = {
         Returns: number
       }
       nivel_rank: { Args: { _nivel: string }; Returns: number }
+      org_sync_in_progress: { Args: never; Returns: boolean }
       perfil_area_do_departamento: {
         Args: { _departamento_id: string }
         Returns: {
