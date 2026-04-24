@@ -33,6 +33,7 @@ import {
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import type { Parametro } from "@/hooks/useParametros";
 import { usePerfisV2 } from "@/hooks/usePerfisV2";
+import ParametrosFinanceiroTab from "@/components/financeiro/ParametrosFinanceiroTab";
 
 interface CategoriaConfig {
   value: string;
