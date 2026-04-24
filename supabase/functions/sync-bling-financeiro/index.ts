@@ -39,7 +39,67 @@ serve(async (req) => {
     if (!roles) throw new Error("Apenas super_admin pode sincronizar");
 
     // ========== Body ==========
-    const { tipo = "full" } = await req.json().catch(() => ({ tipo: "full" }));
+    const body = await req.json().catch(() => ({ tipo: "full" }));
+    const tipo = body.tipo || "full";
+    const oauthCode = body.code;
+    const oauthRedirectUri = body.redirect_uri;
+
+    // ========== TOKEN EXCHANGE (OAuth) ==========
+    if (tipo === "token_exchange" && oauthCode) {
+      const { data: cfg } = await supabase
+        .from("integracoes_config")
+        .select("client_id, client_secret")
+        .eq("sistema", "bling")
+        .maybeSingle();
+
+      if (!cfg?.client_id || !cfg?.client_secret) {
+        throw new Error("Client ID/Secret não cadastrados");
+      }
+
+      const tokenRes = await fetch(`${BLING_API_BASE}/oauth/token`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          Accept: "application/json",
+          Authorization: `Basic ${btoa(`${cfg.client_id}:${cfg.client_secret}`)}`,
+        },
+        body: new URLSearchParams({
+          grant_type: "authorization_code",
+          code: oauthCode,
+          redirect_uri:
+            oauthRedirectUri ||
+            "https://people-fetely.lovable.app/administrativo/configuracao-integracao",
+        }),
+      });
+
+      if (!tokenRes.ok) {
+        const text = await tokenRes.text();
+        throw new Error(`Bling rejeitou: ${tokenRes.status} — ${text}`);
+      }
+
+      const tokens = await tokenRes.json();
+
+      await supabase
+        .from("integracoes_config")
+        .update({
+          access_token: tokens.access_token,
+          refresh_token: tokens.refresh_token,
+          token_expires_at: new Date(
+            Date.now() + (tokens.expires_in || 3600) * 1000,
+          ).toISOString(),
+          ativo: true,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("sistema", "bling");
+
+      return new Response(
+        JSON.stringify({
+          sucesso: true,
+          mensagem: "Bling conectado com sucesso!",
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
 
     // ========== Config ==========
     const { data: config } = await supabase
