@@ -106,6 +106,10 @@ export default function Conciliacao() {
   const [showCriarRegra, setShowCriarRegra] = useState(false);
   const [regraDraft, setRegraDraft] = useState<{ padrao: string; categoriaId: string; categoriaNome: string } | null>(null);
 
+  // Ordenação na conciliação manual
+  const [ordenacaoMov, setOrdenacaoMov] = useState<"valor_asc" | "valor_desc" | "data_asc" | "data_desc">("valor_asc");
+  const [ordenacaoCp, setOrdenacaoCp] = useState<"valor_asc" | "valor_desc" | "venc_asc" | "venc_desc" | "fornecedor">("valor_asc");
+
   const { data: contasBanco = [] } = useQuery({
     queryKey: ["contas-bancarias-conciliacao"],
     queryFn: async () => {
