@@ -62,6 +62,9 @@ type ContaPagar = {
   fornecedor_cliente: string | null;
   nf_numero: string | null;
   nf_cnpj_emitente: string | null;
+  nf_chave_acesso: string | null;
+  forma_pagamento: string | null;
+  dados_enriquecidos_qive: boolean | null;
 };
 
 type MovComRegra = Movimentacao & { _regra_auto?: RegraExtrato };
