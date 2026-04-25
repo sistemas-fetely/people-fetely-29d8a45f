@@ -26,7 +26,7 @@ function sleep(ms: number) {
   return new Promise(function (resolve) { setTimeout(resolve, ms); });
 }
 
-async function blingGet(endpoint: string, accessToken: string): any {
+async function blingGet(endpoint: string, accessToken: string): Promise<any> {
   var url = BLING_BASE + endpoint;
   var res = await fetch(url, {
     method: "GET",
@@ -43,7 +43,7 @@ async function blingGet(endpoint: string, accessToken: string): any {
   return res.json();
 }
 
-async function refreshToken(supabase, config) {
+async function refreshToken(supabase: any, config: any) {
   var credentials = config.client_id + ":" + config.client_secret;
   var encoded = btoa(credentials);
   var params = new URLSearchParams();
@@ -73,7 +73,7 @@ async function refreshToken(supabase, config) {
 }
 
 // === SYNC: CONTAS A RECEBER ===
-async function syncContasReceber(supabase, accessToken, ultimaSync) {
+async function syncContasReceber(supabase: any, accessToken: string, ultimaSync: any) {
   var criados = 0, atualizados = 0, erros = 0;
   var pagina = 1;
   var temMais = true;
@@ -165,7 +165,7 @@ async function syncContasReceber(supabase, accessToken, ultimaSync) {
 }
 
 // === SYNC: PEDIDOS DE VENDA ===
-async function syncPedidos(supabase, accessToken, ultimaSync) {
+async function syncPedidos(supabase: any, accessToken: string, ultimaSync: any) {
   var criados = 0, atualizados = 0, erros = 0;
   var pagina = 1;
   var temMais = true;
@@ -253,7 +253,7 @@ async function syncPedidos(supabase, accessToken, ultimaSync) {
 }
 
 // === SYNC: PRODUTOS ===
-async function syncProdutos(supabase, accessToken) {
+async function syncProdutos(supabase: any, accessToken: string) {
   var criados = 0, atualizados = 0, erros = 0;
   var pagina = 1;
   var temMais = true;
