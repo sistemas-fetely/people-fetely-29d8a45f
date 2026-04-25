@@ -320,6 +320,20 @@ export function PreviewNFsImport({
                     <TableCell>
                       {nf._duplicata ? (
                         <Badge variant="secondary">Duplicada</Badge>
+                      ) : nf._match_pagamento ? (
+                        <div className="space-y-1">
+                          <Badge className="text-[10px] bg-blue-100 text-blue-800 hover:bg-blue-100 gap-1">
+                            <Link2 className="h-3 w-3" /> Vincular
+                          </Badge>
+                          <p className="text-[10px] text-muted-foreground line-clamp-2 max-w-[180px]">
+                            {nf._match_pagamento.conta_descricao}
+                          </p>
+                          {nf._match_pagamento.conta_docs_status && (
+                            <p className="text-[10px] text-blue-600">
+                              Docs: {nf._match_pagamento.conta_docs_status}
+                            </p>
+                          )}
+                        </div>
                       ) : expandido ? (
                         itensClassificados === (nf.itens?.length || 0) ? (
                           <Badge variant="outline" className="border-success text-success">
