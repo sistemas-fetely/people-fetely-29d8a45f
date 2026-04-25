@@ -240,6 +240,43 @@ export default function ContaPagarDetalheDrawer({ contaId, onClose }: Props) {
               </>
             )}
 
+            {itens && itens.length > 0 && temCategoriasMultiplas && (
+              <>
+                <Separator className="my-4" />
+                <div className="space-y-2">
+                  <p className="text-xs font-medium text-muted-foreground uppercase">
+                    Classificação por item
+                  </p>
+                  <div className="space-y-2">
+                    {itens.map((item) => (
+                      <div
+                        key={item.id}
+                        className="flex justify-between items-start gap-3 p-2 rounded bg-muted/50 text-xs"
+                      >
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium truncate">{item.descricao}</p>
+                          <p className="text-muted-foreground">
+                            NCM: {item.ncm || "—"}
+                            {item.quantidade != null && (
+                              <> · Qtd: {item.quantidade} {item.unidade || ""}</>
+                            )}
+                          </p>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <p className="font-medium">{formatBRL(item.valor_total || 0)}</p>
+                          <p className="text-muted-foreground">
+                            {item.plano_contas
+                              ? `${item.plano_contas.codigo || ""} ${item.plano_contas.nome || ""}`.trim()
+                              : "Sem categoria"}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+
             {conta.comprovante_url && (
               <>
                 <Separator className="my-4" />
