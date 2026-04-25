@@ -68,6 +68,7 @@ export interface NFParsed {
     conta_descricao: string;
     conta_status: string;
     conta_docs_status: string | null;
+    conta_categoria_id?: string | null;
   } | null;
 
   // Metadado de origem do import

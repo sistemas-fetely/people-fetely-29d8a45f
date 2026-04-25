@@ -15,6 +15,7 @@ interface ContaMatch {
   fornecedor_cliente: string | null;
   status: string;
   docs_status: string | null;
+  conta_id: string | null;
   _usado?: boolean;
 }
 
@@ -29,7 +30,7 @@ export async function buscarMatchPagamentos(nfs: NFParsed[]): Promise<NFParsed[]
     const { data } = await supabase
       .from("contas_pagar_receber")
       .select(
-        "id, valor, data_vencimento, nf_cnpj_emitente, nf_chave_acesso, fornecedor_cliente, status, docs_status",
+        "id, valor, data_vencimento, nf_cnpj_emitente, nf_chave_acesso, fornecedor_cliente, status, docs_status, conta_id",
       )
       .eq("tipo", "pagar")
       .is("nf_chave_acesso", null)
@@ -42,7 +43,7 @@ export async function buscarMatchPagamentos(nfs: NFParsed[]): Promise<NFParsed[]
   const { data: dataSemCnpj } = await supabase
     .from("contas_pagar_receber")
     .select(
-      "id, valor, data_vencimento, nf_cnpj_emitente, nf_chave_acesso, fornecedor_cliente, status, docs_status",
+      "id, valor, data_vencimento, nf_cnpj_emitente, nf_chave_acesso, fornecedor_cliente, status, docs_status, conta_id",
     )
     .eq("tipo", "pagar")
     .is("nf_chave_acesso", null)
@@ -125,5 +126,6 @@ function encontrarMatchPagamento(
     conta_descricao: `${melhor.conta.fornecedor_cliente || "—"} — R$ ${Number(melhor.conta.valor || 0).toFixed(2)}`,
     conta_status: melhor.conta.status,
     conta_docs_status: melhor.conta.docs_status,
+    conta_categoria_id: melhor.conta.conta_id,
   };
 }

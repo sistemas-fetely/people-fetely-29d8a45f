@@ -43,21 +43,31 @@ export async function importarNFs(nfs: NFParsed[]): Promise<ImportResult> {
       if (nf._match_pagamento) {
         const contaId = nf._match_pagamento.conta_id;
 
+        const updateData: Record<string, unknown> = {
+          nf_chave_acesso: nf.nf_chave_acesso || null,
+          nf_numero: nf.nf_numero || null,
+          nf_serie: nf.nf_serie || null,
+          nf_data_emissao: nf.nf_data_emissao || null,
+          nf_cnpj_emitente: nf.fornecedor_cnpj || null,
+          nf_valor_produtos: nf.nf_valor_produtos || nf.valor,
+          nf_valor_impostos: nf.nf_valor_impostos || 0,
+          nf_natureza_operacao: nf.nf_natureza_operacao || null,
+          nf_cfop: nf.nf_cfop || null,
+          nf_ncm: nf.nf_ncm || null,
+          updated_at: new Date().toISOString(),
+        };
+
+        // Se a conta existente não tem categoria, aplica a regra que matcheou na NF
+        if (!nf._match_pagamento.conta_categoria_id && nf._categoria_id) {
+          updateData.conta_id = nf._categoria_id;
+          updateData.centro_custo = nf._centro_custo || null;
+          updateData.categoria_sugerida_ia = true;
+          updateData.categoria_confirmada = false;
+        }
+
         const { error: upErr } = await supabase
           .from("contas_pagar_receber")
-          .update({
-            nf_chave_acesso: nf.nf_chave_acesso || null,
-            nf_numero: nf.nf_numero || null,
-            nf_serie: nf.nf_serie || null,
-            nf_data_emissao: nf.nf_data_emissao || null,
-            nf_cnpj_emitente: nf.fornecedor_cnpj || null,
-            nf_valor_produtos: nf.nf_valor_produtos || nf.valor,
-            nf_valor_impostos: nf.nf_valor_impostos || 0,
-            nf_natureza_operacao: nf.nf_natureza_operacao || null,
-            nf_cfop: nf.nf_cfop || null,
-            nf_ncm: nf.nf_ncm || null,
-            updated_at: new Date().toISOString(),
-          } as any)
+          .update(updateData as any)
           .eq("id", contaId);
 
         if (upErr) throw upErr;
@@ -160,7 +170,11 @@ export async function importarNFs(nfs: NFParsed[]): Promise<ImportResult> {
           descricao: `${nf.fornecedor_nome} — NF ${nf.nf_numero || "s/n"}`,
           valor: nf.valor,
           data_vencimento: nf.nf_data_emissao || new Date().toISOString().substring(0, 10),
-          status: "rascunho",
+          // Importação inteligente: completo → "aberto" (já validado), incompleto → "rascunho"
+          status:
+            categoriaContaPrincipal && nf.valor && (nf.fornecedor_cnpj || nf.fornecedor_nome)
+              ? "aberto"
+              : "rascunho",
           conta_id: categoriaContaPrincipal,
           centro_custo: centroCustoContaPrincipal,
           fornecedor_cliente: nf.fornecedor_nome,
