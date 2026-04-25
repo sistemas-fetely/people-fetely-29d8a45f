@@ -231,6 +231,7 @@ export function CategoriaCombobox({
                   >
                     <div
                       ref={isSelected ? selectedRef : undefined}
+                      data-selected-item={isSelected ? "true" : undefined}
                       className="flex items-center w-full"
                     >
                       <Check
