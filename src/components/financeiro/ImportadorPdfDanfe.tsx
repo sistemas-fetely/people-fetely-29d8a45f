@@ -102,12 +102,12 @@ export function ImportadorPdfDanfe({ categorias, onImported }: Props) {
     const selecionadas = preview.filter((n) => n._selecionada && !n._duplicata);
     const result = await importarNFs(selecionadas);
     setImporting(false);
-    if (result.sucesso > 0) {
-      toast.success(
-        `${result.sucesso} NF${result.sucesso === 1 ? "" : "s"} importada${
-          result.sucesso === 1 ? "" : "s"
-        }${result.erros > 0 ? ` (${result.erros} com erro)` : ""}`
-      );
+    if (result.sucesso > 0 || result.vinculadas > 0) {
+      const partes: string[] = [];
+      if (result.sucesso > 0) partes.push(`${result.sucesso} nova${result.sucesso === 1 ? "" : "s"}`);
+      if (result.vinculadas > 0) partes.push(`${result.vinculadas} vinculada${result.vinculadas === 1 ? "" : "s"} a existentes`);
+      if (result.erros > 0) partes.push(`${result.erros} erro${result.erros === 1 ? "" : "s"}`);
+      toast.success(`Importação: ${partes.join(", ")}`);
       setPreview([]);
       onImported?.();
     } else if (result.erros > 0) {
