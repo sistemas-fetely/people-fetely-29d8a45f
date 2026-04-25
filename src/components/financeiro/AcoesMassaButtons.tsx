@@ -132,17 +132,6 @@ export default function AcoesMassaButtons({ contas, onDone }: Props) {
         </Button>
       )}
 
-      {nAgendado > 0 && (
-        <Button
-          size="sm"
-          className="bg-green-700 hover:bg-green-800 text-white gap-1"
-          disabled={executando}
-          onClick={() => executarLote("pago", ["agendado"], "Pago em massa")}
-        >
-          <Check className="h-3.5 w-3.5" /> Pagar {nAgendado}
-        </Button>
-      )}
-
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button size="sm" variant="outline" className="gap-1" disabled={executando}>
