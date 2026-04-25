@@ -5,7 +5,20 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Check, FileText, UserCheck, Send, ThumbsUp, X, ShieldCheck, RotateCcw, Ban } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import {
+  Check,
+  FileText,
+  UserCheck,
+  Send,
+  ThumbsUp,
+  X,
+  ShieldCheck,
+  RotateCcw,
+  Clock,
+  ChevronDown,
+  CreditCard,
+} from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,6 +36,7 @@ import RegistrarPagamentoDialog from "./RegistrarPagamentoDialog";
 import StatusProgressBar from "./StatusProgressBar";
 import TimelineHistorico from "./TimelineHistorico";
 import EnviarPagamentoDialog from "./EnviarPagamentoDialog";
+import DocumentosCP from "./DocumentosCP";
 import { useContaWorkflow, type ContaStatus } from "@/hooks/useContaWorkflow";
 
 type Conta = {
@@ -52,9 +66,12 @@ type Conta = {
   parcelas?: number | null;
   email_pagamento_enviado?: boolean | null;
   enviado_pagamento_em?: string | null;
+  is_cartao?: boolean | null;
+  docs_status?: "ok" | "pendente" | "parcial" | null;
+  dados_bancarios_fornecedor?: { banco?: string; agencia?: string; conta?: string; pix?: string } | null;
   dados_pagamento_fornecedor?: { banco?: string; agencia?: string; conta?: string; pix?: string } | null;
   plano_contas?: { codigo?: string | null; nome?: string | null } | null;
-  formas_pagamento?: { nome?: string | null } | null;
+  formas_pagamento?: { nome?: string | null; codigo?: string | null } | null;
   parceiros_comerciais?: { razao_social?: string | null } | null;
 };
 
@@ -77,9 +94,8 @@ const STATUS_STYLE: Record<string, string> = {
   agendado: "bg-amber-100 text-amber-800 hover:bg-amber-100",
   pago: "bg-green-100 text-green-800 hover:bg-green-100",
   cancelado: "bg-gray-100 text-gray-700 hover:bg-gray-100",
+  conciliado: "bg-teal-100 text-teal-800 hover:bg-teal-100",
 };
-
-const PODE_PAGAR = new Set(["aberto", "atrasado", "aprovado", "agendado"]);
 
 interface Props {
   contaId: string | null;
@@ -98,7 +114,7 @@ export default function ContaPagarDetalheDrawer({ contaId, onClose }: Props) {
       const { data, error } = await supabase
         .from("contas_pagar_receber")
         .select(
-          "*, plano_contas:conta_id(codigo,nome), formas_pagamento:forma_pagamento_id(nome), parceiros_comerciais:parceiro_id(razao_social)"
+          "*, plano_contas:conta_id(codigo,nome), formas_pagamento:forma_pagamento_id(nome,codigo), parceiros_comerciais:parceiro_id(razao_social)"
         )
         .eq("id", contaId!)
         .single();
@@ -160,6 +176,21 @@ export default function ContaPagarDetalheDrawer({ contaId, onClose }: Props) {
     return cats.size > 1;
   })();
 
+  async function avancar(novoStatus: ContaStatus, observacao?: string) {
+    if (!conta) return;
+    await workflow.mudarStatus.mutateAsync({
+      contaId: conta.id,
+      statusAnterior: conta.status,
+      novoStatus,
+      observacao: observacao || undefined,
+    });
+    onClose();
+  }
+
+  const dadosBancarios =
+    conta?.dados_bancarios_fornecedor || conta?.dados_pagamento_fornecedor || null;
+  const isCartao = !!conta?.is_cartao;
+
   return (
     <Sheet open={!!contaId} onOpenChange={(v) => !v && onClose()}>
       <SheetContent className="w-full sm:max-w-md overflow-y-auto">
@@ -176,6 +207,11 @@ export default function ContaPagarDetalheDrawer({ contaId, onClose }: Props) {
                     {conta.origem === "nf_pj_interno" && (
                       <Badge variant="outline" className="gap-1 text-xs">
                         <UserCheck className="h-3 w-3" /> NF PJ
+                      </Badge>
+                    )}
+                    {isCartao && (
+                      <Badge variant="outline" className="gap-1 text-xs border-blue-300 text-blue-700">
+                        <CreditCard className="h-3 w-3" /> Cartão
                       </Badge>
                     )}
                   </SheetDescription>
@@ -196,11 +232,19 @@ export default function ContaPagarDetalheDrawer({ contaId, onClose }: Props) {
             </SheetHeader>
 
             <div className="mt-4">
-              <StatusProgressBar statusAtual={conta.status} />
+              <StatusProgressBar statusAtual={conta.status} isCartao={isCartao} />
             </div>
+
+            {isCartao && (conta.status === "rascunho" || conta.status === "aberto") && (
+              <div className="mt-3 p-2 rounded-md bg-blue-50 text-blue-700 text-[11px] flex items-center gap-2">
+                <CreditCard className="h-3 w-3" />
+                Cartão — já pago, aguarda conciliação com extrato
+              </div>
+            )}
 
             <Separator className="my-4" />
 
+            {/* Informações */}
             <div className="space-y-3 text-sm">
               <Linha label="Parceiro" value={conta.parceiros_comerciais?.razao_social || conta.fornecedor_cliente || "—"} />
               <Linha
@@ -239,16 +283,54 @@ export default function ContaPagarDetalheDrawer({ contaId, onClose }: Props) {
               )}
             </div>
 
-            {(conta.nf_chave_acesso || conta.nf_numero) && (
+            {/* Dados de pagamento (colapsável) */}
+            <Separator className="my-4" />
+            <Collapsible defaultOpen>
+              <CollapsibleTrigger className="flex items-center justify-between w-full text-left group">
+                <p className="text-xs font-medium text-muted-foreground uppercase">
+                  Dados de pagamento
+                </p>
+                <ChevronDown className="h-3 w-3 text-muted-foreground transition-transform group-data-[state=open]:rotate-180" />
+              </CollapsibleTrigger>
+              <CollapsibleContent className="mt-2 space-y-2 text-xs">
+                {isCartao ? (
+                  <div className="p-2 rounded bg-muted/50">
+                    <p className="text-muted-foreground">
+                      Pagamento via {conta.formas_pagamento?.nome || "cartão"} — sem dados bancários necessários.
+                    </p>
+                  </div>
+                ) : dadosBancarios ? (
+                  <div className="space-y-1">
+                    {dadosBancarios.banco && <Linha label="Banco" value={dadosBancarios.banco} />}
+                    {dadosBancarios.agencia && <Linha label="Agência" value={dadosBancarios.agencia} />}
+                    {dadosBancarios.conta && <Linha label="Conta" value={dadosBancarios.conta} />}
+                    {dadosBancarios.pix && <Linha label="PIX" value={<span className="font-mono">{dadosBancarios.pix}</span>} />}
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground">
+                    Nenhum dado bancário cadastrado. Será solicitado ao enviar para pagamento.
+                  </p>
+                )}
+              </CollapsibleContent>
+            </Collapsible>
+
+            {/* Documentos */}
+            <Separator className="my-4" />
+            <DocumentosCP
+              contaId={conta.id}
+              docsStatus={conta.docs_status || "pendente"}
+              nfChaveAcesso={conta.nf_chave_acesso}
+              nfNumero={conta.nf_numero}
+              origem={conta.origem}
+            />
+
+            {/* NF vinculada (com PDF/XML, links) */}
+            {(conta.nf_pdf_url || conta.nf_xml_url) && (
               <>
                 <Separator className="my-4" />
                 <div className="space-y-2">
-                  <p className="text-xs font-medium text-muted-foreground uppercase">NF vinculada</p>
-                  {conta.nf_numero && <Linha label="Número/Série" value={`${conta.nf_numero}${conta.nf_serie ? "/" + conta.nf_serie : ""}`} />}
-                  {conta.nf_chave_acesso && (
-                    <Linha label="Chave" value={<span className="font-mono text-[11px] break-all">{conta.nf_chave_acesso}</span>} />
-                  )}
-                  <div className="flex gap-2 pt-1">
+                  <p className="text-xs font-medium text-muted-foreground uppercase">Arquivos da NF</p>
+                  <div className="flex gap-2">
                     {conta.nf_pdf_url && (
                       <Button size="sm" variant="outline" asChild>
                         <a href={conta.nf_pdf_url} target="_blank" rel="noreferrer">PDF</a>
@@ -264,6 +346,7 @@ export default function ContaPagarDetalheDrawer({ contaId, onClose }: Props) {
               </>
             )}
 
+            {/* Itens com categorias múltiplas */}
             {itens && itens.length > 0 && temCategoriasMultiplas && (
               <>
                 <Separator className="my-4" />
@@ -301,6 +384,7 @@ export default function ContaPagarDetalheDrawer({ contaId, onClose }: Props) {
               </>
             )}
 
+            {/* Comprovante */}
             {conta.comprovante_url && (
               <>
                 <Separator className="my-4" />
@@ -319,175 +403,169 @@ export default function ContaPagarDetalheDrawer({ contaId, onClose }: Props) {
               </>
             )}
 
+            {/* AÇÕES DO WORKFLOW (adapta por is_cartao) */}
             {conta.tipo === "pagar" && (
               <>
                 <Separator className="my-4" />
                 <div className="space-y-3">
-                  {conta.status === "rascunho" && (
-                    <div className="space-y-2">
-                      <p className="text-xs text-muted-foreground">
-                        Revise os dados e valide para abrir esta conta.
-                      </p>
-                      <Button
-                        className="w-full bg-blue-700 hover:bg-blue-800 text-white gap-2"
-                        onClick={async () => {
-                          await workflow.mudarStatus.mutateAsync({
-                            contaId: conta.id,
-                            statusAnterior: conta.status,
-                            novoStatus: "aberto" as ContaStatus,
-                          });
-                          onClose();
-                        }}
-                      >
-                        <ShieldCheck className="h-4 w-4" /> Validar e abrir
-                      </Button>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button variant="ghost" className="w-full text-muted-foreground hover:text-red-600 gap-2">
-                            <Ban className="h-4 w-4" /> Cancelar esta conta
+                  {/* ===== WORKFLOW BOLETO/PIX/TRANSFERÊNCIA ===== */}
+                  {!isCartao && (
+                    <>
+                      {conta.status === "rascunho" && (
+                        <div className="space-y-2">
+                          <p className="text-xs text-muted-foreground">
+                            Revise os dados, docs e categoria. Valide para abrir.
+                          </p>
+                          <Button
+                            className="w-full bg-blue-700 hover:bg-blue-800 text-white gap-2"
+                            onClick={() => avancar("aberto")}
+                          >
+                            <ShieldCheck className="h-4 w-4" /> Validar e abrir
                           </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Cancelar esta conta?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              O status mudará para "Cancelado". Você poderá reverter depois se necessário.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Voltar</AlertDialogCancel>
-                            <AlertDialogAction
-                              className="bg-red-600 hover:bg-red-700 text-white"
-                              onClick={async () => {
-                                await workflow.mudarStatus.mutateAsync({
-                                  contaId: conta.id,
-                                  statusAnterior: conta.status,
-                                  novoStatus: "cancelado" as ContaStatus,
-                                  observacao: "Cancelado manualmente",
-                                });
-                                onClose();
-                              }}
+                          <div className="flex gap-2 justify-center pt-1">
+                            <button
+                              className="text-[11px] text-muted-foreground hover:text-foreground underline"
+                              onClick={() => avancar("aprovado", "Validado e aprovado direto")}
                             >
-                              Sim, cancelar
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
-                  )}
+                              Aprovar direto
+                            </button>
+                            <span className="text-[11px] text-muted-foreground">·</span>
+                            <button
+                              className="text-[11px] text-muted-foreground hover:text-foreground underline"
+                              onClick={() => avancar("pago", "Marcado como pago (retroativo)")}
+                            >
+                              Já foi pago
+                            </button>
+                          </div>
+                          <CancelarButton conta={conta} workflow={workflow} onClose={onClose} />
+                        </div>
+                      )}
 
-                  {(conta.status === "aberto" || conta.status === "atrasado") && (
-                    <div className="space-y-2">
-                      <p className={`text-xs ${conta.status === "atrasado" ? "text-red-600 font-medium" : "text-muted-foreground"}`}>
-                        {conta.status === "atrasado"
-                          ? "⚠️ Esta conta está atrasada. Aprove para enviar ao financeiro."
-                          : "Conta validada. Aprove para liberar o pagamento."}
-                      </p>
-                      <Button
-                        className="w-full bg-purple-700 hover:bg-purple-800 text-white gap-2"
-                        onClick={async () => {
-                          await workflow.mudarStatus.mutateAsync({
-                            contaId: conta.id,
-                            statusAnterior: conta.status,
-                            novoStatus: "aprovado" as ContaStatus,
-                          });
-                          onClose();
-                        }}
-                      >
-                        <ThumbsUp className="h-4 w-4" /> Aprovar pagamento
-                      </Button>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button variant="ghost" className="w-full text-muted-foreground hover:text-red-600 gap-2">
-                            <Ban className="h-4 w-4" /> Cancelar esta conta
+                      {(conta.status === "aberto" || conta.status === "atrasado") && (
+                        <div className="space-y-2">
+                          <p
+                            className={`text-xs ${conta.status === "atrasado" ? "text-red-600 font-medium" : "text-muted-foreground"}`}
+                          >
+                            {conta.status === "atrasado"
+                              ? "⚠ Atrasada! Aprove para enviar ao financeiro."
+                              : "Validada. Aprove para liberar."}
+                          </p>
+                          <Button
+                            className="w-full bg-purple-700 hover:bg-purple-800 text-white gap-2"
+                            onClick={() => avancar("aprovado")}
+                          >
+                            <ThumbsUp className="h-4 w-4" /> Aprovar pagamento
                           </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Cancelar esta conta?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              O status mudará para "Cancelado". Você poderá reverter depois se necessário.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Voltar</AlertDialogCancel>
-                            <AlertDialogAction
-                              className="bg-red-600 hover:bg-red-700 text-white"
-                              onClick={async () => {
-                                await workflow.mudarStatus.mutateAsync({
-                                  contaId: conta.id,
-                                  statusAnterior: conta.status,
-                                  novoStatus: "cancelado" as ContaStatus,
-                                  observacao: "Cancelado manualmente",
-                                });
-                                onClose();
-                              }}
+                          <div className="flex justify-center pt-1">
+                            <button
+                              className="text-[11px] text-muted-foreground hover:text-foreground underline"
+                              onClick={() => avancar("pago", "Marcado como pago (retroativo)")}
                             >
-                              Sim, cancelar
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
+                              Já foi pago
+                            </button>
+                          </div>
+                          <CancelarButton conta={conta} workflow={workflow} onClose={onClose} />
+                        </div>
+                      )}
+
+                      {conta.status === "aprovado" && (
+                        <div className="space-y-2">
+                          <p className="text-xs text-muted-foreground">
+                            Aprovado! Envie ao financeiro com todos os docs.
+                          </p>
+                          <Button
+                            className="w-full bg-amber-600 hover:bg-amber-700 text-white gap-2"
+                            onClick={() => setShowEnviar(true)}
+                          >
+                            <Send className="h-4 w-4" /> Enviar para pagamento
+                          </Button>
+                        </div>
+                      )}
+
+                      {conta.status === "agendado" && (
+                        <div className="space-y-2">
+                          <p className="text-xs text-muted-foreground">
+                            Enviado ao financeiro. Aguardando conciliação com extrato.
+                          </p>
+                          <div className="p-3 rounded-lg bg-amber-50 text-amber-700 text-sm flex items-center gap-2">
+                            <Clock className="h-4 w-4" /> Aguardando confirmação via extrato bancário
+                          </div>
+                          <button
+                            className="text-[11px] text-muted-foreground hover:text-foreground underline w-full text-center"
+                            onClick={() => setShowPag(true)}
+                          >
+                            Registrar pagamento manualmente (plano B)
+                          </button>
+                        </div>
+                      )}
+                    </>
                   )}
 
-                  {conta.status === "aprovado" && (
-                    <div className="space-y-2">
-                      <p className="text-xs text-muted-foreground">
-                        Aprovado! Envie para o financeiro externo realizar o pagamento.
-                      </p>
-                      <Button
-                        className="w-full bg-amber-600 hover:bg-amber-700 text-white gap-2"
-                        onClick={() => setShowEnviar(true)}
-                      >
-                        <Send className="h-4 w-4" /> Enviar para pagamento
-                      </Button>
-                    </div>
+                  {/* ===== WORKFLOW CARTÃO (já pago, pula etapas) ===== */}
+                  {isCartao && (
+                    <>
+                      {conta.status === "rascunho" && (
+                        <div className="space-y-2">
+                          <div className="p-3 rounded-lg bg-blue-50 text-blue-700 text-xs">
+                            💳 Pagamento por cartão — já realizado. Valide os dados e docs para encaminhar ao financeiro.
+                          </div>
+                          <Button
+                            className="w-full bg-blue-700 hover:bg-blue-800 text-white gap-2"
+                            onClick={() => avancar("aberto")}
+                          >
+                            <ShieldCheck className="h-4 w-4" /> Validar
+                          </Button>
+                          <CancelarButton conta={conta} workflow={workflow} onClose={onClose} />
+                        </div>
+                      )}
+
+                      {(conta.status === "aberto" || conta.status === "atrasado") && (
+                        <div className="space-y-2">
+                          <div className="p-3 rounded-lg bg-blue-50 text-blue-700 text-xs">
+                            💳 Cartão — envie os docs pro financeiro e aguarde conciliação do extrato.
+                          </div>
+                          <Button
+                            className="w-full bg-amber-600 hover:bg-amber-700 text-white gap-2"
+                            onClick={() => setShowEnviar(true)}
+                          >
+                            <Send className="h-4 w-4" /> Encaminhar docs ao financeiro
+                          </Button>
+                          <CancelarButton conta={conta} workflow={workflow} onClose={onClose} />
+                        </div>
+                      )}
+
+                      {conta.status === "agendado" && (
+                        <div className="space-y-2">
+                          <div className="p-3 rounded-lg bg-amber-50 text-amber-700 text-sm flex items-center gap-2">
+                            <Clock className="h-4 w-4" /> Aguardando conciliação com extrato do cartão
+                          </div>
+                        </div>
+                      )}
+                    </>
                   )}
 
-                  {conta.status === "agendado" && (
-                    <div className="space-y-2">
-                      <p className="text-xs text-muted-foreground">
-                        Enviado ao financeiro. Registre quando o pagamento for realizado.
-                      </p>
-                      <Button
-                        onClick={() => setShowPag(true)}
-                        className="w-full bg-green-700 hover:bg-green-800 text-white gap-2"
-                      >
-                        <Check className="h-4 w-4" /> Registrar pagamento
-                      </Button>
-                    </div>
-                  )}
-
+                  {/* ===== STATUS FINAIS (ambos fluxos) ===== */}
                   {conta.status === "pago" && (
-                    <div className="flex items-center gap-2 p-3 rounded-lg bg-green-50 text-green-700 text-sm">
+                    <div className="p-3 rounded-lg bg-green-50 text-green-700 text-sm flex items-center gap-2">
                       <Check className="h-4 w-4" /> Pago em {formatDateBR(conta.data_pagamento)}
                     </div>
                   )}
 
                   {conta.status === "conciliado" && (
-                    <div className="flex items-center gap-2 p-3 rounded-lg bg-teal-50 text-teal-700 text-sm">
+                    <div className="p-3 rounded-lg bg-teal-50 text-teal-700 text-sm flex items-center gap-2">
                       <ShieldCheck className="h-4 w-4" /> Conciliado
                     </div>
                   )}
 
                   {conta.status === "cancelado" && (
                     <div className="space-y-2">
-                      <div className="flex items-center gap-2 p-3 rounded-lg bg-gray-100 text-gray-700 text-sm">
-                        <Ban className="h-4 w-4" /> Cancelado
+                      <div className="p-3 rounded-lg bg-gray-100 text-gray-700 text-sm flex items-center gap-2">
+                        <X className="h-4 w-4" /> Cancelado
                       </div>
                       <Button
                         variant="outline"
                         className="w-full gap-2"
-                        onClick={async () => {
-                          await workflow.mudarStatus.mutateAsync({
-                            contaId: conta.id,
-                            statusAnterior: "cancelado",
-                            novoStatus: "rascunho" as ContaStatus,
-                            observacao: "Revertido para rascunho",
-                          });
-                          onClose();
-                        }}
+                        onClick={() => avancar("rascunho", "Revertido para rascunho")}
                       >
                         <RotateCcw className="h-4 w-4" /> Reverter para rascunho
                       </Button>
@@ -526,6 +604,54 @@ export default function ContaPagarDetalheDrawer({ contaId, onClose }: Props) {
         )}
       </SheetContent>
     </Sheet>
+  );
+}
+
+function CancelarButton({
+  conta,
+  workflow,
+  onClose,
+}: {
+  conta: { id: string; status: string };
+  workflow: ReturnType<typeof useContaWorkflow>;
+  onClose: () => void;
+}) {
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button
+          variant="ghost"
+          className="w-full text-red-500 hover:text-red-700 hover:bg-red-50 gap-2 text-xs"
+        >
+          <X className="h-3 w-3" /> Cancelar esta conta
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Cancelar esta conta?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Você poderá reverter depois se necessário.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Voltar</AlertDialogCancel>
+          <AlertDialogAction
+            className="bg-red-600 hover:bg-red-700 text-white"
+            onClick={async () => {
+              await workflow.mudarStatus.mutateAsync({
+                contaId: conta.id,
+                statusAnterior: conta.status,
+                novoStatus: "cancelado" as ContaStatus,
+                observacao: "Cancelado manualmente",
+              });
+              onClose();
+            }}
+          >
+            Sim, cancelar
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }
 
