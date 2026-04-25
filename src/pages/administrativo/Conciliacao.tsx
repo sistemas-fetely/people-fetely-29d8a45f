@@ -282,8 +282,8 @@ export default function Conciliacao() {
         return cps.sort((a, b) => b.data_vencimento.localeCompare(a.data_vencimento));
       case "fornecedor":
         return cps.sort((a, b) => {
-          const nomeA = (a as any).fornecedor_cliente || a.descricao || "";
-          const nomeB = (b as any).fornecedor_cliente || b.descricao || "";
+          const nomeA = a.fornecedor_cliente || a.descricao || "";
+          const nomeB = b.fornecedor_cliente || b.descricao || "";
           return nomeA.localeCompare(nomeB);
         });
       default:
