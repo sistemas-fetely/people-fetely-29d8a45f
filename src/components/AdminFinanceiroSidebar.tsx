@@ -41,6 +41,10 @@ const financeiroItems: MenuItem[] = [
   { title: "Configuração Integração", url: "/administrativo/configuracao-integracao", icon: Settings2 },
 ];
 
+const caixaBancoItems: MenuItem[] = [
+  { title: "Caixa e Banco", url: "/administrativo/caixa-banco", icon: Wallet },
+];
+
 const vendasBlingItems: MenuItem[] = [
   { title: "Pedidos de Venda", url: "/administrativo/pedidos", icon: ShoppingCart },
   { title: "Produtos", url: "/administrativo/produtos", icon: Package },
@@ -132,6 +136,16 @@ export function AdminFinanceiroSidebar() {
             </SidebarGroupLabel>
           )}
           <SidebarGroupContent>{renderItems(financeiroItems)}</SidebarGroupContent>
+        </SidebarGroup>
+
+        <div className="mx-4 border-t border-sidebar-border/40" />
+        <SidebarGroup>
+          {!collapsed && (
+            <SidebarGroupLabel className="text-sidebar-muted text-[10px] uppercase tracking-widest font-semibold mb-1 px-4">
+              Caixa e Banco
+            </SidebarGroupLabel>
+          )}
+          <SidebarGroupContent>{renderItems(caixaBancoItems)}</SidebarGroupContent>
         </SidebarGroup>
 
         <div className="mx-4 border-t border-sidebar-border/40" />

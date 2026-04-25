@@ -1336,6 +1336,57 @@ export type Database = {
         }
         Relationships: []
       }
+      contas_bancarias: {
+        Row: {
+          agencia: string | null
+          ativo: boolean | null
+          banco: string
+          banco_codigo: string | null
+          cor: string | null
+          created_at: string | null
+          id: string
+          moeda: string | null
+          nome_exibicao: string
+          numero_conta: string | null
+          saldo_atual: number | null
+          saldo_atualizado_em: string | null
+          tipo: string
+          updated_at: string | null
+        }
+        Insert: {
+          agencia?: string | null
+          ativo?: boolean | null
+          banco: string
+          banco_codigo?: string | null
+          cor?: string | null
+          created_at?: string | null
+          id?: string
+          moeda?: string | null
+          nome_exibicao: string
+          numero_conta?: string | null
+          saldo_atual?: number | null
+          saldo_atualizado_em?: string | null
+          tipo: string
+          updated_at?: string | null
+        }
+        Update: {
+          agencia?: string | null
+          ativo?: boolean | null
+          banco?: string
+          banco_codigo?: string | null
+          cor?: string | null
+          created_at?: string | null
+          id?: string
+          moeda?: string | null
+          nome_exibicao?: string
+          numero_conta?: string | null
+          saldo_atual?: number | null
+          saldo_atualizado_em?: string | null
+          tipo?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       contas_pagar_historico: {
         Row: {
           conta_id: string
@@ -3191,6 +3242,56 @@ export type Database = {
           },
         ]
       }
+      importacoes_extrato: {
+        Row: {
+          arquivo_nome: string
+          conta_bancaria_id: string
+          created_at: string | null
+          formato: string | null
+          id: string
+          importado_por: string
+          periodo_fim: string | null
+          periodo_inicio: string | null
+          registros_duplicados: number | null
+          registros_erro: number | null
+          registros_importados: number | null
+        }
+        Insert: {
+          arquivo_nome: string
+          conta_bancaria_id: string
+          created_at?: string | null
+          formato?: string | null
+          id?: string
+          importado_por: string
+          periodo_fim?: string | null
+          periodo_inicio?: string | null
+          registros_duplicados?: number | null
+          registros_erro?: number | null
+          registros_importados?: number | null
+        }
+        Update: {
+          arquivo_nome?: string
+          conta_bancaria_id?: string
+          created_at?: string | null
+          formato?: string | null
+          id?: string
+          importado_por?: string
+          periodo_fim?: string | null
+          periodo_inicio?: string | null
+          registros_duplicados?: number | null
+          registros_erro?: number | null
+          registros_importados?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "importacoes_extrato_conta_bancaria_id_fkey"
+            columns: ["conta_bancaria_id"]
+            isOneToOne: false
+            referencedRelation: "contas_bancarias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       importacoes_financeiras: {
         Row: {
           arquivo_nome: string
@@ -3462,6 +3563,94 @@ export type Database = {
             columns: ["contrato_pj_id"]
             isOneToOne: false
             referencedRelation: "contratos_pj"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      movimentacoes_bancarias: {
+        Row: {
+          centro_custo: string | null
+          conciliado: boolean | null
+          conciliado_em: string | null
+          conciliado_por: string | null
+          conta_bancaria_id: string
+          conta_pagar_id: string | null
+          conta_plano_id: string | null
+          created_at: string | null
+          data_balancete: string | null
+          data_transacao: string
+          descricao: string
+          hash_unico: string | null
+          id: string
+          id_transacao_banco: string | null
+          importacao_id: string | null
+          origem: string | null
+          saldo_pos_transacao: number | null
+          tipo: string | null
+          valor: number
+        }
+        Insert: {
+          centro_custo?: string | null
+          conciliado?: boolean | null
+          conciliado_em?: string | null
+          conciliado_por?: string | null
+          conta_bancaria_id: string
+          conta_pagar_id?: string | null
+          conta_plano_id?: string | null
+          created_at?: string | null
+          data_balancete?: string | null
+          data_transacao: string
+          descricao: string
+          hash_unico?: string | null
+          id?: string
+          id_transacao_banco?: string | null
+          importacao_id?: string | null
+          origem?: string | null
+          saldo_pos_transacao?: number | null
+          tipo?: string | null
+          valor: number
+        }
+        Update: {
+          centro_custo?: string | null
+          conciliado?: boolean | null
+          conciliado_em?: string | null
+          conciliado_por?: string | null
+          conta_bancaria_id?: string
+          conta_pagar_id?: string | null
+          conta_plano_id?: string | null
+          created_at?: string | null
+          data_balancete?: string | null
+          data_transacao?: string
+          descricao?: string
+          hash_unico?: string | null
+          id?: string
+          id_transacao_banco?: string | null
+          importacao_id?: string | null
+          origem?: string | null
+          saldo_pos_transacao?: number | null
+          tipo?: string | null
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "movimentacoes_bancarias_conta_bancaria_id_fkey"
+            columns: ["conta_bancaria_id"]
+            isOneToOne: false
+            referencedRelation: "contas_bancarias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "movimentacoes_bancarias_conta_pagar_id_fkey"
+            columns: ["conta_pagar_id"]
+            isOneToOne: false
+            referencedRelation: "contas_pagar_receber"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "movimentacoes_bancarias_conta_plano_id_fkey"
+            columns: ["conta_plano_id"]
+            isOneToOne: false
+            referencedRelation: "plano_contas"
             referencedColumns: ["id"]
           },
         ]
