@@ -102,10 +102,16 @@ export function ImportadorCsvQive({ categorias, onImported }: Props) {
             : processarCsvResumo(rows);
           nfs = nfs.map((n) => aplicarRegras(n, regras));
           nfs = await verificarDuplicatas(nfs);
+          // Buscar matches com pagamentos existentes (sem NF)
+          nfs = await buscarMatchPagamentos(nfs);
           // Pré-selecionar todas as não-duplicadas
           nfs = nfs.map((n) => ({ ...n, _selecionada: !n._duplicata }));
           setPreview(nfs);
-          toast.success(`${nfs.length} NFs lidas. Revise antes de importar.`);
+          const nVinc = nfs.filter((n) => n._match_pagamento).length;
+          const msg = nVinc > 0
+            ? `${nfs.length} NFs lidas — ${nVinc} vão vincular a pagamentos existentes.`
+            : `${nfs.length} NFs lidas. Revise antes de importar.`;
+          toast.success(msg);
         } catch (err: any) {
           toast.error("Erro ao processar CSV: " + (err.message || err));
         } finally {
