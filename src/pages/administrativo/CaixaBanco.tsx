@@ -1,30 +1,21 @@
 import { useState, useMemo } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  Select, SelectContent, SelectItem, SelectValue,
 } from "@/components/ui/select";
-import {
-  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
-} from "@/components/ui/dialog";
-import { ArrowDownLeft, ArrowUpRight, Building2, CheckCircle2, Loader2, Sparkles, Upload, Wallet, X } from "lucide-react";
-import { toast } from "sonner";
+import { ArrowDownLeft, ArrowUpRight, Building2, CheckCircle2, Upload, Wallet, X } from "lucide-react";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
-import { parseOFX } from "@/lib/financeiro/ofx-parser";
-import { parseCsvItau } from "@/lib/financeiro/csv-itau-parser";
-import { parseCsvSafra } from "@/lib/financeiro/csv-safra-parser";
-import { gerarHashMov } from "@/lib/financeiro/hash-mov";
-import { useRegrasCategorizacao } from "@/hooks/useRegrasCategorizacao";
+import { useFiltrosPersistentes } from "@/hooks/useFiltrosPersistentes";
+import { FilterSelectTrigger } from "@/components/ui/filter-select-trigger";
+import { ImportarExtratoDialog } from "@/components/financeiro/ImportarExtratoDialog";
 
 // KPI CANDIDATO: Saldo por conta bancária (snapshot diário)
 // KPI CANDIDATO: % de movimentações conciliadas no mês
