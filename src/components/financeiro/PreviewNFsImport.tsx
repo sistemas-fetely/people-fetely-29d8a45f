@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Loader2, Download, AlertTriangle, X } from "lucide-react";
+import { Loader2, Download, AlertTriangle, X, ListTree, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -11,9 +11,17 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { CategoriaCombobox, type CategoriaOption } from "@/components/financeiro/CategoriaCombobox";
 import { CriarRegraDialog } from "@/components/financeiro/CriarRegraDialog";
-import type { NFParsed } from "@/lib/financeiro/types";
+import { aplicarRegrasItem, useRegrasCategorizacao } from "@/hooks/useRegrasCategorizacao";
+import type { ItemNFParsed, NFParsed } from "@/lib/financeiro/types";
+import { cn } from "@/lib/utils";
 
 interface Props {
   nfs: NFParsed[];
@@ -23,6 +31,9 @@ interface Props {
   onClear?: () => void;
   importing: boolean;
 }
+
+const formatBRL = (v: number) =>
+  new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v || 0);
 
 export function PreviewNFsImport({
   nfs,
@@ -36,6 +47,7 @@ export function PreviewNFsImport({
   const [regraNF, setRegraNF] = useState<NFParsed | null>(null);
   const [regraCategoriaId, setRegraCategoriaId] = useState<string | null>(null);
   const [regraCategoriaNome, setRegraCategoriaNome] = useState<string | null>(null);
+  const { data: regras } = useRegrasCategorizacao();
 
   const visibleIdx = useMemo(() => {
     return nfs
@@ -92,9 +104,49 @@ export function PreviewNFsImport({
     }
   }
 
+  function toggleExpandirItens(idx: number) {
+    onChange(
+      nfs.map((n, i) => {
+        if (i !== idx) return n;
+        const expandir = !n._expandirItens;
+        let itens = n.itens;
+        if (expandir && itens) {
+          // Aplica regras nos itens que ainda não têm categoria
+          itens = itens.map((it) => (it._categoria_id ? it : aplicarRegrasItem(it, regras)));
+        }
+        return { ...n, _expandirItens: expandir, itens };
+      }),
+    );
+  }
+
+  function setCategoriaItem(
+    nfIdx: number,
+    itemIdx: number,
+    categoriaId: string | null,
+  ) {
+    const opt = categoriaId ? categorias.find((c) => c.id === categoriaId) || null : null;
+    onChange(
+      nfs.map((n, i) => {
+        if (i !== nfIdx || !n.itens) return n;
+        const novosItens = n.itens.map((it, j) =>
+          j !== itemIdx
+            ? it
+            : {
+                ...it,
+                _categoria_id: categoriaId,
+                _categoria_nome: opt ? `${opt.codigo} — ${opt.nome}` : null,
+                _regra_origem: "manual" as const,
+              },
+        );
+        return { ...n, itens: novosItens };
+      }),
+    );
+  }
+
   if (nfs.length === 0) return null;
 
   return (
+    <TooltipProvider delayDuration={150}>
     <div className="mt-4 space-y-3">
       <div className="flex flex-wrap items-center gap-3 text-sm">
         <Badge variant="outline">{nfs.length} NFs</Badge>
@@ -133,85 +185,209 @@ export function PreviewNFsImport({
               <TableHead>Data</TableHead>
               <TableHead className="text-right">Valor</TableHead>
               <TableHead className="min-w-[260px]">Categoria</TableHead>
+              <TableHead className="w-10 text-center">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="inline-flex">
+                      <ListTree className="h-4 w-4 text-muted-foreground" />
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent>Classificar itens individualmente</TooltipContent>
+                </Tooltip>
+              </TableHead>
               <TableHead>Status</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {visibleIdx.map(({ nf, i }) => (
-              <TableRow
-                key={`${nf.nf_chave_acesso || nf.nf_numero}-${i}`}
-                className={
-                  nf._duplicata
-                    ? "opacity-50"
-                    : !nf._categoria_id
-                    ? "bg-muted/40"
-                    : ""
-                }
-              >
-                <TableCell>
-                  <Checkbox
-                    checked={!!nf._selecionada}
-                    disabled={nf._duplicata}
-                    onCheckedChange={() => toggleOne(i)}
-                  />
-                </TableCell>
-                <TableCell>
-                  <div className="text-sm font-medium">{nf.fornecedor_nome}</div>
-                  {nf.fornecedor_cnpj && (
-                    <div className="text-xs text-muted-foreground font-mono">
-                      {nf.fornecedor_cnpj}
-                    </div>
-                  )}
-                </TableCell>
-                <TableCell className="text-xs">
-                  <div>{nf.nf_numero || "—"}</div>
-                  {nf.nf_serie && (
-                    <div className="text-muted-foreground">Série {nf.nf_serie}</div>
-                  )}
-                </TableCell>
-                <TableCell className="text-xs">{nf.nf_data_emissao || "—"}</TableCell>
-                <TableCell className="text-right font-mono text-sm">
-                  {nf.valor.toLocaleString("pt-BR", {
-                    style: "currency",
-                    currency: "BRL",
-                  })}
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-1">
-                    <div className="flex-1 min-w-0">
-                      <CategoriaCombobox
-                        options={categorias}
-                        value={nf._categoria_id || null}
-                        onChange={(id) => setCategoria(i, id)}
-                        placeholder="Definir conta"
-                      />
-                    </div>
-                    {nf._regra_origem && (
-                      <Badge variant="outline" className="text-[10px] shrink-0">
-                        {nf._regra_origem === "parceiro"
-                          ? "por parceiro"
-                          : nf._regra_origem === "ncm"
-                          ? "por NCM"
-                          : "por texto"}
-                      </Badge>
+            {visibleIdx.map(({ nf, i }) => {
+              const temItens = !!(nf.itens && nf.itens.length > 1);
+              const expandido = !!nf._expandirItens;
+              const itensClassificados = expandido && nf.itens
+                ? nf.itens.filter((it) => it._categoria_id).length
+                : 0;
+              return (
+                <>
+                  <TableRow
+                    key={`${nf.nf_chave_acesso || nf.nf_numero}-${i}`}
+                    className={cn(
+                      nf._duplicata && "opacity-50",
+                      !nf._duplicata && !nf._categoria_id && !expandido && "bg-muted/40",
+                      expandido && "bg-admin/5",
                     )}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  {nf._duplicata ? (
-                    <Badge variant="secondary">Duplicada</Badge>
-                  ) : !nf._categoria_id ? (
-                    <Badge variant="outline" className="border-warning text-warning">
-                      Sem categoria
-                    </Badge>
-                  ) : (
-                    <Badge variant="outline" className="border-success text-success">
-                      Pronta
-                    </Badge>
-                  )}
-                </TableCell>
-              </TableRow>
-            ))}
+                  >
+                    <TableCell>
+                      <Checkbox
+                        checked={!!nf._selecionada}
+                        disabled={nf._duplicata}
+                        onCheckedChange={() => toggleOne(i)}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <div className="text-sm font-medium">{nf.fornecedor_nome}</div>
+                      {nf.fornecedor_cnpj && (
+                        <div className="text-xs text-muted-foreground font-mono">
+                          {nf.fornecedor_cnpj}
+                        </div>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-xs">
+                      <div>{nf.nf_numero || "—"}</div>
+                      {nf.nf_serie && (
+                        <div className="text-muted-foreground">Série {nf.nf_serie}</div>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-xs">{nf.nf_data_emissao || "—"}</TableCell>
+                    <TableCell className="text-right font-mono text-sm">
+                      {nf.valor.toLocaleString("pt-BR", {
+                        style: "currency",
+                        currency: "BRL",
+                      })}
+                    </TableCell>
+                    <TableCell>
+                      {expandido ? (
+                        <div className="flex items-center gap-2">
+                          <Badge
+                            variant="outline"
+                            className="text-[10px] bg-admin/10 text-admin border-admin/30"
+                          >
+                            Múltiplas categorias
+                          </Badge>
+                          <span className="text-[10px] text-muted-foreground">
+                            {itensClassificados}/{nf.itens?.length || 0} classificados
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1">
+                          <div className="flex-1 min-w-0">
+                            <CategoriaCombobox
+                              options={categorias}
+                              value={nf._categoria_id || null}
+                              onChange={(id) => setCategoria(i, id)}
+                              placeholder="Definir conta"
+                            />
+                          </div>
+                          {nf._regra_origem && (
+                            <Badge variant="outline" className="text-[10px] shrink-0">
+                              {nf._regra_origem === "parceiro"
+                                ? "por parceiro"
+                                : nf._regra_origem === "ncm"
+                                ? "por NCM"
+                                : "por texto"}
+                            </Badge>
+                          )}
+                        </div>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {temItens && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button
+                              type="button"
+                              onClick={() => toggleExpandirItens(i)}
+                              className={cn(
+                                "p-1 rounded transition-colors",
+                                expandido
+                                  ? "bg-admin/15 text-admin"
+                                  : "text-muted-foreground hover:text-foreground hover:bg-muted",
+                              )}
+                            >
+                              <ListTree className="h-4 w-4" />
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            {expandido
+                              ? "Voltar para categoria única"
+                              : `Classificar ${nf.itens?.length} itens individualmente`}
+                          </TooltipContent>
+                        </Tooltip>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {nf._duplicata ? (
+                        <Badge variant="secondary">Duplicada</Badge>
+                      ) : expandido ? (
+                        itensClassificados === (nf.itens?.length || 0) ? (
+                          <Badge variant="outline" className="border-success text-success">
+                            Pronta
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="border-warning text-warning">
+                            Parcial
+                          </Badge>
+                        )
+                      ) : !nf._categoria_id ? (
+                        <Badge variant="outline" className="border-warning text-warning">
+                          Sem categoria
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="border-success text-success">
+                          Pronta
+                        </Badge>
+                      )}
+                    </TableCell>
+                  </TableRow>
+
+                  {expandido && nf.itens?.map((item, idx) => (
+                    <TableRow
+                      key={`${nf.nf_chave_acesso || nf.nf_numero}-${i}-item-${idx}`}
+                      className="bg-muted/30 hover:bg-muted/40"
+                    >
+                      <TableCell></TableCell>
+                      <TableCell>
+                        <div className="pl-6 flex items-start gap-2">
+                          <Package className="h-3 w-3 text-muted-foreground flex-shrink-0 mt-0.5" />
+                          <div className="min-w-0">
+                            <p className="text-xs font-medium truncate">{item.descricao}</p>
+                            <p className="text-[10px] text-muted-foreground">
+                              NCM: {item.ncm || "—"}
+                              {item.quantidade != null && (
+                                <> · {item.quantidade} {item.unidade || ""}</>
+                              )}
+                            </p>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell></TableCell>
+                      <TableCell></TableCell>
+                      <TableCell className="text-right text-xs font-mono">
+                        {formatBRL(item.valor_total || 0)}
+                      </TableCell>
+                      <TableCell>
+                        <CategoriaCombobox
+                          options={categorias}
+                          value={item._categoria_id || null}
+                          onChange={(id) => setCategoriaItem(i, idx, id)}
+                          placeholder="Definir conta"
+                        />
+                      </TableCell>
+                      <TableCell></TableCell>
+                      <TableCell>
+                        {item._categoria_id ? (
+                          <Badge
+                            variant="outline"
+                            className="text-[10px] border-success text-success"
+                          >
+                            {item._regra_origem === "ncm"
+                              ? "por NCM"
+                              : item._regra_origem === "texto"
+                              ? "por texto"
+                              : "manual"}
+                          </Badge>
+                        ) : (
+                          <Badge
+                            variant="outline"
+                            className="text-[10px] border-warning text-warning"
+                          >
+                            Sem categ.
+                          </Badge>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </>
+              );
+            })}
           </TableBody>
         </Table>
       </div>
@@ -265,5 +441,6 @@ export function PreviewNFsImport({
         onUpdateAllNfs={onChange}
       />
     </div>
+    </TooltipProvider>
   );
 }
