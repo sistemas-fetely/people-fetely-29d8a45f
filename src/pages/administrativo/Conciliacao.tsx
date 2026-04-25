@@ -1036,10 +1036,10 @@ export default function Conciliacao() {
                 )}
 
                 <div className="space-y-1 max-h-[500px] overflow-y-auto pr-1">
-                  {cpsNaoConciliadas.length === 0 && (
+                  {cpsOrdenadas.length === 0 && (
                     <p className="text-xs text-muted-foreground py-4 text-center">Sem contas pendentes neste período.</p>
                   )}
-                  {cpsNaoConciliadas.map((cp) => {
+                  {cpsOrdenadas.map((cp) => {
                     const match = getMatch(null, cp.id);
                     const ativa = cpSelecionada === cp.id;
                     const checked = contasSelecionadasManual.has(cp.id);
