@@ -1,12 +1,8 @@
-// @ts-expect-error Deno runtime
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.7";
 
-// @ts-expect-error Deno runtime
 const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY")!;
-// @ts-expect-error Deno runtime
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-// @ts-expect-error Deno runtime
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
 const corsHeaders = {
