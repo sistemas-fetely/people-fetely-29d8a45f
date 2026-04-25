@@ -1273,6 +1273,33 @@ export type Database = {
           },
         ]
       }
+      config_financeiro_externo: {
+        Row: {
+          ativo: boolean | null
+          created_at: string | null
+          email: string
+          id: string
+          nome: string
+          observacao: string | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          created_at?: string | null
+          email: string
+          id?: string
+          nome: string
+          observacao?: string | null
+        }
+        Update: {
+          ativo?: boolean | null
+          created_at?: string | null
+          email?: string
+          id?: string
+          nome?: string
+          observacao?: string | null
+        }
+        Relationships: []
+      }
       consentimentos_lgpd: {
         Row: {
           aceito: boolean
@@ -1308,6 +1335,44 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      contas_pagar_historico: {
+        Row: {
+          conta_id: string
+          created_at: string | null
+          id: string
+          observacao: string | null
+          status_anterior: string | null
+          status_novo: string
+          usuario_id: string | null
+        }
+        Insert: {
+          conta_id: string
+          created_at?: string | null
+          id?: string
+          observacao?: string | null
+          status_anterior?: string | null
+          status_novo: string
+          usuario_id?: string | null
+        }
+        Update: {
+          conta_id?: string
+          created_at?: string | null
+          id?: string
+          observacao?: string | null
+          status_anterior?: string | null
+          status_novo?: string
+          usuario_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contas_pagar_historico_conta_id_fkey"
+            columns: ["conta_id"]
+            isOneToOne: false
+            referencedRelation: "contas_pagar_receber"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       contas_pagar_itens: {
         Row: {
@@ -1394,9 +1459,13 @@ export type Database = {
           conta_id: string | null
           created_at: string | null
           criado_por: string | null
+          dados_pagamento_fornecedor: Json | null
           data_pagamento: string | null
           data_vencimento: string
           descricao: string
+          email_pagamento_enviado: boolean | null
+          enviado_pagamento_em: string | null
+          enviado_pagamento_por: string | null
           forma_pagamento_id: string | null
           fornecedor_cliente: string | null
           fornecedor_id: string | null
@@ -1420,7 +1489,10 @@ export type Database = {
           parcela_atual: number | null
           parcela_grupo_id: string | null
           parcelas: number | null
+          sla_aprovacao_dias: number | null
+          sla_pagamento_dias: number | null
           status: string
+          tarefa_id: string | null
           tipo: string
           unidade: string | null
           updated_at: string | null
@@ -1439,9 +1511,13 @@ export type Database = {
           conta_id?: string | null
           created_at?: string | null
           criado_por?: string | null
+          dados_pagamento_fornecedor?: Json | null
           data_pagamento?: string | null
           data_vencimento: string
           descricao: string
+          email_pagamento_enviado?: boolean | null
+          enviado_pagamento_em?: string | null
+          enviado_pagamento_por?: string | null
           forma_pagamento_id?: string | null
           fornecedor_cliente?: string | null
           fornecedor_id?: string | null
@@ -1465,7 +1541,10 @@ export type Database = {
           parcela_atual?: number | null
           parcela_grupo_id?: string | null
           parcelas?: number | null
+          sla_aprovacao_dias?: number | null
+          sla_pagamento_dias?: number | null
           status?: string
+          tarefa_id?: string | null
           tipo: string
           unidade?: string | null
           updated_at?: string | null
@@ -1484,9 +1563,13 @@ export type Database = {
           conta_id?: string | null
           created_at?: string | null
           criado_por?: string | null
+          dados_pagamento_fornecedor?: Json | null
           data_pagamento?: string | null
           data_vencimento?: string
           descricao?: string
+          email_pagamento_enviado?: boolean | null
+          enviado_pagamento_em?: string | null
+          enviado_pagamento_por?: string | null
           forma_pagamento_id?: string | null
           fornecedor_cliente?: string | null
           fornecedor_id?: string | null
@@ -1510,7 +1593,10 @@ export type Database = {
           parcela_atual?: number | null
           parcela_grupo_id?: string | null
           parcelas?: number | null
+          sla_aprovacao_dias?: number | null
+          sla_pagamento_dias?: number | null
           status?: string
+          tarefa_id?: string | null
           tipo?: string
           unidade?: string | null
           updated_at?: string | null
@@ -7026,6 +7112,7 @@ export type Database = {
         Args: { _nota_id: string; _observacao_rh?: string }
         Returns: Json
       }
+      atualizar_contas_atrasadas: { Args: never; Returns: undefined }
       autosave_convite_cadastro: {
         Args: { _dados: Json; _token: string }
         Returns: boolean
