@@ -29,6 +29,13 @@ export default function ConfiguracaoIntegracao() {
   const [manualCode, setManualCode] = useState("");
   const [processingCode, setProcessingCode] = useState(false);
 
+  // Financeiro externo
+  const [showDialogFin, setShowDialogFin] = useState(false);
+  const [editingFin, setEditingFin] = useState<any>(null);
+  const [removingFin, setRemovingFin] = useState<any>(null);
+  const [finForm, setFinForm] = useState({ nome: "", email: "", observacao: "" });
+  const [savingFin, setSavingFin] = useState(false);
+
   const [form, setForm] = useState({
     client_id: "",
     client_secret: "",
