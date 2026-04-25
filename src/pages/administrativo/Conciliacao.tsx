@@ -956,11 +956,25 @@ export default function Conciliacao() {
             {/* COLUNA DIREITA — CONTAS A PAGAR */}
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium flex items-center gap-2">
-                  <Receipt className="h-4 w-4" />
-                  Contas a pagar
-                  <Badge variant="outline">{cpsNaoConciliadas.length} pendentes</Badge>
-                </CardTitle>
+                <div className="flex items-center justify-between gap-2">
+                  <CardTitle className="text-sm font-medium flex items-center gap-2">
+                    <Receipt className="h-4 w-4" />
+                    Contas a pagar
+                    <Badge variant="outline">{cpsOrdenadas.length} pendentes</Badge>
+                  </CardTitle>
+                  <Select value={ordenacaoCp} onValueChange={(v) => setOrdenacaoCp(v as typeof ordenacaoCp)}>
+                    <SelectTrigger className="w-[170px] h-8 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="valor_asc">Menor valor</SelectItem>
+                      <SelectItem value="valor_desc">Maior valor</SelectItem>
+                      <SelectItem value="venc_asc">Vencimento ↑</SelectItem>
+                      <SelectItem value="venc_desc">Vencimento ↓</SelectItem>
+                      <SelectItem value="fornecedor">Fornecedor A-Z</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
                 {movSelecionada && (
                   <p className="text-xs text-admin">
                     Marque várias contas para agrupar (soma deve bater com a movimentação ±1%).
