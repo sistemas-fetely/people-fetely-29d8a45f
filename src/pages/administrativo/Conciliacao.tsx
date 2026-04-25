@@ -22,6 +22,11 @@ import { toast } from "sonner";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
 import { encontrarMatches, type MatchResult } from "@/lib/financeiro/conciliacao";
 import { identificarTransacaoBancaria, type RegraExtrato } from "@/lib/financeiro/regras-extrato";
+import {
+  encontrarAgrupamentosCartao,
+  validarAgrupamento,
+  type AgrupamentoSugerido,
+} from "@/lib/financeiro/agrupamentos-cartao";
 import { CategoriaCombobox } from "@/components/financeiro/CategoriaCombobox";
 import { useCategoriasPlano } from "@/hooks/useCategoriasPlano";
 import { useFiltrosPersistentes } from "@/hooks/useFiltrosPersistentes";
