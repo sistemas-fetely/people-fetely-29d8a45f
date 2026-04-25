@@ -384,7 +384,7 @@ export function PreviewNFsImport({
                       </TableCell>
                     </TableRow>
                   ))}
-                </>
+                </Fragment>
               );
             })}
           </TableBody>
