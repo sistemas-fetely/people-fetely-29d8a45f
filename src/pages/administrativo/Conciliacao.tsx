@@ -168,9 +168,9 @@ export default function Conciliacao() {
     const matchedIds = new Set(matchesGlobais.map((m) => m.movimentacao_id));
     return movsNaoConciliadas
       .filter((m) => Number(m.valor) < 0 && !matchedIds.has(m.id))
-      .map((m) => {
+      .map<MovComRegra>((m) => {
         const regra = identificarTransacaoBancaria(m.descricao);
-        return regra ? { ...m, _regra_auto: regra } : m;
+        return regra ? { ...m, _regra_auto: regra } : { ...m };
       });
   }, [movsNaoConciliadas, matchesGlobais]);
 
