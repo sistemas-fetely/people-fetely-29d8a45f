@@ -1161,13 +1161,42 @@ export default function Conciliacao() {
                           </div>
                           <p className="text-xs mt-1 truncate">{cp.fornecedor_cliente || "—"}</p>
                           <p className="text-[10px] text-muted-foreground truncate">{cp.descricao}</p>
-                          {match && (
-                            <Badge className="mt-1 text-[10px] bg-warning/15 text-warning hover:bg-warning/15 border-warning/30">
-                              Match sugerido
-                            </Badge>
-                          )}
+                          <div className="flex flex-wrap items-center gap-1 mt-1">
+                            {match && (
+                              <Badge className="text-[10px] bg-warning/15 text-warning hover:bg-warning/15 border-warning/30">
+                                Match sugerido
+                              </Badge>
+                            )}
+                            {cp.dados_enriquecidos_qive && (
+                              <Badge variant="outline" className="text-[10px] bg-success/10 text-success border-success/30">
+                                ✓ Qive
+                              </Badge>
+                            )}
+                            {cp.forma_pagamento && (
+                              <Badge variant="outline" className="text-[10px]">
+                                {cp.forma_pagamento}
+                              </Badge>
+                            )}
+                          </div>
                         </button>
+                        {cp.nf_numero && !cp.dados_enriquecidos_qive && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              enriquecerDadosQive(cp.id);
+                            }}
+                            disabled={enriquecendoQive}
+                            className="shrink-0 text-[10px] text-admin hover:underline flex items-center gap-1 mt-0.5 disabled:opacity-50"
+                            title="Enriquecer via Qive"
+                          >
+                            <Sparkles className="h-3 w-3" />
+                          </button>
+                        )}
                       </div>
+                    );
+                  })}
+                </div>
                     );
                   })}
                 </div>
