@@ -251,6 +251,46 @@ export default function Conciliacao() {
     );
   }, [movSelecionada, contasSelecionadasManual, movsNaoConciliadas, cpsNaoConciliadas]);
 
+  // Movimentações ordenadas (apenas saídas — valor < 0)
+  const movsOrdenadas = useMemo(() => {
+    const movs = movsNaoConciliadas.filter((m) => Number(m.valor) < 0);
+    switch (ordenacaoMov) {
+      case "valor_asc":
+        return [...movs].sort((a, b) => Math.abs(Number(a.valor)) - Math.abs(Number(b.valor)));
+      case "valor_desc":
+        return [...movs].sort((a, b) => Math.abs(Number(b.valor)) - Math.abs(Number(a.valor)));
+      case "data_asc":
+        return [...movs].sort((a, b) => a.data_transacao.localeCompare(b.data_transacao));
+      case "data_desc":
+        return [...movs].sort((a, b) => b.data_transacao.localeCompare(a.data_transacao));
+      default:
+        return movs;
+    }
+  }, [movsNaoConciliadas, ordenacaoMov]);
+
+  // Contas a pagar ordenadas
+  const cpsOrdenadas = useMemo(() => {
+    const cps = [...cpsNaoConciliadas];
+    switch (ordenacaoCp) {
+      case "valor_asc":
+        return cps.sort((a, b) => Number(a.valor) - Number(b.valor));
+      case "valor_desc":
+        return cps.sort((a, b) => Number(b.valor) - Number(a.valor));
+      case "venc_asc":
+        return cps.sort((a, b) => a.data_vencimento.localeCompare(b.data_vencimento));
+      case "venc_desc":
+        return cps.sort((a, b) => b.data_vencimento.localeCompare(a.data_vencimento));
+      case "fornecedor":
+        return cps.sort((a, b) => {
+          const nomeA = (a as any).fornecedor_cliente || a.descricao || "";
+          const nomeB = (b as any).fornecedor_cliente || b.descricao || "";
+          return nomeA.localeCompare(nomeB);
+        });
+      default:
+        return cps;
+    }
+  }, [cpsNaoConciliadas, ordenacaoCp]);
+
   const filtrosAtivos =
     (contaBancariaId !== "todas" ? 1 : 0) +
     (periodoIni !== inicioMesISO ? 1 : 0) +
