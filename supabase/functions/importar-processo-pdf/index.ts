@@ -111,7 +111,6 @@ async function callGeminiVision(base64Pdf: string, nomeArquivo: string): Promise
 // ═══════════════════════════════════════════════
 // Handler principal
 // ═══════════════════════════════════════════════
-// @ts-expect-error Deno runtime
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
