@@ -9,24 +9,24 @@ var corsHeaders = {
 
 var BLING_BASE = "https://www.bling.com.br/Api/v3";
 
-function ok(data) {
+function ok(data: any) {
   return new Response(JSON.stringify(data), {
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 }
 
-function err(message, status) {
+function err(message: any, status?: any) {
   return new Response(
     JSON.stringify({ sucesso: false, erro: message }),
     { status: status || 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
   );
 }
 
-function sleep(ms) {
+function sleep(ms: number) {
   return new Promise(function (resolve) { setTimeout(resolve, ms); });
 }
 
-async function blingGet(endpoint, accessToken) {
+async function blingGet(endpoint: string, accessToken: string): any {
   var url = BLING_BASE + endpoint;
   var res = await fetch(url, {
     method: "GET",
