@@ -94,6 +94,7 @@ import BlingCallback from "@/pages/administrativo/BlingCallback";
 import PedidosVenda from "@/pages/administrativo/PedidosVenda";
 import Produtos from "@/pages/administrativo/Produtos";
 import CaixaBanco from "@/pages/administrativo/CaixaBanco";
+import Conciliacao from "@/pages/administrativo/Conciliacao";
 
 const queryClient = new QueryClient();
 
