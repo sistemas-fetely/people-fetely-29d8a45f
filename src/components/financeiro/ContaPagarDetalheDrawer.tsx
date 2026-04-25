@@ -184,6 +184,10 @@ export default function ContaPagarDetalheDrawer({ contaId, onClose }: Props) {
               )}
             </SheetHeader>
 
+            <div className="mt-4">
+              <StatusProgressBar statusAtual={conta.status} />
+            </div>
+
             <Separator className="my-4" />
 
             <div className="space-y-3 text-sm">
