@@ -1273,6 +1273,83 @@ export type Database = {
           },
         ]
       }
+      conciliacoes_agrupadas: {
+        Row: {
+          created_at: string
+          criado_por: string | null
+          diferenca_percentual: number
+          id: string
+          movimentacao_id: string
+          observacao: string | null
+          soma_esperada: number
+          soma_real: number
+        }
+        Insert: {
+          created_at?: string
+          criado_por?: string | null
+          diferenca_percentual?: number
+          id?: string
+          movimentacao_id: string
+          observacao?: string | null
+          soma_esperada: number
+          soma_real: number
+        }
+        Update: {
+          created_at?: string
+          criado_por?: string | null
+          diferenca_percentual?: number
+          id?: string
+          movimentacao_id?: string
+          observacao?: string | null
+          soma_esperada?: number
+          soma_real?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conciliacoes_agrupadas_movimentacao_id_fkey"
+            columns: ["movimentacao_id"]
+            isOneToOne: false
+            referencedRelation: "movimentacoes_bancarias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      conciliacoes_agrupadas_itens: {
+        Row: {
+          agrupamento_id: string
+          conta_pagar_id: string
+          created_at: string
+          id: string
+        }
+        Insert: {
+          agrupamento_id: string
+          conta_pagar_id: string
+          created_at?: string
+          id?: string
+        }
+        Update: {
+          agrupamento_id?: string
+          conta_pagar_id?: string
+          created_at?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conciliacoes_agrupadas_itens_agrupamento_id_fkey"
+            columns: ["agrupamento_id"]
+            isOneToOne: false
+            referencedRelation: "conciliacoes_agrupadas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conciliacoes_agrupadas_itens_conta_pagar_id_fkey"
+            columns: ["conta_pagar_id"]
+            isOneToOne: false
+            referencedRelation: "contas_pagar_receber"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       config_financeiro_externo: {
         Row: {
           ativo: boolean | null
