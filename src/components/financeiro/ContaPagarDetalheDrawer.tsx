@@ -112,6 +112,34 @@ export default function ContaPagarDetalheDrawer({ contaId, onClose }: Props) {
     },
   });
 
+  const { data: itens } = useQuery({
+    queryKey: ["conta-pagar-itens", contaId],
+    enabled: !!contaId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("contas_pagar_itens")
+        .select("id, descricao, ncm, quantidade, unidade, valor_total, conta_plano_id, plano_contas:conta_plano_id(codigo, nome)")
+        .eq("conta_id", contaId!);
+      if (error) throw error;
+      return (data || []) as Array<{
+        id: string;
+        descricao: string;
+        ncm: string | null;
+        quantidade: number | null;
+        unidade: string | null;
+        valor_total: number | null;
+        conta_plano_id: string | null;
+        plano_contas?: { codigo?: string | null; nome?: string | null } | null;
+      }>;
+    },
+  });
+
+  const temCategoriasMultiplas = (() => {
+    if (!itens || itens.length < 2) return false;
+    const cats = new Set(itens.map((i) => i.conta_plano_id || "_sem"));
+    return cats.size > 1;
+  })();
+
   return (
     <Sheet open={!!contaId} onOpenChange={(v) => !v && onClose()}>
       <SheetContent className="w-full sm:max-w-md overflow-y-auto">
@@ -207,6 +235,43 @@ export default function ContaPagarDetalheDrawer({ contaId, onClose }: Props) {
                         <a href={conta.nf_xml_url} target="_blank" rel="noreferrer">XML</a>
                       </Button>
                     )}
+                  </div>
+                </div>
+              </>
+            )}
+
+            {itens && itens.length > 0 && temCategoriasMultiplas && (
+              <>
+                <Separator className="my-4" />
+                <div className="space-y-2">
+                  <p className="text-xs font-medium text-muted-foreground uppercase">
+                    Classificação por item
+                  </p>
+                  <div className="space-y-2">
+                    {itens.map((item) => (
+                      <div
+                        key={item.id}
+                        className="flex justify-between items-start gap-3 p-2 rounded bg-muted/50 text-xs"
+                      >
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium truncate">{item.descricao}</p>
+                          <p className="text-muted-foreground">
+                            NCM: {item.ncm || "—"}
+                            {item.quantidade != null && (
+                              <> · Qtd: {item.quantidade} {item.unidade || ""}</>
+                            )}
+                          </p>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <p className="font-medium">{formatBRL(item.valor_total || 0)}</p>
+                          <p className="text-muted-foreground">
+                            {item.plano_contas
+                              ? `${item.plano_contas.codigo || ""} ${item.plano_contas.nome || ""}`.trim()
+                              : "Sem categoria"}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </>

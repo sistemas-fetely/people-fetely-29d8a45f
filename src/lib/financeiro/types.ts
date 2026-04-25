@@ -14,6 +14,12 @@ export interface ItemNFParsed {
   valor_icms?: number;
   valor_pis?: number;
   valor_cofins?: number;
+
+  // Categoria por item (quando expandido)
+  _categoria_id?: string | null;
+  _categoria_nome?: string | null;
+  _centro_custo?: string | null;
+  _regra_origem?: "parceiro" | "ncm" | "texto" | "manual" | null;
 }
 
 export interface NFParsed {
@@ -51,6 +57,9 @@ export interface NFParsed {
   _categoria_nome?: string | null;
   _centro_custo?: string | null;
   _regra_origem?: "parceiro" | "ncm" | "texto" | null;
+
+  // Quando true, importação usa categoria por item (campo `_categoria_id` de cada item)
+  _expandirItens?: boolean;
 
   // Metadado de origem do import
   _source: "csv_qive" | "xml_nfe" | "pdf_nfe";

@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import type { NFParsed, RegraCategorizacao } from "@/lib/financeiro/types";
+import type { ItemNFParsed, NFParsed, RegraCategorizacao } from "@/lib/financeiro/types";
 
 export function useRegrasCategorizacao() {
   return useQuery({
@@ -71,4 +71,48 @@ export function aplicarRegras(nf: NFParsed, regras: RegraCategorizacao[] | undef
   }
 
   return { ...nf, _categoria_id: null, _categoria_nome: null, _regra_origem: null };
+}
+
+/**
+ * Aplica regras de categorização a um item individual de NF.
+ * Ordem: NCM > texto na descrição > nada.
+ */
+export function aplicarRegrasItem(
+  item: ItemNFParsed,
+  regras: RegraCategorizacao[] | undefined,
+): ItemNFParsed {
+  if (!regras || regras.length === 0) return item;
+
+  // 1. Regra por NCM do item
+  if (item.ncm) {
+    const r = regras.find((x) => x.ncm_prefixo && item.ncm!.startsWith(x.ncm_prefixo));
+    if (r && r.conta) {
+      return {
+        ...item,
+        _categoria_id: r.conta_plano_id,
+        _categoria_nome: `${r.conta.codigo} — ${r.conta.nome}`,
+        _centro_custo: r.centro_custo,
+        _regra_origem: "ncm",
+      };
+    }
+  }
+
+  // 2. Regra por descrição contém
+  if (item.descricao) {
+    const desc = item.descricao.toLowerCase();
+    const r = regras.find(
+      (x) => x.descricao_contem && desc.includes(x.descricao_contem.toLowerCase()),
+    );
+    if (r && r.conta) {
+      return {
+        ...item,
+        _categoria_id: r.conta_plano_id,
+        _categoria_nome: `${r.conta.codigo} — ${r.conta.nome}`,
+        _centro_custo: r.centro_custo,
+        _regra_origem: "texto",
+      };
+    }
+  }
+
+  return item;
 }
