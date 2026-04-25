@@ -1,13 +1,28 @@
 import { Check } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { STATUS_FLOW } from "@/hooks/useContaWorkflow";
+
+const FLOW_NORMAL = [
+  { key: "rascunho", label: "Rascunho" },
+  { key: "aberto", label: "Aberto" },
+  { key: "aprovado", label: "Aprovado" },
+  { key: "agendado", label: "Enviado" },
+  { key: "conciliado", label: "Conciliado" },
+] as const;
+
+const FLOW_CARTAO = [
+  { key: "rascunho", label: "Rascunho" },
+  { key: "aberto", label: "Validado" },
+  { key: "agendado", label: "Docs enviados" },
+  { key: "conciliado", label: "Conciliado" },
+] as const;
 
 interface Props {
   statusAtual: string;
+  isCartao?: boolean;
 }
 
-export default function StatusProgressBar({ statusAtual }: Props) {
+export default function StatusProgressBar({ statusAtual, isCartao = false }: Props) {
   if (statusAtual === "cancelado") {
     return (
       <div className="flex justify-center py-2">
@@ -16,15 +31,21 @@ export default function StatusProgressBar({ statusAtual }: Props) {
     );
   }
 
-  let idxAtual = STATUS_FLOW.findIndex((s) => s.key === statusAtual);
-  if (statusAtual === "atrasado") idxAtual = 1; // entre aberto e aprovado
+  const flow = isCartao ? FLOW_CARTAO : FLOW_NORMAL;
+
+  // Tratamento especial: status "pago" entre agendado e conciliado
+  let statusEffective = statusAtual;
+  if (statusAtual === "pago") statusEffective = "agendado";
+
+  let idxAtual = flow.findIndex((s) => s.key === statusEffective);
+  if (statusAtual === "atrasado") idxAtual = flow.findIndex((s) => s.key === "aberto");
 
   return (
     <div className="flex items-center gap-1 w-full">
-      {STATUS_FLOW.map((step, idx) => {
+      {flow.map((step, idx) => {
         const isAtivo = idx <= idxAtual;
         const isAtual =
-          step.key === statusAtual ||
+          step.key === statusEffective ||
           (statusAtual === "atrasado" && step.key === "aberto");
 
         return (
@@ -53,7 +74,7 @@ export default function StatusProgressBar({ statusAtual }: Props) {
                   idx + 1
                 )}
               </div>
-              {idx < STATUS_FLOW.length - 1 && (
+              {idx < flow.length - 1 && (
                 <div
                   className={cn(
                     "h-0.5 flex-1 -ml-1 -mr-1",
