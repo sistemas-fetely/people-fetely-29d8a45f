@@ -145,7 +145,7 @@ export default function Conciliacao() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("contas_pagar_receber")
-        .select("id, data_vencimento, valor, status, descricao, fornecedor_cliente, nf_numero, nf_cnpj_emitente")
+        .select("id, data_vencimento, valor, status, descricao, fornecedor_cliente, nf_numero, nf_cnpj_emitente, nf_chave_acesso, forma_pagamento, dados_enriquecidos_qive")
         .eq("tipo", "pagar")
         .gte("data_vencimento", periodoIni)
         .lte("data_vencimento", periodoFim)
