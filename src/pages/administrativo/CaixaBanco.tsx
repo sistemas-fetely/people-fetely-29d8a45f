@@ -17,13 +17,14 @@ import {
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
-import { ArrowDownLeft, ArrowUpRight, Building2, CheckCircle2, Loader2, Upload, Wallet } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, Building2, CheckCircle2, Loader2, Sparkles, Upload, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
 import { parseOFX } from "@/lib/financeiro/ofx-parser";
 import { parseCsvItau } from "@/lib/financeiro/csv-itau-parser";
 import { parseCsvSafra } from "@/lib/financeiro/csv-safra-parser";
 import { gerarHashMov } from "@/lib/financeiro/hash-mov";
+import { useRegrasCategorizacao } from "@/hooks/useRegrasCategorizacao";
 
 // KPI CANDIDATO: Saldo por conta bancária (snapshot diário)
 // KPI CANDIDATO: % de movimentações conciliadas no mês
