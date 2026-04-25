@@ -56,10 +56,14 @@ export function PreviewNFsImport({
   }, [nfs, showOnlyMissing]);
 
   const totals = useMemo(() => {
-    const semCat = nfs.filter((n) => !n._categoria_id && !n._duplicata).length;
+    const semCat = nfs.filter((n) => !n._categoria_id && !n._duplicata && !n._match_pagamento).length;
     const dup = nfs.filter((n) => n._duplicata).length;
     const sel = nfs.filter((n) => n._selecionada && !n._duplicata).length;
-    return { semCat, dup, sel };
+    const vincular = nfs.filter((n) => n._match_pagamento && !n._duplicata).length;
+    const novosProntos = nfs.filter(
+      (n) => !n._match_pagamento && !n._duplicata && n._categoria_id,
+    ).length;
+    return { semCat, dup, sel, vincular, novosProntos };
   }, [nfs]);
 
   const allSelectableSelected =
