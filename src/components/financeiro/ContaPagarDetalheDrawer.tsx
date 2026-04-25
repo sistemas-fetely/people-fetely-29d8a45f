@@ -5,10 +5,14 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Check, FileText, UserCheck } from "lucide-react";
+import { Check, FileText, UserCheck, Send, ThumbsUp, X, ShieldCheck } from "lucide-react";
 import { Link } from "react-router-dom";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
 import RegistrarPagamentoDialog from "./RegistrarPagamentoDialog";
+import StatusProgressBar from "./StatusProgressBar";
+import TimelineHistorico from "./TimelineHistorico";
+import EnviarPagamentoDialog from "./EnviarPagamentoDialog";
+import { useContaWorkflow, type ContaStatus } from "@/hooks/useContaWorkflow";
 
 type Conta = {
   id: string;
@@ -35,9 +39,23 @@ type Conta = {
   nf_xml_url?: string | null;
   parcela_atual?: number | null;
   parcelas?: number | null;
+  email_pagamento_enviado?: boolean | null;
+  enviado_pagamento_em?: string | null;
+  dados_pagamento_fornecedor?: { banco?: string; agencia?: string; conta?: string; pix?: string } | null;
   plano_contas?: { codigo?: string | null; nome?: string | null } | null;
   formas_pagamento?: { nome?: string | null } | null;
   parceiros_comerciais?: { razao_social?: string | null } | null;
+};
+
+const STATUS_LABEL: Record<string, string> = {
+  rascunho: "Rascunho",
+  aberto: "Aberto",
+  atrasado: "Atrasado",
+  aprovado: "Aprovado",
+  agendado: "Enviado",
+  pago: "Pago",
+  cancelado: "Cancelado",
+  conciliado: "Conciliado",
 };
 
 const STATUS_LABEL: Record<string, string> = {
