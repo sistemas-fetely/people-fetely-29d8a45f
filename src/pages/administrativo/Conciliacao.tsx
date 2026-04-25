@@ -717,7 +717,124 @@ export default function Conciliacao() {
 
         {/* TAB 1 — CONCILIAR (lado a lado) */}
         <TabsContent value="conciliar" className="space-y-4 mt-4">
+          {/* SEÇÃO 1 — AGRUPAMENTOS SUGERIDOS PELA IA */}
+          {agrupamentosSugeridos.length > 0 && (
+            <Card className="border-admin/30">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-admin" />
+                  Agrupamentos sugeridos pela IA
+                  <Badge className="bg-admin/10 text-admin border-admin/30">
+                    {agrupamentosSugeridos.length}
+                  </Badge>
+                </CardTitle>
+                <p className="text-xs text-muted-foreground">
+                  Grupos de contas a pagar que somam o valor de uma única movimentação (ex: fatura de cartão, lote SISPAG).
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {agrupamentosSugeridos.map((agrup) => (
+                  <div key={agrup.id} className="rounded-lg border bg-card overflow-hidden">
+                    <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-3 items-center p-3">
+                      {/* MOVIMENTAÇÃO */}
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
+                          <Badge variant="outline" className="text-[10px]">Extrato</Badge>
+                        </div>
+                        <p className="text-sm truncate" title={agrup.movimentacao.descricao}>
+                          {agrup.movimentacao.descricao}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {formatDateBR(agrup.movimentacao.data_transacao)}
+                        </p>
+                        <p className="text-base font-semibold text-destructive">
+                          {formatBRL(agrup.valor_movimentacao)}
+                        </p>
+                      </div>
+
+                      {/* SETA */}
+                      <div className="hidden md:flex items-center justify-center">
+                        <ArrowRight className="h-5 w-5 text-admin" />
+                      </div>
+
+                      {/* CONTAS */}
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <Receipt className="h-3.5 w-3.5 text-muted-foreground" />
+                          <Badge variant="outline" className="text-[10px]">
+                            {agrup.contas.length} contas
+                          </Badge>
+                        </div>
+                        <div className="space-y-0.5 max-h-24 overflow-y-auto">
+                          {agrup.contas.slice(0, 5).map((cp) => (
+                            <div key={cp.id} className="flex justify-between text-xs">
+                              <span className="truncate pr-2">{cp.fornecedor_cliente || cp.descricao}</span>
+                              <span className="text-muted-foreground tabular-nums">
+                                {formatBRL(Number(cp.valor))}
+                              </span>
+                            </div>
+                          ))}
+                          {agrup.contas.length > 5 && (
+                            <p className="text-[10px] text-muted-foreground">
+                              + {agrup.contas.length - 5} mais
+                            </p>
+                          )}
+                        </div>
+                        <p className="text-sm font-semibold pt-1 border-t">
+                          Total: {formatBRL(agrup.soma_contas)}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* FOOTER */}
+                    <div className="flex items-center justify-between gap-2 p-3 bg-muted/30 border-t flex-wrap">
+                      <div className="flex items-center gap-2 text-xs flex-wrap">
+                        <Badge className="bg-admin/15 text-admin border-admin/30">
+                          Score {agrup.score}%
+                        </Badge>
+                        <span className="text-muted-foreground">{agrup.motivo}</span>
+                        {agrup.diferenca_percentual > 0 && (
+                          <Badge variant="outline" className="text-[10px]">
+                            Dif: {agrup.diferenca_percentual.toFixed(2)}%
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => rejeitarAgrupamento(agrup.id)}
+                          disabled={conciliando}
+                          className="gap-1"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                          Rejeitar
+                        </Button>
+                        <Button
+                          size="sm"
+                          onClick={() => aceitarAgrupamento(agrup)}
+                          disabled={conciliando}
+                          className="bg-admin hover:bg-admin/90 text-admin-foreground gap-1"
+                        >
+                          {conciliando ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <Check className="h-3.5 w-3.5" />
+                          )}
+                          Aceitar
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* SEÇÃO 2 — CONCILIAÇÃO MANUAL (LADO A LADO) */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* COLUNA ESQUERDA — EXTRATO */}
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium flex items-center gap-2">
@@ -725,6 +842,9 @@ export default function Conciliacao() {
                   Extrato bancário
                   <Badge variant="outline">{movsNaoConciliadas.length} pendentes</Badge>
                 </CardTitle>
+                <p className="text-xs text-muted-foreground">
+                  Selecione uma movimentação para conciliar 1:1 ou marcar várias contas (N:1).
+                </p>
               </CardHeader>
               <CardContent>
                 <div className="space-y-1 max-h-[500px] overflow-y-auto pr-1">
@@ -738,11 +858,20 @@ export default function Conciliacao() {
                       <button
                         key={mov.id}
                         type="button"
-                        onClick={() => setMovSelecionada(ativa ? null : mov.id)}
+                        onClick={() => {
+                          if (ativa) {
+                            setMovSelecionada(null);
+                            setContasSelecionadasManual(new Set());
+                          } else {
+                            setMovSelecionada(mov.id);
+                            setContasSelecionadasManual(new Set());
+                            setCpSelecionada(null);
+                          }
+                        }}
                         className={
                           "w-full text-left p-3 rounded-lg border text-sm transition-colors " +
                           (ativa
-                            ? "border-admin bg-admin/5"
+                            ? "border-admin bg-admin/5 shadow-sm"
                             : match
                               ? "border-warning/40 bg-warning/5 hover:bg-warning/10"
                               : "hover:bg-muted/50")
@@ -767,6 +896,7 @@ export default function Conciliacao() {
               </CardContent>
             </Card>
 
+            {/* COLUNA DIREITA — CONTAS A PAGAR */}
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium flex items-center gap-2">
@@ -774,8 +904,66 @@ export default function Conciliacao() {
                   Contas a pagar
                   <Badge variant="outline">{cpsNaoConciliadas.length} pendentes</Badge>
                 </CardTitle>
+                {movSelecionada && (
+                  <p className="text-xs text-admin">
+                    Marque várias contas para agrupar (soma deve bater com a movimentação ±1%).
+                  </p>
+                )}
               </CardHeader>
               <CardContent>
+                {/* CARD RESUMO da seleção N:1 */}
+                {movSelecionada && contasSelecionadasManual.size > 0 && validacaoManual && (
+                  <div
+                    className={
+                      "mb-3 p-3 rounded-lg border-2 space-y-2 " +
+                      (validacaoManual.valido
+                        ? "border-success/50 bg-success/5"
+                        : "border-destructive/50 bg-destructive/5")
+                    }
+                  >
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Movimentação:</span>
+                      <span className="font-medium">
+                        {formatBRL(
+                          Math.abs(Number(movsNaoConciliadas.find((m) => m.id === movSelecionada)?.valor || 0))
+                        )}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">
+                        {contasSelecionadasManual.size} conta{contasSelecionadasManual.size !== 1 ? "s" : ""}:
+                      </span>
+                      <span className="font-medium">{formatBRL(validacaoManual.soma)}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-sm pt-2 border-t">
+                      <span className="text-muted-foreground">Diferença:</span>
+                      <div className="flex items-center gap-2">
+                        <span className={"font-semibold " + (validacaoManual.valido ? "text-success" : "text-destructive")}>
+                          {validacaoManual.percentual.toFixed(2)}%
+                        </span>
+                        {validacaoManual.valido ? (
+                          <CheckCircle2 className="h-4 w-4 text-success" />
+                        ) : (
+                          <AlertCircle className="h-4 w-4 text-destructive" />
+                        )}
+                      </div>
+                    </div>
+                    <Button
+                      onClick={conciliarManualGrupo}
+                      disabled={conciliando || !validacaoManual.valido}
+                      className="w-full bg-admin hover:bg-admin/90 text-admin-foreground gap-2"
+                      size="sm"
+                    >
+                      {conciliando ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Link2 className="h-4 w-4" />
+                      )}
+                      Conciliar {contasSelecionadasManual.size} conta{contasSelecionadasManual.size !== 1 ? "s" : ""}
+                    </Button>
+                  </div>
+                )}
+
                 <div className="space-y-1 max-h-[500px] overflow-y-auto pr-1">
                   {cpsNaoConciliadas.length === 0 && (
                     <p className="text-xs text-muted-foreground py-4 text-center">Sem contas pendentes neste período.</p>
@@ -783,32 +971,53 @@ export default function Conciliacao() {
                   {cpsNaoConciliadas.map((cp) => {
                     const match = getMatch(null, cp.id);
                     const ativa = cpSelecionada === cp.id;
+                    const checked = contasSelecionadasManual.has(cp.id);
+                    const modoNxN = !!movSelecionada;
                     return (
-                      <button
+                      <div
                         key={cp.id}
-                        type="button"
-                        onClick={() => setCpSelecionada(ativa ? null : cp.id)}
                         className={
-                          "w-full text-left p-3 rounded-lg border text-sm transition-colors " +
-                          (ativa
+                          "flex items-start gap-2 p-3 rounded-lg border text-sm transition-colors " +
+                          (checked
                             ? "border-admin bg-admin/5"
-                            : match
-                              ? "border-warning/40 bg-warning/5 hover:bg-warning/10"
-                              : "hover:bg-muted/50")
+                            : ativa
+                              ? "border-admin bg-admin/5"
+                              : match
+                                ? "border-warning/40 bg-warning/5"
+                                : "hover:bg-muted/50")
                         }
                       >
-                        <div className="flex justify-between">
-                          <span className="text-xs text-muted-foreground">{formatDateBR(cp.data_vencimento)}</span>
-                          <span className="font-medium text-destructive">{formatBRL(Number(cp.valor))}</span>
-                        </div>
-                        <p className="text-xs mt-1 truncate">{cp.fornecedor_cliente || "—"}</p>
-                        <p className="text-[10px] text-muted-foreground truncate">{cp.descricao}</p>
-                        {match && (
-                          <Badge className="mt-1 text-[10px] bg-warning/15 text-warning hover:bg-warning/15 border-warning/30">
-                            Match sugerido
-                          </Badge>
+                        {modoNxN && (
+                          <Checkbox
+                            checked={checked}
+                            onCheckedChange={() => toggleContaManual(cp.id)}
+                            className="mt-0.5"
+                          />
                         )}
-                      </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (modoNxN) {
+                              toggleContaManual(cp.id);
+                            } else {
+                              setCpSelecionada(ativa ? null : cp.id);
+                            }
+                          }}
+                          className="flex-1 text-left min-w-0"
+                        >
+                          <div className="flex justify-between">
+                            <span className="text-xs text-muted-foreground">{formatDateBR(cp.data_vencimento)}</span>
+                            <span className="font-medium text-destructive">{formatBRL(Number(cp.valor))}</span>
+                          </div>
+                          <p className="text-xs mt-1 truncate">{cp.fornecedor_cliente || "—"}</p>
+                          <p className="text-[10px] text-muted-foreground truncate">{cp.descricao}</p>
+                          {match && (
+                            <Badge className="mt-1 text-[10px] bg-warning/15 text-warning hover:bg-warning/15 border-warning/30">
+                              Match sugerido
+                            </Badge>
+                          )}
+                        </button>
+                      </div>
                     );
                   })}
                 </div>
@@ -816,7 +1025,8 @@ export default function Conciliacao() {
             </Card>
           </div>
 
-          {movSelecionada && cpSelecionada && (
+          {/* Botão match 1:1 (legado) — só aparece quando há seleção 1:1 sem checkboxes */}
+          {movSelecionada && cpSelecionada && contasSelecionadasManual.size === 0 && (
             <div className="flex justify-center">
               <Button
                 onClick={conciliarManual}
@@ -824,11 +1034,12 @@ export default function Conciliacao() {
                 className="bg-admin hover:bg-admin/90 text-admin-foreground gap-2"
               >
                 {conciliando ? <Loader2 className="h-4 w-4 animate-spin" /> : <Link2 className="h-4 w-4" />}
-                Conciliar selecionados
+                Conciliar selecionados (1:1)
               </Button>
             </div>
           )}
         </TabsContent>
+
 
         {/* TAB 2 — EXTRATO SEM NF (auto + manuais) */}
         <TabsContent value="extrato_sem_nf" className="space-y-4 mt-4">
