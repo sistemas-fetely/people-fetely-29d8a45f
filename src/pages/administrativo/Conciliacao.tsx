@@ -176,13 +176,13 @@ export default function Conciliacao() {
 
   // Inclui receitas auto-categorizáveis (rendimentos, estornos, aportes)
   const receitasAutoCategorizaveis = useMemo<MovComRegra[]>(() => {
-    return movsNaoConciliadas
-      .filter((m) => Number(m.valor) >= 0)
-      .map((m) => {
-        const regra = identificarTransacaoBancaria(m.descricao);
-        return regra ? { ...m, _regra_auto: regra } : m;
-      })
-      .filter((m): m is MovComRegra & { _regra_auto: RegraExtrato } => !!m._regra_auto);
+    const out: MovComRegra[] = [];
+    for (const m of movsNaoConciliadas) {
+      if (Number(m.valor) < 0) continue;
+      const regra = identificarTransacaoBancaria(m.descricao);
+      if (regra) out.push({ ...m, _regra_auto: regra });
+    }
+    return out;
   }, [movsNaoConciliadas]);
 
   const autoCategorizaveis = useMemo(
