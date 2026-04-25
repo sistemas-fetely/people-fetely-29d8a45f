@@ -3,7 +3,7 @@ import {
   TrendingUp, ArrowDownToLine, ArrowUpFromLine, Upload,
   FileSignature, Building2, ShieldCheck, FolderArchive,
   Users, Monitor, Network, Landmark, LogOut, ClipboardList,
-  UsersRound, Settings2, ShoppingCart, Package,
+  UsersRound, Settings2, ShoppingCart, Package, GitCompare,
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { NavLink } from "@/components/NavLink";
@@ -43,6 +43,7 @@ const financeiroItems: MenuItem[] = [
 
 const caixaBancoItems: MenuItem[] = [
   { title: "Caixa e Banco", url: "/administrativo/caixa-banco", icon: Wallet },
+  { title: "Conciliação", url: "/administrativo/conciliacao", icon: GitCompare },
 ];
 
 const vendasBlingItems: MenuItem[] = [
