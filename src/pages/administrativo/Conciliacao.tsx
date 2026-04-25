@@ -155,6 +155,58 @@ export default function Conciliacao() {
     },
   });
 
+  const [enriquecendoQive, setEnriquecendoQive] = useState(false);
+
+  async function enriquecerDadosQive(contaId: string) {
+    try {
+      setEnriquecendoQive(true);
+      const { data, error } = await supabase.functions.invoke("enriquecer-conta-qive", {
+        body: { conta_id: contaId },
+      });
+      if (error) throw error;
+      if (data?.success) {
+        toast.success("Dados enriquecidos via Qive!");
+        qc.invalidateQueries({ queryKey: ["cp-conciliacao"] });
+      } else {
+        toast.warning(data?.message ?? "Não foi possível enriquecer");
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Erro ao enriquecer dados";
+      toast.error(msg);
+    } finally {
+      setEnriquecendoQive(false);
+    }
+  }
+
+  async function enriquecerTodasContasQive() {
+    const contasParaEnriquecer = contasPagar.filter(
+      (c) => c.nf_numero && !c.dados_enriquecidos_qive,
+    );
+    if (contasParaEnriquecer.length === 0) {
+      toast.info("Nenhuma conta para enriquecer");
+      return;
+    }
+    setEnriquecendoQive(true);
+    toast.info(`Enriquecendo ${contasParaEnriquecer.length} conta(s)...`);
+    let sucessos = 0;
+    let erros = 0;
+    for (const conta of contasParaEnriquecer) {
+      try {
+        const { data, error } = await supabase.functions.invoke("enriquecer-conta-qive", {
+          body: { conta_id: conta.id },
+        });
+        if (error) throw error;
+        if (data?.success) sucessos++;
+        else erros++;
+      } catch {
+        erros++;
+      }
+    }
+    toast.success(`${sucessos} enriquecidas (${erros} erro${erros !== 1 ? "s" : ""})`);
+    qc.invalidateQueries({ queryKey: ["cp-conciliacao"] });
+    setEnriquecendoQive(false);
+  }
+
   const { data: categoriasOpts = [] } = useCategoriasPlano();
 
   const movsNaoConciliadas = useMemo(
