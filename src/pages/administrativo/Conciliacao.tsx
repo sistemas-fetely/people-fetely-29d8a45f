@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import {
-  Select, SelectContent, SelectItem, SelectValue,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
@@ -105,6 +105,10 @@ export default function Conciliacao() {
   // Aprendizado de regra
   const [showCriarRegra, setShowCriarRegra] = useState(false);
   const [regraDraft, setRegraDraft] = useState<{ padrao: string; categoriaId: string; categoriaNome: string } | null>(null);
+
+  // Ordenação na conciliação manual
+  const [ordenacaoMov, setOrdenacaoMov] = useState<"valor_asc" | "valor_desc" | "data_asc" | "data_desc">("valor_asc");
+  const [ordenacaoCp, setOrdenacaoCp] = useState<"valor_asc" | "valor_desc" | "venc_asc" | "venc_desc" | "fornecedor">("valor_asc");
 
   const { data: contasBanco = [] } = useQuery({
     queryKey: ["contas-bancarias-conciliacao"],
@@ -246,6 +250,46 @@ export default function Conciliacao() {
       Number(mov.valor)
     );
   }, [movSelecionada, contasSelecionadasManual, movsNaoConciliadas, cpsNaoConciliadas]);
+
+  // Movimentações ordenadas (apenas saídas — valor < 0)
+  const movsOrdenadas = useMemo(() => {
+    const movs = movsNaoConciliadas.filter((m) => Number(m.valor) < 0);
+    switch (ordenacaoMov) {
+      case "valor_asc":
+        return [...movs].sort((a, b) => Math.abs(Number(a.valor)) - Math.abs(Number(b.valor)));
+      case "valor_desc":
+        return [...movs].sort((a, b) => Math.abs(Number(b.valor)) - Math.abs(Number(a.valor)));
+      case "data_asc":
+        return [...movs].sort((a, b) => a.data_transacao.localeCompare(b.data_transacao));
+      case "data_desc":
+        return [...movs].sort((a, b) => b.data_transacao.localeCompare(a.data_transacao));
+      default:
+        return movs;
+    }
+  }, [movsNaoConciliadas, ordenacaoMov]);
+
+  // Contas a pagar ordenadas
+  const cpsOrdenadas = useMemo(() => {
+    const cps = [...cpsNaoConciliadas];
+    switch (ordenacaoCp) {
+      case "valor_asc":
+        return cps.sort((a, b) => Number(a.valor) - Number(b.valor));
+      case "valor_desc":
+        return cps.sort((a, b) => Number(b.valor) - Number(a.valor));
+      case "venc_asc":
+        return cps.sort((a, b) => a.data_vencimento.localeCompare(b.data_vencimento));
+      case "venc_desc":
+        return cps.sort((a, b) => b.data_vencimento.localeCompare(a.data_vencimento));
+      case "fornecedor":
+        return cps.sort((a, b) => {
+          const nomeA = a.fornecedor_cliente || a.descricao || "";
+          const nomeB = b.fornecedor_cliente || b.descricao || "";
+          return nomeA.localeCompare(nomeB);
+        });
+      default:
+        return cps;
+    }
+  }, [cpsNaoConciliadas, ordenacaoCp]);
 
   const filtrosAtivos =
     (contaBancariaId !== "todas" ? 1 : 0) +
@@ -837,21 +881,34 @@ export default function Conciliacao() {
             {/* COLUNA ESQUERDA — EXTRATO */}
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium flex items-center gap-2">
-                  <Building2 className="h-4 w-4" />
-                  Extrato bancário
-                  <Badge variant="outline">{movsNaoConciliadas.length} pendentes</Badge>
-                </CardTitle>
+                <div className="flex items-center justify-between gap-2">
+                  <CardTitle className="text-sm font-medium flex items-center gap-2">
+                    <Building2 className="h-4 w-4" />
+                    Extrato bancário
+                    <Badge variant="outline">{movsOrdenadas.length} pendentes</Badge>
+                  </CardTitle>
+                  <Select value={ordenacaoMov} onValueChange={(v) => setOrdenacaoMov(v as typeof ordenacaoMov)}>
+                    <SelectTrigger className="w-[160px] h-8 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="valor_asc">Menor valor</SelectItem>
+                      <SelectItem value="valor_desc">Maior valor</SelectItem>
+                      <SelectItem value="data_desc">Mais recente</SelectItem>
+                      <SelectItem value="data_asc">Mais antiga</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
                 <p className="text-xs text-muted-foreground">
                   Selecione uma movimentação para conciliar 1:1 ou marcar várias contas (N:1).
                 </p>
               </CardHeader>
               <CardContent>
                 <div className="space-y-1 max-h-[500px] overflow-y-auto pr-1">
-                  {movsNaoConciliadas.length === 0 && (
+                  {movsOrdenadas.length === 0 && (
                     <p className="text-xs text-muted-foreground py-4 text-center">Tudo conciliado neste período.</p>
                   )}
-                  {movsNaoConciliadas.map((mov) => {
+                  {movsOrdenadas.map((mov) => {
                     const match = getMatch(mov.id, null);
                     const ativa = movSelecionada === mov.id;
                     return (
@@ -899,11 +956,25 @@ export default function Conciliacao() {
             {/* COLUNA DIREITA — CONTAS A PAGAR */}
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium flex items-center gap-2">
-                  <Receipt className="h-4 w-4" />
-                  Contas a pagar
-                  <Badge variant="outline">{cpsNaoConciliadas.length} pendentes</Badge>
-                </CardTitle>
+                <div className="flex items-center justify-between gap-2">
+                  <CardTitle className="text-sm font-medium flex items-center gap-2">
+                    <Receipt className="h-4 w-4" />
+                    Contas a pagar
+                    <Badge variant="outline">{cpsOrdenadas.length} pendentes</Badge>
+                  </CardTitle>
+                  <Select value={ordenacaoCp} onValueChange={(v) => setOrdenacaoCp(v as typeof ordenacaoCp)}>
+                    <SelectTrigger className="w-[170px] h-8 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="valor_asc">Menor valor</SelectItem>
+                      <SelectItem value="valor_desc">Maior valor</SelectItem>
+                      <SelectItem value="venc_asc">Vencimento ↑</SelectItem>
+                      <SelectItem value="venc_desc">Vencimento ↓</SelectItem>
+                      <SelectItem value="fornecedor">Fornecedor A-Z</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
                 {movSelecionada && (
                   <p className="text-xs text-admin">
                     Marque várias contas para agrupar (soma deve bater com a movimentação ±1%).
@@ -965,10 +1036,10 @@ export default function Conciliacao() {
                 )}
 
                 <div className="space-y-1 max-h-[500px] overflow-y-auto pr-1">
-                  {cpsNaoConciliadas.length === 0 && (
+                  {cpsOrdenadas.length === 0 && (
                     <p className="text-xs text-muted-foreground py-4 text-center">Sem contas pendentes neste período.</p>
                   )}
-                  {cpsNaoConciliadas.map((cp) => {
+                  {cpsOrdenadas.map((cp) => {
                     const match = getMatch(null, cp.id);
                     const ativa = cpSelecionada === cp.id;
                     const checked = contasSelecionadasManual.has(cp.id);
