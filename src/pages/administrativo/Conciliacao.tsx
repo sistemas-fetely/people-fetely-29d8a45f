@@ -473,6 +473,71 @@ export default function Conciliacao() {
     }
   }
 
+  function toggleContaManual(contaId: string) {
+    setContasSelecionadasManual((prev) => {
+      const novo = new Set(prev);
+      if (novo.has(contaId)) novo.delete(contaId);
+      else novo.add(contaId);
+      return novo;
+    });
+  }
+
+  async function aceitarAgrupamento(agrup: AgrupamentoSugerido) {
+    setConciliando(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("conciliar-agrupado", {
+        body: {
+          movimentacao_id: agrup.movimentacao.id,
+          contas_pagar_ids: agrup.contas.map((c) => c.id),
+          observacao: `Conciliação automática IA — ${agrup.motivo} (score ${agrup.score}%)`,
+        },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast.success(`${agrup.contas.length} contas conciliadas`);
+      qc.invalidateQueries({ queryKey: ["mov-conciliacao"] });
+      qc.invalidateQueries({ queryKey: ["cp-conciliacao"] });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erro ao conciliar agrupamento");
+    } finally {
+      setConciliando(false);
+    }
+  }
+
+  function rejeitarAgrupamento(agrupId: string) {
+    setAgrupamentosRejeitados((prev) => new Set(prev).add(agrupId));
+    toast("Sugestão ignorada");
+  }
+
+  async function conciliarManualGrupo() {
+    if (!movSelecionada || contasSelecionadasManual.size === 0) return;
+    if (!validacaoManual?.valido) {
+      toast.error("Diferença acima de 1% — não é possível conciliar");
+      return;
+    }
+    setConciliando(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("conciliar-agrupado", {
+        body: {
+          movimentacao_id: movSelecionada,
+          contas_pagar_ids: Array.from(contasSelecionadasManual),
+          observacao: "Conciliação manual N:1",
+        },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast.success(`${contasSelecionadasManual.size} contas conciliadas`);
+      setMovSelecionada(null);
+      setContasSelecionadasManual(new Set());
+      qc.invalidateQueries({ queryKey: ["mov-conciliacao"] });
+      qc.invalidateQueries({ queryKey: ["cp-conciliacao"] });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erro ao conciliar");
+    } finally {
+      setConciliando(false);
+    }
+  }
+
   function getMatch(movId?: string | null, cpId?: string | null) {
     if (movId) return matchesSugeridos.find((m) => m.movimentacao_id === movId);
     if (cpId) return matchesSugeridos.find((m) => m.conta_pagar_id === cpId);
