@@ -14,6 +14,7 @@ import {
   importarNFs,
   verificarDuplicatas,
 } from "@/lib/financeiro/import-handler";
+import { buscarMatchPagamentos } from "@/lib/financeiro/match-pagamentos";
 import type { NFParsed } from "@/lib/financeiro/types";
 import type { CategoriaOption } from "@/components/financeiro/CategoriaCombobox";
 import { PreviewNFsImport } from "./PreviewNFsImport";
@@ -56,6 +57,7 @@ export function ImportadorXmlNFe({ categorias, onImported }: Props) {
       }
       let nfs = parsed.map((n) => aplicarRegras(n, regras));
       nfs = await verificarDuplicatas(nfs);
+      nfs = await buscarMatchPagamentos(nfs);
       nfs = nfs.map((n) => ({ ...n, _selecionada: !n._duplicata }));
       setPreview((prev) => [...prev, ...nfs]);
       if (nfs.length > 0) {
@@ -72,12 +74,12 @@ export function ImportadorXmlNFe({ categorias, onImported }: Props) {
     const selecionadas = preview.filter((n) => n._selecionada && !n._duplicata);
     const result = await importarNFs(selecionadas);
     setImporting(false);
-    if (result.sucesso > 0) {
-      toast.success(
-        `${result.sucesso} NF${result.sucesso === 1 ? "" : "s"} importada${
-          result.sucesso === 1 ? "" : "s"
-        }${result.erros > 0 ? ` (${result.erros} com erro)` : ""}`
-      );
+    if (result.sucesso > 0 || result.vinculadas > 0) {
+      const partes: string[] = [];
+      if (result.sucesso > 0) partes.push(`${result.sucesso} nova${result.sucesso === 1 ? "" : "s"}`);
+      if (result.vinculadas > 0) partes.push(`${result.vinculadas} vinculada${result.vinculadas === 1 ? "" : "s"} a existentes`);
+      if (result.erros > 0) partes.push(`${result.erros} erro${result.erros === 1 ? "" : "s"}`);
+      toast.success(`Importação: ${partes.join(", ")}`);
       setPreview([]);
       onImported?.();
     } else if (result.erros > 0) {

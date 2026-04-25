@@ -1,5 +1,5 @@
 import { Fragment, useMemo, useState } from "react";
-import { Loader2, Download, AlertTriangle, X, ListTree, Package } from "lucide-react";
+import { Loader2, Download, AlertTriangle, X, ListTree, Package, Link2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -56,10 +56,14 @@ export function PreviewNFsImport({
   }, [nfs, showOnlyMissing]);
 
   const totals = useMemo(() => {
-    const semCat = nfs.filter((n) => !n._categoria_id && !n._duplicata).length;
+    const semCat = nfs.filter((n) => !n._categoria_id && !n._duplicata && !n._match_pagamento).length;
     const dup = nfs.filter((n) => n._duplicata).length;
     const sel = nfs.filter((n) => n._selecionada && !n._duplicata).length;
-    return { semCat, dup, sel };
+    const vincular = nfs.filter((n) => n._match_pagamento && !n._duplicata).length;
+    const novosProntos = nfs.filter(
+      (n) => !n._match_pagamento && !n._duplicata && n._categoria_id,
+    ).length;
+    return { semCat, dup, sel, vincular, novosProntos };
   }, [nfs]);
 
   const allSelectableSelected =
@@ -150,6 +154,17 @@ export function PreviewNFsImport({
     <div className="mt-4 space-y-3">
       <div className="flex flex-wrap items-center gap-3 text-sm">
         <Badge variant="outline">{nfs.length} NFs</Badge>
+        {totals.vincular > 0 && (
+          <Badge variant="outline" className="gap-1 border-blue-300 text-blue-700">
+            <Link2 className="h-3 w-3" />
+            {totals.vincular} vincular a existentes
+          </Badge>
+        )}
+        {totals.novosProntos > 0 && (
+          <Badge variant="outline" className="border-success text-success">
+            {totals.novosProntos} novos prontos
+          </Badge>
+        )}
         {totals.dup > 0 && (
           <Badge variant="secondary">
             {totals.dup} duplicadas (já existem)
@@ -305,6 +320,20 @@ export function PreviewNFsImport({
                     <TableCell>
                       {nf._duplicata ? (
                         <Badge variant="secondary">Duplicada</Badge>
+                      ) : nf._match_pagamento ? (
+                        <div className="space-y-1">
+                          <Badge className="text-[10px] bg-blue-100 text-blue-800 hover:bg-blue-100 gap-1">
+                            <Link2 className="h-3 w-3" /> Vincular
+                          </Badge>
+                          <p className="text-[10px] text-muted-foreground line-clamp-2 max-w-[180px]">
+                            {nf._match_pagamento.conta_descricao}
+                          </p>
+                          {nf._match_pagamento.conta_docs_status && (
+                            <p className="text-[10px] text-blue-600">
+                              Docs: {nf._match_pagamento.conta_docs_status}
+                            </p>
+                          )}
+                        </div>
                       ) : expandido ? (
                         itensClassificados === (nf.itens?.length || 0) ? (
                           <Badge variant="outline" className="border-success text-success">
