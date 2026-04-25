@@ -30,7 +30,7 @@ export async function buscarMatchPagamentos(nfs: NFParsed[]): Promise<NFParsed[]
     const { data } = await supabase
       .from("contas_pagar_receber")
       .select(
-        "id, valor, data_vencimento, nf_cnpj_emitente, nf_chave_acesso, fornecedor_cliente, status, docs_status",
+        "id, valor, data_vencimento, nf_cnpj_emitente, nf_chave_acesso, fornecedor_cliente, status, docs_status, conta_id",
       )
       .eq("tipo", "pagar")
       .is("nf_chave_acesso", null)
@@ -43,7 +43,7 @@ export async function buscarMatchPagamentos(nfs: NFParsed[]): Promise<NFParsed[]
   const { data: dataSemCnpj } = await supabase
     .from("contas_pagar_receber")
     .select(
-      "id, valor, data_vencimento, nf_cnpj_emitente, nf_chave_acesso, fornecedor_cliente, status, docs_status",
+      "id, valor, data_vencimento, nf_cnpj_emitente, nf_chave_acesso, fornecedor_cliente, status, docs_status, conta_id",
     )
     .eq("tipo", "pagar")
     .is("nf_chave_acesso", null)
