@@ -1197,9 +1197,6 @@ export default function Conciliacao() {
                     );
                   })}
                 </div>
-                    );
-                  })}
-                </div>
               </CardContent>
             </Card>
           </div>
