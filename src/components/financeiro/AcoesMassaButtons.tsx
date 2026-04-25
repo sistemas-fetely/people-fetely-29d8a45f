@@ -93,7 +93,7 @@ export default function AcoesMassaButtons({ contas, onDone }: Props) {
   const nRascunho = countStatus("rascunho");
   const nAberto = countStatus("aberto", "atrasado");
   const nAprovado = countStatus("aprovado");
-  const nAgendado = countStatus("agendado");
+  
 
   return (
     <>
