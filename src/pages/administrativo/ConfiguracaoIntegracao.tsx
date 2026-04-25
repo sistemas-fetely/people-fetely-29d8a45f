@@ -518,6 +518,138 @@ export default function ConfiguracaoIntegracao() {
         </CardContent>
       </Card>
 
+      {/* Financeiro externo */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Mail className="h-5 w-5 text-admin" />
+            Financeiro externo
+          </CardTitle>
+          <CardDescription>
+            Destinatários dos emails de solicitação de pagamento. O email é enviado automaticamente quando uma conta é enviada para pagamento.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {configFinanceiro.length === 0 ? (
+            <div className="text-center py-8 border border-dashed rounded-lg">
+              <p className="text-sm font-medium">Nenhum destinatário cadastrado</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Adicione o email do financeiro que recebe as solicitações de pagamento.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {configFinanceiro.map((fin: any) => (
+                <div
+                  key={fin.id}
+                  className="flex items-center justify-between p-3 rounded-lg border bg-card"
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium text-sm truncate">{fin.nome}</p>
+                      {!fin.ativo && <Badge variant="outline" className="text-xs">Inativo</Badge>}
+                    </div>
+                    <p className="text-xs text-muted-foreground truncate">{fin.email}</p>
+                    {fin.observacao && (
+                      <p className="text-xs text-muted-foreground mt-0.5 italic">{fin.observacao}</p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1 ml-3">
+                    <Button size="sm" variant="ghost" onClick={() => abrirEditarFin(fin)}>
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="text-destructive hover:text-destructive"
+                      onClick={() => setRemovingFin(fin)}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <Button
+            variant="outline"
+            className="w-full gap-2"
+            onClick={abrirNovoFin}
+          >
+            <Plus className="h-4 w-4" /> Adicionar destinatário
+          </Button>
+        </CardContent>
+      </Card>
+
+      {/* Dialog adicionar/editar financeiro */}
+      <Dialog open={showDialogFin} onOpenChange={setShowDialogFin}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{editingFin ? "Editar destinatário" : "Novo destinatário financeiro"}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <div>
+              <Label>Nome</Label>
+              <Input
+                placeholder="ex: João da Silva"
+                value={finForm.nome}
+                onChange={(e) => setFinForm({ ...finForm, nome: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label>Email</Label>
+              <Input
+                type="email"
+                placeholder="financeiro@empresa.com"
+                value={finForm.email}
+                onChange={(e) => setFinForm({ ...finForm, email: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label>Observação (opcional)</Label>
+              <Input
+                placeholder="ex: Receber só pagamentos acima de 1k"
+                value={finForm.observacao}
+                onChange={(e) => setFinForm({ ...finForm, observacao: e.target.value })}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDialogFin(false)}>Cancelar</Button>
+            <Button
+              onClick={salvarFinanceiro}
+              disabled={savingFin}
+              className="bg-admin hover:bg-admin/90 text-admin-foreground"
+            >
+              {savingFin && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Salvar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* AlertDialog confirmar remoção */}
+      <AlertDialog open={!!removingFin} onOpenChange={(open) => !open && setRemovingFin(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remover destinatário?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {removingFin && `${removingFin.nome} (${removingFin.email}) deixará de receber emails de solicitação de pagamento.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={removerFinanceiro}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Sim, remover
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {/* Histórico */}
       <Card>
         <CardHeader>
