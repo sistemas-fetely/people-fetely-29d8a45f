@@ -132,6 +132,25 @@ export default function ContasPagar() {
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const pageData = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
+  // Filtros ativos
+  const filtrosAtivos = [
+    !!busca.trim(),
+    !!dataDe,
+    !!dataAte,
+    docsFilter !== "todos",
+    statusFilter !== "todos",
+  ].filter(Boolean).length;
+  const temFiltroAtivo = filtrosAtivos > 0;
+  function limparFiltros() {
+    setBusca("");
+    setDataDe("");
+    setDataAte("");
+    setDocsFilter("todos");
+    setStatusFilter("todos");
+    setPage(1);
+  }
+  const filtroAtivoCls = "border-admin bg-admin/5 ring-1 ring-admin/30";
+
   // Seleção
   function toggleSelecionada(id: string) {
     setSelecionadas((prev) => {
