@@ -6,30 +6,28 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  Select, SelectContent, SelectItem, SelectValue,
 } from "@/components/ui/select";
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   AlertCircle, AlertTriangle, ArrowRight, Building2, Check, CheckCircle2,
-  GitCompare, Link2, Loader2, Receipt,
+  GitCompare, Link2, Loader2, Receipt, Sparkles, Upload, X, Zap,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
 import { encontrarMatches, type MatchResult } from "@/lib/financeiro/conciliacao";
+import { identificarTransacaoBancaria, type RegraExtrato } from "@/lib/financeiro/regras-extrato";
 import { CategoriaCombobox } from "@/components/financeiro/CategoriaCombobox";
 import { useCategoriasPlano } from "@/hooks/useCategoriasPlano";
-
-// KPI CANDIDATO: % conciliado no mês (meta: >95%)
-// KPI CANDIDATO: Valor total não conciliado
-// KPI CANDIDATO: Tempo médio pra conciliação (dias)
-// KPI CANDIDATO: Movimentações órfãs (no extrato sem NF) por mês
-// KPI CANDIDATO: Contas sem extrato (possivelmente não pagas) por mês
-// KPI CANDIDATO: Score médio de match automático
+import { useFiltrosPersistentes } from "@/hooks/useFiltrosPersistentes";
+import { FilterInput } from "@/components/ui/filter-input";
+import { FilterSelectTrigger } from "@/components/ui/filter-select-trigger";
+import { ImportarExtratoDialog } from "@/components/financeiro/ImportarExtratoDialog";
 
 type ContaBancaria = {
   id: string;
@@ -60,15 +58,28 @@ type ContaPagar = {
   nf_cnpj_emitente: string | null;
 };
 
+type MovComRegra = Movimentacao & { _regra_auto?: RegraExtrato };
+
+const inicioMesISO = (() => {
+  const h = new Date();
+  return new Date(h.getFullYear(), h.getMonth(), 1).toISOString().slice(0, 10);
+})();
+const hojeISO = new Date().toISOString().slice(0, 10);
+
 export default function Conciliacao() {
   const { user } = useAuth();
   const qc = useQueryClient();
 
-  const hoje = new Date();
-  const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
-  const [contaBancariaId, setContaBancariaId] = useState<string>("todas");
-  const [periodoIni, setPeriodoIni] = useState<string>(inicioMes.toISOString().slice(0, 10));
-  const [periodoFim, setPeriodoFim] = useState<string>(hoje.toISOString().slice(0, 10));
+  const [contaBancariaId, setContaBancariaId] = useFiltrosPersistentes<string>(
+    "conciliacao_conta", "todas"
+  );
+  const [periodoIni, setPeriodoIni] = useFiltrosPersistentes<string>(
+    "conciliacao_inicio", inicioMesISO
+  );
+  const [periodoFim, setPeriodoFim] = useFiltrosPersistentes<string>(
+    "conciliacao_fim", hojeISO
+  );
+  const [tabAtiva, setTabAtiva] = useState<"conciliar" | "extrato_sem_nf" | "nf_sem_extrato">("conciliar");
 
   const [movSelecionada, setMovSelecionada] = useState<string | null>(null);
   const [cpSelecionada, setCpSelecionada] = useState<string | null>(null);
@@ -78,6 +89,11 @@ export default function Conciliacao() {
   const [matchesParaConfirmar, setMatchesParaConfirmar] = useState<MatchResult[]>([]);
   const [selecionados, setSelecionados] = useState<Record<string, boolean>>({});
   const [conciliando, setConciliando] = useState(false);
+  const [showImportar, setShowImportar] = useState(false);
+
+  // Aprendizado de regra
+  const [showCriarRegra, setShowCriarRegra] = useState(false);
+  const [regraDraft, setRegraDraft] = useState<{ padrao: string; categoriaId: string; categoriaNome: string } | null>(null);
 
   const { data: contasBanco = [] } = useQuery({
     queryKey: ["contas-bancarias-conciliacao"],
@@ -125,7 +141,6 @@ export default function Conciliacao() {
 
   const { data: categoriasOpts = [] } = useCategoriasPlano();
 
-  // Splits
   const movsNaoConciliadas = useMemo(
     () => movimentacoes.filter((m) => !m.conciliado),
     [movimentacoes]
@@ -138,32 +153,55 @@ export default function Conciliacao() {
     [contasPagar]
   );
 
-  // Cenário 1: conciliadas
   const conciliadas = useMemo(
     () => movimentacoes.filter((m) => m.conciliado),
     [movimentacoes]
   );
 
-  // Cenário 2: extrato sem NF — débitos não conciliados que não têm match >= 50
-  const movsOrfas = useMemo(() => {
-    const matches = encontrarMatches(movsNaoConciliadas, cpsNaoConciliadas);
-    const matchedIds = new Set(matches.map((m) => m.movimentacao_id));
-    return movsNaoConciliadas.filter(
-      (m) => Number(m.valor) < 0 && !matchedIds.has(m.id)
-    );
-  }, [movsNaoConciliadas, cpsNaoConciliadas]);
+  // Recalcula matches uma única vez por mudança nos arrays
+  const matchesGlobais = useMemo(
+    () => encontrarMatches(movsNaoConciliadas, cpsNaoConciliadas),
+    [movsNaoConciliadas, cpsNaoConciliadas]
+  );
 
-  // Cenário 3: NF sem extrato — contas pagas/agendadas sem match
+  const movsOrfas = useMemo<MovComRegra[]>(() => {
+    const matchedIds = new Set(matchesGlobais.map((m) => m.movimentacao_id));
+    return movsNaoConciliadas
+      .filter((m) => Number(m.valor) < 0 && !matchedIds.has(m.id))
+      .map<MovComRegra>((m) => {
+        const regra = identificarTransacaoBancaria(m.descricao);
+        return regra ? { ...m, _regra_auto: regra } : { ...m };
+      });
+  }, [movsNaoConciliadas, matchesGlobais]);
+
+  // Inclui receitas auto-categorizáveis (rendimentos, estornos, aportes)
+  const receitasAutoCategorizaveis = useMemo<MovComRegra[]>(() => {
+    const out: MovComRegra[] = [];
+    for (const m of movsNaoConciliadas) {
+      if (Number(m.valor) < 0) continue;
+      const regra = identificarTransacaoBancaria(m.descricao);
+      if (regra) out.push({ ...m, _regra_auto: regra });
+    }
+    return out;
+  }, [movsNaoConciliadas]);
+
+  const autoCategorizaveis = useMemo(
+    () => [...movsOrfas.filter((m) => m._regra_auto), ...receitasAutoCategorizaveis],
+    [movsOrfas, receitasAutoCategorizaveis]
+  );
+  const manuais = useMemo(
+    () => movsOrfas.filter((m) => !m._regra_auto),
+    [movsOrfas]
+  );
+
   const cpsSemExtrato = useMemo(() => {
-    const matches = encontrarMatches(movsNaoConciliadas, cpsNaoConciliadas);
-    const matchedIds = new Set(matches.map((m) => m.conta_pagar_id));
+    const matchedIds = new Set(matchesGlobais.map((m) => m.conta_pagar_id));
     return cpsNaoConciliadas.filter(
       (c) =>
         (c.status === "pago" || c.status === "agendado") && !matchedIds.has(c.id)
     );
-  }, [movsNaoConciliadas, cpsNaoConciliadas]);
+  }, [cpsNaoConciliadas, matchesGlobais]);
 
-  // Stats
   const stats = useMemo(() => {
     const valorConciliado = conciliadas.reduce((s, m) => s + Math.abs(Number(m.valor)), 0);
     const valorOrfas = movsOrfas.reduce((s, m) => s + Math.abs(Number(m.valor)), 0);
@@ -175,13 +213,25 @@ export default function Conciliacao() {
       orfasValor: valorOrfas,
       semExtratoCount: cpsSemExtrato.length,
       semExtratoValor: valorSemExtrato,
+      autoCount: autoCategorizaveis.length,
     };
-  }, [conciliadas, movsOrfas, cpsSemExtrato]);
+  }, [conciliadas, movsOrfas, cpsSemExtrato, autoCategorizaveis]);
+
+  const filtrosAtivos =
+    (contaBancariaId !== "todas" ? 1 : 0) +
+    (periodoIni !== inicioMesISO ? 1 : 0) +
+    (periodoFim !== hojeISO ? 1 : 0);
+
+  function limparFiltros() {
+    setContaBancariaId("todas");
+    setPeriodoIni(inicioMesISO);
+    setPeriodoFim(hojeISO);
+  }
 
   function conciliarAutomatico() {
-    const matches = encontrarMatches(movsNaoConciliadas, cpsNaoConciliadas);
+    const matches = matchesGlobais;
     setMatchesSugeridos(matches);
-    const altoConfianca = matches.filter((m) => m.score >= 70);
+    const altoConfianca = matches.filter((m) => m.score >= 60);
     if (altoConfianca.length === 0) {
       toast.info("Nenhum match com confiança alta. Veja sugestões em amarelo no extrato.");
       return;
@@ -197,7 +247,6 @@ export default function Conciliacao() {
 
   async function efetivarConciliacao(movId: string, cpId: string, dataPagamento: string) {
     if (!user) return;
-    // 1. movimentação
     await supabase
       .from("movimentacoes_bancarias")
       .update({
@@ -208,7 +257,6 @@ export default function Conciliacao() {
       })
       .eq("id", movId);
 
-    // 2. conta a pagar
     const cp = contasPagar.find((c) => c.id === cpId);
     const statusAnterior = cp?.status || "pago";
     await supabase
@@ -220,7 +268,6 @@ export default function Conciliacao() {
       })
       .eq("id", cpId);
 
-    // 3. histórico
     await supabase.from("contas_pagar_historico").insert({
       conta_id: cpId,
       status_anterior: statusAnterior,
@@ -268,13 +315,100 @@ export default function Conciliacao() {
     }
   }
 
-  async function categorizarMovOrfa(movId: string, catId: string | null) {
+  /** Aceita uma transação bancária pura: gera lançamento + marca conciliada. */
+  async function aceitarAuto(mov: MovComRegra) {
+    if (!user || !mov._regra_auto) return;
+    const regra = mov._regra_auto;
+    const categoria = categoriasOpts.find((c) => c.codigo === regra.categoria_codigo);
+    if (!categoria) {
+      toast.error(`Categoria ${regra.categoria_codigo} não encontrada no plano de contas`);
+      return;
+    }
+    await supabase.from("movimentacoes_bancarias").update({
+      conta_plano_id: categoria.id,
+      conciliado: true,
+      conciliado_em: new Date().toISOString(),
+      conciliado_por: user.id,
+    }).eq("id", mov.id);
+
+    await supabase.from("lancamentos_financeiros").insert({
+      conta_id: categoria.id,
+      descricao: regra.descricao_limpa,
+      valor: Math.abs(Number(mov.valor)),
+      tipo_lancamento: Number(mov.valor) >= 0 ? "credito" : "debito",
+      data_competencia: mov.data_transacao,
+      data_pagamento: mov.data_transacao,
+      fornecedor: "Banco (automático)",
+      origem: "extrato",
+    });
+  }
+
+  async function aceitarTodosAuto() {
+    if (autoCategorizaveis.length === 0) return;
+    setConciliando(true);
+    let sucesso = 0;
+    for (const mov of autoCategorizaveis) {
+      try {
+        await aceitarAuto(mov);
+        sucesso++;
+      } catch {
+        /* segue */
+      }
+    }
+    toast.success(`${sucesso} lançamento${sucesso !== 1 ? "s" : ""} criado${sucesso !== 1 ? "s" : ""} automaticamente`);
+    qc.invalidateQueries({ queryKey: ["mov-conciliacao"] });
+    setConciliando(false);
+  }
+
+  async function aceitarUmAuto(mov: MovComRegra) {
+    setConciliando(true);
+    try {
+      await aceitarAuto(mov);
+      toast.success("Lançamento criado: " + (mov._regra_auto?.descricao_limpa || ""));
+      qc.invalidateQueries({ queryKey: ["mov-conciliacao"] });
+    } catch (e) {
+      toast.error("Erro: " + (e instanceof Error ? e.message : String(e)));
+    } finally {
+      setConciliando(false);
+    }
+  }
+
+  async function categorizarMovOrfa(mov: Movimentacao, catId: string | null) {
     await supabase
       .from("movimentacoes_bancarias")
       .update({ conta_plano_id: catId })
-      .eq("id", movId);
+      .eq("id", mov.id);
     toast.success("Categorizado");
     qc.invalidateQueries({ queryKey: ["mov-conciliacao"] });
+
+    // Sugerir criar regra a partir das primeiras 3 palavras da descrição
+    if (catId) {
+      const cat = categoriasOpts.find((c) => c.id === catId);
+      const padrao = (mov.descricao || "").split(/\s+/).slice(0, 3).join(" ");
+      if (padrao && cat) {
+        setRegraDraft({ padrao, categoriaId: catId, categoriaNome: `${cat.codigo} — ${cat.nome}` });
+        setShowCriarRegra(true);
+      }
+    }
+  }
+
+  async function criarRegra() {
+    if (!regraDraft || !user) return;
+    try {
+      const { error } = await supabase.from("regras_categorizacao").insert({
+        descricao_contem: regraDraft.padrao,
+        conta_plano_id: regraDraft.categoriaId,
+        prioridade: 50,
+        ativo: true,
+        criado_por: user.id,
+      });
+      if (error) throw error;
+      toast.success("Regra criada");
+      setShowCriarRegra(false);
+      setRegraDraft(null);
+    } catch (e) {
+      toast.error("Erro: " + (e instanceof Error ? e.message : String(e)));
+    }
   }
 
   async function criarContaDeMov(mov: Movimentacao) {
@@ -320,20 +454,30 @@ export default function Conciliacao() {
   return (
     <div className="space-y-6 p-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-bold">Conciliação</h1>
           <p className="text-sm text-muted-foreground">
             Cruzamento automático: extrato bancário × contas a pagar.
           </p>
         </div>
-        <Button
-          onClick={conciliarAutomatico}
-          className="bg-admin hover:bg-admin/90 text-admin-foreground gap-2"
-        >
-          <GitCompare className="h-4 w-4" />
-          Conciliar automaticamente
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            onClick={() => setShowImportar(true)}
+            className="gap-2"
+          >
+            <Upload className="h-4 w-4" />
+            Importar extrato
+          </Button>
+          <Button
+            onClick={conciliarAutomatico}
+            className="bg-admin hover:bg-admin/90 text-admin-foreground gap-2"
+          >
+            <GitCompare className="h-4 w-4" />
+            Conciliar automaticamente
+          </Button>
+        </div>
       </div>
 
       {/* Filtros */}
@@ -342,7 +486,9 @@ export default function Conciliacao() {
           <div className="space-y-1">
             <Label className="text-xs">Conta bancária</Label>
             <Select value={contaBancariaId} onValueChange={setContaBancariaId}>
-              <SelectTrigger className="w-[220px]"><SelectValue /></SelectTrigger>
+              <FilterSelectTrigger active={contaBancariaId !== "todas"} className="w-[220px]">
+                <SelectValue />
+              </FilterSelectTrigger>
               <SelectContent>
                 <SelectItem value="todas">Todas as contas</SelectItem>
                 {contasBanco.map((c) => (
@@ -353,236 +499,368 @@ export default function Conciliacao() {
           </div>
           <div className="space-y-1">
             <Label className="text-xs">Período início</Label>
-            <Input type="date" value={periodoIni} onChange={(e) => setPeriodoIni(e.target.value)} className="w-[160px]" />
+            <FilterInput
+              type="date"
+              value={periodoIni}
+              active={periodoIni !== inicioMesISO}
+              onChange={(e) => setPeriodoIni(e.target.value)}
+              className="w-[160px]"
+            />
           </div>
           <div className="space-y-1">
             <Label className="text-xs">Período fim</Label>
-            <Input type="date" value={periodoFim} onChange={(e) => setPeriodoFim(e.target.value)} className="w-[160px]" />
+            <FilterInput
+              type="date"
+              value={periodoFim}
+              active={periodoFim !== hojeISO}
+              onChange={(e) => setPeriodoFim(e.target.value)}
+              className="w-[160px]"
+            />
           </div>
+          {filtrosAtivos > 0 && (
+            <div className="flex items-center gap-2 ml-auto">
+              <Badge variant="outline" className="text-[10px] text-admin border-admin">
+                {filtrosAtivos} filtro{filtrosAtivos > 1 ? "s" : ""} ativo{filtrosAtivos > 1 ? "s" : ""}
+              </Badge>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-admin hover:text-admin/80 gap-1 text-xs h-7"
+                onClick={limparFiltros}
+              >
+                <X className="h-3 w-3" /> Limpar filtros
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
 
-      {/* Estatísticas */}
+      {/* KPIs clicáveis */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <CheckCircle2 className="h-4 w-4 text-success" />
-              Conciliadas
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+        <button
+          type="button"
+          onClick={() => setTabAtiva("conciliar")}
+          className={
+            "text-left rounded-lg border bg-card transition-colors " +
+            (tabAtiva === "conciliar" ? "border-admin ring-1 ring-admin/30" : "hover:bg-muted/30")
+          }
+        >
+          <div className="p-4 space-y-1">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 text-success" />
+                Conciliadas
+              </span>
+            </div>
             <div className="text-2xl font-bold">{stats.conciliadasCount}</div>
             <p className="text-xs text-muted-foreground">{formatBRL(stats.conciliadasValor)}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4 text-warning" />
-              No extrato sem NF
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+          </div>
+        </button>
+        <button
+          type="button"
+          onClick={() => setTabAtiva("extrato_sem_nf")}
+          className={
+            "text-left rounded-lg border bg-card transition-colors " +
+            (tabAtiva === "extrato_sem_nf" ? "border-admin ring-1 ring-admin/30" : "hover:bg-muted/30")
+          }
+        >
+          <div className="p-4 space-y-1">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4 text-warning" />
+                No extrato sem NF
+              </span>
+              {stats.autoCount > 0 && (
+                <Badge className="bg-admin/10 text-admin border-admin/30 text-[10px] gap-1">
+                  <Zap className="h-3 w-3" /> {stats.autoCount} auto
+                </Badge>
+              )}
+            </div>
             <div className="text-2xl font-bold">{stats.orfasCount}</div>
             <p className="text-xs text-muted-foreground">{formatBRL(stats.orfasValor)}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <AlertCircle className="h-4 w-4 text-destructive" />
-              Na NF sem extrato
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+          </div>
+        </button>
+        <button
+          type="button"
+          onClick={() => setTabAtiva("nf_sem_extrato")}
+          className={
+            "text-left rounded-lg border bg-card transition-colors " +
+            (tabAtiva === "nf_sem_extrato" ? "border-admin ring-1 ring-admin/30" : "hover:bg-muted/30")
+          }
+        >
+          <div className="p-4 space-y-1">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium flex items-center gap-2">
+                <AlertCircle className="h-4 w-4 text-destructive" />
+                Na NF sem extrato
+              </span>
+            </div>
             <div className="text-2xl font-bold">{stats.semExtratoCount}</div>
             <p className="text-xs text-muted-foreground">{formatBRL(stats.semExtratoValor)}</p>
-          </CardContent>
-        </Card>
+          </div>
+        </button>
       </div>
 
-      {/* Lado-a-lado */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Extrato */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Building2 className="h-4 w-4" />
-              Extrato bancário
-              <Badge variant="outline">{movsNaoConciliadas.length} pendentes</Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-1 max-h-[500px] overflow-y-auto pr-1">
-              {movsNaoConciliadas.length === 0 && (
-                <p className="text-xs text-muted-foreground py-4 text-center">Tudo conciliado neste período.</p>
-              )}
-              {movsNaoConciliadas.map((mov) => {
-                const match = getMatch(mov.id, null);
-                const ativa = movSelecionada === mov.id;
-                return (
-                  <button
-                    key={mov.id}
-                    type="button"
-                    onClick={() => setMovSelecionada(ativa ? null : mov.id)}
-                    className={
-                      "w-full text-left p-3 rounded-lg border text-sm transition-colors " +
-                      (ativa
-                        ? "border-admin bg-admin/5"
-                        : match
-                          ? "border-warning/40 bg-warning/5 hover:bg-warning/10"
-                          : "hover:bg-muted/50")
-                    }
-                  >
-                    <div className="flex justify-between">
-                      <span className="text-xs text-muted-foreground">{formatDateBR(mov.data_transacao)}</span>
-                      <span className={"font-medium " + (Number(mov.valor) < 0 ? "text-destructive" : "text-success")}>
-                        {formatBRL(Number(mov.valor))}
-                      </span>
-                    </div>
-                    <p className="text-xs mt-1 truncate">{mov.descricao}</p>
-                    {match && (
-                      <Badge className="mt-1 text-[10px] bg-warning/15 text-warning hover:bg-warning/15 border-warning/30">
-                        Match {match.score}% — {match.motivo}
-                      </Badge>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
+      {/* Tabs */}
+      <Tabs value={tabAtiva} onValueChange={(v) => setTabAtiva(v as typeof tabAtiva)}>
+        <TabsList>
+          <TabsTrigger value="conciliar" className="gap-2">
+            Conciliar
+            {matchesSugeridos.length > 0 && (
+              <Badge variant="secondary" className="text-[10px]">{matchesSugeridos.length}</Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="extrato_sem_nf" className="gap-2">
+            No extrato sem NF
+            <Badge variant="secondary" className="text-[10px]">{movsOrfas.length}</Badge>
+          </TabsTrigger>
+          <TabsTrigger value="nf_sem_extrato" className="gap-2">
+            Na NF sem extrato
+            <Badge variant="secondary" className="text-[10px]">{cpsSemExtrato.length}</Badge>
+          </TabsTrigger>
+        </TabsList>
 
-        {/* Contas a pagar */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Receipt className="h-4 w-4" />
-              Contas a pagar
-              <Badge variant="outline">{cpsNaoConciliadas.length} pendentes</Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-1 max-h-[500px] overflow-y-auto pr-1">
-              {cpsNaoConciliadas.length === 0 && (
-                <p className="text-xs text-muted-foreground py-4 text-center">Sem contas pendentes neste período.</p>
-              )}
-              {cpsNaoConciliadas.map((cp) => {
-                const match = getMatch(null, cp.id);
-                const ativa = cpSelecionada === cp.id;
-                return (
-                  <button
-                    key={cp.id}
-                    type="button"
-                    onClick={() => setCpSelecionada(ativa ? null : cp.id)}
-                    className={
-                      "w-full text-left p-3 rounded-lg border text-sm transition-colors " +
-                      (ativa
-                        ? "border-admin bg-admin/5"
-                        : match
-                          ? "border-warning/40 bg-warning/5 hover:bg-warning/10"
-                          : "hover:bg-muted/50")
-                    }
-                  >
-                    <div className="flex justify-between">
-                      <span className="text-xs text-muted-foreground">{formatDateBR(cp.data_vencimento)}</span>
-                      <span className="font-medium text-destructive">{formatBRL(Number(cp.valor))}</span>
-                    </div>
-                    <p className="text-xs mt-1 truncate">{cp.fornecedor_cliente || "—"}</p>
-                    <p className="text-[10px] text-muted-foreground truncate">{cp.descricao}</p>
-                    {match && (
-                      <Badge className="mt-1 text-[10px] bg-warning/15 text-warning hover:bg-warning/15 border-warning/30">
-                        Match sugerido
-                      </Badge>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Conciliação manual */}
-      {movSelecionada && cpSelecionada && (
-        <div className="flex justify-center">
-          <Button
-            onClick={conciliarManual}
-            disabled={conciliando}
-            className="bg-admin hover:bg-admin/90 text-admin-foreground gap-2"
-          >
-            {conciliando ? <Loader2 className="h-4 w-4 animate-spin" /> : <Link2 className="h-4 w-4" />}
-            Conciliar selecionados
-          </Button>
-        </div>
-      )}
-
-      {/* Cenário 2: extrato sem NF */}
-      {movsOrfas.length > 0 && (
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4 text-warning" />
-              No extrato, sem NF
-              <Badge variant="outline">{movsOrfas.length}</Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-1">
-            {movsOrfas.map((mov) => (
-              <div key={mov.id} className="flex items-center gap-3 p-3 rounded-lg border">
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm truncate">{mov.descricao}</p>
-                  <p className="text-xs text-muted-foreground">{formatDateBR(mov.data_transacao)}</p>
+        {/* TAB 1 — CONCILIAR (lado a lado) */}
+        <TabsContent value="conciliar" className="space-y-4 mt-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <Building2 className="h-4 w-4" />
+                  Extrato bancário
+                  <Badge variant="outline">{movsNaoConciliadas.length} pendentes</Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-1 max-h-[500px] overflow-y-auto pr-1">
+                  {movsNaoConciliadas.length === 0 && (
+                    <p className="text-xs text-muted-foreground py-4 text-center">Tudo conciliado neste período.</p>
+                  )}
+                  {movsNaoConciliadas.map((mov) => {
+                    const match = getMatch(mov.id, null);
+                    const ativa = movSelecionada === mov.id;
+                    return (
+                      <button
+                        key={mov.id}
+                        type="button"
+                        onClick={() => setMovSelecionada(ativa ? null : mov.id)}
+                        className={
+                          "w-full text-left p-3 rounded-lg border text-sm transition-colors " +
+                          (ativa
+                            ? "border-admin bg-admin/5"
+                            : match
+                              ? "border-warning/40 bg-warning/5 hover:bg-warning/10"
+                              : "hover:bg-muted/50")
+                        }
+                      >
+                        <div className="flex justify-between">
+                          <span className="text-xs text-muted-foreground">{formatDateBR(mov.data_transacao)}</span>
+                          <span className={"font-medium " + (Number(mov.valor) < 0 ? "text-destructive" : "text-success")}>
+                            {formatBRL(Number(mov.valor))}
+                          </span>
+                        </div>
+                        <p className="text-xs mt-1 truncate">{mov.descricao}</p>
+                        {match && (
+                          <Badge className="mt-1 text-[10px] bg-warning/15 text-warning hover:bg-warning/15 border-warning/30">
+                            Match {match.score}% — {match.motivo}
+                          </Badge>
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
-                <span className="font-medium text-sm text-destructive">{formatBRL(Number(mov.valor))}</span>
-                <div className="w-[220px]">
-                  <CategoriaCombobox
-                    options={categoriasOpts}
-                    value={mov.conta_plano_id}
-                    onChange={(catId) => categorizarMovOrfa(mov.id, catId)}
-                    placeholder="Categorizar"
-                    allowNull
-                  />
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <Receipt className="h-4 w-4" />
+                  Contas a pagar
+                  <Badge variant="outline">{cpsNaoConciliadas.length} pendentes</Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-1 max-h-[500px] overflow-y-auto pr-1">
+                  {cpsNaoConciliadas.length === 0 && (
+                    <p className="text-xs text-muted-foreground py-4 text-center">Sem contas pendentes neste período.</p>
+                  )}
+                  {cpsNaoConciliadas.map((cp) => {
+                    const match = getMatch(null, cp.id);
+                    const ativa = cpSelecionada === cp.id;
+                    return (
+                      <button
+                        key={cp.id}
+                        type="button"
+                        onClick={() => setCpSelecionada(ativa ? null : cp.id)}
+                        className={
+                          "w-full text-left p-3 rounded-lg border text-sm transition-colors " +
+                          (ativa
+                            ? "border-admin bg-admin/5"
+                            : match
+                              ? "border-warning/40 bg-warning/5 hover:bg-warning/10"
+                              : "hover:bg-muted/50")
+                        }
+                      >
+                        <div className="flex justify-between">
+                          <span className="text-xs text-muted-foreground">{formatDateBR(cp.data_vencimento)}</span>
+                          <span className="font-medium text-destructive">{formatBRL(Number(cp.valor))}</span>
+                        </div>
+                        <p className="text-xs mt-1 truncate">{cp.fornecedor_cliente || "—"}</p>
+                        <p className="text-[10px] text-muted-foreground truncate">{cp.descricao}</p>
+                        {match && (
+                          <Badge className="mt-1 text-[10px] bg-warning/15 text-warning hover:bg-warning/15 border-warning/30">
+                            Match sugerido
+                          </Badge>
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
-                <Button size="sm" variant="outline" onClick={() => criarContaDeMov(mov)}>
-                  Criar conta
+              </CardContent>
+            </Card>
+          </div>
+
+          {movSelecionada && cpSelecionada && (
+            <div className="flex justify-center">
+              <Button
+                onClick={conciliarManual}
+                disabled={conciliando}
+                className="bg-admin hover:bg-admin/90 text-admin-foreground gap-2"
+              >
+                {conciliando ? <Loader2 className="h-4 w-4 animate-spin" /> : <Link2 className="h-4 w-4" />}
+                Conciliar selecionados
+              </Button>
+            </div>
+          )}
+        </TabsContent>
+
+        {/* TAB 2 — EXTRATO SEM NF (auto + manuais) */}
+        <TabsContent value="extrato_sem_nf" className="space-y-4 mt-4">
+          {autoCategorizaveis.length > 0 && (
+            <Card className="border-admin/30">
+              <CardHeader className="pb-2 flex flex-row items-center justify-between">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-admin" />
+                  Transações bancárias reconhecidas
+                  <Badge className="bg-admin/10 text-admin border-admin/30">{autoCategorizaveis.length}</Badge>
+                </CardTitle>
+                <Button
+                  size="sm"
+                  onClick={aceitarTodosAuto}
+                  disabled={conciliando}
+                  className="bg-admin hover:bg-admin/90 text-admin-foreground gap-2"
+                >
+                  {conciliando ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
+                  Aceitar todos
                 </Button>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      )}
+              </CardHeader>
+              <CardContent className="space-y-1">
+                {autoCategorizaveis.map((mov) => (
+                  <div key={mov.id} className="flex items-center gap-3 p-3 rounded-lg border bg-admin/5">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm truncate">{mov.descricao}</p>
+                      <p className="text-xs text-muted-foreground">{formatDateBR(mov.data_transacao)}</p>
+                    </div>
+                    <span className={"font-medium text-sm " + (Number(mov.valor) < 0 ? "text-destructive" : "text-success")}>
+                      {formatBRL(Number(mov.valor))}
+                    </span>
+                    <Badge variant="outline" className="text-[10px]">
+                      {mov._regra_auto?.categoria_codigo} — {mov._regra_auto?.descricao_limpa}
+                    </Badge>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => aceitarUmAuto(mov)}
+                      disabled={conciliando}
+                    >
+                      Aceitar
+                    </Button>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
 
-      {/* Cenário 3: NF sem extrato */}
-      {cpsSemExtrato.length > 0 && (
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <AlertCircle className="h-4 w-4 text-destructive" />
-              Na NF, sem extrato
-              <Badge variant="destructive">{cpsSemExtrato.length}</Badge>
-            </CardTitle>
-            <p className="text-xs text-muted-foreground">
-              Contas com status "pago" ou "agendado" que não foram encontradas no extrato bancário.
-            </p>
-          </CardHeader>
-          <CardContent className="space-y-1">
-            {cpsSemExtrato.map((cp) => (
-              <div key={cp.id} className="flex items-center gap-3 p-3 rounded-lg border border-destructive/20">
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm truncate">{cp.fornecedor_cliente || "—"}</p>
-                  <p className="text-xs text-muted-foreground">
-                    Vencimento: {formatDateBR(cp.data_vencimento)} {cp.nf_numero ? `· NF ${cp.nf_numero}` : ""}
-                  </p>
+          {manuais.length > 0 && (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <AlertTriangle className="h-4 w-4 text-warning" />
+                  Pendentes de identificação
+                  <Badge variant="outline">{manuais.length}</Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-1">
+                {manuais.map((mov) => (
+                  <div key={mov.id} className="flex items-center gap-3 p-3 rounded-lg border">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm truncate">{mov.descricao}</p>
+                      <p className="text-xs text-muted-foreground">{formatDateBR(mov.data_transacao)}</p>
+                    </div>
+                    <span className="font-medium text-sm text-destructive">{formatBRL(Number(mov.valor))}</span>
+                    <div className="w-[220px]">
+                      <CategoriaCombobox
+                        options={categoriasOpts}
+                        value={mov.conta_plano_id}
+                        onChange={(catId) => categorizarMovOrfa(mov, catId)}
+                        placeholder="Categorizar"
+                        allowNull
+                      />
+                    </div>
+                    <Button size="sm" variant="outline" onClick={() => criarContaDeMov(mov)}>
+                      Criar conta
+                    </Button>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
+
+          {autoCategorizaveis.length === 0 && manuais.length === 0 && (
+            <Card>
+              <CardContent className="py-8 text-center text-sm text-muted-foreground">
+                Nenhuma transação no extrato sem NF correspondente.
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        {/* TAB 3 — NF SEM EXTRATO */}
+        <TabsContent value="nf_sem_extrato" className="space-y-4 mt-4">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <AlertCircle className="h-4 w-4 text-destructive" />
+                Na NF, sem extrato
+                <Badge variant="destructive">{cpsSemExtrato.length}</Badge>
+              </CardTitle>
+              <p className="text-xs text-muted-foreground">
+                Contas com status "pago" ou "agendado" que não foram encontradas no extrato bancário.
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-1">
+              {cpsSemExtrato.length === 0 && (
+                <p className="text-xs text-muted-foreground py-4 text-center">
+                  Tudo conciliado — todas as contas pagas têm correspondência no extrato.
+                </p>
+              )}
+              {cpsSemExtrato.map((cp) => (
+                <div key={cp.id} className="flex items-center gap-3 p-3 rounded-lg border border-destructive/20">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm truncate">{cp.fornecedor_cliente || "—"}</p>
+                    <p className="text-xs text-muted-foreground">
+                      Vencimento: {formatDateBR(cp.data_vencimento)} {cp.nf_numero ? `· NF ${cp.nf_numero}` : ""}
+                    </p>
+                  </div>
+                  <span className="font-medium text-sm">{formatBRL(Number(cp.valor))}</span>
+                  <Badge variant="outline" className="text-[10px]">{cp.status}</Badge>
                 </div>
-                <span className="font-medium text-sm">{formatBRL(Number(cp.valor))}</span>
-                <Badge variant="outline" className="text-[10px]">{cp.status}</Badge>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      )}
+              ))}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
 
       {/* Dialog confirmação batch */}
       <Dialog open={showConfirmar} onOpenChange={setShowConfirmar}>
@@ -590,7 +868,7 @@ export default function Conciliacao() {
           <DialogHeader>
             <DialogTitle>Confirmar conciliação automática</DialogTitle>
             <DialogDescription>
-              {matchesParaConfirmar.length} matches encontrados com alta confiança (≥ 70%).
+              {matchesParaConfirmar.length} matches encontrados com alta confiança (≥ 60%).
             </DialogDescription>
           </DialogHeader>
           <div className="max-h-80 overflow-y-auto space-y-2">
@@ -634,6 +912,41 @@ export default function Conciliacao() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Dialog criar regra (aprendizado) */}
+      <Dialog open={showCriarRegra} onOpenChange={setShowCriarRegra}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Criar regra para o extrato?</DialogTitle>
+            <DialogDescription>
+              {regraDraft && (
+                <>
+                  Próxima vez que o extrato contiver <strong>"{regraDraft.padrao}"</strong>, categorizar
+                  automaticamente como <strong>{regraDraft.categoriaNome}</strong>.
+                </>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowCriarRegra(false)}>
+              Não
+            </Button>
+            <Button
+              onClick={criarRegra}
+              className="bg-admin hover:bg-admin/90 text-admin-foreground gap-2"
+            >
+              <Sparkles className="h-4 w-4" />
+              Sim, criar regra
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <ImportarExtratoDialog
+        open={showImportar}
+        onOpenChange={setShowImportar}
+        contaPreSelecionada={contaBancariaId !== "todas" ? contaBancariaId : undefined}
+      />
     </div>
   );
 }
