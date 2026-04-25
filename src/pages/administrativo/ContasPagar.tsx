@@ -320,7 +320,7 @@ export default function ContasPagar() {
                   setBusca(e.target.value);
                   setPage(1);
                 }}
-                className="pl-9"
+                className={`pl-9 ${busca ? filtroAtivoCls : ""}`}
               />
             </div>
             <Input
@@ -330,7 +330,7 @@ export default function ContasPagar() {
                 setDataDe(e.target.value);
                 setPage(1);
               }}
-              className="w-full lg:w-44"
+              className={`w-full lg:w-44 ${dataDe ? filtroAtivoCls : ""}`}
             />
             <Input
               type="date"
@@ -339,7 +339,7 @@ export default function ContasPagar() {
                 setDataAte(e.target.value);
                 setPage(1);
               }}
-              className="w-full lg:w-44"
+              className={`w-full lg:w-44 ${dataAte ? filtroAtivoCls : ""}`}
             />
             <Select
               value={docsFilter}
@@ -348,7 +348,9 @@ export default function ContasPagar() {
                 setPage(1);
               }}
             >
-              <SelectTrigger className="w-full lg:w-40">
+              <SelectTrigger
+                className={`w-full lg:w-40 ${docsFilter !== "todos" ? filtroAtivoCls : ""}`}
+              >
                 <SelectValue placeholder="Documentação" />
               </SelectTrigger>
               <SelectContent>
@@ -377,6 +379,21 @@ export default function ContasPagar() {
               ))}
             </div>
           </div>
+          {temFiltroAtivo && (
+            <div className="flex items-center gap-2 mt-3">
+              <Badge variant="outline" className="text-[10px] text-admin border-admin">
+                {filtrosAtivos} filtro{filtrosAtivos > 1 ? "s" : ""} ativo{filtrosAtivos > 1 ? "s" : ""}
+              </Badge>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-admin hover:text-admin/80 gap-1 text-xs h-7"
+                onClick={limparFiltros}
+              >
+                <X className="h-3 w-3" /> Limpar filtros
+              </Button>
+            </div>
+          )}
         </CardHeader>
         <CardContent>
           {/* Barra de ações em massa */}
