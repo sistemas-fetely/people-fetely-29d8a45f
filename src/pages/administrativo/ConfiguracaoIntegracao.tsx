@@ -732,6 +732,25 @@ export default function ConfiguracaoIntegracao() {
         </CardContent>
       </Card>
 
+      <Card className="border border-dashed">
+        <CardHeader>
+          <CardTitle className="text-base">Manutenção do banco</CardTitle>
+          <CardDescription>Correções pontuais que precisam ser executadas manualmente.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2"
+            disabled={fixExecutado}
+            onClick={corrigirConstraintLancamentos}
+          >
+            Corrigir constraint de lançamentos
+          </Button>
+          {fixExecutado && <p className="text-xs text-success mt-2">Correção aplicada com sucesso!</p>}
+        </CardContent>
+      </Card>
+
       {/* Como configurar */}
       <Accordion type="single" collapsible>
         <AccordionItem value="how">
