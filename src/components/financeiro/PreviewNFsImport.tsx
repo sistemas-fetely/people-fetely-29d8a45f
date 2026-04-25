@@ -154,6 +154,17 @@ export function PreviewNFsImport({
     <div className="mt-4 space-y-3">
       <div className="flex flex-wrap items-center gap-3 text-sm">
         <Badge variant="outline">{nfs.length} NFs</Badge>
+        {totals.vincular > 0 && (
+          <Badge variant="outline" className="gap-1 border-blue-300 text-blue-700">
+            <Link2 className="h-3 w-3" />
+            {totals.vincular} vincular a existentes
+          </Badge>
+        )}
+        {totals.novosProntos > 0 && (
+          <Badge variant="outline" className="border-success text-success">
+            {totals.novosProntos} novos prontos
+          </Badge>
+        )}
         {totals.dup > 0 && (
           <Badge variant="secondary">
             {totals.dup} duplicadas (já existem)
