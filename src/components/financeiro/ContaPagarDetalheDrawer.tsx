@@ -112,6 +112,34 @@ export default function ContaPagarDetalheDrawer({ contaId, onClose }: Props) {
     },
   });
 
+  const { data: itens } = useQuery({
+    queryKey: ["conta-pagar-itens", contaId],
+    enabled: !!contaId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("contas_pagar_itens")
+        .select("id, descricao, ncm, quantidade, unidade, valor_total, conta_plano_id, plano_contas:conta_plano_id(codigo, nome)")
+        .eq("conta_id", contaId!);
+      if (error) throw error;
+      return (data || []) as Array<{
+        id: string;
+        descricao: string;
+        ncm: string | null;
+        quantidade: number | null;
+        unidade: string | null;
+        valor_total: number | null;
+        conta_plano_id: string | null;
+        plano_contas?: { codigo?: string | null; nome?: string | null } | null;
+      }>;
+    },
+  });
+
+  const temCategoriasMultiplas = (() => {
+    if (!itens || itens.length < 2) return false;
+    const cats = new Set(itens.map((i) => i.conta_plano_id || "_sem"));
+    return cats.size > 1;
+  })();
+
   return (
     <Sheet open={!!contaId} onOpenChange={(v) => !v && onClose()}>
       <SheetContent className="w-full sm:max-w-md overflow-y-auto">
