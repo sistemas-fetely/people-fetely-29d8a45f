@@ -178,6 +178,7 @@ export function ImportadorCsvQive({ categorias, onImported }: Props) {
           categorias={categorias}
           onChange={setPreview}
           onImport={doImport}
+          onClear={() => setPreview([])}
           importing={importing}
         />
       </CardContent>
