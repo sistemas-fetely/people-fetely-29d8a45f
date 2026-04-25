@@ -85,6 +85,7 @@ export function ImportadorPdfDanfe({ categorias, onImported }: Props) {
       }
       let processadas = novas.map((n) => aplicarRegras(n, regras));
       processadas = await verificarDuplicatas(processadas);
+      processadas = await buscarMatchPagamentos(processadas);
       processadas = processadas.map((n) => ({ ...n, _selecionada: !n._duplicata }));
       if (processadas.length > 0) {
         setPreview((prev) => [...prev, ...processadas]);
