@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Loader2, Download, AlertTriangle } from "lucide-react";
+import { Loader2, Download, AlertTriangle, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -12,6 +12,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { CategoriaCombobox, type CategoriaOption } from "@/components/financeiro/CategoriaCombobox";
+import { CriarRegraDialog } from "@/components/financeiro/CriarRegraDialog";
 import type { NFParsed } from "@/lib/financeiro/types";
 
 interface Props {
@@ -19,11 +20,22 @@ interface Props {
   categorias: CategoriaOption[];
   onChange: (nfs: NFParsed[]) => void;
   onImport: () => void | Promise<void>;
+  onClear?: () => void;
   importing: boolean;
 }
 
-export function PreviewNFsImport({ nfs, categorias, onChange, onImport, importing }: Props) {
+export function PreviewNFsImport({
+  nfs,
+  categorias,
+  onChange,
+  onImport,
+  onClear,
+  importing,
+}: Props) {
   const [showOnlyMissing, setShowOnlyMissing] = useState(false);
+  const [regraNF, setRegraNF] = useState<NFParsed | null>(null);
+  const [regraCategoriaId, setRegraCategoriaId] = useState<string | null>(null);
+  const [regraCategoriaNome, setRegraCategoriaNome] = useState<string | null>(null);
 
   const visibleIdx = useMemo(() => {
     return nfs
@@ -57,6 +69,9 @@ export function PreviewNFsImport({ nfs, categorias, onChange, onImport, importin
 
   function setCategoria(idx: number, categoriaId: string | null) {
     const opt = categoriaId ? categorias.find((c) => c.id === categoriaId) || null : null;
+    const nfAnterior = nfs[idx];
+    const mudouManualmente =
+      categoriaId && categoriaId !== nfAnterior._categoria_id;
     onChange(
       nfs.map((n, i) =>
         i === idx
@@ -69,6 +84,12 @@ export function PreviewNFsImport({ nfs, categorias, onChange, onImport, importin
           : n
       )
     );
+    // Após seleção manual, oferecer criar regra automática
+    if (mudouManualmente && opt && (nfAnterior.fornecedor_cnpj || nfAnterior.nf_ncm)) {
+      setRegraNF(nfAnterior);
+      setRegraCategoriaId(categoriaId);
+      setRegraCategoriaNome(`${opt.codigo} — ${opt.nome}`);
+    }
   }
 
   if (nfs.length === 0) return null;
@@ -199,19 +220,48 @@ export function PreviewNFsImport({ nfs, categorias, onChange, onImport, importin
         <p className="text-sm text-muted-foreground">
           {totals.sel} selecionada{totals.sel === 1 ? "" : "s"} para importar
         </p>
-        <Button
-          onClick={onImport}
-          disabled={importing || totals.sel === 0}
-          className="bg-admin hover:bg-admin/90 text-admin-foreground gap-2"
-        >
-          {importing ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <Download className="h-4 w-4" />
+        <div className="flex items-center gap-2">
+          {onClear && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onClear}
+              disabled={importing}
+              className="gap-1 text-muted-foreground"
+            >
+              <X className="h-4 w-4" />
+              Limpar
+            </Button>
           )}
-          Importar selecionadas
-        </Button>
+          <Button
+            onClick={onImport}
+            disabled={importing || totals.sel === 0}
+            className="bg-admin hover:bg-admin/90 text-admin-foreground gap-2"
+          >
+            {importing ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Download className="h-4 w-4" />
+            )}
+            Importar selecionadas
+          </Button>
+        </div>
       </div>
+
+      <CriarRegraDialog
+        open={!!regraNF}
+        onOpenChange={(v) => {
+          if (!v) {
+            setRegraNF(null);
+            setRegraCategoriaId(null);
+            setRegraCategoriaNome(null);
+          }
+        }}
+        nf={regraNF}
+        categoriaId={regraCategoriaId}
+        categoriaNome={regraCategoriaNome}
+        centroCusto={regraNF?._centro_custo || null}
+      />
     </div>
   );
 }

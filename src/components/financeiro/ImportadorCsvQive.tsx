@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Papa from "papaparse";
 import { FileSpreadsheet, Loader2 } from "lucide-react";
 import {
@@ -23,6 +23,10 @@ import type { NFParsed } from "@/lib/financeiro/types";
 import type { CategoriaOption } from "@/components/financeiro/CategoriaCombobox";
 import { PreviewNFsImport } from "./PreviewNFsImport";
 
+const STORAGE_KEY = "import_preview_nfs";
+const STORAGE_TS_KEY = "import_preview_timestamp";
+const MAX_AGE_MS = 30 * 60 * 1000; // 30 min
+
 interface Props {
   categorias: CategoriaOption[];
   onImported?: () => void;
@@ -31,8 +35,48 @@ interface Props {
 export function ImportadorCsvQive({ categorias, onImported }: Props) {
   const [parsing, setParsing] = useState(false);
   const [importing, setImporting] = useState(false);
-  const [preview, setPreview] = useState<NFParsed[]>([]);
+  const [preview, setPreviewState] = useState<NFParsed[]>([]);
   const { data: regras } = useRegrasCategorizacao();
+
+  // Salvar preview no sessionStorage sempre que mudar
+  function setPreview(nfs: NFParsed[]) {
+    setPreviewState(nfs);
+    try {
+      if (nfs.length === 0) {
+        sessionStorage.removeItem(STORAGE_KEY);
+        sessionStorage.removeItem(STORAGE_TS_KEY);
+      } else {
+        sessionStorage.setItem(STORAGE_KEY, JSON.stringify(nfs));
+        sessionStorage.setItem(STORAGE_TS_KEY, Date.now().toString());
+      }
+    } catch {
+      // sessionStorage cheio ou indisponível — segue sem persistência
+    }
+  }
+
+  // Restaurar preview ao montar
+  useEffect(() => {
+    try {
+      const saved = sessionStorage.getItem(STORAGE_KEY);
+      const ts = sessionStorage.getItem(STORAGE_TS_KEY);
+      if (saved && ts) {
+        const idade = Date.now() - parseInt(ts, 10);
+        if (idade < MAX_AGE_MS) {
+          const parsed = JSON.parse(saved) as NFParsed[];
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setPreviewState(parsed);
+            toast.info("Preview restaurado da sessão anterior");
+          }
+        } else {
+          sessionStorage.removeItem(STORAGE_KEY);
+          sessionStorage.removeItem(STORAGE_TS_KEY);
+        }
+      }
+    } catch {
+      // ignore
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -134,6 +178,7 @@ export function ImportadorCsvQive({ categorias, onImported }: Props) {
           categorias={categorias}
           onChange={setPreview}
           onImport={doImport}
+          onClear={() => setPreview([])}
           importing={importing}
         />
       </CardContent>
