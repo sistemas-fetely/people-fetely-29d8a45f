@@ -77,6 +77,19 @@ export async function importarNFs(nfs: NFParsed[]): Promise<ImportResult> {
       }
 
       // 3. Insert conta a pagar
+      // Se expandida por item, conta principal usa a categoria do item de maior valor
+      let categoriaContaPrincipal = nf._categoria_id || null;
+      let centroCustoContaPrincipal = nf._centro_custo || null;
+      if (nf._expandirItens && nf.itens && nf.itens.length > 0) {
+        const principal = nf.itens.reduce((a, b) =>
+          (a.valor_total || 0) >= (b.valor_total || 0) ? a : b,
+        );
+        if (principal._categoria_id) {
+          categoriaContaPrincipal = principal._categoria_id;
+          centroCustoContaPrincipal = principal._centro_custo || null;
+        }
+      }
+
       const { data: contaCriada, error: contaErr } = await supabase
         .from("contas_pagar_receber")
         .insert({
@@ -85,8 +98,8 @@ export async function importarNFs(nfs: NFParsed[]): Promise<ImportResult> {
           valor: nf.valor,
           data_vencimento: nf.nf_data_emissao || new Date().toISOString().substring(0, 10),
           status: "rascunho",
-          conta_id: nf._categoria_id || null,
-          centro_custo: nf._centro_custo || null,
+          conta_id: categoriaContaPrincipal,
+          centro_custo: centroCustoContaPrincipal,
           fornecedor_cliente: nf.fornecedor_nome,
           parceiro_id,
           fornecedor_id: parceiro_id,
@@ -102,7 +115,7 @@ export async function importarNFs(nfs: NFParsed[]): Promise<ImportResult> {
           nf_natureza_operacao: nf.nf_natureza_operacao || null,
           nf_cfop: nf.nf_cfop || null,
           nf_ncm: nf.nf_ncm || null,
-          categoria_sugerida_ia: !!nf._categoria_id,
+          categoria_sugerida_ia: !!categoriaContaPrincipal,
           categoria_confirmada: false,
         } as any)
         .select("id")
@@ -125,6 +138,10 @@ export async function importarNFs(nfs: NFParsed[]): Promise<ImportResult> {
           valor_icms: item.valor_icms ?? 0,
           valor_pis: item.valor_pis ?? 0,
           valor_cofins: item.valor_cofins ?? 0,
+          // Categoria por item — usada quando expandida; cai pra categoria geral senão
+          conta_plano_id: nf._expandirItens
+            ? item._categoria_id || nf._categoria_id || null
+            : nf._categoria_id || null,
         }));
         const { error: itErr } = await supabase
           .from("contas_pagar_itens")
