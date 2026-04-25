@@ -26,17 +26,80 @@ export async function verificarDuplicatas(nfs: NFParsed[]): Promise<NFParsed[]> 
 
 export interface ImportResult {
   sucesso: number;
+  vinculadas: number;
   erros: number;
   errosDetalhe: string[];
 }
 
 export async function importarNFs(nfs: NFParsed[]): Promise<ImportResult> {
   let sucesso = 0;
+  let vinculadas = 0;
   let erros = 0;
   const errosDetalhe: string[] = [];
 
   for (const nf of nfs) {
     try {
+      // === VINCULAÇÃO: NF bate com pagamento existente sem NF ===
+      if (nf._match_pagamento) {
+        const contaId = nf._match_pagamento.conta_id;
+
+        const { error: upErr } = await supabase
+          .from("contas_pagar_receber")
+          .update({
+            nf_chave_acesso: nf.nf_chave_acesso || null,
+            nf_numero: nf.nf_numero || null,
+            nf_serie: nf.nf_serie || null,
+            nf_data_emissao: nf.nf_data_emissao || null,
+            nf_cnpj_emitente: nf.fornecedor_cnpj || null,
+            nf_valor_produtos: nf.nf_valor_produtos || nf.valor,
+            nf_valor_impostos: nf.nf_valor_impostos || 0,
+            nf_natureza_operacao: nf.nf_natureza_operacao || null,
+            nf_cfop: nf.nf_cfop || null,
+            nf_ncm: nf.nf_ncm || null,
+            updated_at: new Date().toISOString(),
+          } as any)
+          .eq("id", contaId);
+
+        if (upErr) throw upErr;
+
+        // Histórico de vinculação
+        await supabase.from("contas_pagar_historico").insert({
+          conta_id: contaId,
+          status_anterior: nf._match_pagamento.conta_status,
+          status_novo: nf._match_pagamento.conta_status,
+          observacao: `NF ${nf.nf_numero || "s/n"} vinculada via importação ${nf._source}`,
+        } as any);
+
+        // Inserir itens se houver (e a conta ainda não tem)
+        if (nf.itens && nf.itens.length > 0) {
+          const { count } = await supabase
+            .from("contas_pagar_itens")
+            .select("id", { count: "exact", head: true })
+            .eq("conta_id", contaId);
+          if (!count || count === 0) {
+            const itensInsert = nf.itens.map((item) => ({
+              conta_id: contaId,
+              codigo_produto: item.codigo_produto || null,
+              descricao: item.descricao,
+              ncm: item.ncm || null,
+              cfop: item.cfop || null,
+              unidade: item.unidade || null,
+              quantidade: item.quantidade ?? null,
+              valor_unitario: item.valor_unitario ?? null,
+              valor_total: item.valor_total ?? null,
+              valor_icms: item.valor_icms ?? 0,
+              valor_pis: item.valor_pis ?? 0,
+              valor_cofins: item.valor_cofins ?? 0,
+              conta_plano_id: item._categoria_id || nf._categoria_id || null,
+            }));
+            await supabase.from("contas_pagar_itens").insert(itensInsert as any);
+          }
+        }
+
+        vinculadas++;
+        continue;
+      }
+
       // 1. Upsert parceiro por CNPJ
       let parceiro_id: string | null = null;
       if (nf.fornecedor_cnpj) {
