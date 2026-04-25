@@ -7400,6 +7400,7 @@ export type Database = {
         Args: { payload: Json; queue_name: string }
         Returns: number
       }
+      fix_lancamentos_origem_constraint: { Args: never; Returns: string }
       gerar_celebracoes_aniversario_mural: { Args: never; Returns: number }
       gerar_celebracoes_tempo_casa_mural: { Args: never; Returns: number }
       gerar_periodos_ferias_pendentes: { Args: never; Returns: undefined }
