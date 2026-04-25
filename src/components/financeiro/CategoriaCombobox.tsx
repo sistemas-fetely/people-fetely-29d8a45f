@@ -130,20 +130,32 @@ export function CategoriaCombobox({
   // Scroll para o item selecionado quando abre.
   // Usa interval porque o CommandList (cmdk) renderiza em duas etapas:
   // primeiro o Popover, depois o sizer interno do cmdk. Tenta a cada 100ms
-  // até o ref existir no DOM (máx 1s).
+  // até conseguir scrollar (máx ~1.5s). Faz scroll direto no container do
+  // cmdk porque scrollIntoView dentro de Popover pode mover a página inteira.
   useEffect(() => {
-    if (!open) return;
+    if (!open || !value) return;
     let tentativas = 0;
     const interval = setInterval(() => {
       tentativas++;
-      if (selectedRef.current) {
+      const sizer = document.querySelector("[cmdk-list-sizer]") as HTMLElement | null;
+      const container = sizer?.parentElement as HTMLElement | null;
+      const selectedEl = container?.querySelector<HTMLElement>("[data-selected-item='true']");
+      if (container && selectedEl) {
+        const containerRect = container.getBoundingClientRect();
+        const itemRect = selectedEl.getBoundingClientRect();
+        const offset =
+          itemRect.top - containerRect.top - containerRect.height / 2 + itemRect.height / 2;
+        container.scrollTop = container.scrollTop + offset;
+        clearInterval(interval);
+      } else if (selectedRef.current) {
+        // Fallback: scrollIntoView caso o seletor cmdk mude
         selectedRef.current.scrollIntoView({ block: "center" });
         clearInterval(interval);
       }
-      if (tentativas > 10) clearInterval(interval);
+      if (tentativas > 15) clearInterval(interval);
     }, 100);
     return () => clearInterval(interval);
-  }, [open]);
+  }, [open, value]);
 
   // Resetar busca quando fecha
   useEffect(() => {
