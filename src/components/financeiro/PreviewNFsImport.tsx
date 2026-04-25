@@ -261,6 +261,8 @@ export function PreviewNFsImport({
         categoriaId={regraCategoriaId}
         categoriaNome={regraCategoriaNome}
         centroCusto={regraNF?._centro_custo || null}
+        allNfs={nfs}
+        onUpdateAllNfs={onChange}
       />
     </div>
   );
