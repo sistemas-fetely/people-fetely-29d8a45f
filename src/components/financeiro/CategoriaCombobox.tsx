@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -30,6 +30,75 @@ interface Props {
   allowNull?: boolean;
 }
 
+/**
+ * Filtro hierárquico: quando o usuário digita "investimento", retorna o grupo
+ * que dá match + todos os descendentes + os ancestrais (pra manter a árvore).
+ */
+function filtrarHierarquico(
+  options: CategoriaOption[],
+  search: string,
+): { visiveis: CategoriaOption[]; matchDireto: Set<string> } {
+  if (!search || search.trim() === "") {
+    return { visiveis: options, matchDireto: new Set() };
+  }
+  const termo = search.toLowerCase();
+
+  // 1) IDs com match direto (texto bate em código ou nome)
+  const matchDireto = new Set<string>();
+  options.forEach((cat) => {
+    const hay = (cat.codigo + " " + cat.nome).toLowerCase();
+    if (hay.includes(termo)) matchDireto.add(cat.id);
+  });
+
+  // 2) Incluir descendentes de cada match
+  const comDescendentes = new Set(matchDireto);
+  let changed = true;
+  while (changed) {
+    changed = false;
+    options.forEach((cat) => {
+      if (
+        !comDescendentes.has(cat.id) &&
+        cat.parent_id &&
+        comDescendentes.has(cat.parent_id)
+      ) {
+        comDescendentes.add(cat.id);
+        changed = true;
+      }
+    });
+  }
+
+  // 3) Subir e incluir ancestrais (pra manter hierarquia visível)
+  const idsFinal = new Set(comDescendentes);
+  const byId = new Map(options.map((o) => [o.id, o]));
+  comDescendentes.forEach((id) => {
+    let parentId = byId.get(id)?.parent_id ?? null;
+    while (parentId) {
+      idsFinal.add(parentId);
+      parentId = byId.get(parentId)?.parent_id ?? null;
+    }
+  });
+
+  return {
+    visiveis: options.filter((c) => idsFinal.has(c.id)),
+    matchDireto,
+  };
+}
+
+function highlightText(text: string, search: string): ReactNode {
+  if (!search) return text;
+  const idx = text.toLowerCase().indexOf(search.toLowerCase());
+  if (idx === -1) return text;
+  return (
+    <>
+      {text.substring(0, idx)}
+      <strong className="text-admin font-semibold">
+        {text.substring(idx, idx + search.length)}
+      </strong>
+      {text.substring(idx + search.length)}
+    </>
+  );
+}
+
 export function CategoriaCombobox({
   options,
   value,
@@ -39,12 +108,39 @@ export function CategoriaCombobox({
   allowNull,
 }: Props) {
   const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const selectedRef = useRef<HTMLDivElement | null>(null);
+
   const selected = options.find((o) => o.id === value);
 
-  // Sort by codigo to keep hierarchy order
-  const sorted = [...options].sort((a, b) =>
-    a.codigo.localeCompare(b.codigo, "pt-BR", { numeric: true }),
+  // Sort por código pra manter ordem hierárquica
+  const sorted = useMemo(
+    () =>
+      [...options].sort((a, b) =>
+        a.codigo.localeCompare(b.codigo, "pt-BR", { numeric: true }),
+      ),
+    [options],
   );
+
+  const { visiveis, matchDireto } = useMemo(
+    () => filtrarHierarquico(sorted, search),
+    [sorted, search],
+  );
+
+  // Scroll para o item selecionado quando abre
+  useEffect(() => {
+    if (open && selectedRef.current) {
+      const t = setTimeout(() => {
+        selectedRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
+      }, 80);
+      return () => clearTimeout(t);
+    }
+  }, [open]);
+
+  // Resetar busca quando fecha
+  useEffect(() => {
+    if (!open) setSearch("");
+  }, [open]);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -71,58 +167,71 @@ export function CategoriaCombobox({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[420px] p-0" align="start">
-        <Command
-          filter={(value, search) => {
-            const opt = sorted.find((o) => o.id === value);
-            if (!opt) return 0;
-            const hay = (opt.codigo + " " + opt.nome).toLowerCase();
-            return hay.includes(search.toLowerCase()) ? 1 : 0;
-          }}
-        >
-          <CommandInput placeholder="Buscar por código ou nome..." className="h-9" />
+        <Command shouldFilter={false}>
+          <CommandInput
+            placeholder="Buscar por código ou nome..."
+            className="h-9"
+            value={search}
+            onValueChange={setSearch}
+          />
           <CommandList>
             <CommandEmpty>Nenhuma categoria encontrada.</CommandEmpty>
             <CommandGroup>
               {allowNull && (
                 <CommandItem
-                  value=""
+                  value="__null__"
                   onSelect={() => {
                     onChange(null);
                     setOpen(false);
                   }}
                 >
                   <Check
-                    className={cn("mr-2 h-4 w-4", value === null ? "opacity-100" : "opacity-0")}
+                    className={cn(
+                      "mr-2 h-4 w-4",
+                      value === null ? "opacity-100" : "opacity-0",
+                    )}
                   />
                   <span className="text-muted-foreground italic">Nenhum (raiz)</span>
                 </CommandItem>
               )}
-              {sorted.map((opt) => (
-                <CommandItem
-                  key={opt.id}
-                  value={opt.id}
-                  onSelect={() => {
-                    onChange(opt.id);
-                    setOpen(false);
-                  }}
-                >
-                  <Check
+              {visiveis.map((opt) => {
+                const isSelected = opt.id === value;
+                const isMatch = matchDireto.has(opt.id);
+                return (
+                  <CommandItem
+                    key={opt.id}
+                    value={opt.id}
+                    onSelect={() => {
+                      onChange(opt.id);
+                      setOpen(false);
+                    }}
                     className={cn(
-                      "mr-2 h-4 w-4",
-                      value === opt.id ? "opacity-100" : "opacity-0",
+                      isSelected && "bg-admin/10 font-medium",
                     )}
-                  />
-                  <div
-                    className="flex-1 truncate"
-                    style={{ paddingLeft: `${(opt.nivel - 1) * 12}px` }}
                   >
-                    <span className="font-mono text-xs text-muted-foreground mr-2">
-                      {opt.codigo}
-                    </span>
-                    {opt.nome}
-                  </div>
-                </CommandItem>
-              ))}
+                    <div
+                      ref={isSelected ? selectedRef : undefined}
+                      className="flex items-center w-full"
+                    >
+                      <Check
+                        className={cn(
+                          "mr-2 h-4 w-4 shrink-0",
+                          isSelected ? "opacity-100 text-admin" : "opacity-0",
+                        )}
+                      />
+                      <div
+                        className="flex-1 truncate"
+                        style={{ paddingLeft: `${(opt.nivel - 1) * 12}px` }}
+                      >
+                        <span className="font-mono text-xs text-muted-foreground mr-2">
+                          {isMatch ? highlightText(opt.codigo, search) : opt.codigo}
+                        </span>
+                        {isMatch ? highlightText(opt.nome, search) : opt.nome}
+                      </div>
+                    </div>
+                  </CommandItem>
+                );
+              })}
             </CommandGroup>
           </CommandList>
         </Command>
