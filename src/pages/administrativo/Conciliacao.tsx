@@ -1043,6 +1043,22 @@ export default function Conciliacao() {
                     Marque várias contas para agrupar (soma deve bater com a movimentação ±1%).
                   </p>
                 )}
+                <div className="pt-1">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={enriquecerTodasContasQive}
+                    disabled={enriquecendoQive}
+                    className="h-7 text-xs gap-1"
+                  >
+                    {enriquecendoQive ? (
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                    ) : (
+                      <Sparkles className="h-3 w-3" />
+                    )}
+                    Enriquecer todas via Qive
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent>
                 {/* CARD RESUMO da seleção N:1 */}
