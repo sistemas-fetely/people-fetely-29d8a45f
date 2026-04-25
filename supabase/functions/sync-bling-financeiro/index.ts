@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
@@ -10,24 +9,24 @@ var corsHeaders = {
 
 var BLING_BASE = "https://www.bling.com.br/Api/v3";
 
-function ok(data) {
+function ok(data: any) {
   return new Response(JSON.stringify(data), {
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 }
 
-function err(message, status) {
+function err(message: any, status?: any) {
   return new Response(
     JSON.stringify({ sucesso: false, erro: message }),
     { status: status || 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
   );
 }
 
-function sleep(ms) {
+function sleep(ms: number) {
   return new Promise(function (resolve) { setTimeout(resolve, ms); });
 }
 
-async function blingGet(endpoint, accessToken) {
+async function blingGet(endpoint: string, accessToken: string): Promise<any> {
   var url = BLING_BASE + endpoint;
   var res = await fetch(url, {
     method: "GET",
@@ -44,7 +43,7 @@ async function blingGet(endpoint, accessToken) {
   return res.json();
 }
 
-async function refreshToken(supabase, config) {
+async function refreshToken(supabase: any, config: any) {
   var credentials = config.client_id + ":" + config.client_secret;
   var encoded = btoa(credentials);
   var params = new URLSearchParams();
@@ -74,7 +73,7 @@ async function refreshToken(supabase, config) {
 }
 
 // === SYNC: CONTAS A RECEBER ===
-async function syncContasReceber(supabase, accessToken, ultimaSync) {
+async function syncContasReceber(supabase: any, accessToken: string, ultimaSync: any) {
   var criados = 0, atualizados = 0, erros = 0;
   var pagina = 1;
   var temMais = true;
@@ -166,7 +165,7 @@ async function syncContasReceber(supabase, accessToken, ultimaSync) {
 }
 
 // === SYNC: PEDIDOS DE VENDA ===
-async function syncPedidos(supabase, accessToken, ultimaSync) {
+async function syncPedidos(supabase: any, accessToken: string, ultimaSync: any) {
   var criados = 0, atualizados = 0, erros = 0;
   var pagina = 1;
   var temMais = true;
@@ -254,7 +253,7 @@ async function syncPedidos(supabase, accessToken, ultimaSync) {
 }
 
 // === SYNC: PRODUTOS ===
-async function syncProdutos(supabase, accessToken) {
+async function syncProdutos(supabase: any, accessToken: string) {
   var criados = 0, atualizados = 0, erros = 0;
   var pagina = 1;
   var temMais = true;
@@ -320,8 +319,8 @@ serve(async (req) => {
 
   try {
     var supabase = createClient(
-      Deno.env.get("SUPABASE_URL") || "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || ""
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
     var authHeader = req.headers.get("Authorization");
