@@ -14,6 +14,12 @@ export interface ItemNFParsed {
   valor_icms?: number;
   valor_pis?: number;
   valor_cofins?: number;
+
+  // Categoria por item (quando expandido)
+  _categoria_id?: string | null;
+  _categoria_nome?: string | null;
+  _centro_custo?: string | null;
+  _regra_origem?: "parceiro" | "ncm" | "texto" | "manual" | null;
 }
 
 export interface NFParsed {
