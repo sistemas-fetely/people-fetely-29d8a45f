@@ -17,7 +17,7 @@ import {
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
-import { ArrowDownLeft, ArrowUpRight, Building2, CheckCircle2, Loader2, Sparkles, Upload, Wallet } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, Building2, CheckCircle2, Loader2, Sparkles, Upload, Wallet, X } from "lucide-react";
 import { toast } from "sonner";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
 import { parseOFX } from "@/lib/financeiro/ofx-parser";
