@@ -15,6 +15,7 @@ interface ContaMatch {
   fornecedor_cliente: string | null;
   status: string;
   docs_status: string | null;
+  conta_id: string | null;
   _usado?: boolean;
 }
 
