@@ -24,7 +24,7 @@ type Conta = {
   data_pagamento: string | null;
   status: string;
   fornecedor_cliente: string | null;
-  parceiro_id?: string | null;
+  parceiro_id: string | null;
   conta_id: string | null;
   centro_custo: string | null;
   forma_pagamento_id: string | null;
