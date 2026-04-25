@@ -89,6 +89,12 @@ export default function Conciliacao() {
   const [movSelecionada, setMovSelecionada] = useState<string | null>(null);
   const [cpSelecionada, setCpSelecionada] = useState<string | null>(null);
 
+  // Agrupamento N:1 manual
+  const [contasSelecionadasManual, setContasSelecionadasManual] = useState<Set<string>>(new Set());
+
+  // Agrupamentos sugeridos pela IA
+  const [agrupamentosRejeitados, setAgrupamentosRejeitados] = useState<Set<string>>(new Set());
+
   const [matchesSugeridos, setMatchesSugeridos] = useState<MatchResult[]>([]);
   const [showConfirmar, setShowConfirmar] = useState(false);
   const [matchesParaConfirmar, setMatchesParaConfirmar] = useState<MatchResult[]>([]);
