@@ -5,7 +5,18 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Check, FileText, UserCheck, Send, ThumbsUp, X, ShieldCheck } from "lucide-react";
+import { Check, FileText, UserCheck, Send, ThumbsUp, X, ShieldCheck, RotateCcw, Ban } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Link } from "react-router-dom";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
 import RegistrarPagamentoDialog from "./RegistrarPagamentoDialog";
@@ -311,11 +322,14 @@ export default function ContaPagarDetalheDrawer({ contaId, onClose }: Props) {
             {conta.tipo === "pagar" && (
               <>
                 <Separator className="my-4" />
-                <div className="space-y-2">
+                <div className="space-y-3">
                   {conta.status === "rascunho" && (
-                    <div className="flex gap-2">
+                    <div className="space-y-2">
+                      <p className="text-xs text-muted-foreground">
+                        Revise os dados e valide para abrir esta conta.
+                      </p>
                       <Button
-                        className="flex-1 bg-blue-700 hover:bg-blue-800 text-white gap-2"
+                        className="w-full bg-blue-700 hover:bg-blue-800 text-white gap-2"
                         onClick={async () => {
                           await workflow.mudarStatus.mutateAsync({
                             contaId: conta.id,
@@ -327,28 +341,50 @@ export default function ContaPagarDetalheDrawer({ contaId, onClose }: Props) {
                       >
                         <ShieldCheck className="h-4 w-4" /> Validar e abrir
                       </Button>
-                      <Button
-                        variant="outline"
-                        className="text-red-600"
-                        onClick={async () => {
-                          await workflow.mudarStatus.mutateAsync({
-                            contaId: conta.id,
-                            statusAnterior: conta.status,
-                            novoStatus: "cancelado" as ContaStatus,
-                            observacao: "Cancelado manualmente",
-                          });
-                          onClose();
-                        }}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="ghost" className="w-full text-muted-foreground hover:text-red-600 gap-2">
+                            <Ban className="h-4 w-4" /> Cancelar esta conta
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Cancelar esta conta?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              O status mudará para "Cancelado". Você poderá reverter depois se necessário.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Voltar</AlertDialogCancel>
+                            <AlertDialogAction
+                              className="bg-red-600 hover:bg-red-700 text-white"
+                              onClick={async () => {
+                                await workflow.mudarStatus.mutateAsync({
+                                  contaId: conta.id,
+                                  statusAnterior: conta.status,
+                                  novoStatus: "cancelado" as ContaStatus,
+                                  observacao: "Cancelado manualmente",
+                                });
+                                onClose();
+                              }}
+                            >
+                              Sim, cancelar
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </div>
                   )}
 
                   {(conta.status === "aberto" || conta.status === "atrasado") && (
-                    <div className="flex gap-2">
+                    <div className="space-y-2">
+                      <p className={`text-xs ${conta.status === "atrasado" ? "text-red-600 font-medium" : "text-muted-foreground"}`}>
+                        {conta.status === "atrasado"
+                          ? "⚠️ Esta conta está atrasada. Aprove para enviar ao financeiro."
+                          : "Conta validada. Aprove para liberar o pagamento."}
+                      </p>
                       <Button
-                        className="flex-1 bg-purple-700 hover:bg-purple-800 text-white gap-2"
+                        className="w-full bg-purple-700 hover:bg-purple-800 text-white gap-2"
                         onClick={async () => {
                           await workflow.mudarStatus.mutateAsync({
                             contaId: conta.id,
@@ -358,42 +394,69 @@ export default function ContaPagarDetalheDrawer({ contaId, onClose }: Props) {
                           onClose();
                         }}
                       >
-                        <ThumbsUp className="h-4 w-4" /> Aprovar
+                        <ThumbsUp className="h-4 w-4" /> Aprovar pagamento
                       </Button>
-                      <Button
-                        variant="outline"
-                        className="text-red-600"
-                        onClick={async () => {
-                          await workflow.mudarStatus.mutateAsync({
-                            contaId: conta.id,
-                            statusAnterior: conta.status,
-                            novoStatus: "cancelado" as ContaStatus,
-                            observacao: "Cancelado manualmente",
-                          });
-                          onClose();
-                        }}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="ghost" className="w-full text-muted-foreground hover:text-red-600 gap-2">
+                            <Ban className="h-4 w-4" /> Cancelar esta conta
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Cancelar esta conta?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              O status mudará para "Cancelado". Você poderá reverter depois se necessário.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Voltar</AlertDialogCancel>
+                            <AlertDialogAction
+                              className="bg-red-600 hover:bg-red-700 text-white"
+                              onClick={async () => {
+                                await workflow.mudarStatus.mutateAsync({
+                                  contaId: conta.id,
+                                  statusAnterior: conta.status,
+                                  novoStatus: "cancelado" as ContaStatus,
+                                  observacao: "Cancelado manualmente",
+                                });
+                                onClose();
+                              }}
+                            >
+                              Sim, cancelar
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </div>
                   )}
 
                   {conta.status === "aprovado" && (
-                    <Button
-                      className="w-full bg-amber-600 hover:bg-amber-700 text-white gap-2"
-                      onClick={() => setShowEnviar(true)}
-                    >
-                      <Send className="h-4 w-4" /> Enviar para pagamento
-                    </Button>
+                    <div className="space-y-2">
+                      <p className="text-xs text-muted-foreground">
+                        Aprovado! Envie para o financeiro externo realizar o pagamento.
+                      </p>
+                      <Button
+                        className="w-full bg-amber-600 hover:bg-amber-700 text-white gap-2"
+                        onClick={() => setShowEnviar(true)}
+                      >
+                        <Send className="h-4 w-4" /> Enviar para pagamento
+                      </Button>
+                    </div>
                   )}
 
                   {conta.status === "agendado" && (
-                    <Button
-                      onClick={() => setShowPag(true)}
-                      className="w-full bg-green-700 hover:bg-green-800 text-white gap-2"
-                    >
-                      <Check className="h-4 w-4" /> Registrar pagamento
-                    </Button>
+                    <div className="space-y-2">
+                      <p className="text-xs text-muted-foreground">
+                        Enviado ao financeiro. Registre quando o pagamento for realizado.
+                      </p>
+                      <Button
+                        onClick={() => setShowPag(true)}
+                        className="w-full bg-green-700 hover:bg-green-800 text-white gap-2"
+                      >
+                        <Check className="h-4 w-4" /> Registrar pagamento
+                      </Button>
+                    </div>
                   )}
 
                   {conta.status === "pago" && (
@@ -405,6 +468,29 @@ export default function ContaPagarDetalheDrawer({ contaId, onClose }: Props) {
                   {conta.status === "conciliado" && (
                     <div className="flex items-center gap-2 p-3 rounded-lg bg-teal-50 text-teal-700 text-sm">
                       <ShieldCheck className="h-4 w-4" /> Conciliado
+                    </div>
+                  )}
+
+                  {conta.status === "cancelado" && (
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 p-3 rounded-lg bg-gray-100 text-gray-700 text-sm">
+                        <Ban className="h-4 w-4" /> Cancelado
+                      </div>
+                      <Button
+                        variant="outline"
+                        className="w-full gap-2"
+                        onClick={async () => {
+                          await workflow.mudarStatus.mutateAsync({
+                            contaId: conta.id,
+                            statusAnterior: "cancelado",
+                            novoStatus: "rascunho" as ContaStatus,
+                            observacao: "Revertido para rascunho",
+                          });
+                          onClose();
+                        }}
+                      >
+                        <RotateCcw className="h-4 w-4" /> Reverter para rascunho
+                      </Button>
                     </div>
                   )}
                 </div>
