@@ -1,5 +1,5 @@
 import { Fragment, useMemo, useState } from "react";
-import { Loader2, Download, AlertTriangle, X, ListTree, Package } from "lucide-react";
+import { Loader2, Download, AlertTriangle, X, ListTree, Package, Link2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
