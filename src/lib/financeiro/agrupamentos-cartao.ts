@@ -118,9 +118,9 @@ export function encontrarAgrupamentosCartao(
   const sugestoes: AgrupamentoSugerido[] = [];
   const contasUsadas = new Set<string>();
 
-  // Só considerar débitos com valor relevante
+  // Só considerar débitos relevantes que pareçam fatura de cartão ou lote
   const debitos = movs
-    .filter((m) => num(m.valor) < 0 && Math.abs(num(m.valor)) >= 100)
+    .filter((m) => num(m.valor) < 0 && Math.abs(num(m.valor)) >= 100 && ehFaturaOuLote(m))
     .sort((a, b) => Math.abs(num(b.valor)) - Math.abs(num(a.valor)));
 
   for (const mov of debitos) {
