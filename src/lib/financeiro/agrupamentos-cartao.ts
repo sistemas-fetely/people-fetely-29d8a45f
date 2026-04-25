@@ -10,7 +10,29 @@ export type MovInput = {
   descricao: string;
   valor: number | string;
   conciliado?: boolean | null;
+  tipo_pagamento?: string | null;
 };
+
+/**
+ * Detecta se uma movimentação é fatura de cartão de crédito ou lote de pagamentos.
+ * Usa tipo_pagamento (preenchido pelo banco) e padrões na descrição.
+ */
+function ehFaturaOuLote(mov: MovInput): boolean {
+  const tipo = (mov.tipo_pagamento || "").toUpperCase();
+  if (tipo.includes("FATURA") || tipo.includes("CARTAO") || tipo.includes("CARTÃO")) {
+    return true;
+  }
+  const desc = (mov.descricao || "").toUpperCase();
+  const padroes = [
+    /SISPAG/,
+    /FAT.*CART/,
+    /FATURA.*CART/,
+    /PAG.*TIT.*\d{11}/,
+    /\b(VISA|MASTER|MASTERCARD|ELO|HIPERCARD|AMEX)\b/,
+    /LOTE|REMESSA/,
+  ];
+  return padroes.some((p) => p.test(desc));
+}
 
 export type ContaInput = {
   id: string;
@@ -96,9 +118,9 @@ export function encontrarAgrupamentosCartao(
   const sugestoes: AgrupamentoSugerido[] = [];
   const contasUsadas = new Set<string>();
 
-  // Só considerar débitos com valor relevante
+  // Só considerar débitos relevantes que pareçam fatura de cartão ou lote
   const debitos = movs
-    .filter((m) => num(m.valor) < 0 && Math.abs(num(m.valor)) >= 100)
+    .filter((m) => num(m.valor) < 0 && Math.abs(num(m.valor)) >= 100 && ehFaturaOuLote(m))
     .sort((a, b) => Math.abs(num(b.valor)) - Math.abs(num(a.valor)));
 
   for (const mov of debitos) {

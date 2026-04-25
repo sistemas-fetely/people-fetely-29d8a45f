@@ -3714,6 +3714,7 @@ export type Database = {
           origem: string | null
           saldo_pos_transacao: number | null
           tipo: string | null
+          tipo_pagamento: string | null
           valor: number
         }
         Insert: {
@@ -3735,6 +3736,7 @@ export type Database = {
           origem?: string | null
           saldo_pos_transacao?: number | null
           tipo?: string | null
+          tipo_pagamento?: string | null
           valor: number
         }
         Update: {
@@ -3756,6 +3758,7 @@ export type Database = {
           origem?: string | null
           saldo_pos_transacao?: number | null
           tipo?: string | null
+          tipo_pagamento?: string | null
           valor?: number
         }
         Relationships: [
@@ -7473,6 +7476,7 @@ export type Database = {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
       }
+      detectar_tipo_pagamento: { Args: { descricao: string }; Returns: string }
       enqueue_email: {
         Args: { payload: Json; queue_name: string }
         Returns: number
