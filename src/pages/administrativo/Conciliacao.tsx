@@ -228,6 +228,25 @@ export default function Conciliacao() {
     };
   }, [conciliadas, movsOrfas, cpsSemExtrato, autoCategorizaveis]);
 
+  // Agrupamentos sugeridos pela IA (N:1)
+  const agrupamentosSugeridos = useMemo<AgrupamentoSugerido[]>(() => {
+    if (movsNaoConciliadas.length === 0 || cpsNaoConciliadas.length === 0) return [];
+    const todos = encontrarAgrupamentosCartao(movsNaoConciliadas, cpsNaoConciliadas);
+    return todos.filter((s) => !agrupamentosRejeitados.has(s.id));
+  }, [movsNaoConciliadas, cpsNaoConciliadas, agrupamentosRejeitados]);
+
+  // Validação em tempo real do agrupamento manual
+  const validacaoManual = useMemo(() => {
+    if (!movSelecionada || contasSelecionadasManual.size === 0) return null;
+    const mov = movsNaoConciliadas.find((m) => m.id === movSelecionada);
+    if (!mov) return null;
+    return validarAgrupamento(
+      Array.from(contasSelecionadasManual),
+      cpsNaoConciliadas,
+      Number(mov.valor)
+    );
+  }, [movSelecionada, contasSelecionadasManual, movsNaoConciliadas, cpsNaoConciliadas]);
+
   const filtrosAtivos =
     (contaBancariaId !== "todas" ? 1 : 0) +
     (periodoIni !== inicioMesISO ? 1 : 0) +
