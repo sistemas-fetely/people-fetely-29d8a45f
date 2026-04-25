@@ -222,5 +222,5 @@ export async function importarNFs(nfs: NFParsed[]): Promise<ImportResult> {
     }
   }
 
-  return { sucesso, erros, errosDetalhe };
+  return { sucesso, vinculadas, erros, errosDetalhe };
 }
