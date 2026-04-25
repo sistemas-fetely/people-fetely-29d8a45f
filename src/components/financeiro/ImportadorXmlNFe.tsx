@@ -14,6 +14,7 @@ import {
   importarNFs,
   verificarDuplicatas,
 } from "@/lib/financeiro/import-handler";
+import { buscarMatchPagamentos } from "@/lib/financeiro/match-pagamentos";
 import type { NFParsed } from "@/lib/financeiro/types";
 import type { CategoriaOption } from "@/components/financeiro/CategoriaCombobox";
 import { PreviewNFsImport } from "./PreviewNFsImport";
