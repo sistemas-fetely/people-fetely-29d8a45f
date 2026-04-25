@@ -881,21 +881,34 @@ export default function Conciliacao() {
             {/* COLUNA ESQUERDA — EXTRATO */}
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium flex items-center gap-2">
-                  <Building2 className="h-4 w-4" />
-                  Extrato bancário
-                  <Badge variant="outline">{movsNaoConciliadas.length} pendentes</Badge>
-                </CardTitle>
+                <div className="flex items-center justify-between gap-2">
+                  <CardTitle className="text-sm font-medium flex items-center gap-2">
+                    <Building2 className="h-4 w-4" />
+                    Extrato bancário
+                    <Badge variant="outline">{movsOrdenadas.length} pendentes</Badge>
+                  </CardTitle>
+                  <Select value={ordenacaoMov} onValueChange={(v) => setOrdenacaoMov(v as typeof ordenacaoMov)}>
+                    <SelectTrigger className="w-[160px] h-8 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="valor_asc">Menor valor</SelectItem>
+                      <SelectItem value="valor_desc">Maior valor</SelectItem>
+                      <SelectItem value="data_desc">Mais recente</SelectItem>
+                      <SelectItem value="data_asc">Mais antiga</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
                 <p className="text-xs text-muted-foreground">
                   Selecione uma movimentação para conciliar 1:1 ou marcar várias contas (N:1).
                 </p>
               </CardHeader>
               <CardContent>
                 <div className="space-y-1 max-h-[500px] overflow-y-auto pr-1">
-                  {movsNaoConciliadas.length === 0 && (
+                  {movsOrdenadas.length === 0 && (
                     <p className="text-xs text-muted-foreground py-4 text-center">Tudo conciliado neste período.</p>
                   )}
-                  {movsNaoConciliadas.map((mov) => {
+                  {movsOrdenadas.map((mov) => {
                     const match = getMatch(mov.id, null);
                     const ativa = movSelecionada === mov.id;
                     return (
