@@ -80,6 +80,67 @@ export default function ConfiguracaoIntegracao() {
     refetchInterval: syncing ? 2000 : false,
   });
 
+  const { data: configFinanceiro = [] } = useQuery({
+    queryKey: ["config-financeiro-externo"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("config_financeiro_externo")
+        .select("*")
+        .order("nome");
+      return data || [];
+    },
+  });
+
+  function abrirNovoFin() {
+    setEditingFin(null);
+    setFinForm({ nome: "", email: "", observacao: "" });
+    setShowDialogFin(true);
+  }
+
+  function abrirEditarFin(fin: any) {
+    setEditingFin(fin);
+    setFinForm({ nome: fin.nome || "", email: fin.email || "", observacao: fin.observacao || "" });
+    setShowDialogFin(true);
+  }
+
+  async function salvarFinanceiro() {
+    if (!finForm.nome.trim() || !finForm.email.trim()) {
+      toast.error("Nome e email são obrigatórios");
+      return;
+    }
+    setSavingFin(true);
+    if (editingFin) {
+      const { error } = await supabase
+        .from("config_financeiro_externo")
+        .update({ nome: finForm.nome.trim(), email: finForm.email.trim(), observacao: finForm.observacao.trim() || null })
+        .eq("id", editingFin.id);
+      setSavingFin(false);
+      if (error) { toast.error("Erro: " + error.message); return; }
+      toast.success("Destinatário atualizado");
+    } else {
+      const { error } = await supabase
+        .from("config_financeiro_externo")
+        .insert({ nome: finForm.nome.trim(), email: finForm.email.trim(), observacao: finForm.observacao.trim() || null, ativo: true });
+      setSavingFin(false);
+      if (error) { toast.error("Erro: " + error.message); return; }
+      toast.success("Destinatário adicionado");
+    }
+    setShowDialogFin(false);
+    qc.invalidateQueries({ queryKey: ["config-financeiro-externo"] });
+  }
+
+  async function removerFinanceiro() {
+    if (!removingFin) return;
+    const { error } = await supabase
+      .from("config_financeiro_externo")
+      .delete()
+      .eq("id", removingFin.id);
+    if (error) { toast.error("Erro: " + error.message); return; }
+    toast.success("Destinatário removido");
+    setRemovingFin(null);
+    qc.invalidateQueries({ queryKey: ["config-financeiro-externo"] });
+  }
+
   async function salvar() {
     setSaving(true);
     const { error } = await supabase
