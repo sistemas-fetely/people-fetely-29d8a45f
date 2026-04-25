@@ -394,6 +394,7 @@ const App = () => (
               <Route path="fluxo-caixa" element={<FluxoCaixa />} />
               <Route path="contas-pagar" element={<ContasPagar />} />
               <Route path="caixa-banco" element={<CaixaBanco />} />
+              <Route path="conciliacao" element={<Conciliacao />} />
               <Route path="contas-receber" element={<ContasReceber />} />
               <Route path="parceiros" element={<Parceiros />} />
               <Route path="pedidos" element={<PedidosVenda />} />
