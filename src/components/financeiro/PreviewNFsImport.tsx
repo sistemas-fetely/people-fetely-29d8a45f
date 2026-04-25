@@ -220,19 +220,48 @@ export function PreviewNFsImport({
         <p className="text-sm text-muted-foreground">
           {totals.sel} selecionada{totals.sel === 1 ? "" : "s"} para importar
         </p>
-        <Button
-          onClick={onImport}
-          disabled={importing || totals.sel === 0}
-          className="bg-admin hover:bg-admin/90 text-admin-foreground gap-2"
-        >
-          {importing ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <Download className="h-4 w-4" />
+        <div className="flex items-center gap-2">
+          {onClear && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onClear}
+              disabled={importing}
+              className="gap-1 text-muted-foreground"
+            >
+              <X className="h-4 w-4" />
+              Limpar
+            </Button>
           )}
-          Importar selecionadas
-        </Button>
+          <Button
+            onClick={onImport}
+            disabled={importing || totals.sel === 0}
+            className="bg-admin hover:bg-admin/90 text-admin-foreground gap-2"
+          >
+            {importing ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Download className="h-4 w-4" />
+            )}
+            Importar selecionadas
+          </Button>
+        </div>
       </div>
+
+      <CriarRegraDialog
+        open={!!regraNF}
+        onOpenChange={(v) => {
+          if (!v) {
+            setRegraNF(null);
+            setRegraCategoriaId(null);
+            setRegraCategoriaNome(null);
+          }
+        }}
+        nf={regraNF}
+        categoriaId={regraCategoriaId}
+        categoriaNome={regraCategoriaNome}
+        centroCusto={regraNF?._centro_custo || null}
+      />
     </div>
   );
 }
