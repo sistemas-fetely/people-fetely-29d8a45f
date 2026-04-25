@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import type { NFParsed, RegraCategorizacao } from "@/lib/financeiro/types";
+import type { ItemNFParsed, NFParsed, RegraCategorizacao } from "@/lib/financeiro/types";
 
 export function useRegrasCategorizacao() {
   return useQuery({
