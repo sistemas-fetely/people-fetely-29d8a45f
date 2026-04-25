@@ -24,7 +24,7 @@ type Conta = {
   data_pagamento: string | null;
   status: string;
   fornecedor_cliente: string | null;
-  parceiro_id?: string | null;
+  parceiro_id: string | null;
   conta_id: string | null;
   centro_custo: string | null;
   forma_pagamento_id: string | null;
@@ -77,6 +77,8 @@ interface Props {
 
 export default function ContaPagarDetalheDrawer({ contaId, onClose }: Props) {
   const [showPag, setShowPag] = useState(false);
+  const [showEnviar, setShowEnviar] = useState(false);
+  const workflow = useContaWorkflow();
 
   const { data: conta } = useQuery({
     queryKey: ["conta-pagar-detalhe", contaId],
@@ -181,6 +183,10 @@ export default function ContaPagarDetalheDrawer({ contaId, onClose }: Props) {
                 </Link>
               )}
             </SheetHeader>
+
+            <div className="mt-4">
+              <StatusProgressBar statusAtual={conta.status} />
+            </div>
 
             <Separator className="my-4" />
 
@@ -302,15 +308,106 @@ export default function ContaPagarDetalheDrawer({ contaId, onClose }: Props) {
               </>
             )}
 
-            {conta.tipo === "pagar" && PODE_PAGAR.has(conta.status) && (
+            {conta.tipo === "pagar" && (
               <>
                 <Separator className="my-4" />
-                <Button
-                  onClick={() => setShowPag(true)}
-                  className="w-full bg-green-700 hover:bg-green-800 text-white gap-2"
-                >
-                  <Check className="h-4 w-4" /> Registrar pagamento
-                </Button>
+                <div className="space-y-2">
+                  {conta.status === "rascunho" && (
+                    <div className="flex gap-2">
+                      <Button
+                        className="flex-1 bg-blue-700 hover:bg-blue-800 text-white gap-2"
+                        onClick={async () => {
+                          await workflow.mudarStatus.mutateAsync({
+                            contaId: conta.id,
+                            statusAnterior: conta.status,
+                            novoStatus: "aberto" as ContaStatus,
+                          });
+                          onClose();
+                        }}
+                      >
+                        <ShieldCheck className="h-4 w-4" /> Validar e abrir
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="text-red-600"
+                        onClick={async () => {
+                          await workflow.mudarStatus.mutateAsync({
+                            contaId: conta.id,
+                            statusAnterior: conta.status,
+                            novoStatus: "cancelado" as ContaStatus,
+                            observacao: "Cancelado manualmente",
+                          });
+                          onClose();
+                        }}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
+
+                  {(conta.status === "aberto" || conta.status === "atrasado") && (
+                    <div className="flex gap-2">
+                      <Button
+                        className="flex-1 bg-purple-700 hover:bg-purple-800 text-white gap-2"
+                        onClick={async () => {
+                          await workflow.mudarStatus.mutateAsync({
+                            contaId: conta.id,
+                            statusAnterior: conta.status,
+                            novoStatus: "aprovado" as ContaStatus,
+                          });
+                          onClose();
+                        }}
+                      >
+                        <ThumbsUp className="h-4 w-4" /> Aprovar
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="text-red-600"
+                        onClick={async () => {
+                          await workflow.mudarStatus.mutateAsync({
+                            contaId: conta.id,
+                            statusAnterior: conta.status,
+                            novoStatus: "cancelado" as ContaStatus,
+                            observacao: "Cancelado manualmente",
+                          });
+                          onClose();
+                        }}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
+
+                  {conta.status === "aprovado" && (
+                    <Button
+                      className="w-full bg-amber-600 hover:bg-amber-700 text-white gap-2"
+                      onClick={() => setShowEnviar(true)}
+                    >
+                      <Send className="h-4 w-4" /> Enviar para pagamento
+                    </Button>
+                  )}
+
+                  {conta.status === "agendado" && (
+                    <Button
+                      onClick={() => setShowPag(true)}
+                      className="w-full bg-green-700 hover:bg-green-800 text-white gap-2"
+                    >
+                      <Check className="h-4 w-4" /> Registrar pagamento
+                    </Button>
+                  )}
+
+                  {conta.status === "pago" && (
+                    <div className="flex items-center gap-2 p-3 rounded-lg bg-green-50 text-green-700 text-sm">
+                      <Check className="h-4 w-4" /> Pago em {formatDateBR(conta.data_pagamento)}
+                    </div>
+                  )}
+
+                  {conta.status === "conciliado" && (
+                    <div className="flex items-center gap-2 p-3 rounded-lg bg-teal-50 text-teal-700 text-sm">
+                      <ShieldCheck className="h-4 w-4" /> Conciliado
+                    </div>
+                  )}
+                </div>
               </>
             )}
 
@@ -327,6 +424,18 @@ export default function ContaPagarDetalheDrawer({ contaId, onClose }: Props) {
                 onPaid={onClose}
               />
             )}
+
+            {showEnviar && (
+              <EnviarPagamentoDialog
+                open={showEnviar}
+                onOpenChange={setShowEnviar}
+                conta={conta}
+                onDone={onClose}
+              />
+            )}
+
+            <Separator className="my-4" />
+            <TimelineHistorico contaId={conta.id} />
           </>
         )}
       </SheetContent>
