@@ -47,6 +47,7 @@ type Movimentacao = {
   descricao: string;
   valor: number;
   tipo: string | null;
+  tipo_pagamento: string | null;
   conciliado: boolean | null;
   conta_pagar_id: string | null;
   conta_plano_id: string | null;
@@ -128,7 +129,7 @@ export default function Conciliacao() {
     queryFn: async () => {
       let q = supabase
         .from("movimentacoes_bancarias")
-        .select("id, conta_bancaria_id, data_transacao, descricao, valor, tipo, conciliado, conta_pagar_id, conta_plano_id")
+        .select("id, conta_bancaria_id, data_transacao, descricao, valor, tipo, tipo_pagamento, conciliado, conta_pagar_id, conta_plano_id")
         .gte("data_transacao", periodoIni)
         .lte("data_transacao", periodoFim)
         .order("data_transacao", { ascending: false });
@@ -934,9 +935,16 @@ export default function Conciliacao() {
                               : "hover:bg-muted/50")
                         }
                       >
-                        <div className="flex justify-between">
-                          <span className="text-xs text-muted-foreground">{formatDateBR(mov.data_transacao)}</span>
-                          <span className={"font-medium " + (Number(mov.valor) < 0 ? "text-destructive" : "text-success")}>
+                        <div className="flex justify-between gap-2">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className="text-xs text-muted-foreground whitespace-nowrap">{formatDateBR(mov.data_transacao)}</span>
+                            {mov.tipo_pagamento && (
+                              <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 font-normal">
+                                {mov.tipo_pagamento}
+                              </Badge>
+                            )}
+                          </div>
+                          <span className={"font-medium whitespace-nowrap " + (Number(mov.valor) < 0 ? "text-destructive" : "text-success")}>
                             {formatBRL(Number(mov.valor))}
                           </span>
                         </div>
