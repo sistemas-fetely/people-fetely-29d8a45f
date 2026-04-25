@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Loader2, Download, AlertTriangle } from "lucide-react";
+import { Loader2, Download, AlertTriangle, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -12,6 +12,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { CategoriaCombobox, type CategoriaOption } from "@/components/financeiro/CategoriaCombobox";
+import { CriarRegraDialog } from "@/components/financeiro/CriarRegraDialog";
 import type { NFParsed } from "@/lib/financeiro/types";
 
 interface Props {
@@ -19,11 +20,22 @@ interface Props {
   categorias: CategoriaOption[];
   onChange: (nfs: NFParsed[]) => void;
   onImport: () => void | Promise<void>;
+  onClear?: () => void;
   importing: boolean;
 }
 
-export function PreviewNFsImport({ nfs, categorias, onChange, onImport, importing }: Props) {
+export function PreviewNFsImport({
+  nfs,
+  categorias,
+  onChange,
+  onImport,
+  onClear,
+  importing,
+}: Props) {
   const [showOnlyMissing, setShowOnlyMissing] = useState(false);
+  const [regraNF, setRegraNF] = useState<NFParsed | null>(null);
+  const [regraCategoriaId, setRegraCategoriaId] = useState<string | null>(null);
+  const [regraCategoriaNome, setRegraCategoriaNome] = useState<string | null>(null);
 
   const visibleIdx = useMemo(() => {
     return nfs
