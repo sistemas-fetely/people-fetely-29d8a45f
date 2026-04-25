@@ -77,6 +77,8 @@ interface Props {
 
 export default function ContaPagarDetalheDrawer({ contaId, onClose }: Props) {
   const [showPag, setShowPag] = useState(false);
+  const [showEnviar, setShowEnviar] = useState(false);
+  const workflow = useContaWorkflow();
 
   const { data: conta } = useQuery({
     queryKey: ["conta-pagar-detalhe", contaId],
