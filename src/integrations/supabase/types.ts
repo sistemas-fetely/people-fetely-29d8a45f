@@ -3477,7 +3477,7 @@ export type Database = {
           bling_id: string | null
           canal: string | null
           centro_custo: string | null
-          conta_id: string
+          conta_id: string | null
           created_at: string | null
           data_competencia: string
           data_pagamento: string | null
@@ -3497,7 +3497,7 @@ export type Database = {
           bling_id?: string | null
           canal?: string | null
           centro_custo?: string | null
-          conta_id: string
+          conta_id?: string | null
           created_at?: string | null
           data_competencia: string
           data_pagamento?: string | null
@@ -3517,7 +3517,7 @@ export type Database = {
           bling_id?: string | null
           canal?: string | null
           centro_custo?: string | null
-          conta_id?: string
+          conta_id?: string | null
           created_at?: string | null
           data_competencia?: string
           data_pagamento?: string | null

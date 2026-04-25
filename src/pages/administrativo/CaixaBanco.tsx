@@ -17,7 +17,7 @@ import {
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
-import { ArrowDownLeft, ArrowUpRight, Building2, CheckCircle2, Loader2, Sparkles, Upload, Wallet } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, Building2, CheckCircle2, Loader2, Sparkles, Upload, Wallet, X } from "lucide-react";
 import { toast } from "sonner";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
 import { parseOFX } from "@/lib/financeiro/ofx-parser";
@@ -318,7 +318,11 @@ export default function CaixaBanco() {
       {/* Filtros */}
       <div className="flex items-center gap-3 flex-wrap">
         <Select value={filtroTipo} onValueChange={(v) => setFiltroTipo(v as typeof filtroTipo)}>
-          <SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>
+          <SelectTrigger
+            className={`w-[160px] ${filtroTipo !== "todos" ? "border-admin bg-admin/5 ring-1 ring-admin/30" : ""}`}
+          >
+            <SelectValue />
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value="todos">Todos os tipos</SelectItem>
             <SelectItem value="credito">Apenas créditos</SelectItem>
@@ -326,13 +330,30 @@ export default function CaixaBanco() {
           </SelectContent>
         </Select>
         <Select value={filtroConciliado} onValueChange={(v) => setFiltroConciliado(v as typeof filtroConciliado)}>
-          <SelectTrigger className="w-[200px]"><SelectValue /></SelectTrigger>
+          <SelectTrigger
+            className={`w-[200px] ${filtroConciliado !== "todos" ? "border-admin bg-admin/5 ring-1 ring-admin/30" : ""}`}
+          >
+            <SelectValue />
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value="todos">Conciliação: todos</SelectItem>
             <SelectItem value="sim">Conciliadas</SelectItem>
             <SelectItem value="nao">Não conciliadas</SelectItem>
           </SelectContent>
         </Select>
+        {(filtroTipo !== "todos" || filtroConciliado !== "todos") && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-admin hover:text-admin/80 gap-1 text-xs h-7"
+            onClick={() => {
+              setFiltroTipo("todos");
+              setFiltroConciliado("todos");
+            }}
+          >
+            <X className="h-3 w-3" /> Limpar filtros
+          </Button>
+        )}
       </div>
 
       {/* Tabela */}
