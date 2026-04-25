@@ -57,6 +57,7 @@ export function ImportadorXmlNFe({ categorias, onImported }: Props) {
       }
       let nfs = parsed.map((n) => aplicarRegras(n, regras));
       nfs = await verificarDuplicatas(nfs);
+      nfs = await buscarMatchPagamentos(nfs);
       nfs = nfs.map((n) => ({ ...n, _selecionada: !n._duplicata }));
       setPreview((prev) => [...prev, ...nfs]);
       if (nfs.length > 0) {
