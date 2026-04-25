@@ -61,6 +61,15 @@ export interface NFParsed {
   // Quando true, importação usa categoria por item (campo `_categoria_id` de cada item)
   _expandirItens?: boolean;
 
+  // Match com pagamento existente (ao invés de criar nova conta, vincula NF)
+  _match_pagamento?: {
+    conta_id: string;
+    score: number;
+    conta_descricao: string;
+    conta_status: string;
+    conta_docs_status: string | null;
+  } | null;
+
   // Metadado de origem do import
   _source: "csv_qive" | "xml_nfe" | "pdf_nfe";
 }
