@@ -23,7 +23,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Link } from "react-router-dom";
-import { ArrowUpFromLine, FileWarning, Search, Sparkles, Upload, UserCheck } from "lucide-react";
+import { ArrowUpFromLine, FileWarning, Search, Sparkles, Upload, UserCheck, X } from "lucide-react";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
 import ContaPagarDetalheDrawer from "@/components/financeiro/ContaPagarDetalheDrawer";
 import AcoesMassaButtons, {
