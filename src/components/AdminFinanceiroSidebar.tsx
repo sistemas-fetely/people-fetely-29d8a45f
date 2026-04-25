@@ -142,6 +142,16 @@ export function AdminFinanceiroSidebar() {
         <SidebarGroup>
           {!collapsed && (
             <SidebarGroupLabel className="text-sidebar-muted text-[10px] uppercase tracking-widest font-semibold mb-1 px-4">
+              Caixa e Banco
+            </SidebarGroupLabel>
+          )}
+          <SidebarGroupContent>{renderItems(caixaBancoItems)}</SidebarGroupContent>
+        </SidebarGroup>
+
+        <div className="mx-4 border-t border-sidebar-border/40" />
+        <SidebarGroup>
+          {!collapsed && (
+            <SidebarGroupLabel className="text-sidebar-muted text-[10px] uppercase tracking-widest font-semibold mb-1 px-4">
               Vendas Bling
             </SidebarGroupLabel>
           )}
