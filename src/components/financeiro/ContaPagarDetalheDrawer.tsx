@@ -58,17 +58,6 @@ const STATUS_LABEL: Record<string, string> = {
   conciliado: "Conciliado",
 };
 
-const STATUS_LABEL: Record<string, string> = {
-  rascunho: "Rascunho",
-  aberto: "Aberto",
-  atrasado: "Atrasado",
-  aprovado: "Aprovado",
-  agendado: "Agendado",
-  pago: "Pago",
-  cancelado: "Cancelado",
-  conciliado: "Conciliado",
-};
-
 const STATUS_STYLE: Record<string, string> = {
   rascunho: "bg-muted text-muted-foreground",
   aberto: "bg-blue-100 text-blue-800 hover:bg-blue-100",
