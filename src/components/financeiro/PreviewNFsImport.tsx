@@ -206,9 +206,8 @@ export function PreviewNFsImport({
                 ? nf.itens.filter((it) => it._categoria_id).length
                 : 0;
               return (
-                <>
+                <Fragment key={`${nf.nf_chave_acesso || nf.nf_numero}-${i}`}>
                   <TableRow
-                    key={`${nf.nf_chave_acesso || nf.nf_numero}-${i}`}
                     className={cn(
                       nf._duplicata && "opacity-50",
                       !nf._duplicata && !nf._categoria_id && !expandido && "bg-muted/40",
