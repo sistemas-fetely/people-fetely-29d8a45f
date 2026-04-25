@@ -1387,6 +1387,47 @@ export type Database = {
         }
         Relationships: []
       }
+      contas_pagar_documentos: {
+        Row: {
+          conta_id: string
+          created_at: string | null
+          id: string
+          nome_arquivo: string
+          storage_path: string
+          tamanho_bytes: number | null
+          tipo: string
+          uploaded_por: string | null
+        }
+        Insert: {
+          conta_id: string
+          created_at?: string | null
+          id?: string
+          nome_arquivo: string
+          storage_path: string
+          tamanho_bytes?: number | null
+          tipo: string
+          uploaded_por?: string | null
+        }
+        Update: {
+          conta_id?: string
+          created_at?: string | null
+          id?: string
+          nome_arquivo?: string
+          storage_path?: string
+          tamanho_bytes?: number | null
+          tipo?: string
+          uploaded_por?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contas_pagar_documentos_conta_id_fkey"
+            columns: ["conta_id"]
+            isOneToOne: false
+            referencedRelation: "contas_pagar_receber"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contas_pagar_historico: {
         Row: {
           conta_id: string
@@ -1510,10 +1551,12 @@ export type Database = {
           conta_id: string | null
           created_at: string | null
           criado_por: string | null
+          dados_bancarios_fornecedor: Json | null
           dados_pagamento_fornecedor: Json | null
           data_pagamento: string | null
           data_vencimento: string
           descricao: string
+          docs_status: string | null
           email_pagamento_enviado: boolean | null
           enviado_pagamento_em: string | null
           enviado_pagamento_por: string | null
@@ -1521,6 +1564,7 @@ export type Database = {
           fornecedor_cliente: string | null
           fornecedor_id: string | null
           id: string
+          is_cartao: boolean | null
           nf_cfop: string | null
           nf_chave_acesso: string | null
           nf_cnpj_emitente: string | null
@@ -1562,10 +1606,12 @@ export type Database = {
           conta_id?: string | null
           created_at?: string | null
           criado_por?: string | null
+          dados_bancarios_fornecedor?: Json | null
           dados_pagamento_fornecedor?: Json | null
           data_pagamento?: string | null
           data_vencimento: string
           descricao: string
+          docs_status?: string | null
           email_pagamento_enviado?: boolean | null
           enviado_pagamento_em?: string | null
           enviado_pagamento_por?: string | null
@@ -1573,6 +1619,7 @@ export type Database = {
           fornecedor_cliente?: string | null
           fornecedor_id?: string | null
           id?: string
+          is_cartao?: boolean | null
           nf_cfop?: string | null
           nf_chave_acesso?: string | null
           nf_cnpj_emitente?: string | null
@@ -1614,10 +1661,12 @@ export type Database = {
           conta_id?: string | null
           created_at?: string | null
           criado_por?: string | null
+          dados_bancarios_fornecedor?: Json | null
           dados_pagamento_fornecedor?: Json | null
           data_pagamento?: string | null
           data_vencimento?: string
           descricao?: string
+          docs_status?: string | null
           email_pagamento_enviado?: boolean | null
           enviado_pagamento_em?: string | null
           enviado_pagamento_por?: string | null
@@ -1625,6 +1674,7 @@ export type Database = {
           fornecedor_cliente?: string | null
           fornecedor_id?: string | null
           id?: string
+          is_cartao?: boolean | null
           nf_cfop?: string | null
           nf_chave_acesso?: string | null
           nf_cnpj_emitente?: string | null
