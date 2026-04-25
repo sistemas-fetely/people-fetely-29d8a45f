@@ -69,6 +69,9 @@ export function PreviewNFsImport({
 
   function setCategoria(idx: number, categoriaId: string | null) {
     const opt = categoriaId ? categorias.find((c) => c.id === categoriaId) || null : null;
+    const nfAnterior = nfs[idx];
+    const mudouManualmente =
+      categoriaId && categoriaId !== nfAnterior._categoria_id;
     onChange(
       nfs.map((n, i) =>
         i === idx
@@ -81,6 +84,12 @@ export function PreviewNFsImport({
           : n
       )
     );
+    // Após seleção manual, oferecer criar regra automática
+    if (mudouManualmente && opt && (nfAnterior.fornecedor_cnpj || nfAnterior.nf_ncm)) {
+      setRegraNF(nfAnterior);
+      setRegraCategoriaId(categoriaId);
+      setRegraCategoriaNome(`${opt.codigo} — ${opt.nome}`);
+    }
   }
 
   if (nfs.length === 0) return null;
