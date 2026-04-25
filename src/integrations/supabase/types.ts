@@ -1629,6 +1629,7 @@ export type Database = {
           created_at: string | null
           criado_por: string | null
           dados_bancarios_fornecedor: Json | null
+          dados_enriquecidos_qive: boolean | null
           dados_pagamento_fornecedor: Json | null
           data_pagamento: string | null
           data_vencimento: string
@@ -1637,6 +1638,7 @@ export type Database = {
           email_pagamento_enviado: boolean | null
           enviado_pagamento_em: string | null
           enviado_pagamento_por: string | null
+          forma_pagamento: string | null
           forma_pagamento_id: string | null
           fornecedor_cliente: string | null
           fornecedor_id: string | null
@@ -1684,6 +1686,7 @@ export type Database = {
           created_at?: string | null
           criado_por?: string | null
           dados_bancarios_fornecedor?: Json | null
+          dados_enriquecidos_qive?: boolean | null
           dados_pagamento_fornecedor?: Json | null
           data_pagamento?: string | null
           data_vencimento: string
@@ -1692,6 +1695,7 @@ export type Database = {
           email_pagamento_enviado?: boolean | null
           enviado_pagamento_em?: string | null
           enviado_pagamento_por?: string | null
+          forma_pagamento?: string | null
           forma_pagamento_id?: string | null
           fornecedor_cliente?: string | null
           fornecedor_id?: string | null
@@ -1739,6 +1743,7 @@ export type Database = {
           created_at?: string | null
           criado_por?: string | null
           dados_bancarios_fornecedor?: Json | null
+          dados_enriquecidos_qive?: boolean | null
           dados_pagamento_fornecedor?: Json | null
           data_pagamento?: string | null
           data_vencimento?: string
@@ -1747,6 +1752,7 @@ export type Database = {
           email_pagamento_enviado?: boolean | null
           enviado_pagamento_em?: string | null
           enviado_pagamento_por?: string | null
+          forma_pagamento?: string | null
           forma_pagamento_id?: string | null
           fornecedor_cliente?: string | null
           fornecedor_id?: string | null
