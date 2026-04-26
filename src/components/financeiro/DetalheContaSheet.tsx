@@ -143,7 +143,16 @@ export function DetalheContaSheet({
   const unidadeLabel = unidadeObj?.nome ?? conta.unidade;
 
   const handleAvancar = (novoStatus: ContaPagarStatus) => {
-    atualizarStatus.mutate({ contaId: conta.id, novoStatus });
+    atualizarStatus.mutate(
+      { contaId: conta.id, novoStatus },
+      {
+        onSuccess: () => {
+          // Fecha o Sheet para que a tabela seja exibida já atualizada
+          // (evita inconsistência visual entre o Sheet e a linha por trás).
+          onOpenChange(false);
+        },
+      },
+    );
   };
 
   const isCancelado = conta.status === "cancelado";
