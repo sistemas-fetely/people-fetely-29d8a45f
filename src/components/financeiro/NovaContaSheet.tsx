@@ -593,7 +593,7 @@ export function NovaContaSheet({ open, onOpenChange, conta }: NovaContaSheetProp
                 value={formData.forma_pagamento}
                 onValueChange={(v) => setFormData({ ...formData, forma_pagamento: v })}
               >
-                <SelectTrigger>
+                <SelectTrigger className={iaCls("forma_pagamento")}>
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
                 <SelectContent>
