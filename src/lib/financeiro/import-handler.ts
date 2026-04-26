@@ -173,7 +173,7 @@ export async function importarNFs(nfs: NFParsed[]): Promise<ImportResult> {
           fornecedor_cliente: nf.fornecedor_nome,
           parceiro_id,
           fornecedor_id: parceiro_id,
-          forma_pagamento_id: forma_id,
+          forma_pagamento: nf.meio_pagamento || null,
           origem: nf._source,
           nf_chave_acesso: nf.nf_chave_acesso || null,
           nf_numero: nf.nf_numero || null,
