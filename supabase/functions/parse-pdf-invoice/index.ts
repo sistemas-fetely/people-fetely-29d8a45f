@@ -22,7 +22,15 @@ Deno.serve(async (req) => {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
-    const lovableApiKey = Deno.env.get("LOVABLE_API_KEY")!;
+    const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
+
+    if (!lovableApiKey) {
+      console.error("LOVABLE_API_KEY não configurada");
+      return new Response(
+        JSON.stringify({ error: "LOVABLE_API_KEY não configurada no servidor" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
 
     const supabaseClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
@@ -49,14 +57,23 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Converte PDF para base64
     const arrayBuffer = await file.arrayBuffer();
     const bytes = new Uint8Array(arrayBuffer);
     let binary = "";
-    for (let i = 0; i < bytes.length; i++) {
-      binary += String.fromCharCode(bytes[i]);
+    const chunkSize = 0x8000;
+    for (let i = 0; i < bytes.length; i += chunkSize) {
+      binary += String.fromCharCode.apply(
+        null,
+        Array.from(bytes.subarray(i, i + chunkSize)) as any,
+      );
     }
     const base64 = btoa(binary);
 
+    console.log(`Processando PDF: ${file.name}, ${bytes.length} bytes`);
+
+    // Gemini suporta PDFs via formato file/inline_data — no AI Gateway via OpenAI compatible
+    // usamos type "file" com file_data contendo o data URL base64
     const aiResponse = await fetch(
       "https://ai.gateway.lovable.dev/v1/chat/completions",
       {
@@ -87,9 +104,10 @@ Use null para campos não encontrados.`,
               role: "user",
               content: [
                 {
-                  type: "image_url",
-                  image_url: {
-                    url: `data:application/pdf;base64,${base64}`,
+                  type: "file",
+                  file: {
+                    filename: file.name || "invoice.pdf",
+                    file_data: `data:application/pdf;base64,${base64}`,
                   },
                 },
                 {
@@ -121,13 +139,14 @@ Use null para campos não encontrados.`,
         );
       }
       return new Response(
-        JSON.stringify({ error: "Erro ao processar PDF com IA" }),
+        JSON.stringify({ error: `Erro ao processar PDF com IA: ${errText.slice(0, 200)}` }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
     const aiData = await aiResponse.json();
     const content = aiData.choices?.[0]?.message?.content || "";
+    console.log("AI response content:", content.slice(0, 300));
 
     let cleaned = content.trim();
     if (cleaned.startsWith("```")) {
@@ -156,7 +175,8 @@ Use null para campos não encontrados.`,
     });
   } catch (err) {
     console.error("Error:", err);
-    return new Response(JSON.stringify({ error: "Erro interno" }), {
+    const msg = err instanceof Error ? err.message : String(err);
+    return new Response(JSON.stringify({ error: `Erro interno: ${msg}` }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
