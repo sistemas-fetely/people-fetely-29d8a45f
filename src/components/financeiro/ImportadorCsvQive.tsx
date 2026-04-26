@@ -23,6 +23,7 @@ import { buscarMatchPagamentos } from "@/lib/financeiro/match-pagamentos";
 import type { NFParsed } from "@/lib/financeiro/types";
 import type { CategoriaOption } from "@/components/financeiro/CategoriaCombobox";
 import { PreviewNFsImport } from "./PreviewNFsImport";
+import { restaurarRascunho, useAutoSaveRascunho } from "@/hooks/useAutoSaveRascunho";
 
 const STORAGE_KEY = "import_preview_nfs";
 const STORAGE_TS_KEY = "import_preview_timestamp";
@@ -39,7 +40,10 @@ export function ImportadorCsvQive({ categorias, onImported }: Props) {
   const [preview, setPreviewState] = useState<NFParsed[]>([]);
   const { data: regras } = useRegrasCategorizacao();
 
-  // Salvar preview no sessionStorage sempre que mudar
+  // Auto-save no banco (proteção principal)
+  const { clearRascunho, setRascunhoId } = useAutoSaveRascunho(preview, "csv_qive");
+
+  // Mantém sessionStorage como fallback rápido
   function setPreview(nfs: NFParsed[]) {
     setPreviewState(nfs);
     try {
@@ -55,27 +59,45 @@ export function ImportadorCsvQive({ categorias, onImported }: Props) {
     }
   }
 
-  // Restaurar preview ao montar
+  // Restaurar rascunho ao montar (banco primeiro, depois sessionStorage)
   useEffect(() => {
-    try {
-      const saved = sessionStorage.getItem(STORAGE_KEY);
-      const ts = sessionStorage.getItem(STORAGE_TS_KEY);
-      if (saved && ts) {
-        const idade = Date.now() - parseInt(ts, 10);
-        if (idade < MAX_AGE_MS) {
-          const parsed = JSON.parse(saved) as NFParsed[];
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            setPreviewState(parsed);
-            toast.info("Preview restaurado da sessão anterior");
-          }
-        } else {
-          sessionStorage.removeItem(STORAGE_KEY);
-          sessionStorage.removeItem(STORAGE_TS_KEY);
-        }
+    let cancelado = false;
+    (async () => {
+      const rascunho = await restaurarRascunho("csv_qive");
+      if (cancelado) return;
+      if (rascunho) {
+        setRascunhoId(rascunho.id);
+        setPreviewState(rascunho.nfs);
+        toast.info(`📦 Rascunho restaurado: ${rascunho.nfs.length} NFs`, {
+          description: "Você pode continuar de onde parou!",
+          duration: 5000,
+        });
+        return;
       }
-    } catch {
-      // ignore
-    }
+      // Fallback: sessionStorage
+      try {
+        const saved = sessionStorage.getItem(STORAGE_KEY);
+        const ts = sessionStorage.getItem(STORAGE_TS_KEY);
+        if (saved && ts) {
+          const idade = Date.now() - parseInt(ts, 10);
+          if (idade < MAX_AGE_MS) {
+            const parsed = JSON.parse(saved) as NFParsed[];
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              setPreviewState(parsed);
+              toast.info("Preview restaurado da sessão anterior");
+            }
+          } else {
+            sessionStorage.removeItem(STORAGE_KEY);
+            sessionStorage.removeItem(STORAGE_TS_KEY);
+          }
+        }
+      } catch {
+        // ignore
+      }
+    })();
+    return () => {
+      cancelado = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -138,6 +160,7 @@ export function ImportadorCsvQive({ categorias, onImported }: Props) {
       if (result.vinculadas > 0) partes.push(`${result.vinculadas} vinculada${result.vinculadas === 1 ? "" : "s"} a existentes`);
       if (result.erros > 0) partes.push(`${result.erros} erro${result.erros === 1 ? "" : "s"}`);
       toast.success(`Importação: ${partes.join(", ")}`);
+      await clearRascunho();
       setPreview([]);
       onImported?.();
     } else if (result.erros > 0) {
