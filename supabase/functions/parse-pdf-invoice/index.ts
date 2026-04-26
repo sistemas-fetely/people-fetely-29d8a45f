@@ -87,15 +87,19 @@ Deno.serve(async (req) => {
           messages: [
             {
               role: "system",
-              content: `Você é um extrator de dados de invoices/receipts internacionais (Lovable, Anthropic, OpenAI, AWS, GitHub, SaaS em geral).
+              content: `Você é um extrator de dados de Notas Fiscais brasileiras (DANFE), recibos, e invoices internacionais (Lovable, Anthropic, OpenAI, AWS, GitHub, SaaS).
 Analise o PDF e extraia em JSON:
-- invoice_number: string (número da invoice/receipt)
-- date: string YYYY-MM-DD (data de emissão ou pagamento)
-- amount: number (valor; se houver valor convertido em BRL no PDF use ele, senão use o valor original)
+- vendor: string (razão social ou nome fantasia do emitente/fornecedor)
+- vendor_cnpj: string | null (CNPJ do emitente, só números)
+- description: string (descrição resumida dos itens/serviços)
+- amount: number (valor total da NF/invoice. Se houver valor em BRL use ele, senão use o original)
 - currency: "BRL" | "USD" | "EUR" | outro
-- vendor: string (nome da empresa emissora — Lovable, Anthropic, etc.)
-- description: string (descrição curta do serviço)
-- payment_method: "Cartão Crédito" se mencionar Visa/Mastercard/cartão; "PIX" se mencionar PIX; senão "Outros"
+- issue_date: string YYYY-MM-DD (data de emissão)
+- due_date: string | null YYYY-MM-DD (data de vencimento, se existir)
+- invoice_number: string | null (número da NF ou invoice)
+- invoice_series: string | null (série da NF, se existir)
+- access_key: string | null (chave de acesso da NF-e, 44 dígitos, se existir)
+- payment_method: "Cartão Crédito" | "PIX" | "Boleto" | "TED" | "Débito Automático" | "Outros"
 
 Responda APENAS com JSON válido, sem markdown.
 Use null para campos não encontrados.`,
@@ -112,7 +116,7 @@ Use null para campos não encontrados.`,
                 },
                 {
                   type: "text",
-                  text: "Extraia os dados deste invoice/receipt.",
+                  text: "Extraia os dados deste documento fiscal (NF, DANFE, recibo ou invoice).",
                 },
               ],
             },
