@@ -273,7 +273,6 @@ export default function Parceiros() {
                         className="cursor-pointer"
                         onClick={() => handleEdit(p)}
                       >
-                        <TableCell className="font-mono text-xs">{formatCnpj(p.cnpj)}</TableCell>
                         <TableCell>
                           <div>
                             <div className="font-medium">{p.razao_social}</div>
@@ -282,6 +281,7 @@ export default function Parceiros() {
                             )}
                           </div>
                         </TableCell>
+                        <TableCell className="font-mono text-xs">{formatCnpj(p.cnpj)}</TableCell>
                         <TableCell>
                           <Badge className={TIPO_BADGE[tipoLabel] || "bg-muted"}>
                             {tipoLabel === "ambos" ? "Forn. + Cliente" : tipoLabel}
