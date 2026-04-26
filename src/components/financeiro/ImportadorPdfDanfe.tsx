@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FileText, Loader2 } from "lucide-react";
+import { restaurarRascunho, useAutoSaveRascunho } from "@/hooks/useAutoSaveRascunho";
 import {
   Card,
   CardContent,
@@ -30,6 +31,22 @@ export function ImportadorPdfDanfe({ categorias, onImported }: Props) {
   const [importing, setImporting] = useState(false);
   const [preview, setPreview] = useState<NFParsed[]>([]);
   const { data: regras } = useRegrasCategorizacao();
+  const { clearRascunho, setRascunhoId } = useAutoSaveRascunho(preview, "pdf_danfe");
+
+  // Restaurar preview ao montar
+  useEffect(() => {
+    restaurarRascunho("pdf_danfe").then((r) => {
+      if (r) {
+        setPreview(r.nfs);
+        setRascunhoId(r.id);
+        toast.info(`📦 Rascunho restaurado: ${r.nfs.length} NFs`, {
+          description: "Você pode continuar de onde parou!",
+          duration: 5000,
+        });
+      }
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function handleFiles(e: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files || []);
@@ -108,6 +125,7 @@ export function ImportadorPdfDanfe({ categorias, onImported }: Props) {
       if (result.vinculadas > 0) partes.push(`${result.vinculadas} vinculada${result.vinculadas === 1 ? "" : "s"} a existentes`);
       if (result.erros > 0) partes.push(`${result.erros} erro${result.erros === 1 ? "" : "s"}`);
       toast.success(`Importação: ${partes.join(", ")}`);
+      await clearRascunho();
       setPreview([]);
       onImported?.();
     } else if (result.erros > 0) {
