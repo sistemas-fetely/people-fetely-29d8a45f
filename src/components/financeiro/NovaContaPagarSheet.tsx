@@ -144,6 +144,7 @@ export function NovaContaPagarSheet({ open, onOpenChange }: Props) {
       setCentroCusto("");
       setUnidade("matriz_sp");
       setParcelas(1);
+      setFormaPagamento("");
       setNfNumero("");
       setNfSerie("");
       setNfChave("");
