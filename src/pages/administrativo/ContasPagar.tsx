@@ -23,12 +23,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Link } from "react-router-dom";
-import { ArrowUpFromLine, FileWarning, Search, Sparkles, Upload, UserCheck, X } from "lucide-react";
+import { ArrowUpFromLine, FileWarning, Plus, Search, Sparkles, Upload, UserCheck, X } from "lucide-react";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
 import ContaPagarDetalheDrawer from "@/components/financeiro/ContaPagarDetalheDrawer";
 import AcoesMassaButtons, {
   type ContaSelecionada,
 } from "@/components/financeiro/AcoesMassaButtons";
+import { NovaContaPagarSheet } from "@/components/financeiro/NovaContaPagarSheet";
 
 type Conta = {
   id: string;
@@ -71,6 +72,7 @@ export default function ContasPagar() {
   const [page, setPage] = useState(1);
   const [contaIdSelecionada, setContaIdSelecionada] = useState<string | null>(null);
   const [selecionadas, setSelecionadas] = useState<Set<string>>(new Set());
+  const [novaContaAberta, setNovaContaAberta] = useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: ["contas-pagar"],
@@ -201,14 +203,23 @@ export default function ContasPagar() {
 
   return (
     <div className="p-6 space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-          <ArrowUpFromLine className="h-6 w-6 text-admin" />
-          Contas a Pagar
-        </h1>
-        <p className="text-muted-foreground text-sm mt-1">
-          Vencimentos a parceiros — abertos, pagos e atrasados.
-        </p>
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+            <ArrowUpFromLine className="h-6 w-6 text-admin" />
+            Contas a Pagar
+          </h1>
+          <p className="text-muted-foreground text-sm mt-1">
+            Vencimentos a parceiros — abertos, pagos e atrasados.
+          </p>
+        </div>
+        <Button
+          onClick={() => setNovaContaAberta(true)}
+          className="bg-admin hover:bg-admin-accent text-admin-foreground"
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          Novo Pagamento
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -610,6 +621,11 @@ export default function ContasPagar() {
       <ContaPagarDetalheDrawer
         contaId={contaIdSelecionada}
         onClose={() => setContaIdSelecionada(null)}
+      />
+
+      <NovaContaPagarSheet
+        open={novaContaAberta}
+        onOpenChange={setNovaContaAberta}
       />
     </div>
   );
