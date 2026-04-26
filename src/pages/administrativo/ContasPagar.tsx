@@ -216,22 +216,22 @@ export default function ContasPagar() {
                         )}
                       </TableCell>
                       <TableCell className="text-center">
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <span className="inline-flex">
-                              {conta.nf_path ? (
-                                <Paperclip className="h-4 w-4 text-success" />
-                              ) : (
-                                <Paperclip className="h-4 w-4 text-muted-foreground/40" />
-                              )}
-                            </span>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            {conta.nf_path
-                              ? conta.nf_nome ?? "NF anexada"
-                              : "Sem NF anexada"}
-                          </TooltipContent>
-                        </Tooltip>
+                        {conta.nf_path ? (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-success/10">
+                                <FileCheck2 className="h-4 w-4 text-success" />
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              {conta.nf_nome ?? "Anexo disponível"}
+                            </TooltipContent>
+                          </Tooltip>
+                        ) : (
+                          <span className="text-xs text-muted-foreground/70">
+                            Sem anexo
+                          </span>
+                        )}
                       </TableCell>
                       <TableCell onClick={(e) => e.stopPropagation()}>
                         {renderAcaoStatus(conta)}
