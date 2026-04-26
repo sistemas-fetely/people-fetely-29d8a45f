@@ -227,11 +227,8 @@ export async function importarNFs(nfs: NFParsed[]): Promise<ImportResult> {
           descricao: `${nf.fornecedor_nome} — NF ${nf.nf_numero || "s/n"}`,
           valor: nf.valor,
           data_vencimento: nf.nf_data_emissao || new Date().toISOString().substring(0, 10),
-          // Importação inteligente: completo → "aberto" (já validado), incompleto → "rascunho"
-          status:
-            categoriaContaPrincipal && nf.valor && (nf.fornecedor_cnpj || nf.fornecedor_nome)
-              ? "aberto"
-              : "rascunho",
+          // PR2: importação sempre cria como "aberto" (validação acontece no fluxo)
+          status: "aberto",
           conta_id: categoriaContaPrincipal,
           centro_custo: centroCustoContaPrincipal,
           fornecedor_cliente: nf.fornecedor_nome,
