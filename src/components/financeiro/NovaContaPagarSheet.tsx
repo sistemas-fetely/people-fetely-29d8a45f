@@ -189,6 +189,7 @@ export function NovaContaPagarSheet({ open, onOpenChange }: Props) {
       if (!descricao.trim()) throw new Error("Descrição é obrigatória");
       if (!valorNum || valorNum <= 0) throw new Error("Valor inválido");
       if (!dataVenc) throw new Error("Data de vencimento obrigatória");
+      if (!formaPagamento) throw new Error("Forma de pagamento é obrigatória");
 
       const parceiro = parceiros?.find((p) => p.id === parceiroId);
       const fornecedorNome = parceiro?.razao_social || null;
