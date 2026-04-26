@@ -286,14 +286,17 @@ export function AprovarNFDialog({ open, onOpenChange, tarefaId, notaId }: Props)
               <Alert>
                 <Mail className="h-4 w-4" />
                 <AlertDescription className="text-xs">
-                  Ao aprovar, email será enviado para: <strong>{emailResponsavel}</strong>
+                  Ao aprovar, email será enviado para:{" "}
+                  <strong>
+                    {destinatariosFinanceiro?.map((d) => `${d.nome} <${d.email}>`).join(", ")}
+                  </strong>
                 </AlertDescription>
               </Alert>
             ) : (
               <Alert variant="destructive">
                 <AlertTriangle className="h-4 w-4" />
                 <AlertDescription className="text-xs">
-                  Email do responsável pelo pagamento não configurado. Configure em <strong>/parametros</strong> (categoria: nf_pj_config).
+                  Nenhum destinatário ativo em <strong>Financeiro Externo</strong>. Configure em Parâmetros → Financeiro externo.
                 </AlertDescription>
               </Alert>
             )}
