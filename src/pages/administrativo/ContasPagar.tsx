@@ -198,7 +198,7 @@ export default function ContasPagar() {
     return Array.from(selecionadas)
       .map((id) => map.get(id))
       .filter((c): c is Conta => !!c)
-      .map((c) => ({ id: c.id, status: c.status, conta_id: c.conta_id }));
+      .map((c) => ({ id: c.id, status: c.status, conta_id: c.conta_id, tem_nf: !!c.nf_pdf_url || !!c.nf_xml_url || !!c.nf_numero }));
   }, [data, selecionadas]);
 
   return (
