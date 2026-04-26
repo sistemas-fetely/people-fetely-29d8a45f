@@ -153,10 +153,11 @@ function tentarCombinacoesPorFornecedor(
       }
     }
     const dif = difPercent(alvo, soma);
-    if (dif > TOLERANCIA_PCT) continue;
+    // Só aceita match EXATO (≤0.1% — score 100)
+    if (dif > 0.1) continue;
     const base = calcularScoreBase(dif);
-    if (base < 95) continue;
-    const score = Math.min(99, base + Math.min(usados.length * 2, 10));
+    if (base < 100) continue;
+    const score = 100;
     if (!melhor || score > melhor.score) {
       melhor = { contas, soma, dif, score, fornecedores: usados };
     }
