@@ -13,13 +13,22 @@ export type ContaPagarStatus =
 
 export interface ContaPagar {
   id: string;
+  parceiro_id?: string | null;
   fornecedor: string;
   descricao: string;
   valor: number;
+  data_emissao?: string | null;
   vencimento: string;
+  parcelas?: number | null;
   categoria_id?: string | null;
+  centro_custo?: string | null;
+  unidade?: string | null;
+  forma_pagamento?: string | null;
   observacoes?: string | null;
   status: ContaPagarStatus;
+  nf_numero?: string | null;
+  nf_serie?: string | null;
+  nf_chave?: string | null;
   nf_path?: string | null;
   nf_nome?: string | null;
   nf_uploaded_at?: string | null;
@@ -45,12 +54,22 @@ export interface ContaPagarHistorico {
 }
 
 export interface ContaPagarFormData {
+  parceiro_id?: string | null;
   fornecedor: string;
   descricao: string;
   valor: number;
+  data_emissao?: string | null;
   vencimento: string;
-  categoria_id?: string;
-  observacoes?: string;
+  parcelas?: number | null;
+  categoria_id?: string | null;
+  centro_custo?: string | null;
+  unidade?: string | null;
+  forma_pagamento?: string | null;
+  nf_numero?: string | null;
+  nf_serie?: string | null;
+  nf_chave?: string | null;
+  nf_arquivo?: File | null;
+  observacoes?: string | null;
 }
 
 export const STATUS_LABELS: Record<ContaPagarStatus, string> = {
@@ -80,14 +99,66 @@ export const TRANSICOES_PERMITIDAS: Record<ContaPagarStatus, ContaPagarStatus[]>
   cancelado: [],
 };
 
-// Hook principal - listar contas
+export const CENTROS_CUSTO = [
+  { value: "comercial", label: "Comercial" },
+  { value: "administrativo", label: "Administrativo" },
+  { value: "rh", label: "RH" },
+  { value: "ti", label: "TI" },
+  { value: "fiscal", label: "Fiscal" },
+  { value: "financeiro", label: "Financeiro" },
+  { value: "fabrica", label: "Fábrica" },
+  { value: "geral", label: "Geral" },
+] as const;
+
+export const UNIDADES_CONTA = [
+  { value: "matriz_sp", label: "Matriz SP" },
+  { value: "joinville", label: "Joinville" },
+] as const;
+
+export interface FornecedorOption {
+  id: string;
+  razao_social: string;
+  nome_fantasia: string | null;
+  cnpj: string | null;
+  categoria_padrao_id: string | null;
+  centro_custo_padrao: string | null;
+}
+
+// Hook: lista de fornecedores ativos para o combobox
+export function useFornecedores() {
+  return useQuery({
+    queryKey: ["parceiros-fornecedores"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("parceiros_comerciais")
+        .select("id, razao_social, nome_fantasia, cnpj, categoria_padrao_id, centro_custo_padrao")
+        .eq("ativo", true)
+        .contains("tipos", ["fornecedor"])
+        .order("razao_social", { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as FornecedorOption[];
+    },
+    staleTime: 60_000,
+  });
+}
+
+// Hook principal - listar contas (join com parceiro e categoria)
+export interface ContaPagarComRelacionados extends ContaPagar {
+  parceiro?: { id: string; razao_social: string; nome_fantasia: string | null } | null;
+  categoria?: { id: string; codigo: string; nome: string } | null;
+}
+
 export function useContasPagar(filtroStatus?: ContaPagarStatus) {
   return useQuery({
     queryKey: ["contas_pagar", filtroStatus],
     queryFn: async () => {
       let query = supabase
         .from("contas_pagar")
-        .select("*")
+        .select(
+          `*,
+           parceiro:parceiros_comerciais!contas_pagar_parceiro_id_fkey(id, razao_social, nome_fantasia),
+           categoria:plano_contas!contas_pagar_categoria_id_fkey(id, codigo, nome)`,
+        )
         .is("deleted_at", null)
         .order("vencimento", { ascending: true });
 
@@ -96,8 +167,17 @@ export function useContasPagar(filtroStatus?: ContaPagarStatus) {
       }
 
       const { data, error } = await query;
-      if (error) throw error;
-      return (data ?? []) as unknown as ContaPagar[];
+      if (error) {
+        // Fallback caso o nome do FK não bata
+        const { data: simple, error: e2 } = await supabase
+          .from("contas_pagar")
+          .select("*")
+          .is("deleted_at", null)
+          .order("vencimento", { ascending: true });
+        if (e2) throw e2;
+        return (simple ?? []) as unknown as ContaPagarComRelacionados[];
+      }
+      return (data ?? []) as unknown as ContaPagarComRelacionados[];
     },
   });
 }
@@ -122,6 +202,21 @@ export function useContaHistorico(contaId: string | null) {
   });
 }
 
+// Helper: upload da NF para storage
+async function uploadNF(contaId: string, arquivo: File) {
+  const fileExt = arquivo.name.split(".").pop();
+  const fileName = `${contaId}_${Date.now()}.${fileExt}`;
+  const filePath = `contas-pagar/${fileName}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from("documentos")
+    .upload(filePath, arquivo);
+
+  if (uploadError) throw uploadError;
+
+  return { filePath, fileName: arquivo.name };
+}
+
 // Mutation: Criar conta
 export function useCriarConta() {
   const queryClient = useQueryClient();
@@ -129,11 +224,26 @@ export function useCriarConta() {
   return useMutation({
     mutationFn: async (dados: ContaPagarFormData) => {
       const { data: userData } = await supabase.auth.getUser();
+      const { nf_arquivo, ...rest } = dados;
 
       const { data, error } = await supabase
         .from("contas_pagar")
         .insert({
-          ...dados,
+          parceiro_id: rest.parceiro_id || null,
+          fornecedor: rest.fornecedor,
+          descricao: rest.descricao,
+          valor: rest.valor,
+          data_emissao: rest.data_emissao || null,
+          vencimento: rest.vencimento,
+          parcelas: rest.parcelas ?? 1,
+          categoria_id: rest.categoria_id || null,
+          centro_custo: rest.centro_custo || null,
+          unidade: rest.unidade || null,
+          forma_pagamento: rest.forma_pagamento || null,
+          nf_numero: rest.nf_numero || null,
+          nf_serie: rest.nf_serie || null,
+          nf_chave: rest.nf_chave || null,
+          observacoes: rest.observacoes || null,
           status: "rascunho",
           created_by: userData.user?.id,
         })
@@ -141,6 +251,26 @@ export function useCriarConta() {
         .single();
 
       if (error) throw error;
+
+      // Upload NF se enviado
+      if (nf_arquivo && data?.id) {
+        try {
+          const { filePath, fileName } = await uploadNF(data.id, nf_arquivo);
+          await supabase
+            .from("contas_pagar")
+            .update({
+              nf_path: filePath,
+              nf_nome: fileName,
+              nf_uploaded_at: new Date().toISOString(),
+            })
+            .eq("id", data.id);
+        } catch (e: any) {
+          toast.error("Conta criada, mas falhou upload da NF", {
+            description: e?.message,
+          });
+        }
+      }
+
       return data;
     },
     onSuccess: () => {
@@ -189,21 +319,13 @@ export function useAnexarNF() {
 
   return useMutation({
     mutationFn: async ({ contaId, arquivo }: { contaId: string; arquivo: File }) => {
-      const fileExt = arquivo.name.split(".").pop();
-      const fileName = `${contaId}_${Date.now()}.${fileExt}`;
-      const filePath = `contas-pagar/${fileName}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from("documentos")
-        .upload(filePath, arquivo);
-
-      if (uploadError) throw uploadError;
+      const { filePath, fileName } = await uploadNF(contaId, arquivo);
 
       const { error: updateError } = await supabase
         .from("contas_pagar")
         .update({
           nf_path: filePath,
-          nf_nome: arquivo.name,
+          nf_nome: fileName,
           nf_uploaded_at: new Date().toISOString(),
         })
         .eq("id", contaId);
