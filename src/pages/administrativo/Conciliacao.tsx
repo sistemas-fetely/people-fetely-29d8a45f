@@ -567,6 +567,33 @@ export default function Conciliacao() {
     toast("Sugestão ignorada");
   }
 
+  async function aceitarMatch1to1(match: Match1to1) {
+    setConciliando(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("conciliar-agrupado", {
+        body: {
+          movimentacao_id: match.movimentacao_id,
+          contas_pagar_ids: [match.conta_id],
+          observacao: `Conciliação 1:1 — ${match.motivo} (score 100%)`,
+        },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast.success("Conciliado");
+      qc.invalidateQueries({ queryKey: ["mov-conciliacao"] });
+      qc.invalidateQueries({ queryKey: ["cp-conciliacao"] });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erro ao conciliar");
+    } finally {
+      setConciliando(false);
+    }
+  }
+
+  function rejeitarMatch1to1(movId: string) {
+    setMatches1to1Rejeitados((prev) => new Set(prev).add(movId));
+    toast("Sugestão ignorada");
+  }
+
   async function conciliarManualGrupo() {
     if (!movSelecionada || contasSelecionadasManual.size === 0) return;
     if (!validacaoManual?.valido) {
