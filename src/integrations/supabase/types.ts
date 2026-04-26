@@ -6249,6 +6249,33 @@ export type Database = {
           },
         ]
       }
+      rascunhos_importacao: {
+        Row: {
+          created_at: string
+          id: string
+          nfs_json: Json
+          tipo_importacao: string
+          updated_at: string
+          usuario_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          nfs_json: Json
+          tipo_importacao: string
+          updated_at?: string
+          usuario_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          nfs_json?: Json
+          tipo_importacao?: string
+          updated_at?: string
+          usuario_id?: string
+        }
+        Relationships: []
+      }
       regras_categorizacao: {
         Row: {
           ativo: boolean | null
@@ -8139,6 +8166,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      limpar_rascunhos_antigos: { Args: never; Returns: number }
       marcar_nf_enviada_pagamento: {
         Args: { _email_destinatario: string; _nota_id: string }
         Returns: Json
