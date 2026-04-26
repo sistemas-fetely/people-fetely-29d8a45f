@@ -35,6 +35,18 @@ interface Props {
 const formatBRL = (v: number) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v || 0);
 
+const formatDate = (dateStr: string | null | undefined): string => {
+  if (!dateStr) return "—";
+  try {
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateStr)) return dateStr;
+    const [year, month, day] = dateStr.split("-");
+    if (year && month && day) return `${day}/${month}/${year}`;
+    return dateStr;
+  } catch {
+    return dateStr;
+  }
+};
+
 export function PreviewNFsImport({
   nfs,
   categorias,
@@ -215,7 +227,7 @@ export function PreviewNFsImport({
           </TableHeader>
           <TableBody>
             {visibleIdx.map(({ nf, i }) => {
-              const temItens = !!(nf.itens && nf.itens.length > 1);
+              const temItens = !!(nf.itens && nf.itens.length >= 1);
               const expandido = !!nf._expandirItens;
               const itensClassificados = expandido && nf.itens
                 ? nf.itens.filter((it) => it._categoria_id).length
@@ -250,7 +262,7 @@ export function PreviewNFsImport({
                         <div className="text-muted-foreground">Série {nf.nf_serie}</div>
                       )}
                     </TableCell>
-                    <TableCell className="text-xs">{nf.nf_data_emissao || "—"}</TableCell>
+                    <TableCell className="text-xs">{formatDate(nf.nf_data_emissao)}</TableCell>
                     <TableCell className="text-right font-mono text-sm">
                       {nf.valor.toLocaleString("pt-BR", {
                         style: "currency",
