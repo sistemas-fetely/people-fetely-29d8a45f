@@ -1,6 +1,6 @@
 // src/pages/administrativo/ContasPagar.tsx
 import { useState } from "react";
-import { Plus, FileText } from "lucide-react";
+import { Plus, FileText, Paperclip } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -19,24 +19,19 @@ export default function ContasPagar() {
   const { data: contas = [], isLoading } = useContasPagar();
   const [sheetOpen, setSheetOpen] = useState(false);
 
-  const formatarValor = (valor: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-    }).format(valor);
-  };
+  const formatarValor = (valor: number) =>
+    new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(valor);
 
-  const formatarData = (data: string) => {
-    return new Date(data).toLocaleDateString('pt-BR');
-  };
+  const formatarData = (data: string | null | undefined) =>
+    data ? new Date(data).toLocaleDateString("pt-BR") : "—";
 
   return (
     <div className="space-y-6 p-6">
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Contas a Pagar</h1>
-          <p className="text-gray-500 mt-1">
+          <h1 className="text-3xl font-bold text-foreground">Contas a Pagar</h1>
+          <p className="text-muted-foreground mt-1">
             Gerencie pagamentos de fornecedores
           </p>
         </div>
@@ -46,72 +41,101 @@ export default function ContasPagar() {
         </Button>
       </div>
 
-      {/* Loading */}
       {isLoading && (
-        <div className="text-center py-12 text-gray-500">
+        <div className="text-center py-12 text-muted-foreground">
           Carregando contas...
         </div>
       )}
 
-      {/* Empty State */}
       {!isLoading && contas.length === 0 && (
         <div className="text-center py-12">
-          <FileText className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-          <p className="text-gray-500 mb-4">Nenhuma conta cadastrada</p>
-          <Button 
-            variant="outline"
-            onClick={() => setSheetOpen(true)}
-          >
+          <FileText className="h-12 w-12 text-muted-foreground/40 mx-auto mb-4" />
+          <p className="text-muted-foreground mb-4">Nenhuma conta cadastrada</p>
+          <Button variant="outline" onClick={() => setSheetOpen(true)}>
             Criar primeira conta
           </Button>
         </div>
       )}
 
-      {/* Tabela */}
       {!isLoading && contas.length > 0 && (
-        <div className="bg-white rounded-lg border">
+        <div className="bg-card rounded-lg border">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Fornecedor</TableHead>
+                <TableHead>Parceiro / Fornecedor</TableHead>
                 <TableHead>Descrição</TableHead>
-                <TableHead>Valor</TableHead>
+                <TableHead>Categoria</TableHead>
+                <TableHead className="text-right">Valor</TableHead>
                 <TableHead>Vencimento</TableHead>
+                <TableHead>Forma Pgto</TableHead>
+                <TableHead>NF</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="w-[80px]">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {contas.map((conta) => (
-                <TableRow key={conta.id}>
-                  <TableCell className="font-medium">
-                    {conta.fornecedor}
-                  </TableCell>
-                  <TableCell className="max-w-[300px] truncate">
-                    {conta.descricao}
-                  </TableCell>
-                  <TableCell>{formatarValor(conta.valor)}</TableCell>
-                  <TableCell>{formatarData(conta.vencimento)}</TableCell>
-                  <TableCell>
-                    <Badge className={STATUS_COLORS[conta.status]}>
-                      {STATUS_LABELS[conta.status]}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <AcoesContaMenu conta={conta} />
-                  </TableCell>
-                </TableRow>
-              ))}
+              {contas.map((conta) => {
+                const nomeParceiro =
+                  conta.parceiro?.razao_social || conta.fornecedor;
+                const fantasia = conta.parceiro?.nome_fantasia;
+                return (
+                  <TableRow key={conta.id}>
+                    <TableCell className="font-medium max-w-[220px]">
+                      <div className="truncate">{nomeParceiro}</div>
+                      {fantasia && (
+                        <div className="text-xs text-muted-foreground truncate">
+                          {fantasia}
+                        </div>
+                      )}
+                    </TableCell>
+                    <TableCell className="max-w-[260px] truncate">
+                      {conta.descricao}
+                    </TableCell>
+                    <TableCell className="max-w-[180px]">
+                      {conta.categoria ? (
+                        <div className="truncate">
+                          <span className="font-mono text-xs text-muted-foreground mr-1">
+                            {conta.categoria.codigo}
+                          </span>
+                          {conta.categoria.nome}
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {formatarValor(conta.valor)}
+                    </TableCell>
+                    <TableCell>{formatarData(conta.vencimento)}</TableCell>
+                    <TableCell>
+                      {conta.forma_pagamento ?? (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {conta.nf_path ? (
+                        <Paperclip className="h-4 w-4 text-primary" />
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <Badge className={STATUS_COLORS[conta.status]}>
+                        {STATUS_LABELS[conta.status]}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <AcoesContaMenu conta={conta} />
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         </div>
       )}
 
-      {/* Sheet de criação */}
-      <NovaContaSheet
-        open={sheetOpen}
-        onOpenChange={setSheetOpen}
-      />
+      <NovaContaSheet open={sheetOpen} onOpenChange={setSheetOpen} />
     </div>
   );
 }
