@@ -222,6 +222,7 @@ export function NovaContaPagarSheet({ open, onOpenChange }: Props) {
           nf_serie: nfSerie.trim() || null,
           nf_chave_acesso: nfChave.trim() || null,
           nf_data_emissao: dataEmissao || null,
+          forma_pagamento: formaPagamento,
         });
       }
       const { data: inserted, error } = await supabase
