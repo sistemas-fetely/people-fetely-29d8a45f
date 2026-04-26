@@ -1543,20 +1543,29 @@ export type Database = {
       contas_pagar: {
         Row: {
           categoria_id: string | null
+          centro_custo: string | null
           comprovante_nome: string | null
           comprovante_path: string | null
           created_at: string
           created_by: string | null
+          data_emissao: string | null
           data_pagamento: string | null
           deleted_at: string | null
           descricao: string
+          forma_pagamento: string | null
           fornecedor: string
           id: string
+          nf_chave: string | null
           nf_nome: string | null
+          nf_numero: string | null
           nf_path: string | null
+          nf_serie: string | null
           nf_uploaded_at: string | null
           observacoes: string | null
+          parceiro_id: string | null
+          parcelas: number | null
           status: string
+          unidade: string | null
           updated_at: string
           updated_by: string | null
           valor: number
@@ -1565,20 +1574,29 @@ export type Database = {
         }
         Insert: {
           categoria_id?: string | null
+          centro_custo?: string | null
           comprovante_nome?: string | null
           comprovante_path?: string | null
           created_at?: string
           created_by?: string | null
+          data_emissao?: string | null
           data_pagamento?: string | null
           deleted_at?: string | null
           descricao: string
+          forma_pagamento?: string | null
           fornecedor: string
           id?: string
+          nf_chave?: string | null
           nf_nome?: string | null
+          nf_numero?: string | null
           nf_path?: string | null
+          nf_serie?: string | null
           nf_uploaded_at?: string | null
           observacoes?: string | null
+          parceiro_id?: string | null
+          parcelas?: number | null
           status?: string
+          unidade?: string | null
           updated_at?: string
           updated_by?: string | null
           valor: number
@@ -1587,20 +1605,29 @@ export type Database = {
         }
         Update: {
           categoria_id?: string | null
+          centro_custo?: string | null
           comprovante_nome?: string | null
           comprovante_path?: string | null
           created_at?: string
           created_by?: string | null
+          data_emissao?: string | null
           data_pagamento?: string | null
           deleted_at?: string | null
           descricao?: string
+          forma_pagamento?: string | null
           fornecedor?: string
           id?: string
+          nf_chave?: string | null
           nf_nome?: string | null
+          nf_numero?: string | null
           nf_path?: string | null
+          nf_serie?: string | null
           nf_uploaded_at?: string | null
           observacoes?: string | null
+          parceiro_id?: string | null
+          parcelas?: number | null
           status?: string
+          unidade?: string | null
           updated_at?: string
           updated_by?: string | null
           valor?: number
@@ -1613,6 +1640,13 @@ export type Database = {
             columns: ["categoria_id"]
             isOneToOne: false
             referencedRelation: "plano_contas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contas_pagar_parceiro_id_fkey"
+            columns: ["parceiro_id"]
+            isOneToOne: false
+            referencedRelation: "parceiros_comerciais"
             referencedColumns: ["id"]
           },
         ]
