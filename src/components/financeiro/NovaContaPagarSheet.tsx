@@ -192,11 +192,6 @@ export function NovaContaPagarSheet({ open, onOpenChange }: Props) {
       const baseDate = new Date(dataVenc + "T00:00:00");
       const grupoId = parcelas > 1 ? crypto.randomUUID() : null;
 
-      const qtdNum = quantidade ? parseFloat(quantidade.replace(",", ".")) : null;
-      const vlrUnitNum = valorUnitario
-        ? parseFloat(valorUnitario.replace(/\./g, "").replace(",", "."))
-        : null;
-
       const rows = [];
       for (let i = 0; i < parcelas; i++) {
         const venc = new Date(baseDate);
@@ -223,7 +218,6 @@ export function NovaContaPagarSheet({ open, onOpenChange }: Props) {
           nf_serie: nfSerie.trim() || null,
           nf_chave_acesso: nfChave.trim() || null,
           nf_data_emissao: dataEmissao || null,
-          nf_ncm: ncm.trim() || null,
         });
       }
       const { data: inserted, error } = await supabase
@@ -234,16 +228,29 @@ export function NovaContaPagarSheet({ open, onOpenChange }: Props) {
 
       const firstId = inserted?.[0]?.id;
       if (firstId) {
-        // Item detalhado (somente na 1ª parcela)
-        if (qtdNum || vlrUnitNum || ncm.trim()) {
-          await supabase.from("contas_pagar_itens").insert({
-            conta_id: firstId,
-            descricao: descricao.trim(),
-            ncm: ncm.trim() || null,
-            quantidade: qtdNum,
-            valor_unitario: vlrUnitNum,
-            valor_total: qtdNum && vlrUnitNum ? qtdNum * vlrUnitNum : valorNum,
-          });
+        // Itens (somente na 1ª parcela)
+        if (itens.length > 0) {
+          const itensValidos = itens.filter((it) => it.descricao.trim());
+          if (itensValidos.length > 0) {
+            const itensPayload = itensValidos.map((it) => {
+              const qtd = parseFloat(it.quantidade.replace(",", ".")) || 1;
+              const vlrUnit =
+                parseFloat(it.valorUnitario.replace(/\./g, "").replace(",", ".")) || 0;
+              return {
+                conta_id: firstId,
+                descricao: it.descricao.trim(),
+                ncm: it.ncm.trim() || null,
+                quantidade: qtd,
+                valor_unitario: vlrUnit,
+                valor_total: qtd * vlrUnit,
+                conta_plano_id: it.categoriaId || null,
+              };
+            });
+            const { error: errItens } = await supabase
+              .from("contas_pagar_itens")
+              .insert(itensPayload);
+            if (errItens) throw errItens;
+          }
         }
 
         // Uploads
