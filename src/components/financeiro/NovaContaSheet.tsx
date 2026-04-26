@@ -366,6 +366,53 @@ export function NovaContaSheet({ open, onOpenChange, conta }: NovaContaSheetProp
         </SheetHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 mt-6">
+          {!isEdit && (
+            <div className="rounded-lg border-2 border-dashed border-primary/30 bg-primary/5 p-4 space-y-3">
+              <div className="flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-primary" />
+                <span className="font-medium text-sm">Importar NF/Recibo (opcional)</span>
+              </div>
+              <label
+                htmlFor="ia_upload"
+                className={cn(
+                  "flex flex-col items-center justify-center gap-2 rounded-md border border-dashed border-primary/40 bg-background/60 px-4 py-6 text-center cursor-pointer hover:bg-background transition-colors",
+                  iaProcessando && "pointer-events-none opacity-60",
+                )}
+              >
+                {iaProcessando ? (
+                  <>
+                    <Loader2 className="h-5 w-5 text-primary animate-spin" />
+                    <span className="text-sm font-medium">Lendo documento com IA...</span>
+                  </>
+                ) : (
+                  <>
+                    <Upload className="h-5 w-5 text-primary" />
+                    <span className="text-sm font-medium">
+                      Arraste um PDF aqui ou clique para upload
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      Aceita: PDF, JPG, PNG (max 10MB) — A IA preenche os campos automaticamente.
+                    </span>
+                  </>
+                )}
+                <input
+                  id="ia_upload"
+                  type="file"
+                  className="sr-only"
+                  accept="application/pdf,image/jpeg,image/png,image/jpg"
+                  onChange={handleIAFileInput}
+                  disabled={iaProcessando}
+                />
+              </label>
+              {camposIA.size > 0 && !iaProcessando && (
+                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                  <Sparkles className="h-3 w-3 text-primary" />
+                  Campos com borda azul foram preenchidos pela IA. Confira antes de salvar.
+                </p>
+              )}
+            </div>
+          )}
+
           <div className="space-y-2">
             <Label>Parceiro / Fornecedor *</Label>
             <Popover open={parceiroOpen} onOpenChange={setParceiroOpen}>
