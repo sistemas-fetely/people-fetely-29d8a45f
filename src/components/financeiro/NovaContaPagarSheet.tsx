@@ -155,8 +155,15 @@ export function NovaContaPagarSheet({ open, onOpenChange }: Props) {
       setNfNumero("");
       setNfSerie("");
       setNfChave("");
-      setItens([]);
-      setMostrarItens(false);
+      setItens([{
+        id: crypto.randomUUID(),
+        descricao: "",
+        ncm: "",
+        quantidade: "1",
+        valorUnitario: "",
+        categoriaId: null,
+      }]);
+      setMostrarItens(true);
       setNfFile(null);
       setReciboFile(null);
     }
