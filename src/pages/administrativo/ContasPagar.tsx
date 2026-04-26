@@ -1,6 +1,6 @@
 // src/pages/administrativo/ContasPagar.tsx
 import { useState } from "react";
-import { Plus, FileText, Paperclip, Check, ArrowRight } from "lucide-react";
+import { Plus, FileText, FileCheck2, Check, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -161,7 +161,7 @@ export default function ContasPagar() {
                   <TableHead className="text-right">Valor</TableHead>
                   <TableHead>Vencimento</TableHead>
                   <TableHead>Forma Pgto</TableHead>
-                  <TableHead className="text-center">NF</TableHead>
+                  <TableHead className="text-center">NF/Recibo</TableHead>
                   <TableHead>Status / Ação</TableHead>
                   <TableHead className="w-[60px]"></TableHead>
                 </TableRow>
@@ -216,22 +216,22 @@ export default function ContasPagar() {
                         )}
                       </TableCell>
                       <TableCell className="text-center">
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <span className="inline-flex">
-                              {conta.nf_path ? (
-                                <Paperclip className="h-4 w-4 text-success" />
-                              ) : (
-                                <Paperclip className="h-4 w-4 text-muted-foreground/40" />
-                              )}
-                            </span>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            {conta.nf_path
-                              ? conta.nf_nome ?? "NF anexada"
-                              : "Sem NF anexada"}
-                          </TooltipContent>
-                        </Tooltip>
+                        {conta.nf_path ? (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-success/10">
+                                <FileCheck2 className="h-4 w-4 text-success" />
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              {conta.nf_nome ?? "Anexo disponível"}
+                            </TooltipContent>
+                          </Tooltip>
+                        ) : (
+                          <span className="text-xs text-muted-foreground/70">
+                            Sem anexo
+                          </span>
+                        )}
                       </TableCell>
                       <TableCell onClick={(e) => e.stopPropagation()}>
                         {renderAcaoStatus(conta)}
