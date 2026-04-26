@@ -1,4 +1,4 @@
-import { Fragment, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { Loader2, Download, AlertTriangle, X, ListTree, Package, Link2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -60,6 +60,21 @@ export function PreviewNFsImport({
   const [regraCategoriaId, setRegraCategoriaId] = useState<string | null>(null);
   const [regraCategoriaNome, setRegraCategoriaNome] = useState<string | null>(null);
   const { data: regras } = useRegrasCategorizacao();
+
+  // Proteção contra saída acidental quando há NFs pendentes
+  useEffect(() => {
+    if (nfs.length === 0) return;
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      const pendentes = nfs.filter((n) => n._selecionada && !n._duplicata).length;
+      if (pendentes > 0) {
+        e.preventDefault();
+        e.returnValue = `Você tem ${pendentes} NFs prontas para importar! Se sair vai perder o progresso.`;
+        return e.returnValue;
+      }
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [nfs]);
 
   const visibleIdx = useMemo(() => {
     return nfs
