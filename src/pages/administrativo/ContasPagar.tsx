@@ -47,6 +47,8 @@ type Conta = {
   docs_status: string | null;
   plano_contas?: { codigo?: string | null; nome: string } | null;
   parceiros_comerciais?: { razao_social: string | null } | null;
+  formas_pagamento?: { nome: string | null } | null;
+  forma_pagamento?: string | null;
 };
 
 const STATUS_STYLES: Record<string, string> = {
@@ -83,7 +85,7 @@ export default function ContasPagar() {
       const { data, error } = await supabase
         .from("contas_pagar_receber")
         .select(
-          "*, plano_contas:conta_id(codigo,nome), parceiros_comerciais:parceiro_id(razao_social)",
+          "*, plano_contas:conta_id(codigo,nome), parceiros_comerciais:parceiro_id(razao_social), formas_pagamento:forma_pagamento_id(nome)",
         )
         .eq("tipo", "pagar")
         .order("data_vencimento", { ascending: true });
@@ -490,9 +492,10 @@ export default function ContasPagar() {
                           aria-label="Selecionar todos"
                         />
                       </TableHead>
-                      <TableHead>Vencimento</TableHead>
-                      <TableHead>Descrição</TableHead>
                       <TableHead>Parceiro</TableHead>
+                      <TableHead>Descrição</TableHead>
+                      <TableHead>Vencimento</TableHead>
+                      <TableHead>Meio de pagamento</TableHead>
                       <TableHead>Categoria</TableHead>
                       <TableHead className="text-right">Valor</TableHead>
                       <TableHead>Status</TableHead>
@@ -514,8 +517,12 @@ export default function ContasPagar() {
                               aria-label="Selecionar conta"
                             />
                           </TableCell>
-                          <TableCell className="whitespace-nowrap">
-                            {formatDateBR(c.data_vencimento)}
+                          <TableCell className="max-w-[200px]">
+                            <div className="truncate" title={c.parceiros_comerciais?.razao_social || c.fornecedor_cliente || ""}>
+                              {c.parceiros_comerciais?.razao_social ||
+                                c.fornecedor_cliente ||
+                                "—"}
+                            </div>
                           </TableCell>
                           <TableCell className="max-w-xs" title={c.descricao}>
                             <div className="flex items-center gap-2 min-w-0">
@@ -530,10 +537,13 @@ export default function ContasPagar() {
                               )}
                             </div>
                           </TableCell>
-                          <TableCell>
-                            {c.parceiros_comerciais?.razao_social ||
-                              c.fornecedor_cliente ||
-                              "—"}
+                          <TableCell className="whitespace-nowrap">
+                            {formatDateBR(c.data_vencimento)}
+                          </TableCell>
+                          <TableCell className="text-xs text-muted-foreground">
+                            {c.formas_pagamento?.nome || c.forma_pagamento || (
+                              <span className="text-[10px] italic">—</span>
+                            )}
                           </TableCell>
                           <TableCell className="text-muted-foreground text-xs">
                             {c.plano_contas?.nome ? (
