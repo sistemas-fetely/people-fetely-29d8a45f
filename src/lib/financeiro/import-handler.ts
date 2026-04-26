@@ -138,16 +138,9 @@ export async function importarNFs(nfs: NFParsed[]): Promise<ImportResult> {
         }
       }
 
-      // 2. Forma de pagamento
-      let forma_id: string | null = null;
-      if (nf.meio_pagamento) {
-        const { data: forma } = await supabase
-          .from("formas_pagamento")
-          .select("id")
-          .eq("codigo", nf.meio_pagamento)
-          .maybeSingle();
-        forma_id = forma?.id || null;
-      }
+      // 2. Forma de pagamento agora é TEXT (entrada manual alinhada ao enum)
+      // — sem busca em formas_pagamento (FK removida do fluxo).
+
 
       // 3. Insert conta a pagar
       // Se expandida por item, conta principal usa a categoria do item de maior valor
@@ -180,7 +173,7 @@ export async function importarNFs(nfs: NFParsed[]): Promise<ImportResult> {
           fornecedor_cliente: nf.fornecedor_nome,
           parceiro_id,
           fornecedor_id: parceiro_id,
-          forma_pagamento_id: forma_id,
+          forma_pagamento: nf.meio_pagamento || null,
           origem: nf._source,
           nf_chave_acesso: nf.nf_chave_acesso || null,
           nf_numero: nf.nf_numero || null,

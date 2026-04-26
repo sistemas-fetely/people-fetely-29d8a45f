@@ -27,6 +27,7 @@ import {
   validarAgrupamento,
   type AgrupamentoSugerido,
 } from "@/lib/financeiro/agrupamentos-cartao";
+import { encontrarMatches1to1, type Match1to1 } from "@/lib/financeiro/match-1-1";
 import { CategoriaCombobox } from "@/components/financeiro/CategoriaCombobox";
 import { useCategoriasPlano } from "@/hooks/useCategoriasPlano";
 import { useFiltrosPersistentes } from "@/hooks/useFiltrosPersistentes";
@@ -97,6 +98,9 @@ export default function Conciliacao() {
 
   // Agrupamentos sugeridos pela IA
   const [agrupamentosRejeitados, setAgrupamentosRejeitados] = useState<Set<string>>(new Set());
+
+  // Matches 1:1 (data + valor) — rejeitados nesta sessão
+  const [matches1to1Rejeitados, setMatches1to1Rejeitados] = useState<Set<string>>(new Set());
 
   const [matchesSugeridos, setMatchesSugeridos] = useState<MatchResult[]>([]);
   const [showConfirmar, setShowConfirmar] = useState(false);
@@ -241,6 +245,13 @@ export default function Conciliacao() {
     const todos = encontrarAgrupamentosCartao(movsNaoConciliadas, cpsNaoConciliadas);
     return todos.filter((s) => !agrupamentosRejeitados.has(s.id));
   }, [movsNaoConciliadas, cpsNaoConciliadas, agrupamentosRejeitados]);
+
+  // Matches 1:1 (não-cartão) — APENAS data + valor 100% exatos
+  const matches1to1 = useMemo<Match1to1[]>(() => {
+    if (movsNaoConciliadas.length === 0 || cpsNaoConciliadas.length === 0) return [];
+    const todos = encontrarMatches1to1(movsNaoConciliadas, cpsNaoConciliadas);
+    return todos.filter((m) => !matches1to1Rejeitados.has(m.movimentacao_id));
+  }, [movsNaoConciliadas, cpsNaoConciliadas, matches1to1Rejeitados]);
 
   // Validação em tempo real do agrupamento manual
   const validacaoManual = useMemo(() => {
@@ -556,6 +567,33 @@ export default function Conciliacao() {
     toast("Sugestão ignorada");
   }
 
+  async function aceitarMatch1to1(match: Match1to1) {
+    setConciliando(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("conciliar-agrupado", {
+        body: {
+          movimentacao_id: match.movimentacao_id,
+          contas_pagar_ids: [match.conta_id],
+          observacao: `Conciliação 1:1 — ${match.motivo} (score 100%)`,
+        },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast.success("Conciliado");
+      qc.invalidateQueries({ queryKey: ["mov-conciliacao"] });
+      qc.invalidateQueries({ queryKey: ["cp-conciliacao"] });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erro ao conciliar");
+    } finally {
+      setConciliando(false);
+    }
+  }
+
+  function rejeitarMatch1to1(movId: string) {
+    setMatches1to1Rejeitados((prev) => new Set(prev).add(movId));
+    toast("Sugestão ignorada");
+  }
+
   async function conciliarManualGrupo() {
     if (!movSelecionada || contasSelecionadasManual.size === 0) return;
     if (!validacaoManual?.valido) {
@@ -764,6 +802,106 @@ export default function Conciliacao() {
 
         {/* TAB 1 — CONCILIAR (lado a lado) */}
         <TabsContent value="conciliar" className="space-y-4 mt-4">
+          {/* SEÇÃO 0 — MATCHES 1:1 (data + valor 100% — não-cartão) */}
+          {matches1to1.length > 0 && (
+            <Card className="border-emerald-500/30">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <Zap className="h-4 w-4 text-emerald-600" />
+                  Matches exatos (PIX, Boleto, TED, Débito)
+                  <Badge className="bg-emerald-500/10 text-emerald-700 border-emerald-500/30">
+                    {matches1to1.length}
+                  </Badge>
+                </CardTitle>
+                <p className="text-xs text-muted-foreground">
+                  Movimentações com data e valor idênticos a uma única conta a pagar — match 100%.
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {matches1to1.map((match) => {
+                  const mov = movimentacoes.find((m) => m.id === match.movimentacao_id);
+                  const conta = contasPagar.find((c) => c.id === match.conta_id);
+                  if (!mov || !conta) return null;
+
+                  return (
+                    <div key={match.movimentacao_id} className="rounded-lg border bg-card overflow-hidden">
+                      <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-3 items-center p-3">
+                        {/* Movimentação */}
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
+                            <Badge variant="outline" className="text-[10px]">Extrato</Badge>
+                          </div>
+                          <p className="text-sm truncate" title={mov.descricao}>{mov.descricao}</p>
+                          <p className="text-xs text-muted-foreground">{formatDateBR(mov.data_transacao)}</p>
+                          <p className="text-base font-semibold text-destructive">
+                            {formatBRL(Math.abs(Number(mov.valor)))}
+                          </p>
+                        </div>
+
+                        <div className="hidden md:flex items-center justify-center">
+                          <ArrowRight className="h-5 w-5 text-emerald-600" />
+                        </div>
+
+                        {/* Conta */}
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <Receipt className="h-3.5 w-3.5 text-muted-foreground" />
+                            <Badge variant="outline" className="text-[10px]">Conta a pagar</Badge>
+                            {conta.forma_pagamento && (
+                              <Badge variant="secondary" className="text-[10px]">{conta.forma_pagamento}</Badge>
+                            )}
+                          </div>
+                          <p className="text-sm truncate" title={conta.fornecedor_cliente || conta.descricao}>
+                            {conta.fornecedor_cliente || conta.descricao}
+                          </p>
+                          <p className="text-xs text-muted-foreground">{formatDateBR(conta.data_vencimento)}</p>
+                          <p className="text-base font-semibold tabular-nums">
+                            {formatBRL(Number(conta.valor))}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between gap-2 p-3 bg-muted/30 border-t flex-wrap">
+                        <div className="flex items-center gap-2 text-xs flex-wrap">
+                          <Badge className="bg-emerald-500/15 text-emerald-700 border-emerald-500/30">
+                            Score 100%
+                          </Badge>
+                          <span className="text-muted-foreground">{match.motivo}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => rejeitarMatch1to1(match.movimentacao_id)}
+                            disabled={conciliando}
+                            className="gap-1"
+                          >
+                            <X className="h-3.5 w-3.5" />
+                            Rejeitar
+                          </Button>
+                          <Button
+                            size="sm"
+                            onClick={() => aceitarMatch1to1(match)}
+                            disabled={conciliando}
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white gap-1"
+                          >
+                            {conciliando ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                              <Check className="h-3.5 w-3.5" />
+                            )}
+                            Conciliar
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </CardContent>
+            </Card>
+          )}
+
           {/* SEÇÃO 1 — AGRUPAMENTOS SUGERIDOS PELA IA */}
           {agrupamentosSugeridos.length > 0 && (
             <Card className="border-admin/30">
