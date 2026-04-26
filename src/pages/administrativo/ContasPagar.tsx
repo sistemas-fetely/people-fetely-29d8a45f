@@ -30,6 +30,7 @@ import AcoesMassaButtons, {
   type ContaSelecionada,
 } from "@/components/financeiro/AcoesMassaButtons";
 import { NovaContaPagarSheet } from "@/components/financeiro/NovaContaPagarSheet";
+import AlertasBadge from "@/components/financeiro/AlertasBadge";
 
 type Conta = {
   id: string;
@@ -213,13 +214,16 @@ export default function ContasPagar() {
             Vencimentos a parceiros — abertos, pagos e atrasados.
           </p>
         </div>
-        <Button
-          onClick={() => setNovaContaAberta(true)}
-          className="bg-admin hover:bg-admin-accent text-admin-foreground"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Novo Pagamento
-        </Button>
+        <div className="flex items-center gap-2">
+          <AlertasBadge />
+          <Button
+            onClick={() => setNovaContaAberta(true)}
+            className="bg-admin hover:bg-admin-accent text-admin-foreground"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Novo Pagamento
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
