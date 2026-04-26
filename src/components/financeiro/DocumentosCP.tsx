@@ -229,7 +229,7 @@ export default function DocumentosCP({
         <input
           ref={fileInputRef}
           type="file"
-          accept=".pdf,.jpg,.jpeg,.png"
+          accept=".pdf,.jpg,.jpeg,.png,.webp,.gif,.heic"
           className="hidden"
           onChange={handleUploadDoc}
         />
