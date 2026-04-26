@@ -155,24 +155,44 @@ export default function EnviarPagamentoDialog({ open, onOpenChange, conta, onDon
         },
       });
 
-      // 2) Enviar email (best-effort)
+      // 2) Enviar email (best-effort) — uma cópia para CADA destinatário ativo
+      // Monta string única com dados PIX/bancários
+      const dadosPixTxt = [
+        dadosPgto.pix && `PIX: ${dadosPgto.pix}`,
+        dadosPgto.banco && `Banco: ${dadosPgto.banco}`,
+        dadosPgto.agencia && `Agência: ${dadosPgto.agencia}`,
+        dadosPgto.conta && `Conta: ${dadosPgto.conta}`,
+      ].filter(Boolean).join(" | ");
+
+      // PDF assinado da NF (se houver)
+      let arquivoUrl: string | null = null;
+      if (conta.nf_pdf_url) {
+        try {
+          const path = conta.nf_pdf_url.replace(/^https?:\/\/[^/]+\/storage\/v1\/object\/(public|sign)\/[^/]+\//, "");
+          const { data: signed } = await supabase.storage
+            .from("notas-fiscais")
+            .createSignedUrl(path, 7 * 24 * 3600);
+          arquivoUrl = signed?.signedUrl || conta.nf_pdf_url;
+        } catch {
+          arquivoUrl = conta.nf_pdf_url;
+        }
+      }
+
       const emailResult = await supabase.functions.invoke("send-transactional-email", {
         body: {
-          templateName: "pagamento-solicitacao",
+          templateName: "nf-pagamento",
           recipientEmail: emailDestinatario,
-          idempotencyKey: `pgto-${conta.id}-${Date.now()}`,
+          idempotencyKey: `pgto-${conta.id}-${emailDestinatario}-${Date.now()}`,
           templateData: {
-            fornecedor: fornecedorNome,
+            nomeColaborador: fornecedorNome,
+            nomeFantasia: conta.parceiros_comerciais?.razao_social || undefined,
+            numeroNF: conta.nf_numero || "(sem NF)",
             valor: formatBRL(conta.valor),
-            vencimento: formatDateBR(conta.data_vencimento),
-            nf_numero: conta.nf_numero || "—",
-            categoria: categoriaTxt,
-            banco: dadosPgto.banco || "—",
-            agencia: dadosPgto.agencia || "—",
-            conta_bancaria: dadosPgto.conta || "—",
-            pix: dadosPgto.pix || "—",
-            observacao: obsEnvio || "—",
-            solicitante: user?.email || "",
+            dataVencimento: formatDateBR(conta.data_vencimento),
+            arquivoUrl,
+            dadosPix: dadosPixTxt || undefined,
+            linkBoleto: undefined,
+            observacao: obsEnvio || undefined,
           },
         },
       });
