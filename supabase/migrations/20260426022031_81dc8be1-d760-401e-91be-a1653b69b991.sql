@@ -1,0 +1,1 @@
+ALTER TABLE contas_pagar_receber DROP COLUMN IF EXISTS dados_enriquecidos_qive;

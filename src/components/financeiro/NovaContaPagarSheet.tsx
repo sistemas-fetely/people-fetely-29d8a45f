@@ -43,6 +43,7 @@ import {
 import { ParceiroFormSheet, Parceiro } from "@/components/financeiro/ParceiroFormSheet";
 import { CategoriaFormDialog } from "@/components/financeiro/CategoriaFormDialog";
 import { formatBRL } from "@/lib/format-currency";
+import { FORMAS_PAGAMENTO } from "@/lib/financeiro/formas-pagamento";
 
 type FormaPgto = { id: string; nome: string; codigo: string };
 const CENTROS = ["comercial", "administrativo", "rh", "ti", "fiscal", "financeiro", "fabrica", "geral"];
@@ -69,6 +70,7 @@ export function NovaContaPagarSheet({ open, onOpenChange }: Props) {
   const [centroCusto, setCentroCusto] = useState("");
   const [unidade, setUnidade] = useState("matriz_sp");
   const [formaPgtoId, setFormaPgtoId] = useState<string>("");
+  const [formaPagamentoTexto, setFormaPagamentoTexto] = useState<string>("");
   const [parcelas, setParcelas] = useState(1);
 
   const { data: parceiros } = useQuery({
@@ -147,6 +149,7 @@ export function NovaContaPagarSheet({ open, onOpenChange }: Props) {
       if (!descricao.trim()) throw new Error("Descrição é obrigatória");
       if (!valorNum || valorNum <= 0) throw new Error("Valor inválido");
       if (!dataVenc) throw new Error("Data de vencimento obrigatória");
+      if (!formaPagamentoTexto) throw new Error("Forma de pagamento é obrigatória");
 
       const parceiro = parceiros?.find((p) => p.id === parceiroId);
       const fornecedorNome = parceiro?.razao_social || null;
@@ -171,6 +174,7 @@ export function NovaContaPagarSheet({ open, onOpenChange }: Props) {
           centro_custo: centroCusto || null,
           unidade,
           forma_pagamento_id: formaPgtoId || null,
+          forma_pagamento: formaPagamentoTexto || null,
           parcelas,
           parcela_atual: i + 1,
           parcela_grupo_id: grupoId,
@@ -325,9 +329,20 @@ export function NovaContaPagarSheet({ open, onOpenChange }: Props) {
               <p className="text-sm font-medium mb-3">Pagamento</p>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label>Forma de pagamento</Label>
-                  <Select value={formaPgtoId || "_none"} onValueChange={(v) => setFormaPgtoId(v === "_none" ? "" : v)}>
+                  <Label>Forma de pagamento *</Label>
+                  <Select value={formaPagamentoTexto || ""} onValueChange={setFormaPagamentoTexto}>
                     <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectContent>
+                      {FORMAS_PAGAMENTO.map((f) => (
+                        <SelectItem key={f} value={f}>{f}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Detalhe (opcional)</Label>
+                  <Select value={formaPgtoId || "_none"} onValueChange={(v) => setFormaPgtoId(v === "_none" ? "" : v)}>
+                    <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="_none">—</SelectItem>
                       {(formasPgto || []).map((f) => (
