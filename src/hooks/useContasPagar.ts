@@ -398,8 +398,9 @@ export function useAtualizarStatus() {
 
       if (error) throw error;
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["contas_pagar"] });
+    onSuccess: async (_, variables) => {
+      await queryClient.invalidateQueries({ queryKey: ["contas_pagar"], refetchType: "active" });
+      await queryClient.refetchQueries({ queryKey: ["contas_pagar"], type: "active" });
       queryClient.invalidateQueries({ queryKey: ["conta_historico", variables.contaId] });
       toast.success(`Status atualizado para: ${STATUS_LABELS[variables.novoStatus]}`);
     },
