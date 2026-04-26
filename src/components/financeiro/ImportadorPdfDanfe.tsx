@@ -31,6 +31,22 @@ export function ImportadorPdfDanfe({ categorias, onImported }: Props) {
   const [importing, setImporting] = useState(false);
   const [preview, setPreview] = useState<NFParsed[]>([]);
   const { data: regras } = useRegrasCategorizacao();
+  const { clearRascunho, setRascunhoId } = useAutoSaveRascunho(preview, "pdf_danfe");
+
+  // Restaurar preview ao montar
+  useEffect(() => {
+    restaurarRascunho("pdf_danfe").then((r) => {
+      if (r) {
+        setPreview(r.nfs);
+        setRascunhoId(r.id);
+        toast.info(`📦 Rascunho restaurado: ${r.nfs.length} NFs`, {
+          description: "Você pode continuar de onde parou!",
+          duration: 5000,
+        });
+      }
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function handleFiles(e: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files || []);
