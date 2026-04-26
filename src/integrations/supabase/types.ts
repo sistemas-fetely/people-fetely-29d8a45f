@@ -1629,7 +1629,6 @@ export type Database = {
           created_at: string | null
           criado_por: string | null
           dados_bancarios_fornecedor: Json | null
-          dados_enriquecidos_qive: boolean | null
           dados_pagamento_fornecedor: Json | null
           data_pagamento: string | null
           data_vencimento: string
@@ -1686,7 +1685,6 @@ export type Database = {
           created_at?: string | null
           criado_por?: string | null
           dados_bancarios_fornecedor?: Json | null
-          dados_enriquecidos_qive?: boolean | null
           dados_pagamento_fornecedor?: Json | null
           data_pagamento?: string | null
           data_vencimento: string
@@ -1743,7 +1741,6 @@ export type Database = {
           created_at?: string | null
           criado_por?: string | null
           dados_bancarios_fornecedor?: Json | null
-          dados_enriquecidos_qive?: boolean | null
           dados_pagamento_fornecedor?: Json | null
           data_pagamento?: string | null
           data_vencimento?: string
