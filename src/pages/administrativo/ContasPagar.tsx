@@ -223,6 +223,7 @@ export default function ContasPagar() {
                           </span>
                         )}
                       </TableCell>
+                      <TableCell>{renderStatusBadge(conta)}</TableCell>
                       <TableCell onClick={(e) => e.stopPropagation()}>
                         {renderAcaoStatus(conta)}
                       </TableCell>
