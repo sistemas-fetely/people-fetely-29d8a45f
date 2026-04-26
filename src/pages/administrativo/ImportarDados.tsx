@@ -17,7 +17,6 @@ import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useCategoriasPlano } from "@/hooks/useCategoriasPlano";
 import { ImportadorCsvQive } from "@/components/financeiro/ImportadorCsvQive";
-import { ImportadorXmlNFe } from "@/components/financeiro/ImportadorXmlNFe";
 import { ImportadorPdfDanfe } from "@/components/financeiro/ImportadorPdfDanfe";
 import { ImportadorPdfInvoice } from "@/components/financeiro/ImportadorPdfInvoice";
 
@@ -153,7 +152,6 @@ export default function ImportarDados() {
         </p>
         <div className="grid gap-4 md:grid-cols-1">
           <ImportadorCsvQive categorias={categorias} />
-          <ImportadorXmlNFe categorias={categorias} />
           <ImportadorPdfDanfe categorias={categorias} />
           <ImportadorPdfInvoice categorias={categorias} />
         </div>
