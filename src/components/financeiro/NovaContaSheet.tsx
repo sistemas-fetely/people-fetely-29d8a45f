@@ -164,6 +164,160 @@ export function NovaContaSheet({ open, onOpenChange, conta }: NovaContaSheetProp
     setFormData((prev) => ({ ...prev, nf_arquivo: f }));
   };
 
+  // Normaliza CNPJ para apenas dígitos
+  const normalizeCnpj = (v: string | null | undefined) => (v ?? "").replace(/\D/g, "");
+
+  const findFornecedorMatch = (vendor: string | null, cnpj: string | null) => {
+    if (!fornecedores.length) return null;
+    const cnpjNorm = normalizeCnpj(cnpj);
+    if (cnpjNorm.length >= 8) {
+      const byCnpj = fornecedores.find((f) => normalizeCnpj(f.cnpj) === cnpjNorm);
+      if (byCnpj) return byCnpj;
+    }
+    if (vendor) {
+      const v = vendor.toLowerCase().trim();
+      const byNome = fornecedores.find(
+        (f) =>
+          f.razao_social?.toLowerCase().trim() === v ||
+          f.nome_fantasia?.toLowerCase().trim() === v,
+      );
+      if (byNome) return byNome;
+      const byContains = fornecedores.find(
+        (f) =>
+          f.razao_social?.toLowerCase().includes(v) ||
+          v.includes(f.razao_social?.toLowerCase() ?? "___"),
+      );
+      if (byContains) return byContains;
+    }
+    return null;
+  };
+
+  const handleUploadIA = async (file: File) => {
+    if (!file) return;
+    const okTipos = ["application/pdf", "image/jpeg", "image/jpg", "image/png"];
+    if (!okTipos.includes(file.type)) {
+      toast.error("Formato inválido. Use PDF, JPG ou PNG.");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("Arquivo muito grande. Máximo 10MB.");
+      return;
+    }
+
+    setIaProcessando(true);
+    try {
+      const formDataIA = new FormData();
+      formDataIA.append("file", file);
+      const { data, error } = await supabase.functions.invoke("parse-pdf-invoice", {
+        body: formDataIA,
+      });
+
+      if (error) {
+        const msg = (error as any)?.message || "";
+        if (msg.includes("429") || msg.toLowerCase().includes("limite")) {
+          toast.error("Limite de IA atingido, tente novamente em instantes.");
+        } else if (msg.includes("402")) {
+          toast.error("Créditos de IA esgotados. Adicione créditos no workspace.");
+        } else {
+          toast.error("Não foi possível ler o documento. Preencha manualmente.");
+        }
+        // Mesmo em erro, anexa o arquivo
+        setFormData((prev) => ({ ...prev, nf_arquivo: file }));
+        setNfOpen(true);
+        return;
+      }
+
+      if (!data?.success || !data?.data) {
+        toast.error("Não foi possível ler o documento. Preencha manualmente.");
+        setFormData((prev) => ({ ...prev, nf_arquivo: file }));
+        setNfOpen(true);
+        return;
+      }
+
+      const ext = data.data as Record<string, any>;
+      const match = findFornecedorMatch(ext.vendor ?? null, ext.vendor_cnpj ?? null);
+      const novosCampos = new Set<keyof FormState>();
+
+      setFormData((prev) => {
+        const next: FormState = { ...prev, nf_arquivo: file };
+        novosCampos.add("nf_arquivo");
+
+        if (match) {
+          next.parceiro_id = match.id;
+          next.fornecedor = match.razao_social;
+          novosCampos.add("parceiro_id");
+          if (!prev.categoria_id && match.categoria_padrao_id) {
+            next.categoria_id = match.categoria_padrao_id;
+            novosCampos.add("categoria_id");
+          }
+          if (!prev.centro_custo && match.centro_custo_padrao) {
+            next.centro_custo = match.centro_custo_padrao;
+            novosCampos.add("centro_custo");
+          }
+        } else if (ext.vendor) {
+          next.fornecedor = String(ext.vendor);
+          novosCampos.add("fornecedor");
+        }
+
+        if (typeof ext.amount === "number" && ext.amount > 0) {
+          next.valor = ext.amount;
+          novosCampos.add("valor");
+        }
+        if (typeof ext.issue_date === "string" && ext.issue_date) {
+          next.data_emissao = ext.issue_date;
+          novosCampos.add("data_emissao");
+        }
+        if (typeof ext.due_date === "string" && ext.due_date) {
+          next.vencimento = ext.due_date;
+          novosCampos.add("vencimento");
+        }
+        if (typeof ext.description === "string" && ext.description) {
+          next.descricao = ext.description;
+          novosCampos.add("descricao");
+        }
+        if (ext.invoice_number != null) {
+          next.nf_numero = String(ext.invoice_number);
+          novosCampos.add("nf_numero");
+        }
+        if (ext.invoice_series != null) {
+          next.nf_serie = String(ext.invoice_series);
+          novosCampos.add("nf_serie");
+        }
+        if (ext.access_key != null) {
+          next.nf_chave = String(ext.access_key);
+          novosCampos.add("nf_chave");
+        }
+        if (typeof ext.payment_method === "string" && ext.payment_method) {
+          next.forma_pagamento = ext.payment_method;
+          novosCampos.add("forma_pagamento");
+        }
+
+        return next;
+      });
+
+      setCamposIA(novosCampos);
+      setNfOpen(true);
+      toast.success("Documento lido! Confira os dados antes de salvar.");
+    } catch (e) {
+      console.error("Erro IA:", e);
+      toast.error("Não foi possível ler o documento. Preencha manualmente.");
+      setFormData((prev) => ({ ...prev, nf_arquivo: file }));
+      setNfOpen(true);
+    } finally {
+      setIaProcessando(false);
+    }
+  };
+
+  const handleIAFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (f) handleUploadIA(f);
+    // permite re-upload do mesmo arquivo
+    e.target.value = "";
+  };
+
+  const iaCls = (campo: keyof FormState) =>
+    camposIA.has(campo) ? "ring-1 ring-primary/40 border-primary/50" : "";
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const payload = {
