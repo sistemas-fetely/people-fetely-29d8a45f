@@ -154,7 +154,6 @@ export default function ImportarDados() {
         <div className="grid gap-4 md:grid-cols-1">
           <ImportadorCsvQive categorias={categorias} />
           <ImportadorXmlNFe categorias={categorias} />
-          <ImportadorXmlNFSe categorias={categorias} />
           <ImportadorPdfDanfe categorias={categorias} />
           <ImportadorPdfInvoice categorias={categorias} />
         </div>
