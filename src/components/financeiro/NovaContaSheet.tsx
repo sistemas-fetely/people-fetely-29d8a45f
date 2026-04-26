@@ -500,6 +500,7 @@ export function NovaContaSheet({ open, onOpenChange, conta }: NovaContaSheetProp
                 }
                 placeholder="0,00"
                 required
+                className={iaCls("valor")}
               />
             </div>
             <div className="space-y-2">
@@ -510,6 +511,7 @@ export function NovaContaSheet({ open, onOpenChange, conta }: NovaContaSheetProp
                 value={formData.data_emissao}
                 onChange={(e) => setFormData({ ...formData, data_emissao: e.target.value })}
                 required
+                className={iaCls("data_emissao")}
               />
             </div>
           </div>
@@ -523,6 +525,7 @@ export function NovaContaSheet({ open, onOpenChange, conta }: NovaContaSheetProp
               value={formData.vencimento}
               onChange={(e) => setFormData({ ...formData, vencimento: e.target.value })}
               required
+              className={iaCls("vencimento")}
             />
           </div>
 
