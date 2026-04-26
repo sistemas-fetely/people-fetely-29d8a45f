@@ -60,19 +60,52 @@ async function anexarPdfNF(
 }
 
 export async function verificarDuplicatas(nfs: NFParsed[]): Promise<NFParsed[]> {
+  // Estratégia 1: chave de acesso (XML, alguns PDFs)
   const chaves = nfs.map((n) => n.nf_chave_acesso).filter((c): c is string => !!c);
-  if (chaves.length === 0) return nfs.map((n) => ({ ...n, _duplicata: false }));
+  let existentesPorChave = new Set<string>();
+  if (chaves.length > 0) {
+    const { data } = await supabase
+      .from("contas_pagar_receber")
+      .select("nf_chave_acesso")
+      .in("nf_chave_acesso", chaves);
+    existentesPorChave = new Set((data || []).map((r: any) => r.nf_chave_acesso as string));
+  }
 
-  const { data } = await supabase
-    .from("contas_pagar_receber")
-    .select("nf_chave_acesso")
-    .in("nf_chave_acesso", chaves);
+  // Estratégia 2: CNPJ emitente + número da NF (PDFs DANFE não têm chave de acesso)
+  // Coleta pares (cnpj, numero) das NFs que NÃO têm chave de acesso
+  const paresCnpjNumero = nfs
+    .filter((n) => !n.nf_chave_acesso && n.fornecedor_cnpj && n.nf_numero)
+    .map((n) => ({ cnpj: n.fornecedor_cnpj!, numero: n.nf_numero! }));
 
-  const existentes = new Set((data || []).map((r: any) => r.nf_chave_acesso as string));
-  return nfs.map((n) => ({
-    ...n,
-    _duplicata: !!n.nf_chave_acesso && existentes.has(n.nf_chave_acesso),
-  }));
+  const existentesPorCnpjNumero = new Set<string>();
+  if (paresCnpjNumero.length > 0) {
+    const cnpjsBusca = Array.from(new Set(paresCnpjNumero.map((p) => p.cnpj)));
+    const numerosBusca = Array.from(new Set(paresCnpjNumero.map((p) => p.numero)));
+    const { data } = await supabase
+      .from("contas_pagar_receber")
+      .select("nf_cnpj_emitente, nf_numero")
+      .in("nf_cnpj_emitente", cnpjsBusca)
+      .in("nf_numero", numerosBusca);
+    for (const r of data || []) {
+      const row = r as { nf_cnpj_emitente: string | null; nf_numero: string | null };
+      if (row.nf_cnpj_emitente && row.nf_numero) {
+        existentesPorCnpjNumero.add(`${row.nf_cnpj_emitente}|${row.nf_numero}`);
+      }
+    }
+  }
+
+  return nfs.map((n) => {
+    const dupChave = !!n.nf_chave_acesso && existentesPorChave.has(n.nf_chave_acesso);
+    const dupCnpjNum =
+      !n.nf_chave_acesso &&
+      !!n.fornecedor_cnpj &&
+      !!n.nf_numero &&
+      existentesPorCnpjNumero.has(`${n.fornecedor_cnpj}|${n.nf_numero}`);
+    return {
+      ...n,
+      _duplicata: dupChave || dupCnpjNum,
+    };
+  });
 }
 
 export interface ImportResult {

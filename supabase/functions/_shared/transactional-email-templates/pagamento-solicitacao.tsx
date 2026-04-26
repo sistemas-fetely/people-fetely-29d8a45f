@@ -1,10 +1,16 @@
 import * as React from 'npm:react@18.3.1'
 import {
-  Body, Container, Head, Heading, Html, Preview, Text, Hr, Section, Row, Column,
+  Body, Container, Head, Heading, Html, Preview, Text, Hr, Section, Row, Column, Link,
 } from 'npm:@react-email/components@0.0.22'
 import type { TemplateEntry } from './registry.ts'
 
 const SITE_NAME = "Fetely People"
+
+interface DocLink {
+  tipo?: string
+  nome?: string
+  url?: string
+}
 
 interface PagamentoSolicitacaoProps {
   fornecedor?: string
@@ -17,6 +23,8 @@ interface PagamentoSolicitacaoProps {
   conta_bancaria?: string
   pix?: string
   observacao?: string
+  mensagem_personalizada?: string
+  documentos_links?: DocLink[]
   solicitante?: string
 }
 
@@ -31,6 +39,8 @@ const PagamentoSolicitacaoEmail = ({
   conta_bancaria,
   pix,
   observacao,
+  mensagem_personalizada,
+  documentos_links,
   solicitante,
 }: PagamentoSolicitacaoProps) => (
   <Html lang="pt-BR" dir="ltr">
@@ -39,13 +49,23 @@ const PagamentoSolicitacaoEmail = ({
     <Body style={main}>
       <Container style={container}>
         <Heading style={h1}>Solicitação de Pagamento</Heading>
-        <Text style={text}>
-          Prezado(a),
-        </Text>
-        <Text style={text}>
-          Segue solicitação de pagamento aprovada{solicitante ? ` por ${solicitante}` : ''}.
-          Por favor, processe e devolva o comprovante.
-        </Text>
+
+        {/* Mensagem personalizada do solicitante (preserva quebras de linha) */}
+        {mensagem_personalizada ? (
+          <Section style={mensagemBox}>
+            {mensagem_personalizada.split('\n').map((linha, i) => (
+              <Text key={i} style={text}>{linha || '\u00A0'}</Text>
+            ))}
+          </Section>
+        ) : (
+          <>
+            <Text style={text}>Prezado(a),</Text>
+            <Text style={text}>
+              Segue solicitação de pagamento aprovada{solicitante ? ` por ${solicitante}` : ''}.
+              Por favor, processe e devolva o comprovante.
+            </Text>
+          </>
+        )}
 
         <Section style={card}>
           <Heading as="h2" style={h2}>Resumo</Heading>
@@ -95,9 +115,35 @@ const PagamentoSolicitacaoEmail = ({
           </Row>
         </Section>
 
+        {/* Documentos como links assinados */}
+        {documentos_links && documentos_links.length > 0 && (
+          <Section style={card}>
+            <Heading as="h2" style={h2}>Documentos anexados</Heading>
+            <Text style={textSmall}>
+              Clique nos links abaixo para baixar os documentos (válidos por 30 dias):
+            </Text>
+            {documentos_links.map((doc, i) => (
+              <Row key={i} style={{ marginBottom: '6px' }}>
+                <Column>
+                  <Text style={docItem}>
+                    <span style={docTipo}>[{doc.tipo || 'Doc'}]</span>{' '}
+                    {doc.url ? (
+                      <Link href={doc.url} style={docLink}>
+                        {doc.nome || 'Documento'}
+                      </Link>
+                    ) : (
+                      <span>{doc.nome || 'Documento'}</span>
+                    )}
+                  </Text>
+                </Column>
+              </Row>
+            ))}
+          </Section>
+        )}
+
         {observacao && observacao !== '—' && (
           <Section style={obsBox}>
-            <Text style={labelText}>Observação</Text>
+            <Text style={labelText}>Observação interna</Text>
             <Text style={text}>{observacao}</Text>
           </Section>
         )}
@@ -105,7 +151,7 @@ const PagamentoSolicitacaoEmail = ({
         <Hr style={hr} />
         <Text style={footer}>
           Atenciosamente,<br />
-          Equipe {SITE_NAME}
+          {solicitante || `Equipe ${SITE_NAME}`}
         </Text>
       </Container>
     </Body>
@@ -128,6 +174,11 @@ export const template = {
     conta_bancaria: '56789-0',
     pix: 'cnpj@empresa.com.br',
     observacao: 'Pagar via PIX preferencialmente.',
+    mensagem_personalizada: 'Olá,\n\nSegue solicitação de pagamento conforme aprovado.\n\nObrigado.',
+    documentos_links: [
+      { tipo: 'NF', nome: 'nf_174882.pdf', url: 'https://example.com/nf.pdf' },
+      { tipo: 'Boleto', nome: 'boleto.pdf', url: 'https://example.com/boleto.pdf' },
+    ],
     solicitante: 'Maria Souza',
   },
 } satisfies TemplateEntry
@@ -136,12 +187,17 @@ const main = { backgroundColor: '#ffffff', fontFamily: "'Segoe UI', Arial, sans-
 const container = { padding: '30px 25px', maxWidth: '560px' }
 const h1 = { fontSize: '22px', fontWeight: 'bold' as const, color: '#1a3a5c', margin: '0 0 20px' }
 const h2 = { fontSize: '15px', fontWeight: 'bold' as const, color: '#1a3a5c', margin: '0 0 10px' }
-const text = { fontSize: '15px', color: '#3a3a4a', lineHeight: '1.6', margin: '0 0 16px' }
+const text = { fontSize: '15px', color: '#3a3a4a', lineHeight: '1.6', margin: '0 0 8px' }
+const textSmall = { fontSize: '13px', color: '#6b7280', lineHeight: '1.5', margin: '0 0 10px' }
+const mensagemBox = { padding: '14px 16px', backgroundColor: '#fafbfc', borderRadius: '8px', margin: '0 0 16px', border: '1px solid #e5e7eb' }
 const card = { padding: '14px 16px', backgroundColor: '#f7f9fc', borderRadius: '8px', margin: '0 0 14px', border: '1px solid #e5e7eb' }
 const obsBox = { padding: '12px 16px', backgroundColor: '#fffaf0', borderRadius: '8px', margin: '0 0 14px', border: '1px solid #fde9c4' }
 const labelCol = { width: '120px', verticalAlign: 'top' as const }
 const labelText = { fontSize: '12px', color: '#6b7280', margin: '4px 0', textTransform: 'uppercase' as const, letterSpacing: '0.04em' }
 const valueText = { fontSize: '14px', color: '#1a3a5c', margin: '4px 0' }
 const valueStrong = { fontSize: '16px', color: '#1a3a5c', margin: '4px 0', fontWeight: 'bold' as const }
+const docItem = { fontSize: '14px', margin: '2px 0', lineHeight: '1.5' }
+const docTipo = { display: 'inline-block', backgroundColor: '#e0e7ff', color: '#3730a3', padding: '1px 6px', borderRadius: '3px', fontSize: '11px', fontWeight: 'bold' as const, marginRight: '6px' }
+const docLink = { color: '#1d4ed8', textDecoration: 'underline' }
 const hr = { borderColor: '#e5e7eb', margin: '24px 0' }
 const footer = { fontSize: '13px', color: '#999999', margin: '0', lineHeight: '1.5' }
