@@ -46,6 +46,7 @@ type Conta = {
   data_vencimento: string | null;
   status: string;
   nf_numero?: string | null;
+  nf_chave_acesso?: string | null;
   nf_pdf_url?: string | null;
   nf_xml_url?: string | null;
   plano_contas?: { codigo?: string | null; nome?: string | null } | null;
