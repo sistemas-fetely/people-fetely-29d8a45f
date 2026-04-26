@@ -13,6 +13,7 @@ export function useCategoriasPlano() {
       if (error) throw error;
       return (data || []) as CategoriaOption[];
     },
-    staleTime: 60_000,
+    staleTime: 300_000,
+    refetchOnWindowFocus: false,
   });
 }

@@ -99,6 +99,7 @@ export const TRANSICOES_PERMITIDAS: Record<ContaPagarStatus, ContaPagarStatus[]>
   cancelado: [],
 };
 
+// TODO: migrar para dimensão administrável em Parâmetros > Financeiro
 export const CENTROS_CUSTO = [
   { value: "comercial", label: "Comercial" },
   { value: "administrativo", label: "Administrativo" },
@@ -138,7 +139,8 @@ export function useFornecedores() {
       if (error) throw error;
       return (data ?? []) as FornecedorOption[];
     },
-    staleTime: 60_000,
+    staleTime: 300_000,
+    refetchOnWindowFocus: false,
   });
 }
 
@@ -179,6 +181,8 @@ export function useContasPagar(filtroStatus?: ContaPagarStatus) {
       }
       return (data ?? []) as unknown as ContaPagarComRelacionados[];
     },
+    staleTime: 300_000,
+    refetchOnWindowFocus: false,
   });
 }
 
@@ -199,6 +203,8 @@ export function useContaHistorico(contaId: string | null) {
       return (data ?? []) as unknown as ContaPagarHistorico[];
     },
     enabled: !!contaId,
+    staleTime: 300_000,
+    refetchOnWindowFocus: false,
   });
 }
 
@@ -279,6 +285,76 @@ export function useCriarConta() {
     },
     onError: (error: any) => {
       toast.error("Erro ao criar conta", { description: error.message });
+    },
+  });
+}
+
+// Mutation: Editar conta
+export function useEditarConta() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      contaId,
+      dados,
+    }: {
+      contaId: string;
+      dados: ContaPagarFormData;
+    }) => {
+      const { data: userData } = await supabase.auth.getUser();
+      const { nf_arquivo, ...rest } = dados;
+
+      const { error } = await supabase
+        .from("contas_pagar")
+        .update({
+          parceiro_id: rest.parceiro_id || null,
+          fornecedor: rest.fornecedor,
+          descricao: rest.descricao,
+          valor: rest.valor,
+          data_emissao: rest.data_emissao || null,
+          vencimento: rest.vencimento,
+          parcelas: rest.parcelas ?? 1,
+          categoria_id: rest.categoria_id || null,
+          centro_custo: rest.centro_custo || null,
+          unidade: rest.unidade || null,
+          forma_pagamento: rest.forma_pagamento || null,
+          nf_numero: rest.nf_numero || null,
+          nf_serie: rest.nf_serie || null,
+          nf_chave: rest.nf_chave || null,
+          observacoes: rest.observacoes || null,
+          updated_by: userData.user?.id,
+        })
+        .eq("id", contaId);
+
+      if (error) throw error;
+
+      // Upload NF se um novo arquivo foi enviado
+      if (nf_arquivo) {
+        try {
+          const { filePath, fileName } = await uploadNF(contaId, nf_arquivo);
+          await supabase
+            .from("contas_pagar")
+            .update({
+              nf_path: filePath,
+              nf_nome: fileName,
+              nf_uploaded_at: new Date().toISOString(),
+            })
+            .eq("id", contaId);
+        } catch (e: any) {
+          toast.error("Conta editada, mas falhou upload da NF", {
+            description: e?.message,
+          });
+        }
+      }
+
+      return contaId;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["contas_pagar"] });
+      toast.success("Conta atualizada com sucesso!");
+    },
+    onError: (error: any) => {
+      toast.error("Erro ao editar conta", { description: error.message });
     },
   });
 }
