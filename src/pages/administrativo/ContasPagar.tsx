@@ -1,6 +1,6 @@
 // src/pages/administrativo/ContasPagar.tsx
 import { useState } from "react";
-import { Plus, FileText, Paperclip, Check, ArrowRight } from "lucide-react";
+import { Plus, FileText, FileCheck2, Check, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
