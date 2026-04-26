@@ -56,16 +56,21 @@ export function AprovarNFDialog({ open, onOpenChange, tarefaId, notaId }: Props)
     },
   });
 
-  const { data: emailResponsavel } = useQuery({
-    queryKey: ["parametros", "nf_pj_config_email"],
+  const { data: destinatariosFinanceiro } = useQuery({
+    queryKey: ["config-financeiro-externo"],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("parametros")
-        .select("label")
-        .eq("categoria", "nf_pj_config")
-        .eq("valor", "email_responsavel_pagamento")
-        .maybeSingle();
-      return data?.label || null;
+      const { data, error } = await supabase
+        .from("config_financeiro_externo")
+        .select("email, nome")
+        .eq("ativo", true)
+        .order("nome");
+
+      if (error) {
+        console.error("Erro ao buscar destinatários financeiros:", error);
+        return [];
+      }
+
+      return data || [];
     },
   });
 
