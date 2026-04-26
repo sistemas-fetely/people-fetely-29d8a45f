@@ -218,13 +218,16 @@ export default function EnviarPagamentoDialog({ open, onOpenChange, conta, onDon
       }
 
       const novoStatusFinal = temDocFiscal ? "finalizado" : "doc_pendente";
+      const isReenvio = conta.status === "finalizado" || conta.status === "doc_pendente";
 
-      // 1) Salvar dados bancários + atualizar status
+      // 1) Salvar dados bancários + atualizar status (se não for reenvio mantém status atual)
       await mudarStatus.mutateAsync({
         contaId: conta.id,
         statusAnterior: conta.status,
-        novoStatus: novoStatusFinal,
-        observacao: `Enviado para pagamento: ${emailDestinatario}${obsEnvio ? ` — ${obsEnvio}` : ""}${temDocFiscal ? "" : " (documentação fiscal pendente)"}`,
+        novoStatus: isReenvio ? (conta.status as typeof novoStatusFinal) : novoStatusFinal,
+        observacao: isReenvio
+          ? `Reenvio de e-mail para ${emailDestinatario}${obsEnvio ? ` — ${obsEnvio}` : ""}`
+          : `Enviado para pagamento: ${emailDestinatario}${obsEnvio ? ` — ${obsEnvio}` : ""}${temDocFiscal ? "" : " (documentação fiscal pendente)"}`,
         extras: {
           dados_pagamento_fornecedor: dadosPgto,
           enviado_pagamento_em: new Date().toISOString(),

@@ -184,7 +184,7 @@ export default function ContaPagarDetalheDrawer({ contaId, onClose }: Props) {
       novoStatus,
       observacao: observacao || undefined,
     });
-    onClose();
+    // Drawer permanece aberto - usuário decide quando fechar
   }
 
   const dadosBancarios =
@@ -466,8 +466,18 @@ export default function ContaPagarDetalheDrawer({ contaId, onClose }: Props) {
 
                   {/* FINALIZADO */}
                   {conta.status === "finalizado" && (
-                    <div className="p-3 rounded-lg bg-green-50 text-green-700 text-sm flex items-center gap-2">
-                      <Check className="h-4 w-4" /> Finalizado — documentação OK, pagamento gerenciado em Caixa e Banco
+                    <div className="space-y-2">
+                      <div className="p-3 rounded-lg bg-green-50 text-green-700 text-sm flex items-center gap-2">
+                        <Check className="h-4 w-4" /> Finalizado — documentação OK, pagamento gerenciado em Caixa e Banco
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full gap-2"
+                        onClick={() => setShowEnviar(true)}
+                      >
+                        <Send className="h-3.5 w-3.5" /> Reenviar e-mail (caso necessário)
+                      </Button>
                     </div>
                   )}
 
@@ -525,7 +535,7 @@ export default function ContaPagarDetalheDrawer({ contaId, onClose }: Props) {
                 open={showEnviar}
                 onOpenChange={setShowEnviar}
                 conta={conta}
-                onDone={onClose}
+                onDone={() => {}}
               />
             )}
 
