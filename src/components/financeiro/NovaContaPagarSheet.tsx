@@ -43,6 +43,7 @@ import {
 import { ParceiroFormSheet, Parceiro } from "@/components/financeiro/ParceiroFormSheet";
 import { CategoriaFormDialog } from "@/components/financeiro/CategoriaFormDialog";
 import { formatBRL } from "@/lib/format-currency";
+import { FORMAS_PAGAMENTO } from "@/lib/financeiro/formas-pagamento";
 
 const CENTROS = ["comercial", "administrativo", "rh", "ti", "fiscal", "financeiro", "fabrica", "geral"];
 
@@ -69,6 +70,7 @@ export function NovaContaPagarSheet({ open, onOpenChange }: Props) {
   const [centroCusto, setCentroCusto] = useState("");
   const [unidade, setUnidade] = useState("matriz_sp");
   const [parcelas, setParcelas] = useState(1);
+  const [formaPagamento, setFormaPagamento] = useState<string>("");
 
   // NF
   const [nfNumero, setNfNumero] = useState("");
@@ -142,6 +144,7 @@ export function NovaContaPagarSheet({ open, onOpenChange }: Props) {
       setCentroCusto("");
       setUnidade("matriz_sp");
       setParcelas(1);
+      setFormaPagamento("");
       setNfNumero("");
       setNfSerie("");
       setNfChave("");
@@ -186,6 +189,7 @@ export function NovaContaPagarSheet({ open, onOpenChange }: Props) {
       if (!descricao.trim()) throw new Error("Descrição é obrigatória");
       if (!valorNum || valorNum <= 0) throw new Error("Valor inválido");
       if (!dataVenc) throw new Error("Data de vencimento obrigatória");
+      if (!formaPagamento) throw new Error("Forma de pagamento é obrigatória");
 
       const parceiro = parceiros?.find((p) => p.id === parceiroId);
       const fornecedorNome = parceiro?.razao_social || null;
@@ -218,6 +222,7 @@ export function NovaContaPagarSheet({ open, onOpenChange }: Props) {
           nf_serie: nfSerie.trim() || null,
           nf_chave_acesso: nfChave.trim() || null,
           nf_data_emissao: dataEmissao || null,
+          forma_pagamento: formaPagamento,
         });
       }
       const { data: inserted, error } = await supabase
@@ -689,6 +694,19 @@ export function NovaContaPagarSheet({ open, onOpenChange }: Props) {
             <div className="border-t pt-4">
               <p className="text-sm font-medium mb-3">Pagamento</p>
               <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label>Forma de pagamento *</Label>
+                  <Select value={formaPagamento} onValueChange={setFormaPagamento}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {FORMAS_PAGAMENTO.map((f) => (
+                        <SelectItem key={f} value={f}>{f}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
                 <div>
                   <Label>Parcelas</Label>
                   <Input
