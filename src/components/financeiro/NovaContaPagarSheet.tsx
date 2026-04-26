@@ -163,7 +163,7 @@ export function NovaContaPagarSheet({ open, onOpenChange }: Props) {
           observacao: observacao.trim() || null,
           valor: valorParcela,
           data_vencimento: venc.toISOString().slice(0, 10),
-          data_emissao: dataEmissao || null,
+          nf_data_emissao: dataEmissao || null,
           conta_id: categoriaId,
           parceiro_id: parceiroId,
           fornecedor_id: parceiroId,
