@@ -1,6 +1,17 @@
 import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -21,7 +32,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Search, Users } from "lucide-react";
+import { Plus, Search, Users, Trash2 } from "lucide-react";
 import { ParceiroFormSheet, Parceiro } from "@/components/financeiro/ParceiroFormSheet";
 import { CategoriaOption } from "@/components/financeiro/CategoriaCombobox";
 
@@ -44,6 +55,46 @@ export default function Parceiros() {
   const [filtroStatus, setFiltroStatus] = useState<string>("ativos");
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Parceiro | null>(null);
+  const [parceiroParaExcluir, setParceiroParaExcluir] = useState<Parceiro | null>(null);
+  const [excluindo, setExcluindo] = useState(false);
+  const queryClient = useQueryClient();
+
+  async function handleConfirmarExcluir() {
+    if (!parceiroParaExcluir) return;
+    setExcluindo(true);
+    try {
+      const { count } = await supabase
+        .from("contas_pagar_receber")
+        .select("id", { count: "exact", head: true })
+        .eq("parceiro_id", parceiroParaExcluir.id);
+
+      if (count && count > 0) {
+        const { error } = await supabase
+          .from("parceiros_comerciais")
+          .update({ ativo: false })
+          .eq("id", parceiroParaExcluir.id);
+        if (error) throw error;
+        toast.success(
+          `Parceiro inativado (tem ${count} conta${count === 1 ? "" : "s"} vinculada${count === 1 ? "" : "s"} - não pode ser excluído)`,
+        );
+      } else {
+        const { error } = await supabase
+          .from("parceiros_comerciais")
+          .delete()
+          .eq("id", parceiroParaExcluir.id);
+        if (error) throw error;
+        toast.success("Parceiro excluído");
+      }
+
+      queryClient.invalidateQueries({ queryKey: ["parceiros"] });
+      queryClient.invalidateQueries({ queryKey: ["parceiros-fornecedores"] });
+      setParceiroParaExcluir(null);
+    } catch (e: any) {
+      toast.error("Erro ao excluir parceiro", { description: e.message });
+    } finally {
+      setExcluindo(false);
+    }
+  }
 
   const { data, isLoading } = useQuery({
     queryKey: ["parceiros"],
@@ -203,11 +254,12 @@ export default function Parceiros() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>CNPJ</TableHead>
                     <TableHead>Razão Social</TableHead>
+                    <TableHead>CNPJ</TableHead>
                     <TableHead>Tipo</TableHead>
                     <TableHead>Cidade/UF</TableHead>
                     <TableHead>Tags</TableHead>
+                    <TableHead className="w-[60px]"></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -221,7 +273,6 @@ export default function Parceiros() {
                         className="cursor-pointer"
                         onClick={() => handleEdit(p)}
                       >
-                        <TableCell className="font-mono text-xs">{formatCnpj(p.cnpj)}</TableCell>
                         <TableCell>
                           <div>
                             <div className="font-medium">{p.razao_social}</div>
@@ -230,6 +281,7 @@ export default function Parceiros() {
                             )}
                           </div>
                         </TableCell>
+                        <TableCell className="font-mono text-xs">{formatCnpj(p.cnpj)}</TableCell>
                         <TableCell>
                           <Badge className={TIPO_BADGE[tipoLabel] || "bg-muted"}>
                             {tipoLabel === "ambos" ? "Forn. + Cliente" : tipoLabel}
@@ -254,6 +306,17 @@ export default function Parceiros() {
                             <span className="text-xs text-muted-foreground">—</span>
                           )}
                         </TableCell>
+                        <TableCell onClick={(e) => e.stopPropagation()}>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                            onClick={() => setParceiroParaExcluir(p)}
+                            title="Excluir parceiro"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
                       </TableRow>
                     );
                   })}
@@ -270,6 +333,38 @@ export default function Parceiros() {
         editing={editing}
         categorias={categorias || []}
       />
+
+      <AlertDialog
+        open={!!parceiroParaExcluir}
+        onOpenChange={(v) => {
+          if (!v) setParceiroParaExcluir(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir parceiro?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Você está prestes a excluir <strong>{parceiroParaExcluir?.razao_social}</strong>.
+              Se este parceiro tiver contas a pagar/receber vinculadas, ele será apenas
+              inativado (não pode ser excluído de fato para preservar o histórico).
+              Caso contrário, será excluído permanentemente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={excluindo}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                handleConfirmarExcluir();
+              }}
+              disabled={excluindo}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {excluindo ? "Processando..." : "Confirmar"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
