@@ -802,6 +802,106 @@ export default function Conciliacao() {
 
         {/* TAB 1 — CONCILIAR (lado a lado) */}
         <TabsContent value="conciliar" className="space-y-4 mt-4">
+          {/* SEÇÃO 0 — MATCHES 1:1 (data + valor 100% — não-cartão) */}
+          {matches1to1.length > 0 && (
+            <Card className="border-emerald-500/30">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <Zap className="h-4 w-4 text-emerald-600" />
+                  Matches exatos (PIX, Boleto, TED, Débito)
+                  <Badge className="bg-emerald-500/10 text-emerald-700 border-emerald-500/30">
+                    {matches1to1.length}
+                  </Badge>
+                </CardTitle>
+                <p className="text-xs text-muted-foreground">
+                  Movimentações com data e valor idênticos a uma única conta a pagar — match 100%.
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {matches1to1.map((match) => {
+                  const mov = movimentacoes.find((m) => m.id === match.movimentacao_id);
+                  const conta = contasPagar.find((c) => c.id === match.conta_id);
+                  if (!mov || !conta) return null;
+
+                  return (
+                    <div key={match.movimentacao_id} className="rounded-lg border bg-card overflow-hidden">
+                      <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-3 items-center p-3">
+                        {/* Movimentação */}
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
+                            <Badge variant="outline" className="text-[10px]">Extrato</Badge>
+                          </div>
+                          <p className="text-sm truncate" title={mov.descricao}>{mov.descricao}</p>
+                          <p className="text-xs text-muted-foreground">{formatDateBR(mov.data_transacao)}</p>
+                          <p className="text-base font-semibold text-destructive">
+                            {formatBRL(Math.abs(Number(mov.valor)))}
+                          </p>
+                        </div>
+
+                        <div className="hidden md:flex items-center justify-center">
+                          <ArrowRight className="h-5 w-5 text-emerald-600" />
+                        </div>
+
+                        {/* Conta */}
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <Receipt className="h-3.5 w-3.5 text-muted-foreground" />
+                            <Badge variant="outline" className="text-[10px]">Conta a pagar</Badge>
+                            {conta.forma_pagamento && (
+                              <Badge variant="secondary" className="text-[10px]">{conta.forma_pagamento}</Badge>
+                            )}
+                          </div>
+                          <p className="text-sm truncate" title={conta.fornecedor_cliente || conta.descricao}>
+                            {conta.fornecedor_cliente || conta.descricao}
+                          </p>
+                          <p className="text-xs text-muted-foreground">{formatDateBR(conta.data_vencimento)}</p>
+                          <p className="text-base font-semibold tabular-nums">
+                            {formatBRL(Number(conta.valor))}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between gap-2 p-3 bg-muted/30 border-t flex-wrap">
+                        <div className="flex items-center gap-2 text-xs flex-wrap">
+                          <Badge className="bg-emerald-500/15 text-emerald-700 border-emerald-500/30">
+                            Score 100%
+                          </Badge>
+                          <span className="text-muted-foreground">{match.motivo}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => rejeitarMatch1to1(match.movimentacao_id)}
+                            disabled={conciliando}
+                            className="gap-1"
+                          >
+                            <X className="h-3.5 w-3.5" />
+                            Rejeitar
+                          </Button>
+                          <Button
+                            size="sm"
+                            onClick={() => aceitarMatch1to1(match)}
+                            disabled={conciliando}
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white gap-1"
+                          >
+                            {conciliando ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                              <Check className="h-3.5 w-3.5" />
+                            )}
+                            Conciliar
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </CardContent>
+            </Card>
+          )}
+
           {/* SEÇÃO 1 — AGRUPAMENTOS SUGERIDOS PELA IA */}
           {agrupamentosSugeridos.length > 0 && (
             <Card className="border-admin/30">
