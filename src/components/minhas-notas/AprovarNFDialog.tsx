@@ -176,7 +176,7 @@ export function AprovarNFDialog({ open, onOpenChange, tarefaId, notaId }: Props)
   const contrato = nota?.contratos_pj as any;
   const totalClass = (detalhe?.classificacoes || []).reduce((s, c: any) => s + Number(c.valor), 0);
   const temExtras = (detalhe?.classificacoes || []).some((c: any) => c.categoria_valor !== "contrato");
-  const emailOk = emailResponsavel && emailResponsavel !== "(não configurado)";
+  const emailOk = !!destinatariosFinanceiro && destinatariosFinanceiro.length > 0;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
