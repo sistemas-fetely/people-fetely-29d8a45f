@@ -665,22 +665,68 @@ export function NovaContaSheet({ open, onOpenChange, conta }: NovaContaSheetProp
               </div>
               <div className="space-y-2">
                 <Label htmlFor="nf_arquivo">Arquivo da NF ou Recibo (PDF, JPG ou PNG)</Label>
-                <Input
-                  id="nf_arquivo"
-                  type="file"
-                  accept="application/pdf,image/jpeg,image/png,image/jpg"
-                  onChange={handleFileChange}
-                />
-                {formData.nf_arquivo && (
-                  <p className="text-xs text-muted-foreground">
-                    Selecionado: {formData.nf_arquivo.name} (
-                    {(formData.nf_arquivo.size / 1024).toFixed(0)} KB)
-                  </p>
-                )}
-                {isEdit && conta?.nf_nome && !formData.nf_arquivo && (
-                  <p className="text-xs text-muted-foreground">
-                    Arquivo atual: {conta.nf_nome}
-                  </p>
+                {formData.nf_arquivo ? (
+                  <div className="flex items-center justify-between gap-2 rounded-md border border-success/30 bg-success/5 px-3 py-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <FileText className="h-4 w-4 text-success shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium truncate">
+                          Arquivo já anexado: {formData.nf_arquivo.name}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {(formData.nf_arquivo.size / 1024).toFixed(0)} KB
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex gap-1 shrink-0">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => document.getElementById("nf_arquivo")?.click()}
+                      >
+                        Trocar
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setFormData((prev) => ({ ...prev, nf_arquivo: null }))}
+                      >
+                        Remover
+                      </Button>
+                    </div>
+                    <Input
+                      id="nf_arquivo"
+                      type="file"
+                      accept="application/pdf,image/jpeg,image/png,image/jpg"
+                      onChange={handleFileChange}
+                      className="hidden"
+                    />
+                  </div>
+                ) : isEdit && conta?.nf_nome ? (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 rounded-md border border-success/30 bg-success/5 px-3 py-2">
+                      <FileText className="h-4 w-4 text-success shrink-0" />
+                      <p className="text-sm truncate">Arquivo já anexado: {conta.nf_nome}</p>
+                    </div>
+                    <Input
+                      id="nf_arquivo"
+                      type="file"
+                      accept="application/pdf,image/jpeg,image/png,image/jpg"
+                      onChange={handleFileChange}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Selecione um novo arquivo apenas se quiser substituir o atual.
+                    </p>
+                  </div>
+                ) : (
+                  <Input
+                    id="nf_arquivo"
+                    type="file"
+                    accept="application/pdf,image/jpeg,image/png,image/jpg"
+                    onChange={handleFileChange}
+                  />
                 )}
               </div>
             </CollapsibleContent>
