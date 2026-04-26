@@ -70,6 +70,7 @@ export function NovaContaPagarSheet({ open, onOpenChange }: Props) {
   const [centroCusto, setCentroCusto] = useState("");
   const [unidade, setUnidade] = useState("matriz_sp");
   const [parcelas, setParcelas] = useState(1);
+  const [formaPagamento, setFormaPagamento] = useState<string>("");
 
   // NF
   const [nfNumero, setNfNumero] = useState("");
