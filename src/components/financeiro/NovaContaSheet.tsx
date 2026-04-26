@@ -422,7 +422,7 @@ export function NovaContaSheet({ open, onOpenChange, conta }: NovaContaSheetProp
                   variant="outline"
                   role="combobox"
                   aria-expanded={parceiroOpen}
-                  className="w-full justify-between font-normal"
+                  className={cn("w-full justify-between font-normal", iaCls("parceiro_id") || iaCls("fornecedor"))}
                 >
                   {parceiroSelecionado ? (
                     <span className="truncate">
