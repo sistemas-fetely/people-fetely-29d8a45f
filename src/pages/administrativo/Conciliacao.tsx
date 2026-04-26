@@ -27,6 +27,7 @@ import {
   validarAgrupamento,
   type AgrupamentoSugerido,
 } from "@/lib/financeiro/agrupamentos-cartao";
+import { encontrarMatches1to1, type Match1to1 } from "@/lib/financeiro/match-1-1";
 import { CategoriaCombobox } from "@/components/financeiro/CategoriaCombobox";
 import { useCategoriasPlano } from "@/hooks/useCategoriasPlano";
 import { useFiltrosPersistentes } from "@/hooks/useFiltrosPersistentes";
