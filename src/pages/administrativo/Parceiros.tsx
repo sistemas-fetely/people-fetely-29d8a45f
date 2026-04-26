@@ -254,11 +254,12 @@ export default function Parceiros() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>CNPJ</TableHead>
                     <TableHead>Razão Social</TableHead>
+                    <TableHead>CNPJ</TableHead>
                     <TableHead>Tipo</TableHead>
                     <TableHead>Cidade/UF</TableHead>
                     <TableHead>Tags</TableHead>
+                    <TableHead className="w-[60px]"></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
