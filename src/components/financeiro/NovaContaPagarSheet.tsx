@@ -695,6 +695,19 @@ export function NovaContaPagarSheet({ open, onOpenChange }: Props) {
               <p className="text-sm font-medium mb-3">Pagamento</p>
               <div className="grid grid-cols-2 gap-3">
                 <div>
+                  <Label>Forma de pagamento *</Label>
+                  <Select value={formaPagamento} onValueChange={setFormaPagamento}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {FORMAS_PAGAMENTO.map((f) => (
+                        <SelectItem key={f} value={f}>{f}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
                   <Label>Parcelas</Label>
                   <Input
                     type="number"
