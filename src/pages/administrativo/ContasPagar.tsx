@@ -161,7 +161,7 @@ export default function ContasPagar() {
                   <TableHead className="text-right">Valor</TableHead>
                   <TableHead>Vencimento</TableHead>
                   <TableHead>Forma Pgto</TableHead>
-                  <TableHead className="text-center">NF</TableHead>
+                  <TableHead className="text-center">NF/Recibo</TableHead>
                   <TableHead>Status / Ação</TableHead>
                   <TableHead className="w-[60px]"></TableHead>
                 </TableRow>
