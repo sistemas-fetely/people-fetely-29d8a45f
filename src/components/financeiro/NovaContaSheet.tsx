@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Sheet,
   SheetContent,
@@ -39,9 +39,11 @@ import { Check, ChevronsUpDown, ChevronDown, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   useCriarConta,
+  useEditarConta,
   useFornecedores,
   CENTROS_CUSTO,
   UNIDADES_CONTA,
+  type ContaPagarComRelacionados,
 } from "@/hooks/useContasPagar";
 import { useCategoriasPlano } from "@/hooks/useCategoriasPlano";
 import { CategoriaCombobox } from "@/components/financeiro/CategoriaCombobox";
@@ -50,6 +52,7 @@ import { FORMAS_PAGAMENTO } from "@/lib/financeiro/formas-pagamento";
 interface NovaContaSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  conta?: ContaPagarComRelacionados | null; // se enviado: modo edição
 }
 
 interface FormState {
@@ -90,15 +93,52 @@ const INITIAL_STATE: FormState = {
   observacoes: "",
 };
 
-export function NovaContaSheet({ open, onOpenChange }: NovaContaSheetProps) {
+function contaToFormState(conta: ContaPagarComRelacionados): FormState {
+  return {
+    parceiro_id: conta.parceiro_id ?? null,
+    fornecedor: conta.fornecedor ?? "",
+    descricao: conta.descricao ?? "",
+    valor: Number(conta.valor) || 0,
+    data_emissao: conta.data_emissao ?? "",
+    vencimento: conta.vencimento ?? "",
+    parcelas: conta.parcelas ?? 1,
+    categoria_id: conta.categoria_id ?? null,
+    centro_custo: conta.centro_custo ?? "",
+    unidade: conta.unidade ?? "matriz_sp",
+    forma_pagamento: conta.forma_pagamento ?? "",
+    nf_numero: conta.nf_numero ?? "",
+    nf_serie: conta.nf_serie ?? "",
+    nf_chave: conta.nf_chave ?? "",
+    nf_arquivo: null,
+    observacoes: conta.observacoes ?? "",
+  };
+}
+
+export function NovaContaSheet({ open, onOpenChange, conta }: NovaContaSheetProps) {
+  const isEdit = !!conta;
   const criarConta = useCriarConta();
+  const editarConta = useEditarConta();
   const { data: fornecedores = [] } = useFornecedores();
   const { data: categorias = [] } = useCategoriasPlano();
   const [formData, setFormData] = useState<FormState>(INITIAL_STATE);
   const [parceiroOpen, setParceiroOpen] = useState(false);
   const [nfOpen, setNfOpen] = useState(false);
 
+  // Hidrata form ao abrir em modo edição (ou reseta ao criar)
+  useEffect(() => {
+    if (!open) return;
+    if (conta) {
+      setFormData(contaToFormState(conta));
+      // abre seção NF se já existem dados
+      setNfOpen(!!(conta.nf_numero || conta.nf_serie || conta.nf_chave || conta.nf_path));
+    } else {
+      setFormData(INITIAL_STATE);
+      setNfOpen(false);
+    }
+  }, [open, conta]);
+
   const parceiroSelecionado = fornecedores.find((f) => f.id === formData.parceiro_id);
+  const isPending = criarConta.isPending || editarConta.isPending;
 
   const handleSelectParceiro = (id: string) => {
     const fornecedor = fornecedores.find((f) => f.id === id);
@@ -120,26 +160,31 @@ export function NovaContaSheet({ open, onOpenChange }: NovaContaSheetProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      await criarConta.mutateAsync({
-        parceiro_id: formData.parceiro_id,
-        fornecedor: formData.fornecedor,
-        descricao: formData.descricao,
-        valor: formData.valor,
-        data_emissao: formData.data_emissao || null,
-        vencimento: formData.vencimento,
-        parcelas: formData.parcelas || 1,
-        categoria_id: formData.categoria_id,
-        centro_custo: formData.centro_custo || null,
-        unidade: formData.unidade || null,
-        forma_pagamento: formData.forma_pagamento || null,
-        nf_numero: formData.nf_numero || null,
-        nf_serie: formData.nf_serie || null,
-        nf_chave: formData.nf_chave || null,
-        nf_arquivo: formData.nf_arquivo,
-        observacoes: formData.observacoes || null,
-      });
+    const payload = {
+      parceiro_id: formData.parceiro_id,
+      fornecedor: formData.fornecedor,
+      descricao: formData.descricao,
+      valor: formData.valor,
+      data_emissao: formData.data_emissao || null,
+      vencimento: formData.vencimento,
+      parcelas: formData.parcelas || 1,
+      categoria_id: formData.categoria_id,
+      centro_custo: formData.centro_custo || null,
+      unidade: formData.unidade || null,
+      forma_pagamento: formData.forma_pagamento || null,
+      nf_numero: formData.nf_numero || null,
+      nf_serie: formData.nf_serie || null,
+      nf_chave: formData.nf_chave || null,
+      nf_arquivo: formData.nf_arquivo,
+      observacoes: formData.observacoes || null,
+    };
 
+    try {
+      if (isEdit && conta) {
+        await editarConta.mutateAsync({ contaId: conta.id, dados: payload });
+      } else {
+        await criarConta.mutateAsync(payload);
+      }
       setFormData(INITIAL_STATE);
       setNfOpen(false);
       onOpenChange(false);
@@ -152,9 +197,11 @@ export function NovaContaSheet({ open, onOpenChange }: NovaContaSheetProps) {
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="sm:max-w-xl overflow-y-auto">
         <SheetHeader>
-          <SheetTitle>Nova Conta a Pagar</SheetTitle>
+          <SheetTitle>{isEdit ? "Editar Conta a Pagar" : "Nova Conta a Pagar"}</SheetTitle>
           <SheetDescription>
-            Cadastre uma nova conta. Ela será criada como rascunho.
+            {isEdit
+              ? "Atualize os dados da conta selecionada."
+              : "Cadastre uma nova conta. Ela será criada como rascunho."}
           </SheetDescription>
         </SheetHeader>
 
@@ -259,29 +306,16 @@ export function NovaContaSheet({ open, onOpenChange }: NovaContaSheetProps) {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="vencimento">Vencimento *</Label>
-              <Input
-                id="vencimento"
-                type="date"
-                value={formData.vencimento}
-                onChange={(e) => setFormData({ ...formData, vencimento: e.target.value })}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="parcelas">Parcelas</Label>
-              <Input
-                id="parcelas"
-                type="number"
-                min="1"
-                value={formData.parcelas}
-                onChange={(e) =>
-                  setFormData({ ...formData, parcelas: parseInt(e.target.value) || 1 })
-                }
-              />
-            </div>
+          {/* Vencimento sozinho na linha */}
+          <div className="space-y-2">
+            <Label htmlFor="vencimento">Vencimento *</Label>
+            <Input
+              id="vencimento"
+              type="date"
+              value={formData.vencimento}
+              onChange={(e) => setFormData({ ...formData, vencimento: e.target.value })}
+              required
+            />
           </div>
 
           <div className="space-y-2">
@@ -298,6 +332,7 @@ export function NovaContaSheet({ open, onOpenChange }: NovaContaSheetProps) {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Centro de Custo</Label>
+              {/* TODO: migrar para dimensão administrável em Parâmetros > Financeiro */}
               <Select
                 value={formData.centro_custo}
                 onValueChange={(v) => setFormData({ ...formData, centro_custo: v })}
@@ -334,23 +369,38 @@ export function NovaContaSheet({ open, onOpenChange }: NovaContaSheetProps) {
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label>Forma de Pagamento</Label>
-            <Select
-              value={formData.forma_pagamento}
-              onValueChange={(v) => setFormData({ ...formData, forma_pagamento: v })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione" />
-              </SelectTrigger>
-              <SelectContent>
-                {FORMAS_PAGAMENTO.map((fp) => (
-                  <SelectItem key={fp} value={fp}>
-                    {fp}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          {/* Forma de Pagamento + Parcelas lado a lado */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Forma de Pagamento</Label>
+              <Select
+                value={formData.forma_pagamento}
+                onValueChange={(v) => setFormData({ ...formData, forma_pagamento: v })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione" />
+                </SelectTrigger>
+                <SelectContent>
+                  {FORMAS_PAGAMENTO.map((fp) => (
+                    <SelectItem key={fp} value={fp}>
+                      {fp}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="parcelas">Parcelas</Label>
+              <Input
+                id="parcelas"
+                type="number"
+                min="1"
+                value={formData.parcelas}
+                onChange={(e) =>
+                  setFormData({ ...formData, parcelas: parseInt(e.target.value) || 1 })
+                }
+              />
+            </div>
           </div>
 
           <Collapsible open={nfOpen} onOpenChange={setNfOpen}>
@@ -358,7 +408,7 @@ export function NovaContaSheet({ open, onOpenChange }: NovaContaSheetProps) {
               <Button type="button" variant="outline" className="w-full justify-between">
                 <span className="flex items-center gap-2">
                   <FileText className="h-4 w-4" />
-                  Nota Fiscal / Recibo (opcional)
+                  NF ou Recibo (opcional)
                 </span>
                 <ChevronDown
                   className={cn("h-4 w-4 transition-transform", nfOpen && "rotate-180")}
@@ -368,7 +418,7 @@ export function NovaContaSheet({ open, onOpenChange }: NovaContaSheetProps) {
             <CollapsibleContent className="space-y-4 pt-4 px-1">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="nf_numero">Número da NF</Label>
+                  <Label htmlFor="nf_numero">Número da NF ou Recibo</Label>
                   <Input
                     id="nf_numero"
                     value={formData.nf_numero}
@@ -377,7 +427,7 @@ export function NovaContaSheet({ open, onOpenChange }: NovaContaSheetProps) {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="nf_serie">Série</Label>
+                  <Label htmlFor="nf_serie">Série da NF ou Recibo</Label>
                   <Input
                     id="nf_serie"
                     value={formData.nf_serie}
@@ -387,7 +437,7 @@ export function NovaContaSheet({ open, onOpenChange }: NovaContaSheetProps) {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="nf_chave">Chave de Acesso</Label>
+                <Label htmlFor="nf_chave">Chave de Acesso da NF</Label>
                 <Input
                   id="nf_chave"
                   value={formData.nf_chave}
@@ -396,7 +446,7 @@ export function NovaContaSheet({ open, onOpenChange }: NovaContaSheetProps) {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="nf_arquivo">Arquivo (PDF, JPG ou PNG)</Label>
+                <Label htmlFor="nf_arquivo">Arquivo da NF ou Recibo (PDF, JPG ou PNG)</Label>
                 <Input
                   id="nf_arquivo"
                   type="file"
@@ -407,6 +457,11 @@ export function NovaContaSheet({ open, onOpenChange }: NovaContaSheetProps) {
                   <p className="text-xs text-muted-foreground">
                     Selecionado: {formData.nf_arquivo.name} (
                     {(formData.nf_arquivo.size / 1024).toFixed(0)} KB)
+                  </p>
+                )}
+                {isEdit && conta?.nf_nome && !formData.nf_arquivo && (
+                  <p className="text-xs text-muted-foreground">
+                    Arquivo atual: {conta.nf_nome}
                   </p>
                 )}
               </div>
@@ -429,12 +484,18 @@ export function NovaContaSheet({ open, onOpenChange }: NovaContaSheetProps) {
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
-              disabled={criarConta.isPending}
+              disabled={isPending}
             >
               Cancelar
             </Button>
-            <Button type="submit" disabled={criarConta.isPending}>
-              {criarConta.isPending ? "Criando..." : "Criar Conta"}
+            <Button type="submit" disabled={isPending}>
+              {isPending
+                ? isEdit
+                  ? "Salvando..."
+                  : "Criando..."
+                : isEdit
+                  ? "Salvar Alterações"
+                  : "Criar Conta"}
             </Button>
           </div>
         </form>
