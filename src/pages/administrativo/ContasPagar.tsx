@@ -67,6 +67,12 @@ export default function ContasPagar() {
     atualizarStatus.mutate({ contaId, novoStatus });
   };
 
+  const renderStatusBadge = (conta: ContaPagarComRelacionados) => (
+    <Badge className={STATUS_COLORS[conta.status]}>
+      {STATUS_LABELS[conta.status]}
+    </Badge>
+  );
+
   const renderAcaoStatus = (conta: ContaPagarComRelacionados) => {
     switch (conta.status) {
       case "rascunho":
@@ -94,25 +100,8 @@ export default function ContasPagar() {
             Aprovar
           </Button>
         );
-      case "aprovado":
-        return (
-          <Badge variant="outline" className="border-success text-success bg-success/5">
-            <Check className="h-3 w-3 mr-1" />
-            Aprovado
-          </Badge>
-        );
-      case "cancelado":
-        return (
-          <Badge variant="outline" className="text-muted-foreground">
-            Cancelado
-          </Badge>
-        );
       default:
-        return (
-          <Badge className={STATUS_COLORS[conta.status]}>
-            {STATUS_LABELS[conta.status]}
-          </Badge>
-        );
+        return <span className="text-muted-foreground/50 text-xs">—</span>;
     }
   };
 
@@ -162,7 +151,8 @@ export default function ContasPagar() {
                   <TableHead>Vencimento</TableHead>
                   <TableHead>Forma Pgto</TableHead>
                   <TableHead className="text-center">NF/Recibo</TableHead>
-                  <TableHead>Status / Ação</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Ação</TableHead>
                   <TableHead className="w-[60px]"></TableHead>
                 </TableRow>
               </TableHeader>
@@ -233,6 +223,7 @@ export default function ContasPagar() {
                           </span>
                         )}
                       </TableCell>
+                      <TableCell>{renderStatusBadge(conta)}</TableCell>
                       <TableCell onClick={(e) => e.stopPropagation()}>
                         {renderAcaoStatus(conta)}
                       </TableCell>
