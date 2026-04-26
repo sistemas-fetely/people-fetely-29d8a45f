@@ -1833,6 +1833,47 @@ export type Database = {
         }
         Relationships: []
       }
+      contas_alertas: {
+        Row: {
+          ativo: boolean
+          conta_id: string
+          created_at: string
+          id: string
+          mensagem: string
+          resolvido_em: string | null
+          resolvido_por: string | null
+          tipo: string
+        }
+        Insert: {
+          ativo?: boolean
+          conta_id: string
+          created_at?: string
+          id?: string
+          mensagem: string
+          resolvido_em?: string | null
+          resolvido_por?: string | null
+          tipo: string
+        }
+        Update: {
+          ativo?: boolean
+          conta_id?: string
+          created_at?: string
+          id?: string
+          mensagem?: string
+          resolvido_em?: string | null
+          resolvido_por?: string | null
+          tipo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contas_alertas_conta_id_fkey"
+            columns: ["conta_id"]
+            isOneToOne: false
+            referencedRelation: "contas_pagar_receber"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contas_bancarias: {
         Row: {
           agencia: string | null
