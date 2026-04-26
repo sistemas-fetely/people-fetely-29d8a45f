@@ -73,6 +73,9 @@ export interface NFParsed {
 
   // Metadado de origem do import
   _source: "csv_qive" | "xml_nfe" | "pdf_nfe";
+
+  // Arquivo original (apenas PDFs - usado para anexar à conta criada)
+  _arquivo?: File;
 }
 
 export interface RegraCategorizacao {
