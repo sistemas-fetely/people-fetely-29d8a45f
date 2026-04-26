@@ -1,6 +1,6 @@
 // src/components/financeiro/AcoesContaMenu.tsx
 import { useState } from "react";
-import { MoreVertical, Check, X, FileUp, Trash2, Pencil } from "lucide-react";
+import { MoreVertical, X, FileUp, Trash2, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -22,6 +22,12 @@ interface AcoesContaMenuProps {
   onEditar?: () => void;
 }
 
+/**
+ * Menu de ações secundárias.
+ * As ações principais (Validar/Aprovar) ficam INLINE na tabela
+ * via os botões da página ContasPagar; aqui só ficam ações secundárias:
+ * Editar, Anexar NF, Cancelar e Excluir.
+ */
 export function AcoesContaMenu({ conta, onEditar }: AcoesContaMenuProps) {
   const atualizarStatus = useAtualizarStatus();
   const excluirConta = useExcluirConta();
@@ -29,11 +35,10 @@ export function AcoesContaMenu({ conta, onEditar }: AcoesContaMenuProps) {
 
   const transicoesPermitidas = TRANSICOES_PERMITIDAS[conta.status];
 
-  const handleMudarStatus = async (novoStatus: string) => {
-    atualizarStatus.mutate({
-      contaId: conta.id,
-      novoStatus: novoStatus as any,
-    });
+  const handleCancelar = () => {
+    if (confirm("Tem certeza que deseja cancelar esta conta?")) {
+      atualizarStatus.mutate({ contaId: conta.id, novoStatus: "cancelado" });
+    }
   };
 
   const handleExcluir = () => {
@@ -57,54 +62,18 @@ export function AcoesContaMenu({ conta, onEditar }: AcoesContaMenuProps) {
         <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
           {/* Editar */}
           {onEditar && (
-            <>
-              <DropdownMenuItem onClick={onEditar}>
-                <Pencil className="h-4 w-4 mr-2" />
-                Editar
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-            </>
-          )}
-
-          {/* Transições de status - Fase 1: até aprovado */}
-          {conta.status === "rascunho" && transicoesPermitidas.includes("pendente") && (
-            <DropdownMenuItem onClick={() => handleMudarStatus("pendente")}>
-              <Check className="h-4 w-4 mr-2" />
-              Validar (→ Pendente)
-            </DropdownMenuItem>
-          )}
-
-          {conta.status === "pendente" && transicoesPermitidas.includes("aprovado") && (
-            <DropdownMenuItem onClick={() => handleMudarStatus("aprovado")}>
-              <Check className="h-4 w-4 mr-2" />
-              Aprovar (→ Aprovado)
-            </DropdownMenuItem>
-          )}
-
-          {/* Voltar status */}
-          {conta.status === "pendente" && transicoesPermitidas.includes("rascunho") && (
-            <DropdownMenuItem onClick={() => handleMudarStatus("rascunho")}>
-              <X className="h-4 w-4 mr-2" />
-              Voltar para Rascunho
-            </DropdownMenuItem>
-          )}
-
-          {conta.status === "aprovado" && transicoesPermitidas.includes("pendente") && (
-            <DropdownMenuItem onClick={() => handleMudarStatus("pendente")}>
-              <X className="h-4 w-4 mr-2" />
-              Voltar para Pendente
+            <DropdownMenuItem onClick={onEditar}>
+              <Pencil className="h-4 w-4 mr-2" />
+              Editar
             </DropdownMenuItem>
           )}
 
           {/* Anexar NF */}
           {!conta.nf_path && (
-            <>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => setAnexarSheetOpen(true)}>
-                <FileUp className="h-4 w-4 mr-2" />
-                Anexar NF/Recibo
-              </DropdownMenuItem>
-            </>
+            <DropdownMenuItem onClick={() => setAnexarSheetOpen(true)}>
+              <FileUp className="h-4 w-4 mr-2" />
+              Anexar NF/Recibo
+            </DropdownMenuItem>
           )}
 
           {/* Cancelar */}
@@ -112,7 +81,7 @@ export function AcoesContaMenu({ conta, onEditar }: AcoesContaMenuProps) {
             <>
               <DropdownMenuSeparator />
               <DropdownMenuItem
-                onClick={() => handleMudarStatus("cancelado")}
+                onClick={handleCancelar}
                 className="text-destructive"
               >
                 <X className="h-4 w-4 mr-2" />

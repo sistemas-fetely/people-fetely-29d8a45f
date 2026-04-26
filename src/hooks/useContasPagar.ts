@@ -111,10 +111,30 @@ export const CENTROS_CUSTO = [
   { value: "geral", label: "Geral" },
 ] as const;
 
-export const UNIDADES_CONTA = [
-  { value: "matriz_sp", label: "Matriz SP" },
-  { value: "joinville", label: "Joinville" },
-] as const;
+export interface UnidadeOption {
+  id: string;
+  nome: string;
+  codigo: string | null;
+  tipo: string | null;
+}
+
+// Hook: lista de unidades ativas (dimensão administrável)
+export function useUnidades() {
+  return useQuery({
+    queryKey: ["unidades-ativas"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("unidades")
+        .select("id, nome, codigo, tipo")
+        .eq("ativa", true)
+        .order("nome");
+      if (error) throw error;
+      return (data ?? []) as UnidadeOption[];
+    },
+    staleTime: 300_000,
+    refetchOnWindowFocus: false,
+  });
+}
 
 export interface FornecedorOption {
   id: string;
@@ -436,7 +456,16 @@ export function useExcluirConta() {
       toast.success("Conta excluída!");
     },
     onError: (error: any) => {
-      toast.error("Erro ao excluir conta", { description: error.message });
+      const msg = String(error?.message || "");
+      const isRLS =
+        error?.code === "42501" ||
+        msg.toLowerCase().includes("row-level security") ||
+        msg.toLowerCase().includes("permission denied");
+      if (isRLS) {
+        toast.error("Sem permissão para excluir");
+      } else {
+        toast.error("Erro ao excluir conta", { description: error.message });
+      }
     },
   });
 }

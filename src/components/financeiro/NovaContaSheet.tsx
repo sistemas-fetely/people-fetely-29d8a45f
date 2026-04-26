@@ -41,8 +41,8 @@ import {
   useCriarConta,
   useEditarConta,
   useFornecedores,
+  useUnidades,
   CENTROS_CUSTO,
-  UNIDADES_CONTA,
   type ContaPagarComRelacionados,
 } from "@/hooks/useContasPagar";
 import { useCategoriasPlano } from "@/hooks/useCategoriasPlano";
@@ -84,7 +84,7 @@ const INITIAL_STATE: FormState = {
   parcelas: 1,
   categoria_id: null,
   centro_custo: "",
-  unidade: "matriz_sp",
+  unidade: "",
   forma_pagamento: "",
   nf_numero: "",
   nf_serie: "",
@@ -104,7 +104,7 @@ function contaToFormState(conta: ContaPagarComRelacionados): FormState {
     parcelas: conta.parcelas ?? 1,
     categoria_id: conta.categoria_id ?? null,
     centro_custo: conta.centro_custo ?? "",
-    unidade: conta.unidade ?? "matriz_sp",
+    unidade: conta.unidade ?? "",
     forma_pagamento: conta.forma_pagamento ?? "",
     nf_numero: conta.nf_numero ?? "",
     nf_serie: conta.nf_serie ?? "",
@@ -120,6 +120,7 @@ export function NovaContaSheet({ open, onOpenChange, conta }: NovaContaSheetProp
   const editarConta = useEditarConta();
   const { data: fornecedores = [] } = useFornecedores();
   const { data: categorias = [] } = useCategoriasPlano();
+  const { data: unidades = [] } = useUnidades();
   const [formData, setFormData] = useState<FormState>(INITIAL_STATE);
   const [parceiroOpen, setParceiroOpen] = useState(false);
   const [nfOpen, setNfOpen] = useState(false);
@@ -356,12 +357,17 @@ export function NovaContaSheet({ open, onOpenChange, conta }: NovaContaSheetProp
                 onValueChange={(v) => setFormData({ ...formData, unidade: v })}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione" />
+                  <SelectValue placeholder={unidades.length ? "Selecione" : "Carregando..."} />
                 </SelectTrigger>
                 <SelectContent>
-                  {UNIDADES_CONTA.map((u) => (
-                    <SelectItem key={u.value} value={u.value}>
-                      {u.label}
+                  {unidades.map((u) => (
+                    <SelectItem key={u.id} value={u.id}>
+                      {u.nome}
+                      {u.codigo && (
+                        <span className="text-muted-foreground ml-2 text-xs">
+                          ({u.codigo})
+                        </span>
+                      )}
                     </SelectItem>
                   ))}
                 </SelectContent>
