@@ -11,19 +11,41 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useContasPagar, STATUS_LABELS, STATUS_COLORS } from "@/hooks/useContasPagar";
+import {
+  useContasPagar,
+  STATUS_LABELS,
+  STATUS_COLORS,
+  type ContaPagarComRelacionados,
+} from "@/hooks/useContasPagar";
 import { NovaContaSheet } from "@/components/financeiro/NovaContaSheet";
+import { DetalheContaSheet } from "@/components/financeiro/DetalheContaSheet";
 import { AcoesContaMenu } from "@/components/financeiro/AcoesContaMenu";
 
 export default function ContasPagar() {
   const { data: contas = [], isLoading } = useContasPagar();
-  const [sheetOpen, setSheetOpen] = useState(false);
+  const [criarOpen, setCriarOpen] = useState(false);
+  const [detalheOpen, setDetalheOpen] = useState(false);
+  const [editarOpen, setEditarOpen] = useState(false);
+  const [contaSelecionada, setContaSelecionada] = useState<ContaPagarComRelacionados | null>(
+    null,
+  );
 
   const formatarValor = (valor: number) =>
     new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(valor);
 
   const formatarData = (data: string | null | undefined) =>
     data ? new Date(data).toLocaleDateString("pt-BR") : "—";
+
+  const handleAbrirDetalhe = (conta: ContaPagarComRelacionados) => {
+    setContaSelecionada(conta);
+    setDetalheOpen(true);
+  };
+
+  const handleAbrirEdicao = (conta: ContaPagarComRelacionados) => {
+    setContaSelecionada(conta);
+    setDetalheOpen(false);
+    setEditarOpen(true);
+  };
 
   return (
     <div className="space-y-6 p-6">
@@ -35,7 +57,7 @@ export default function ContasPagar() {
             Gerencie pagamentos de fornecedores
           </p>
         </div>
-        <Button onClick={() => setSheetOpen(true)}>
+        <Button onClick={() => setCriarOpen(true)}>
           <Plus className="h-4 w-4 mr-2" />
           Nova Conta
         </Button>
@@ -51,7 +73,7 @@ export default function ContasPagar() {
         <div className="text-center py-12">
           <FileText className="h-12 w-12 text-muted-foreground/40 mx-auto mb-4" />
           <p className="text-muted-foreground mb-4">Nenhuma conta cadastrada</p>
-          <Button variant="outline" onClick={() => setSheetOpen(true)}>
+          <Button variant="outline" onClick={() => setCriarOpen(true)}>
             Criar primeira conta
           </Button>
         </div>
@@ -75,13 +97,18 @@ export default function ContasPagar() {
             </TableHeader>
             <TableBody>
               {contas.map((conta) => {
-                const nomeParceiro =
-                  conta.parceiro?.razao_social || conta.fornecedor;
+                const nomeParceiro = conta.parceiro?.razao_social || conta.fornecedor;
                 const fantasia = conta.parceiro?.nome_fantasia;
                 return (
-                  <TableRow key={conta.id}>
+                  <TableRow
+                    key={conta.id}
+                    className="cursor-pointer hover:bg-muted/50"
+                    onClick={() => handleAbrirDetalhe(conta)}
+                  >
                     <TableCell className="font-medium max-w-[220px]">
-                      <div className="truncate">{nomeParceiro}</div>
+                      <div className="truncate text-primary hover:underline">
+                        {nomeParceiro}
+                      </div>
                       {fantasia && (
                         <div className="text-xs text-muted-foreground truncate">
                           {fantasia}
@@ -124,8 +151,11 @@ export default function ContasPagar() {
                         {STATUS_LABELS[conta.status]}
                       </Badge>
                     </TableCell>
-                    <TableCell>
-                      <AcoesContaMenu conta={conta} />
+                    <TableCell onClick={(e) => e.stopPropagation()}>
+                      <AcoesContaMenu
+                        conta={conta}
+                        onEditar={() => handleAbrirEdicao(conta)}
+                      />
                     </TableCell>
                   </TableRow>
                 );
@@ -135,7 +165,26 @@ export default function ContasPagar() {
         </div>
       )}
 
-      <NovaContaSheet open={sheetOpen} onOpenChange={setSheetOpen} />
+      {/* Sheet: criar nova conta */}
+      <NovaContaSheet open={criarOpen} onOpenChange={setCriarOpen} />
+
+      {/* Sheet: detalhe (leitura) */}
+      <DetalheContaSheet
+        open={detalheOpen}
+        onOpenChange={setDetalheOpen}
+        conta={contaSelecionada}
+        onEditar={() => contaSelecionada && handleAbrirEdicao(contaSelecionada)}
+      />
+
+      {/* Sheet: editar (reusa o NovaContaSheet em modo edit) */}
+      <NovaContaSheet
+        open={editarOpen}
+        onOpenChange={(open) => {
+          setEditarOpen(open);
+          if (!open) setContaSelecionada(null);
+        }}
+        conta={contaSelecionada}
+      />
     </div>
   );
 }
