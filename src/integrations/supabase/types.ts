@@ -2078,6 +2078,7 @@ export type Database = {
           nf_valor_produtos: number | null
           nf_xml_url: string | null
           observacao: string | null
+          observacao_financeiro: string | null
           observacao_pagamento: string | null
           origem: string | null
           parceiro_id: string | null
@@ -2136,6 +2137,7 @@ export type Database = {
           nf_valor_produtos?: number | null
           nf_xml_url?: string | null
           observacao?: string | null
+          observacao_financeiro?: string | null
           observacao_pagamento?: string | null
           origem?: string | null
           parceiro_id?: string | null
@@ -2194,6 +2196,7 @@ export type Database = {
           nf_valor_produtos?: number | null
           nf_xml_url?: string | null
           observacao?: string | null
+          observacao_financeiro?: string | null
           observacao_pagamento?: string | null
           origem?: string | null
           parceiro_id?: string | null
