@@ -99,6 +99,9 @@ export default function Conciliacao() {
   // Agrupamentos sugeridos pela IA
   const [agrupamentosRejeitados, setAgrupamentosRejeitados] = useState<Set<string>>(new Set());
 
+  // Matches 1:1 (data + valor) — rejeitados nesta sessão
+  const [matches1to1Rejeitados, setMatches1to1Rejeitados] = useState<Set<string>>(new Set());
+
   const [matchesSugeridos, setMatchesSugeridos] = useState<MatchResult[]>([]);
   const [showConfirmar, setShowConfirmar] = useState(false);
   const [matchesParaConfirmar, setMatchesParaConfirmar] = useState<MatchResult[]>([]);
