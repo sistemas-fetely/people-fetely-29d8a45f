@@ -126,6 +126,8 @@ export function NovaContaSheet({ open, onOpenChange, conta }: NovaContaSheetProp
   const [formData, setFormData] = useState<FormState>(INITIAL_STATE);
   const [parceiroOpen, setParceiroOpen] = useState(false);
   const [nfOpen, setNfOpen] = useState(false);
+  const [iaProcessando, setIaProcessando] = useState(false);
+  const [camposIA, setCamposIA] = useState<Set<keyof FormState>>(new Set());
 
   // Hidrata form ao abrir em modo edição (ou reseta ao criar)
   useEffect(() => {
@@ -138,6 +140,7 @@ export function NovaContaSheet({ open, onOpenChange, conta }: NovaContaSheetProp
       setFormData(INITIAL_STATE);
       setNfOpen(false);
     }
+    setCamposIA(new Set());
   }, [open, conta]);
 
   const parceiroSelecionado = fornecedores.find((f) => f.id === formData.parceiro_id);
