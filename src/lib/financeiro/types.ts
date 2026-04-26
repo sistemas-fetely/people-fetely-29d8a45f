@@ -76,6 +76,9 @@ export interface NFParsed {
 
   // Arquivo original (apenas PDFs - usado para anexar à conta criada)
   _arquivo?: File;
+
+  // Parceiro_id resolvido após auto-cadastro (sobrescreve a busca por CNPJ no import-handler)
+  _parceiro_id_resolvido?: string;
 }
 
 export interface RegraCategorizacao {
