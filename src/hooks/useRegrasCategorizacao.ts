@@ -55,12 +55,8 @@ export function aplicarRegras(nf: NFParsed, regras: RegraCategorizacao[] | undef
     }
   }
 
-  // 3. Regra por descrição contém — busca em fornecedor + natureza + descrição dos itens
-  const descricoesItens = (nf.itens || [])
-    .map((it) => it.descricao || "")
-    .join(" ");
-  const descricaoBusca =
-    `${nf.fornecedor_nome} ${nf.nf_natureza_operacao || ""} ${descricoesItens}`.toLowerCase();
+  // 3. Regra por descrição contém
+  const descricaoBusca = `${nf.fornecedor_nome} ${nf.nf_natureza_operacao || ""}`.toLowerCase();
   const r = regras.find(
     (x) => x.descricao_contem && descricaoBusca.includes(x.descricao_contem.toLowerCase())
   );
@@ -72,28 +68,6 @@ export function aplicarRegras(nf: NFParsed, regras: RegraCategorizacao[] | undef
       _centro_custo: r.centro_custo,
       _regra_origem: "texto",
     };
-  }
-
-  // 4. Fallback: tenta pelo item de maior valor
-  if (nf.itens && nf.itens.length > 0) {
-    const itemPrincipal = [...nf.itens].sort(
-      (a, b) => (b.valor_total || 0) - (a.valor_total || 0)
-    )[0];
-    if (itemPrincipal?.descricao) {
-      const desc = itemPrincipal.descricao.toLowerCase();
-      const r2 = regras.find(
-        (x) => x.descricao_contem && desc.includes(x.descricao_contem.toLowerCase())
-      );
-      if (r2 && r2.conta) {
-        return {
-          ...nf,
-          _categoria_id: r2.conta_plano_id,
-          _categoria_nome: `${r2.conta.codigo} — ${r2.conta.nome}`,
-          _centro_custo: r2.centro_custo,
-          _regra_origem: "texto",
-        };
-      }
-    }
   }
 
   return { ...nf, _categoria_id: null, _categoria_nome: null, _regra_origem: null };

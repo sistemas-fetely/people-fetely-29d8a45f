@@ -40,17 +40,15 @@ export function mapearMeioPagamentoCsv(str: string | null | undefined): string |
   if (!str) return null;
   const s = str.toString().toLowerCase().trim();
   if (!s) return null;
-
-  // Mapeia para valores do enum FORMAS_PAGAMENTO (entrada manual/TEXT)
-  if (s.includes("pix")) return "PIX";
-  if (s.includes("crédito") || s.includes("credito") || s === "03") return "Cartão Crédito";
-  if (s.includes("débito") || s.includes("debito") || s === "04") return "Débito Automático";
-  if (s.includes("boleto") || s === "15") return "Boleto";
-  if (s.includes("dinheiro") || s === "01") return "Dinheiro";
-  if (s.includes("transfer") || s === "02") return "TED";
-  if (s.includes("sem pagamento") || s === "90") return null;
-  if (s.includes("cheque")) return "Outros";
-  return "Outros";
+  if (s.includes("pix")) return "pix";
+  if (s.includes("crédito") || s.includes("credito") || s === "03") return "cartao_credito";
+  if (s.includes("débito") || s.includes("debito") || s === "04") return "cartao_debito";
+  if (s.includes("boleto") || s === "15") return "boleto";
+  if (s.includes("dinheiro") || s === "01") return "dinheiro";
+  if (s.includes("transfer") || s === "02") return "transferencia";
+  if (s.includes("sem pagamento") || s === "90") return "sem_pagamento";
+  if (s.includes("cheque")) return "cheque";
+  return "outro";
 }
 
 // XML NFe — tabela oficial do tag <tPag>

@@ -1,0 +1,665 @@
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import {
+  Check,
+  FileText,
+  UserCheck,
+  Send,
+  ThumbsUp,
+  X,
+  ShieldCheck,
+  RotateCcw,
+  Clock,
+  ChevronDown,
+  CreditCard,
+} from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Link } from "react-router-dom";
+import { formatBRL, formatDateBR } from "@/lib/format-currency";
+import RegistrarPagamentoDialog from "./RegistrarPagamentoDialog";
+import StatusProgressBar from "./StatusProgressBar";
+import TimelineHistorico from "./TimelineHistorico";
+import EnviarPagamentoDialog from "./EnviarPagamentoDialog";
+import DocumentosCP from "./DocumentosCP";
+import { useContaWorkflow, type ContaStatus } from "@/hooks/useContaWorkflow";
+
+type Conta = {
+  id: string;
+  tipo: string;
+  descricao: string;
+  valor: number;
+  valor_pago?: number | null;
+  data_vencimento: string | null;
+  data_pagamento: string | null;
+  status: string;
+  fornecedor_cliente: string | null;
+  parceiro_id: string | null;
+  conta_id: string | null;
+  centro_custo: string | null;
+  forma_pagamento_id: string | null;
+  origem: string | null;
+  observacao?: string | null;
+  observacao_pagamento?: string | null;
+  comprovante_url?: string | null;
+  nf_chave_acesso?: string | null;
+  nf_numero?: string | null;
+  nf_serie?: string | null;
+  nf_pdf_url?: string | null;
+  nf_xml_url?: string | null;
+  parcela_atual?: number | null;
+  parcelas?: number | null;
+  email_pagamento_enviado?: boolean | null;
+  enviado_pagamento_em?: string | null;
+  is_cartao?: boolean | null;
+  docs_status?: "ok" | "pendente" | "parcial" | null;
+  dados_bancarios_fornecedor?: { banco?: string; agencia?: string; conta?: string; pix?: string } | null;
+  dados_pagamento_fornecedor?: { banco?: string; agencia?: string; conta?: string; pix?: string } | null;
+  plano_contas?: { codigo?: string | null; nome?: string | null } | null;
+  formas_pagamento?: { nome?: string | null; codigo?: string | null } | null;
+  parceiros_comerciais?: { razao_social?: string | null } | null;
+};
+
+const STATUS_LABEL: Record<string, string> = {
+  rascunho: "Rascunho",
+  aberto: "Aberto",
+  atrasado: "Atrasado",
+  aprovado: "Aprovado",
+  agendado: "Enviado",
+  pago: "Pago",
+  cancelado: "Cancelado",
+  conciliado: "Conciliado",
+};
+
+const STATUS_STYLE: Record<string, string> = {
+  rascunho: "bg-muted text-muted-foreground",
+  aberto: "bg-blue-100 text-blue-800 hover:bg-blue-100",
+  atrasado: "bg-red-100 text-red-800 hover:bg-red-100",
+  aprovado: "bg-purple-100 text-purple-800 hover:bg-purple-100",
+  agendado: "bg-amber-100 text-amber-800 hover:bg-amber-100",
+  pago: "bg-green-100 text-green-800 hover:bg-green-100",
+  cancelado: "bg-gray-100 text-gray-700 hover:bg-gray-100",
+  conciliado: "bg-teal-100 text-teal-800 hover:bg-teal-100",
+};
+
+interface Props {
+  contaId: string | null;
+  onClose: () => void;
+}
+
+export default function ContaPagarDetalheDrawer({ contaId, onClose }: Props) {
+  const [showPag, setShowPag] = useState(false);
+  const [showEnviar, setShowEnviar] = useState(false);
+  const workflow = useContaWorkflow();
+
+  const { data: conta } = useQuery({
+    queryKey: ["conta-pagar-detalhe", contaId],
+    enabled: !!contaId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("contas_pagar_receber")
+        .select(
+          "*, plano_contas:conta_id(codigo,nome), formas_pagamento:forma_pagamento_id(nome,codigo), parceiros_comerciais:parceiro_id(razao_social)"
+        )
+        .eq("id", contaId!)
+        .single();
+      if (error) throw error;
+      return data as unknown as Conta;
+    },
+  });
+
+  const { data: comprovUrl } = useQuery({
+    queryKey: ["comprovante-url", conta?.comprovante_url],
+    enabled: !!conta?.comprovante_url,
+    queryFn: async () => {
+      const { data } = await supabase.storage
+        .from("comprovantes-pagamento")
+        .createSignedUrl(conta!.comprovante_url!, 60 * 10);
+      return data?.signedUrl || null;
+    },
+  });
+
+  const { data: nfPjId } = useQuery({
+    queryKey: ["nf-pj-by-numero", conta?.nf_numero, conta?.origem],
+    enabled: !!conta && conta.origem === "nf_pj_interno" && !!conta.nf_numero,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("notas_fiscais_pj")
+        .select("id")
+        .eq("numero", conta!.nf_numero!)
+        .limit(1)
+        .maybeSingle();
+      return data?.id || null;
+    },
+  });
+
+  const { data: itens } = useQuery({
+    queryKey: ["conta-pagar-itens", contaId],
+    enabled: !!contaId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("contas_pagar_itens")
+        .select("id, descricao, ncm, quantidade, unidade, valor_total, conta_plano_id, plano_contas:conta_plano_id(codigo, nome)")
+        .eq("conta_id", contaId!);
+      if (error) throw error;
+      return (data || []) as Array<{
+        id: string;
+        descricao: string;
+        ncm: string | null;
+        quantidade: number | null;
+        unidade: string | null;
+        valor_total: number | null;
+        conta_plano_id: string | null;
+        plano_contas?: { codigo?: string | null; nome?: string | null } | null;
+      }>;
+    },
+  });
+
+  const temCategoriasMultiplas = (() => {
+    if (!itens || itens.length < 2) return false;
+    const cats = new Set(itens.map((i) => i.conta_plano_id || "_sem"));
+    return cats.size > 1;
+  })();
+
+  async function avancar(novoStatus: ContaStatus, observacao?: string) {
+    if (!conta) return;
+    await workflow.mudarStatus.mutateAsync({
+      contaId: conta.id,
+      statusAnterior: conta.status,
+      novoStatus,
+      observacao: observacao || undefined,
+    });
+    onClose();
+  }
+
+  const dadosBancarios =
+    conta?.dados_bancarios_fornecedor || conta?.dados_pagamento_fornecedor || null;
+  const isCartao = !!conta?.is_cartao;
+
+  return (
+    <Sheet open={!!contaId} onOpenChange={(v) => !v && onClose()}>
+      <SheetContent className="w-full sm:max-w-md overflow-y-auto">
+        {!conta ? (
+          <div className="py-12 text-center text-sm text-muted-foreground">Carregando…</div>
+        ) : (
+          <>
+            <SheetHeader className="text-left">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <SheetTitle className="truncate">{conta.descricao}</SheetTitle>
+                  <SheetDescription className="flex items-center gap-2 flex-wrap">
+                    <span>{conta.tipo === "pagar" ? "Conta a pagar" : "Conta a receber"}</span>
+                    {conta.origem === "nf_pj_interno" && (
+                      <Badge variant="outline" className="gap-1 text-xs">
+                        <UserCheck className="h-3 w-3" /> NF PJ
+                      </Badge>
+                    )}
+                    {isCartao && (
+                      <Badge variant="outline" className="gap-1 text-xs border-blue-300 text-blue-700">
+                        <CreditCard className="h-3 w-3" /> Cartão
+                      </Badge>
+                    )}
+                  </SheetDescription>
+                </div>
+                <Badge className={STATUS_STYLE[conta.status] || "bg-muted"}>
+                  {STATUS_LABEL[conta.status] || conta.status}
+                </Badge>
+              </div>
+              <div className="text-2xl font-bold mt-2">{formatBRL(conta.valor)}</div>
+              {conta.origem === "nf_pj_interno" && nfPjId && (
+                <Link
+                  to={`/notas-fiscais/${nfPjId}`}
+                  className="text-sm text-admin underline mt-1 inline-block"
+                >
+                  Ver NF PJ original no People →
+                </Link>
+              )}
+            </SheetHeader>
+
+            <div className="mt-4">
+              <StatusProgressBar statusAtual={conta.status} isCartao={isCartao} />
+            </div>
+
+            {isCartao && (conta.status === "rascunho" || conta.status === "aberto") && (
+              <div className="mt-3 p-2 rounded-md bg-blue-50 text-blue-700 text-[11px] flex items-center gap-2">
+                <CreditCard className="h-3 w-3" />
+                Cartão — já pago, aguarda conciliação com extrato
+              </div>
+            )}
+
+            <Separator className="my-4" />
+
+            {/* Informações */}
+            <div className="space-y-3 text-sm">
+              <Linha label="Parceiro" value={conta.parceiros_comerciais?.razao_social || conta.fornecedor_cliente || "—"} />
+              <Linha
+                label="Categoria"
+                value={
+                  conta.plano_contas
+                    ? `${conta.plano_contas.codigo || ""} ${conta.plano_contas.nome || ""}`.trim()
+                    : "—"
+                }
+              />
+              <Linha label="Centro de custo" value={conta.centro_custo || "—"} />
+              <Linha label="Forma de pagamento" value={conta.formas_pagamento?.nome || "—"} />
+              <Linha label="Vencimento" value={formatDateBR(conta.data_vencimento)} />
+              {conta.data_pagamento && (
+                <Linha label="Pago em" value={formatDateBR(conta.data_pagamento)} />
+              )}
+              {conta.valor_pago != null && conta.valor_pago !== conta.valor && (
+                <Linha label="Valor pago" value={formatBRL(conta.valor_pago)} />
+              )}
+              {conta.parcelas && conta.parcelas > 1 && (
+                <Linha label="Parcela" value={`${conta.parcela_atual || 1} de ${conta.parcelas}`} />
+              )}
+              <Linha label="Origem" value={conta.origem || "manual"} />
+
+              {conta.observacao && (
+                <div>
+                  <div className="text-xs text-muted-foreground mb-1">Observação</div>
+                  <p className="text-sm">{conta.observacao}</p>
+                </div>
+              )}
+              {conta.observacao_pagamento && (
+                <div>
+                  <div className="text-xs text-muted-foreground mb-1">Observação do pagamento</div>
+                  <p className="text-sm">{conta.observacao_pagamento}</p>
+                </div>
+              )}
+            </div>
+
+            {/* Dados de pagamento (colapsável) */}
+            <Separator className="my-4" />
+            <Collapsible defaultOpen>
+              <CollapsibleTrigger className="flex items-center justify-between w-full text-left group">
+                <p className="text-xs font-medium text-muted-foreground uppercase">
+                  Dados de pagamento
+                </p>
+                <ChevronDown className="h-3 w-3 text-muted-foreground transition-transform group-data-[state=open]:rotate-180" />
+              </CollapsibleTrigger>
+              <CollapsibleContent className="mt-2 space-y-2 text-xs">
+                {isCartao ? (
+                  <div className="p-2 rounded bg-muted/50">
+                    <p className="text-muted-foreground">
+                      Pagamento via {conta.formas_pagamento?.nome || "cartão"} — sem dados bancários necessários.
+                    </p>
+                  </div>
+                ) : dadosBancarios ? (
+                  <div className="space-y-1">
+                    {dadosBancarios.banco && <Linha label="Banco" value={dadosBancarios.banco} />}
+                    {dadosBancarios.agencia && <Linha label="Agência" value={dadosBancarios.agencia} />}
+                    {dadosBancarios.conta && <Linha label="Conta" value={dadosBancarios.conta} />}
+                    {dadosBancarios.pix && <Linha label="PIX" value={<span className="font-mono">{dadosBancarios.pix}</span>} />}
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground">
+                    Nenhum dado bancário cadastrado. Será solicitado ao enviar para pagamento.
+                  </p>
+                )}
+              </CollapsibleContent>
+            </Collapsible>
+
+            {/* Documentos */}
+            <Separator className="my-4" />
+            <DocumentosCP
+              contaId={conta.id}
+              docsStatus={conta.docs_status || "pendente"}
+              nfChaveAcesso={conta.nf_chave_acesso}
+              nfNumero={conta.nf_numero}
+              origem={conta.origem}
+            />
+
+            {/* NF vinculada (com PDF/XML, links) */}
+            {(conta.nf_pdf_url || conta.nf_xml_url) && (
+              <>
+                <Separator className="my-4" />
+                <div className="space-y-2">
+                  <p className="text-xs font-medium text-muted-foreground uppercase">Arquivos da NF</p>
+                  <div className="flex gap-2">
+                    {conta.nf_pdf_url && (
+                      <Button size="sm" variant="outline" asChild>
+                        <a href={conta.nf_pdf_url} target="_blank" rel="noreferrer">PDF</a>
+                      </Button>
+                    )}
+                    {conta.nf_xml_url && (
+                      <Button size="sm" variant="outline" asChild>
+                        <a href={conta.nf_xml_url} target="_blank" rel="noreferrer">XML</a>
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* Itens com categorias múltiplas */}
+            {itens && itens.length > 0 && temCategoriasMultiplas && (
+              <>
+                <Separator className="my-4" />
+                <div className="space-y-2">
+                  <p className="text-xs font-medium text-muted-foreground uppercase">
+                    Classificação por item
+                  </p>
+                  <div className="space-y-2">
+                    {itens.map((item) => (
+                      <div
+                        key={item.id}
+                        className="flex justify-between items-start gap-3 p-2 rounded bg-muted/50 text-xs"
+                      >
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium truncate">{item.descricao}</p>
+                          <p className="text-muted-foreground">
+                            NCM: {item.ncm || "—"}
+                            {item.quantidade != null && (
+                              <> · Qtd: {item.quantidade} {item.unidade || ""}</>
+                            )}
+                          </p>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <p className="font-medium">{formatBRL(item.valor_total || 0)}</p>
+                          <p className="text-muted-foreground">
+                            {item.plano_contas
+                              ? `${item.plano_contas.codigo || ""} ${item.plano_contas.nome || ""}`.trim()
+                              : "Sem categoria"}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* Comprovante */}
+            {conta.comprovante_url && (
+              <>
+                <Separator className="my-4" />
+                <div className="space-y-2">
+                  <p className="text-xs font-medium text-muted-foreground uppercase">Comprovante</p>
+                  {comprovUrl ? (
+                    <Button size="sm" variant="outline" asChild className="gap-2">
+                      <a href={comprovUrl} target="_blank" rel="noreferrer">
+                        <FileText className="h-4 w-4" /> Ver comprovante
+                      </a>
+                    </Button>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">Carregando link…</p>
+                  )}
+                </div>
+              </>
+            )}
+
+            {/* AÇÕES DO WORKFLOW (adapta por is_cartao) */}
+            {conta.tipo === "pagar" && (
+              <>
+                <Separator className="my-4" />
+                <div className="space-y-3">
+                  {/* ===== WORKFLOW BOLETO/PIX/TRANSFERÊNCIA ===== */}
+                  {!isCartao && (
+                    <>
+                      {conta.status === "rascunho" && (
+                        <div className="space-y-2">
+                          <p className="text-xs text-muted-foreground">
+                            Revise os dados, docs e categoria. Valide para abrir.
+                          </p>
+                          <Button
+                            className="w-full bg-blue-700 hover:bg-blue-800 text-white gap-2"
+                            onClick={() => avancar("aberto")}
+                          >
+                            <ShieldCheck className="h-4 w-4" /> Validar e abrir
+                          </Button>
+                          <div className="flex gap-2 justify-center pt-1">
+                            <button
+                              className="text-[11px] text-muted-foreground hover:text-foreground underline"
+                              onClick={() => avancar("aprovado", "Validado e aprovado direto")}
+                            >
+                              Aprovar direto
+                            </button>
+                            <span className="text-[11px] text-muted-foreground">·</span>
+                            <button
+                              className="text-[11px] text-muted-foreground hover:text-foreground underline"
+                              onClick={() => avancar("pago", "Marcado como pago (retroativo)")}
+                            >
+                              Já foi pago
+                            </button>
+                          </div>
+                          <CancelarButton conta={conta} workflow={workflow} onClose={onClose} />
+                        </div>
+                      )}
+
+                      {(conta.status === "aberto" || conta.status === "atrasado") && (
+                        <div className="space-y-2">
+                          <p
+                            className={`text-xs ${conta.status === "atrasado" ? "text-red-600 font-medium" : "text-muted-foreground"}`}
+                          >
+                            {conta.status === "atrasado"
+                              ? "⚠ Atrasada! Aprove para enviar ao financeiro."
+                              : "Validada. Aprove para liberar."}
+                          </p>
+                          <Button
+                            className="w-full bg-purple-700 hover:bg-purple-800 text-white gap-2"
+                            onClick={() => avancar("aprovado")}
+                          >
+                            <ThumbsUp className="h-4 w-4" /> Aprovar pagamento
+                          </Button>
+                          <div className="flex justify-center pt-1">
+                            <button
+                              className="text-[11px] text-muted-foreground hover:text-foreground underline"
+                              onClick={() => avancar("pago", "Marcado como pago (retroativo)")}
+                            >
+                              Já foi pago
+                            </button>
+                          </div>
+                          <CancelarButton conta={conta} workflow={workflow} onClose={onClose} />
+                        </div>
+                      )}
+
+                      {conta.status === "aprovado" && (
+                        <div className="space-y-2">
+                          <p className="text-xs text-muted-foreground">
+                            Aprovado! Envie ao financeiro com todos os docs.
+                          </p>
+                          <Button
+                            className="w-full bg-amber-600 hover:bg-amber-700 text-white gap-2"
+                            onClick={() => setShowEnviar(true)}
+                          >
+                            <Send className="h-4 w-4" /> Enviar para pagamento
+                          </Button>
+                        </div>
+                      )}
+
+                      {conta.status === "agendado" && (
+                        <div className="space-y-2">
+                          <p className="text-xs text-muted-foreground">
+                            Enviado ao financeiro. Aguardando conciliação com extrato.
+                          </p>
+                          <div className="p-3 rounded-lg bg-amber-50 text-amber-700 text-sm flex items-center gap-2">
+                            <Clock className="h-4 w-4" /> Aguardando confirmação via extrato bancário
+                          </div>
+                          <button
+                            className="text-[11px] text-muted-foreground hover:text-foreground underline w-full text-center"
+                            onClick={() => setShowPag(true)}
+                          >
+                            Registrar pagamento manualmente (plano B)
+                          </button>
+                        </div>
+                      )}
+                    </>
+                  )}
+
+                  {/* ===== WORKFLOW CARTÃO (já pago, pula etapas) ===== */}
+                  {isCartao && (
+                    <>
+                      {conta.status === "rascunho" && (
+                        <div className="space-y-2">
+                          <div className="p-3 rounded-lg bg-blue-50 text-blue-700 text-xs">
+                            💳 Pagamento por cartão — já realizado. Valide os dados e docs para encaminhar ao financeiro.
+                          </div>
+                          <Button
+                            className="w-full bg-blue-700 hover:bg-blue-800 text-white gap-2"
+                            onClick={() => avancar("aberto")}
+                          >
+                            <ShieldCheck className="h-4 w-4" /> Validar
+                          </Button>
+                          <CancelarButton conta={conta} workflow={workflow} onClose={onClose} />
+                        </div>
+                      )}
+
+                      {(conta.status === "aberto" || conta.status === "atrasado") && (
+                        <div className="space-y-2">
+                          <div className="p-3 rounded-lg bg-blue-50 text-blue-700 text-xs">
+                            💳 Cartão — envie os docs pro financeiro e aguarde conciliação do extrato.
+                          </div>
+                          <Button
+                            className="w-full bg-amber-600 hover:bg-amber-700 text-white gap-2"
+                            onClick={() => setShowEnviar(true)}
+                          >
+                            <Send className="h-4 w-4" /> Encaminhar docs ao financeiro
+                          </Button>
+                          <CancelarButton conta={conta} workflow={workflow} onClose={onClose} />
+                        </div>
+                      )}
+
+                      {conta.status === "agendado" && (
+                        <div className="space-y-2">
+                          <div className="p-3 rounded-lg bg-amber-50 text-amber-700 text-sm flex items-center gap-2">
+                            <Clock className="h-4 w-4" /> Aguardando conciliação com extrato do cartão
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  )}
+
+                  {/* ===== STATUS FINAIS (ambos fluxos) ===== */}
+                  {conta.status === "pago" && (
+                    <div className="p-3 rounded-lg bg-green-50 text-green-700 text-sm flex items-center gap-2">
+                      <Check className="h-4 w-4" /> Pago em {formatDateBR(conta.data_pagamento)}
+                    </div>
+                  )}
+
+                  {conta.status === "conciliado" && (
+                    <div className="p-3 rounded-lg bg-teal-50 text-teal-700 text-sm flex items-center gap-2">
+                      <ShieldCheck className="h-4 w-4" /> Conciliado
+                    </div>
+                  )}
+
+                  {conta.status === "cancelado" && (
+                    <div className="space-y-2">
+                      <div className="p-3 rounded-lg bg-gray-100 text-gray-700 text-sm flex items-center gap-2">
+                        <X className="h-4 w-4" /> Cancelado
+                      </div>
+                      <Button
+                        variant="outline"
+                        className="w-full gap-2"
+                        onClick={() => avancar("rascunho", "Revertido para rascunho")}
+                      >
+                        <RotateCcw className="h-4 w-4" /> Reverter para rascunho
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+
+            {showPag && (
+              <RegistrarPagamentoDialog
+                open={showPag}
+                onOpenChange={setShowPag}
+                conta={{
+                  id: conta.id,
+                  descricao: conta.descricao,
+                  valor: conta.valor,
+                  forma_pagamento_id: conta.forma_pagamento_id,
+                }}
+                onPaid={onClose}
+              />
+            )}
+
+            {showEnviar && (
+              <EnviarPagamentoDialog
+                open={showEnviar}
+                onOpenChange={setShowEnviar}
+                conta={conta}
+                onDone={onClose}
+              />
+            )}
+
+            <Separator className="my-4" />
+            <TimelineHistorico contaId={conta.id} />
+          </>
+        )}
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+function CancelarButton({
+  conta,
+  workflow,
+  onClose,
+}: {
+  conta: { id: string; status: string };
+  workflow: ReturnType<typeof useContaWorkflow>;
+  onClose: () => void;
+}) {
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button
+          variant="ghost"
+          className="w-full text-red-500 hover:text-red-700 hover:bg-red-50 gap-2 text-xs"
+        >
+          <X className="h-3 w-3" /> Cancelar esta conta
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Cancelar esta conta?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Você poderá reverter depois se necessário.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Voltar</AlertDialogCancel>
+          <AlertDialogAction
+            className="bg-red-600 hover:bg-red-700 text-white"
+            onClick={async () => {
+              await workflow.mudarStatus.mutateAsync({
+                contaId: conta.id,
+                statusAnterior: conta.status,
+                novoStatus: "cancelado" as ContaStatus,
+                observacao: "Cancelado manualmente",
+              });
+              onClose();
+            }}
+          >
+            Sim, cancelar
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+
+function Linha({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <div className="flex items-start justify-between gap-3">
+      <span className="text-xs text-muted-foreground shrink-0">{label}</span>
+      <span className="text-sm text-right">{value}</span>
+    </div>
+  );
+}

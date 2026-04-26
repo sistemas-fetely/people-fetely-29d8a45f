@@ -234,7 +234,7 @@ export default function ColaboradorDetalhe() {
             }
           }
 
-          await (supabase as any).from("alertas_agendados").insert(alertas);
+          await supabase.from("alertas_agendados").insert(alertas);
         } catch (alertErr) {
           console.error("Erro ao criar alertas de experiência:", alertErr);
         }

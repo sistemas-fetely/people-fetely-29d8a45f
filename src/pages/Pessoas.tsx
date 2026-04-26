@@ -156,7 +156,7 @@ export default function Pessoas() {
         await supabase.from("colaborador_departamentos").delete().eq("colaborador_id", id);
         await supabase.from("colaborador_equipamentos").delete().eq("colaborador_id", id);
         await supabase.from("dependentes").delete().eq("colaborador_id", id);
-        await (supabase as any).from("alertas_agendados").delete().eq("colaborador_id", id);
+        await supabase.from("alertas_agendados").delete().eq("colaborador_id", id);
         await supabase.from("convites_cadastro").update({ colaborador_id: null }).eq("colaborador_id", id);
         const { error } = await supabase.from("colaboradores_clt").delete().eq("id", id);
         if (error) throw error;
@@ -165,7 +165,7 @@ export default function Pessoas() {
         await supabase.from("beneficios_pj").delete().eq("contrato_id", id);
         await supabase.from("contrato_pj_acessos_sistemas").delete().eq("contrato_pj_id", id);
         await supabase.from("contrato_pj_equipamentos").delete().eq("contrato_pj_id", id);
-        await (supabase as any).from("alertas_agendados").delete().eq("contrato_pj_id", id);
+        await supabase.from("alertas_agendados").delete().eq("contrato_pj_id", id);
         await supabase.from("convites_cadastro").update({ contrato_pj_id: null }).eq("contrato_pj_id", id);
         const { error } = await supabase.from("contratos_pj").delete().eq("id", id);
         if (error) throw error;

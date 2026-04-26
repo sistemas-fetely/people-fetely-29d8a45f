@@ -153,11 +153,10 @@ function tentarCombinacoesPorFornecedor(
       }
     }
     const dif = difPercent(alvo, soma);
-    // Só aceita match EXATO (≤0.1% — score 100)
-    if (dif > 0.1) continue;
+    if (dif > TOLERANCIA_PCT) continue;
     const base = calcularScoreBase(dif);
-    if (base < 100) continue;
-    const score = 100;
+    if (base < 95) continue;
+    const score = Math.min(99, base + Math.min(usados.length * 2, 10));
     if (!melhor || score > melhor.score) {
       melhor = { contas, soma, dif, score, fornecedores: usados };
     }
@@ -248,9 +247,21 @@ export function encontrarAgrupamentosCartao(
 
     if (combFornecedor) {
       escolha = combFornecedor;
+    } else {
+      // Estratégia 2: greedy
+      const greedy = buscarCombinacaoGreedy(candidatas, valorAlvo);
+      if (greedy) {
+        const soma = greedy.reduce((s, c) => s + num(c.valor), 0);
+        const dif = difPercent(valorAlvo, soma);
+        let score = calcularScoreBase(dif);
+        if (score === 0) continue;
+        if (/CARTAO|CARTÃO|FATURA|VISA|MASTER|ELO/.test(desc)) score += 5;
+        else if (/SISPAG|LOTE|REMESSA/.test(desc)) score += 3;
+        if (greedy.length >= 3) score += 2;
+        if (score < 85) continue;
+        escolha = { contas: greedy, soma, dif, score: Math.min(score, 99) };
+      }
     }
-    // Estratégia 2 (greedy fallback) REMOVIDA: IA sugere APENAS matches 100% exatos.
-    // Se não houver combinação perfeita por fornecedor, não sugere nada.
 
     if (!escolha) continue;
 

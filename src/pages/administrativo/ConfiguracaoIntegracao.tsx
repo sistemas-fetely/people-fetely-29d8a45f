@@ -1,14 +1,779 @@
-import { Settings2 } from "lucide-react";
-import AdminPlaceholder from "./_AdminPlaceholder";
+import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Eye, EyeOff, Loader2, RefreshCw, CheckCircle2, XCircle, AlertCircle, Settings2, ExternalLink, Mail, Plus, Pencil, Trash2 } from "lucide-react";
+import { toast } from "sonner";
+import { formatDistanceToNow, format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+
+const CALLBACK_URL = "https://people-fetely.lovable.app/administrativo/bling-callback";
 
 export default function ConfiguracaoIntegracao() {
+  const qc = useQueryClient();
+  const [showSecret, setShowSecret] = useState(false);
+  const [showAccess, setShowAccess] = useState(false);
+  const [showRefresh, setShowRefresh] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [syncing, setSyncing] = useState<string | null>(null);
+  const [syncResult, setSyncResult] = useState<any>(null);
+  const [manualCode, setManualCode] = useState("");
+  const [processingCode, setProcessingCode] = useState(false);
+  const [fixExecutado, setFixExecutado] = useState(false);
+
+  // Financeiro externo
+  const [showDialogFin, setShowDialogFin] = useState(false);
+  const [editingFin, setEditingFin] = useState<any>(null);
+  const [removingFin, setRemovingFin] = useState<any>(null);
+  const [finForm, setFinForm] = useState({ nome: "", email: "", observacao: "" });
+  const [savingFin, setSavingFin] = useState(false);
+
+  const [form, setForm] = useState({
+    client_id: "",
+    client_secret: "",
+    access_token: "",
+    refresh_token: "",
+    ativo: false,
+  });
+
+  const { data: config, isLoading } = useQuery({
+    queryKey: ["integracao-bling"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("integracoes_config")
+        .select("*")
+        .eq("sistema", "bling")
+        .maybeSingle();
+      if (error) throw error;
+      if (data) {
+        setForm({
+          client_id: data.client_id || "",
+          client_secret: data.client_secret || "",
+          access_token: data.access_token || "",
+          refresh_token: data.refresh_token || "",
+          ativo: data.ativo || false,
+        });
+      }
+      return data;
+    },
+  });
+
+  const { data: logs = [] } = useQuery({
+    queryKey: ["integracao-bling-logs"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("integracoes_sync_log")
+        .select("*")
+        .eq("sistema", "bling")
+        .order("created_at", { ascending: false })
+        .limit(20);
+      return data || [];
+    },
+    refetchInterval: syncing ? 2000 : false,
+  });
+
+  const { data: configFinanceiro = [] } = useQuery({
+    queryKey: ["config-financeiro-externo"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("config_financeiro_externo")
+        .select("*")
+        .order("nome");
+      return data || [];
+    },
+  });
+
+  function abrirNovoFin() {
+    setEditingFin(null);
+    setFinForm({ nome: "", email: "", observacao: "" });
+    setShowDialogFin(true);
+  }
+
+  function abrirEditarFin(fin: any) {
+    setEditingFin(fin);
+    setFinForm({ nome: fin.nome || "", email: fin.email || "", observacao: fin.observacao || "" });
+    setShowDialogFin(true);
+  }
+
+  async function salvarFinanceiro() {
+    if (!finForm.nome.trim() || !finForm.email.trim()) {
+      toast.error("Nome e email são obrigatórios");
+      return;
+    }
+    setSavingFin(true);
+    if (editingFin) {
+      const { error } = await supabase
+        .from("config_financeiro_externo")
+        .update({ nome: finForm.nome.trim(), email: finForm.email.trim(), observacao: finForm.observacao.trim() || null })
+        .eq("id", editingFin.id);
+      setSavingFin(false);
+      if (error) { toast.error("Erro: " + error.message); return; }
+      toast.success("Destinatário atualizado");
+    } else {
+      const { error } = await supabase
+        .from("config_financeiro_externo")
+        .insert({ nome: finForm.nome.trim(), email: finForm.email.trim(), observacao: finForm.observacao.trim() || null, ativo: true });
+      setSavingFin(false);
+      if (error) { toast.error("Erro: " + error.message); return; }
+      toast.success("Destinatário adicionado");
+    }
+    setShowDialogFin(false);
+    qc.invalidateQueries({ queryKey: ["config-financeiro-externo"] });
+  }
+
+  async function removerFinanceiro() {
+    if (!removingFin) return;
+    const { error } = await supabase
+      .from("config_financeiro_externo")
+      .delete()
+      .eq("id", removingFin.id);
+    if (error) { toast.error("Erro: " + error.message); return; }
+    toast.success("Destinatário removido");
+    setRemovingFin(null);
+    qc.invalidateQueries({ queryKey: ["config-financeiro-externo"] });
+  }
+
+  async function salvar() {
+    setSaving(true);
+    const { error } = await supabase
+      .from("integracoes_config")
+      .update({
+        client_id: form.client_id || null,
+        client_secret: form.client_secret || null,
+        access_token: form.access_token || null,
+        refresh_token: form.refresh_token || null,
+        ativo: form.ativo,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("sistema", "bling");
+    setSaving(false);
+    if (error) {
+      toast.error("Erro ao salvar: " + error.message);
+      return;
+    }
+    toast.success("Credenciais salvas");
+    qc.invalidateQueries({ queryKey: ["integracao-bling"] });
+  }
+
+  async function sincronizar(tipo: "contas_receber" | "pedidos" | "produtos") {
+    setSyncing(tipo);
+    setSyncResult(null);
+    const { data, error } = await supabase.functions.invoke("sync-bling-financeiro", {
+      body: { tipo },
+    });
+    setSyncing(null);
+    if (error) {
+      toast.error("Falha: " + error.message);
+      return;
+    }
+    if (data?.sucesso === false) {
+      toast.error(data.erro || "Erro desconhecido");
+      return;
+    }
+    setSyncResult(data);
+    toast.success(`Sync concluída: ${data?.criados || 0} novos, ${data?.atualizados || 0} atualizados`);
+    qc.invalidateQueries({ queryKey: ["integracao-bling"] });
+    qc.invalidateQueries({ queryKey: ["integracao-bling-logs"] });
+  }
+
+  async function testarConexao() {
+    setSyncing("ping");
+    try {
+      const { data, error } = await supabase.functions.invoke("sync-bling-financeiro", {
+        body: { tipo: "ping" },
+      });
+      if (error) throw new Error(error.message);
+      if (data?.sucesso === false) throw new Error(data.erro || "Erro");
+      toast.success("Conexão OK: " + (data?.mensagem || "Edge Function ativa"));
+    } catch (e: any) {
+      toast.error("Falha: " + (e?.message || String(e)));
+    } finally {
+      setSyncing(null);
+    }
+  }
+
+  async function handleSyncFull() {
+    setSyncing("full");
+    setSyncResult(null);
+    let totalCriados = 0;
+    let totalAtualizados = 0;
+    let totalErros = 0;
+    const detalhes: string[] = [];
+    const startTime = Date.now();
+
+    const etapas: Array<{ tipo: "contas_receber" | "pedidos" | "produtos"; label: string }> = [
+      { tipo: "contas_receber", label: "contas a receber" },
+      { tipo: "pedidos", label: "pedidos de venda" },
+      { tipo: "produtos", label: "produtos" },
+    ];
+
+    try {
+      for (const etapa of etapas) {
+        toast.info(`Sincronizando ${etapa.label}...`);
+        const { data, error } = await supabase.functions.invoke("sync-bling-financeiro", {
+          body: { tipo: etapa.tipo },
+        });
+        if (error) throw new Error(error.message);
+        if (data?.sucesso === false) throw new Error(data.erro || "Erro desconhecido");
+        if (data) {
+          totalCriados += data.criados || 0;
+          totalAtualizados += data.atualizados || 0;
+          totalErros += data.erros || 0;
+          if (data.detalhes) detalhes.push(data.detalhes);
+        }
+        qc.invalidateQueries({ queryKey: ["integracao-bling-logs"] });
+      }
+
+      setSyncResult({
+        criados: totalCriados,
+        atualizados: totalAtualizados,
+        erros: totalErros,
+        detalhes: detalhes.join(" | "),
+        duracao_ms: Date.now() - startTime,
+      });
+      toast.success(`Sync completo! ${totalCriados} novos, ${totalAtualizados} atualizados`);
+    } catch (e: any) {
+      toast.error("Erro no sync: " + (e?.message || String(e)));
+    } finally {
+      setSyncing(null);
+      qc.invalidateQueries({ queryKey: ["integracao-bling"] });
+      qc.invalidateQueries({ queryKey: ["integracao-bling-logs"] });
+    }
+  }
+
+  async function processarCodeManual() {
+    setProcessingCode(true);
+    try {
+      const code = manualCode.trim();
+      if (!code) throw new Error("Cole o código de autorização");
+
+      const { data, error } = await supabase.functions.invoke("sync-bling-financeiro", {
+        body: { tipo: "token_exchange", code, redirect_uri: CALLBACK_URL },
+      });
+
+      if (error) throw new Error(error.message || "Erro no servidor");
+      if (data?.sucesso === false) throw new Error(data.erro || "Erro desconhecido");
+
+      toast.success("Bling conectado com sucesso!");
+      setManualCode("");
+      qc.invalidateQueries({ queryKey: ["integracao-bling"] });
+    } catch (e: any) {
+      toast.error("Erro: " + (e?.message || String(e)));
+    } finally {
+      setProcessingCode(false);
+    }
+  }
+
+  function autorizarBling() {
+    if (!form.client_id) {
+      toast.error("Cadastre o Client ID antes de autorizar");
+      return;
+    }
+    salvar().then(() => {
+      const url = new URL("https://www.bling.com.br/Api/v3/oauth/authorize");
+      url.searchParams.set("response_type", "code");
+      url.searchParams.set("client_id", form.client_id);
+      url.searchParams.set("redirect_uri", CALLBACK_URL);
+      url.searchParams.set("state", "oauth");
+      window.open(url.toString(), "_blank");
+    });
+  }
+
+  async function corrigirConstraintLancamentos() {
+    try {
+      const { data, error } = await supabase.rpc("fix_lancamentos_origem_constraint" as any);
+      if (error) {
+        toast.error("Erro: " + error.message);
+      } else {
+        toast.success("Correção aplicada: " + (data || "OK"));
+        setFixExecutado(true);
+      }
+    } catch (e) {
+      toast.error("Erro: " + String(e));
+    }
+  }
+
+  const statusBadge = () => {
+    if (!config?.ativo) return <Badge variant="outline">Desconectado</Badge>;
+    if (config.ultima_sync_status === "erro") return <Badge variant="destructive">Erro</Badge>;
+    if (config.ultima_sync_status === "parcial")
+      return <Badge className="bg-amber-500 hover:bg-amber-500">Parcial</Badge>;
+    return <Badge className="bg-emerald-600 hover:bg-emerald-600">Conectado</Badge>;
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="h-6 w-6 animate-spin text-admin" />
+      </div>
+    );
+  }
+
   return (
-    <AdminPlaceholder
-      title="Configuração de Integração"
-      description="Conexão com Bling e outros sistemas externos"
-      icon={Settings2}
-      status="fase2"
-      detalhes="Integração será religada após a reconstrução do módulo financeiro."
-    />
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+            <Settings2 className="h-6 w-6 text-admin" />
+            Configuração da Integração
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Conecte o Sistema Financeiro Fetely à API do Bling.
+          </p>
+        </div>
+        {statusBadge()}
+      </div>
+
+      {/* Credenciais */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Credenciais Bling</CardTitle>
+          <CardDescription>
+            Cadastre o app no portal do Bling e cole as chaves abaixo.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid md:grid-cols-2 gap-4">
+            <div>
+              <Label>Client ID</Label>
+              <Input
+                value={form.client_id}
+                onChange={(e) => setForm({ ...form, client_id: e.target.value })}
+                placeholder="ex: abcd1234..."
+              />
+            </div>
+            <div>
+              <Label>Client Secret</Label>
+              <div className="relative">
+                <Input
+                  type={showSecret ? "text" : "password"}
+                  value={form.client_secret}
+                  onChange={(e) => setForm({ ...form, client_secret: e.target.value })}
+                  placeholder="••••••••••"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowSecret((s) => !s)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground"
+                >
+                  {showSecret ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+            </div>
+            <div>
+              <Label>Access Token</Label>
+              <div className="relative">
+                <Input
+                  type={showAccess ? "text" : "password"}
+                  value={form.access_token}
+                  onChange={(e) => setForm({ ...form, access_token: e.target.value })}
+                  placeholder="Gerado após autorização OAuth"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowAccess((s) => !s)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground"
+                >
+                  {showAccess ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+            </div>
+            <div>
+              <Label>Refresh Token</Label>
+              <div className="relative">
+                <Input
+                  type={showRefresh ? "text" : "password"}
+                  value={form.refresh_token}
+                  onChange={(e) => setForm({ ...form, refresh_token: e.target.value })}
+                  placeholder="Gerado após autorização OAuth"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowRefresh((s) => !s)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground"
+                >
+                  {showRefresh ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 p-3 rounded-lg border bg-muted/30">
+            <Switch
+              checked={form.ativo}
+              onCheckedChange={(v) => setForm({ ...form, ativo: v })}
+            />
+            <Label className="cursor-pointer">Integração ativa</Label>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            <Button onClick={salvar} disabled={saving} className="bg-admin hover:bg-admin/90 text-admin-foreground">
+              {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Salvar credenciais
+            </Button>
+            <Button variant="outline" onClick={autorizarBling} disabled={!form.client_id}>
+              <ExternalLink className="h-4 w-4 mr-2" />
+              Autorizar no Bling
+            </Button>
+            <Button
+              variant="outline"
+              onClick={testarConexao}
+              disabled={!!syncing}
+            >
+              {syncing === "ping" ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <CheckCircle2 className="h-4 w-4 mr-2" />
+              )}
+              Testar conexão
+            </Button>
+          </div>
+
+          <div className="mt-4 p-4 rounded-lg border border-dashed space-y-2">
+            <p className="text-xs text-muted-foreground">
+              Após autorizar no Bling, copie o <code>code=</code> da URL e cole aqui:
+            </p>
+            <div className="flex gap-2">
+              <Input
+                placeholder="Cole o code aqui"
+                value={manualCode}
+                onChange={(e) => setManualCode(e.target.value)}
+                className="flex-1 text-xs font-mono"
+              />
+              <Button
+                size="sm"
+                onClick={processarCodeManual}
+                disabled={!manualCode.trim() || processingCode}
+                className="bg-admin hover:bg-admin-accent text-admin-foreground"
+              >
+                {processingCode ? <Loader2 className="h-4 w-4 animate-spin" /> : "Conectar"}
+              </Button>
+            </div>
+          </div>
+
+        </CardContent>
+      </Card>
+
+      {/* Sincronização */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Sincronização</CardTitle>
+          <CardDescription>
+            {config?.ultima_sync_at
+              ? `Última sincronização ${formatDistanceToNow(new Date(config.ultima_sync_at), { addSuffix: true, locale: ptBR })}`
+              : "Nunca sincronizado"}
+            {config?.ultima_sync_detalhes && (
+              <span className="block mt-1 text-xs">{config.ultima_sync_detalhes}</span>
+            )}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex flex-wrap gap-2">
+            <Button
+              size="lg"
+              className="bg-admin hover:bg-admin/90 text-admin-foreground"
+              onClick={handleSyncFull}
+              disabled={!!syncing || !form.access_token}
+            >
+              {syncing === "full" ? (
+                <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+              ) : (
+                <RefreshCw className="h-5 w-5 mr-2" />
+              )}
+              Sincronizar tudo
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => sincronizar("contas_receber")}
+              disabled={!!syncing || !form.access_token}
+            >
+              Contas a receber
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => sincronizar("pedidos")}
+              disabled={!!syncing || !form.access_token}
+            >
+              Pedidos de venda
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => sincronizar("produtos")}
+              disabled={!!syncing || !form.access_token}
+            >
+              Produtos
+            </Button>
+          </div>
+
+          {syncResult && (
+            <div className="p-4 rounded-lg border bg-emerald-50 dark:bg-emerald-950/30 text-sm">
+              <div className="font-medium text-emerald-900 dark:text-emerald-200 mb-1">
+                ✅ Sincronização concluída
+              </div>
+              <div className="text-emerald-800 dark:text-emerald-300">
+                {syncResult.criados} novos | {syncResult.atualizados} atualizados |{" "}
+                {syncResult.erros} erros | {syncResult.duracao_ms}ms
+              </div>
+              {syncResult.detalhes && (
+                <div className="text-xs text-emerald-700 dark:text-emerald-400 mt-1">
+                  {syncResult.detalhes}
+                </div>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Financeiro externo */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Mail className="h-5 w-5 text-admin" />
+            Financeiro externo
+          </CardTitle>
+          <CardDescription>
+            Destinatários dos emails de solicitação de pagamento. O email é enviado automaticamente quando uma conta é enviada para pagamento.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {configFinanceiro.length === 0 ? (
+            <div className="text-center py-8 border border-dashed rounded-lg">
+              <p className="text-sm font-medium">Nenhum destinatário cadastrado</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Adicione o email do financeiro que recebe as solicitações de pagamento.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {configFinanceiro.map((fin: any) => (
+                <div
+                  key={fin.id}
+                  className="flex items-center justify-between p-3 rounded-lg border bg-card"
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium text-sm truncate">{fin.nome}</p>
+                      {!fin.ativo && <Badge variant="outline" className="text-xs">Inativo</Badge>}
+                    </div>
+                    <p className="text-xs text-muted-foreground truncate">{fin.email}</p>
+                    {fin.observacao && (
+                      <p className="text-xs text-muted-foreground mt-0.5 italic">{fin.observacao}</p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1 ml-3">
+                    <Button size="sm" variant="ghost" onClick={() => abrirEditarFin(fin)}>
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="text-destructive hover:text-destructive"
+                      onClick={() => setRemovingFin(fin)}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <Button
+            variant="outline"
+            className="w-full gap-2"
+            onClick={abrirNovoFin}
+          >
+            <Plus className="h-4 w-4" /> Adicionar destinatário
+          </Button>
+        </CardContent>
+      </Card>
+
+      {/* Dialog adicionar/editar financeiro */}
+      <Dialog open={showDialogFin} onOpenChange={setShowDialogFin}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{editingFin ? "Editar destinatário" : "Novo destinatário financeiro"}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <div>
+              <Label>Nome</Label>
+              <Input
+                placeholder="ex: João da Silva"
+                value={finForm.nome}
+                onChange={(e) => setFinForm({ ...finForm, nome: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label>Email</Label>
+              <Input
+                type="email"
+                placeholder="financeiro@empresa.com"
+                value={finForm.email}
+                onChange={(e) => setFinForm({ ...finForm, email: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label>Observação (opcional)</Label>
+              <Input
+                placeholder="ex: Receber só pagamentos acima de 1k"
+                value={finForm.observacao}
+                onChange={(e) => setFinForm({ ...finForm, observacao: e.target.value })}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDialogFin(false)}>Cancelar</Button>
+            <Button
+              onClick={salvarFinanceiro}
+              disabled={savingFin}
+              className="bg-admin hover:bg-admin/90 text-admin-foreground"
+            >
+              {savingFin && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Salvar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* AlertDialog confirmar remoção */}
+      <AlertDialog open={!!removingFin} onOpenChange={(open) => !open && setRemovingFin(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remover destinatário?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {removingFin && `${removingFin.nome} (${removingFin.email}) deixará de receber emails de solicitação de pagamento.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={removerFinanceiro}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Sim, remover
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Histórico */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Histórico de sincronizações</CardTitle>
+          <CardDescription>Últimas 20 execuções</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {logs.length === 0 ? (
+            <div className="text-center py-8 text-sm text-muted-foreground">
+              Nenhuma sincronização registrada ainda.
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Data</TableHead>
+                  <TableHead>Tipo</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Criados</TableHead>
+                  <TableHead className="text-right">Atualizados</TableHead>
+                  <TableHead className="text-right">Erros</TableHead>
+                  <TableHead className="text-right">Duração</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {logs.map((l: any) => (
+                  <TableRow key={l.id}>
+                    <TableCell className="text-xs">
+                      {format(new Date(l.created_at), "dd/MM HH:mm", { locale: ptBR })}
+                    </TableCell>
+                    <TableCell className="text-xs">{l.tipo}</TableCell>
+                    <TableCell>
+                      {l.status === "sucesso" && (
+                        <Badge className="bg-emerald-600 hover:bg-emerald-600">
+                          <CheckCircle2 className="h-3 w-3 mr-1" /> Sucesso
+                        </Badge>
+                      )}
+                      {l.status === "erro" && (
+                        <Badge variant="destructive">
+                          <XCircle className="h-3 w-3 mr-1" /> Erro
+                        </Badge>
+                      )}
+                      {l.status === "parcial" && (
+                        <Badge className="bg-amber-500 hover:bg-amber-500">
+                          <AlertCircle className="h-3 w-3 mr-1" /> Parcial
+                        </Badge>
+                      )}
+                      {l.status === "executando" && (
+                        <Badge variant="outline">
+                          <Loader2 className="h-3 w-3 mr-1 animate-spin" /> Executando
+                        </Badge>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right text-xs">{l.registros_criados ?? 0}</TableCell>
+                    <TableCell className="text-right text-xs">{l.registros_atualizados ?? 0}</TableCell>
+                    <TableCell className="text-right text-xs">{l.registros_erro ?? 0}</TableCell>
+                    <TableCell className="text-right text-xs">
+                      {l.duracao_ms ? `${l.duracao_ms}ms` : "-"}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card className="border border-dashed">
+        <CardHeader>
+          <CardTitle className="text-base">Manutenção do banco</CardTitle>
+          <CardDescription>Correções pontuais que precisam ser executadas manualmente.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2"
+            disabled={fixExecutado}
+            onClick={corrigirConstraintLancamentos}
+          >
+            Corrigir constraint de lançamentos
+          </Button>
+          {fixExecutado && <p className="text-xs text-success mt-2">Correção aplicada com sucesso!</p>}
+        </CardContent>
+      </Card>
+
+      {/* Como configurar */}
+      <Accordion type="single" collapsible>
+        <AccordionItem value="how">
+          <AccordionTrigger className="text-sm font-medium">
+            Como configurar a integração
+          </AccordionTrigger>
+          <AccordionContent className="text-sm text-muted-foreground space-y-2">
+            <ol className="list-decimal list-inside space-y-1.5">
+              <li>Acesse o portal do Bling → Configurações → API → Aplicativos</li>
+              <li>Crie um novo aplicativo com nome "Fetely Uauuu"</li>
+              <li>
+                URL de callback:{" "}
+                <code className="bg-muted px-1.5 py-0.5 rounded text-xs">
+                  {CALLBACK_URL}
+                </code>
+              </li>
+              <li>Copie Client ID e Client Secret nos campos acima e salve</li>
+              <li>Clique em "Autorizar no Bling" para gerar os tokens</li>
+              <li>Teste a conexão e sincronize os dados</li>
+            </ol>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
+    </div>
   );
 }

@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import { Loader2, Download, AlertTriangle, X, ListTree, Package, Link2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -35,18 +35,6 @@ interface Props {
 const formatBRL = (v: number) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v || 0);
 
-const formatDate = (dateStr: string | null | undefined): string => {
-  if (!dateStr) return "—";
-  try {
-    if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateStr)) return dateStr;
-    const [year, month, day] = dateStr.split("-");
-    if (year && month && day) return `${day}/${month}/${year}`;
-    return dateStr;
-  } catch {
-    return dateStr;
-  }
-};
-
 export function PreviewNFsImport({
   nfs,
   categorias,
@@ -60,21 +48,6 @@ export function PreviewNFsImport({
   const [regraCategoriaId, setRegraCategoriaId] = useState<string | null>(null);
   const [regraCategoriaNome, setRegraCategoriaNome] = useState<string | null>(null);
   const { data: regras } = useRegrasCategorizacao();
-
-  // Proteção contra saída acidental quando há NFs pendentes
-  useEffect(() => {
-    if (nfs.length === 0) return;
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      const pendentes = nfs.filter((n) => n._selecionada && !n._duplicata).length;
-      if (pendentes > 0) {
-        e.preventDefault();
-        e.returnValue = `Você tem ${pendentes} NFs prontas para importar! Se sair vai perder o progresso.`;
-        return e.returnValue;
-      }
-    };
-    window.addEventListener("beforeunload", handleBeforeUnload);
-    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-  }, [nfs]);
 
   const visibleIdx = useMemo(() => {
     return nfs
@@ -242,7 +215,7 @@ export function PreviewNFsImport({
           </TableHeader>
           <TableBody>
             {visibleIdx.map(({ nf, i }) => {
-              const temItens = !!(nf.itens && nf.itens.length >= 1);
+              const temItens = !!(nf.itens && nf.itens.length > 1);
               const expandido = !!nf._expandirItens;
               const itensClassificados = expandido && nf.itens
                 ? nf.itens.filter((it) => it._categoria_id).length
@@ -277,7 +250,7 @@ export function PreviewNFsImport({
                         <div className="text-muted-foreground">Série {nf.nf_serie}</div>
                       )}
                     </TableCell>
-                    <TableCell className="text-xs">{formatDate(nf.nf_data_emissao)}</TableCell>
+                    <TableCell className="text-xs">{nf.nf_data_emissao || "—"}</TableCell>
                     <TableCell className="text-right font-mono text-sm">
                       {nf.valor.toLocaleString("pt-BR", {
                         style: "currency",
