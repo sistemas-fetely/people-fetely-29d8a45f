@@ -351,9 +351,9 @@ export function NovaContaPagarSheet({ open, onOpenChange }: Props) {
                 onChange={(e) => setObsFinanceiro(e.target.value)}
                 rows={2}
                 placeholder="Ex: NF será encaminhada depois, aguardar confirmação de entrega, etc."
-                className="border-amber-300 bg-amber-50/30"
+                className="border-warning/40 bg-warning/5"
               />
-              <p className="text-xs text-amber-700 mt-1">
+              <p className="text-xs text-warning mt-1">
                 💡 Esta observação será vista pela equipe do financeiro
               </p>
             </div>
