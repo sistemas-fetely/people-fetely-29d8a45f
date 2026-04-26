@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FileText, Loader2 } from "lucide-react";
+import { useAutoSaveRascunho, restaurarRascunho } from "@/hooks/useAutoSaveRascunho";
 import {
   Card,
   CardContent,
@@ -30,6 +31,38 @@ export function ImportadorPdfDanfe({ categorias, onImported }: Props) {
   const [importing, setImporting] = useState(false);
   const [preview, setPreview] = useState<NFParsed[]>([]);
   const { data: regras } = useRegrasCategorizacao();
+
+  // Auto-save no banco a cada mudança no preview (debounce 2s)
+  const { clearRascunho, setRascunhoId } = useAutoSaveRascunho(preview, "pdf_danfe");
+
+  // Restaurar rascunho ao montar
+  useEffect(() => {
+    let cancelado = false;
+    (async () => {
+      const restaurado = await restaurarRascunho("pdf_danfe");
+      if (cancelado || !restaurado) return;
+
+      // Remove _arquivo (File não serializa) e marca para re-anexar
+      const nfsRestauradas = restaurado.nfs.map((nf) => ({
+        ...nf,
+        _arquivo: undefined,
+      }));
+
+      setPreview(nfsRestauradas);
+      setRascunhoId(restaurado.id);
+
+      const semArquivo = nfsRestauradas.length;
+      toast.info(
+        `${semArquivo} NF${semArquivo === 1 ? "" : "s"} restaurada${semArquivo === 1 ? "" : "s"} da sessão anterior. ` +
+          `Re-anexe os PDFs originais antes de importar para que os arquivos fiquem nas contas.`,
+        { duration: 8000 },
+      );
+    })();
+    return () => {
+      cancelado = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function handleFiles(e: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files || []);
@@ -110,6 +143,7 @@ export function ImportadorPdfDanfe({ categorias, onImported }: Props) {
       if (result.erros > 0) partes.push(`${result.erros} erro${result.erros === 1 ? "" : "s"}`);
       toast.success(`Importação: ${partes.join(", ")}`);
       setPreview([]);
+      await clearRascunho();
       onImported?.();
     } else if (result.erros > 0) {
       toast.error(`${result.erros} erros ao importar`);

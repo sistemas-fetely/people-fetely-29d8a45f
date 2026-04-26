@@ -23,10 +23,7 @@ import { buscarMatchPagamentos } from "@/lib/financeiro/match-pagamentos";
 import type { NFParsed } from "@/lib/financeiro/types";
 import type { CategoriaOption } from "@/components/financeiro/CategoriaCombobox";
 import { PreviewNFsImport } from "./PreviewNFsImport";
-
-const STORAGE_KEY = "import_preview_nfs";
-const STORAGE_TS_KEY = "import_preview_timestamp";
-const MAX_AGE_MS = 30 * 60 * 1000; // 30 min
+import { useAutoSaveRascunho, restaurarRascunho } from "@/hooks/useAutoSaveRascunho";
 
 interface Props {
   categorias: CategoriaOption[];
@@ -36,46 +33,27 @@ interface Props {
 export function ImportadorCsvQive({ categorias, onImported }: Props) {
   const [parsing, setParsing] = useState(false);
   const [importing, setImporting] = useState(false);
-  const [preview, setPreviewState] = useState<NFParsed[]>([]);
+  const [preview, setPreview] = useState<NFParsed[]>([]);
   const { data: regras } = useRegrasCategorizacao();
 
-  // Salvar preview no sessionStorage sempre que mudar
-  function setPreview(nfs: NFParsed[]) {
-    setPreviewState(nfs);
-    try {
-      if (nfs.length === 0) {
-        sessionStorage.removeItem(STORAGE_KEY);
-        sessionStorage.removeItem(STORAGE_TS_KEY);
-      } else {
-        sessionStorage.setItem(STORAGE_KEY, JSON.stringify(nfs));
-        sessionStorage.setItem(STORAGE_TS_KEY, Date.now().toString());
-      }
-    } catch {
-      // sessionStorage cheio ou indisponível — segue sem persistência
-    }
-  }
+  // Auto-save no banco a cada mudança no preview (debounce 2s)
+  const { clearRascunho, setRascunhoId } = useAutoSaveRascunho(preview, "csv_qive");
 
-  // Restaurar preview ao montar
+  // Restaurar rascunho ao montar
   useEffect(() => {
-    try {
-      const saved = sessionStorage.getItem(STORAGE_KEY);
-      const ts = sessionStorage.getItem(STORAGE_TS_KEY);
-      if (saved && ts) {
-        const idade = Date.now() - parseInt(ts, 10);
-        if (idade < MAX_AGE_MS) {
-          const parsed = JSON.parse(saved) as NFParsed[];
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            setPreviewState(parsed);
-            toast.info("Preview restaurado da sessão anterior");
-          }
-        } else {
-          sessionStorage.removeItem(STORAGE_KEY);
-          sessionStorage.removeItem(STORAGE_TS_KEY);
-        }
-      }
-    } catch {
-      // ignore
-    }
+    let cancelado = false;
+    (async () => {
+      const restaurado = await restaurarRascunho("csv_qive");
+      if (cancelado || !restaurado) return;
+      setPreview(restaurado.nfs);
+      setRascunhoId(restaurado.id);
+      toast.info(
+        `${restaurado.nfs.length} NF${restaurado.nfs.length === 1 ? "" : "s"} restaurada${restaurado.nfs.length === 1 ? "" : "s"} da sessão anterior.`,
+      );
+    })();
+    return () => {
+      cancelado = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -139,6 +117,7 @@ export function ImportadorCsvQive({ categorias, onImported }: Props) {
       if (result.erros > 0) partes.push(`${result.erros} erro${result.erros === 1 ? "" : "s"}`);
       toast.success(`Importação: ${partes.join(", ")}`);
       setPreview([]);
+      await clearRascunho();
       onImported?.();
     } else if (result.erros > 0) {
       toast.error(`${result.erros} erros ao importar`);
