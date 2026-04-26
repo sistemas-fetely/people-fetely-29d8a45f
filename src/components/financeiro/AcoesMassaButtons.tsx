@@ -116,19 +116,6 @@ export default function AcoesMassaButtons({ contas, onDone }: Props) {
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuLabel className="text-xs">Ações em massa</DropdownMenuLabel>
-          {nAprovado > 0 && (
-            <DropdownMenuItem
-              onClick={() =>
-                executarLote(
-                  "finalizado",
-                  ["aprovado"],
-                  "Finalizado direto em massa (NF entregue fora do sistema)",
-                )
-              }
-            >
-              Finalizar aprovados (NF entregue manual)
-            </DropdownMenuItem>
-          )}
           <DropdownMenuSeparator />
           <AlertDialog>
             <AlertDialogTrigger asChild>

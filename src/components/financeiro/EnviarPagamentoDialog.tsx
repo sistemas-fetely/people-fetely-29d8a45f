@@ -15,10 +15,28 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Send } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { FileText, Loader2, Send } from "lucide-react";
 import { toast } from "sonner";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
 import { useContaWorkflow } from "@/hooks/useContaWorkflow";
+
+const TIPO_DOC_LABEL: Record<string, string> = {
+  nf: "NF",
+  recibo: "Recibo",
+  boleto: "Boleto",
+  ticket_cartao: "Ticket cartão",
+  comprovante: "Comprovante",
+  contrato: "Contrato",
+  outro: "Outro",
+};
+
+interface DocAnexo {
+  id: string;
+  tipo: string;
+  nome_arquivo: string;
+  storage_path: string;
+}
 
 type Conta = {
   id: string;
@@ -28,9 +46,9 @@ type Conta = {
   data_vencimento: string | null;
   status: string;
   nf_numero?: string | null;
+  nf_chave_acesso?: string | null;
   nf_pdf_url?: string | null;
   nf_xml_url?: string | null;
-  nf_chave_acesso?: string | null;
   plano_contas?: { codigo?: string | null; nome?: string | null } | null;
   parceiros_comerciais?: { razao_social?: string | null } | null;
   dados_pagamento_fornecedor?: {
@@ -61,6 +79,23 @@ export default function EnviarPagamentoDialog({ open, onOpenChange, conta, onDon
   });
   const [emailDestinatario, setEmailDestinatario] = useState("");
   const [obsEnvio, setObsEnvio] = useState("");
+  const [mensagemEmail, setMensagemEmail] = useState("");
+  const [docsSelecionados, setDocsSelecionados] = useState<Set<string>>(new Set());
+
+  // Buscar documentos anexados à conta
+  const { data: documentos } = useQuery({
+    queryKey: ["envio-pagto-docs", conta.id],
+    enabled: open,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("contas_pagar_documentos")
+        .select("id, tipo, nome_arquivo, storage_path")
+        .eq("conta_id", conta.id)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data || []) as DocAnexo[];
+    },
+  });
 
   // Buscar últimos dados bancários usados pra esse parceiro
   const { data: ultimosDados } = useQuery({
@@ -124,6 +159,32 @@ export default function EnviarPagamentoDialog({ open, onOpenChange, conta, onDon
     }
   }, [destinatarios, emailDestinatario]);
 
+  // Inicializar mensagem padrão e selecionar todos os docs ao abrir
+  useEffect(() => {
+    if (!open) return;
+    const fornecedor =
+      conta.parceiros_comerciais?.razao_social ||
+      conta.fornecedor_cliente ||
+      "Fornecedor";
+    const msgPadrao =
+      `Olá,\n\n` +
+      `Segue solicitação de pagamento ao fornecedor ${fornecedor} no valor de ${formatBRL(conta.valor)}, ` +
+      `com vencimento em ${formatDateBR(conta.data_vencimento)}.\n\n` +
+      `${conta.nf_numero ? `Nota Fiscal nº ${conta.nf_numero}.\n\n` : ""}` +
+      `Os dados bancários e documentos relacionados seguem anexos abaixo.\n\n` +
+      `Qualquer dúvida, estou à disposição.\n\n` +
+      `Obrigado.`;
+    setMensagemEmail(msgPadrao);
+  }, [open, conta]);
+
+  // Selecionar todos os documentos por default quando carregam
+  useEffect(() => {
+    if (documentos && documentos.length > 0 && docsSelecionados.size === 0) {
+      setDocsSelecionados(new Set(documentos.map((d) => d.id)));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [documentos]);
+
   const fornecedorNome = useMemo(
     () =>
       conta.parceiros_comerciais?.razao_social ||
@@ -171,7 +232,23 @@ export default function EnviarPagamentoDialog({ open, onOpenChange, conta, onDon
         },
       });
 
-      // 2) Enviar email (best-effort)
+      // 2) Gerar URLs assinadas dos documentos selecionados (válidas por 30 dias)
+      const docsParaEnviar = (documentos || []).filter((d) => docsSelecionados.has(d.id));
+      const linksDocs: { tipo: string; nome: string; url: string }[] = [];
+      for (const doc of docsParaEnviar) {
+        const { data: signed } = await supabase.storage
+          .from("financeiro-docs")
+          .createSignedUrl(doc.storage_path, 60 * 60 * 24 * 30); // 30 dias
+        if (signed?.signedUrl) {
+          linksDocs.push({
+            tipo: TIPO_DOC_LABEL[doc.tipo] || doc.tipo,
+            nome: doc.nome_arquivo,
+            url: signed.signedUrl,
+          });
+        }
+      }
+
+      // 3) Enviar email (best-effort)
       const emailResult = await supabase.functions.invoke("send-transactional-email", {
         body: {
           templateName: "pagamento-solicitacao",
@@ -188,6 +265,8 @@ export default function EnviarPagamentoDialog({ open, onOpenChange, conta, onDon
             conta_bancaria: dadosPgto.conta || "—",
             pix: dadosPgto.pix || "—",
             observacao: obsEnvio || "—",
+            mensagem_personalizada: mensagemEmail || "",
+            documentos_links: linksDocs,
             solicitante: user?.email || "",
           },
         },
@@ -255,7 +334,7 @@ export default function EnviarPagamentoDialog({ open, onOpenChange, conta, onDon
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Enviar para pagamento</DialogTitle>
           <DialogDescription>
@@ -358,29 +437,77 @@ export default function EnviarPagamentoDialog({ open, onOpenChange, conta, onDon
             )}
           </div>
 
-          {/* Observação */}
+          {/* Mensagem do email - EDITÁVEL */}
           <div className="space-y-1">
             <Label className="text-xs uppercase tracking-wide text-muted-foreground">
-              Observação para o financeiro
+              Mensagem do e-mail
+            </Label>
+            <Textarea
+              value={mensagemEmail}
+              onChange={(e) => setMensagemEmail(e.target.value)}
+              rows={8}
+              className="font-mono text-xs"
+            />
+            <p className="text-[10px] text-muted-foreground">
+              Edite o texto que será enviado ao financeiro. Os dados estruturados (valor, banco, etc) aparecem em tabela separada.
+            </p>
+          </div>
+
+          {/* Observação adicional */}
+          <div className="space-y-1">
+            <Label className="text-xs uppercase tracking-wide text-muted-foreground">
+              Observação interna
             </Label>
             <Textarea
               value={obsEnvio}
               onChange={(e) => setObsEnvio(e.target.value)}
-              placeholder="Opcional"
+              placeholder="Opcional - aparece destacado no email"
               rows={2}
             />
           </div>
 
-          {/* Documentos */}
-          {(conta.nf_pdf_url || conta.nf_xml_url) && (
-            <div className="text-xs text-muted-foreground">
-              Documentos referenciados:
-              {conta.nf_pdf_url && (
-                <Badge variant="outline" className="ml-1">PDF da NF</Badge>
-              )}
-              {conta.nf_xml_url && (
-                <Badge variant="outline" className="ml-1">XML da NF</Badge>
-              )}
+          {/* Documentos para anexar (selecionar quais) */}
+          {documentos && documentos.length > 0 && (
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">
+                Documentos para anexar ({docsSelecionados.size}/{documentos.length})
+              </Label>
+              <div className="space-y-1.5 border rounded-md p-2">
+                {documentos.map((doc) => (
+                  <div key={doc.id} className="flex items-center gap-2 text-xs">
+                    <Checkbox
+                      id={`doc-${doc.id}`}
+                      checked={docsSelecionados.has(doc.id)}
+                      onCheckedChange={(checked) => {
+                        const next = new Set(docsSelecionados);
+                        if (checked) next.add(doc.id);
+                        else next.delete(doc.id);
+                        setDocsSelecionados(next);
+                      }}
+                    />
+                    <FileText className="h-3 w-3 text-muted-foreground shrink-0" />
+                    <Badge variant="outline" className="text-[9px] py-0 px-1.5">
+                      {TIPO_DOC_LABEL[doc.tipo] || doc.tipo}
+                    </Badge>
+                    <label
+                      htmlFor={`doc-${doc.id}`}
+                      className="truncate flex-1 cursor-pointer"
+                      title={doc.nome_arquivo}
+                    >
+                      {doc.nome_arquivo}
+                    </label>
+                  </div>
+                ))}
+              </div>
+              <p className="text-[10px] text-muted-foreground">
+                Os documentos selecionados serão enviados como links seguros (válidos por 30 dias) no e-mail.
+              </p>
+            </div>
+          )}
+
+          {!documentos?.length && (
+            <div className="text-xs text-amber-700 bg-amber-50 p-2 rounded-md border border-amber-200">
+              ⚠ Nenhum documento anexado a esta conta. O envio será feito sem anexos.
             </div>
           )}
         </div>

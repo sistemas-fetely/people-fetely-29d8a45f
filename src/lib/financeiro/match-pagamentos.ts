@@ -12,6 +12,7 @@ interface ContaMatch {
   data_vencimento: string | null;
   nf_cnpj_emitente: string | null;
   nf_chave_acesso: string | null;
+  nf_numero: string | null;
   fornecedor_cliente: string | null;
   status: string;
   docs_status: string | null;
@@ -25,28 +26,31 @@ export async function buscarMatchPagamentos(nfs: NFParsed[]): Promise<NFParsed[]
     .filter((c) => c.length > 0);
 
   // Buscar contas a pagar SEM NF vinculada (com CNPJ)
+  // Importante: SEM nf_numero também (evita vincular NF nova em conta que já tem outra NF)
   let contasPorCnpj: ContaMatch[] = [];
   if (cnpjs.length > 0) {
     const { data } = await supabase
       .from("contas_pagar_receber")
       .select(
-        "id, valor, data_vencimento, nf_cnpj_emitente, nf_chave_acesso, fornecedor_cliente, status, docs_status, conta_id",
+        "id, valor, data_vencimento, nf_cnpj_emitente, nf_chave_acesso, nf_numero, fornecedor_cliente, status, docs_status, conta_id",
       )
       .eq("tipo", "pagar")
       .is("nf_chave_acesso", null)
+      .is("nf_numero", null)
       .in("nf_cnpj_emitente", cnpjs)
       .neq("status", "cancelado");
     contasPorCnpj = (data || []) as ContaMatch[];
   }
 
-  // Buscar contas SEM CNPJ (match por nome+valor)
+  // Buscar contas SEM CNPJ e SEM NF (match por nome+valor)
   const { data: dataSemCnpj } = await supabase
     .from("contas_pagar_receber")
     .select(
-      "id, valor, data_vencimento, nf_cnpj_emitente, nf_chave_acesso, fornecedor_cliente, status, docs_status, conta_id",
+      "id, valor, data_vencimento, nf_cnpj_emitente, nf_chave_acesso, nf_numero, fornecedor_cliente, status, docs_status, conta_id",
     )
     .eq("tipo", "pagar")
     .is("nf_chave_acesso", null)
+    .is("nf_numero", null)
     .is("nf_cnpj_emitente", null)
     .neq("status", "cancelado");
 
