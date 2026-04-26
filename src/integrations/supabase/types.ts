@@ -65,79 +65,6 @@ export type Database = {
         }
         Relationships: []
       }
-      alertas_agendados: {
-        Row: {
-          colaborador_id: string | null
-          contrato_pj_id: string | null
-          convite_id: string | null
-          created_at: string
-          data_alerta: string
-          executado: boolean
-          executado_em: string | null
-          id: string
-          link: string | null
-          mensagem: string | null
-          tipo: string
-          titulo: string
-          updated_at: string
-          user_id: string | null
-        }
-        Insert: {
-          colaborador_id?: string | null
-          contrato_pj_id?: string | null
-          convite_id?: string | null
-          created_at?: string
-          data_alerta: string
-          executado?: boolean
-          executado_em?: string | null
-          id?: string
-          link?: string | null
-          mensagem?: string | null
-          tipo: string
-          titulo: string
-          updated_at?: string
-          user_id?: string | null
-        }
-        Update: {
-          colaborador_id?: string | null
-          contrato_pj_id?: string | null
-          convite_id?: string | null
-          created_at?: string
-          data_alerta?: string
-          executado?: boolean
-          executado_em?: string | null
-          id?: string
-          link?: string | null
-          mensagem?: string | null
-          tipo?: string
-          titulo?: string
-          updated_at?: string
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "alertas_agendados_colaborador_id_fkey"
-            columns: ["colaborador_id"]
-            isOneToOne: false
-            referencedRelation: "colaboradores_clt"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "alertas_agendados_contrato_pj_id_fkey"
-            columns: ["contrato_pj_id"]
-            isOneToOne: false
-            referencedRelation: "contratos_pj"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "alertas_agendados_convite_id_fkey"
-            columns: ["convite_id"]
-            isOneToOne: false
-            referencedRelation: "convites_cadastro"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       atribuicao_origem: {
         Row: {
           atribuicao_id: string
@@ -219,6 +146,162 @@ export type Database = {
           user_email?: string | null
           user_id?: string | null
           user_nome?: string | null
+        }
+        Relationships: []
+      }
+      backup_movimentacoes_bancarias_20260426: {
+        Row: {
+          centro_custo: string | null
+          conciliado: boolean | null
+          conciliado_em: string | null
+          conciliado_por: string | null
+          conta_bancaria_id: string | null
+          conta_pagar_id: string | null
+          conta_plano_id: string | null
+          created_at: string | null
+          data_balancete: string | null
+          data_transacao: string | null
+          descricao: string | null
+          hash_unico: string | null
+          id: string | null
+          id_transacao_banco: string | null
+          importacao_id: string | null
+          origem: string | null
+          saldo_pos_transacao: number | null
+          tipo: string | null
+          tipo_pagamento: string | null
+          valor: number | null
+        }
+        Insert: {
+          centro_custo?: string | null
+          conciliado?: boolean | null
+          conciliado_em?: string | null
+          conciliado_por?: string | null
+          conta_bancaria_id?: string | null
+          conta_pagar_id?: string | null
+          conta_plano_id?: string | null
+          created_at?: string | null
+          data_balancete?: string | null
+          data_transacao?: string | null
+          descricao?: string | null
+          hash_unico?: string | null
+          id?: string | null
+          id_transacao_banco?: string | null
+          importacao_id?: string | null
+          origem?: string | null
+          saldo_pos_transacao?: number | null
+          tipo?: string | null
+          tipo_pagamento?: string | null
+          valor?: number | null
+        }
+        Update: {
+          centro_custo?: string | null
+          conciliado?: boolean | null
+          conciliado_em?: string | null
+          conciliado_por?: string | null
+          conta_bancaria_id?: string | null
+          conta_pagar_id?: string | null
+          conta_plano_id?: string | null
+          created_at?: string | null
+          data_balancete?: string | null
+          data_transacao?: string | null
+          descricao?: string | null
+          hash_unico?: string | null
+          id?: string | null
+          id_transacao_banco?: string | null
+          importacao_id?: string | null
+          origem?: string | null
+          saldo_pos_transacao?: number | null
+          tipo?: string | null
+          tipo_pagamento?: string | null
+          valor?: number | null
+        }
+        Relationships: []
+      }
+      backup_parceiros_comerciais_20260426: {
+        Row: {
+          ativo: boolean | null
+          bairro: string | null
+          bling_id: string | null
+          canal: string | null
+          categoria_padrao_id: string | null
+          centro_custo_padrao: string | null
+          cep: string | null
+          cidade: string | null
+          cnpj: string | null
+          cpf: string | null
+          created_at: string | null
+          email: string | null
+          id: string | null
+          logradouro: string | null
+          nome_fantasia: string | null
+          numero: string | null
+          observacao: string | null
+          origem: string | null
+          razao_social: string | null
+          segmento: string | null
+          tags: string[] | null
+          telefone: string | null
+          tipo: string | null
+          tipos: string[] | null
+          uf: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          bairro?: string | null
+          bling_id?: string | null
+          canal?: string | null
+          categoria_padrao_id?: string | null
+          centro_custo_padrao?: string | null
+          cep?: string | null
+          cidade?: string | null
+          cnpj?: string | null
+          cpf?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string | null
+          logradouro?: string | null
+          nome_fantasia?: string | null
+          numero?: string | null
+          observacao?: string | null
+          origem?: string | null
+          razao_social?: string | null
+          segmento?: string | null
+          tags?: string[] | null
+          telefone?: string | null
+          tipo?: string | null
+          tipos?: string[] | null
+          uf?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          ativo?: boolean | null
+          bairro?: string | null
+          bling_id?: string | null
+          canal?: string | null
+          categoria_padrao_id?: string | null
+          centro_custo_padrao?: string | null
+          cep?: string | null
+          cidade?: string | null
+          cnpj?: string | null
+          cpf?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string | null
+          logradouro?: string | null
+          nome_fantasia?: string | null
+          numero?: string | null
+          observacao?: string | null
+          origem?: string | null
+          razao_social?: string | null
+          segmento?: string | null
+          tags?: string[] | null
+          telefone?: string | null
+          tipo?: string | null
+          tipos?: string[] | null
+          uf?: string | null
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -1341,13 +1424,6 @@ export type Database = {
             referencedRelation: "conciliacoes_agrupadas"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "conciliacoes_agrupadas_itens_conta_pagar_id_fkey"
-            columns: ["conta_pagar_id"]
-            isOneToOne: false
-            referencedRelation: "contas_pagar_receber"
-            referencedColumns: ["id"]
-          },
         ]
       }
       config_financeiro_externo: {
@@ -1498,44 +1574,6 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "contas_pagar_documentos_conta_id_fkey"
-            columns: ["conta_id"]
-            isOneToOne: false
-            referencedRelation: "contas_pagar_receber"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      contas_pagar_historico: {
-        Row: {
-          conta_id: string
-          created_at: string | null
-          id: string
-          observacao: string | null
-          status_anterior: string | null
-          status_novo: string
-          usuario_id: string | null
-        }
-        Insert: {
-          conta_id: string
-          created_at?: string | null
-          id?: string
-          observacao?: string | null
-          status_anterior?: string | null
-          status_novo: string
-          usuario_id?: string | null
-        }
-        Update: {
-          conta_id?: string
-          created_at?: string | null
-          id?: string
-          observacao?: string | null
-          status_anterior?: string | null
-          status_novo?: string
-          usuario_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "contas_pagar_historico_conta_id_fkey"
             columns: ["conta_id"]
             isOneToOne: false
             referencedRelation: "contas_pagar_receber"
@@ -1724,7 +1762,7 @@ export type Database = {
           sla_pagamento_dias?: number | null
           status?: string
           tarefa_id?: string | null
-          tipo: string
+          tipo?: string
           unidade?: string | null
           updated_at?: string | null
           valor: number
@@ -1800,13 +1838,6 @@ export type Database = {
             columns: ["forma_pagamento_id"]
             isOneToOne: false
             referencedRelation: "formas_pagamento"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "contas_pagar_receber_fornecedor_id_fkey"
-            columns: ["fornecedor_id"]
-            isOneToOne: false
-            referencedRelation: "parceiros_comerciais"
             referencedColumns: ["id"]
           },
           {
@@ -3776,13 +3807,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "movimentacoes_bancarias_conta_pagar_id_fkey"
-            columns: ["conta_pagar_id"]
-            isOneToOne: false
-            referencedRelation: "contas_pagar_receber"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "movimentacoes_bancarias_conta_plano_id_fkey"
             columns: ["conta_plano_id"]
             isOneToOne: false
@@ -5654,6 +5678,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      rascunhos_importacao: {
+        Row: {
+          created_at: string
+          id: string
+          nfs_json: Json
+          tipo_importacao: string
+          updated_at: string
+          usuario_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          nfs_json: Json
+          tipo_importacao: string
+          updated_at?: string
+          usuario_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          nfs_json?: Json
+          tipo_importacao?: string
+          updated_at?: string
+          usuario_id?: string
+        }
+        Relationships: []
       }
       regras_categorizacao: {
         Row: {
@@ -7545,6 +7596,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      limpar_rascunhos_antigos: { Args: never; Returns: number }
       marcar_nf_enviada_pagamento: {
         Args: { _email_destinatario: string; _nota_id: string }
         Returns: Json
