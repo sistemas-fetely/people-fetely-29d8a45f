@@ -77,6 +77,7 @@ export function ImportadorPdfDanfe({ categorias, onImported }: Props) {
                 }))
               : [],
             _source: "pdf_nfe",
+            _arquivo: f,
           };
           novas.push(nf);
         } catch (err: any) {

@@ -8,6 +8,45 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { NFParsed } from "./types";
 
+async function anexarPdfNF(
+  contaId: string,
+  arquivo: File,
+  nfNumero: string | undefined,
+  errosDetalhe: string[],
+): Promise<void> {
+  try {
+    const nomeLimpo = arquivo.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+    const path = `contas-pagar/${contaId}/${Date.now()}_${nomeLimpo}`;
+    const { error: upErr } = await supabase.storage
+      .from("financeiro-docs")
+      .upload(path, arquivo, {
+        contentType: arquivo.type || "application/pdf",
+        upsert: false,
+      });
+    if (upErr) {
+      errosDetalhe.push(`Upload PDF NF ${nfNumero || "s/n"}: ${upErr.message}`);
+      return;
+    }
+    const { data: userData } = await supabase.auth.getUser();
+    const { error: docErr } = await supabase
+      .from("contas_pagar_documentos")
+      .insert({
+        conta_id: contaId,
+        tipo: "nf",
+        nome_arquivo: arquivo.name,
+        storage_path: path,
+        tamanho_bytes: arquivo.size,
+        uploaded_por: userData.user?.id || null,
+      } as any);
+    if (docErr) {
+      errosDetalhe.push(`Registro doc NF ${nfNumero || "s/n"}: ${docErr.message}`);
+      await supabase.storage.from("financeiro-docs").remove([path]);
+    }
+  } catch (e: any) {
+    errosDetalhe.push(`Anexar PDF NF ${nfNumero || "s/n"}: ${e?.message || e}`);
+  }
+}
+
 export async function verificarDuplicatas(nfs: NFParsed[]): Promise<NFParsed[]> {
   const chaves = nfs.map((n) => n.nf_chave_acesso).filter((c): c is string => !!c);
   if (chaves.length === 0) return nfs.map((n) => ({ ...n, _duplicata: false }));
@@ -104,6 +143,11 @@ export async function importarNFs(nfs: NFParsed[]): Promise<ImportResult> {
             }));
             await supabase.from("contas_pagar_itens").insert(itensInsert as any);
           }
+        }
+
+        // Anexar PDF se for importação de PDF
+        if (nf._arquivo && nf._source === "pdf_nfe") {
+          await anexarPdfNF(contaId, nf._arquivo, nf.nf_numero, errosDetalhe);
         }
 
         vinculadas++;
@@ -227,6 +271,11 @@ export async function importarNFs(nfs: NFParsed[]): Promise<ImportResult> {
           // Não falhar a NF inteira por causa de itens, mas registrar
           errosDetalhe.push(`Itens da NF ${nf.nf_numero}: ${itErr.message}`);
         }
+      }
+
+      // Anexar PDF se for importação de PDF
+      if (nf._arquivo && nf._source === "pdf_nfe" && contaCriada) {
+        await anexarPdfNF(contaCriada.id, nf._arquivo, nf.nf_numero, errosDetalhe);
       }
 
       sucesso++;
