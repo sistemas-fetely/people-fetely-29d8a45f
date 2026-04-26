@@ -104,7 +104,7 @@ function contaToFormState(conta: ContaPagarComRelacionados): FormState {
     parcelas: conta.parcelas ?? 1,
     categoria_id: conta.categoria_id ?? null,
     centro_custo: conta.centro_custo ?? "",
-    unidade: conta.unidade ?? "matriz_sp",
+    unidade: conta.unidade ?? "",
     forma_pagamento: conta.forma_pagamento ?? "",
     nf_numero: conta.nf_numero ?? "",
     nf_serie: conta.nf_serie ?? "",
