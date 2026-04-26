@@ -72,7 +72,7 @@ export interface NFParsed {
   } | null;
 
   // Metadado de origem do import
-  _source: "csv_qive" | "xml_nfe" | "pdf_nfe";
+  _source: "csv_qive" | "xml_nfe" | "pdf_nfe" | "xml_nfse" | "pdf_invoice";
 }
 
 export interface RegraCategorizacao {
