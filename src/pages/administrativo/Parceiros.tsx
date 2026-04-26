@@ -55,6 +55,46 @@ export default function Parceiros() {
   const [filtroStatus, setFiltroStatus] = useState<string>("ativos");
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Parceiro | null>(null);
+  const [parceiroParaExcluir, setParceiroParaExcluir] = useState<Parceiro | null>(null);
+  const [excluindo, setExcluindo] = useState(false);
+  const queryClient = useQueryClient();
+
+  async function handleConfirmarExcluir() {
+    if (!parceiroParaExcluir) return;
+    setExcluindo(true);
+    try {
+      const { count } = await supabase
+        .from("contas_pagar_receber")
+        .select("id", { count: "exact", head: true })
+        .eq("parceiro_id", parceiroParaExcluir.id);
+
+      if (count && count > 0) {
+        const { error } = await supabase
+          .from("parceiros_comerciais")
+          .update({ ativo: false })
+          .eq("id", parceiroParaExcluir.id);
+        if (error) throw error;
+        toast.success(
+          `Parceiro inativado (tem ${count} conta${count === 1 ? "" : "s"} vinculada${count === 1 ? "" : "s"} - não pode ser excluído)`,
+        );
+      } else {
+        const { error } = await supabase
+          .from("parceiros_comerciais")
+          .delete()
+          .eq("id", parceiroParaExcluir.id);
+        if (error) throw error;
+        toast.success("Parceiro excluído");
+      }
+
+      queryClient.invalidateQueries({ queryKey: ["parceiros"] });
+      queryClient.invalidateQueries({ queryKey: ["parceiros-fornecedores"] });
+      setParceiroParaExcluir(null);
+    } catch (e: any) {
+      toast.error("Erro ao excluir parceiro", { description: e.message });
+    } finally {
+      setExcluindo(false);
+    }
+  }
 
   const { data, isLoading } = useQuery({
     queryKey: ["parceiros"],
