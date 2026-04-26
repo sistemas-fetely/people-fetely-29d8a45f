@@ -95,6 +95,7 @@ import PedidosVenda from "@/pages/administrativo/PedidosVenda";
 import Produtos from "@/pages/administrativo/Produtos";
 import CaixaBanco from "@/pages/administrativo/CaixaBanco";
 import Conciliacao from "@/pages/administrativo/Conciliacao";
+import RadarPendencias from "@/pages/administrativo/RadarPendencias";
 
 const queryClient = new QueryClient();
 
@@ -395,6 +396,7 @@ const App = () => (
               <Route path="contas-pagar" element={<ContasPagar />} />
               <Route path="caixa-banco" element={<CaixaBanco />} />
               <Route path="conciliacao" element={<Conciliacao />} />
+              <Route path="radar-pendencias" element={<RadarPendencias />} />
               <Route path="contas-receber" element={<ContasReceber />} />
               <Route path="parceiros" element={<Parceiros />} />
               <Route path="pedidos" element={<PedidosVenda />} />

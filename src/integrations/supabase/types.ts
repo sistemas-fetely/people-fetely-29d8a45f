@@ -1630,6 +1630,7 @@ export type Database = {
           criado_por: string | null
           dados_bancarios_fornecedor: Json | null
           dados_pagamento_fornecedor: Json | null
+          dados_pix: string | null
           data_pagamento: string | null
           data_vencimento: string
           descricao: string
@@ -1643,6 +1644,7 @@ export type Database = {
           fornecedor_id: string | null
           id: string
           is_cartao: boolean | null
+          link_boleto: string | null
           nf_cfop: string | null
           nf_chave_acesso: string | null
           nf_cnpj_emitente: string | null
@@ -1686,6 +1688,7 @@ export type Database = {
           criado_por?: string | null
           dados_bancarios_fornecedor?: Json | null
           dados_pagamento_fornecedor?: Json | null
+          dados_pix?: string | null
           data_pagamento?: string | null
           data_vencimento: string
           descricao: string
@@ -1699,6 +1702,7 @@ export type Database = {
           fornecedor_id?: string | null
           id?: string
           is_cartao?: boolean | null
+          link_boleto?: string | null
           nf_cfop?: string | null
           nf_chave_acesso?: string | null
           nf_cnpj_emitente?: string | null
@@ -1742,6 +1746,7 @@ export type Database = {
           criado_por?: string | null
           dados_bancarios_fornecedor?: Json | null
           dados_pagamento_fornecedor?: Json | null
+          dados_pix?: string | null
           data_pagamento?: string | null
           data_vencimento?: string
           descricao?: string
@@ -1755,6 +1760,7 @@ export type Database = {
           fornecedor_id?: string | null
           id?: string
           is_cartao?: boolean | null
+          link_boleto?: string | null
           nf_cfop?: string | null
           nf_chave_acesso?: string | null
           nf_cnpj_emitente?: string | null
