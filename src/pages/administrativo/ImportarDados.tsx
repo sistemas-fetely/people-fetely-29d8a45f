@@ -19,7 +19,6 @@ import { useCategoriasPlano } from "@/hooks/useCategoriasPlano";
 import { ImportadorCsvQive } from "@/components/financeiro/ImportadorCsvQive";
 import { ImportadorXmlNFe } from "@/components/financeiro/ImportadorXmlNFe";
 import { ImportadorPdfDanfe } from "@/components/financeiro/ImportadorPdfDanfe";
-import { ImportadorXmlNFSe } from "@/components/financeiro/ImportadorXmlNFSe";
 import { ImportadorPdfInvoice } from "@/components/financeiro/ImportadorPdfInvoice";
 
 export default function ImportarDados() {
