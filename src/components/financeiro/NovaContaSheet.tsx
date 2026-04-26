@@ -482,6 +482,7 @@ export function NovaContaSheet({ open, onOpenChange, conta }: NovaContaSheetProp
               onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
               placeholder="Descrição da conta"
               required
+              className={iaCls("descricao")}
             />
           </div>
 
