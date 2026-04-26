@@ -140,19 +140,6 @@ export default function ImportarDados() {
         </CardContent>
       </Card>
 
-      {/* Importadores de NF */}
-      <div>
-        <h2 className="text-lg font-semibold mb-1">Importar NFs</h2>
-        <p className="text-sm text-muted-foreground mb-3">
-          Categorização automática por regras (parceiro, NCM, descrição). NFs entram como
-          rascunho — você revisa antes de aprovar.
-        </p>
-        <div className="grid gap-4 md:grid-cols-1">
-          <ImportadorCsvQive categorias={categorias} />
-          <ImportadorPdfDanfe categorias={categorias} />
-          <ImportadorPdfInvoice categorias={categorias} />
-        </div>
-      </div>
     </div>
   );
 }
