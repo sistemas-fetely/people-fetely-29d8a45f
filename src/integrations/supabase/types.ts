@@ -2096,6 +2096,7 @@ export type Database = {
           data_vencimento: string
           descricao: string
           docs_status: string | null
+          email_enviado_em: string | null
           email_pagamento_enviado: boolean | null
           enviado_pagamento_em: string | null
           enviado_pagamento_por: string | null
@@ -2155,6 +2156,7 @@ export type Database = {
           data_vencimento: string
           descricao: string
           docs_status?: string | null
+          email_enviado_em?: string | null
           email_pagamento_enviado?: boolean | null
           enviado_pagamento_em?: string | null
           enviado_pagamento_por?: string | null
@@ -2214,6 +2216,7 @@ export type Database = {
           data_vencimento?: string
           descricao?: string
           docs_status?: string | null
+          email_enviado_em?: string | null
           email_pagamento_enviado?: boolean | null
           enviado_pagamento_em?: string | null
           enviado_pagamento_por?: string | null
