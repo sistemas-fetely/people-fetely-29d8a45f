@@ -75,10 +75,17 @@ export function NovaContaPagarSheet({ open, onOpenChange }: Props) {
   const [nfSerie, setNfSerie] = useState("");
   const [nfChave, setNfChave] = useState("");
 
-  // Item
-  const [ncm, setNcm] = useState("");
-  const [quantidade, setQuantidade] = useState("");
-  const [valorUnitario, setValorUnitario] = useState("");
+  // Itens (multi)
+  type ItemForm = {
+    id: string;
+    descricao: string;
+    ncm: string;
+    quantidade: string;
+    valorUnitario: string;
+    categoriaId: string | null;
+  };
+  const [itens, setItens] = useState<ItemForm[]>([]);
+  const [mostrarItens, setMostrarItens] = useState(false);
 
   // Uploads
   const [nfFile, setNfFile] = useState<File | null>(null);
