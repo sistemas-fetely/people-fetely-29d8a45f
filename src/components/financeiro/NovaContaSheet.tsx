@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   Sheet,
   SheetContent,
@@ -118,6 +119,7 @@ function contaToFormState(conta: ContaPagarComRelacionados): FormState {
 
 export function NovaContaSheet({ open, onOpenChange, conta }: NovaContaSheetProps) {
   const isEdit = !!conta;
+  const queryClient = useQueryClient();
   const criarConta = useCriarConta();
   const editarConta = useEditarConta();
   const { data: fornecedores = [] } = useFornecedores();
@@ -238,20 +240,50 @@ export function NovaContaSheet({ open, onOpenChange, conta }: NovaContaSheetProp
       const match = findFornecedorMatch(ext.vendor ?? null, ext.vendor_cnpj ?? null);
       const novosCampos = new Set<keyof FormState>();
 
+      // Auto-cadastro: se não achou match mas tem dados mínimos do fornecedor,
+      // cria o parceiro automaticamente (doutrina: "Auto-cadastro por CNPJ")
+      let parceiroAutoCadastrado: typeof match | null = null;
+      if (!match && ext.vendor) {
+        const cnpjLimpo = (ext.vendor_cnpj ?? "").replace(/\D/g, "");
+        try {
+          const { data: novoParceiro, error: erroParceiro } = await supabase
+            .from("parceiros_comerciais")
+            .insert({
+              razao_social: String(ext.vendor),
+              cnpj: cnpjLimpo || null,
+              tipos: ["fornecedor"],
+              ativo: true,
+              origem: "auto_ia",
+            })
+            .select("id, razao_social, nome_fantasia, cnpj, categoria_padrao_id, centro_custo_padrao")
+            .single();
+
+          if (!erroParceiro && novoParceiro) {
+            parceiroAutoCadastrado = novoParceiro as typeof match;
+            queryClient.invalidateQueries({ queryKey: ["parceiros-fornecedores"] });
+            toast.success(`Fornecedor "${novoParceiro.razao_social}" cadastrado automaticamente.`);
+          }
+        } catch (e) {
+          console.error("Erro ao auto-cadastrar parceiro:", e);
+        }
+      }
+
+      const fornecedorFinal = match || parceiroAutoCadastrado;
+
       setFormData((prev) => {
         const next: FormState = { ...prev, nf_arquivo: file };
         novosCampos.add("nf_arquivo");
 
-        if (match) {
-          next.parceiro_id = match.id;
-          next.fornecedor = match.razao_social;
+        if (fornecedorFinal) {
+          next.parceiro_id = fornecedorFinal.id;
+          next.fornecedor = fornecedorFinal.razao_social;
           novosCampos.add("parceiro_id");
-          if (!prev.categoria_id && match.categoria_padrao_id) {
-            next.categoria_id = match.categoria_padrao_id;
+          if (!prev.categoria_id && fornecedorFinal.categoria_padrao_id) {
+            next.categoria_id = fornecedorFinal.categoria_padrao_id;
             novosCampos.add("categoria_id");
           }
-          if (!prev.centro_custo && match.centro_custo_padrao) {
-            next.centro_custo = match.centro_custo_padrao;
+          if (!prev.centro_custo && fornecedorFinal.centro_custo_padrao) {
+            next.centro_custo = fornecedorFinal.centro_custo_padrao;
             novosCampos.add("centro_custo");
           }
         } else if (ext.vendor) {
