@@ -357,12 +357,17 @@ export function NovaContaSheet({ open, onOpenChange, conta }: NovaContaSheetProp
                 onValueChange={(v) => setFormData({ ...formData, unidade: v })}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione" />
+                  <SelectValue placeholder={unidades.length ? "Selecione" : "Carregando..."} />
                 </SelectTrigger>
                 <SelectContent>
-                  {UNIDADES_CONTA.map((u) => (
-                    <SelectItem key={u.value} value={u.value}>
-                      {u.label}
+                  {unidades.map((u) => (
+                    <SelectItem key={u.id} value={u.id}>
+                      {u.nome}
+                      {u.codigo && (
+                        <span className="text-muted-foreground ml-2 text-xs">
+                          ({u.codigo})
+                        </span>
+                      )}
                     </SelectItem>
                   ))}
                 </SelectContent>
