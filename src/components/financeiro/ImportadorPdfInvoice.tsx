@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Receipt, Loader2 } from "lucide-react";
+import { restaurarRascunho, useAutoSaveRascunho } from "@/hooks/useAutoSaveRascunho";
 import {
   Card,
   CardContent,
@@ -125,6 +126,7 @@ export function ImportadorPdfInvoice({ categorias, onImported }: Props) {
       if (result.erros > 0)
         partes.push(`${result.erros} erro${result.erros === 1 ? "" : "s"}`);
       toast.success(`Importação: ${partes.join(", ")}`);
+      await clearRascunho();
       setPreview([]);
       onImported?.();
     } else if (result.erros > 0) {

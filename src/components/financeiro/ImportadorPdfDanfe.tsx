@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FileText, Loader2 } from "lucide-react";
+import { restaurarRascunho, useAutoSaveRascunho } from "@/hooks/useAutoSaveRascunho";
 import {
   Card,
   CardContent,
@@ -108,6 +109,7 @@ export function ImportadorPdfDanfe({ categorias, onImported }: Props) {
       if (result.vinculadas > 0) partes.push(`${result.vinculadas} vinculada${result.vinculadas === 1 ? "" : "s"} a existentes`);
       if (result.erros > 0) partes.push(`${result.erros} erro${result.erros === 1 ? "" : "s"}`);
       toast.success(`Importação: ${partes.join(", ")}`);
+      await clearRascunho();
       setPreview([]);
       onImported?.();
     } else if (result.erros > 0) {
