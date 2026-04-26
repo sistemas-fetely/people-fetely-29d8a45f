@@ -49,7 +49,7 @@ export default function DocumentosCP({
   const { user } = useAuth();
   const qc = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const [tipoDocUpload, setTipoDocUpload] = useState<string>("");
+  const [tipoDocUpload, setTipoDocUpload] = useState<string>("outro");
   const [uploading, setUploading] = useState(false);
 
   const { data: documentos } = useQuery({
@@ -93,10 +93,7 @@ export default function DocumentosCP({
   async function handleUploadDoc(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (!tipoDocUpload) {
-      toast.error("Selecione o tipo do documento");
-      return;
-    }
+    const tipo = tipoDocUpload || "outro"; // fallback para "outro" se vazio
 
     setUploading(true);
     try {
@@ -110,7 +107,7 @@ export default function DocumentosCP({
         .from("contas_pagar_documentos")
         .insert({
           conta_id: contaId,
-          tipo: tipoDocUpload,
+          tipo,
           nome_arquivo: file.name,
           storage_path: path,
           tamanho_bytes: file.size,
@@ -119,7 +116,7 @@ export default function DocumentosCP({
       if (insErr) throw insErr;
 
       toast.success("Documento anexado!");
-      setTipoDocUpload("");
+      setTipoDocUpload("outro");
       if (fileInputRef.current) fileInputRef.current.value = "";
       qc.invalidateQueries({ queryKey: ["cp-documentos", contaId] });
       qc.invalidateQueries({ queryKey: ["conta-pagar-detalhe", contaId] });
