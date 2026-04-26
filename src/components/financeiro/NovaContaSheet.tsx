@@ -35,8 +35,10 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { Check, ChevronsUpDown, ChevronDown, FileText } from "lucide-react";
+import { Check, ChevronsUpDown, ChevronDown, FileText, Sparkles, Upload, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import {
   useCriarConta,
   useEditarConta,
