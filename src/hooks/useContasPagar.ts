@@ -456,7 +456,16 @@ export function useExcluirConta() {
       toast.success("Conta excluída!");
     },
     onError: (error: any) => {
-      toast.error("Erro ao excluir conta", { description: error.message });
+      const msg = String(error?.message || "");
+      const isRLS =
+        error?.code === "42501" ||
+        msg.toLowerCase().includes("row-level security") ||
+        msg.toLowerCase().includes("permission denied");
+      if (isRLS) {
+        toast.error("Sem permissão para excluir");
+      } else {
+        toast.error("Erro ao excluir conta", { description: error.message });
+      }
     },
   });
 }
