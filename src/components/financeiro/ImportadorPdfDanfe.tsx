@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { FileText, Loader2 } from "lucide-react";
-import { useAutoSaveRascunho, restaurarRascunho } from "@/hooks/useAutoSaveRascunho";
 import {
   Card,
   CardContent,
@@ -17,6 +16,9 @@ import {
 } from "@/lib/financeiro/import-handler";
 import { buscarMatchPagamentos } from "@/lib/financeiro/match-pagamentos";
 import { limparCnpj, parseDataBR, parseValorBR } from "@/lib/financeiro/parsers";
+import { useAutoSaveRascunho, restaurarRascunho } from "@/hooks/useAutoSaveRascunho";
+import { useFilaAutoCadastroParceiro } from "@/hooks/useFilaAutoCadastroParceiro";
+import { ParceiroFormSheet } from "@/components/financeiro/ParceiroFormSheet";
 import type { NFParsed } from "@/lib/financeiro/types";
 import type { CategoriaOption } from "@/components/financeiro/CategoriaCombobox";
 import { PreviewNFsImport } from "./PreviewNFsImport";
@@ -34,6 +36,11 @@ export function ImportadorPdfDanfe({ categorias, onImported }: Props) {
 
   // Auto-save no banco a cada mudança no preview (debounce 2s)
   const { clearRascunho, setRascunhoId } = useAutoSaveRascunho(preview, "pdf_danfe");
+
+  // Fila de auto-cadastro de parceiros (CNPJs ainda não cadastrados)
+  const fila = useFilaAutoCadastroParceiro();
+  const [aguardandoCadastro, setAguardandoCadastro] = useState(false);
+  const [nfsParaImportar, setNfsParaImportar] = useState<NFParsed[] | null>(null);
 
   // Restaurar rascunho ao montar
   useEffect(() => {
@@ -132,9 +139,26 @@ export function ImportadorPdfDanfe({ categorias, onImported }: Props) {
   }
 
   async function doImport() {
-    setImporting(true);
     const selecionadas = preview.filter((n) => n._selecionada && !n._duplicata);
-    const result = await importarNFs(selecionadas);
+    if (selecionadas.length === 0) return;
+
+    // Verificar se tem CNPJs novos pra cadastrar antes
+    const { nfs: nfsHidratadas, precisaCadastrar } = await fila.prepararFila(selecionadas);
+
+    if (precisaCadastrar) {
+      // Pausa importação - guarda lista hidratada e abre modal sequencial
+      setNfsParaImportar(nfsHidratadas);
+      setAguardandoCadastro(true);
+      return;
+    }
+
+    // Não precisa cadastrar - vai direto
+    await executarImportacao(nfsHidratadas);
+  }
+
+  async function executarImportacao(nfs: NFParsed[]) {
+    setImporting(true);
+    const result = await importarNFs(nfs);
     setImporting(false);
     if (result.sucesso > 0 || result.vinculadas > 0) {
       const partes: string[] = [];
@@ -148,6 +172,18 @@ export function ImportadorPdfDanfe({ categorias, onImported }: Props) {
     } else if (result.erros > 0) {
       toast.error(`${result.erros} erros ao importar`);
       console.error(result.errosDetalhe);
+    }
+  }
+
+  function handleParceiroCadastrado(parceiroId: string) {
+    if (!nfsParaImportar) return;
+    const nfsAtualizadas = fila.avancarFila(nfsParaImportar, parceiroId);
+    setNfsParaImportar(nfsAtualizadas);
+
+    // Próxima posição já foi avançada pelo hook - se não há mais, executa importação
+    if (fila.posicao + 1 >= fila.totalFila) {
+      setAguardandoCadastro(false);
+      executarImportacao(nfsAtualizadas);
     }
   }
 
@@ -193,6 +229,30 @@ export function ImportadorPdfDanfe({ categorias, onImported }: Props) {
           importing={importing}
         />
       </CardContent>
+
+      {/* Modal sequencial de auto-cadastro - aberto quando há CNPJs pendentes */}
+      <ParceiroFormSheet
+        open={aguardandoCadastro && !!fila.itemAtual}
+        onOpenChange={(v) => {
+          if (!v) {
+            // só fecha se não está obrigatório (mas obrigatorio=true esconde Cancelar)
+            setAguardandoCadastro(false);
+            fila.cancelarFila();
+            setNfsParaImportar(null);
+          }
+        }}
+        categorias={categorias}
+        obrigatorio
+        prefill={
+          fila.itemAtual
+            ? {
+                cnpj: fila.itemAtual.cnpj,
+                razao_social: fila.itemAtual.razao_social,
+              }
+            : undefined
+        }
+        onSaved={handleParceiroCadastrado}
+      />
     </Card>
   );
 }

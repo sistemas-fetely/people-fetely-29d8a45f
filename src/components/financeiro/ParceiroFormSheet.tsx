@@ -59,6 +59,17 @@ interface Props {
   editing?: Parceiro | null;
   categorias: CategoriaOption[];
   onSaved?: (id: string) => void;
+  /** Pré-preenche os campos ao abrir em modo criação. */
+  prefill?: {
+    razao_social?: string;
+    cnpj?: string;
+    nome_fantasia?: string;
+  };
+  /**
+   * Quando true, desativa o botão Cancelar e exige completar campos críticos
+   * (Razão Social, CNPJ, Nome Fantasia). Usado no auto-cadastro vindo de NF.
+   */
+  obrigatorio?: boolean;
 }
 
 const CENTROS = ["comercial", "administrativo", "rh", "ti", "fiscal", "financeiro", "fabrica", "geral"];
@@ -75,7 +86,7 @@ function maskCep(v: string) {
   return v.replace(/\D/g, "").slice(0, 8).replace(/^(\d{5})(\d)/, "$1-$2");
 }
 
-export function ParceiroFormSheet({ open, onOpenChange, editing, categorias, onSaved }: Props) {
+export function ParceiroFormSheet({ open, onOpenChange, editing, categorias, onSaved, prefill, obrigatorio }: Props) {
   const qc = useQueryClient();
   const isEdit = !!editing;
 
@@ -123,9 +134,9 @@ export function ParceiroFormSheet({ open, onOpenChange, editing, categorias, onS
       setObservacao(editing.observacao || "");
     } else {
       setTiposSelecionados(["fornecedor"]);
-      setCnpj("");
-      setRazaoSocial("");
-      setNomeFantasia("");
+      setCnpj(prefill?.cnpj ? maskCnpj(prefill.cnpj) : "");
+      setRazaoSocial(prefill?.razao_social || "");
+      setNomeFantasia(prefill?.nome_fantasia || "");
       setCep("");
       setLogradouro("");
       setNumero("");
@@ -193,6 +204,12 @@ export function ParceiroFormSheet({ open, onOpenChange, editing, categorias, onS
     mutationFn: async () => {
       if (!razaoSocial.trim()) throw new Error("Razão social é obrigatória");
       if (tiposSelecionados.length === 0) throw new Error("Selecione ao menos um tipo");
+      // Validações reforçadas em modo auto-cadastro
+      if (obrigatorio) {
+        if (!cnpj.replace(/\D/g, "")) throw new Error("CNPJ é obrigatório");
+        if (cnpj.replace(/\D/g, "").length !== 14) throw new Error("CNPJ inválido (14 dígitos)");
+        if (!nomeFantasia.trim()) throw new Error("Nome fantasia é obrigatório");
+      }
       const payload = {
         tipos: tiposSelecionados,
         cnpj: cnpj.replace(/\D/g, "") || null,
@@ -248,9 +265,13 @@ export function ParceiroFormSheet({ open, onOpenChange, editing, categorias, onS
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-full sm:max-w-xl overflow-y-auto">
         <SheetHeader>
-          <SheetTitle>{isEdit ? "Editar parceiro" : "Novo parceiro"}</SheetTitle>
+          <SheetTitle>
+            {isEdit ? "Editar parceiro" : obrigatorio ? "Completar cadastro do fornecedor" : "Novo parceiro"}
+          </SheetTitle>
           <SheetDescription>
-            Cadastro unificado de fornecedores, clientes e parceiros da Fetely.
+            {obrigatorio
+              ? "Este fornecedor não está cadastrado. Complete os campos obrigatórios (*) antes de prosseguir com o pagamento."
+              : "Cadastro unificado de fornecedores, clientes e parceiros da Fetely."}
           </SheetDescription>
         </SheetHeader>
 
@@ -278,7 +299,7 @@ export function ParceiroFormSheet({ open, onOpenChange, editing, categorias, onS
 
           {/* CNPJ */}
           <div>
-            <Label>CNPJ</Label>
+            <Label>CNPJ {obrigatorio && "*"}</Label>
             <Input
               value={cnpj}
               onChange={(e) => setCnpj(maskCnpj(e.target.value))}
@@ -295,7 +316,7 @@ export function ParceiroFormSheet({ open, onOpenChange, editing, categorias, onS
             <Input value={razaoSocial} onChange={(e) => setRazaoSocial(e.target.value)} />
           </div>
           <div>
-            <Label>Nome fantasia</Label>
+            <Label>Nome fantasia {obrigatorio && "*"}</Label>
             <Input value={nomeFantasia} onChange={(e) => setNomeFantasia(e.target.value)} />
           </div>
 
@@ -444,9 +465,11 @@ export function ParceiroFormSheet({ open, onOpenChange, editing, categorias, onS
         </div>
 
         <SheetFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancelar
-          </Button>
+          {!obrigatorio && (
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
+              Cancelar
+            </Button>
+          )}
           <Button onClick={() => mutation.mutate()} disabled={mutation.isPending}>
             {mutation.isPending ? "Salvando..." : isEdit ? "Salvar" : "Cadastrar"}
           </Button>

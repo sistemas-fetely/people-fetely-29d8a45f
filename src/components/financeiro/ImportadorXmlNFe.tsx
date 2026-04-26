@@ -15,6 +15,8 @@ import {
   verificarDuplicatas,
 } from "@/lib/financeiro/import-handler";
 import { buscarMatchPagamentos } from "@/lib/financeiro/match-pagamentos";
+import { useFilaAutoCadastroParceiro } from "@/hooks/useFilaAutoCadastroParceiro";
+import { ParceiroFormSheet } from "@/components/financeiro/ParceiroFormSheet";
 import type { NFParsed } from "@/lib/financeiro/types";
 import type { CategoriaOption } from "@/components/financeiro/CategoriaCombobox";
 import { PreviewNFsImport } from "./PreviewNFsImport";
@@ -38,6 +40,11 @@ export function ImportadorXmlNFe({ categorias, onImported }: Props) {
   const [importing, setImporting] = useState(false);
   const [preview, setPreview] = useState<NFParsed[]>([]);
   const { data: regras } = useRegrasCategorizacao();
+
+  // Fila de auto-cadastro de parceiros
+  const fila = useFilaAutoCadastroParceiro();
+  const [aguardandoCadastro, setAguardandoCadastro] = useState(false);
+  const [nfsParaImportar, setNfsParaImportar] = useState<NFParsed[] | null>(null);
 
   async function handleFiles(e: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files || []);
@@ -70,9 +77,23 @@ export function ImportadorXmlNFe({ categorias, onImported }: Props) {
   }
 
   async function doImport() {
-    setImporting(true);
     const selecionadas = preview.filter((n) => n._selecionada && !n._duplicata);
-    const result = await importarNFs(selecionadas);
+    if (selecionadas.length === 0) return;
+
+    const { nfs: nfsHidratadas, precisaCadastrar } = await fila.prepararFila(selecionadas);
+
+    if (precisaCadastrar) {
+      setNfsParaImportar(nfsHidratadas);
+      setAguardandoCadastro(true);
+      return;
+    }
+
+    await executarImportacao(nfsHidratadas);
+  }
+
+  async function executarImportacao(nfs: NFParsed[]) {
+    setImporting(true);
+    const result = await importarNFs(nfs);
     setImporting(false);
     if (result.sucesso > 0 || result.vinculadas > 0) {
       const partes: string[] = [];
@@ -85,6 +106,17 @@ export function ImportadorXmlNFe({ categorias, onImported }: Props) {
     } else if (result.erros > 0) {
       toast.error(`${result.erros} erros ao importar`);
       console.error(result.errosDetalhe);
+    }
+  }
+
+  function handleParceiroCadastrado(parceiroId: string) {
+    if (!nfsParaImportar) return;
+    const nfsAtualizadas = fila.avancarFila(nfsParaImportar, parceiroId);
+    setNfsParaImportar(nfsAtualizadas);
+
+    if (fila.posicao + 1 >= fila.totalFila) {
+      setAguardandoCadastro(false);
+      executarImportacao(nfsAtualizadas);
     }
   }
 
@@ -128,6 +160,29 @@ export function ImportadorXmlNFe({ categorias, onImported }: Props) {
           importing={importing}
         />
       </CardContent>
+
+      {/* Modal sequencial de auto-cadastro */}
+      <ParceiroFormSheet
+        open={aguardandoCadastro && !!fila.itemAtual}
+        onOpenChange={(v) => {
+          if (!v) {
+            setAguardandoCadastro(false);
+            fila.cancelarFila();
+            setNfsParaImportar(null);
+          }
+        }}
+        categorias={categorias}
+        obrigatorio
+        prefill={
+          fila.itemAtual
+            ? {
+                cnpj: fila.itemAtual.cnpj,
+                razao_social: fila.itemAtual.razao_social,
+              }
+            : undefined
+        }
+        onSaved={handleParceiroCadastrado}
+      />
     </Card>
   );
 }

@@ -8,6 +8,11 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { NFParsed } from "./types";
 
+/**
+ * Faz upload do PDF da NF para o bucket `financeiro-docs` e registra
+ * em `contas_pagar_documentos`. Não falha o fluxo se algo der errado;
+ * apenas registra o erro no array passado.
+ */
 async function anexarPdfNF(
   contaId: string,
   arquivo: File,
@@ -15,19 +20,24 @@ async function anexarPdfNF(
   errosDetalhe: string[],
 ): Promise<void> {
   try {
+    const ext = arquivo.name.split(".").pop() || "pdf";
     const nomeLimpo = arquivo.name.replace(/[^a-zA-Z0-9._-]/g, "_");
     const path = `contas-pagar/${contaId}/${Date.now()}_${nomeLimpo}`;
+
     const { error: upErr } = await supabase.storage
       .from("financeiro-docs")
       .upload(path, arquivo, {
         contentType: arquivo.type || "application/pdf",
         upsert: false,
       });
+
     if (upErr) {
       errosDetalhe.push(`Upload PDF NF ${nfNumero || "s/n"}: ${upErr.message}`);
       return;
     }
+
     const { data: userData } = await supabase.auth.getUser();
+
     const { error: docErr } = await supabase
       .from("contas_pagar_documentos")
       .insert({
@@ -38,8 +48,10 @@ async function anexarPdfNF(
         tamanho_bytes: arquivo.size,
         uploaded_por: userData.user?.id || null,
       } as any);
+
     if (docErr) {
       errosDetalhe.push(`Registro doc NF ${nfNumero || "s/n"}: ${docErr.message}`);
+      // tentar remover arquivo órfão do storage
       await supabase.storage.from("financeiro-docs").remove([path]);
     }
   } catch (e: any) {
@@ -154,9 +166,9 @@ export async function importarNFs(nfs: NFParsed[]): Promise<ImportResult> {
         continue;
       }
 
-      // 1. Upsert parceiro por CNPJ
-      let parceiro_id: string | null = null;
-      if (nf.fornecedor_cnpj) {
+      // 1. Resolver parceiro: prioriza _parceiro_id_resolvido (auto-cadastro feito antes)
+      let parceiro_id: string | null = nf._parceiro_id_resolvido || null;
+      if (!parceiro_id && nf.fornecedor_cnpj) {
         const { data: parceiro } = await supabase
           .from("parceiros_comerciais")
           .select("id")
@@ -166,6 +178,7 @@ export async function importarNFs(nfs: NFParsed[]): Promise<ImportResult> {
         if (parceiro) {
           parceiro_id = parceiro.id;
         } else {
+          // Fallback: cria parceiro mínimo (caminho antigo, mantido para compatibilidade)
           const { data: novoParceiro, error: pErr } = await supabase
             .from("parceiros_comerciais")
             .insert({
