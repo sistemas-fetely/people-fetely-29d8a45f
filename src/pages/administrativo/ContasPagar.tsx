@@ -92,7 +92,20 @@ export default function ContasPagar() {
 
   const filtered = useMemo(() => {
     let list = data || [];
-    if (statusFilter !== "todos") list = list.filter((c) => c.status === statusFilter);
+    if (statusFilter !== "todos") {
+      if (statusFilter === "atrasado") {
+        const hoje = new Date().toISOString().substring(0, 10);
+        list = list.filter(
+          (c) =>
+            c.data_vencimento &&
+            c.data_vencimento < hoje &&
+            c.status !== "finalizado" &&
+            c.status !== "cancelado",
+        );
+      } else {
+        list = list.filter((c) => c.status === statusFilter);
+      }
+    }
     if (docsFilter !== "todos") list = list.filter((c) => (c.docs_status || "pendente") === docsFilter);
     if (busca.trim()) {
       const t = busca.toLowerCase();
@@ -110,11 +123,18 @@ export default function ContasPagar() {
 
   const totals = useMemo(() => {
     const all = data || [];
+    const hoje = new Date().toISOString().substring(0, 10);
     const aberto = all
-      .filter((c) => c.status === "aberto" || c.status === "atrasado" || c.status === "aprovado" || c.status === "doc_pendente")
+      .filter((c) => c.status === "aberto" || c.status === "aprovado" || c.status === "doc_pendente")
       .reduce((s, c) => s + Number(c.valor || 0), 0);
     const atrasado = all
-      .filter((c) => c.status === "atrasado")
+      .filter(
+        (c) =>
+          c.data_vencimento &&
+          c.data_vencimento < hoje &&
+          c.status !== "finalizado" &&
+          c.status !== "cancelado",
+      )
       .reduce((s, c) => s + Number(c.valor || 0), 0);
     const finalizadoPeriodo = (filtered || [])
       .filter((c) => c.status === "finalizado" || c.status === "pago" || c.status === "conciliado")
