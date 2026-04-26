@@ -43,9 +43,7 @@ import {
 import { ParceiroFormSheet, Parceiro } from "@/components/financeiro/ParceiroFormSheet";
 import { CategoriaFormDialog } from "@/components/financeiro/CategoriaFormDialog";
 import { formatBRL } from "@/lib/format-currency";
-import { FORMAS_PAGAMENTO } from "@/lib/financeiro/formas-pagamento";
 
-type FormaPgto = { id: string; nome: string; codigo: string };
 const CENTROS = ["comercial", "administrativo", "rh", "ti", "fiscal", "financeiro", "fabrica", "geral"];
 
 interface Props {
@@ -63,15 +61,28 @@ export function NovaContaPagarSheet({ open, onOpenChange }: Props) {
 
   const [descricao, setDescricao] = useState("");
   const [observacao, setObservacao] = useState("");
+  const [obsFinanceiro, setObsFinanceiro] = useState("");
   const [valor, setValor] = useState("");
   const [dataVenc, setDataVenc] = useState("");
   const [dataEmissao, setDataEmissao] = useState("");
   const [categoriaId, setCategoriaId] = useState<string | null>(null);
   const [centroCusto, setCentroCusto] = useState("");
   const [unidade, setUnidade] = useState("matriz_sp");
-  const [formaPgtoId, setFormaPgtoId] = useState<string>("");
-  const [formaPagamentoTexto, setFormaPagamentoTexto] = useState<string>("");
   const [parcelas, setParcelas] = useState(1);
+
+  // NF
+  const [nfNumero, setNfNumero] = useState("");
+  const [nfSerie, setNfSerie] = useState("");
+  const [nfChave, setNfChave] = useState("");
+
+  // Item
+  const [ncm, setNcm] = useState("");
+  const [quantidade, setQuantidade] = useState("");
+  const [valorUnitario, setValorUnitario] = useState("");
+
+  // Uploads
+  const [nfFile, setNfFile] = useState<File | null>(null);
+  const [reciboFile, setReciboFile] = useState<File | null>(null);
 
   const { data: parceiros } = useQuery({
     queryKey: ["parceiros-fornecedores"],
@@ -102,20 +113,6 @@ export function NovaContaPagarSheet({ open, onOpenChange }: Props) {
     },
   });
 
-  const { data: formasPgto } = useQuery({
-    queryKey: ["formas-pagamento"],
-    enabled: open,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("formas_pagamento")
-        .select("id,nome,codigo")
-        .eq("ativo", true)
-        .order("ordem");
-      if (error) throw error;
-      return data as FormaPgto[];
-    },
-  });
-
   // Auto preenche categoria/centro se parceiro tem padrão
   useEffect(() => {
     if (!parceiroId || !parceiros) return;
@@ -130,31 +127,69 @@ export function NovaContaPagarSheet({ open, onOpenChange }: Props) {
       setParceiroId(null);
       setDescricao("");
       setObservacao("");
+      setObsFinanceiro("");
       setValor("");
       setDataVenc("");
       setDataEmissao("");
       setCategoriaId(null);
       setCentroCusto("");
       setUnidade("matriz_sp");
-      setFormaPgtoId("");
       setParcelas(1);
+      setNfNumero("");
+      setNfSerie("");
+      setNfChave("");
+      setNcm("");
+      setQuantidade("");
+      setValorUnitario("");
+      setNfFile(null);
+      setReciboFile(null);
     }
   }, [open]);
 
   const valorNum = Number(valor.replace(/\./g, "").replace(",", ".")) || 0;
   const valorParcela = parcelas > 0 ? valorNum / parcelas : valorNum;
 
+  const handleNfUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) setNfFile(file);
+  };
+
+  const handleReciboUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) setReciboFile(file);
+  };
+
+  async function uploadDoc(contaId: string, file: File, tipo: string, userId: string | null) {
+    const safeName = file.name.replace(/[^\w.\-]/g, "_");
+    const path = `cp/${contaId}/${Date.now()}-${safeName}`;
+    const { error: upErr } = await supabase.storage.from("financeiro-docs").upload(path, file);
+    if (upErr) throw upErr;
+    const { error: insErr } = await supabase.from("contas_pagar_documentos").insert({
+      conta_id: contaId,
+      tipo,
+      nome_arquivo: file.name,
+      storage_path: path,
+      tamanho_bytes: file.size,
+      uploaded_por: userId,
+    });
+    if (insErr) throw insErr;
+  }
+
   const mutation = useMutation({
     mutationFn: async () => {
       if (!descricao.trim()) throw new Error("Descrição é obrigatória");
       if (!valorNum || valorNum <= 0) throw new Error("Valor inválido");
       if (!dataVenc) throw new Error("Data de vencimento obrigatória");
-      if (!formaPagamentoTexto) throw new Error("Forma de pagamento é obrigatória");
 
       const parceiro = parceiros?.find((p) => p.id === parceiroId);
       const fornecedorNome = parceiro?.razao_social || null;
       const baseDate = new Date(dataVenc + "T00:00:00");
       const grupoId = parcelas > 1 ? crypto.randomUUID() : null;
+
+      const qtdNum = quantidade ? parseFloat(quantidade.replace(",", ".")) : null;
+      const vlrUnitNum = valorUnitario
+        ? parseFloat(valorUnitario.replace(/\./g, "").replace(",", "."))
+        : null;
 
       const rows = [];
       for (let i = 0; i < parcelas; i++) {
@@ -164,26 +199,67 @@ export function NovaContaPagarSheet({ open, onOpenChange }: Props) {
           tipo: "pagar",
           descricao: parcelas > 1 ? `${descricao.trim()} (${i + 1}/${parcelas})` : descricao.trim(),
           observacao: observacao.trim() || null,
+          observacao_pagamento: obsFinanceiro.trim() || null,
           valor: valorParcela,
           data_vencimento: venc.toISOString().slice(0, 10),
-          data_emissao: dataEmissao || null,
           conta_id: categoriaId,
           parceiro_id: parceiroId,
           fornecedor_id: parceiroId,
           fornecedor_cliente: fornecedorNome,
           centro_custo: centroCusto || null,
           unidade,
-          forma_pagamento_id: formaPgtoId || null,
-          forma_pagamento: formaPagamentoTexto || null,
           parcelas,
           parcela_atual: i + 1,
           parcela_grupo_id: grupoId,
           status: "aberto",
           origem: "manual",
+          nf_numero: nfNumero.trim() || null,
+          nf_serie: nfSerie.trim() || null,
+          nf_chave_acesso: nfChave.trim() || null,
+          nf_data_emissao: dataEmissao || null,
+          nf_ncm: ncm.trim() || null,
         });
       }
-      const { error } = await supabase.from("contas_pagar_receber").insert(rows);
+      const { data: inserted, error } = await supabase
+        .from("contas_pagar_receber")
+        .insert(rows)
+        .select("id");
       if (error) throw error;
+
+      const firstId = inserted?.[0]?.id;
+      if (firstId) {
+        // Item detalhado (somente na 1ª parcela)
+        if (qtdNum || vlrUnitNum || ncm.trim()) {
+          await supabase.from("contas_pagar_itens").insert({
+            conta_id: firstId,
+            descricao: descricao.trim(),
+            ncm: ncm.trim() || null,
+            quantidade: qtdNum,
+            valor_unitario: vlrUnitNum,
+            valor_total: qtdNum && vlrUnitNum ? qtdNum * vlrUnitNum : valorNum,
+          });
+        }
+
+        // Uploads
+        const { data: userData } = await supabase.auth.getUser();
+        const uid = userData?.user?.id || null;
+        if (nfFile) {
+          try {
+            await uploadDoc(firstId, nfFile, "nf", uid);
+          } catch (e) {
+            console.error("Erro upload NF:", e);
+            toast.error("Conta criada, mas falhou upload da NF");
+          }
+        }
+        if (reciboFile) {
+          try {
+            await uploadDoc(firstId, reciboFile, "comprovante", uid);
+          } catch (e) {
+            console.error("Erro upload recibo:", e);
+            toast.error("Conta criada, mas falhou upload do recibo");
+          }
+        }
+      }
     },
     onSuccess: () => {
       toast.success(parcelas > 1 ? `${parcelas} parcelas registradas!` : "Conta registrada!");
@@ -260,11 +336,29 @@ export function NovaContaPagarSheet({ open, onOpenChange }: Props) {
               <Input value={descricao} onChange={(e) => setDescricao(e.target.value)} />
             </div>
             <div>
-              <Label>Observação</Label>
-              <Textarea value={observacao} onChange={(e) => setObservacao(e.target.value)} rows={2} />
+              <Label>Observação Interna</Label>
+              <Textarea
+                value={observacao}
+                onChange={(e) => setObservacao(e.target.value)}
+                rows={2}
+                placeholder="Notas internas sobre este pagamento..."
+              />
+            </div>
+            <div>
+              <Label>Observação para o Financeiro</Label>
+              <Textarea
+                value={obsFinanceiro}
+                onChange={(e) => setObsFinanceiro(e.target.value)}
+                rows={2}
+                placeholder="Ex: NF será encaminhada depois, aguardar confirmação de entrega, etc."
+                className="border-warning/40 bg-warning/5"
+              />
+              <p className="text-xs text-warning mt-1">
+                💡 Esta observação será vista pela equipe do financeiro
+              </p>
             </div>
 
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label>Valor *</Label>
                 <Input value={valor} onChange={(e) => setValor(e.target.value)} placeholder="0,00" />
@@ -273,9 +367,95 @@ export function NovaContaPagarSheet({ open, onOpenChange }: Props) {
                 <Label>Vencimento *</Label>
                 <Input type="date" value={dataVenc} onChange={(e) => setDataVenc(e.target.value)} />
               </div>
-              <div>
-                <Label>Emissão</Label>
-                <Input type="date" value={dataEmissao} onChange={(e) => setDataEmissao(e.target.value)} />
+            </div>
+
+            {/* Dados da NF */}
+            <div className="border-t pt-4">
+              <p className="text-sm font-medium mb-3">Dados da Nota Fiscal (opcional)</p>
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <Label>Número NF</Label>
+                  <Input value={nfNumero} onChange={(e) => setNfNumero(e.target.value)} placeholder="123456" />
+                </div>
+                <div>
+                  <Label>Série</Label>
+                  <Input value={nfSerie} onChange={(e) => setNfSerie(e.target.value)} placeholder="1" />
+                </div>
+                <div>
+                  <Label>Data Emissão</Label>
+                  <Input type="date" value={dataEmissao} onChange={(e) => setDataEmissao(e.target.value)} />
+                </div>
+              </div>
+              <div className="mt-3">
+                <Label>Chave de Acesso (44 dígitos)</Label>
+                <Input
+                  value={nfChave}
+                  onChange={(e) => setNfChave(e.target.value)}
+                  placeholder="00000000000000000000000000000000000000000000"
+                  maxLength={44}
+                  className="font-mono text-xs"
+                />
+              </div>
+            </div>
+
+            {/* Detalhamento do Item */}
+            <div className="border-t pt-4">
+              <p className="text-sm font-medium mb-3">Detalhamento do Item</p>
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <Label>NCM</Label>
+                  <Input value={ncm} onChange={(e) => setNcm(e.target.value)} placeholder="12345678" maxLength={8} />
+                </div>
+                <div>
+                  <Label>Quantidade</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={quantidade}
+                    onChange={(e) => setQuantidade(e.target.value)}
+                    placeholder="1,00"
+                  />
+                </div>
+                <div>
+                  <Label>Valor Unitário</Label>
+                  <Input
+                    value={valorUnitario}
+                    onChange={(e) => setValorUnitario(e.target.value)}
+                    placeholder="0,00"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Documentos */}
+            <div className="border-t pt-4">
+              <p className="text-sm font-medium mb-3">Documentos</p>
+              <div className="space-y-3">
+                <div>
+                  <Label>Anexar NF (PDF/XML)</Label>
+                  <Input
+                    type="file"
+                    accept=".pdf,.xml"
+                    onChange={handleNfUpload}
+                    className="cursor-pointer"
+                  />
+                  {nfFile && (
+                    <p className="text-xs text-muted-foreground mt-1">📄 {nfFile.name}</p>
+                  )}
+                </div>
+                <div>
+                  <Label>Anexar Recibo/Documento Adicional (PDF/imagem)</Label>
+                  <Input
+                    type="file"
+                    accept=".pdf,.jpg,.jpeg,.png"
+                    onChange={handleReciboUpload}
+                    className="cursor-pointer"
+                  />
+                  {reciboFile && (
+                    <p className="text-xs text-muted-foreground mt-1">📎 {reciboFile.name}</p>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -328,29 +508,6 @@ export function NovaContaPagarSheet({ open, onOpenChange }: Props) {
             <div className="border-t pt-4">
               <p className="text-sm font-medium mb-3">Pagamento</p>
               <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label>Forma de pagamento *</Label>
-                  <Select value={formaPagamentoTexto || ""} onValueChange={setFormaPagamentoTexto}>
-                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                    <SelectContent>
-                      {FORMAS_PAGAMENTO.map((f) => (
-                        <SelectItem key={f} value={f}>{f}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label>Detalhe (opcional)</Label>
-                  <Select value={formaPgtoId || "_none"} onValueChange={(v) => setFormaPgtoId(v === "_none" ? "" : v)}>
-                    <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="_none">—</SelectItem>
-                      {(formasPgto || []).map((f) => (
-                        <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
                 <div>
                   <Label>Parcelas</Label>
                   <Input
