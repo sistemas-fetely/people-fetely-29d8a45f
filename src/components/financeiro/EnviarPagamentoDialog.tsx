@@ -142,11 +142,11 @@ export default function EnviarPagamentoDialog({ open, onOpenChange, conta, onDon
     }
     setEnviando(true);
     try {
-      // 1) Salvar dados bancários + mudar status para agendado
+      // 1) Salvar dados bancários + mudar status para aguardando_pagamento
       await mudarStatus.mutateAsync({
         contaId: conta.id,
         statusAnterior: conta.status,
-        novoStatus: "agendado",
+        novoStatus: "aguardando_pagamento",
         observacao: `Enviado para pagamento: ${emailDestinatario}${obsEnvio ? ` — ${obsEnvio}` : ""}`,
         extras: {
           dados_pagamento_fornecedor: dadosPgto,

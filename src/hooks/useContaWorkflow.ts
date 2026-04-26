@@ -7,7 +7,8 @@ export const STATUS_FLOW = [
   { key: "rascunho", label: "Rascunho" },
   { key: "aberto", label: "Aberto" },
   { key: "aprovado", label: "Aprovado" },
-  { key: "agendado", label: "Enviado" },
+  { key: "nf_pendente", label: "NF Pendente" },
+  { key: "aguardando_pagamento", label: "Aguardando Pagamento" },
   { key: "pago", label: "Pago" },
   { key: "conciliado", label: "Conciliado" },
 ] as const;
@@ -17,7 +18,8 @@ export type ContaStatus =
   | "aberto"
   | "atrasado"
   | "aprovado"
-  | "agendado"
+  | "nf_pendente"
+  | "aguardando_pagamento"
   | "pago"
   | "cancelado"
   | "conciliado";
