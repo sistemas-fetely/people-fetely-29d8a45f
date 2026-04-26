@@ -8,14 +8,17 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Pencil, Paperclip, FileText } from "lucide-react";
+import { Pencil, Paperclip, FileText, Check, X, ArrowRight, Undo2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import {
   STATUS_LABELS,
   STATUS_COLORS,
   useContaHistorico,
+  useAtualizarStatus,
+  useUnidades,
   CENTROS_CUSTO,
-  UNIDADES_CONTA,
   type ContaPagarComRelacionados,
+  type ContaPagarStatus,
 } from "@/hooks/useContasPagar";
 
 interface DetalheContaSheetProps {
@@ -53,6 +56,73 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
+// Stepper horizontal do workflow
+const FLUXO: { key: ContaPagarStatus; label: string }[] = [
+  { key: "rascunho", label: "Rascunho" },
+  { key: "pendente", label: "Pendente" },
+  { key: "aprovado", label: "Aprovado" },
+  { key: "pago", label: "Pago" },
+  { key: "finalizado", label: "Finalizado" },
+];
+
+function WorkflowStepper({ status }: { status: ContaPagarStatus }) {
+  if (status === "cancelado") {
+    return (
+      <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-center">
+        <Badge variant="outline" className="border-destructive text-destructive">
+          <X className="h-3 w-3 mr-1" />
+          Conta Cancelada
+        </Badge>
+      </div>
+    );
+  }
+
+  const idxAtual = FLUXO.findIndex((s) => s.key === status);
+
+  return (
+    <div className="flex items-center w-full">
+      {FLUXO.map((step, idx) => {
+        const isPast = idx < idxAtual;
+        const isCurrent = idx === idxAtual;
+        const isFuture = idx > idxAtual;
+
+        return (
+          <div key={step.key} className="flex items-center flex-1 last:flex-none">
+            <div className="flex flex-col items-center gap-1">
+              <div
+                className={cn(
+                  "w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold border-2 transition-colors",
+                  isPast && "bg-success border-success text-success-foreground",
+                  isCurrent && "bg-primary border-primary text-primary-foreground ring-4 ring-primary/20",
+                  isFuture && "bg-muted border-muted-foreground/20 text-muted-foreground",
+                )}
+              >
+                {isPast ? <Check className="h-4 w-4" /> : idx + 1}
+              </div>
+              <span
+                className={cn(
+                  "text-[10px] text-center whitespace-nowrap",
+                  isCurrent ? "text-primary font-semibold" : "text-muted-foreground",
+                )}
+              >
+                {step.label}
+              </span>
+            </div>
+            {idx < FLUXO.length - 1 && (
+              <div
+                className={cn(
+                  "h-0.5 flex-1 mx-1 mb-5",
+                  isPast ? "bg-success" : "bg-muted",
+                )}
+              />
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export function DetalheContaSheet({
   open,
   onOpenChange,
@@ -60,6 +130,8 @@ export function DetalheContaSheet({
   onEditar,
 }: DetalheContaSheetProps) {
   const { data: historico = [] } = useContaHistorico(open && conta ? conta.id : null);
+  const { data: unidades = [] } = useUnidades();
+  const atualizarStatus = useAtualizarStatus();
 
   if (!conta) return null;
 
@@ -67,8 +139,14 @@ export function DetalheContaSheet({
   const fantasia = conta.parceiro?.nome_fantasia;
   const centroCustoLabel =
     CENTROS_CUSTO.find((c) => c.value === conta.centro_custo)?.label ?? conta.centro_custo;
-  const unidadeLabel =
-    UNIDADES_CONTA.find((u) => u.value === conta.unidade)?.label ?? conta.unidade;
+  const unidadeObj = unidades.find((u) => u.id === conta.unidade);
+  const unidadeLabel = unidadeObj?.nome ?? conta.unidade;
+
+  const handleAvancar = (novoStatus: ContaPagarStatus) => {
+    atualizarStatus.mutate({ contaId: conta.id, novoStatus });
+  };
+
+  const isCancelado = conta.status === "cancelado";
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -91,6 +169,82 @@ export function DetalheContaSheet({
         </SheetHeader>
 
         <div className="space-y-6 mt-6">
+          {/* Workflow Stepper */}
+          <div>
+            <WorkflowStepper status={conta.status} />
+          </div>
+
+          {/* Botões de próximo passo */}
+          {!isCancelado && (
+            <div className="space-y-2">
+              {conta.status === "rascunho" && (
+                <Button
+                  className="w-full"
+                  onClick={() => handleAvancar("pendente")}
+                  disabled={atualizarStatus.isPending}
+                >
+                  <ArrowRight className="h-4 w-4 mr-2" />
+                  Validar → Pendente
+                </Button>
+              )}
+              {conta.status === "pendente" && (
+                <>
+                  <Button
+                    className="w-full bg-success hover:bg-success/90 text-success-foreground"
+                    onClick={() => handleAvancar("aprovado")}
+                    disabled={atualizarStatus.isPending}
+                  >
+                    <Check className="h-4 w-4 mr-2" />
+                    Aprovar → Aprovado
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                    onClick={() => handleAvancar("rascunho")}
+                    disabled={atualizarStatus.isPending}
+                  >
+                    <Undo2 className="h-4 w-4 mr-2" />
+                    Voltar para Rascunho
+                  </Button>
+                </>
+              )}
+              {conta.status === "aprovado" && (
+                <>
+                  <div className="rounded-md bg-muted/50 border border-dashed p-3 text-center text-sm text-muted-foreground">
+                    Aguardando processo de pagamento (Fase 2)
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                    onClick={() => handleAvancar("pendente")}
+                    disabled={atualizarStatus.isPending}
+                  >
+                    <Undo2 className="h-4 w-4 mr-2" />
+                    Voltar para Pendente
+                  </Button>
+                </>
+              )}
+
+              {/* Cancelar */}
+              {conta.status !== "finalizado" && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full text-destructive hover:text-destructive hover:bg-destructive/10"
+                  onClick={() => handleAvancar("cancelado")}
+                  disabled={atualizarStatus.isPending}
+                >
+                  <X className="h-4 w-4 mr-2" />
+                  Cancelar Conta
+                </Button>
+              )}
+            </div>
+          )}
+
+          <Separator />
+
           {/* Parceiro */}
           <div>
             <h3 className="text-sm font-semibold text-foreground mb-3">Parceiro</h3>
