@@ -120,6 +120,7 @@ export function NovaContaSheet({ open, onOpenChange, conta }: NovaContaSheetProp
   const editarConta = useEditarConta();
   const { data: fornecedores = [] } = useFornecedores();
   const { data: categorias = [] } = useCategoriasPlano();
+  const { data: unidades = [] } = useUnidades();
   const [formData, setFormData] = useState<FormState>(INITIAL_STATE);
   const [parceiroOpen, setParceiroOpen] = useState(false);
   const [nfOpen, setNfOpen] = useState(false);
