@@ -1581,6 +1581,44 @@ export type Database = {
           },
         ]
       }
+      contas_pagar_historico: {
+        Row: {
+          conta_id: string
+          created_at: string | null
+          id: string
+          observacao: string | null
+          status_anterior: string | null
+          status_novo: string
+          usuario_id: string | null
+        }
+        Insert: {
+          conta_id: string
+          created_at?: string | null
+          id?: string
+          observacao?: string | null
+          status_anterior?: string | null
+          status_novo: string
+          usuario_id?: string | null
+        }
+        Update: {
+          conta_id?: string
+          created_at?: string | null
+          id?: string
+          observacao?: string | null
+          status_anterior?: string | null
+          status_novo?: string
+          usuario_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contas_pagar_historico_conta_id_fkey"
+            columns: ["conta_id"]
+            isOneToOne: false
+            referencedRelation: "contas_pagar_receber"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contas_pagar_itens: {
         Row: {
           cfop: string | null
