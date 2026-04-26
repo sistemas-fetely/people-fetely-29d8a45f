@@ -45,6 +45,7 @@ const financeiroItems: MenuItem[] = [
 const caixaBancoItems: MenuItem[] = [
   { title: "Caixa e Banco", url: "/administrativo/caixa-banco", icon: Wallet },
   { title: "Conciliação", url: "/administrativo/conciliacao", icon: GitCompare },
+  { title: "Radar de Pendências", url: "/administrativo/radar-pendencias", icon: AlertTriangle },
 ];
 
 const vendasBlingItems: MenuItem[] = [
