@@ -41,8 +41,8 @@ import {
   useCriarConta,
   useEditarConta,
   useFornecedores,
+  useUnidades,
   CENTROS_CUSTO,
-  UNIDADES_CONTA,
   type ContaPagarComRelacionados,
 } from "@/hooks/useContasPagar";
 import { useCategoriasPlano } from "@/hooks/useCategoriasPlano";
