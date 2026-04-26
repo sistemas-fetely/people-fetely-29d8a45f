@@ -152,7 +152,8 @@ export default function ContasPagar() {
       (c) =>
         (c.docs_status === "pendente" || c.docs_status === null) &&
         c.status !== "cancelado" &&
-        c.status !== "finalizado",
+        c.status !== "finalizado" &&
+        c.status !== "doc_pendente",
     ).length;
     return { aberto, atrasado, finalizadoPeriodo, countDocPendente, countSemCategoria, countSemDocs };
   }, [data, filtered]);
@@ -320,18 +321,21 @@ export default function ContasPagar() {
             </div>
           )}
           {totals.countSemDocs > 0 && (
-            <div className="p-3 rounded-lg border border-amber-200 bg-amber-50/60 flex items-center justify-between">
-              <div className="flex items-center gap-2 text-amber-800 text-sm">
+            <div className="p-3 rounded-lg border border-blue-200 bg-blue-50/60 flex items-center justify-between">
+              <div className="flex items-center gap-2 text-blue-800 text-sm">
                 <FileWarning className="h-4 w-4" />
-                {totals.countSemDocs} sem documentação (NF ou recibo)
+                <span>
+                  {totals.countSemDocs} {totals.countSemDocs === 1 ? "conta sem NF/Recibo" : "contas sem NF/Recibo"}
+                  <span className="text-blue-600 text-xs ml-1">— anexar antes de enviar ao financeiro</span>
+                </span>
               </div>
               <Button
                 size="sm"
                 variant="outline"
-                className="text-amber-700 border-amber-300"
+                className="text-blue-700 border-blue-300 hover:bg-blue-100"
                 onClick={verPendentesDocs}
               >
-                Ver pendentes
+                Ver
               </Button>
             </div>
           )}
