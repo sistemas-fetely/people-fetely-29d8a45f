@@ -333,6 +333,38 @@ export default function Parceiros() {
         editing={editing}
         categorias={categorias || []}
       />
+
+      <AlertDialog
+        open={!!parceiroParaExcluir}
+        onOpenChange={(v) => {
+          if (!v) setParceiroParaExcluir(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir parceiro?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Você está prestes a excluir <strong>{parceiroParaExcluir?.razao_social}</strong>.
+              Se este parceiro tiver contas a pagar/receber vinculadas, ele será apenas
+              inativado (não pode ser excluído de fato para preservar o histórico).
+              Caso contrário, será excluído permanentemente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={excluindo}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                handleConfirmarExcluir();
+              }}
+              disabled={excluindo}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {excluindo ? "Processando..." : "Confirmar"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
