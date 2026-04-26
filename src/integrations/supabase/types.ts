@@ -222,6 +222,426 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_contas_pagar_historico_20260426: {
+        Row: {
+          conta_id: string | null
+          created_at: string | null
+          id: string | null
+          observacao: string | null
+          status_anterior: string | null
+          status_novo: string | null
+          usuario_id: string | null
+        }
+        Insert: {
+          conta_id?: string | null
+          created_at?: string | null
+          id?: string | null
+          observacao?: string | null
+          status_anterior?: string | null
+          status_novo?: string | null
+          usuario_id?: string | null
+        }
+        Update: {
+          conta_id?: string | null
+          created_at?: string | null
+          id?: string | null
+          observacao?: string | null
+          status_anterior?: string | null
+          status_novo?: string | null
+          usuario_id?: string | null
+        }
+        Relationships: []
+      }
+      backup_contas_pagar_itens_20260426: {
+        Row: {
+          cfop: string | null
+          codigo_produto: string | null
+          conta_id: string | null
+          conta_plano_id: string | null
+          created_at: string | null
+          descricao: string | null
+          id: string | null
+          ncm: string | null
+          quantidade: number | null
+          unidade: string | null
+          valor_cofins: number | null
+          valor_icms: number | null
+          valor_ipi: number | null
+          valor_pis: number | null
+          valor_total: number | null
+          valor_unitario: number | null
+        }
+        Insert: {
+          cfop?: string | null
+          codigo_produto?: string | null
+          conta_id?: string | null
+          conta_plano_id?: string | null
+          created_at?: string | null
+          descricao?: string | null
+          id?: string | null
+          ncm?: string | null
+          quantidade?: number | null
+          unidade?: string | null
+          valor_cofins?: number | null
+          valor_icms?: number | null
+          valor_ipi?: number | null
+          valor_pis?: number | null
+          valor_total?: number | null
+          valor_unitario?: number | null
+        }
+        Update: {
+          cfop?: string | null
+          codigo_produto?: string | null
+          conta_id?: string | null
+          conta_plano_id?: string | null
+          created_at?: string | null
+          descricao?: string | null
+          id?: string | null
+          ncm?: string | null
+          quantidade?: number | null
+          unidade?: string | null
+          valor_cofins?: number | null
+          valor_icms?: number | null
+          valor_ipi?: number | null
+          valor_pis?: number | null
+          valor_total?: number | null
+          valor_unitario?: number | null
+        }
+        Relationships: []
+      }
+      backup_contas_pagar_receber_20260426: {
+        Row: {
+          aprovado_em: string | null
+          aprovado_por: string | null
+          bling_id: string | null
+          canal: string | null
+          categoria_confirmada: boolean | null
+          categoria_sugerida_ia: boolean | null
+          centro_custo: string | null
+          comprovante_url: string | null
+          conta_id: string | null
+          created_at: string | null
+          criado_por: string | null
+          dados_bancarios_fornecedor: Json | null
+          dados_pagamento_fornecedor: Json | null
+          dados_pix: string | null
+          data_pagamento: string | null
+          data_vencimento: string | null
+          descricao: string | null
+          docs_status: string | null
+          email_pagamento_enviado: boolean | null
+          enviado_pagamento_em: string | null
+          enviado_pagamento_por: string | null
+          forma_pagamento: string | null
+          forma_pagamento_id: string | null
+          fornecedor_cliente: string | null
+          fornecedor_id: string | null
+          id: string | null
+          is_cartao: boolean | null
+          link_boleto: string | null
+          nf_cfop: string | null
+          nf_chave_acesso: string | null
+          nf_cnpj_emitente: string | null
+          nf_data_emissao: string | null
+          nf_natureza_operacao: string | null
+          nf_ncm: string | null
+          nf_numero: string | null
+          nf_pdf_url: string | null
+          nf_serie: string | null
+          nf_valor_impostos: number | null
+          nf_valor_produtos: number | null
+          nf_xml_url: string | null
+          observacao: string | null
+          observacao_pagamento: string | null
+          origem: string | null
+          parceiro_id: string | null
+          parcela_atual: number | null
+          parcela_grupo_id: string | null
+          parcelas: number | null
+          sla_aprovacao_dias: number | null
+          sla_pagamento_dias: number | null
+          status: string | null
+          tarefa_id: string | null
+          tipo: string | null
+          unidade: string | null
+          updated_at: string | null
+          valor: number | null
+          valor_pago: number | null
+        }
+        Insert: {
+          aprovado_em?: string | null
+          aprovado_por?: string | null
+          bling_id?: string | null
+          canal?: string | null
+          categoria_confirmada?: boolean | null
+          categoria_sugerida_ia?: boolean | null
+          centro_custo?: string | null
+          comprovante_url?: string | null
+          conta_id?: string | null
+          created_at?: string | null
+          criado_por?: string | null
+          dados_bancarios_fornecedor?: Json | null
+          dados_pagamento_fornecedor?: Json | null
+          dados_pix?: string | null
+          data_pagamento?: string | null
+          data_vencimento?: string | null
+          descricao?: string | null
+          docs_status?: string | null
+          email_pagamento_enviado?: boolean | null
+          enviado_pagamento_em?: string | null
+          enviado_pagamento_por?: string | null
+          forma_pagamento?: string | null
+          forma_pagamento_id?: string | null
+          fornecedor_cliente?: string | null
+          fornecedor_id?: string | null
+          id?: string | null
+          is_cartao?: boolean | null
+          link_boleto?: string | null
+          nf_cfop?: string | null
+          nf_chave_acesso?: string | null
+          nf_cnpj_emitente?: string | null
+          nf_data_emissao?: string | null
+          nf_natureza_operacao?: string | null
+          nf_ncm?: string | null
+          nf_numero?: string | null
+          nf_pdf_url?: string | null
+          nf_serie?: string | null
+          nf_valor_impostos?: number | null
+          nf_valor_produtos?: number | null
+          nf_xml_url?: string | null
+          observacao?: string | null
+          observacao_pagamento?: string | null
+          origem?: string | null
+          parceiro_id?: string | null
+          parcela_atual?: number | null
+          parcela_grupo_id?: string | null
+          parcelas?: number | null
+          sla_aprovacao_dias?: number | null
+          sla_pagamento_dias?: number | null
+          status?: string | null
+          tarefa_id?: string | null
+          tipo?: string | null
+          unidade?: string | null
+          updated_at?: string | null
+          valor?: number | null
+          valor_pago?: number | null
+        }
+        Update: {
+          aprovado_em?: string | null
+          aprovado_por?: string | null
+          bling_id?: string | null
+          canal?: string | null
+          categoria_confirmada?: boolean | null
+          categoria_sugerida_ia?: boolean | null
+          centro_custo?: string | null
+          comprovante_url?: string | null
+          conta_id?: string | null
+          created_at?: string | null
+          criado_por?: string | null
+          dados_bancarios_fornecedor?: Json | null
+          dados_pagamento_fornecedor?: Json | null
+          dados_pix?: string | null
+          data_pagamento?: string | null
+          data_vencimento?: string | null
+          descricao?: string | null
+          docs_status?: string | null
+          email_pagamento_enviado?: boolean | null
+          enviado_pagamento_em?: string | null
+          enviado_pagamento_por?: string | null
+          forma_pagamento?: string | null
+          forma_pagamento_id?: string | null
+          fornecedor_cliente?: string | null
+          fornecedor_id?: string | null
+          id?: string | null
+          is_cartao?: boolean | null
+          link_boleto?: string | null
+          nf_cfop?: string | null
+          nf_chave_acesso?: string | null
+          nf_cnpj_emitente?: string | null
+          nf_data_emissao?: string | null
+          nf_natureza_operacao?: string | null
+          nf_ncm?: string | null
+          nf_numero?: string | null
+          nf_pdf_url?: string | null
+          nf_serie?: string | null
+          nf_valor_impostos?: number | null
+          nf_valor_produtos?: number | null
+          nf_xml_url?: string | null
+          observacao?: string | null
+          observacao_pagamento?: string | null
+          origem?: string | null
+          parceiro_id?: string | null
+          parcela_atual?: number | null
+          parcela_grupo_id?: string | null
+          parcelas?: number | null
+          sla_aprovacao_dias?: number | null
+          sla_pagamento_dias?: number | null
+          status?: string | null
+          tarefa_id?: string | null
+          tipo?: string | null
+          unidade?: string | null
+          updated_at?: string | null
+          valor?: number | null
+          valor_pago?: number | null
+        }
+        Relationships: []
+      }
+      backup_movimentacoes_bancarias_20260426: {
+        Row: {
+          centro_custo: string | null
+          conciliado: boolean | null
+          conciliado_em: string | null
+          conciliado_por: string | null
+          conta_bancaria_id: string | null
+          conta_pagar_id: string | null
+          conta_plano_id: string | null
+          created_at: string | null
+          data_balancete: string | null
+          data_transacao: string | null
+          descricao: string | null
+          hash_unico: string | null
+          id: string | null
+          id_transacao_banco: string | null
+          importacao_id: string | null
+          origem: string | null
+          saldo_pos_transacao: number | null
+          tipo: string | null
+          tipo_pagamento: string | null
+          valor: number | null
+        }
+        Insert: {
+          centro_custo?: string | null
+          conciliado?: boolean | null
+          conciliado_em?: string | null
+          conciliado_por?: string | null
+          conta_bancaria_id?: string | null
+          conta_pagar_id?: string | null
+          conta_plano_id?: string | null
+          created_at?: string | null
+          data_balancete?: string | null
+          data_transacao?: string | null
+          descricao?: string | null
+          hash_unico?: string | null
+          id?: string | null
+          id_transacao_banco?: string | null
+          importacao_id?: string | null
+          origem?: string | null
+          saldo_pos_transacao?: number | null
+          tipo?: string | null
+          tipo_pagamento?: string | null
+          valor?: number | null
+        }
+        Update: {
+          centro_custo?: string | null
+          conciliado?: boolean | null
+          conciliado_em?: string | null
+          conciliado_por?: string | null
+          conta_bancaria_id?: string | null
+          conta_pagar_id?: string | null
+          conta_plano_id?: string | null
+          created_at?: string | null
+          data_balancete?: string | null
+          data_transacao?: string | null
+          descricao?: string | null
+          hash_unico?: string | null
+          id?: string | null
+          id_transacao_banco?: string | null
+          importacao_id?: string | null
+          origem?: string | null
+          saldo_pos_transacao?: number | null
+          tipo?: string | null
+          tipo_pagamento?: string | null
+          valor?: number | null
+        }
+        Relationships: []
+      }
+      backup_parceiros_comerciais_20260426: {
+        Row: {
+          ativo: boolean | null
+          bairro: string | null
+          bling_id: string | null
+          canal: string | null
+          categoria_padrao_id: string | null
+          centro_custo_padrao: string | null
+          cep: string | null
+          cidade: string | null
+          cnpj: string | null
+          cpf: string | null
+          created_at: string | null
+          email: string | null
+          id: string | null
+          logradouro: string | null
+          nome_fantasia: string | null
+          numero: string | null
+          observacao: string | null
+          origem: string | null
+          razao_social: string | null
+          segmento: string | null
+          tags: string[] | null
+          telefone: string | null
+          tipo: string | null
+          tipos: string[] | null
+          uf: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          bairro?: string | null
+          bling_id?: string | null
+          canal?: string | null
+          categoria_padrao_id?: string | null
+          centro_custo_padrao?: string | null
+          cep?: string | null
+          cidade?: string | null
+          cnpj?: string | null
+          cpf?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string | null
+          logradouro?: string | null
+          nome_fantasia?: string | null
+          numero?: string | null
+          observacao?: string | null
+          origem?: string | null
+          razao_social?: string | null
+          segmento?: string | null
+          tags?: string[] | null
+          telefone?: string | null
+          tipo?: string | null
+          tipos?: string[] | null
+          uf?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          ativo?: boolean | null
+          bairro?: string | null
+          bling_id?: string | null
+          canal?: string | null
+          categoria_padrao_id?: string | null
+          centro_custo_padrao?: string | null
+          cep?: string | null
+          cidade?: string | null
+          cnpj?: string | null
+          cpf?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string | null
+          logradouro?: string | null
+          nome_fantasia?: string | null
+          numero?: string | null
+          observacao?: string | null
+          origem?: string | null
+          razao_social?: string | null
+          segmento?: string | null
+          tags?: string[] | null
+          telefone?: string | null
+          tipo?: string | null
+          tipos?: string[] | null
+          uf?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       beneficios_catalogo: {
         Row: {
           ativo: boolean | null
