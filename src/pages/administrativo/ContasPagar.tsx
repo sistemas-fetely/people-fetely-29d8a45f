@@ -23,12 +23,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Link } from "react-router-dom";
-import { ArrowUpFromLine, FileWarning, Search, Sparkles, Upload, UserCheck, X } from "lucide-react";
+import { ArrowUpFromLine, FileWarning, Plus, Search, Sparkles, Upload, UserCheck, X } from "lucide-react";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
 import ContaPagarDetalheDrawer from "@/components/financeiro/ContaPagarDetalheDrawer";
 import AcoesMassaButtons, {
   type ContaSelecionada,
 } from "@/components/financeiro/AcoesMassaButtons";
+import { NovaContaPagarSheet } from "@/components/financeiro/NovaContaPagarSheet";
 
 type Conta = {
   id: string;
@@ -46,6 +47,8 @@ type Conta = {
   docs_status: string | null;
   plano_contas?: { codigo?: string | null; nome: string } | null;
   parceiros_comerciais?: { razao_social: string | null } | null;
+  formas_pagamento?: { nome: string | null } | null;
+  forma_pagamento?: string | null;
 };
 
 const STATUS_STYLES: Record<string, string> = {
@@ -74,6 +77,7 @@ export default function ContasPagar() {
   const [page, setPage] = useState(1);
   const [contaIdSelecionada, setContaIdSelecionada] = useState<string | null>(null);
   const [selecionadas, setSelecionadas] = useState<Set<string>>(new Set());
+  const [novaContaOpen, setNovaContaOpen] = useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: ["contas-pagar"],
@@ -81,7 +85,7 @@ export default function ContasPagar() {
       const { data, error } = await supabase
         .from("contas_pagar_receber")
         .select(
-          "*, plano_contas:conta_id(codigo,nome), parceiros_comerciais:parceiro_id(razao_social)",
+          "*, plano_contas:conta_id(codigo,nome), parceiros_comerciais:parceiro_id(razao_social), formas_pagamento:forma_pagamento_id(nome)",
         )
         .eq("tipo", "pagar")
         .order("data_vencimento", { ascending: true });
@@ -92,7 +96,21 @@ export default function ContasPagar() {
 
   const filtered = useMemo(() => {
     let list = data || [];
-    if (statusFilter !== "todos") list = list.filter((c) => c.status === statusFilter);
+    if (statusFilter !== "todos") {
+      if (statusFilter === "atrasado") {
+        // "Atrasado" é calculado: vencimento passado + status ativo (não finalizado/cancelado)
+        const hoje = new Date().toISOString().substring(0, 10);
+        list = list.filter(
+          (c) =>
+            c.data_vencimento &&
+            c.data_vencimento < hoje &&
+            c.status !== "finalizado" &&
+            c.status !== "cancelado",
+        );
+      } else {
+        list = list.filter((c) => c.status === statusFilter);
+      }
+    }
     if (docsFilter !== "todos") list = list.filter((c) => (c.docs_status || "pendente") === docsFilter);
     if (busca.trim()) {
       const t = busca.toLowerCase();
@@ -110,11 +128,18 @@ export default function ContasPagar() {
 
   const totals = useMemo(() => {
     const all = data || [];
+    const hoje = new Date().toISOString().substring(0, 10);
     const aberto = all
-      .filter((c) => c.status === "aberto" || c.status === "atrasado" || c.status === "aprovado" || c.status === "doc_pendente")
+      .filter((c) => c.status === "aberto" || c.status === "aprovado" || c.status === "doc_pendente")
       .reduce((s, c) => s + Number(c.valor || 0), 0);
     const atrasado = all
-      .filter((c) => c.status === "atrasado")
+      .filter(
+        (c) =>
+          c.data_vencimento &&
+          c.data_vencimento < hoje &&
+          c.status !== "finalizado" &&
+          c.status !== "cancelado",
+      )
       .reduce((s, c) => s + Number(c.valor || 0), 0);
     const finalizadoPeriodo = (filtered || [])
       .filter((c) => c.status === "finalizado" || c.status === "pago" || c.status === "conciliado")
@@ -127,7 +152,8 @@ export default function ContasPagar() {
       (c) =>
         (c.docs_status === "pendente" || c.docs_status === null) &&
         c.status !== "cancelado" &&
-        c.status !== "finalizado",
+        c.status !== "finalizado" &&
+        c.status !== "doc_pendente",
     ).length;
     return { aberto, atrasado, finalizadoPeriodo, countDocPendente, countSemCategoria, countSemDocs };
   }, [data, filtered]);
@@ -198,14 +224,23 @@ export default function ContasPagar() {
 
   return (
     <div className="p-6 space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-          <ArrowUpFromLine className="h-6 w-6 text-admin" />
-          Contas a Pagar
-        </h1>
-        <p className="text-muted-foreground text-sm mt-1">
-          Vencimentos a parceiros — abertos, pagos e atrasados.
-        </p>
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+            <ArrowUpFromLine className="h-6 w-6 text-admin" />
+            Contas a Pagar
+          </h1>
+          <p className="text-muted-foreground text-sm mt-1">
+            Vencimentos a parceiros — abertos, pagos e atrasados.
+          </p>
+        </div>
+        <Button
+          onClick={() => setNovaContaOpen(true)}
+          className="gap-2 bg-admin hover:bg-admin-accent text-admin-foreground"
+        >
+          <Plus className="h-4 w-4" />
+          Nova conta manual
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -286,18 +321,21 @@ export default function ContasPagar() {
             </div>
           )}
           {totals.countSemDocs > 0 && (
-            <div className="p-3 rounded-lg border border-amber-200 bg-amber-50/60 flex items-center justify-between">
-              <div className="flex items-center gap-2 text-amber-800 text-sm">
+            <div className="p-3 rounded-lg border border-blue-200 bg-blue-50/60 flex items-center justify-between">
+              <div className="flex items-center gap-2 text-blue-800 text-sm">
                 <FileWarning className="h-4 w-4" />
-                {totals.countSemDocs} sem documentação (NF ou recibo)
+                <span>
+                  {totals.countSemDocs} {totals.countSemDocs === 1 ? "conta sem NF/Recibo" : "contas sem NF/Recibo"}
+                  <span className="text-blue-600 text-xs ml-1">— anexar antes de enviar ao financeiro</span>
+                </span>
               </div>
               <Button
                 size="sm"
                 variant="outline"
-                className="text-amber-700 border-amber-300"
+                className="text-blue-700 border-blue-300 hover:bg-blue-100"
                 onClick={verPendentesDocs}
               >
-                Ver pendentes
+                Ver
               </Button>
             </div>
           )}
@@ -458,9 +496,10 @@ export default function ContasPagar() {
                           aria-label="Selecionar todos"
                         />
                       </TableHead>
-                      <TableHead>Vencimento</TableHead>
-                      <TableHead>Descrição</TableHead>
                       <TableHead>Parceiro</TableHead>
+                      <TableHead>Descrição</TableHead>
+                      <TableHead>Vencimento</TableHead>
+                      <TableHead>Meio de pagamento</TableHead>
                       <TableHead>Categoria</TableHead>
                       <TableHead className="text-right">Valor</TableHead>
                       <TableHead>Status</TableHead>
@@ -482,8 +521,12 @@ export default function ContasPagar() {
                               aria-label="Selecionar conta"
                             />
                           </TableCell>
-                          <TableCell className="whitespace-nowrap">
-                            {formatDateBR(c.data_vencimento)}
+                          <TableCell className="max-w-[200px]">
+                            <div className="truncate" title={c.parceiros_comerciais?.razao_social || c.fornecedor_cliente || ""}>
+                              {c.parceiros_comerciais?.razao_social ||
+                                c.fornecedor_cliente ||
+                                "—"}
+                            </div>
                           </TableCell>
                           <TableCell className="max-w-xs" title={c.descricao}>
                             <div className="flex items-center gap-2 min-w-0">
@@ -498,10 +541,13 @@ export default function ContasPagar() {
                               )}
                             </div>
                           </TableCell>
-                          <TableCell>
-                            {c.parceiros_comerciais?.razao_social ||
-                              c.fornecedor_cliente ||
-                              "—"}
+                          <TableCell className="whitespace-nowrap">
+                            {formatDateBR(c.data_vencimento)}
+                          </TableCell>
+                          <TableCell className="text-xs text-muted-foreground">
+                            {c.formas_pagamento?.nome || c.forma_pagamento || (
+                              <span className="text-[10px] italic">—</span>
+                            )}
                           </TableCell>
                           <TableCell className="text-muted-foreground text-xs">
                             {c.plano_contas?.nome ? (
@@ -581,6 +627,11 @@ export default function ContasPagar() {
       <ContaPagarDetalheDrawer
         contaId={contaIdSelecionada}
         onClose={() => setContaIdSelecionada(null)}
+      />
+
+      <NovaContaPagarSheet
+        open={novaContaOpen}
+        onOpenChange={setNovaContaOpen}
       />
     </div>
   );
