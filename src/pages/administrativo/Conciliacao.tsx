@@ -246,6 +246,13 @@ export default function Conciliacao() {
     return todos.filter((s) => !agrupamentosRejeitados.has(s.id));
   }, [movsNaoConciliadas, cpsNaoConciliadas, agrupamentosRejeitados]);
 
+  // Matches 1:1 (não-cartão) — APENAS data + valor 100% exatos
+  const matches1to1 = useMemo<Match1to1[]>(() => {
+    if (movsNaoConciliadas.length === 0 || cpsNaoConciliadas.length === 0) return [];
+    const todos = encontrarMatches1to1(movsNaoConciliadas, cpsNaoConciliadas);
+    return todos.filter((m) => !matches1to1Rejeitados.has(m.movimentacao_id));
+  }, [movsNaoConciliadas, cpsNaoConciliadas, matches1to1Rejeitados]);
+
   // Validação em tempo real do agrupamento manual
   const validacaoManual = useMemo(() => {
     if (!movSelecionada || contasSelecionadasManual.size === 0) return null;
