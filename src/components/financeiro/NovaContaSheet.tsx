@@ -84,7 +84,7 @@ const INITIAL_STATE: FormState = {
   parcelas: 1,
   categoria_id: null,
   centro_custo: "",
-  unidade: "matriz_sp",
+  unidade: "",
   forma_pagamento: "",
   nf_numero: "",
   nf_serie: "",
