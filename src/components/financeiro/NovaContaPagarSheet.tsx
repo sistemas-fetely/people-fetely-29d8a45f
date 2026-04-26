@@ -43,6 +43,7 @@ import {
 import { ParceiroFormSheet, Parceiro } from "@/components/financeiro/ParceiroFormSheet";
 import { CategoriaFormDialog } from "@/components/financeiro/CategoriaFormDialog";
 import { formatBRL } from "@/lib/format-currency";
+import { FORMAS_PAGAMENTO } from "@/lib/financeiro/formas-pagamento";
 
 const CENTROS = ["comercial", "administrativo", "rh", "ti", "fiscal", "financeiro", "fabrica", "geral"];
 
