@@ -16,9 +16,6 @@ import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useCategoriasPlano } from "@/hooks/useCategoriasPlano";
-import { ImportadorCsvQive } from "@/components/financeiro/ImportadorCsvQive";
-import { ImportadorPdfDanfe } from "@/components/financeiro/ImportadorPdfDanfe";
-import { ImportadorPdfInvoice } from "@/components/financeiro/ImportadorPdfInvoice";
 
 export default function ImportarDados() {
   const [syncing, setSyncing] = useState(false);
