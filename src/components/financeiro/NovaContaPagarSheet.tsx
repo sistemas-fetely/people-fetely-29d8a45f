@@ -411,34 +411,202 @@ export function NovaContaPagarSheet({ open, onOpenChange }: Props) {
               </div>
             </div>
 
-            {/* Detalhamento do Item */}
+            {/* Itens da Conta (multi) */}
             <div className="border-t pt-4">
-              <p className="text-sm font-medium mb-3">Detalhamento do Item</p>
-              <div className="grid grid-cols-3 gap-3">
-                <div>
-                  <Label>NCM</Label>
-                  <Input value={ncm} onChange={(e) => setNcm(e.target.value)} placeholder="12345678" maxLength={8} />
-                </div>
-                <div>
-                  <Label>Quantidade</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={quantidade}
-                    onChange={(e) => setQuantidade(e.target.value)}
-                    placeholder="1,00"
-                  />
-                </div>
-                <div>
-                  <Label>Valor Unitário</Label>
-                  <Input
-                    value={valorUnitario}
-                    onChange={(e) => setValorUnitario(e.target.value)}
-                    placeholder="0,00"
-                  />
-                </div>
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-sm font-medium">Itens da Conta (opcional)</p>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    if (!mostrarItens && itens.length === 0) {
+                      // Abre e já adiciona o primeiro item
+                      setItens([
+                        {
+                          id: crypto.randomUUID(),
+                          descricao: "",
+                          ncm: "",
+                          quantidade: "1",
+                          valorUnitario: "",
+                          categoriaId: null,
+                        },
+                      ]);
+                    }
+                    setMostrarItens(!mostrarItens);
+                  }}
+                  className="text-xs"
+                >
+                  {mostrarItens ? "Ocultar" : "Adicionar"} itens
+                </Button>
               </div>
+
+              {mostrarItens && (
+                <div className="space-y-3">
+                  {itens.map((item, idx) => (
+                    <div
+                      key={item.id}
+                      className="p-3 border rounded-lg bg-muted/30 space-y-2"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-medium text-muted-foreground">
+                          Item {idx + 1}
+                        </span>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          onClick={() =>
+                            setItens(itens.filter((i) => i.id !== item.id))
+                          }
+                          className="h-6 w-6 p-0 text-destructive"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+
+                      <div>
+                        <Label className="text-xs">Descrição *</Label>
+                        <Input
+                          value={item.descricao}
+                          onChange={(e) =>
+                            setItens(
+                              itens.map((i) =>
+                                i.id === item.id
+                                  ? { ...i, descricao: e.target.value }
+                                  : i
+                              )
+                            )
+                          }
+                          placeholder="Ex: Kit Teclado e Mouse sem fio"
+                          className="h-8"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-2">
+                        <div>
+                          <Label className="text-xs">NCM</Label>
+                          <Input
+                            value={item.ncm}
+                            onChange={(e) =>
+                              setItens(
+                                itens.map((i) =>
+                                  i.id === item.id
+                                    ? { ...i, ncm: e.target.value }
+                                    : i
+                                )
+                              )
+                            }
+                            placeholder="12345678"
+                            maxLength={8}
+                            className="h-8 font-mono text-xs"
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs">Qtd *</Label>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            value={item.quantidade}
+                            onChange={(e) =>
+                              setItens(
+                                itens.map((i) =>
+                                  i.id === item.id
+                                    ? { ...i, quantidade: e.target.value }
+                                    : i
+                                )
+                              )
+                            }
+                            className="h-8"
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs">Vlr Unit *</Label>
+                          <Input
+                            value={item.valorUnitario}
+                            onChange={(e) =>
+                              setItens(
+                                itens.map((i) =>
+                                  i.id === item.id
+                                    ? { ...i, valorUnitario: e.target.value }
+                                    : i
+                                )
+                              )
+                            }
+                            placeholder="0,00"
+                            className="h-8"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <Label className="text-xs">Categoria (opcional)</Label>
+                        <CategoriaCombobox
+                          options={categorias || []}
+                          value={item.categoriaId}
+                          onChange={(v) =>
+                            setItens(
+                              itens.map((i) =>
+                                i.id === item.id ? { ...i, categoriaId: v } : i
+                              )
+                            )
+                          }
+                          placeholder="Categoria específica para este item"
+                        />
+                      </div>
+                    </div>
+                  ))}
+
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() =>
+                      setItens([
+                        ...itens,
+                        {
+                          id: crypto.randomUUID(),
+                          descricao: "",
+                          ncm: "",
+                          quantidade: "1",
+                          valorUnitario: "",
+                          categoriaId: null,
+                        },
+                      ])
+                    }
+                    className="w-full"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Adicionar Item
+                  </Button>
+
+                  {itens.length > 0 && (() => {
+                    const totalItens = itens.reduce((acc, it) => {
+                      const qtd = parseFloat(it.quantidade.replace(",", ".")) || 0;
+                      const vu =
+                        parseFloat(
+                          it.valorUnitario.replace(/\./g, "").replace(",", ".")
+                        ) || 0;
+                      return acc + qtd * vu;
+                    }, 0);
+                    const diff = Math.abs(totalItens - valorNum) > 0.01;
+                    return (
+                      <div className="p-2 bg-muted/40 rounded border">
+                        <p className="text-xs">
+                          <strong>Total dos itens:</strong>{" "}
+                          {formatBRL(totalItens)}
+                        </p>
+                        {diff && valorNum > 0 && (
+                          <p className="text-xs text-warning mt-1">
+                            ⚠️ Difere do valor total da conta (
+                            {formatBRL(valorNum)})
+                          </p>
+                        )}
+                      </div>
+                    );
+                  })()}
+                </div>
+              )}
             </div>
 
             {/* Documentos */}
