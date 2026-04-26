@@ -1540,6 +1540,121 @@ export type Database = {
         }
         Relationships: []
       }
+      contas_pagar: {
+        Row: {
+          categoria_id: string | null
+          comprovante_nome: string | null
+          comprovante_path: string | null
+          created_at: string
+          created_by: string | null
+          data_pagamento: string | null
+          deleted_at: string | null
+          descricao: string
+          fornecedor: string
+          id: string
+          nf_nome: string | null
+          nf_path: string | null
+          nf_uploaded_at: string | null
+          observacoes: string | null
+          status: string
+          updated_at: string
+          updated_by: string | null
+          valor: number
+          valor_pago: number | null
+          vencimento: string
+        }
+        Insert: {
+          categoria_id?: string | null
+          comprovante_nome?: string | null
+          comprovante_path?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_pagamento?: string | null
+          deleted_at?: string | null
+          descricao: string
+          fornecedor: string
+          id?: string
+          nf_nome?: string | null
+          nf_path?: string | null
+          nf_uploaded_at?: string | null
+          observacoes?: string | null
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+          valor: number
+          valor_pago?: number | null
+          vencimento: string
+        }
+        Update: {
+          categoria_id?: string | null
+          comprovante_nome?: string | null
+          comprovante_path?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_pagamento?: string | null
+          deleted_at?: string | null
+          descricao?: string
+          fornecedor?: string
+          id?: string
+          nf_nome?: string | null
+          nf_path?: string | null
+          nf_uploaded_at?: string | null
+          observacoes?: string | null
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+          valor?: number
+          valor_pago?: number | null
+          vencimento?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contas_pagar_categoria_id_fkey"
+            columns: ["categoria_id"]
+            isOneToOne: false
+            referencedRelation: "plano_contas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contas_pagar_historico: {
+        Row: {
+          conta_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          observacao: string | null
+          status_anterior: string | null
+          status_novo: string
+        }
+        Insert: {
+          conta_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          observacao?: string | null
+          status_anterior?: string | null
+          status_novo: string
+        }
+        Update: {
+          conta_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          observacao?: string | null
+          status_anterior?: string | null
+          status_novo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contas_pagar_historico_conta_id_fkey"
+            columns: ["conta_id"]
+            isOneToOne: false
+            referencedRelation: "contas_pagar"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contrato_pj_acessos_sistemas: {
         Row: {
           contrato_pj_id: string
