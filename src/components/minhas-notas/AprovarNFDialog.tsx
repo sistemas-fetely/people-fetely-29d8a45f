@@ -85,34 +85,49 @@ export function AprovarNFDialog({ open, onOpenChange, tarefaId, notaId }: Props)
       if (rpcErr) throw rpcErr;
       if ((rpcRes as any)?.erro) throw new Error((rpcRes as any).erro);
 
-      if (!emailResponsavel || emailResponsavel === "(não configurado)") {
-        toast.warning("Email do responsável pelo pagamento não configurado em Parâmetros. NF aprovada mas email não enviado.");
+      if (!destinatariosFinanceiro || destinatariosFinanceiro.length === 0) {
+        toast.warning("Nenhum destinatário configurado em Financeiro Externo. NF aprovada mas email não enviado.");
       } else if (detalhe?.nota && detalhe?.pdfUrl) {
         const contrato = detalhe.nota.contratos_pj as any;
-        const { error: emailErr } = await supabase.functions.invoke("send-transactional-email", {
-          body: {
-            templateName: "nf-pagamento",
-            recipientEmail: emailResponsavel,
-            idempotencyKey: `nf-pag-${notaId}-${Date.now()}`,
-            templateData: {
-              nomeColaborador: contrato?.contato_nome,
-              nomeFantasia: contrato?.nome_fantasia || contrato?.razao_social,
-              numeroNF: detalhe.nota.numero,
-              valor: `R$ ${Number(detalhe.nota.valor).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`,
-              dataVencimento: detalhe.nota.data_vencimento || detalhe.nota.data_emissao,
-              arquivoUrl: detalhe.pdfUrl,
+
+        const emailPromises = destinatariosFinanceiro.map(async (dest) => {
+          const { error: emailErr } = await supabase.functions.invoke("send-transactional-email", {
+            body: {
+              templateName: "nf-pagamento",
+              recipientEmail: dest.email,
+              idempotencyKey: `nf-pag-${notaId}-${dest.email}-${Date.now()}`,
+              templateData: {
+                nomeColaborador: contrato?.contato_nome,
+                nomeFantasia: contrato?.nome_fantasia || contrato?.razao_social,
+                numeroNF: detalhe.nota.numero,
+                valor: `R$ ${Number(detalhe.nota.valor).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`,
+                dataVencimento: detalhe.nota.data_vencimento || detalhe.nota.data_emissao,
+                arquivoUrl: detalhe.pdfUrl,
+              },
             },
-          },
+          });
+
+          if (emailErr) {
+            console.error(`Erro ao enviar para ${dest.email}:`, emailErr);
+            return { email: dest.email, erro: emailErr.message, sucesso: false };
+          }
+
+          return { email: dest.email, sucesso: true };
         });
 
-        if (emailErr) {
-          toast.error("NF aprovada, mas email falhou: " + emailErr.message);
-        } else {
+        const resultados = await Promise.all(emailPromises);
+        const sucessos = resultados.filter((r) => r.sucesso).length;
+        const erros = resultados.filter((r) => !r.sucesso);
+
+        if (sucessos > 0) {
           await supabase.rpc("marcar_nf_enviada_pagamento", {
             _nota_id: notaId,
-            _email_destinatario: emailResponsavel,
+            _email_destinatario: destinatariosFinanceiro.map((d) => d.email).join(", "),
           });
-          toast.success("NF aprovada e enviada pro financeiro! 🎉");
+          toast.success(`NF aprovada! Email enviado para ${sucessos} destinatário${sucessos > 1 ? "s" : ""}`);
+        }
+        if (erros.length > 0) {
+          toast.error(`${erros.length} email${erros.length > 1 ? "s" : ""} falharam`);
         }
       } else {
         toast.success("NF aprovada!");
