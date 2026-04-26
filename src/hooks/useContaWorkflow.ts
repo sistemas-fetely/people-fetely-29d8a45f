@@ -4,23 +4,19 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
 export const STATUS_FLOW = [
-  { key: "rascunho", label: "Rascunho" },
   { key: "aberto", label: "Aberto" },
   { key: "aprovado", label: "Aprovado" },
-  { key: "agendado", label: "Enviado" },
-  { key: "pago", label: "Pago" },
-  { key: "conciliado", label: "Conciliado" },
+  { key: "doc_pendente", label: "Doc. Pendente" },
+  { key: "finalizado", label: "Finalizado" },
 ] as const;
 
 export type ContaStatus =
-  | "rascunho"
   | "aberto"
   | "atrasado"
   | "aprovado"
-  | "agendado"
-  | "pago"
-  | "cancelado"
-  | "conciliado";
+  | "doc_pendente"
+  | "finalizado"
+  | "cancelado";
 
 export function useContaWorkflow() {
   const { user } = useAuth();

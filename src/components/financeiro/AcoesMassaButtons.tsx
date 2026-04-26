@@ -19,7 +19,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { ShieldCheck, ThumbsUp, Send, Check, ChevronDown, X, Loader2 } from "lucide-react";
+import { ThumbsUp, Check, ChevronDown, X, Loader2 } from "lucide-react";
 import { useContaWorkflow, type ContaStatus } from "@/hooks/useContaWorkflow";
 import { toast } from "sonner";
 
@@ -49,21 +49,10 @@ export default function AcoesMassaButtons({ contas, onDone }: Props) {
   ) {
     setExecutando(true);
     let sucesso = 0;
-    let pulados = 0;
     let erros = 0;
 
     for (const conta of contas) {
       if (!filtroStatuses.includes(conta.status)) continue;
-
-      // Se é rascunho indo pra "aberto" sem categoria → pula (precisa categorizar antes)
-      if (
-        conta.status === "rascunho" &&
-        novoStatus === "aberto" &&
-        !conta.conta_id
-      ) {
-        pulados++;
-        continue;
-      }
 
       try {
         await workflow.mudarStatus.mutateAsync({
@@ -79,36 +68,22 @@ export default function AcoesMassaButtons({ contas, onDone }: Props) {
     }
 
     let msg = `${sucesso} atualizada${sucesso !== 1 ? "s" : ""}`;
-    if (pulados > 0) msg += ` (${pulados} sem categoria, mantidas como rascunho)`;
     if (erros > 0) msg += ` (${erros} erro${erros > 1 ? "s" : ""})`;
 
     if (sucesso > 0) toast.success(msg);
-    else if (pulados > 0) toast.warning(msg);
     else toast.error(msg);
 
     setExecutando(false);
     onDone();
   }
 
-  const nRascunho = countStatus("rascunho");
   const nAberto = countStatus("aberto", "atrasado");
   const nAprovado = countStatus("aprovado");
-  
+  const nDocPendente = countStatus("doc_pendente");
 
   return (
     <>
       {executando && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
-
-      {nRascunho > 0 && (
-        <Button
-          size="sm"
-          className="bg-blue-700 hover:bg-blue-800 text-white gap-1"
-          disabled={executando}
-          onClick={() => executarLote("aberto", ["rascunho"], "Validado em massa")}
-        >
-          <ShieldCheck className="h-3.5 w-3.5" /> Validar {nRascunho}
-        </Button>
-      )}
 
       {nAberto > 0 && (
         <Button
@@ -121,14 +96,15 @@ export default function AcoesMassaButtons({ contas, onDone }: Props) {
         </Button>
       )}
 
-      {nAprovado > 0 && (
+      {nDocPendente > 0 && (
         <Button
           size="sm"
-          className="bg-amber-600 hover:bg-amber-700 text-white gap-1"
+          variant="outline"
+          className="gap-1"
           disabled={executando}
-          onClick={() => executarLote("agendado", ["aprovado"], "Enviado em massa")}
+          onClick={() => executarLote("finalizado", ["doc_pendente"], "Finalizado manualmente em massa")}
         >
-          <Send className="h-3.5 w-3.5" /> Enviar {nAprovado}
+          <Check className="h-3.5 w-3.5" /> Finalizar {nDocPendente}
         </Button>
       )}
 
@@ -139,40 +115,20 @@ export default function AcoesMassaButtons({ contas, onDone }: Props) {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuLabel className="text-xs">Pular etapas</DropdownMenuLabel>
-          <DropdownMenuItem
-            onClick={() =>
-              executarLote(
-                "aprovado",
-                ["rascunho", "aberto", "atrasado"],
-                "Validado + aprovado em massa",
-              )
-            }
-          >
-            Validar + Aprovar direto
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            onClick={() =>
-              executarLote(
-                "agendado",
-                ["rascunho", "aberto", "atrasado", "aprovado"],
-                "Enviado direto em massa",
-              )
-            }
-          >
-            Enviar direto (pular aprovação)
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            onClick={() =>
-              executarLote(
-                "pago",
-                ["rascunho", "aberto", "atrasado", "aprovado", "agendado"],
-                "Marcado como pago (retroativo, em massa)",
-              )
-            }
-          >
-            Marcar como pago (retroativo)
-          </DropdownMenuItem>
+          <DropdownMenuLabel className="text-xs">Ações em massa</DropdownMenuLabel>
+          {nAprovado > 0 && (
+            <DropdownMenuItem
+              onClick={() =>
+                executarLote(
+                  "finalizado",
+                  ["aprovado"],
+                  "Finalizado direto em massa (NF entregue fora do sistema)",
+                )
+              }
+            >
+              Finalizar aprovados (NF entregue manual)
+            </DropdownMenuItem>
+          )}
           <DropdownMenuSeparator />
           <AlertDialog>
             <AlertDialogTrigger asChild>
@@ -189,7 +145,7 @@ export default function AcoesMassaButtons({ contas, onDone }: Props) {
                   Cancelar {contas.length} conta{contas.length > 1 ? "s" : ""}?
                 </AlertDialogTitle>
                 <AlertDialogDescription>
-                  As contas selecionadas serão marcadas como canceladas. Você poderá reverter depois
+                  As contas selecionadas serão marcadas como canceladas. Você poderá reabrir depois
                   se necessário.
                 </AlertDialogDescription>
               </AlertDialogHeader>
@@ -200,7 +156,7 @@ export default function AcoesMassaButtons({ contas, onDone }: Props) {
                   onClick={() =>
                     executarLote(
                       "cancelado",
-                      ["rascunho", "aberto", "atrasado", "aprovado", "agendado"],
+                      ["aberto", "atrasado", "aprovado", "doc_pendente"],
                       "Cancelado em massa",
                     )
                   }

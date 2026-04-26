@@ -30,6 +30,7 @@ type Conta = {
   nf_numero?: string | null;
   nf_pdf_url?: string | null;
   nf_xml_url?: string | null;
+  nf_chave_acesso?: string | null;
   plano_contas?: { codigo?: string | null; nome?: string | null } | null;
   parceiros_comerciais?: { razao_social?: string | null } | null;
   dados_pagamento_fornecedor?: {
@@ -142,12 +143,27 @@ export default function EnviarPagamentoDialog({ open, onOpenChange, conta, onDon
     }
     setEnviando(true);
     try {
-      // 1) Salvar dados bancários + mudar status para agendado
+      // PR2: detectar automaticamente se há NF/Recibo anexado
+      // Se sim → finalizado direto. Se não → doc_pendente.
+      const temNFNaConta = !!conta.nf_chave_acesso || !!conta.nf_pdf_url;
+      let temDocFiscal = temNFNaConta;
+      if (!temDocFiscal) {
+        const { count } = await supabase
+          .from("contas_pagar_documentos")
+          .select("id", { count: "exact", head: true })
+          .eq("conta_id", conta.id)
+          .in("tipo", ["nf", "recibo"]);
+        temDocFiscal = !!(count && count > 0);
+      }
+
+      const novoStatusFinal = temDocFiscal ? "finalizado" : "doc_pendente";
+
+      // 1) Salvar dados bancários + atualizar status
       await mudarStatus.mutateAsync({
         contaId: conta.id,
         statusAnterior: conta.status,
-        novoStatus: "agendado",
-        observacao: `Enviado para pagamento: ${emailDestinatario}${obsEnvio ? ` — ${obsEnvio}` : ""}`,
+        novoStatus: novoStatusFinal,
+        observacao: `Enviado para pagamento: ${emailDestinatario}${obsEnvio ? ` — ${obsEnvio}` : ""}${temDocFiscal ? "" : " (documentação fiscal pendente)"}`,
         extras: {
           dados_pagamento_fornecedor: dadosPgto,
           enviado_pagamento_em: new Date().toISOString(),

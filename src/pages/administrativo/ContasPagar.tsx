@@ -49,14 +49,17 @@ type Conta = {
 };
 
 const STATUS_STYLES: Record<string, string> = {
-  rascunho: "bg-muted text-muted-foreground",
   aberto: "bg-blue-100 text-blue-800 hover:bg-blue-100",
   atrasado: "bg-red-100 text-red-800 hover:bg-red-100",
   aprovado: "bg-purple-100 text-purple-800 hover:bg-purple-100",
+  doc_pendente: "bg-amber-100 text-amber-800 hover:bg-amber-100",
+  finalizado: "bg-green-100 text-green-800 hover:bg-green-100",
+  cancelado: "bg-gray-100 text-gray-700 hover:bg-gray-100",
+  // Legados (não mais usados ativamente, mantidos para compatibilidade visual)
+  rascunho: "bg-muted text-muted-foreground",
   agendado: "bg-amber-100 text-amber-800 hover:bg-amber-100",
   pago: "bg-green-100 text-green-800 hover:bg-green-100",
   conciliado: "bg-teal-100 text-teal-800 hover:bg-teal-100",
-  cancelado: "bg-gray-100 text-gray-700 hover:bg-gray-100",
 };
 
 const PAGE_SIZE = 20;
@@ -108,25 +111,25 @@ export default function ContasPagar() {
   const totals = useMemo(() => {
     const all = data || [];
     const aberto = all
-      .filter((c) => c.status === "aberto" || c.status === "atrasado")
+      .filter((c) => c.status === "aberto" || c.status === "atrasado" || c.status === "aprovado" || c.status === "doc_pendente")
       .reduce((s, c) => s + Number(c.valor || 0), 0);
     const atrasado = all
       .filter((c) => c.status === "atrasado")
       .reduce((s, c) => s + Number(c.valor || 0), 0);
-    const pagoPeriodo = (filtered || [])
-      .filter((c) => c.status === "pago")
+    const finalizadoPeriodo = (filtered || [])
+      .filter((c) => c.status === "finalizado" || c.status === "pago" || c.status === "conciliado")
       .reduce((s, c) => s + Number(c.valor || 0), 0);
-    const countRascunho = all.filter((c) => c.status === "rascunho").length;
+    const countDocPendente = all.filter((c) => c.status === "doc_pendente").length;
     const countSemCategoria = all.filter(
-      (c) => !c.conta_id && c.status !== "cancelado",
+      (c) => !c.conta_id && c.status !== "cancelado" && c.status !== "finalizado",
     ).length;
     const countSemDocs = all.filter(
       (c) =>
         (c.docs_status === "pendente" || c.docs_status === null) &&
         c.status !== "cancelado" &&
-        c.status !== "rascunho",
+        c.status !== "finalizado",
     ).length;
-    return { aberto, atrasado, pagoPeriodo, countRascunho, countSemCategoria, countSemDocs };
+    return { aberto, atrasado, finalizadoPeriodo, countDocPendente, countSemCategoria, countSemDocs };
   }, [data, filtered]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
@@ -173,12 +176,6 @@ export default function ContasPagar() {
   }
   function limparSelecao() {
     setSelecionadas(new Set());
-  }
-  function selecionarRascunhos() {
-    const ids = (data || []).filter((c) => c.status === "rascunho").map((c) => c.id);
-    setSelecionadas(new Set(ids));
-    setStatusFilter("rascunho");
-    setPage(1);
   }
   function verSemCategoria() {
     setStatusFilter("todos");
@@ -235,27 +232,26 @@ export default function ContasPagar() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-normal text-muted-foreground">
-              Pago no período
+              Finalizado no período
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-700">{formatBRL(totals.pagoPeriodo)}</div>
+            <div className="text-2xl font-bold text-green-700">{formatBRL(totals.finalizadoPeriodo)}</div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Banner Legado: muitos rascunhos */}
-      {totals.countRascunho > 5 && (
+      {/* Banner Doc Pendente */}
+      {totals.countDocPendente > 0 && (
         <div className="p-4 rounded-lg border border-amber-300 bg-amber-50 flex items-center justify-between gap-4 flex-wrap">
           <div className="flex items-start gap-3 flex-1 min-w-[260px]">
             <Sparkles className="h-5 w-5 text-amber-700 mt-0.5 shrink-0" />
             <div>
               <p className="text-sm font-semibold text-amber-900">
-                {totals.countRascunho} itens em rascunho (legado)
+                {totals.countDocPendente} {totals.countDocPendente === 1 ? "conta com documentação pendente" : "contas com documentação pendente"}
               </p>
               <p className="text-xs text-amber-800 mt-0.5">
-                Selecione todos e use as ações em massa para avançar o workflow. Itens com categoria
-                vão para "Aberto". Sem categoria ficam como rascunho.
+                Pagamento foi enviado ao financeiro mas falta NF/Recibo do fornecedor. Reenvie e-mail cobrando ou finalize manualmente.
               </p>
             </div>
           </div>
@@ -263,9 +259,9 @@ export default function ContasPagar() {
             size="sm"
             variant="outline"
             className="border-amber-400 text-amber-800 hover:bg-amber-100"
-            onClick={selecionarRascunhos}
+            onClick={() => { setStatusFilter("doc_pendente"); setPage(1); }}
           >
-            Selecionar rascunhos
+            Ver pendentes
           </Button>
         </div>
       )}
@@ -362,7 +358,7 @@ export default function ContasPagar() {
             </Select>
             <div className="flex flex-wrap gap-1">
               {(
-                ["todos", "rascunho", "aberto", "atrasado", "aprovado", "agendado", "pago", "cancelado"] as const
+                ["todos", "aberto", "atrasado", "aprovado", "doc_pendente", "finalizado", "cancelado"] as const
               ).map((s) => (
                 <Button
                   key={s}
@@ -374,7 +370,7 @@ export default function ContasPagar() {
                   }}
                   className="capitalize"
                 >
-                  {s}
+                  {s === "doc_pendente" ? "Doc. Pendente" : s}
                 </Button>
               ))}
             </div>
@@ -472,11 +468,6 @@ export default function ContasPagar() {
                   </TableHeader>
                   <TableBody>
                     {pageData.map((c) => {
-                      const pagoComAtraso =
-                        c.status === "pago" &&
-                        c.data_pagamento &&
-                        c.data_vencimento &&
-                        c.data_pagamento > c.data_vencimento;
                       const isSel = selecionadas.has(c.id);
                       return (
                         <TableRow
@@ -529,32 +520,12 @@ export default function ContasPagar() {
                           </TableCell>
                           <TableCell>
                             <div className="flex flex-col gap-1 items-start">
-                              {pagoComAtraso ? (
-                                <>
-                                  <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100">
-                                    Pago c/ atraso
-                                  </Badge>
-                                  <span className="text-[10px] text-muted-foreground">
-                                    {formatDateBR(c.data_pagamento)}
-                                  </span>
-                                </>
-                              ) : c.status === "pago" ? (
-                                <>
-                                  <Badge className={STATUS_STYLES.pago}>Pago</Badge>
-                                  {c.data_pagamento && (
-                                    <span className="text-[10px] text-muted-foreground">
-                                      {formatDateBR(c.data_pagamento)}
-                                    </span>
-                                  )}
-                                </>
-                              ) : (
-                                <Badge className={STATUS_STYLES[c.status] || "bg-muted"}>
-                                  {c.status}
-                                </Badge>
-                              )}
+                              <Badge className={STATUS_STYLES[c.status] || "bg-muted"}>
+                                {c.status === "doc_pendente" ? "Doc. Pendente" : c.status}
+                              </Badge>
                               {c.docs_status === "pendente" &&
                                 c.status !== "cancelado" &&
-                                c.status !== "rascunho" && (
+                                c.status !== "finalizado" && (
                                   <Badge
                                     variant="outline"
                                     className="text-[9px] border-amber-400 text-amber-600"
