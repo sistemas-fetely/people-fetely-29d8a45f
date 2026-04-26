@@ -95,6 +95,7 @@ import PedidosVenda from "@/pages/administrativo/PedidosVenda";
 import Produtos from "@/pages/administrativo/Produtos";
 import CaixaBanco from "@/pages/administrativo/CaixaBanco";
 import Conciliacao from "@/pages/administrativo/Conciliacao";
+import RadarPendencias from "@/pages/administrativo/RadarPendencias";
 
 const queryClient = new QueryClient();
 
