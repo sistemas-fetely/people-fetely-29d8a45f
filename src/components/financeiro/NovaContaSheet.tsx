@@ -640,6 +640,7 @@ export function NovaContaSheet({ open, onOpenChange, conta }: NovaContaSheetProp
                     value={formData.nf_numero}
                     onChange={(e) => setFormData({ ...formData, nf_numero: e.target.value })}
                     placeholder="000000"
+                    className={iaCls("nf_numero")}
                   />
                 </div>
                 <div className="space-y-2">
@@ -649,6 +650,7 @@ export function NovaContaSheet({ open, onOpenChange, conta }: NovaContaSheetProp
                     value={formData.nf_serie}
                     onChange={(e) => setFormData({ ...formData, nf_serie: e.target.value })}
                     placeholder="1"
+                    className={iaCls("nf_serie")}
                   />
                 </div>
               </div>
