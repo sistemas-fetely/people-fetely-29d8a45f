@@ -99,6 +99,7 @@ export default function CaixaBanco() {
   const [marcarPagoOpen, setMarcarPagoOpen] = useState(false);
   const [contasParaPagar, setContasParaPagar] = useState<Lancamento[]>([]);
   const [contaIdDrawer, setContaIdDrawer] = useState<string | null>(null);
+  const navigate = useNavigate();
   const [editarOpen, setEditarOpen] = useState(false);
   const [lancamentoEditando, setLancamentoEditando] = useState<Lancamento | null>(null);
 
