@@ -804,33 +804,20 @@ export default function FaturasCartao() {
                                            </td>
                                            <td className="px-2 py-1.5">
                                             <div className="flex items-center gap-1">
-                                              <Select
-                                                value={l.categoria_id || ""}
-                                                onValueChange={(v) =>
-                                                  alterarCategoriaLanc(l.id, v)
-                                                }
-                                              >
-                                                <SelectTrigger className="h-7 text-[10px]">
-                                                  <SelectValue placeholder="Definir..." />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                  {categorias.map(
-                                                    (c: {
-                                                      id: string;
-                                                      codigo: string;
-                                                      nome: string;
-                                                    }) => (
-                                                      <SelectItem
-                                                        key={c.id}
-                                                        value={c.id}
-                                                        className="text-[10px]"
-                                                      >
-                                                        {c.codigo} {c.nome}
-                                                      </SelectItem>
-                                                    ),
-                                                  )}
-                                                </SelectContent>
-                                              </Select>
+                                              <div className="flex-1 min-w-[160px] [&_button]:h-7 [&_button]:text-[10px]">
+                                                <CategoriaCombobox
+                                                  options={categoriasDespesa}
+                                                  value={l.categoria_id || null}
+                                                  onChange={(id) =>
+                                                    id &&
+                                                    alterarCategoriaLanc(
+                                                      l.id,
+                                                      id,
+                                                    )
+                                                  }
+                                                  placeholder="Definir..."
+                                                />
+                                              </div>
                                               {(() => {
                                                 const sug = obterSugestao(l);
                                                 if (!sug) return null;
