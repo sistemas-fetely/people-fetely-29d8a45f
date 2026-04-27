@@ -57,7 +57,9 @@ type ParcelaPrevista = {
   data_vencimento: string;
   numero_parcela: number;
   total_parcelas: number;
-  compromisso_parcelado_id: string;
+  compromisso_parcelado_id: string | null;
+  compromisso_recorrente_id: string | null;
+  origem_tipo: "parcelado" | "recorrente";
 };
 
 type Compromisso = {
@@ -75,6 +77,19 @@ type Compromisso = {
   conta_bancaria_id: string | null;
   conta_bancaria?: { nome_exibicao: string } | null;
   created_at: string;
+};
+
+type CompromissoRecorrente = {
+  id: string;
+  descricao: string;
+  valor: number;
+  periodicidade: "mensal" | "trimestral" | "anual";
+  dia_vencimento: number;
+  data_inicio: string;
+  data_fim: string | null;
+  status: string;
+  conta_bancaria_id: string | null;
+  conta_bancaria?: { nome_exibicao: string } | null;
 };
 
 type AgrupadoPorMes = {
