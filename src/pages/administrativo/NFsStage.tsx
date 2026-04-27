@@ -53,6 +53,7 @@ import {
   descartarStage,
 } from "@/lib/financeiro/stage-handler";
 import { useCategoriasPlano } from "@/hooks/useCategoriasPlano";
+import { CategoriaCombobox } from "@/components/financeiro/CategoriaCombobox";
 import {
   classificarComAprendizado,
   useRegrasAtivas,
