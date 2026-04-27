@@ -4,6 +4,7 @@ import {
   FileSignature, Building2, ShieldCheck, FolderArchive,
   Users, Monitor, Network, Landmark, LogOut, ClipboardList,
   UsersRound, Settings2, ShoppingCart, Package, GitCompare,
+  Layers,
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { NavLink } from "@/components/NavLink";
@@ -38,6 +39,7 @@ const financeiroItems: MenuItem[] = [
   { title: "Contas a Receber", url: "/administrativo/contas-receber", icon: ArrowDownToLine },
   { title: "Parceiros Comerciais", url: "/administrativo/parceiros", icon: Users },
   { title: "Importar Dados", url: "/administrativo/importar", icon: Upload },
+  { title: "NFs em Stage", url: "/administrativo/nfs-stage", icon: Layers },
   { title: "Configuração Integração", url: "/administrativo/configuracao-integracao", icon: Settings2 },
 ];
 

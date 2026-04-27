@@ -4147,6 +4147,148 @@ export type Database = {
           },
         ]
       }
+      nfs_stage: {
+        Row: {
+          arquivo_nome: string | null
+          arquivo_storage_path: string | null
+          categoria_id: string | null
+          conta_pagar_existente_id: string | null
+          conta_pagar_id: string | null
+          created_at: string
+          criada_por: string | null
+          data_vencimento: string | null
+          descricao: string | null
+          fonte: string
+          fornecedor_cliente: string | null
+          fornecedor_cnpj: string | null
+          fornecedor_razao_social: string | null
+          id: string
+          importacao_lote_id: string | null
+          importada_em: string | null
+          importada_por: string | null
+          itens: Json | null
+          match_motivos: string | null
+          match_score: number | null
+          motivo_descarte: string | null
+          nf_chave_acesso: string | null
+          nf_data_emissao: string | null
+          nf_numero: string | null
+          nf_serie: string | null
+          observacoes_importacao: string | null
+          parceiro_id: string | null
+          status: string
+          updated_at: string
+          valor: number
+        }
+        Insert: {
+          arquivo_nome?: string | null
+          arquivo_storage_path?: string | null
+          categoria_id?: string | null
+          conta_pagar_existente_id?: string | null
+          conta_pagar_id?: string | null
+          created_at?: string
+          criada_por?: string | null
+          data_vencimento?: string | null
+          descricao?: string | null
+          fonte?: string
+          fornecedor_cliente?: string | null
+          fornecedor_cnpj?: string | null
+          fornecedor_razao_social?: string | null
+          id?: string
+          importacao_lote_id?: string | null
+          importada_em?: string | null
+          importada_por?: string | null
+          itens?: Json | null
+          match_motivos?: string | null
+          match_score?: number | null
+          motivo_descarte?: string | null
+          nf_chave_acesso?: string | null
+          nf_data_emissao?: string | null
+          nf_numero?: string | null
+          nf_serie?: string | null
+          observacoes_importacao?: string | null
+          parceiro_id?: string | null
+          status?: string
+          updated_at?: string
+          valor?: number
+        }
+        Update: {
+          arquivo_nome?: string | null
+          arquivo_storage_path?: string | null
+          categoria_id?: string | null
+          conta_pagar_existente_id?: string | null
+          conta_pagar_id?: string | null
+          created_at?: string
+          criada_por?: string | null
+          data_vencimento?: string | null
+          descricao?: string | null
+          fonte?: string
+          fornecedor_cliente?: string | null
+          fornecedor_cnpj?: string | null
+          fornecedor_razao_social?: string | null
+          id?: string
+          importacao_lote_id?: string | null
+          importada_em?: string | null
+          importada_por?: string | null
+          itens?: Json | null
+          match_motivos?: string | null
+          match_score?: number | null
+          motivo_descarte?: string | null
+          nf_chave_acesso?: string | null
+          nf_data_emissao?: string | null
+          nf_numero?: string | null
+          nf_serie?: string | null
+          observacoes_importacao?: string | null
+          parceiro_id?: string | null
+          status?: string
+          updated_at?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nfs_stage_categoria_id_fkey"
+            columns: ["categoria_id"]
+            isOneToOne: false
+            referencedRelation: "plano_contas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nfs_stage_conta_pagar_existente_id_fkey"
+            columns: ["conta_pagar_existente_id"]
+            isOneToOne: false
+            referencedRelation: "contas_pagar_receber"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nfs_stage_conta_pagar_existente_id_fkey"
+            columns: ["conta_pagar_existente_id"]
+            isOneToOne: false
+            referencedRelation: "vw_lancamentos_caixa_banco"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nfs_stage_conta_pagar_id_fkey"
+            columns: ["conta_pagar_id"]
+            isOneToOne: false
+            referencedRelation: "contas_pagar_receber"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nfs_stage_conta_pagar_id_fkey"
+            columns: ["conta_pagar_id"]
+            isOneToOne: false
+            referencedRelation: "vw_lancamentos_caixa_banco"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nfs_stage_parceiro_id_fkey"
+            columns: ["parceiro_id"]
+            isOneToOne: false
+            referencedRelation: "parceiros_comerciais"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notas_fiscais_pj: {
         Row: {
           arquivo_url: string | null

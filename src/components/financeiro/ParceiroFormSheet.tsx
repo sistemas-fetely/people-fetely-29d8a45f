@@ -136,7 +136,9 @@ export function ParceiroFormSheet({ open, onOpenChange, editing, categorias, onS
       setTiposSelecionados(["fornecedor"]);
       setCnpj(prefill?.cnpj ? maskCnpj(prefill.cnpj) : "");
       setRazaoSocial(prefill?.razao_social || "");
-      setNomeFantasia(prefill?.nome_fantasia || "");
+      // Nome Fantasia: usa o valor explícito do prefill OU adota a razão social como default
+      // (evita travar o fluxo de importação - usuário pode editar depois no cadastro)
+      setNomeFantasia(prefill?.nome_fantasia || prefill?.razao_social || "");
       setCep("");
       setLogradouro("");
       setNumero("");
