@@ -91,7 +91,6 @@ type LancamentoRow = {
   cotacao: number | null;
   estabelecimento_local: string | null;
   ramo_estabelecimento: string | null;
-  cnpj_estabelecimento: string | null;
   parceiro_id: string | null;
   categoria_id: string | null;
   status: string;
@@ -225,35 +224,58 @@ export default function FaturasCartao() {
     },
   });
 
-  // Calcular sugestões: categoria mais usada por descrição normalizada + por CNPJ
+  // Calcular sugestões: categoria mais usada por descrição normalizada + por CNPJ + por TOKEN principal
   const sugestoes = useMemo(() => {
     type Sugestao = { categoria_id: string; count: number };
     const porDescricao: Record<string, Record<string, number>> = {};
     const porCnpj: Record<string, Record<string, number>> = {};
+    const porToken: Record<string, Record<string, number>> = {};
 
     function normalizar(s: string): string {
       return (s || "")
         .toLowerCase()
         .normalize("NFD")
         .replace(/[\u0300-\u036f]/g, "")
-        .replace(/\s+\d{1,2}\/\d{1,2}\s*$/, "")
+        .replace(/\s+\d{1,2}\/\d{1,2}\s*$/, "") // tira parcela X/Y
+        .replace(/[^a-z0-9 ]/g, " ") // remove pontuação/símbolos
         .replace(/\s+/g, " ")
         .trim();
     }
 
+    // Pega o "token principal" - primeira palavra >= 3 chars que não seja stopword
+    function tokenPrincipal(desc: string): string | null {
+      const STOPWORDS = new Set([
+        "para", "com", "por", "dos", "das", "uma", "um", "de", "da", "do",
+        "the", "and", "for", "of", "to", "ltda", "me", "epp", "sa",
+      ]);
+      const words = normalizar(desc).split(" ");
+      for (const w of words) {
+        if (w.length >= 3 && !STOPWORDS.has(w) && !/^\d+$/.test(w)) {
+          return w;
+        }
+      }
+      return null;
+    }
+
     for (const l of historicoClassificados || []) {
-      // Por descrição normalizada
+      // Por descrição normalizada (match mais forte)
       const descNorm = normalizar(l.descricao);
       if (descNorm) {
         if (!porDescricao[descNorm]) porDescricao[descNorm] = {};
         porDescricao[descNorm][l.categoria_id] =
           (porDescricao[descNorm][l.categoria_id] || 0) + 1;
       }
-      // Por CNPJ
+      // Por CNPJ (forte)
       if (l.cnpj_estabelecimento) {
         if (!porCnpj[l.cnpj_estabelecimento]) porCnpj[l.cnpj_estabelecimento] = {};
         porCnpj[l.cnpj_estabelecimento][l.categoria_id] =
           (porCnpj[l.cnpj_estabelecimento][l.categoria_id] || 0) + 1;
+      }
+      // Por token principal (fraco - "KALUNGA POMP" → "kalunga")
+      const token = tokenPrincipal(l.descricao);
+      if (token) {
+        if (!porToken[token]) porToken[token] = {};
+        porToken[token][l.categoria_id] = (porToken[token][l.categoria_id] || 0) + 1;
       }
     }
 
@@ -282,25 +304,47 @@ export default function FaturasCartao() {
       if (m) sugestaoPorCnpj[k] = m;
     }
 
-    return { porDescricao: sugestaoPorDescricao, porCnpj: sugestaoPorCnpj, normalizar };
+    const sugestaoPorToken: Record<string, Sugestao> = {};
+    for (const k in porToken) {
+      const m = pegarMelhor(porToken[k]);
+      if (m) sugestaoPorToken[k] = m;
+    }
+
+    return {
+      porDescricao: sugestaoPorDescricao,
+      porCnpj: sugestaoPorCnpj,
+      porToken: sugestaoPorToken,
+      normalizar,
+      tokenPrincipal,
+    };
   }, [historicoClassificados]);
 
-  // Helper: pega sugestão pra um lançamento específico
+  // Helper: pega sugestão pra um lançamento específico (3 níveis de match)
   function obterSugestao(lanc: LancamentoRow): { categoria_id: string; count: number; motivo: string } | null {
     if (lanc.categoria_id) return null; // já classificado
     if (lanc.status === "descartado") return null;
 
-    // Prioridade 1: CNPJ exato
+    // Prioridade 1: CNPJ exato (mais confiável)
     if (lanc.cnpj_estabelecimento && sugestoes.porCnpj[lanc.cnpj_estabelecimento]) {
       const s = sugestoes.porCnpj[lanc.cnpj_estabelecimento];
-      return { ...s, motivo: `CNPJ deste estabelecimento já classificado ${s.count}x` };
+      return { ...s, motivo: `CNPJ ${lanc.cnpj_estabelecimento} já classificado ${s.count}x` };
     }
 
-    // Prioridade 2: descrição normalizada
+    // Prioridade 2: descrição normalizada exata
     const descNorm = sugestoes.normalizar(lanc.descricao);
     if (descNorm && sugestoes.porDescricao[descNorm]) {
       const s = sugestoes.porDescricao[descNorm];
       return { ...s, motivo: `Descrição similar já classificada ${s.count}x` };
+    }
+
+    // Prioridade 3: token principal (KALUNGA POMP-CT → KALUNGA)
+    const token = sugestoes.tokenPrincipal(lanc.descricao);
+    if (token && sugestoes.porToken[token]) {
+      const s = sugestoes.porToken[token];
+      // Só sugere por token se houver pelo menos 1 outra entrada (não conta a si mesmo)
+      if (s.count >= 1) {
+        return { ...s, motivo: `Estabelecimento "${token.toUpperCase()}" já classificado ${s.count}x` };
+      }
     }
 
     return null;
