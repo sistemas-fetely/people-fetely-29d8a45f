@@ -546,7 +546,7 @@ export default function CaixaBanco() {
                               >
                                 <Pencil className="h-3 w-3" />
                               </Button>
-                              {l.status_caixa === "em_aberto" && (
+                              {l.status_caixa === "em_aberto" && l.origem_view !== "cartao_lancamento" && (
                                 <Button
                                   size="sm"
                                   variant="outline"
