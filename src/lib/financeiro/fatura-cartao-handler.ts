@@ -97,7 +97,7 @@ export async function salvarFaturaCartao(
         fornecedor_cliente: cartaoLabel,
         status: "aberto",
         origem: "fatura_cartao",
-        observacoes: observacao || `Fatura de cartão importada com ${parsed.lancamentos.length} lançamento(s)`,
+        observacao: observacao || `Fatura de cartão importada com ${parsed.lancamentos.length} lançamento(s)`,
       })
       .select("id")
       .single();
