@@ -92,6 +92,7 @@ export default function DialogNovoRecorrente({
       setParceiroId("");
       setContaBancariaId("");
       setObservacao("");
+      setMostrarTodas(false);
     }
   }, [recorrenteEditando, aberto]);
 
