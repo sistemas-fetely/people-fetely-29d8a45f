@@ -358,28 +358,41 @@ export default function FluxoCaixaFuturo() {
                             </TableRow>
                           </TableHeader>
                           <TableBody>
-                            {g.parcelas.map((p) => (
-                              <TableRow
-                                key={p.id}
-                                className="cursor-pointer hover:bg-background"
-                                onClick={() =>
-                                  setCompromissoDetalhe(p.compromisso_parcelado_id)
-                                }
-                              >
-                                <TableCell className="text-xs whitespace-nowrap">
-                                  {formatDateBR(p.data_vencimento)}
-                                </TableCell>
-                                <TableCell className="text-xs">{p.descricao}</TableCell>
-                                <TableCell className="text-center">
-                                  <Badge variant="outline" className="text-[9px] py-0 px-1 h-4">
-                                    {p.numero_parcela}/{p.total_parcelas}
-                                  </Badge>
-                                </TableCell>
-                                <TableCell className="text-right font-mono text-xs">
-                                  {formatBRL(p.valor)}
-                                </TableCell>
-                              </TableRow>
-                            ))}
+                            {g.parcelas.map((p) => {
+                              const info = ORIGEM_BADGE[p.origem_tipo];
+                              const Icon = info.Icon;
+                              const clickable = p.origem_tipo === "parcelado" && p.compromisso_parcelado_id;
+                              return (
+                                <TableRow
+                                  key={p.id}
+                                  className={clickable ? "cursor-pointer hover:bg-background" : ""}
+                                  onClick={
+                                    clickable
+                                      ? () => setCompromissoDetalhe(p.compromisso_parcelado_id)
+                                      : undefined
+                                  }
+                                >
+                                  <TableCell className="text-xs whitespace-nowrap">
+                                    {formatDateBR(p.data_vencimento)}
+                                  </TableCell>
+                                  <TableCell className="text-xs">{p.descricao}</TableCell>
+                                  <TableCell className="text-center">
+                                    <Badge
+                                      variant="outline"
+                                      className={`text-[9px] py-0 px-1 h-4 inline-flex items-center gap-1 ${info.className}`}
+                                    >
+                                      <Icon className="h-2.5 w-2.5" />
+                                      {p.origem_tipo === "parcelado"
+                                        ? `${p.numero_parcela}/${p.total_parcelas}`
+                                        : "Recorrente"}
+                                    </Badge>
+                                  </TableCell>
+                                  <TableCell className="text-right font-mono text-xs">
+                                    {formatBRL(p.valor)}
+                                  </TableCell>
+                                </TableRow>
+                              );
+                            })}
                           </TableBody>
                         </Table>
                       </div>
