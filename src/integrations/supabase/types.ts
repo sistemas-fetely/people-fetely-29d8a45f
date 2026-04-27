@@ -1474,6 +1474,88 @@ export type Database = {
           },
         ]
       }
+      compromissos_recorrentes: {
+        Row: {
+          categoria_id: string | null
+          centro_custo: string | null
+          conta_bancaria_id: string | null
+          created_at: string
+          criado_por: string | null
+          data_fim: string | null
+          data_inicio: string
+          descricao: string
+          descricao_normalizada: string | null
+          dia_vencimento: number
+          id: string
+          observacao: string | null
+          parceiro_id: string | null
+          periodicidade: string
+          status: string
+          updated_at: string
+          valor: number
+        }
+        Insert: {
+          categoria_id?: string | null
+          centro_custo?: string | null
+          conta_bancaria_id?: string | null
+          created_at?: string
+          criado_por?: string | null
+          data_fim?: string | null
+          data_inicio: string
+          descricao: string
+          descricao_normalizada?: string | null
+          dia_vencimento: number
+          id?: string
+          observacao?: string | null
+          parceiro_id?: string | null
+          periodicidade: string
+          status?: string
+          updated_at?: string
+          valor: number
+        }
+        Update: {
+          categoria_id?: string | null
+          centro_custo?: string | null
+          conta_bancaria_id?: string | null
+          created_at?: string
+          criado_por?: string | null
+          data_fim?: string | null
+          data_inicio?: string
+          descricao?: string
+          descricao_normalizada?: string | null
+          dia_vencimento?: number
+          id?: string
+          observacao?: string | null
+          parceiro_id?: string | null
+          periodicidade?: string
+          status?: string
+          updated_at?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "compromissos_recorrentes_categoria_id_fkey"
+            columns: ["categoria_id"]
+            isOneToOne: false
+            referencedRelation: "plano_contas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compromissos_recorrentes_conta_bancaria_id_fkey"
+            columns: ["conta_bancaria_id"]
+            isOneToOne: false
+            referencedRelation: "contas_bancarias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compromissos_recorrentes_parceiro_id_fkey"
+            columns: ["parceiro_id"]
+            isOneToOne: false
+            referencedRelation: "parceiros_comerciais"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       conciliacoes_agrupadas: {
         Row: {
           created_at: string
@@ -1858,6 +1940,7 @@ export type Database = {
           categoria_sugerida_ia: boolean | null
           centro_custo: string | null
           compromisso_parcelado_id: string | null
+          compromisso_recorrente_id: string | null
           comprovante_url: string | null
           conciliado_em: string | null
           conciliado_por: string | null
@@ -1925,6 +2008,7 @@ export type Database = {
           categoria_sugerida_ia?: boolean | null
           centro_custo?: string | null
           compromisso_parcelado_id?: string | null
+          compromisso_recorrente_id?: string | null
           comprovante_url?: string | null
           conciliado_em?: string | null
           conciliado_por?: string | null
@@ -1992,6 +2076,7 @@ export type Database = {
           categoria_sugerida_ia?: boolean | null
           centro_custo?: string | null
           compromisso_parcelado_id?: string | null
+          compromisso_recorrente_id?: string | null
           comprovante_url?: string | null
           conciliado_em?: string | null
           conciliado_por?: string | null
@@ -2056,6 +2141,13 @@ export type Database = {
             columns: ["compromisso_parcelado_id"]
             isOneToOne: false
             referencedRelation: "compromissos_parcelados"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contas_pagar_receber_compromisso_recorrente_id_fkey"
+            columns: ["compromisso_recorrente_id"]
+            isOneToOne: false
+            referencedRelation: "compromissos_recorrentes"
             referencedColumns: ["id"]
           },
           {
@@ -8251,6 +8343,10 @@ export type Database = {
         Args: { _dados: Json; _token: string }
         Returns: boolean
       }
+      cancelar_parcelas_futuras_recorrente: {
+        Args: { p_recorrente_id: string }
+        Returns: number
+      }
       contar_uso_template: { Args: { _template_id: string }; Returns: Json }
       criar_tarefa_aprovacao_nf_pj: {
         Args: { _nota_id: string }
@@ -8306,6 +8402,10 @@ export type Database = {
           p_parcela_final?: number
           p_parcela_inicial?: number
         }
+        Returns: number
+      }
+      gerar_parcelas_recorrentes: {
+        Args: { p_meses_a_frente?: number; p_recorrente_id: string }
         Returns: number
       }
       gerar_periodos_ferias_pendentes: { Args: never; Returns: undefined }
