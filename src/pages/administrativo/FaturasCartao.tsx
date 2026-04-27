@@ -205,6 +205,106 @@ export default function FaturasCartao() {
     },
   });
 
+  // Histórico de TODOS os lançamentos classificados pra construir sugestões
+  const { data: historicoClassificados } = useQuery({
+    queryKey: ["fatura-lancamentos-historico"],
+    queryFn: async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data } = await (supabase as any)
+        .from("fatura_cartao_lancamentos")
+        .select("descricao, cnpj_estabelecimento, categoria_id, status")
+        .not("categoria_id", "is", null)
+        .neq("status", "descartado");
+      return (data || []) as Array<{
+        descricao: string;
+        cnpj_estabelecimento: string | null;
+        categoria_id: string;
+        status: string;
+      }>;
+    },
+  });
+
+  // Calcular sugestões: categoria mais usada por descrição normalizada + por CNPJ
+  const sugestoes = useMemo(() => {
+    type Sugestao = { categoria_id: string; count: number };
+    const porDescricao: Record<string, Record<string, number>> = {};
+    const porCnpj: Record<string, Record<string, number>> = {};
+
+    function normalizar(s: string): string {
+      return (s || "")
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/\s+\d{1,2}\/\d{1,2}\s*$/, "")
+        .replace(/\s+/g, " ")
+        .trim();
+    }
+
+    for (const l of historicoClassificados || []) {
+      // Por descrição normalizada
+      const descNorm = normalizar(l.descricao);
+      if (descNorm) {
+        if (!porDescricao[descNorm]) porDescricao[descNorm] = {};
+        porDescricao[descNorm][l.categoria_id] =
+          (porDescricao[descNorm][l.categoria_id] || 0) + 1;
+      }
+      // Por CNPJ
+      if (l.cnpj_estabelecimento) {
+        if (!porCnpj[l.cnpj_estabelecimento]) porCnpj[l.cnpj_estabelecimento] = {};
+        porCnpj[l.cnpj_estabelecimento][l.categoria_id] =
+          (porCnpj[l.cnpj_estabelecimento][l.categoria_id] || 0) + 1;
+      }
+    }
+
+    // Pegar a mais usada de cada
+    function pegarMelhor(map: Record<string, number>): Sugestao | null {
+      let melhor = "";
+      let max = 0;
+      for (const c in map) {
+        if (map[c] > max) {
+          max = map[c];
+          melhor = c;
+        }
+      }
+      return melhor ? { categoria_id: melhor, count: max } : null;
+    }
+
+    const sugestaoPorDescricao: Record<string, Sugestao> = {};
+    for (const k in porDescricao) {
+      const m = pegarMelhor(porDescricao[k]);
+      if (m) sugestaoPorDescricao[k] = m;
+    }
+
+    const sugestaoPorCnpj: Record<string, Sugestao> = {};
+    for (const k in porCnpj) {
+      const m = pegarMelhor(porCnpj[k]);
+      if (m) sugestaoPorCnpj[k] = m;
+    }
+
+    return { porDescricao: sugestaoPorDescricao, porCnpj: sugestaoPorCnpj, normalizar };
+  }, [historicoClassificados]);
+
+  // Helper: pega sugestão pra um lançamento específico
+  function obterSugestao(lanc: LancamentoRow): { categoria_id: string; count: number; motivo: string } | null {
+    if (lanc.categoria_id) return null; // já classificado
+    if (lanc.status === "descartado") return null;
+
+    // Prioridade 1: CNPJ exato
+    if (lanc.cnpj_estabelecimento && sugestoes.porCnpj[lanc.cnpj_estabelecimento]) {
+      const s = sugestoes.porCnpj[lanc.cnpj_estabelecimento];
+      return { ...s, motivo: `CNPJ deste estabelecimento já classificado ${s.count}x` };
+    }
+
+    // Prioridade 2: descrição normalizada
+    const descNorm = sugestoes.normalizar(lanc.descricao);
+    if (descNorm && sugestoes.porDescricao[descNorm]) {
+      const s = sugestoes.porDescricao[descNorm];
+      return { ...s, motivo: `Descrição similar já classificada ${s.count}x` };
+    }
+
+    return null;
+  }
+
   const { data: categorias = [] } = useCategoriasPlano();
 
   // Mapa categorias
@@ -302,10 +402,54 @@ export default function FaturasCartao() {
       if (error) throw error;
       qc.invalidateQueries({ queryKey: ["fatura-lancamentos", faturaExpanded] });
       qc.invalidateQueries({ queryKey: ["faturas-cartao"] });
+      qc.invalidateQueries({ queryKey: ["fatura-lancamentos-historico"] });
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       toast.error("Erro: " + msg);
     }
+  }
+
+  // Aplicar todas as sugestões disponíveis na fatura expandida
+  async function aplicarTodasSugestoes() {
+    if (!lancamentosExpanded) return;
+    const lancsParaAplicar = lancamentosExpanded
+      .map((l) => ({ l, sug: obterSugestao(l) }))
+      .filter((x) => x.sug !== null);
+
+    if (lancsParaAplicar.length === 0) {
+      toast.info("Nenhuma sugestão automática disponível");
+      return;
+    }
+
+    if (
+      !confirm(
+        `Aplicar sugestão automática em ${lancsParaAplicar.length} lançamento${lancsParaAplicar.length === 1 ? "" : "s"}?`,
+      )
+    ) {
+      return;
+    }
+
+    let ok = 0;
+    for (const { l, sug } of lancsParaAplicar) {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { error } = await (supabase as any)
+          .from("fatura_cartao_lancamentos")
+          .update({
+            categoria_id: sug!.categoria_id,
+            status: "classificado",
+          })
+          .eq("id", l.id);
+        if (!error) ok++;
+      } catch {
+        // ignora individual
+      }
+    }
+
+    qc.invalidateQueries({ queryKey: ["fatura-lancamentos", faturaExpanded] });
+    qc.invalidateQueries({ queryKey: ["faturas-cartao"] });
+    qc.invalidateQueries({ queryKey: ["fatura-lancamentos-historico"] });
+    toast.success(`${ok} sugestão${ok === 1 ? "" : "ões"} aplicada${ok === 1 ? "" : "s"}`);
   }
 
   return (
@@ -579,10 +723,33 @@ export default function FaturasCartao() {
                         <TableRow>
                           <TableCell colSpan={8} className="bg-muted/20 p-0">
                             <div className="p-4">
-                              <p className="text-xs font-semibold mb-2 flex items-center gap-2">
-                                <ArrowDownToLine className="h-3.5 w-3.5" />
-                                Lançamentos detalhados
-                              </p>
+                              <div className="flex items-center justify-between mb-2">
+                                <p className="text-xs font-semibold flex items-center gap-2">
+                                  <ArrowDownToLine className="h-3.5 w-3.5" />
+                                  Lançamentos detalhados
+                                </p>
+                                {(() => {
+                                  if (!lancamentosExpanded) return null;
+                                  const qtdSug = lancamentosExpanded.filter(
+                                    (l) => obterSugestao(l) !== null,
+                                  ).length;
+                                  if (qtdSug === 0) return null;
+                                  return (
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      className="h-7 text-xs gap-1 border-violet-300 text-violet-700 hover:bg-violet-50"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        aplicarTodasSugestoes();
+                                      }}
+                                    >
+                                      <Sparkles className="h-3 w-3" />
+                                      Aplicar {qtdSug} sugestão{qtdSug === 1 ? "" : "ões"} automática{qtdSug === 1 ? "" : "s"}
+                                    </Button>
+                                  );
+                                })()}
+                              </div>
                               {!lancamentosExpanded ? (
                                 <Skeleton className="h-32 w-full" />
                               ) : lancamentosExpanded.length === 0 ? (
@@ -642,33 +809,53 @@ export default function FaturasCartao() {
                                             {formatBRL(l.valor)}
                                           </td>
                                           <td className="px-2 py-1.5">
-                                            <Select
-                                              value={l.categoria_id || ""}
-                                              onValueChange={(v) =>
-                                                alterarCategoriaLanc(l.id, v)
-                                              }
-                                            >
-                                              <SelectTrigger className="h-7 text-[10px]">
-                                                <SelectValue placeholder="Definir..." />
-                                              </SelectTrigger>
-                                              <SelectContent>
-                                                {categorias.map(
-                                                  (c: {
-                                                    id: string;
-                                                    codigo: string;
-                                                    nome: string;
-                                                  }) => (
-                                                    <SelectItem
-                                                      key={c.id}
-                                                      value={c.id}
-                                                      className="text-[10px]"
-                                                    >
-                                                      {c.codigo} {c.nome}
-                                                    </SelectItem>
-                                                  ),
-                                                )}
-                                              </SelectContent>
-                                            </Select>
+                                            <div className="flex items-center gap-1">
+                                              <Select
+                                                value={l.categoria_id || ""}
+                                                onValueChange={(v) =>
+                                                  alterarCategoriaLanc(l.id, v)
+                                                }
+                                              >
+                                                <SelectTrigger className="h-7 text-[10px]">
+                                                  <SelectValue placeholder="Definir..." />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                  {categorias.map(
+                                                    (c: {
+                                                      id: string;
+                                                      codigo: string;
+                                                      nome: string;
+                                                    }) => (
+                                                      <SelectItem
+                                                        key={c.id}
+                                                        value={c.id}
+                                                        className="text-[10px]"
+                                                      >
+                                                        {c.codigo} {c.nome}
+                                                      </SelectItem>
+                                                    ),
+                                                  )}
+                                                </SelectContent>
+                                              </Select>
+                                              {(() => {
+                                                const sug = obterSugestao(l);
+                                                if (!sug) return null;
+                                                return (
+                                                  <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    className="h-7 text-[9px] gap-1 border-violet-300 text-violet-700 hover:bg-violet-50 px-1.5 shrink-0"
+                                                    onClick={() =>
+                                                      alterarCategoriaLanc(l.id, sug.categoria_id)
+                                                    }
+                                                    title={`${mapCategorias[sug.categoria_id]} (${sug.motivo})`}
+                                                  >
+                                                    <Sparkles className="h-3 w-3" />
+                                                    Sugerir
+                                                  </Button>
+                                                );
+                                              })()}
+                                            </div>
                                           </td>
                                           <td className="px-2 py-1.5 text-center">
                                             <Badge
