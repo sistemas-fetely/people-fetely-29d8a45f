@@ -55,6 +55,8 @@ type Lancamento = {
   forma_pagamento_id: string | null;
   unidade: string | null;
   nf_numero: string | null;
+  origem_view: "conta_pagar" | "cartao_lancamento";
+  fatura_id: string | null;
 };
 
 type ContaBancariaLite = {
