@@ -771,8 +771,29 @@ export default function FaturasCartao() {
                                             }`}
                                           >
                                             {formatBRL(l.valor)}
-                                          </td>
-                                          <td className="px-2 py-1.5">
+                                           </td>
+                                           <td className="px-2 py-1.5 text-center">
+                                             {l.nf_vinculada_id ? (
+                                               <Badge
+                                                 variant="outline"
+                                                 className="text-[9px] py-0 px-1 h-4 border-emerald-300 text-emerald-700 bg-emerald-50 gap-1"
+                                                 title="Lançamento vinculado a uma NF"
+                                               >
+                                                 <Link2 className="h-2.5 w-2.5" />
+                                                 Vinculada
+                                               </Badge>
+                                             ) : (
+                                               <Badge
+                                                 variant="outline"
+                                                 className="text-[9px] py-0 px-1 h-4 border-amber-300 text-amber-700 bg-amber-50 gap-1"
+                                                 title="Aguardando match com NF na tela de Reconciliação"
+                                               >
+                                                 <Clock className="h-2.5 w-2.5" />
+                                                 Aguardando
+                                               </Badge>
+                                             )}
+                                           </td>
+                                           <td className="px-2 py-1.5">
                                             <div className="flex items-center gap-1">
                                               <Select
                                                 value={l.categoria_id || ""}
