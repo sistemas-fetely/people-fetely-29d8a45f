@@ -272,7 +272,7 @@ export default function NFsStage() {
           await classificarComAprendizado({
             descricao: nf.fornecedor_razao_social || nf.fornecedor_cliente,
             cnpj: nf.fornecedor_cnpj,
-            parceiro_id: null, // NFs em stage ainda não tem parceiro_id resolvido
+            parceiro_id: nf.parceiro_id,
             categoria_id: categoriaId,
             origem: "nf",
           });
@@ -442,10 +442,7 @@ export default function NFsStage() {
   }, [selecionadas, filtered]);
 
   const sugestoesDisponiveis = (nfs || []).filter(
-    (n) =>
-      n.status === "pendente" &&
-      n.fornecedor_cnpj &&
-      sugestoesPorCnpj[n.fornecedor_cnpj],
+    (n) => n.status === "pendente" && sugestoesPorNf[n.id],
   ).length;
 
   return (
@@ -659,9 +656,7 @@ export default function NFsStage() {
                     nf.status === "pendente" || nf.status === "classificada";
                   const salvando = salvandoCategoria.has(nf.id);
                   const sugestao =
-                    nf.status === "pendente" &&
-                    nf.fornecedor_cnpj &&
-                    sugestoesPorCnpj[nf.fornecedor_cnpj];
+                    nf.status === "pendente" ? sugestoesPorNf[nf.id] : null;
 
                   return (
                     <TableRow
@@ -718,19 +713,30 @@ export default function NFsStage() {
                                 ))}
                               </SelectContent>
                             </Select>
-                            {sugestao && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="h-8 text-[10px] gap-1 border-violet-300 text-violet-700 hover:bg-violet-50 px-2"
-                                onClick={() => aceitarSugestao(nf)}
-                                disabled={salvando}
-                                title={`${mapCategorias[sugestao.categoria_id]} (${sugestao.count} NF${sugestao.count === 1 ? "" : "s"} deste fornecedor já assim)`}
-                              >
-                                <Sparkles className="h-3 w-3" />
-                                Sugerir
-                              </Button>
-                            )}
+                            {sugestao && (() => {
+                              const conf = sugestao.confianca || 0;
+                              const corBadge =
+                                conf >= 80
+                                  ? "border-emerald-400 text-emerald-700 bg-emerald-50"
+                                  : conf >= 50
+                                    ? "border-amber-400 text-amber-700 bg-amber-50"
+                                    : "border-violet-300 text-violet-700 bg-violet-50";
+                              const labelConf = conf >= 80 ? "Alta" : conf >= 50 ? "Média" : "Baixa";
+                              return (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className={`h-8 text-[10px] gap-1 px-2 ${corBadge}`}
+                                  onClick={() => aceitarSugestao(nf)}
+                                  disabled={salvando}
+                                  title={`${mapCategorias[sugestao.categoria_id]} · Confiança ${labelConf} · ${sugestao.motivo}`}
+                                >
+                                  <Sparkles className="h-3 w-3" />
+                                  Sugerir
+                                  <span className="text-[8px] opacity-70 ml-0.5">{labelConf}</span>
+                                </Button>
+                              );
+                            })()}
                           </div>
                         ) : nf.categoria_id ? (
                           <span className="text-xs text-muted-foreground">
