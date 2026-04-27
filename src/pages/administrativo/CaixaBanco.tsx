@@ -222,7 +222,7 @@ export default function CaixaBanco() {
   const pageData = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const lancamentosSelecionados = useMemo(
-    () => filtered.filter((l) => selecionados.has(l.id) && l.status_caixa === "em_aberto"),
+    () => filtered.filter((l) => selecionados.has(l.id) && l.status_caixa === "em_aberto" && l.origem_view !== "cartao_lancamento"),
     [filtered, selecionados],
   );
 
