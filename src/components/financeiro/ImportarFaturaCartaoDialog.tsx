@@ -30,6 +30,7 @@ import {
   ArrowRight,
   Globe,
   Receipt,
+  Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
@@ -61,6 +62,12 @@ export function ImportarFaturaCartaoDialog({ open, onOpenChange, onSuccess }: Pr
   const [dataVencimento, setDataVencimento] = useState<string>("");
   const [observacao, setObservacao] = useState<string>("");
   const [parseando, setParseando] = useState(false);
+  const [resultadoFinal, setResultadoFinal] = useState<{
+    qtd_lancamentos: number;
+    compromissos_criados: number;
+    parcelas_previstas_criadas: number;
+    parcelas_pagas_marcadas: number;
+  } | null>(null);
 
   // Buscar cartões cadastrados
   const { data: cartoes } = useQuery({
@@ -85,6 +92,7 @@ export function ImportarFaturaCartaoDialog({ open, onOpenChange, onSuccess }: Pr
     setDataVencimento("");
     setObservacao("");
     setParseando(false);
+    setResultadoFinal(null);
   }
 
   function handleClose() {
@@ -174,9 +182,22 @@ export function ImportarFaturaCartaoDialog({ open, onOpenChange, onSuccess }: Pr
       return;
     }
 
-    toast.success(
-      `Fatura importada! ${result.qtd_lancamentos} lançamento${result.qtd_lancamentos === 1 ? "" : "s"} + 1 conta a pagar criada.`,
-    );
+    // Guardar resultado pra mostrar na etapa concluido
+    setResultadoFinal({
+      qtd_lancamentos: result.qtd_lancamentos || 0,
+      compromissos_criados: result.compromissos_criados || 0,
+      parcelas_previstas_criadas: result.parcelas_previstas_criadas || 0,
+      parcelas_pagas_marcadas: result.parcelas_pagas_marcadas || 0,
+    });
+
+    let msg = `Fatura importada! ${result.qtd_lancamentos} lançamento${result.qtd_lancamentos === 1 ? "" : "s"}`;
+    if (result.compromissos_criados && result.compromissos_criados > 0) {
+      msg += ` + ${result.parcelas_previstas_criadas} parcelas futuras geradas`;
+    }
+    if (result.parcelas_pagas_marcadas && result.parcelas_pagas_marcadas > 0) {
+      msg += ` + ${result.parcelas_pagas_marcadas} parcelas previstas marcadas como pagas`;
+    }
+    toast.success(msg);
     setEtapa("concluido");
     onSuccess?.();
   }
@@ -453,7 +474,7 @@ export function ImportarFaturaCartaoDialog({ open, onOpenChange, onSuccess }: Pr
 
           {/* ETAPA 4 - CONCLUIDO */}
           {etapa === "concluido" && (
-            <div className="py-12 text-center space-y-3">
+            <div className="py-8 text-center space-y-4">
               <CheckCircle2 className="h-14 w-14 text-emerald-600 mx-auto" />
               <div>
                 <p className="font-semibold text-lg">Fatura importada!</p>
@@ -461,6 +482,51 @@ export function ImportarFaturaCartaoDialog({ open, onOpenChange, onSuccess }: Pr
                   Acesse "Faturas de Cartão" para classificar os lançamentos.
                 </p>
               </div>
+
+              {resultadoFinal && (
+                <div className="rounded-md border bg-muted/20 p-4 max-w-md mx-auto text-left space-y-2">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+                    Resumo da importação
+                  </p>
+                  <div className="flex items-center gap-2 text-sm">
+                    <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+                    <span>
+                      <strong>{resultadoFinal.qtd_lancamentos}</strong> lançamento(s) na fatura
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <Receipt className="h-4 w-4 text-blue-600 shrink-0" />
+                    <span>
+                      <strong>1</strong> conta a pagar criada (vai aparecer em Contas a Pagar)
+                    </span>
+                  </div>
+                  {resultadoFinal.compromissos_criados > 0 && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <Sparkles className="h-4 w-4 text-violet-600 shrink-0" />
+                      <span>
+                        <strong>{resultadoFinal.compromissos_criados}</strong> compromisso(s) parcelado(s) detectado(s)
+                      </span>
+                    </div>
+                  )}
+                  {resultadoFinal.parcelas_previstas_criadas > 0 && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <Sparkles className="h-4 w-4 text-violet-600 shrink-0" />
+                      <span>
+                        <strong>{resultadoFinal.parcelas_previstas_criadas}</strong> parcelas futuras lançadas no fluxo de caixa
+                      </span>
+                    </div>
+                  )}
+                  {resultadoFinal.parcelas_pagas_marcadas > 0 && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+                      <span>
+                        <strong>{resultadoFinal.parcelas_pagas_marcadas}</strong> parcelas previstas marcadas como pagas
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
+
               <Button onClick={handleClose} className="bg-admin">
                 Fechar
               </Button>

@@ -28,6 +28,9 @@ export interface SalvarFaturaResult {
   fatura_id?: string;
   conta_pagar_id?: string;
   qtd_lancamentos?: number;
+  compromissos_criados?: number;
+  parcelas_previstas_criadas?: number;
+  parcelas_pagas_marcadas?: number;
   erro?: string;
 }
 
@@ -162,15 +165,42 @@ export async function salvarFaturaCartao(
       linha_original_csv: l.linha_original_csv,
     }));
 
+    let idsLancamentosCriados: string[] = [];
     if (linhasLancamentos.length > 0) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error: errLanc } = await (supabase as any)
+      const { data: lancsCriados, error: errLanc } = await (supabase as any)
         .from("fatura_cartao_lancamentos")
-        .insert(linhasLancamentos);
+        .insert(linhasLancamentos)
+        .select("id");
       if (errLanc) {
         console.error("Erro ao criar lançamentos:", errLanc);
         // Não rollback aqui - fatura ja existe; usuário pode reprocessar
+      } else {
+        idsLancamentosCriados = (lancsCriados || []).map((x: { id: string }) => x.id);
       }
+    }
+
+    // === FASE B: processar compromissos parcelados ===
+    let resultadoCompromissos: {
+      compromissos_criados: number;
+      parcelas_previstas_criadas: number;
+      parcelas_pagas_marcadas: number;
+    } = { compromissos_criados: 0, parcelas_previstas_criadas: 0, parcelas_pagas_marcadas: 0 };
+
+    try {
+      const { processarParcelasDaFatura } = await import("./compromissos-handler");
+      const r = await processarParcelasDaFatura(
+        faturaId,
+        parsed.lancamentos,
+        idsLancamentosCriados,
+      );
+      resultadoCompromissos = {
+        compromissos_criados: r.compromissos_criados,
+        parcelas_previstas_criadas: r.parcelas_previstas_criadas,
+        parcelas_pagas_marcadas: r.parcelas_pagas_marcadas,
+      };
+    } catch (e) {
+      console.warn("Falha não-bloqueante no processamento de parcelas:", e);
     }
 
     return {
@@ -178,6 +208,7 @@ export async function salvarFaturaCartao(
       fatura_id: faturaId,
       conta_pagar_id: contaPagarId,
       qtd_lancamentos: linhasLancamentos.length,
+      ...resultadoCompromissos,
     };
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);

@@ -1356,6 +1356,124 @@ export type Database = {
           },
         ]
       }
+      compromissos_parcelados: {
+        Row: {
+          categoria_id: string | null
+          centro_custo: string | null
+          conta_bancaria_id: string | null
+          created_at: string
+          criado_por: string | null
+          data_compra: string
+          data_primeira_parcela: string
+          descricao: string
+          descricao_normalizada: string | null
+          fatura_origem_id: string | null
+          id: string
+          nf_origem_id: string | null
+          observacao: string | null
+          origem: string
+          parceiro_id: string | null
+          parcelas_pagas: number
+          parcelas_previstas: number
+          qtd_parcelas: number
+          status: string
+          updated_at: string
+          valor_parcela: number
+          valor_total: number
+        }
+        Insert: {
+          categoria_id?: string | null
+          centro_custo?: string | null
+          conta_bancaria_id?: string | null
+          created_at?: string
+          criado_por?: string | null
+          data_compra: string
+          data_primeira_parcela: string
+          descricao: string
+          descricao_normalizada?: string | null
+          fatura_origem_id?: string | null
+          id?: string
+          nf_origem_id?: string | null
+          observacao?: string | null
+          origem: string
+          parceiro_id?: string | null
+          parcelas_pagas?: number
+          parcelas_previstas?: number
+          qtd_parcelas: number
+          status?: string
+          updated_at?: string
+          valor_parcela: number
+          valor_total: number
+        }
+        Update: {
+          categoria_id?: string | null
+          centro_custo?: string | null
+          conta_bancaria_id?: string | null
+          created_at?: string
+          criado_por?: string | null
+          data_compra?: string
+          data_primeira_parcela?: string
+          descricao?: string
+          descricao_normalizada?: string | null
+          fatura_origem_id?: string | null
+          id?: string
+          nf_origem_id?: string | null
+          observacao?: string | null
+          origem?: string
+          parceiro_id?: string | null
+          parcelas_pagas?: number
+          parcelas_previstas?: number
+          qtd_parcelas?: number
+          status?: string
+          updated_at?: string
+          valor_parcela?: number
+          valor_total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "compromissos_parcelados_categoria_id_fkey"
+            columns: ["categoria_id"]
+            isOneToOne: false
+            referencedRelation: "plano_contas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compromissos_parcelados_conta_bancaria_id_fkey"
+            columns: ["conta_bancaria_id"]
+            isOneToOne: false
+            referencedRelation: "contas_bancarias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compromissos_parcelados_fatura_origem_id_fkey"
+            columns: ["fatura_origem_id"]
+            isOneToOne: false
+            referencedRelation: "faturas_cartao"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compromissos_parcelados_nf_origem_id_fkey"
+            columns: ["nf_origem_id"]
+            isOneToOne: false
+            referencedRelation: "contas_pagar_receber"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compromissos_parcelados_nf_origem_id_fkey"
+            columns: ["nf_origem_id"]
+            isOneToOne: false
+            referencedRelation: "vw_lancamentos_caixa_banco"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compromissos_parcelados_parceiro_id_fkey"
+            columns: ["parceiro_id"]
+            isOneToOne: false
+            referencedRelation: "parceiros_comerciais"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       conciliacoes_agrupadas: {
         Row: {
           created_at: string
@@ -1739,6 +1857,7 @@ export type Database = {
           categoria_confirmada: boolean | null
           categoria_sugerida_ia: boolean | null
           centro_custo: string | null
+          compromisso_parcelado_id: string | null
           comprovante_url: string | null
           conciliado_em: string | null
           conciliado_por: string | null
@@ -1774,6 +1893,7 @@ export type Database = {
           nf_valor_impostos: number | null
           nf_valor_produtos: number | null
           nf_xml_url: string | null
+          numero_parcela: number | null
           observacao: string | null
           observacao_pagamento: string | null
           observacao_pagamento_manual: string | null
@@ -1790,6 +1910,7 @@ export type Database = {
           status: string
           tarefa_id: string | null
           tipo: string
+          total_parcelas: number | null
           unidade: string | null
           updated_at: string | null
           valor: number
@@ -1803,6 +1924,7 @@ export type Database = {
           categoria_confirmada?: boolean | null
           categoria_sugerida_ia?: boolean | null
           centro_custo?: string | null
+          compromisso_parcelado_id?: string | null
           comprovante_url?: string | null
           conciliado_em?: string | null
           conciliado_por?: string | null
@@ -1838,6 +1960,7 @@ export type Database = {
           nf_valor_impostos?: number | null
           nf_valor_produtos?: number | null
           nf_xml_url?: string | null
+          numero_parcela?: number | null
           observacao?: string | null
           observacao_pagamento?: string | null
           observacao_pagamento_manual?: string | null
@@ -1854,6 +1977,7 @@ export type Database = {
           status?: string
           tarefa_id?: string | null
           tipo?: string
+          total_parcelas?: number | null
           unidade?: string | null
           updated_at?: string | null
           valor: number
@@ -1867,6 +1991,7 @@ export type Database = {
           categoria_confirmada?: boolean | null
           categoria_sugerida_ia?: boolean | null
           centro_custo?: string | null
+          compromisso_parcelado_id?: string | null
           comprovante_url?: string | null
           conciliado_em?: string | null
           conciliado_por?: string | null
@@ -1902,6 +2027,7 @@ export type Database = {
           nf_valor_impostos?: number | null
           nf_valor_produtos?: number | null
           nf_xml_url?: string | null
+          numero_parcela?: number | null
           observacao?: string | null
           observacao_pagamento?: string | null
           observacao_pagamento_manual?: string | null
@@ -1918,12 +2044,20 @@ export type Database = {
           status?: string
           tarefa_id?: string | null
           tipo?: string
+          total_parcelas?: number | null
           unidade?: string | null
           updated_at?: string | null
           valor?: number
           valor_pago?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "contas_pagar_receber_compromisso_parcelado_id_fkey"
+            columns: ["compromisso_parcelado_id"]
+            isOneToOne: false
+            referencedRelation: "compromissos_parcelados"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "contas_pagar_receber_conta_id_fkey"
             columns: ["conta_id"]
@@ -7932,6 +8066,15 @@ export type Database = {
         }
         Relationships: []
       }
+      vw_fluxo_caixa_futuro: {
+        Row: {
+          mes_referencia: string | null
+          qtd_compromissos: number | null
+          qtd_parcelas: number | null
+          valor_total: number | null
+        }
+        Relationships: []
+      }
       vw_lancamentos_caixa_banco: {
         Row: {
           categoria_id: string | null
@@ -8132,6 +8275,14 @@ export type Database = {
       fix_lancamentos_origem_constraint: { Args: never; Returns: string }
       gerar_celebracoes_aniversario_mural: { Args: never; Returns: number }
       gerar_celebracoes_tempo_casa_mural: { Args: never; Returns: number }
+      gerar_parcelas_previstas: {
+        Args: {
+          p_compromisso_id: string
+          p_parcela_final?: number
+          p_parcela_inicial?: number
+        }
+        Returns: number
+      }
       gerar_periodos_ferias_pendentes: { Args: never; Returns: undefined }
       get_convite_by_token: { Args: { _token: string }; Returns: Json }
       get_organograma_tree: {
