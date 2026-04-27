@@ -59,6 +59,7 @@ import {
   type SortState,
 } from "@/components/shared/SortableTableHead";
 import { useCategoriasPlano } from "@/hooks/useCategoriasPlano";
+import { CategoriaCombobox } from "@/components/financeiro/CategoriaCombobox";
 import {
   useRegrasAtivas,
   sugerirNoClient,
