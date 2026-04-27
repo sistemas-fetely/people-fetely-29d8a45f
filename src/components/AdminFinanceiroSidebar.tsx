@@ -42,8 +42,9 @@ const financeiroItems: MenuItem[] = [
 ];
 
 const caixaBancoItems: MenuItem[] = [
-  { title: "Caixa e Banco", url: "/administrativo/caixa-banco", icon: Wallet },
-  { title: "Conciliação", url: "/administrativo/conciliacao", icon: GitCompare },
+  { title: "Movimentações", url: "/administrativo/caixa-banco", icon: Wallet },
+  { title: "Contas Bancárias", url: "/administrativo/caixa-banco/contas", icon: Landmark },
+  { title: "Conciliação OFX", url: "/administrativo/caixa-banco/conciliacao", icon: GitCompare },
 ];
 
 const vendasBlingItems: MenuItem[] = [

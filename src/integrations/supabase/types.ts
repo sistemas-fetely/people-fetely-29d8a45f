@@ -1497,13 +1497,19 @@ export type Database = {
           banco_codigo: string | null
           cor: string | null
           created_at: string | null
+          data_saldo_inicial: string | null
+          dia_fechamento: number | null
+          dia_vencimento: number | null
           id: string
+          limite_credito: number | null
           moeda: string | null
           nome_exibicao: string
           numero_conta: string | null
           saldo_atual: number | null
           saldo_atualizado_em: string | null
+          saldo_inicial: number | null
           tipo: string
+          unidade: string | null
           updated_at: string | null
         }
         Insert: {
@@ -1513,13 +1519,19 @@ export type Database = {
           banco_codigo?: string | null
           cor?: string | null
           created_at?: string | null
+          data_saldo_inicial?: string | null
+          dia_fechamento?: number | null
+          dia_vencimento?: number | null
           id?: string
+          limite_credito?: number | null
           moeda?: string | null
           nome_exibicao: string
           numero_conta?: string | null
           saldo_atual?: number | null
           saldo_atualizado_em?: string | null
+          saldo_inicial?: number | null
           tipo: string
+          unidade?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -1529,13 +1541,19 @@ export type Database = {
           banco_codigo?: string | null
           cor?: string | null
           created_at?: string | null
+          data_saldo_inicial?: string | null
+          dia_fechamento?: number | null
+          dia_vencimento?: number | null
           id?: string
+          limite_credito?: number | null
           moeda?: string | null
           nome_exibicao?: string
           numero_conta?: string | null
           saldo_atual?: number | null
           saldo_atualizado_em?: string | null
+          saldo_inicial?: number | null
           tipo?: string
+          unidade?: string | null
           updated_at?: string | null
         }
         Relationships: []
