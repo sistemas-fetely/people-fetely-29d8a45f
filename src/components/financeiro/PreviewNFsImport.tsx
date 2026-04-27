@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { Loader2, Download, AlertTriangle, X, ListTree, Package, Link2 } from "lucide-react";
+import { formatDateBR } from "@/lib/format-currency";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -261,7 +262,7 @@ export function PreviewNFsImport({
                         <div className="text-muted-foreground">Série {nf.nf_serie}</div>
                       )}
                     </TableCell>
-                    <TableCell className="text-xs">{nf.nf_data_emissao || "—"}</TableCell>
+                    <TableCell className="text-xs whitespace-nowrap">{formatDateBR(nf.nf_data_emissao)}</TableCell>
                     <TableCell className="text-right font-mono text-sm">
                       {nf.valor.toLocaleString("pt-BR", {
                         style: "currency",
