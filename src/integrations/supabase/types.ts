@@ -3526,11 +3526,13 @@ export type Database = {
           formato: string | null
           id: string
           importado_por: string
+          observacao: string | null
           periodo_fim: string | null
           periodo_inicio: string | null
           registros_duplicados: number | null
           registros_erro: number | null
           registros_importados: number | null
+          saldo_final_extrato: number | null
         }
         Insert: {
           arquivo_nome: string
@@ -3539,11 +3541,13 @@ export type Database = {
           formato?: string | null
           id?: string
           importado_por: string
+          observacao?: string | null
           periodo_fim?: string | null
           periodo_inicio?: string | null
           registros_duplicados?: number | null
           registros_erro?: number | null
           registros_importados?: number | null
+          saldo_final_extrato?: number | null
         }
         Update: {
           arquivo_nome?: string
@@ -3552,11 +3556,13 @@ export type Database = {
           formato?: string | null
           id?: string
           importado_por?: string
+          observacao?: string | null
           periodo_fim?: string | null
           periodo_inicio?: string | null
           registros_duplicados?: number | null
           registros_erro?: number | null
           registros_importados?: number | null
+          saldo_final_extrato?: number | null
         }
         Relationships: [
           {

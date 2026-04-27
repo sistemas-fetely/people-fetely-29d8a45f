@@ -29,9 +29,11 @@ import {
   Clock,
   Link as LinkIcon,
   Upload,
+  FileWarning,
 } from "lucide-react";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
 import { MarcarPagoDialog } from "@/components/financeiro/MarcarPagoDialog";
+import { ImportarOFXDialog } from "@/components/financeiro/ImportarOFXDialog";
 import ContaPagarDetalheDrawer from "@/components/financeiro/ContaPagarDetalheDrawer";
 
 type Lancamento = {
@@ -93,6 +95,7 @@ export default function CaixaBanco() {
   const [marcarPagoOpen, setMarcarPagoOpen] = useState(false);
   const [contasParaPagar, setContasParaPagar] = useState<Lancamento[]>([]);
   const [contaIdDrawer, setContaIdDrawer] = useState<string | null>(null);
+  const [importarOpen, setImportarOpen] = useState(false);
 
   // Query da view unificada
   const { data: lancamentos, isLoading } = useQuery({
@@ -278,10 +281,13 @@ export default function CaixaBanco() {
             Lançamentos de pagamento — em aberto, pagos e conciliados.
           </p>
         </div>
-        <Button variant="outline" className="gap-2" disabled>
+        <Button
+          variant="outline"
+          className="gap-2"
+          onClick={() => setImportarOpen(true)}
+        >
           <Upload className="h-4 w-4" />
           Importar OFX
-          <Badge variant="outline" className="ml-1 text-[9px]">em breve</Badge>
         </Button>
       </div>
 
@@ -459,6 +465,16 @@ export default function CaixaBanco() {
                             <div className="truncate" title={nomeParceiro(l)}>
                               {nomeParceiro(l)}
                             </div>
+                            {l.status_conta_pagar === "doc_pendente" && (
+                              <Badge
+                                variant="outline"
+                                className="mt-1 text-[9px] py-0 px-1.5 border-amber-400 text-amber-700 bg-amber-50 gap-1"
+                                title="Pagamento foi enviado ao financeiro mas falta NF/Recibo do fornecedor"
+                              >
+                                <FileWarning className="h-2.5 w-2.5" />
+                                Doc. Pendente
+                              </Badge>
+                            )}
                           </TableCell>
                           <TableCell className="max-w-[200px]">
                             <div className="truncate text-xs text-muted-foreground" title={l.descricao}>
@@ -561,6 +577,11 @@ export default function CaixaBanco() {
       <ContaPagarDetalheDrawer
         contaId={contaIdDrawer}
         onClose={() => setContaIdDrawer(null)}
+      />
+
+      <ImportarOFXDialog
+        open={importarOpen}
+        onOpenChange={setImportarOpen}
       />
     </div>
   );
