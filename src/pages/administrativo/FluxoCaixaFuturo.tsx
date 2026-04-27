@@ -41,6 +41,7 @@ import {
   Receipt,
   Layers,
   AlertTriangle,
+  Repeat,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
