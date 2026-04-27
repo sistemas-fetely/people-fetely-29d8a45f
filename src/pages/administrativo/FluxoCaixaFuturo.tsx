@@ -110,6 +110,22 @@ function formatarMesAno(iso: string): string {
   return `${MESES[mes - 1]} ${ano}`;
 }
 
+const ORIGEM_BADGE: Record<
+  "parcelado" | "recorrente",
+  { label: string; className: string; Icon: typeof CreditCard }
+> = {
+  parcelado: {
+    label: "Parcelado",
+    className: "bg-violet-50 text-violet-700 border-violet-300",
+    Icon: CreditCard,
+  },
+  recorrente: {
+    label: "Recorrente",
+    className: "bg-blue-50 text-blue-700 border-blue-300",
+    Icon: Repeat,
+  },
+};
+
 export default function FluxoCaixaFuturo() {
   const qc = useQueryClient();
   const [mesExpandido, setMesExpandido] = useState<string | null>(null);
