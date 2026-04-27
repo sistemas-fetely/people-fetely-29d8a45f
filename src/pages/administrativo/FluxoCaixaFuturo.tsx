@@ -41,6 +41,7 @@ import {
   Receipt,
   Layers,
   AlertTriangle,
+  Repeat,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
@@ -56,7 +57,9 @@ type ParcelaPrevista = {
   data_vencimento: string;
   numero_parcela: number;
   total_parcelas: number;
-  compromisso_parcelado_id: string;
+  compromisso_parcelado_id: string | null;
+  compromisso_recorrente_id: string | null;
+  origem_tipo: "parcelado" | "recorrente";
 };
 
 type Compromisso = {
@@ -74,6 +77,19 @@ type Compromisso = {
   conta_bancaria_id: string | null;
   conta_bancaria?: { nome_exibicao: string } | null;
   created_at: string;
+};
+
+type CompromissoRecorrente = {
+  id: string;
+  descricao: string;
+  valor: number;
+  periodicidade: "mensal" | "trimestral" | "anual";
+  dia_vencimento: number;
+  data_inicio: string;
+  data_fim: string | null;
+  status: string;
+  conta_bancaria_id: string | null;
+  conta_bancaria?: { nome_exibicao: string } | null;
 };
 
 type AgrupadoPorMes = {
@@ -94,25 +110,45 @@ function formatarMesAno(iso: string): string {
   return `${MESES[mes - 1]} ${ano}`;
 }
 
+const ORIGEM_BADGE: Record<
+  "parcelado" | "recorrente",
+  { label: string; className: string; Icon: typeof CreditCard }
+> = {
+  parcelado: {
+    label: "Parcelado",
+    className: "bg-violet-50 text-violet-700 border-violet-300",
+    Icon: CreditCard,
+  },
+  recorrente: {
+    label: "Recorrente",
+    className: "bg-blue-50 text-blue-700 border-blue-300",
+    Icon: Repeat,
+  },
+};
+
 export default function FluxoCaixaFuturo() {
   const qc = useQueryClient();
   const [mesExpandido, setMesExpandido] = useState<string | null>(null);
   const [compromissoDetalhe, setCompromissoDetalhe] = useState<string | null>(null);
   const [compromissoCancelar, setCompromissoCancelar] = useState<Compromisso | null>(null);
 
-  // Parcelas previstas
+  // Parcelas previstas (parcelados + recorrentes)
   const { data: parcelas, isLoading: loadingParcelas } = useQuery({
     queryKey: ["parcelas-previstas"],
     queryFn: async () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data, error } = await (supabase as any)
         .from("contas_pagar_receber")
-        .select("id, descricao, valor, data_vencimento, numero_parcela, total_parcelas, compromisso_parcelado_id")
+        .select("id, descricao, valor, data_vencimento, numero_parcela, total_parcelas, compromisso_parcelado_id, compromisso_recorrente_id")
         .eq("status", "previsto")
-        .not("compromisso_parcelado_id", "is", null)
+        .eq("tipo", "pagar")
+        .or("compromisso_parcelado_id.not.is.null,compromisso_recorrente_id.not.is.null")
         .order("data_vencimento", { ascending: true });
       if (error) throw error;
-      return (data || []) as ParcelaPrevista[];
+      return ((data || []) as Array<Record<string, unknown>>).map((p) => ({
+        ...p,
+        origem_tipo: p.compromisso_recorrente_id ? "recorrente" : "parcelado",
+      })) as ParcelaPrevista[];
     },
   });
 
@@ -133,7 +169,27 @@ export default function FluxoCaixaFuturo() {
     },
   });
 
-  // Agrupar parcelas por mês
+  // Compromissos recorrentes ativos
+  const { data: recorrentes, isLoading: loadingRec } = useQuery({
+    queryKey: ["compromissos-recorrentes-ativos"],
+    queryFn: async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase as any)
+        .from("compromissos_recorrentes")
+        .select(`
+          id, descricao, valor, periodicidade, dia_vencimento,
+          data_inicio, data_fim, status, conta_bancaria_id,
+          conta_bancaria:conta_bancaria_id ( nome_exibicao )
+        `)
+        .eq("status", "ativo")
+        .order("descricao");
+      if (error) throw error;
+      return (data || []) as CompromissoRecorrente[];
+    },
+  });
+
+  const isLoading = loadingParcelas || loadingComp || loadingRec;
+
   const agrupadoPorMes = useMemo<AgrupadoPorMes[]>(() => {
     if (!parcelas) return [];
     const grupos: Record<string, AgrupadoPorMes> = {};
@@ -302,28 +358,41 @@ export default function FluxoCaixaFuturo() {
                             </TableRow>
                           </TableHeader>
                           <TableBody>
-                            {g.parcelas.map((p) => (
-                              <TableRow
-                                key={p.id}
-                                className="cursor-pointer hover:bg-background"
-                                onClick={() =>
-                                  setCompromissoDetalhe(p.compromisso_parcelado_id)
-                                }
-                              >
-                                <TableCell className="text-xs whitespace-nowrap">
-                                  {formatDateBR(p.data_vencimento)}
-                                </TableCell>
-                                <TableCell className="text-xs">{p.descricao}</TableCell>
-                                <TableCell className="text-center">
-                                  <Badge variant="outline" className="text-[9px] py-0 px-1 h-4">
-                                    {p.numero_parcela}/{p.total_parcelas}
-                                  </Badge>
-                                </TableCell>
-                                <TableCell className="text-right font-mono text-xs">
-                                  {formatBRL(p.valor)}
-                                </TableCell>
-                              </TableRow>
-                            ))}
+                            {g.parcelas.map((p) => {
+                              const info = ORIGEM_BADGE[p.origem_tipo];
+                              const Icon = info.Icon;
+                              const clickable = p.origem_tipo === "parcelado" && p.compromisso_parcelado_id;
+                              return (
+                                <TableRow
+                                  key={p.id}
+                                  className={clickable ? "cursor-pointer hover:bg-background" : ""}
+                                  onClick={
+                                    clickable
+                                      ? () => setCompromissoDetalhe(p.compromisso_parcelado_id)
+                                      : undefined
+                                  }
+                                >
+                                  <TableCell className="text-xs whitespace-nowrap">
+                                    {formatDateBR(p.data_vencimento)}
+                                  </TableCell>
+                                  <TableCell className="text-xs">{p.descricao}</TableCell>
+                                  <TableCell className="text-center">
+                                    <Badge
+                                      variant="outline"
+                                      className={`text-[9px] py-0 px-1 h-4 inline-flex items-center gap-1 ${info.className}`}
+                                    >
+                                      <Icon className="h-2.5 w-2.5" />
+                                      {p.origem_tipo === "parcelado"
+                                        ? `${p.numero_parcela}/${p.total_parcelas}`
+                                        : "Recorrente"}
+                                    </Badge>
+                                  </TableCell>
+                                  <TableCell className="text-right font-mono text-xs">
+                                    {formatBRL(p.valor)}
+                                  </TableCell>
+                                </TableRow>
+                              );
+                            })}
                           </TableBody>
                         </Table>
                       </div>
@@ -338,75 +407,147 @@ export default function FluxoCaixaFuturo() {
 
       {/* Compromissos ativos */}
       <Card>
-        <CardContent className="pt-6">
-          <div className="flex items-center justify-between mb-4">
+        <CardContent className="pt-6 space-y-6">
+          <div className="flex items-center justify-between">
             <h2 className="text-base font-semibold flex items-center gap-2">
               <Layers className="h-4 w-4 text-admin" />
-              Compromissos ativos ({compromissosAtivos.length})
+              Compromissos ativos
             </h2>
           </div>
 
-          {loadingComp ? (
-            <div className="space-y-2">
-              {Array.from({ length: 3 }).map((_, i) => (
-                <Skeleton key={i} className="h-12 w-full" />
-              ))}
-            </div>
-          ) : compromissosAtivos.length === 0 ? (
-            <p className="text-sm text-muted-foreground italic text-center py-6">
-              Nenhum compromisso parcelado ativo.
-            </p>
-          ) : (
-            <div className="rounded-md border overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Descrição</TableHead>
-                    <TableHead className="w-28 text-center">Origem</TableHead>
-                    <TableHead className="w-32">Cartão</TableHead>
-                    <TableHead className="text-right w-28">Valor parcela</TableHead>
-                    <TableHead className="text-center w-24">Progresso</TableHead>
-                    <TableHead className="text-right w-32">Total</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {compromissosAtivos.map((c) => (
-                    <TableRow
-                      key={c.id}
-                      className="cursor-pointer hover:bg-muted/30"
-                      onClick={() => setCompromissoDetalhe(c.id)}
-                    >
-                      <TableCell>
-                        <div className="text-sm font-medium">{c.descricao}</div>
-                        <div className="text-[10px] text-muted-foreground">
-                          desde {formatDateBR(c.data_compra)}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <Badge variant="outline" className="text-[10px]">
-                          {c.origem === "cartao" ? "Cartão" : c.origem === "manual" ? "Manual" : c.origem}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-xs text-muted-foreground">
-                        {c.conta_bancaria?.nome_exibicao || "—"}
-                      </TableCell>
-                      <TableCell className="text-right font-mono text-sm">
-                        {formatBRL(c.valor_parcela)}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <Badge variant="outline" className="text-[10px]">
-                          {c.parcelas_pagas}/{c.qtd_parcelas}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right font-mono text-sm font-bold">
-                        {formatBRL(c.valor_total)}
-                      </TableCell>
+          {/* Seção Parcelados */}
+          <div className="space-y-2">
+            <h3 className="text-sm font-semibold flex items-center gap-2 text-violet-700">
+              <CreditCard className="h-4 w-4" />
+              Parcelados em andamento ({compromissosAtivos.length})
+            </h3>
+
+            {isLoading ? (
+              <div className="space-y-2">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <Skeleton key={i} className="h-12 w-full" />
+                ))}
+              </div>
+            ) : compromissosAtivos.length === 0 ? (
+              <p className="text-sm text-muted-foreground italic text-center py-4">
+                Nenhum parcelado ativo.
+              </p>
+            ) : (
+              <div className="rounded-md border overflow-hidden">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Descrição</TableHead>
+                      <TableHead className="w-28 text-center">Origem</TableHead>
+                      <TableHead className="w-32">Cartão</TableHead>
+                      <TableHead className="text-right w-28">Valor parcela</TableHead>
+                      <TableHead className="text-center w-24">Progresso</TableHead>
+                      <TableHead className="text-right w-32">Total</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
+                  </TableHeader>
+                  <TableBody>
+                    {compromissosAtivos.map((c) => (
+                      <TableRow
+                        key={c.id}
+                        className="cursor-pointer hover:bg-muted/30"
+                        onClick={() => setCompromissoDetalhe(c.id)}
+                      >
+                        <TableCell>
+                          <div className="text-sm font-medium">{c.descricao}</div>
+                          <div className="text-[10px] text-muted-foreground">
+                            desde {formatDateBR(c.data_compra)}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Badge variant="outline" className="text-[10px]">
+                            {c.origem === "cartao" ? "Cartão" : c.origem === "manual" ? "Manual" : c.origem}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-xs text-muted-foreground">
+                          {c.conta_bancaria?.nome_exibicao || "—"}
+                        </TableCell>
+                        <TableCell className="text-right font-mono text-sm">
+                          {formatBRL(c.valor_parcela)}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Badge variant="outline" className="text-[10px]">
+                            {c.parcelas_pagas}/{c.qtd_parcelas}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right font-mono text-sm font-bold">
+                          {formatBRL(c.valor_total)}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </div>
+
+          {/* Seção Recorrentes */}
+          <div className="space-y-2">
+            <h3 className="text-sm font-semibold flex items-center gap-2 text-blue-700">
+              <Repeat className="h-4 w-4" />
+              Recorrentes ativos ({(recorrentes || []).length})
+            </h3>
+
+            {isLoading ? (
+              <div className="space-y-2">
+                {Array.from({ length: 2 }).map((_, i) => (
+                  <Skeleton key={i} className="h-12 w-full" />
+                ))}
+              </div>
+            ) : (recorrentes || []).length === 0 ? (
+              <p className="text-sm text-muted-foreground italic text-center py-4">
+                Nenhum compromisso recorrente ativo.
+              </p>
+            ) : (
+              <div className="rounded-md border overflow-hidden">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Descrição</TableHead>
+                      <TableHead className="w-28 text-center">Periodicidade</TableHead>
+                      <TableHead className="w-32">Conta saída</TableHead>
+                      <TableHead className="w-24 text-center">Vencimento</TableHead>
+                      <TableHead className="w-32">Vigência</TableHead>
+                      <TableHead className="text-right w-28">Valor</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {(recorrentes || []).map((r) => (
+                      <TableRow key={r.id}>
+                        <TableCell>
+                          <div className="text-sm font-medium">{r.descricao}</div>
+                          <div className="text-[10px] text-muted-foreground">
+                            desde {formatDateBR(r.data_inicio)}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Badge variant="outline" className="text-[10px] capitalize">
+                            {r.periodicidade}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-xs text-muted-foreground">
+                          {r.conta_bancaria?.nome_exibicao || "—"}
+                        </TableCell>
+                        <TableCell className="text-xs text-center">
+                          Dia {r.dia_vencimento}
+                        </TableCell>
+                        <TableCell className="text-xs text-muted-foreground">
+                          {r.data_fim ? `até ${formatDateBR(r.data_fim)}` : "Sem fim"}
+                        </TableCell>
+                        <TableCell className="text-right font-mono text-sm font-bold">
+                          {formatBRL(r.valor)}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </div>
         </CardContent>
       </Card>
 
