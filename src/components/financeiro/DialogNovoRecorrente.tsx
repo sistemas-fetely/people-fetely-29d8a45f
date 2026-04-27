@@ -119,6 +119,11 @@ export default function DialogNovoRecorrente({
     },
   });
 
+  const categoriasFiltradas = useMemo(() => {
+    if (mostrarTodas) return categorias || [];
+    return (categorias || []).filter((c) => !c.codigo.startsWith("01"));
+  }, [categorias, mostrarTodas]);
+
   async function salvar() {
     if (!descricao.trim()) {
       toast.error("Descrição é obrigatória");
