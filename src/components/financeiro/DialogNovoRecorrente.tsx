@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -22,6 +22,8 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { useCategoriasPlano } from "@/hooks/useCategoriasPlano";
+import { CategoriaCombobox } from "@/components/financeiro/CategoriaCombobox";
+import { Switch } from "@/components/ui/switch";
 
 type RecorrenteEditando = {
   id: string;
@@ -64,6 +66,7 @@ export default function DialogNovoRecorrente({
   const [parceiroId, setParceiroId] = useState<string>("");
   const [contaBancariaId, setContaBancariaId] = useState<string>("");
   const [observacao, setObservacao] = useState("");
+  const [mostrarTodas, setMostrarTodas] = useState(false);
 
   // Pre-fill quando editando
   useEffect(() => {
@@ -89,6 +92,7 @@ export default function DialogNovoRecorrente({
       setParceiroId("");
       setContaBancariaId("");
       setObservacao("");
+      setMostrarTodas(false);
     }
   }, [recorrenteEditando, aberto]);
 
@@ -114,6 +118,11 @@ export default function DialogNovoRecorrente({
       return data || [];
     },
   });
+
+  const categoriasFiltradas = useMemo(() => {
+    if (mostrarTodas) return categorias || [];
+    return (categorias || []).filter((c) => !c.codigo.startsWith("01"));
+  }, [categorias, mostrarTodas]);
 
   async function salvar() {
     if (!descricao.trim()) {
@@ -288,19 +297,26 @@ export default function DialogNovoRecorrente({
           </div>
 
           <div>
-            <Label>Categoria</Label>
-            <Select value={categoriaId} onValueChange={setCategoriaId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecionar..." />
-              </SelectTrigger>
-              <SelectContent>
-                {(categorias || []).map((c) => (
-                  <SelectItem key={c.id} value={c.id}>
-                    {c.codigo} {c.nome}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="flex items-center justify-between mb-1">
+              <Label>Categoria</Label>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">
+                  Mostrar receitas
+                </span>
+                <Switch
+                  checked={mostrarTodas}
+                  onCheckedChange={setMostrarTodas}
+                />
+              </div>
+            </div>
+            <CategoriaCombobox
+              options={categoriasFiltradas}
+              value={categoriaId || null}
+              onChange={(id) => setCategoriaId(id || "")}
+              placeholder={
+                mostrarTodas ? "Selecionar (todas)..." : "Selecionar despesa..."
+              }
+            />
           </div>
 
           <div className="grid grid-cols-2 gap-3">

@@ -53,6 +53,7 @@ import {
   descartarStage,
 } from "@/lib/financeiro/stage-handler";
 import { useCategoriasPlano } from "@/hooks/useCategoriasPlano";
+import { CategoriaCombobox } from "@/components/financeiro/CategoriaCombobox";
 import {
   classificarComAprendizado,
   useRegrasAtivas,
@@ -697,22 +698,15 @@ export default function NFsStage() {
                       <TableCell>
                         {podeSel ? (
                           <div className="flex items-center gap-1.5">
-                            <Select
-                              value={nf.categoria_id || ""}
-                              onValueChange={(v) => alterarCategoria(nf.id, v)}
+                            <CategoriaCombobox
+                              options={categorias}
+                              value={nf.categoria_id || null}
+                              onChange={(id) =>
+                                alterarCategoria(nf.id, id || "")
+                              }
+                              placeholder="Classificar..."
                               disabled={salvando}
-                            >
-                              <SelectTrigger className="h-8 text-xs w-[200px]">
-                                <SelectValue placeholder="Definir categoria..." />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {categorias.map((c: { id: string; codigo: string; nome: string }) => (
-                                  <SelectItem key={c.id} value={c.id} className="text-xs">
-                                    {c.codigo} {c.nome}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
+                            />
                             {sugestao && (() => {
                               const conf = sugestao.confianca || 0;
                               const corBadge =
