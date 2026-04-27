@@ -6322,49 +6322,73 @@ export type Database = {
       }
       regras_categorizacao: {
         Row: {
+          aprendida_automaticamente: boolean
           ativo: boolean | null
           centro_custo: string | null
           cnpj_emitente: string | null
+          confianca: number
           conta_plano_id: string
           created_at: string | null
+          criada_por: string | null
           criado_por: string | null
           descricao_contem: string | null
+          escopo_origem: string
           fornecedor_id: string | null
           id: string
           ncm_prefixo: string | null
           parceiro_id: string | null
           prioridade: number | null
+          token_principal: string | null
+          ultima_aplicacao_em: string | null
           updated_at: string | null
+          vezes_aplicada: number
+          vezes_corrigida: number
         }
         Insert: {
+          aprendida_automaticamente?: boolean
           ativo?: boolean | null
           centro_custo?: string | null
           cnpj_emitente?: string | null
+          confianca?: number
           conta_plano_id: string
           created_at?: string | null
+          criada_por?: string | null
           criado_por?: string | null
           descricao_contem?: string | null
+          escopo_origem?: string
           fornecedor_id?: string | null
           id?: string
           ncm_prefixo?: string | null
           parceiro_id?: string | null
           prioridade?: number | null
+          token_principal?: string | null
+          ultima_aplicacao_em?: string | null
           updated_at?: string | null
+          vezes_aplicada?: number
+          vezes_corrigida?: number
         }
         Update: {
+          aprendida_automaticamente?: boolean
           ativo?: boolean | null
           centro_custo?: string | null
           cnpj_emitente?: string | null
+          confianca?: number
           conta_plano_id?: string
           created_at?: string | null
+          criada_por?: string | null
           criado_por?: string | null
           descricao_contem?: string | null
+          escopo_origem?: string
           fornecedor_id?: string | null
           id?: string
           ncm_prefixo?: string | null
           parceiro_id?: string | null
           prioridade?: number | null
+          token_principal?: string | null
+          ultima_aplicacao_em?: string | null
           updated_at?: string | null
+          vezes_aplicada?: number
+          vezes_corrigida?: number
         }
         Relationships: [
           {
@@ -8272,6 +8296,7 @@ export type Database = {
         Args: { payload: Json; queue_name: string }
         Returns: number
       }
+      extrair_token_principal: { Args: { p_desc: string }; Returns: string }
       fix_lancamentos_origem_constraint: { Args: never; Returns: string }
       gerar_celebracoes_aniversario_mural: { Args: never; Returns: number }
       gerar_celebracoes_tempo_casa_mural: { Args: never; Returns: number }
@@ -8455,8 +8480,23 @@ export type Database = {
         }
         Returns: string
       }
+      registrar_classificacao: {
+        Args: {
+          p_categoria_id: string
+          p_cnpj: string
+          p_descricao: string
+          p_origem?: string
+          p_parceiro_id: string
+          p_user_id?: string
+        }
+        Returns: string
+      }
       registrar_consulta_processo: {
         Args: { _processo_id: string }
+        Returns: undefined
+      }
+      registrar_correcao_regra: {
+        Args: { p_regra_id: string }
         Returns: undefined
       }
       registrar_log_fiscal_nf: {
@@ -8477,6 +8517,23 @@ export type Database = {
       submit_convite_cadastro: {
         Args: { _dados: Json; _token: string }
         Returns: boolean
+      }
+      sugerir_categoria: {
+        Args: {
+          p_cnpj?: string
+          p_descricao?: string
+          p_ncm?: string
+          p_origem?: string
+          p_parceiro_id?: string
+        }
+        Returns: {
+          categoria_id: string
+          centro_custo: string
+          confianca: number
+          motivo: string
+          regra_id: string
+          tipo_match: string
+        }[]
       }
       tem_consentimento_ativo: {
         Args: { _tipo: string; _user_id: string }
