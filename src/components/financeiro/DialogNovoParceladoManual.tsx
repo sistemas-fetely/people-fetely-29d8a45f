@@ -88,6 +88,7 @@ export default function DialogNovoParceladoManual({
     setParceiroId("");
     setContaBancariaId("");
     setObservacao("");
+    setMostrarTodas(false);
   }
 
   async function salvar() {
