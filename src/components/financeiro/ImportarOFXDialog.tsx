@@ -173,7 +173,8 @@ export function ImportarOFXDialog({ open, onOpenChange, onSuccess }: Props) {
           data_transacao: t.data,
           descricao: t.descricao,
           valor: t.valor,
-          tipo: t.tipo || null,
+          // Mapeia tipo: valor positivo = credito (entrada), negativo = debito (saida)
+          tipo: t.valor >= 0 ? "credito" : "debito",
           id_transacao_banco: t.fitid,
           conciliado: false,
           origem: "ofx",
@@ -205,9 +206,16 @@ export function ImportarOFXDialog({ open, onOpenChange, onSuccess }: Props) {
       qc.invalidateQueries({ queryKey: ["contas-bancarias"] });
       onSuccess?.();
     } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const err = e as any;
+      const msg =
+        err?.message ||
+        err?.error_description ||
+        err?.details ||
+        err?.hint ||
+        (err instanceof Error ? err.message : JSON.stringify(err));
       toast.error("Erro ao salvar: " + msg);
-      setEtapa("preview"); // volta pro preview pra tentar de novo
+      setEtapa("preview");
     }
   }
 
