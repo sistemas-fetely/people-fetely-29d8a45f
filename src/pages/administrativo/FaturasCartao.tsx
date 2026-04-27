@@ -705,6 +705,12 @@ export default function FaturasCartao() {
                                   );
                                 })()}
                               </div>
+                              <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground mb-2 px-1 py-1 rounded bg-muted/40 border border-dashed">
+                                <Info className="h-3 w-3 shrink-0" />
+                                <span>
+                                  Lançamentos sem categoria serão classificados automaticamente na reconciliação com NF.
+                                </span>
+                              </div>
                               {!lancamentosExpanded ? (
                                 <Skeleton className="h-32 w-full" />
                               ) : lancamentosExpanded.length === 0 ? (
@@ -719,7 +725,10 @@ export default function FaturasCartao() {
                                         <th className="text-left px-2 py-1.5 font-normal">Data</th>
                                         <th className="text-left px-2 py-1.5 font-normal">Descrição</th>
                                         <th className="text-right px-2 py-1.5 font-normal">Valor</th>
-                                        <th className="text-left px-2 py-1.5 font-normal w-[220px]">
+                                        <th className="text-center px-2 py-1.5 font-normal w-[110px]">
+                                          Match NF
+                                        </th>
+                                        <th className="text-left px-2 py-1.5 font-normal w-[180px]">
                                           Categoria
                                         </th>
                                         <th className="text-center px-2 py-1.5 font-normal">Tipo</th>
