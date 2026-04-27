@@ -31,6 +31,7 @@ interface ContaParaPagar {
   valor: number;
   fornecedor_cliente: string | null;
   forma_pagamento_id?: string | null;
+  data_vencimento?: string | null;
 }
 
 interface Props {
@@ -79,7 +80,19 @@ export function MarcarPagoDialog({ open, onOpenChange, contas, onSuccess }: Prop
 
   useEffect(() => {
     if (!open) return;
-    setDataPgto(new Date().toISOString().substring(0, 10));
+
+    // Data de pagamento: se todas as contas têm o mesmo vencimento, usa esse no input.
+    // Senão (vencimentos diferentes), input fica vazio MAS cada conta usa seu próprio
+    // vencimento na hora de salvar (a menos que usuário preencha o input).
+    const vencimentos = contas.map((c) => c.data_vencimento).filter(Boolean);
+    const vencimentosUnicos = new Set(vencimentos);
+    if (vencimentosUnicos.size === 1 && vencimentos.length > 0) {
+      setDataPgto(vencimentos[0] as string);
+    } else {
+      // Massa com vencimentos diferentes: input vazio, cada conta usa o seu
+      setDataPgto("");
+    }
+
     setObservacao("");
     setContaBancariaId("");
     // Pré-preenche forma de pagamento se todas as contas tiverem a mesma
@@ -93,37 +106,58 @@ export function MarcarPagoDialog({ open, onOpenChange, contas, onSuccess }: Prop
     }
   }, [open, contas]);
 
+  // Detecta se as contas têm vencimentos diferentes (caso massa)
+  const vencimentosUnicos = new Set(
+    contas.map((c) => c.data_vencimento).filter(Boolean),
+  );
+  const vencimentosDiferentes = vencimentosUnicos.size > 1;
+
   async function handleConfirmar() {
     if (!contaBancariaId) {
       toast.error("Selecione a conta bancária");
       return;
     }
+    // Validação: precisa ter dataPgto OU todas as contas precisam ter data_vencimento
     if (!dataPgto) {
-      toast.error("Informe a data do pagamento");
-      return;
+      const semVenc = contas.filter((c) => !c.data_vencimento);
+      if (semVenc.length > 0) {
+        toast.error(
+          "Algumas contas não têm vencimento — informe uma data padrão.",
+        );
+        return;
+      }
     }
 
     setSalvando(true);
     try {
-      const ids = contas.map((c) => c.id);
-      const updateData: Record<string, unknown> = {
+      const dadosBase: Record<string, unknown> = {
         pago_em_conta_id: contaBancariaId,
-        data_pagamento: dataPgto,
         pago_em: new Date().toISOString(),
         pago_por: user?.id || null,
         observacao_pagamento_manual: observacao.trim() || null,
       };
-      // Atualiza forma de pagamento se foi selecionada (caso massa, sobrescreve)
       if (formaPgtoId) {
-        updateData.forma_pagamento_id = formaPgtoId;
+        dadosBase.forma_pagamento_id = formaPgtoId;
       }
 
-      const { error } = await supabase
-        .from("contas_pagar_receber")
-        .update(updateData as never)
-        .in("id", ids);
-
-      if (error) throw error;
+      // Se dataPgto preenchido: aplica em todos
+      // Se vazio (massa com vencimentos diferentes): cada conta usa seu próprio vencimento
+      if (dataPgto) {
+        const { error } = await supabase
+          .from("contas_pagar_receber")
+          .update({ ...dadosBase, data_pagamento: dataPgto })
+          .in("id", contas.map((c) => c.id));
+        if (error) throw error;
+      } else {
+        // Atualiza uma a uma com sua própria data_vencimento
+        for (const c of contas) {
+          const { error } = await supabase
+            .from("contas_pagar_receber")
+            .update({ ...dadosBase, data_pagamento: c.data_vencimento })
+            .eq("id", c.id);
+          if (error) throw error;
+        }
+      }
 
       // Histórico (best-effort)
       try {
@@ -221,12 +255,20 @@ export function MarcarPagoDialog({ open, onOpenChange, contas, onSuccess }: Prop
 
           {/* Data */}
           <div className="space-y-1">
-            <Label>Data do pagamento *</Label>
+            <Label>
+              Data do pagamento {!vencimentosDiferentes && "*"}
+            </Label>
             <Input
               type="date"
               value={dataPgto}
               onChange={(e) => setDataPgto(e.target.value)}
+              placeholder={vencimentosDiferentes ? "Vazio = usa vencimento de cada conta" : ""}
             />
+            {vencimentosDiferentes && (
+              <p className="text-[10px] text-muted-foreground">
+                As contas selecionadas têm vencimentos diferentes. Deixe vazio pra usar a data de vencimento de cada uma como data de pagamento, ou preencha pra aplicar a mesma data em todas.
+              </p>
+            )}
           </div>
 
           {/* Observação */}
