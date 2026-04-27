@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -30,6 +31,7 @@ import {
   Link as LinkIcon,
   FileWarning,
   Pencil,
+  CreditCard,
 } from "lucide-react";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
 import { MarcarPagoDialog } from "@/components/financeiro/MarcarPagoDialog";
@@ -53,6 +55,8 @@ type Lancamento = {
   forma_pagamento_id: string | null;
   unidade: string | null;
   nf_numero: string | null;
+  origem_view: "conta_pagar" | "cartao_lancamento";
+  fatura_id: string | null;
 };
 
 type ContaBancariaLite = {
@@ -95,6 +99,7 @@ export default function CaixaBanco() {
   const [marcarPagoOpen, setMarcarPagoOpen] = useState(false);
   const [contasParaPagar, setContasParaPagar] = useState<Lancamento[]>([]);
   const [contaIdDrawer, setContaIdDrawer] = useState<string | null>(null);
+  const navigate = useNavigate();
   const [editarOpen, setEditarOpen] = useState(false);
   const [lancamentoEditando, setLancamentoEditando] = useState<Lancamento | null>(null);
 
@@ -195,7 +200,7 @@ export default function CaixaBanco() {
   const totals = useMemo(() => {
     const all = lancamentos || [];
     const emAberto = all
-      .filter((l) => l.status_caixa === "em_aberto")
+      .filter((l) => l.status_caixa === "em_aberto" && l.origem_view !== "cartao_lancamento")
       .reduce((s, l) => s + Number(l.valor || 0), 0);
     const pago = all
       .filter((l) => l.status_caixa === "pago")
@@ -207,7 +212,7 @@ export default function CaixaBanco() {
       emAberto,
       pago,
       conciliado,
-      countAberto: all.filter((l) => l.status_caixa === "em_aberto").length,
+      countAberto: all.filter((l) => l.status_caixa === "em_aberto" && l.origem_view !== "cartao_lancamento").length,
       countPago: all.filter((l) => l.status_caixa === "pago").length,
       countConciliado: all.filter((l) => l.status_caixa === "conciliado").length,
     };
@@ -217,7 +222,7 @@ export default function CaixaBanco() {
   const pageData = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const lancamentosSelecionados = useMemo(
-    () => filtered.filter((l) => selecionados.has(l.id) && l.status_caixa === "em_aberto"),
+    () => filtered.filter((l) => selecionados.has(l.id) && l.status_caixa === "em_aberto" && l.origem_view !== "cartao_lancamento"),
     [filtered, selecionados],
   );
 
@@ -231,13 +236,13 @@ export default function CaixaBanco() {
   function togglePagina() {
     const next = new Set(selecionados);
     const todasSelecionadas = pageData
-      .filter((l) => l.status_caixa === "em_aberto")
+      .filter((l) => l.status_caixa === "em_aberto" && l.origem_view !== "cartao_lancamento")
       .every((l) => next.has(l.id));
     if (todasSelecionadas) {
       pageData.forEach((l) => next.delete(l.id));
     } else {
       pageData
-        .filter((l) => l.status_caixa === "em_aberto")
+        .filter((l) => l.status_caixa === "em_aberto" && l.origem_view !== "cartao_lancamento")
         .forEach((l) => next.add(l.id));
     }
     setSelecionados(next);
@@ -412,9 +417,9 @@ export default function CaixaBanco() {
                       <TableHead className="w-10">
                         <Checkbox
                           checked={
-                            pageData.filter((l) => l.status_caixa === "em_aberto").length > 0 &&
+                            pageData.filter((l) => l.status_caixa === "em_aberto" && l.origem_view !== "cartao_lancamento").length > 0 &&
                             pageData
-                              .filter((l) => l.status_caixa === "em_aberto")
+                              .filter((l) => l.status_caixa === "em_aberto" && l.origem_view !== "cartao_lancamento")
                               .every((l) => selecionados.has(l.id))
                           }
                           onCheckedChange={togglePagina}
@@ -435,7 +440,7 @@ export default function CaixaBanco() {
                   <TableBody>
                     {pageData.map((l) => {
                       const isSel = selecionados.has(l.id);
-                      const podeSel = l.status_caixa === "em_aberto";
+                      const podeSel = l.status_caixa === "em_aberto" && l.origem_view !== "cartao_lancamento";
                       const conta =
                         l.pago_em_conta_id && mapContas[l.pago_em_conta_id];
                       const formaNome =
@@ -444,7 +449,13 @@ export default function CaixaBanco() {
                         <TableRow
                           key={l.id}
                           className={`cursor-pointer hover:bg-muted/50 ${isSel ? "bg-muted/40" : ""}`}
-                          onClick={() => setContaIdDrawer(l.id)}
+                          onClick={() => {
+                            if (l.origem_view === "cartao_lancamento") {
+                              navigate("/administrativo/faturas-cartao");
+                            } else {
+                              setContaIdDrawer(l.id);
+                            }
+                          }}
                         >
                           <TableCell onClick={(e) => e.stopPropagation()}>
                             <Checkbox
@@ -473,6 +484,15 @@ export default function CaixaBanco() {
                             <div className="truncate text-xs text-muted-foreground" title={l.descricao}>
                               {l.descricao}
                             </div>
+                            {l.origem_view === "cartao_lancamento" && (
+                              <Badge
+                                variant="outline"
+                                className="text-[9px] py-0 px-1.5 h-4 border-violet-300 text-violet-700 bg-violet-50/50 gap-1 mt-0.5"
+                              >
+                                <CreditCard className="h-2.5 w-2.5" />
+                                Cartão
+                              </Badge>
+                            )}
                           </TableCell>
                           <TableCell className="whitespace-nowrap text-xs">
                             {formatDateBR(l.data_vencimento)}
@@ -526,7 +546,7 @@ export default function CaixaBanco() {
                               >
                                 <Pencil className="h-3 w-3" />
                               </Button>
-                              {l.status_caixa === "em_aberto" && (
+                              {l.status_caixa === "em_aberto" && l.origem_view !== "cartao_lancamento" && (
                                 <Button
                                   size="sm"
                                   variant="outline"
