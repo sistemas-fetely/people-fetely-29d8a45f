@@ -99,7 +99,7 @@ export function EditarLancamentoDialog({
 
       const { error } = await supabase
         .from("contas_pagar_receber")
-        .update(updateData)
+        .update(updateData as never)
         .eq("id", lancamento.id);
 
       if (error) throw error;
