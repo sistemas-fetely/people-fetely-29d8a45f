@@ -35,6 +35,7 @@ const financeiroItems: MenuItem[] = [
   { title: "Lançamentos", url: "/administrativo/lancamentos", icon: Receipt },
   { title: "DRE", url: "/administrativo/dre", icon: FileBarChart2 },
   { title: "Fluxo de Caixa", url: "/administrativo/fluxo-caixa", icon: TrendingUp },
+  { title: "Compromissos", url: "/administrativo/compromissos", icon: Repeat },
   { title: "Fluxo Futuro", url: "/administrativo/fluxo-futuro", icon: Calendar },
   { title: "Contas a Pagar", url: "/administrativo/contas-pagar", icon: ArrowUpFromLine },
   { title: "Contas a Receber", url: "/administrativo/contas-receber", icon: ArrowDownToLine },
@@ -50,7 +51,6 @@ const caixaBancoItems: MenuItem[] = [
   { title: "Conciliação OFX", url: "/administrativo/caixa-banco/conciliacao", icon: GitCompare },
   { title: "Faturas de Cartão", url: "/administrativo/faturas-cartao", icon: CreditCard },
   { title: "Reconciliação Cartão ↔ NF", url: "/administrativo/reconciliacao-cartao", icon: GitMerge },
-  { title: "Compromissos", url: "/administrativo/compromissos", icon: Repeat },
 ];
 
 const vendasBlingItems: MenuItem[] = [
