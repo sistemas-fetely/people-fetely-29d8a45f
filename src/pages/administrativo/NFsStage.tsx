@@ -53,6 +53,7 @@ import {
   descartarStage,
 } from "@/lib/financeiro/stage-handler";
 import { useCategoriasPlano } from "@/hooks/useCategoriasPlano";
+import { classificarComAprendizado } from "@/hooks/useEngineClassificacao";
 import {
   SortableTableHead,
   ordenarPor,
@@ -266,7 +267,23 @@ export default function NFsStage() {
         })
         .eq("id", id);
       if (error) throw error;
+
+      // Engine Universal: aprende com a classificação manual
+      if (categoriaId) {
+        const nf = nfs?.find((n) => n.id === id);
+        if (nf) {
+          await classificarComAprendizado({
+            descricao: nf.fornecedor_razao_social || nf.fornecedor_cliente,
+            cnpj: nf.fornecedor_cnpj,
+            parceiro_id: null, // NFs em stage ainda não tem parceiro_id resolvido
+            categoria_id: categoriaId,
+            origem: "nf",
+          });
+        }
+      }
+
       qc.invalidateQueries({ queryKey: ["nfs-stage"] });
+      qc.invalidateQueries({ queryKey: ["engine-regras-ativas"] });
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       toast.error("Erro: " + msg);
@@ -310,12 +327,23 @@ export default function NFsStage() {
           .from("nfs_stage")
           .update({ categoria_id: sug.categoria_id, status: "classificada" })
           .eq("id", nf.id);
-        if (!error) ok++;
+        if (!error) {
+          ok++;
+          // Engine Universal: aprende
+          await classificarComAprendizado({
+            descricao: nf.fornecedor_razao_social || nf.fornecedor_cliente,
+            cnpj: nf.fornecedor_cnpj,
+            parceiro_id: null,
+            categoria_id: sug.categoria_id,
+            origem: "nf",
+          });
+        }
       } catch {
         // ignora
       }
     }
     qc.invalidateQueries({ queryKey: ["nfs-stage"] });
+    qc.invalidateQueries({ queryKey: ["engine-regras-ativas"] });
     toast.success(`${ok} sugestão${ok === 1 ? "" : "ões"} aplicada${ok === 1 ? "" : "s"}`);
   }
 
