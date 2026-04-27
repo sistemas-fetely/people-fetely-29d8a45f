@@ -46,6 +46,8 @@ import {
   Clock,
   Sparkles,
   ChevronRight,
+  Link2,
+  Info,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
@@ -102,6 +104,7 @@ type LancamentoRow = {
   parceiro_id: string | null;
   categoria_id: string | null;
   status: string;
+  nf_vinculada_id: string | null;
 };
 
 const STATUS_LABELS: Record<string, string> = {
