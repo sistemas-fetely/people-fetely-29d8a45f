@@ -4,7 +4,7 @@ import {
   FileSignature, Building2, ShieldCheck, FolderArchive,
   Users, Monitor, Network, Landmark, LogOut, ClipboardList,
   UsersRound, Settings2, ShoppingCart, Package, GitCompare,
-  Layers, CreditCard, Calendar, GitMerge,
+  Layers, CreditCard, Calendar, GitMerge, Repeat,
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { NavLink } from "@/components/NavLink";
@@ -35,6 +35,7 @@ const financeiroItems: MenuItem[] = [
   { title: "Lançamentos", url: "/administrativo/lancamentos", icon: Receipt },
   { title: "DRE", url: "/administrativo/dre", icon: FileBarChart2 },
   { title: "Fluxo de Caixa", url: "/administrativo/fluxo-caixa", icon: TrendingUp },
+  { title: "Compromissos", url: "/administrativo/compromissos", icon: Repeat },
   { title: "Fluxo Futuro", url: "/administrativo/fluxo-futuro", icon: Calendar },
   { title: "Contas a Pagar", url: "/administrativo/contas-pagar", icon: ArrowUpFromLine },
   { title: "Contas a Receber", url: "/administrativo/contas-receber", icon: ArrowDownToLine },
