@@ -1,7 +1,7 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -39,9 +39,12 @@ import {
   Trash2,
   CheckCircle2,
   Clock,
-  AlertTriangle,
   FileText,
   Eye,
+  Sparkles,
+  Calculator,
+  Package,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
@@ -82,17 +85,25 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 const STATUS_STYLES: Record<string, string> = {
-  pendente: "bg-amber-100 text-amber-800 hover:bg-amber-100",
-  classificada: "bg-emerald-100 text-emerald-800 hover:bg-emerald-100",
-  importada: "bg-blue-100 text-blue-800 hover:bg-blue-100",
-  descartada: "bg-gray-100 text-gray-700 hover:bg-gray-100",
-  duplicata: "bg-orange-100 text-orange-800 hover:bg-orange-100",
+  pendente: "bg-amber-100 text-amber-800 hover:bg-amber-100 border-amber-200",
+  classificada: "bg-emerald-100 text-emerald-800 hover:bg-emerald-100 border-emerald-200",
+  importada: "bg-blue-100 text-blue-800 hover:bg-blue-100 border-blue-200",
+  descartada: "bg-gray-100 text-gray-700 hover:bg-gray-100 border-gray-200",
+  duplicata: "bg-orange-100 text-orange-800 hover:bg-orange-100 border-orange-200",
 };
+
+const FONTE_LABELS: Record<string, string> = {
+  pdf_nfe: "PDF DANFE",
+  xml_nfe: "XML NF-e",
+  csv_qive: "CSV Qive",
+};
+
+type FiltroPill = "ativos" | "pendente" | "classificada" | "importada" | "descartada" | "todos";
 
 export default function NFsStage() {
   const qc = useQueryClient();
   const [busca, setBusca] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("ativos");
+  const [filtroPill, setFiltroPill] = useState<FiltroPill>("ativos");
   const [selecionadas, setSelecionadas] = useState<Set<string>>(new Set());
   const [paraDescartar, setParaDescartar] = useState<NFStage[]>([]);
   const [salvandoCategoria, setSalvandoCategoria] = useState<Set<string>>(new Set());
@@ -113,16 +124,16 @@ export default function NFsStage() {
     },
   });
 
-  // Filtros
+  // Filtro aplicado
   const filtered = useMemo(() => {
     let list = nfs || [];
-    if (statusFilter !== "todos") {
-      if (statusFilter === "ativos") {
+    if (filtroPill !== "todos") {
+      if (filtroPill === "ativos") {
         list = list.filter(
           (n) => n.status === "pendente" || n.status === "classificada",
         );
       } else {
-        list = list.filter((n) => n.status === statusFilter);
+        list = list.filter((n) => n.status === filtroPill);
       }
     }
     if (busca.trim()) {
@@ -136,9 +147,9 @@ export default function NFsStage() {
       );
     }
     return list;
-  }, [nfs, statusFilter, busca]);
+  }, [nfs, filtroPill, busca]);
 
-  // KPIs
+  // KPIs (sempre baseados em todos os dados, não filtered)
   const totals = useMemo(() => {
     const all = nfs || [];
     return {
@@ -146,8 +157,63 @@ export default function NFsStage() {
       prontas: all.filter((n) => n.status === "classificada").length,
       importadas: all.filter((n) => n.status === "importada").length,
       descartadas: all.filter((n) => n.status === "descartada").length,
+      total: all.length,
     };
   }, [nfs]);
+
+  // Soma do valor das selecionadas
+  const totalSelecionadas = useMemo(() => {
+    if (selecionadas.size === 0) return 0;
+    return (nfs || [])
+      .filter((n) => selecionadas.has(n.id))
+      .reduce((s, n) => s + (n.valor || 0), 0);
+  }, [selecionadas, nfs]);
+
+  // Soma das filtradas (independente de seleção)
+  const totalFiltradas = useMemo(
+    () => filtered.reduce((s, n) => s + (n.valor || 0), 0),
+    [filtered],
+  );
+
+  // SUGESTÃO INTELIGENTE: pra cada NF pendente, ver se outras NFs do mesmo CNPJ já estão classificadas
+  // Retorna { cnpj: { categoria_id, count } } com a categoria mais usada
+  const sugestoesPorCnpj = useMemo(() => {
+    const all = nfs || [];
+    const map: Record<string, Record<string, number>> = {};
+    for (const nf of all) {
+      if (!nf.fornecedor_cnpj || !nf.categoria_id) continue;
+      if (nf.status === "descartada") continue;
+      if (!map[nf.fornecedor_cnpj]) map[nf.fornecedor_cnpj] = {};
+      map[nf.fornecedor_cnpj][nf.categoria_id] =
+        (map[nf.fornecedor_cnpj][nf.categoria_id] || 0) + 1;
+    }
+    // Pega a mais usada de cada CNPJ
+    const sugestoes: Record<string, { categoria_id: string; count: number }> = {};
+    for (const cnpj in map) {
+      const cats = map[cnpj];
+      let melhor = "";
+      let max = 0;
+      for (const c in cats) {
+        if (cats[c] > max) {
+          max = cats[c];
+          melhor = c;
+        }
+      }
+      if (melhor && max >= 1) {
+        sugestoes[cnpj] = { categoria_id: melhor, count: max };
+      }
+    }
+    return sugestoes;
+  }, [nfs]);
+
+  // Map de id pra label de categoria
+  const mapCategorias = useMemo(() => {
+    const m: Record<string, string> = {};
+    (categorias || []).forEach((c: { id: string; codigo: string; nome: string }) => {
+      m[c.id] = `${c.codigo} ${c.nome}`;
+    });
+    return m;
+  }, [categorias]);
 
   function toggleSel(id: string) {
     const next = new Set(selecionadas);
@@ -160,7 +226,7 @@ export default function NFsStage() {
     const ativasIds = filtered
       .filter((n) => n.status === "pendente" || n.status === "classificada")
       .map((n) => n.id);
-    const todasSel = ativasIds.every((id) => selecionadas.has(id));
+    const todasSel = ativasIds.length > 0 && ativasIds.every((id) => selecionadas.has(id));
     if (todasSel) {
       setSelecionadas(new Set());
     } else {
@@ -194,17 +260,59 @@ export default function NFsStage() {
     }
   }
 
-  async function handleEnviarSelecionadas() {
-    const ids = Array.from(selecionadas);
-    const semCategoria = filtered.filter(
-      (n) => selecionadas.has(n.id) && !n.categoria_id,
-    );
+  async function aceitarSugestao(nf: NFStage) {
+    if (!nf.fornecedor_cnpj) return;
+    const sug = sugestoesPorCnpj[nf.fornecedor_cnpj];
+    if (!sug) return;
+    await alterarCategoria(nf.id, sug.categoria_id);
+    toast.success("Sugestão aplicada");
+  }
 
-    if (semCategoria.length > 0) {
-      const ok = confirm(
-        `${semCategoria.length} NFs estão sem categoria. Enviar mesmo assim? Elas vão pra Contas a Pagar como "Sem categoria" e podem ser classificadas depois.`,
+  async function aceitarTodasSugestoes() {
+    if (!nfs) return;
+    const aplicar = nfs.filter(
+      (n) =>
+        n.status === "pendente" &&
+        n.fornecedor_cnpj &&
+        sugestoesPorCnpj[n.fornecedor_cnpj],
+    );
+    if (aplicar.length === 0) {
+      toast.info("Nenhuma sugestão automática disponível.");
+      return;
+    }
+    if (!confirm(`Aplicar sugestão automática em ${aplicar.length} NF${aplicar.length === 1 ? "" : "s"}?`)) return;
+
+    let ok = 0;
+    for (const nf of aplicar) {
+      try {
+        const sug = sugestoesPorCnpj[nf.fornecedor_cnpj!];
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { error } = await (supabase as any)
+          .from("nfs_stage")
+          .update({ categoria_id: sug.categoria_id, status: "classificada" })
+          .eq("id", nf.id);
+        if (!error) ok++;
+      } catch {
+        // ignora
+      }
+    }
+    qc.invalidateQueries({ queryKey: ["nfs-stage"] });
+    toast.success(`${ok} sugestão${ok === 1 ? "" : "ões"} aplicada${ok === 1 ? "" : "s"}`);
+  }
+
+  async function handleEnviarSelecionadas() {
+    if (selecionadas.size === 0) {
+      toast.info("Selecione NFs primeiro");
+      return;
+    }
+    const ids = Array.from(selecionadas);
+    const lista = (nfs || []).filter((n) => ids.includes(n.id));
+    const naoClassificadas = lista.filter((n) => !n.categoria_id);
+    if (naoClassificadas.length > 0) {
+      toast.error(
+        `${naoClassificadas.length} NF${naoClassificadas.length === 1 ? "" : "s"} sem categoria. Classifique antes de enviar.`,
       );
-      if (!ok) return;
+      return;
     }
 
     setEnviando(true);
@@ -212,11 +320,12 @@ export default function NFsStage() {
       const result = await enviarStageParaContasPagar(ids);
       if (result.sucesso > 0) {
         toast.success(
-          `${result.sucesso} NF${result.sucesso === 1 ? "" : "s"} enviada${result.sucesso === 1 ? "" : "s"} para Contas a Pagar`,
+          `${result.sucesso} NF${result.sucesso === 1 ? "" : "s"} enviada${result.sucesso === 1 ? "" : "s"} pra Contas a Pagar`,
         );
       }
       if (result.erros.length > 0) {
         toast.error(`${result.erros.length} erro(s): ${result.erros[0]}`);
+        console.error(result.erros);
       }
       setSelecionadas(new Set());
       qc.invalidateQueries({ queryKey: ["nfs-stage"] });
@@ -258,186 +367,289 @@ export default function NFsStage() {
     }
   }
 
+  // Atalhos de teclado
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      // Ignora se está num input/select/textarea
+      const tag = (e.target as HTMLElement)?.tagName?.toLowerCase();
+      if (tag === "input" || tag === "select" || tag === "textarea") return;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+
+      if (e.key === "e" || e.key === "E") {
+        if (selecionadas.size > 0) {
+          e.preventDefault();
+          handleEnviarSelecionadas();
+        }
+      } else if (e.key === "d" || e.key === "D") {
+        if (selecionadas.size > 0) {
+          e.preventDefault();
+          const lista = filtered.filter((n) => selecionadas.has(n.id));
+          setParaDescartar(lista);
+        }
+      } else if (e.key === "Escape") {
+        if (selecionadas.size > 0) {
+          setSelecionadas(new Set());
+        }
+      } else if (e.key === "/") {
+        e.preventDefault();
+        const input = document.getElementById("nfs-stage-busca") as HTMLInputElement | null;
+        input?.focus();
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selecionadas, filtered]);
+
+  const sugestoesDisponiveis = (nfs || []).filter(
+    (n) =>
+      n.status === "pendente" &&
+      n.fornecedor_cnpj &&
+      sugestoesPorCnpj[n.fornecedor_cnpj],
+  ).length;
+
   return (
-    <div className="p-6 space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-          <Layers className="h-6 w-6 text-admin" />
-          NFs em Stage
-        </h1>
-        <p className="text-muted-foreground text-sm mt-1">
-          Área de revisão antes de enviar pra Contas a Pagar. NFs ficam aqui até você classificar e mandar.
-        </p>
-      </div>
+    <div className="flex flex-col h-[calc(100vh-64px)] overflow-hidden">
+      {/* HEADER FIXO - Título, KPIs como filtros, busca */}
+      <div className="px-6 pt-6 pb-3 border-b bg-background/95 backdrop-blur sticky top-0 z-20 space-y-4">
+        <div className="flex items-start justify-between gap-4 flex-wrap">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+              <Layers className="h-6 w-6 text-admin" />
+              NFs em Stage
+            </h1>
+            <p className="text-muted-foreground text-sm mt-0.5">
+              Revise, classifique e envie pra Contas a Pagar.{" "}
+              <span className="text-[11px] opacity-70">
+                Atalhos: <kbd className="px-1 py-0.5 border rounded text-[10px]">/</kbd> buscar ·{" "}
+                <kbd className="px-1 py-0.5 border rounded text-[10px]">E</kbd> enviar ·{" "}
+                <kbd className="px-1 py-0.5 border rounded text-[10px]">D</kbd> descartar ·{" "}
+                <kbd className="px-1 py-0.5 border rounded text-[10px]">Esc</kbd> limpar
+              </span>
+            </p>
+          </div>
+          {sugestoesDisponiveis > 0 && (
+            <Button
+              variant="outline"
+              onClick={aceitarTodasSugestoes}
+              className="gap-2 border-violet-300 text-violet-700 hover:bg-violet-50"
+            >
+              <Sparkles className="h-4 w-4" />
+              Aplicar {sugestoesDisponiveis} sugestão{sugestoesDisponiveis === 1 ? "" : "ões"} automática{sugestoesDisponiveis === 1 ? "" : "s"}
+            </Button>
+          )}
+        </div>
 
-      {/* KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Card>
-          <CardContent className="pt-4">
-            <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-              <Clock className="h-3 w-3 text-amber-700" /> Pendentes
-            </p>
-            <p className="text-2xl font-bold text-amber-700">{totals.pendentes}</p>
-            <p className="text-[10px] text-muted-foreground">Sem categoria definida</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-4">
-            <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-              <CheckCircle2 className="h-3 w-3 text-emerald-700" /> Prontas
-            </p>
-            <p className="text-2xl font-bold text-emerald-700">{totals.prontas}</p>
-            <p className="text-[10px] text-muted-foreground">Pode enviar</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-4">
-            <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-              <Send className="h-3 w-3 text-blue-700" /> Importadas
-            </p>
-            <p className="text-2xl font-bold text-blue-700">{totals.importadas}</p>
-            <p className="text-[10px] text-muted-foreground">Já em Contas a Pagar</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-4">
-            <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-              <Trash2 className="h-3 w-3 text-gray-500" /> Descartadas
-            </p>
-            <p className="text-2xl font-bold text-gray-500">{totals.descartadas}</p>
-          </CardContent>
-        </Card>
-      </div>
+        {/* KPI pills (clicáveis = filtros) */}
+        <div className="flex flex-wrap gap-2">
+          <KpiPill
+            label="Ativas"
+            count={totals.pendentes + totals.prontas}
+            color="admin"
+            active={filtroPill === "ativos"}
+            onClick={() => setFiltroPill("ativos")}
+            icon={<Package className="h-3 w-3" />}
+            description="pendente + pronta"
+          />
+          <KpiPill
+            label="Pendentes"
+            count={totals.pendentes}
+            color="amber"
+            active={filtroPill === "pendente"}
+            onClick={() => setFiltroPill("pendente")}
+            icon={<Clock className="h-3 w-3" />}
+            description="sem categoria"
+          />
+          <KpiPill
+            label="Prontas"
+            count={totals.prontas}
+            color="emerald"
+            active={filtroPill === "classificada"}
+            onClick={() => setFiltroPill("classificada")}
+            icon={<CheckCircle2 className="h-3 w-3" />}
+            description="podem enviar"
+          />
+          <KpiPill
+            label="Importadas"
+            count={totals.importadas}
+            color="blue"
+            active={filtroPill === "importada"}
+            onClick={() => setFiltroPill("importada")}
+            icon={<Send className="h-3 w-3" />}
+            description="já em CP"
+          />
+          <KpiPill
+            label="Descartadas"
+            count={totals.descartadas}
+            color="gray"
+            active={filtroPill === "descartada"}
+            onClick={() => setFiltroPill("descartada")}
+            icon={<Trash2 className="h-3 w-3" />}
+          />
+          <KpiPill
+            label="Todas"
+            count={totals.total}
+            color="gray"
+            active={filtroPill === "todos"}
+            onClick={() => setFiltroPill("todos")}
+          />
+        </div>
 
-      {/* Filtros + Ações */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex gap-2 flex-wrap items-center">
-            <div className="relative flex-1 min-w-[240px]">
-              <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                value={busca}
-                onChange={(e) => setBusca(e.target.value)}
-                placeholder="Buscar fornecedor, CNPJ ou NF..."
-                className="pl-9"
-              />
-            </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ativos">Ativas (pend. + prontas)</SelectItem>
-                <SelectItem value="pendente">Pendentes</SelectItem>
-                <SelectItem value="classificada">Prontas</SelectItem>
-                <SelectItem value="importada">Importadas</SelectItem>
-                <SelectItem value="descartada">Descartadas</SelectItem>
-                <SelectItem value="todos">Todos</SelectItem>
-              </SelectContent>
-            </Select>
-            {selecionadas.size > 0 && (
-              <>
-                <Button
-                  onClick={handleEnviarSelecionadas}
-                  disabled={enviando}
-                  className="ml-auto gap-2 bg-emerald-700 hover:bg-emerald-800 text-white"
-                >
-                  <Send className="h-4 w-4" />
-                  Enviar {selecionadas.size} pra Contas a Pagar
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    const lista = filtered.filter((n) => selecionadas.has(n.id));
-                    setParaDescartar(lista);
-                  }}
-                  className="text-destructive border-destructive/30 hover:bg-destructive/5"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </>
+        {/* Busca + Ações */}
+        <div className="flex gap-2 items-center flex-wrap">
+          <div className="relative flex-1 min-w-[280px] max-w-md">
+            <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              id="nfs-stage-busca"
+              value={busca}
+              onChange={(e) => setBusca(e.target.value)}
+              placeholder="Buscar fornecedor, CNPJ ou nº NF... (atalho: /)"
+              className="pl-9"
+            />
+            {busca && (
+              <button
+                onClick={() => setBusca("")}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-4 w-4" />
+              </button>
             )}
           </div>
-        </CardContent>
-      </Card>
 
-      {/* Tabela */}
-      <Card>
-        <CardContent className="pt-6">
-          {isLoading ? (
-            <div className="space-y-2">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <Skeleton key={i} className="h-12 w-full" />
-              ))}
+          {/* Resumo de valores */}
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <Calculator className="h-3.5 w-3.5" />
+            <span>
+              <strong className="text-foreground">{filtered.length}</strong> NF{filtered.length === 1 ? "" : "s"} ·{" "}
+              <strong className="text-foreground font-mono">{formatBRL(totalFiltradas)}</strong>
+            </span>
+          </div>
+
+          {selecionadas.size > 0 && (
+            <div className="ml-auto flex items-center gap-2 flex-wrap">
+              <Badge variant="outline" className="gap-1 text-xs">
+                <strong>{selecionadas.size}</strong> selecionadas ·{" "}
+                <span className="font-mono">{formatBRL(totalSelecionadas)}</span>
+              </Badge>
+              <Button
+                onClick={handleEnviarSelecionadas}
+                disabled={enviando}
+                className="gap-2 bg-emerald-700 hover:bg-emerald-800 text-white"
+              >
+                <Send className="h-4 w-4" />
+                Enviar pra Contas a Pagar
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => {
+                  const lista = filtered.filter((n) => selecionadas.has(n.id));
+                  setParaDescartar(lista);
+                }}
+                className="text-destructive border-destructive/30 hover:bg-destructive/5"
+                title="Descartar (D)"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
             </div>
-          ) : filtered.length === 0 ? (
-            <div className="py-12 text-center text-sm text-muted-foreground">
-              <Layers className="h-12 w-12 mx-auto mb-3 text-muted-foreground/50" />
+          )}
+        </div>
+      </div>
+
+      {/* TABELA - área que rola */}
+      <div className="flex-1 overflow-auto px-6 pb-6 pt-4">
+        {isLoading ? (
+          <div className="space-y-2">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <Skeleton key={i} className="h-14 w-full" />
+            ))}
+          </div>
+        ) : filtered.length === 0 ? (
+          <Card>
+            <CardContent className="py-16 text-center text-sm text-muted-foreground">
+              <Layers className="h-12 w-12 mx-auto mb-3 text-muted-foreground/40" />
               {nfs?.length === 0
-                ? "Nenhuma NF no stage ainda. Importe arquivos em 'Importar Dados'."
+                ? "Nenhuma NF no stage ainda. Importe arquivos em \"Importar Dados\"."
                 : "Nenhuma NF encontrada com esses filtros."}
-            </div>
-          ) : (
-            <div className="border rounded-md overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-10">
-                      <Checkbox
-                        checked={
-                          filtered
-                            .filter((n) => n.status === "pendente" || n.status === "classificada")
-                            .length > 0 &&
-                          filtered
-                            .filter((n) => n.status === "pendente" || n.status === "classificada")
-                            .every((n) => selecionadas.has(n.id))
-                        }
-                        onCheckedChange={toggleTodas}
-                      />
-                    </TableHead>
-                    <TableHead>Fornecedor</TableHead>
-                    <TableHead>NF</TableHead>
-                    <TableHead>Data</TableHead>
-                    <TableHead className="text-right">Valor</TableHead>
-                    <TableHead>Categoria</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="w-20">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filtered.map((nf) => {
-                    const isSel = selecionadas.has(nf.id);
-                    const podeSel =
-                      nf.status === "pendente" || nf.status === "classificada";
-                    const salvando = salvandoCategoria.has(nf.id);
-                    return (
-                      <TableRow key={nf.id} className={isSel ? "bg-muted/40" : ""}>
-                        <TableCell>
-                          <Checkbox
-                            checked={isSel}
-                            disabled={!podeSel}
-                            onCheckedChange={() => toggleSel(nf.id)}
-                          />
-                        </TableCell>
-                        <TableCell className="max-w-[220px]">
-                          <div className="text-sm truncate" title={nf.fornecedor_razao_social || ""}>
-                            {nf.fornecedor_razao_social || nf.fornecedor_cliente || "—"}
-                          </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="border rounded-md overflow-hidden">
+            <Table>
+              <TableHeader className="sticky top-0 bg-muted/95 backdrop-blur z-10">
+                <TableRow>
+                  <TableHead className="w-10">
+                    <Checkbox
+                      checked={
+                        filtered
+                          .filter((n) => n.status === "pendente" || n.status === "classificada")
+                          .length > 0 &&
+                        filtered
+                          .filter((n) => n.status === "pendente" || n.status === "classificada")
+                          .every((n) => selecionadas.has(n.id))
+                      }
+                      onCheckedChange={toggleTodas}
+                    />
+                  </TableHead>
+                  <TableHead>Fornecedor</TableHead>
+                  <TableHead className="w-20">NF</TableHead>
+                  <TableHead className="w-28">Data</TableHead>
+                  <TableHead className="text-right w-28">Valor</TableHead>
+                  <TableHead className="min-w-[220px]">Categoria</TableHead>
+                  <TableHead className="w-24">Status</TableHead>
+                  <TableHead className="w-24 text-center">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filtered.map((nf) => {
+                  const isSel = selecionadas.has(nf.id);
+                  const podeSel =
+                    nf.status === "pendente" || nf.status === "classificada";
+                  const salvando = salvandoCategoria.has(nf.id);
+                  const sugestao =
+                    nf.status === "pendente" &&
+                    nf.fornecedor_cnpj &&
+                    sugestoesPorCnpj[nf.fornecedor_cnpj];
+
+                  return (
+                    <TableRow
+                      key={nf.id}
+                      className={isSel ? "bg-admin/5" : ""}
+                    >
+                      <TableCell>
+                        <Checkbox
+                          checked={isSel}
+                          disabled={!podeSel}
+                          onCheckedChange={() => toggleSel(nf.id)}
+                        />
+                      </TableCell>
+                      <TableCell className="max-w-[260px]">
+                        <div className="text-sm truncate font-medium" title={nf.fornecedor_razao_social || ""}>
+                          {nf.fornecedor_razao_social || nf.fornecedor_cliente || "—"}
+                        </div>
+                        <div className="flex items-center gap-2 mt-0.5">
                           {nf.fornecedor_cnpj && (
-                            <div className="text-[10px] text-muted-foreground font-mono">
+                            <span className="text-[10px] text-muted-foreground font-mono">
                               {nf.fornecedor_cnpj}
-                            </div>
+                            </span>
                           )}
-                        </TableCell>
-                        <TableCell className="text-xs">{nf.nf_numero || "—"}</TableCell>
-                        <TableCell className="text-xs whitespace-nowrap">
-                          {formatDateBR(nf.nf_data_emissao)}
-                        </TableCell>
-                        <TableCell className="text-right font-mono whitespace-nowrap">
-                          {formatBRL(nf.valor)}
-                        </TableCell>
-                        <TableCell>
-                          {podeSel ? (
+                          {nf.fonte && (
+                            <Badge variant="outline" className="text-[9px] py-0 px-1 h-4 font-normal">
+                              {FONTE_LABELS[nf.fonte] || nf.fonte}
+                            </Badge>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-xs">{nf.nf_numero || "—"}</TableCell>
+                      <TableCell className="text-xs whitespace-nowrap">
+                        {formatDateBR(nf.nf_data_emissao)}
+                      </TableCell>
+                      <TableCell className="text-right font-mono whitespace-nowrap text-sm">
+                        {formatBRL(nf.valor)}
+                      </TableCell>
+                      <TableCell>
+                        {podeSel ? (
+                          <div className="flex items-center gap-1.5">
                             <Select
                               value={nf.categoria_id || ""}
                               onValueChange={(v) => alterarCategoria(nf.id, v)}
@@ -454,39 +666,67 @@ export default function NFsStage() {
                                 ))}
                               </SelectContent>
                             </Select>
-                          ) : (
-                            <span className="text-xs text-muted-foreground italic">—</span>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <Badge className={STATUS_STYLES[nf.status]}>
-                            {STATUS_LABELS[nf.status] || nf.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex gap-1">
-                            {nf.arquivo_storage_path && (
+                            {sugestao && (
                               <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-7 w-7"
-                                onClick={() => visualizarPDF(nf)}
-                                title="Ver arquivo"
+                                size="sm"
+                                variant="outline"
+                                className="h-8 text-[10px] gap-1 border-violet-300 text-violet-700 hover:bg-violet-50 px-2"
+                                onClick={() => aceitarSugestao(nf)}
+                                disabled={salvando}
+                                title={`${mapCategorias[sugestao.categoria_id]} (${sugestao.count} NF${sugestao.count === 1 ? "" : "s"} deste fornecedor já assim)`}
                               >
-                                <Eye className="h-3.5 w-3.5" />
+                                <Sparkles className="h-3 w-3" />
+                                Sugerir
                               </Button>
                             )}
                           </div>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                        ) : nf.categoria_id ? (
+                          <span className="text-xs text-muted-foreground">
+                            {mapCategorias[nf.categoria_id] || "—"}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-muted-foreground italic">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={STATUS_STYLES[nf.status]}>
+                          {STATUS_LABELS[nf.status] || nf.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center justify-center gap-1">
+                          {nf.arquivo_storage_path && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7"
+                              onClick={() => visualizarPDF(nf)}
+                              title="Ver arquivo"
+                            >
+                              <Eye className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
+                          {podeSel && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
+                              onClick={() => setParaDescartar([nf])}
+                              title="Descartar"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+      </div>
 
       {/* AlertDialog descartar */}
       <AlertDialog
@@ -518,5 +758,74 @@ export default function NFsStage() {
         </AlertDialogContent>
       </AlertDialog>
     </div>
+  );
+}
+
+// =====================================================
+// KpiPill - Cards de KPI clicáveis (viram filtros)
+// =====================================================
+interface KpiPillProps {
+  label: string;
+  count: number;
+  color: "admin" | "amber" | "emerald" | "blue" | "gray";
+  active: boolean;
+  onClick: () => void;
+  icon?: React.ReactNode;
+  description?: string;
+}
+
+function KpiPill({ label, count, color, active, onClick, icon, description }: KpiPillProps) {
+  const colorMap: Record<string, { bg: string; text: string; border: string; activeBg: string }> = {
+    admin: {
+      bg: "bg-admin/5",
+      text: "text-admin",
+      border: "border-admin/20",
+      activeBg: "bg-admin text-admin-foreground border-admin",
+    },
+    amber: {
+      bg: "bg-amber-50",
+      text: "text-amber-700",
+      border: "border-amber-200",
+      activeBg: "bg-amber-600 text-white border-amber-600",
+    },
+    emerald: {
+      bg: "bg-emerald-50",
+      text: "text-emerald-700",
+      border: "border-emerald-200",
+      activeBg: "bg-emerald-600 text-white border-emerald-600",
+    },
+    blue: {
+      bg: "bg-blue-50",
+      text: "text-blue-700",
+      border: "border-blue-200",
+      activeBg: "bg-blue-600 text-white border-blue-600",
+    },
+    gray: {
+      bg: "bg-gray-50",
+      text: "text-gray-700",
+      border: "border-gray-200",
+      activeBg: "bg-gray-700 text-white border-gray-700",
+    },
+  };
+  const c = colorMap[color];
+  const cls = active
+    ? `${c.activeBg} shadow-md`
+    : `${c.bg} ${c.text} ${c.border} hover:shadow-sm`;
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`rounded-lg border-2 px-3 py-2 transition-all text-left min-w-[120px] ${cls}`}
+    >
+      <div className="flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wide opacity-90">
+        {icon}
+        {label}
+      </div>
+      <div className="text-2xl font-bold leading-tight mt-0.5">{count}</div>
+      {description && (
+        <div className="text-[9px] opacity-75 mt-0.5">{description}</div>
+      )}
+    </button>
   );
 }
