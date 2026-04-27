@@ -30,10 +30,12 @@ import {
   Link as LinkIcon,
   Upload,
   FileWarning,
+  Pencil,
 } from "lucide-react";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
 import { MarcarPagoDialog } from "@/components/financeiro/MarcarPagoDialog";
 import { ImportarOFXDialog } from "@/components/financeiro/ImportarOFXDialog";
+import { EditarLancamentoDialog } from "@/components/financeiro/EditarLancamentoDialog";
 import ContaPagarDetalheDrawer from "@/components/financeiro/ContaPagarDetalheDrawer";
 
 type Lancamento = {
@@ -96,6 +98,8 @@ export default function CaixaBanco() {
   const [contasParaPagar, setContasParaPagar] = useState<Lancamento[]>([]);
   const [contaIdDrawer, setContaIdDrawer] = useState<string | null>(null);
   const [importarOpen, setImportarOpen] = useState(false);
+  const [editarOpen, setEditarOpen] = useState(false);
+  const [lancamentoEditando, setLancamentoEditando] = useState<Lancamento | null>(null);
 
   // Query da view unificada
   const { data: lancamentos, isLoading } = useQuery({
@@ -436,7 +440,7 @@ export default function CaixaBanco() {
                       <TableHead>Meio Pgto</TableHead>
                       <TableHead className="text-right">Valor</TableHead>
                       <TableHead>Status</TableHead>
-                      <TableHead className="w-[140px]">Ação</TableHead>
+                      <TableHead className="w-[180px]">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -520,17 +524,31 @@ export default function CaixaBanco() {
                             </Badge>
                           </TableCell>
                           <TableCell onClick={(e) => e.stopPropagation()}>
-                            {l.status_caixa === "em_aberto" && (
+                            <div className="flex gap-1">
                               <Button
                                 size="sm"
                                 variant="outline"
-                                className="text-green-700 border-green-300 hover:bg-green-50 h-7 text-xs gap-1"
-                                onClick={() => handleMarcarPagoIndividual(l)}
+                                className="h-7 px-2 text-xs"
+                                onClick={() => {
+                                  setLancamentoEditando(l);
+                                  setEditarOpen(true);
+                                }}
+                                title="Editar conta, meio e data"
                               >
-                                <CheckCircle2 className="h-3 w-3" />
-                                Pagar
+                                <Pencil className="h-3 w-3" />
                               </Button>
-                            )}
+                              {l.status_caixa === "em_aberto" && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="text-green-700 border-green-300 hover:bg-green-50 h-7 text-xs gap-1"
+                                  onClick={() => handleMarcarPagoIndividual(l)}
+                                >
+                                  <CheckCircle2 className="h-3 w-3" />
+                                  Pagar
+                                </Button>
+                              )}
+                            </div>
                           </TableCell>
                         </TableRow>
                       );
@@ -582,6 +600,13 @@ export default function CaixaBanco() {
       <ImportarOFXDialog
         open={importarOpen}
         onOpenChange={setImportarOpen}
+      />
+
+      <EditarLancamentoDialog
+        open={editarOpen}
+        onOpenChange={setEditarOpen}
+        lancamento={lancamentoEditando}
+        onSuccess={() => qc.invalidateQueries({ queryKey: ["lancamentos-caixa-banco"] })}
       />
     </div>
   );
