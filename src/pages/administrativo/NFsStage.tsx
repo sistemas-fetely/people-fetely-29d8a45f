@@ -53,7 +53,12 @@ import {
   descartarStage,
 } from "@/lib/financeiro/stage-handler";
 import { useCategoriasPlano } from "@/hooks/useCategoriasPlano";
-import { classificarComAprendizado } from "@/hooks/useEngineClassificacao";
+import {
+  classificarComAprendizado,
+  useRegrasAtivas,
+  sugerirNoClient,
+  type SugestaoResult,
+} from "@/hooks/useEngineClassificacao";
 import {
   SortableTableHead,
   ordenarPor,
@@ -195,36 +200,28 @@ export default function NFsStage() {
     [filtered],
   );
 
-  // SUGESTÃO INTELIGENTE: pra cada NF pendente, ver se outras NFs do mesmo CNPJ já estão classificadas
-  // Retorna { cnpj: { categoria_id, count } } com a categoria mais usada
-  const sugestoesPorCnpj = useMemo(() => {
-    const all = nfs || [];
-    const map: Record<string, Record<string, number>> = {};
-    for (const nf of all) {
-      if (!nf.fornecedor_cnpj || !nf.categoria_id) continue;
+  // ENGINE UNIVERSAL: regras ativas (alimentadas por NF, cartão, manual…)
+  const { data: regrasEngine } = useRegrasAtivas();
+
+  // Sugestões por NF usando engine universal (não mais só por CNPJ)
+  const sugestoesPorNf = useMemo(() => {
+    const map: Record<string, SugestaoResult> = {};
+    for (const nf of nfs || []) {
+      if (nf.categoria_id) continue;
       if (nf.status === "descartada") continue;
-      if (!map[nf.fornecedor_cnpj]) map[nf.fornecedor_cnpj] = {};
-      map[nf.fornecedor_cnpj][nf.categoria_id] =
-        (map[nf.fornecedor_cnpj][nf.categoria_id] || 0) + 1;
+      const sug = sugerirNoClient(
+        {
+          descricao: nf.fornecedor_razao_social || nf.fornecedor_cliente || nf.descricao,
+          cnpj: nf.fornecedor_cnpj,
+          parceiro_id: nf.parceiro_id,
+          origem: "nf",
+        },
+        regrasEngine,
+      );
+      if (sug) map[nf.id] = sug;
     }
-    // Pega a mais usada de cada CNPJ
-    const sugestoes: Record<string, { categoria_id: string; count: number }> = {};
-    for (const cnpj in map) {
-      const cats = map[cnpj];
-      let melhor = "";
-      let max = 0;
-      for (const c in cats) {
-        if (cats[c] > max) {
-          max = cats[c];
-          melhor = c;
-        }
-      }
-      if (melhor && max >= 1) {
-        sugestoes[cnpj] = { categoria_id: melhor, count: max };
-      }
-    }
-    return sugestoes;
-  }, [nfs]);
+    return map;
+  }, [nfs, regrasEngine]);
 
   // Map de id pra label de categoria
   const mapCategorias = useMemo(() => {
@@ -297,8 +294,7 @@ export default function NFsStage() {
   }
 
   async function aceitarSugestao(nf: NFStage) {
-    if (!nf.fornecedor_cnpj) return;
-    const sug = sugestoesPorCnpj[nf.fornecedor_cnpj];
+    const sug = sugestoesPorNf[nf.id];
     if (!sug) return;
     await alterarCategoria(nf.id, sug.categoria_id);
     toast.success("Sugestão aplicada");
@@ -307,10 +303,7 @@ export default function NFsStage() {
   async function aceitarTodasSugestoes() {
     if (!nfs) return;
     const aplicar = nfs.filter(
-      (n) =>
-        n.status === "pendente" &&
-        n.fornecedor_cnpj &&
-        sugestoesPorCnpj[n.fornecedor_cnpj],
+      (n) => n.status === "pendente" && sugestoesPorNf[n.id],
     );
     if (aplicar.length === 0) {
       toast.info("Nenhuma sugestão automática disponível.");
@@ -321,7 +314,7 @@ export default function NFsStage() {
     let ok = 0;
     for (const nf of aplicar) {
       try {
-        const sug = sugestoesPorCnpj[nf.fornecedor_cnpj!];
+        const sug = sugestoesPorNf[nf.id];
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { error } = await (supabase as any)
           .from("nfs_stage")
@@ -333,7 +326,7 @@ export default function NFsStage() {
           await classificarComAprendizado({
             descricao: nf.fornecedor_razao_social || nf.fornecedor_cliente,
             cnpj: nf.fornecedor_cnpj,
-            parceiro_id: null,
+            parceiro_id: nf.parceiro_id,
             categoria_id: sug.categoria_id,
             origem: "nf",
           });
