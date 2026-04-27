@@ -35,6 +35,7 @@ import {
 } from "@/lib/financeiro/match-engine";
 import { BuscarMatchManualDialog } from "@/components/financeiro/BuscarMatchManualDialog";
 import { ImportarOFXDialog } from "@/components/financeiro/ImportarOFXDialog";
+import { ConfirmarMatchDialog } from "@/components/financeiro/ConfirmarMatchDialog";
 
 type Movimentacao = {
   id: string;
@@ -87,6 +88,11 @@ export default function Conciliacao() {
   const [buscarMatchOpen, setBuscarMatchOpen] = useState(false);
   const [movParaBusca, setMovParaBusca] = useState<Movimentacao | null>(null);
   const [importarOpen, setImportarOpen] = useState(false);
+  const [confirmarOpen, setConfirmarOpen] = useState(false);
+  const [matchPendente, setMatchPendente] = useState<{
+    mov: Movimentacao;
+    conta: ContaParaMatch;
+  } | null>(null);
 
   const { data: contasBancarias } = useQuery({
     queryKey: ["contas-bancarias-conciliacao"],
@@ -462,7 +468,10 @@ export default function Conciliacao() {
                         <Button
                           size="sm"
                           className="bg-emerald-700 hover:bg-emerald-800 text-white text-xs h-8"
-                          onClick={() => confirmarMatch(mov.id, conta.id)}
+                          onClick={() => {
+                            setMatchPendente({ mov, conta });
+                            setConfirmarOpen(true);
+                          }}
                           disabled={processando}
                         >
                           <Check className="h-3 w-3 mr-1" />
@@ -589,8 +598,12 @@ export default function Conciliacao() {
         contas={contasParaMatch || []}
         onMatch={(contaId) => {
           if (movParaBusca) {
-            confirmarMatch(movParaBusca.id, contaId);
-            setBuscarMatchOpen(false);
+            const contaEscolhida = contasParaMatch?.find((c) => c.id === contaId);
+            if (contaEscolhida) {
+              setMatchPendente({ mov: movParaBusca, conta: contaEscolhida });
+              setConfirmarOpen(true);
+              setBuscarMatchOpen(false);
+            }
           }
         }}
       />
@@ -600,6 +613,19 @@ export default function Conciliacao() {
         onOpenChange={setImportarOpen}
         onSuccess={() => {
           qc.invalidateQueries({ queryKey: ["movs-nao-conciliadas"] });
+        }}
+      />
+
+      <ConfirmarMatchDialog
+        open={confirmarOpen}
+        onOpenChange={setConfirmarOpen}
+        movimentacao={matchPendente?.mov || null}
+        conta={matchPendente?.conta || null}
+        onSuccess={() => {
+          qc.invalidateQueries({ queryKey: ["movs-nao-conciliadas"] });
+          qc.invalidateQueries({ queryKey: ["contas-para-match"] });
+          qc.invalidateQueries({ queryKey: ["lancamentos-caixa-banco"] });
+          setMatchPendente(null);
         }}
       />
     </div>
