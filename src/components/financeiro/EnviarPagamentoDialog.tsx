@@ -16,6 +16,13 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { FileText, Loader2, Send } from "lucide-react";
 import { toast } from "sonner";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
@@ -49,6 +56,7 @@ type Conta = {
   nf_chave_acesso?: string | null;
   nf_pdf_url?: string | null;
   nf_xml_url?: string | null;
+  forma_pagamento_id?: string | null;
   plano_contas?: { codigo?: string | null; nome?: string | null } | null;
   parceiros_comerciais?: { razao_social?: string | null } | null;
   dados_pagamento_fornecedor?: {
@@ -81,6 +89,20 @@ export default function EnviarPagamentoDialog({ open, onOpenChange, conta, onDon
   const [obsEnvio, setObsEnvio] = useState("");
   const [mensagemEmail, setMensagemEmail] = useState("");
   const [docsSelecionados, setDocsSelecionados] = useState<Set<string>>(new Set());
+  const [formaPagamentoId, setFormaPagamentoId] = useState<string>("");
+
+  // Buscar formas de pagamento ativas
+  const { data: formasPagamento } = useQuery({
+    queryKey: ["formas-pagamento-ativas"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("formas_pagamento")
+        .select("id, nome, codigo")
+        .eq("ativo", true)
+        .order("nome");
+      return data || [];
+    },
+  });
 
   // Buscar documentos anexados à conta
   const { data: documentos } = useQuery({
@@ -175,6 +197,7 @@ export default function EnviarPagamentoDialog({ open, onOpenChange, conta, onDon
       `Qualquer dúvida, estou à disposição.\n\n` +
       `Obrigado.`;
     setMensagemEmail(msgPadrao);
+    setFormaPagamentoId(conta.forma_pagamento_id || "");
   }, [open, conta]);
 
   // Selecionar todos os documentos por default quando carregam
@@ -200,6 +223,10 @@ export default function EnviarPagamentoDialog({ open, onOpenChange, conta, onDon
   async function handleEnviar() {
     if (!emailDestinatario) {
       toast.error("Selecione um destinatário");
+      return;
+    }
+    if (!formaPagamentoId) {
+      toast.error("Selecione a forma de pagamento");
       return;
     }
     setEnviando(true);
@@ -230,6 +257,7 @@ export default function EnviarPagamentoDialog({ open, onOpenChange, conta, onDon
           : `Enviado para pagamento: ${emailDestinatario}${obsEnvio ? ` — ${obsEnvio}` : ""}${temDocFiscal ? "" : " (documentação fiscal pendente)"}`,
         extras: {
           dados_pagamento_fornecedor: dadosPgto,
+          forma_pagamento_id: formaPagamentoId,
           enviado_pagamento_em: new Date().toISOString(),
           enviado_pagamento_por: user?.id || null,
         },
@@ -373,6 +401,25 @@ export default function EnviarPagamentoDialog({ open, onOpenChange, conta, onDon
                 {categoriaTxt}
               </p>
             )}
+          </div>
+
+          {/* Forma de Pagamento - OBRIGATÓRIO */}
+          <div className="space-y-1">
+            <Label className="text-xs uppercase tracking-wide text-muted-foreground">
+              Forma de pagamento *
+            </Label>
+            <Select value={formaPagamentoId} onValueChange={setFormaPagamentoId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione (PIX, Boleto, Transferência...)" />
+              </SelectTrigger>
+              <SelectContent>
+                {(formasPagamento || []).map((fp) => (
+                  <SelectItem key={fp.id} value={fp.id}>
+                    {fp.nome}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Dados bancários */}
