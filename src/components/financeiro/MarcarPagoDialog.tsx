@@ -120,7 +120,7 @@ export function MarcarPagoDialog({ open, onOpenChange, contas, onSuccess }: Prop
 
       const { error } = await supabase
         .from("contas_pagar_receber")
-        .update(updateData)
+        .update(updateData as never)
         .in("id", ids);
 
       if (error) throw error;
