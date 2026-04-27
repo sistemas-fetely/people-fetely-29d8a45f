@@ -169,7 +169,27 @@ export default function FluxoCaixaFuturo() {
     },
   });
 
-  // Agrupar parcelas por mês
+  // Compromissos recorrentes ativos
+  const { data: recorrentes, isLoading: loadingRec } = useQuery({
+    queryKey: ["compromissos-recorrentes-ativos"],
+    queryFn: async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase as any)
+        .from("compromissos_recorrentes")
+        .select(`
+          id, descricao, valor, periodicidade, dia_vencimento,
+          data_inicio, data_fim, status, conta_bancaria_id,
+          conta_bancaria:conta_bancaria_id ( nome_exibicao )
+        `)
+        .eq("status", "ativo")
+        .order("descricao");
+      if (error) throw error;
+      return (data || []) as CompromissoRecorrente[];
+    },
+  });
+
+  const isLoading = loadingParcelas || loadingComp || loadingRec;
+
   const agrupadoPorMes = useMemo<AgrupadoPorMes[]>(() => {
     if (!parcelas) return [];
     const grupos: Record<string, AgrupadoPorMes> = {};
