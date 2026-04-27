@@ -94,6 +94,7 @@ import BlingCallback from "@/pages/administrativo/BlingCallback";
 import PedidosVenda from "@/pages/administrativo/PedidosVenda";
 import Produtos from "@/pages/administrativo/Produtos";
 import CaixaBanco from "@/pages/administrativo/CaixaBanco";
+import ContasBancarias from "@/pages/administrativo/ContasBancarias";
 import Conciliacao from "@/pages/administrativo/Conciliacao";
 
 const queryClient = new QueryClient();
@@ -394,6 +395,7 @@ const App = () => (
               <Route path="fluxo-caixa" element={<FluxoCaixa />} />
               <Route path="contas-pagar" element={<ContasPagar />} />
               <Route path="caixa-banco" element={<CaixaBanco />} />
+              <Route path="caixa-banco/contas" element={<ContasBancarias />} />
               <Route path="conciliacao" element={<Conciliacao />} />
               <Route path="contas-receber" element={<ContasReceber />} />
               <Route path="parceiros" element={<Parceiros />} />
