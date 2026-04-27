@@ -28,13 +28,11 @@ import {
   CheckCircle2,
   Clock,
   Link as LinkIcon,
-  Upload,
   FileWarning,
   Pencil,
 } from "lucide-react";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
 import { MarcarPagoDialog } from "@/components/financeiro/MarcarPagoDialog";
-import { ImportarOFXDialog } from "@/components/financeiro/ImportarOFXDialog";
 import { EditarLancamentoDialog } from "@/components/financeiro/EditarLancamentoDialog";
 import ContaPagarDetalheDrawer from "@/components/financeiro/ContaPagarDetalheDrawer";
 
@@ -97,7 +95,6 @@ export default function CaixaBanco() {
   const [marcarPagoOpen, setMarcarPagoOpen] = useState(false);
   const [contasParaPagar, setContasParaPagar] = useState<Lancamento[]>([]);
   const [contaIdDrawer, setContaIdDrawer] = useState<string | null>(null);
-  const [importarOpen, setImportarOpen] = useState(false);
   const [editarOpen, setEditarOpen] = useState(false);
   const [lancamentoEditando, setLancamentoEditando] = useState<Lancamento | null>(null);
 
@@ -285,14 +282,6 @@ export default function CaixaBanco() {
             Lançamentos de pagamento — em aberto, pagos e conciliados.
           </p>
         </div>
-        <Button
-          variant="outline"
-          className="gap-2"
-          onClick={() => setImportarOpen(true)}
-        >
-          <Upload className="h-4 w-4" />
-          Importar OFX
-        </Button>
       </div>
 
       {/* KPIs */}
@@ -595,11 +584,6 @@ export default function CaixaBanco() {
       <ContaPagarDetalheDrawer
         contaId={contaIdDrawer}
         onClose={() => setContaIdDrawer(null)}
-      />
-
-      <ImportarOFXDialog
-        open={importarOpen}
-        onOpenChange={setImportarOpen}
       />
 
       <EditarLancamentoDialog

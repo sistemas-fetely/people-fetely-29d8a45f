@@ -23,6 +23,7 @@ import {
   Sparkles,
   Search,
   Zap,
+  Upload,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
@@ -33,6 +34,7 @@ import {
   type ContaPagarParaMatch,
 } from "@/lib/financeiro/match-engine";
 import { BuscarMatchManualDialog } from "@/components/financeiro/BuscarMatchManualDialog";
+import { ImportarOFXDialog } from "@/components/financeiro/ImportarOFXDialog";
 
 type Movimentacao = {
   id: string;
@@ -84,6 +86,7 @@ export default function Conciliacao() {
   const [conciliando, setConciliando] = useState<Set<string>>(new Set());
   const [buscarMatchOpen, setBuscarMatchOpen] = useState(false);
   const [movParaBusca, setMovParaBusca] = useState<Movimentacao | null>(null);
+  const [importarOpen, setImportarOpen] = useState(false);
 
   const { data: contasBancarias } = useQuery({
     queryKey: ["contas-bancarias-conciliacao"],
@@ -277,14 +280,23 @@ export default function Conciliacao() {
 
   return (
     <div className="p-6 space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-          <GitCompare className="h-6 w-6 text-admin" />
-          Conciliação OFX
-        </h1>
-        <p className="text-muted-foreground text-sm mt-1">
-          Compare extrato bancário com lançamentos do sistema. Confirme matches automáticos ou busque manualmente.
-        </p>
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+            <GitCompare className="h-6 w-6 text-admin" />
+            Conciliação OFX
+          </h1>
+          <p className="text-muted-foreground text-sm mt-1">
+            Compare extrato bancário com lançamentos do sistema. Confirme matches automáticos ou busque manualmente.
+          </p>
+        </div>
+        <Button
+          onClick={() => setImportarOpen(true)}
+          className="gap-2 bg-admin hover:bg-admin-accent text-admin-foreground"
+        >
+          <Upload className="h-4 w-4" />
+          Importar OFX
+        </Button>
       </div>
 
       <Card>
@@ -580,6 +592,14 @@ export default function Conciliacao() {
             confirmarMatch(movParaBusca.id, contaId);
             setBuscarMatchOpen(false);
           }
+        }}
+      />
+
+      <ImportarOFXDialog
+        open={importarOpen}
+        onOpenChange={setImportarOpen}
+        onSuccess={() => {
+          qc.invalidateQueries({ queryKey: ["movs-nao-conciliadas"] });
         }}
       />
     </div>
