@@ -62,7 +62,7 @@ type CompromissoRecorrente = {
   parceiro_id: string | null;
   conta_bancaria_id: string | null;
   observacao: string | null;
-  parceiro?: { nome: string } | null;
+  parceiro?: { razao_social: string } | null;
   conta_bancaria?: { nome_exibicao: string } | null;
 };
 
@@ -132,7 +132,7 @@ export default function Compromissos() {
           id, descricao, valor, periodicidade, dia_vencimento,
           data_inicio, data_fim, status, categoria_id, parceiro_id,
           conta_bancaria_id, observacao,
-          parceiro:parceiros_comerciais(nome),
+          parceiro:parceiros_comerciais(razao_social),
           conta_bancaria:contas_bancarias(nome_exibicao)
         `)
         .order("status", { ascending: true })
@@ -354,9 +354,9 @@ export default function Compromissos() {
                         >
                           <TableCell>
                             <div className="font-medium">{r.descricao}</div>
-                            {r.parceiro?.nome && (
+                            {r.parceiro?.razao_social && (
                               <div className="text-xs text-muted-foreground">
-                                {r.parceiro.nome}
+                                {r.parceiro.razao_social}
                               </div>
                             )}
                           </TableCell>

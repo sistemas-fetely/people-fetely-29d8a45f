@@ -98,8 +98,8 @@ export default function DialogNovoRecorrente({
     queryFn: async () => {
       const { data } = await supabase
         .from("parceiros_comerciais")
-        .select("id, nome")
-        .order("nome");
+        .select("id, razao_social")
+        .order("razao_social");
       return data || [];
     },
   });
@@ -313,7 +313,7 @@ export default function DialogNovoRecorrente({
                 <SelectContent>
                   {(parceiros || []).map((p) => (
                     <SelectItem key={p.id} value={p.id}>
-                      {p.nome}
+                      {p.razao_social}
                     </SelectItem>
                   ))}
                 </SelectContent>
