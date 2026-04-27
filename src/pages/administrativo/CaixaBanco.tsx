@@ -1,289 +1,566 @@
-import { useState, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
 import {
-  Select, SelectContent, SelectItem, SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
-import { ArrowDownLeft, ArrowUpRight, Building2, CheckCircle2, Upload, Wallet, X } from "lucide-react";
+import {
+  Wallet,
+  Search,
+  CheckCircle2,
+  Clock,
+  Link as LinkIcon,
+  Upload,
+} from "lucide-react";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
-import { useFiltrosPersistentes } from "@/hooks/useFiltrosPersistentes";
-import { FilterSelectTrigger } from "@/components/ui/filter-select-trigger";
-import { ImportarExtratoDialog } from "@/components/financeiro/ImportarExtratoDialog";
+import { MarcarPagoDialog } from "@/components/financeiro/MarcarPagoDialog";
+import ContaPagarDetalheDrawer from "@/components/financeiro/ContaPagarDetalheDrawer";
 
-type ContaBancaria = {
+type Lancamento = {
   id: string;
-  banco: string;
-  banco_codigo: string | null;
-  agencia: string | null;
-  numero_conta: string | null;
-  tipo: string;
+  descricao: string;
+  valor: number;
+  data_vencimento: string | null;
+  data_pagamento: string | null;
+  pago_em: string | null;
+  pago_em_conta_id: string | null;
+  conciliado_em: string | null;
+  movimentacao_bancaria_id: string | null;
+  status_conta_pagar: string;
+  status_caixa: "em_aberto" | "pago" | "conciliado";
+  fornecedor_cliente: string | null;
+  parceiro_id: string | null;
+  forma_pagamento_id: string | null;
+  unidade: string | null;
+  nf_numero: string | null;
+};
+
+type ContaBancariaLite = {
+  id: string;
   nome_exibicao: string;
-  saldo_atual: number | null;
-  saldo_atualizado_em: string | null;
-  ativo: boolean | null;
   cor: string | null;
 };
 
-type Movimentacao = {
+type FormaPgtoLite = {
   id: string;
-  conta_bancaria_id: string;
-  data_transacao: string;
-  descricao: string;
-  valor: number;
-  tipo: string | null;
-  conciliado: boolean | null;
-  conta_pagar_id: string | null;
-  conta_plano_id: string | null;
-  saldo_pos_transacao: number | null;
-  origem: string | null;
+  nome: string;
 };
 
+type Parceiro = {
+  id: string;
+  razao_social: string | null;
+};
+
+const STATUS_STYLES: Record<string, string> = {
+  em_aberto: "bg-blue-100 text-blue-800 hover:bg-blue-100",
+  pago: "bg-green-100 text-green-800 hover:bg-green-100",
+  conciliado: "bg-emerald-100 text-emerald-900 hover:bg-emerald-100",
+};
+
+const STATUS_LABEL: Record<string, string> = {
+  em_aberto: "Em aberto",
+  pago: "Pago",
+  conciliado: "Conciliado",
+};
+
+const PAGE_SIZE = 25;
+
 export default function CaixaBanco() {
-  const [contaSelecionada, setContaSelecionada] = useFiltrosPersistentes<string>(
-    "caixabanco_conta", "todas"
-  );
-  const [filtroTipo, setFiltroTipo] = useFiltrosPersistentes<"todos" | "credito" | "debito">(
-    "caixabanco_tipo", "todos"
-  );
-  const [filtroConciliado, setFiltroConciliado] = useFiltrosPersistentes<"todos" | "sim" | "nao">(
-    "caixabanco_conciliado", "todos"
-  );
+  const qc = useQueryClient();
+  const [statusFilter, setStatusFilter] = useState<string>("todos");
+  const [contaBancariaFilter, setContaBancariaFilter] = useState<string>("todas");
+  const [busca, setBusca] = useState("");
+  const [page, setPage] = useState(1);
+  const [selecionados, setSelecionados] = useState<Set<string>>(new Set());
+  const [marcarPagoOpen, setMarcarPagoOpen] = useState(false);
+  const [contasParaPagar, setContasParaPagar] = useState<Lancamento[]>([]);
+  const [contaIdDrawer, setContaIdDrawer] = useState<string | null>(null);
 
-  const [showImport, setShowImport] = useState(false);
-
-  const { data: contas = [] } = useQuery({
-    queryKey: ["contas-bancarias"],
+  // Query da view unificada
+  const { data: lancamentos, isLoading } = useQuery({
+    queryKey: ["lancamentos-caixa-banco"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase as any)
+        .from("vw_lancamentos_caixa_banco")
+        .select("*")
+        .order("data_vencimento", { ascending: true });
+      if (error) throw error;
+      return (data || []) as Lancamento[];
+    },
+  });
+
+  // Contas bancárias
+  const { data: contasBancarias } = useQuery({
+    queryKey: ["contas-bancarias-lite"],
+    queryFn: async () => {
+      const { data } = await supabase
         .from("contas_bancarias")
-        .select("*")
-        .eq("ativo", true)
+        .select("id, nome_exibicao, cor")
         .order("nome_exibicao");
-      if (error) throw error;
-      return (data || []) as ContaBancaria[];
+      return (data || []) as ContaBancariaLite[];
     },
   });
 
-  const { data: movimentacoes = [], isLoading } = useQuery({
-    queryKey: ["movimentacoes-bancarias", contaSelecionada, filtroTipo, filtroConciliado],
+  // Formas de pagamento (pra exibir nome na tabela)
+  const { data: formasPagamento } = useQuery({
+    queryKey: ["formas-pagamento-lite"],
     queryFn: async () => {
-      let q = supabase
-        .from("movimentacoes_bancarias")
-        .select("*")
-        .order("data_transacao", { ascending: false })
-        .limit(500);
-      if (contaSelecionada !== "todas") q = q.eq("conta_bancaria_id", contaSelecionada);
-      if (filtroTipo !== "todos") q = q.eq("tipo", filtroTipo);
-      if (filtroConciliado === "sim") q = q.eq("conciliado", true);
-      if (filtroConciliado === "nao") q = q.eq("conciliado", false);
-      const { data, error } = await q;
-      if (error) throw error;
-      return (data || []) as Movimentacao[];
+      const { data } = await supabase
+        .from("formas_pagamento")
+        .select("id, nome");
+      return (data || []) as FormaPgtoLite[];
     },
   });
 
-  const kpis = useMemo(() => {
-    const saldoTotal = contas.reduce((s, c) => s + Number(c.saldo_atual || 0), 0);
-    const hoje = new Date();
-    const mesAtual = hoje.getMonth();
-    const anoAtual = hoje.getFullYear();
-    let entradas = 0;
-    let saidas = 0;
-    let naoConciliadas = 0;
-    for (const m of movimentacoes) {
-      const d = new Date(m.data_transacao + "T00:00:00");
-      if (d.getMonth() === mesAtual && d.getFullYear() === anoAtual) {
-        if (Number(m.valor) >= 0) entradas += Number(m.valor);
-        else saidas += Math.abs(Number(m.valor));
-      }
-      if (!m.conciliado) naoConciliadas++;
+  // Parceiros (pra mostrar razão social em vez de fornecedor_cliente texto)
+  const { data: parceiros } = useQuery({
+    queryKey: ["parceiros-lite"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("parceiros_comerciais")
+        .select("id, razao_social");
+      return (data || []) as Parceiro[];
+    },
+  });
+
+  // Mapas de lookup
+  const mapContas = useMemo(() => {
+    const m: Record<string, ContaBancariaLite> = {};
+    (contasBancarias || []).forEach((c) => (m[c.id] = c));
+    return m;
+  }, [contasBancarias]);
+
+  const mapFormas = useMemo(() => {
+    const m: Record<string, string> = {};
+    (formasPagamento || []).forEach((f) => (m[f.id] = f.nome));
+    return m;
+  }, [formasPagamento]);
+
+  const mapParceiros = useMemo(() => {
+    const m: Record<string, string> = {};
+    (parceiros || []).forEach((p) => {
+      if (p.razao_social) m[p.id] = p.razao_social;
+    });
+    return m;
+  }, [parceiros]);
+
+  // Filtros
+  const filtered = useMemo(() => {
+    let list = lancamentos || [];
+    if (statusFilter !== "todos") {
+      list = list.filter((l) => l.status_caixa === statusFilter);
     }
-    return { saldoTotal, entradas, saidas, naoConciliadas };
-  }, [contas, movimentacoes]);
+    if (contaBancariaFilter !== "todas") {
+      list = list.filter((l) => l.pago_em_conta_id === contaBancariaFilter);
+    }
+    if (busca.trim()) {
+      const t = busca.toLowerCase();
+      list = list.filter((l) => {
+        const parceiroNome =
+          (l.parceiro_id && mapParceiros[l.parceiro_id]) || l.fornecedor_cliente || "";
+        return (
+          l.descricao?.toLowerCase().includes(t) ||
+          parceiroNome.toLowerCase().includes(t) ||
+          (l.nf_numero || "").toLowerCase().includes(t)
+        );
+      });
+    }
+    return list;
+  }, [lancamentos, statusFilter, contaBancariaFilter, busca, mapParceiros]);
+
+  // Totais (sempre calcula do dataset completo, não filtrado)
+  const totals = useMemo(() => {
+    const all = lancamentos || [];
+    const emAberto = all
+      .filter((l) => l.status_caixa === "em_aberto")
+      .reduce((s, l) => s + Number(l.valor || 0), 0);
+    const pago = all
+      .filter((l) => l.status_caixa === "pago")
+      .reduce((s, l) => s + Number(l.valor || 0), 0);
+    const conciliado = all
+      .filter((l) => l.status_caixa === "conciliado")
+      .reduce((s, l) => s + Number(l.valor || 0), 0);
+    return {
+      emAberto,
+      pago,
+      conciliado,
+      countAberto: all.filter((l) => l.status_caixa === "em_aberto").length,
+      countPago: all.filter((l) => l.status_caixa === "pago").length,
+      countConciliado: all.filter((l) => l.status_caixa === "conciliado").length,
+    };
+  }, [lancamentos]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const pageData = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  const lancamentosSelecionados = useMemo(
+    () => filtered.filter((l) => selecionados.has(l.id) && l.status_caixa === "em_aberto"),
+    [filtered, selecionados],
+  );
+
+  function toggleSelecionado(id: string) {
+    const next = new Set(selecionados);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    setSelecionados(next);
+  }
+
+  function togglePagina() {
+    const next = new Set(selecionados);
+    const todasSelecionadas = pageData
+      .filter((l) => l.status_caixa === "em_aberto")
+      .every((l) => next.has(l.id));
+    if (todasSelecionadas) {
+      pageData.forEach((l) => next.delete(l.id));
+    } else {
+      pageData
+        .filter((l) => l.status_caixa === "em_aberto")
+        .forEach((l) => next.add(l.id));
+    }
+    setSelecionados(next);
+  }
+
+  function handleMarcarPagoIndividual(l: Lancamento) {
+    setContasParaPagar([l]);
+    setMarcarPagoOpen(true);
+  }
+
+  function handleMarcarPagoMassa() {
+    if (lancamentosSelecionados.length === 0) {
+      return;
+    }
+    setContasParaPagar(lancamentosSelecionados);
+    setMarcarPagoOpen(true);
+  }
+
+  function handleSucessoPagamento() {
+    setSelecionados(new Set());
+    setContasParaPagar([]);
+    qc.invalidateQueries({ queryKey: ["lancamentos-caixa-banco"] });
+  }
+
+  function nomeParceiro(l: Lancamento): string {
+    return (
+      (l.parceiro_id && mapParceiros[l.parceiro_id]) ||
+      l.fornecedor_cliente ||
+      "—"
+    );
+  }
 
   return (
-    <div className="space-y-6 p-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+    <div className="p-6 space-y-6">
+      <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-2xl font-bold">Caixa e Banco</h1>
-          <p className="text-sm text-muted-foreground">
-            Movimentações realizadas — extratos bancários e cartões.
+          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+            <Wallet className="h-6 w-6 text-admin" />
+            Caixa e Banco
+          </h1>
+          <p className="text-muted-foreground text-sm mt-1">
+            Lançamentos de pagamento — em aberto, pagos e conciliados.
           </p>
         </div>
-        <Button onClick={() => setShowImport(true)} className="bg-admin hover:bg-admin/90 text-admin-foreground gap-2">
+        <Button variant="outline" className="gap-2" disabled>
           <Upload className="h-4 w-4" />
-          Importar extrato
+          Importar OFX
+          <Badge variant="outline" className="ml-1 text-[9px]">em breve</Badge>
         </Button>
       </div>
 
       {/* KPIs */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Saldo total</CardTitle>
-            <Wallet className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-normal text-muted-foreground flex items-center gap-1.5">
+              <Clock className="h-3.5 w-3.5 text-blue-600" /> Em aberto
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatBRL(kpis.saldoTotal)}</div>
-            <p className="text-xs text-muted-foreground">{contas.length} conta{contas.length !== 1 ? "s" : ""} ativa{contas.length !== 1 ? "s" : ""}</p>
+            <div className="text-2xl font-bold text-blue-700">
+              {formatBRL(totals.emAberto)}
+            </div>
+            <p className="text-[11px] text-muted-foreground mt-1">
+              {totals.countAberto} {totals.countAberto === 1 ? "lançamento" : "lançamentos"}
+            </p>
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Entradas do mês</CardTitle>
-            <ArrowDownLeft className="h-4 w-4 text-success" />
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-normal text-muted-foreground flex items-center gap-1.5">
+              <CheckCircle2 className="h-3.5 w-3.5 text-green-600" /> Pago
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-success">{formatBRL(kpis.entradas)}</div>
+            <div className="text-2xl font-bold text-green-700">
+              {formatBRL(totals.pago)}
+            </div>
+            <p className="text-[11px] text-muted-foreground mt-1">
+              {totals.countPago} {totals.countPago === 1 ? "pagamento" : "pagamentos"} aguardando conciliação
+            </p>
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Saídas do mês</CardTitle>
-            <ArrowUpRight className="h-4 w-4 text-destructive" />
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-normal text-muted-foreground flex items-center gap-1.5">
+              <LinkIcon className="h-3.5 w-3.5 text-emerald-700" /> Conciliado
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-destructive">{formatBRL(kpis.saidas)}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Não conciliadas</CardTitle>
-            <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{kpis.naoConciliadas}</div>
-            <p className="text-xs text-muted-foreground">Aguardando conciliação</p>
+            <div className="text-2xl font-bold text-emerald-800">
+              {formatBRL(totals.conciliado)}
+            </div>
+            <p className="text-[11px] text-muted-foreground mt-1">
+              {totals.countConciliado} batem com extrato
+            </p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Seletor de conta */}
-      <Tabs value={contaSelecionada} onValueChange={(v) => setContaSelecionada(v as string)}>
-        <TabsList className="flex-wrap h-auto">
-          <TabsTrigger value="todas" className="gap-2">
-            <Building2 className="h-3.5 w-3.5" />
-            Todas as contas
-          </TabsTrigger>
-          {contas.map((c) => (
-            <TabsTrigger key={c.id} value={c.id} className="gap-2">
-              <span
-                className="inline-block h-2.5 w-2.5 rounded-full"
-                style={{ backgroundColor: c.cor || "hsl(var(--muted-foreground))" }}
-              />
-              <span>{c.nome_exibicao}</span>
-              <span className="text-xs text-muted-foreground">{formatBRL(Number(c.saldo_atual || 0))}</span>
-            </TabsTrigger>
-          ))}
-        </TabsList>
-      </Tabs>
-
-      {/* Filtros */}
-      <div className="flex items-center gap-3 flex-wrap">
-        <Select value={filtroTipo} onValueChange={(v) => setFiltroTipo(v as typeof filtroTipo)}>
-          <FilterSelectTrigger active={filtroTipo !== "todos"} className="w-[160px]">
-            <SelectValue />
-          </FilterSelectTrigger>
-          <SelectContent>
-            <SelectItem value="todos">Todos os tipos</SelectItem>
-            <SelectItem value="credito">Apenas créditos</SelectItem>
-            <SelectItem value="debito">Apenas débitos</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={filtroConciliado} onValueChange={(v) => setFiltroConciliado(v as typeof filtroConciliado)}>
-          <FilterSelectTrigger active={filtroConciliado !== "todos"} className="w-[200px]">
-            <SelectValue />
-          </FilterSelectTrigger>
-          <SelectContent>
-            <SelectItem value="todos">Conciliação: todos</SelectItem>
-            <SelectItem value="sim">Conciliadas</SelectItem>
-            <SelectItem value="nao">Não conciliadas</SelectItem>
-          </SelectContent>
-        </Select>
-        {(filtroTipo !== "todos" || filtroConciliado !== "todos") && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-admin hover:text-admin/80 gap-1 text-xs h-7"
-            onClick={() => {
-              setFiltroTipo("todos");
-              setFiltroConciliado("todos");
-            }}
-          >
-            <X className="h-3 w-3" /> Limpar filtros
-          </Button>
-        )}
-      </div>
-
-      {/* Tabela */}
+      {/* Filtros + Ações em massa */}
       <Card>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[110px]">Data</TableHead>
-                <TableHead>Descrição</TableHead>
-                <TableHead className="text-right w-[140px]">Valor</TableHead>
-                <TableHead className="text-right w-[140px]">Saldo</TableHead>
-                <TableHead className="w-[120px]">Conciliado</TableHead>
-                <TableHead className="w-[100px]">Origem</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading && (
-                <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Carregando...</TableCell></TableRow>
-              )}
-              {!isLoading && movimentacoes.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                    Nenhuma movimentação. Clique em "Importar extrato" para começar.
-                  </TableCell>
-                </TableRow>
-              )}
-              {movimentacoes.map((m) => {
-                const positivo = Number(m.valor) >= 0;
-                return (
-                  <TableRow key={m.id}>
-                    <TableCell className="text-xs">{formatDateBR(m.data_transacao)}</TableCell>
-                    <TableCell className="text-sm">{m.descricao}</TableCell>
-                    <TableCell className={`text-right font-medium ${positivo ? "text-success" : "text-destructive"}`}>
-                      {positivo ? "+" : ""}{formatBRL(Number(m.valor))}
-                    </TableCell>
-                    <TableCell className="text-right text-xs text-muted-foreground">
-                      {m.saldo_pos_transacao != null ? formatBRL(Number(m.saldo_pos_transacao)) : "—"}
-                    </TableCell>
-                    <TableCell>
-                      {m.conciliado ? (
-                        <Badge variant="outline" className="border-success text-success text-[10px] gap-1">
-                          <CheckCircle2 className="h-3 w-3" /> Sim
-                        </Badge>
-                      ) : (
-                        <Badge variant="outline" className="text-[10px] text-muted-foreground">Pendente</Badge>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className="text-[10px] uppercase">{m.origem || "manual"}</Badge>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
+        <CardContent className="pt-6">
+          <div className="flex gap-2 flex-wrap items-center">
+            <div className="relative w-full sm:w-72">
+              <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={busca}
+                onChange={(e) => setBusca(e.target.value)}
+                placeholder="Buscar parceiro, descrição ou NF..."
+                className="pl-9"
+              />
+            </div>
+
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-[160px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos status</SelectItem>
+                <SelectItem value="em_aberto">Em aberto</SelectItem>
+                <SelectItem value="pago">Pago</SelectItem>
+                <SelectItem value="conciliado">Conciliado</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={contaBancariaFilter} onValueChange={setContaBancariaFilter}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="Conta bancária" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todas">Todas as contas</SelectItem>
+                {(contasBancarias || []).map((cb) => (
+                  <SelectItem key={cb.id} value={cb.id}>
+                    {cb.nome_exibicao}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {/* Botão massa */}
+            {lancamentosSelecionados.length > 0 && (
+              <Button
+                onClick={handleMarcarPagoMassa}
+                className="ml-auto gap-2 bg-green-600 hover:bg-green-700 text-white"
+              >
+                <CheckCircle2 className="h-4 w-4" />
+                Marcar {lancamentosSelecionados.length} como pago
+              </Button>
+            )}
+          </div>
         </CardContent>
       </Card>
 
-      <ImportarExtratoDialog
-        open={showImport}
-        onOpenChange={setShowImport}
-        contaPreSelecionada={contaSelecionada !== "todas" ? contaSelecionada : undefined}
+      {/* Tabela */}
+      <Card>
+        <CardContent className="pt-6">
+          {isLoading ? (
+            <div className="space-y-2">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Skeleton key={i} className="h-12 w-full" />
+              ))}
+            </div>
+          ) : filtered.length === 0 ? (
+            <div className="py-12 text-center text-sm text-muted-foreground">
+              Nenhum lançamento encontrado.
+              <p className="text-xs mt-2">
+                Quando uma conta a pagar for finalizada, aparece aqui automaticamente.
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="border rounded-md overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-10">
+                        <Checkbox
+                          checked={
+                            pageData.filter((l) => l.status_caixa === "em_aberto").length > 0 &&
+                            pageData
+                              .filter((l) => l.status_caixa === "em_aberto")
+                              .every((l) => selecionados.has(l.id))
+                          }
+                          onCheckedChange={togglePagina}
+                          aria-label="Selecionar página"
+                        />
+                      </TableHead>
+                      <TableHead>Parceiro</TableHead>
+                      <TableHead>Descrição</TableHead>
+                      <TableHead>Vencimento</TableHead>
+                      <TableHead>Dt. Pagamento</TableHead>
+                      <TableHead>Conta</TableHead>
+                      <TableHead>Meio Pgto</TableHead>
+                      <TableHead className="text-right">Valor</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="w-[140px]">Ação</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {pageData.map((l) => {
+                      const isSel = selecionados.has(l.id);
+                      const podeSel = l.status_caixa === "em_aberto";
+                      const conta =
+                        l.pago_em_conta_id && mapContas[l.pago_em_conta_id];
+                      const formaNome =
+                        l.forma_pagamento_id && mapFormas[l.forma_pagamento_id];
+                      return (
+                        <TableRow
+                          key={l.id}
+                          className={`cursor-pointer hover:bg-muted/50 ${isSel ? "bg-muted/40" : ""}`}
+                          onClick={() => setContaIdDrawer(l.id)}
+                        >
+                          <TableCell onClick={(e) => e.stopPropagation()}>
+                            <Checkbox
+                              checked={isSel}
+                              disabled={!podeSel}
+                              onCheckedChange={() => toggleSelecionado(l.id)}
+                              aria-label="Selecionar"
+                            />
+                          </TableCell>
+                          <TableCell className="max-w-[180px]">
+                            <div className="truncate" title={nomeParceiro(l)}>
+                              {nomeParceiro(l)}
+                            </div>
+                          </TableCell>
+                          <TableCell className="max-w-[200px]">
+                            <div className="truncate text-xs text-muted-foreground" title={l.descricao}>
+                              {l.descricao}
+                            </div>
+                          </TableCell>
+                          <TableCell className="whitespace-nowrap text-xs">
+                            {formatDateBR(l.data_vencimento)}
+                          </TableCell>
+                          <TableCell className="whitespace-nowrap text-xs">
+                            {l.data_pagamento ? (
+                              formatDateBR(l.data_pagamento)
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-xs">
+                            {conta ? (
+                              <div className="flex items-center gap-1.5">
+                                {conta.cor && (
+                                  <div
+                                    className="w-2 h-2 rounded-full shrink-0"
+                                    style={{ backgroundColor: conta.cor }}
+                                  />
+                                )}
+                                <span className="truncate max-w-[120px]">
+                                  {conta.nome_exibicao}
+                                </span>
+                              </div>
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-xs text-muted-foreground">
+                            {formaNome || "—"}
+                          </TableCell>
+                          <TableCell className="text-right font-mono whitespace-nowrap">
+                            {formatBRL(l.valor)}
+                          </TableCell>
+                          <TableCell>
+                            <Badge className={STATUS_STYLES[l.status_caixa]}>
+                              {STATUS_LABEL[l.status_caixa]}
+                            </Badge>
+                          </TableCell>
+                          <TableCell onClick={(e) => e.stopPropagation()}>
+                            {l.status_caixa === "em_aberto" && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="text-green-700 border-green-300 hover:bg-green-50 h-7 text-xs gap-1"
+                                onClick={() => handleMarcarPagoIndividual(l)}
+                              >
+                                <CheckCircle2 className="h-3 w-3" />
+                                Pagar
+                              </Button>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+
+              <div className="flex items-center justify-between mt-4">
+                <p className="text-xs text-muted-foreground">
+                  {filtered.length} {filtered.length === 1 ? "lançamento" : "lançamentos"} • Página {page} de {totalPages}
+                </p>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={page === 1}
+                    onClick={() => setPage((p) => p - 1)}
+                  >
+                    Anterior
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={page === totalPages}
+                    onClick={() => setPage((p) => p + 1)}
+                  >
+                    Próxima
+                  </Button>
+                </div>
+              </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
+
+      <MarcarPagoDialog
+        open={marcarPagoOpen}
+        onOpenChange={setMarcarPagoOpen}
+        contas={contasParaPagar}
+        onSuccess={handleSucessoPagamento}
+      />
+
+      <ContaPagarDetalheDrawer
+        contaId={contaIdDrawer}
+        onClose={() => setContaIdDrawer(null)}
       />
     </div>
   );
