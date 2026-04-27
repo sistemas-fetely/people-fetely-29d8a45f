@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Papa from "papaparse";
 import { FileSpreadsheet, Loader2 } from "lucide-react";
 import {
@@ -20,7 +20,6 @@ import {
 } from "@/lib/financeiro/import-handler";
 import { moverParaStage } from "@/lib/financeiro/stage-handler";
 import { buscarMatchPagamentos } from "@/lib/financeiro/match-pagamentos";
-import { useAutoSaveRascunho, restaurarRascunho } from "@/hooks/useAutoSaveRascunho";
 import { useFilaAutoCadastroParceiro } from "@/hooks/useFilaAutoCadastroParceiro";
 import { ParceiroFormSheet } from "@/components/financeiro/ParceiroFormSheet";
 import type { NFParsed } from "@/lib/financeiro/types";
@@ -38,31 +37,10 @@ export function ImportadorCsvQive({ categorias, onImported }: Props) {
   const [preview, setPreview] = useState<NFParsed[]>([]);
   const { data: regras } = useRegrasCategorizacao();
 
-  // Auto-save no banco a cada mudança no preview (debounce 2s)
-  const { clearRascunho, setRascunhoId } = useAutoSaveRascunho(preview, "csv_qive");
-
   // Fila de auto-cadastro de parceiros
   const fila = useFilaAutoCadastroParceiro();
   const [aguardandoCadastro, setAguardandoCadastro] = useState(false);
   const [nfsParaImportar, setNfsParaImportar] = useState<NFParsed[] | null>(null);
-
-  // Restaurar rascunho ao montar
-  useEffect(() => {
-    let cancelado = false;
-    (async () => {
-      const restaurado = await restaurarRascunho("csv_qive");
-      if (cancelado || !restaurado) return;
-      setPreview(restaurado.nfs);
-      setRascunhoId(restaurado.id);
-      toast.info(
-        `${restaurado.nfs.length} NF${restaurado.nfs.length === 1 ? "" : "s"} restaurada${restaurado.nfs.length === 1 ? "" : "s"} da sessão anterior.`,
-      );
-    })();
-    return () => {
-      cancelado = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -130,7 +108,6 @@ export function ImportadorCsvQive({ categorias, onImported }: Props) {
         `${result.sucesso} NF${result.sucesso === 1 ? "" : "s"} enviada${result.sucesso === 1 ? "" : "s"} pro Stage. Acesse "NFs em Stage" para revisar e enviar pra Contas a Pagar.`,
       );
       setPreview([]);
-      await clearRascunho();
       onImported?.();
     }
     if (result.duplicatas > 0) {

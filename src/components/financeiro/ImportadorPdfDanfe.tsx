@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { FileText, Loader2 } from "lucide-react";
 import {
   Card,
@@ -16,7 +16,6 @@ import {
 import { moverParaStage } from "@/lib/financeiro/stage-handler";
 import { buscarMatchPagamentos } from "@/lib/financeiro/match-pagamentos";
 import { limparCnpj, parseDataBR, parseValorBR } from "@/lib/financeiro/parsers";
-import { useAutoSaveRascunho, restaurarRascunho } from "@/hooks/useAutoSaveRascunho";
 import { useFilaAutoCadastroParceiro } from "@/hooks/useFilaAutoCadastroParceiro";
 import { ParceiroFormSheet } from "@/components/financeiro/ParceiroFormSheet";
 import type { NFParsed } from "@/lib/financeiro/types";
@@ -34,42 +33,10 @@ export function ImportadorPdfDanfe({ categorias, onImported }: Props) {
   const [preview, setPreview] = useState<NFParsed[]>([]);
   const { data: regras } = useRegrasCategorizacao();
 
-  // Auto-save no banco a cada mudança no preview (debounce 2s)
-  const { clearRascunho, setRascunhoId } = useAutoSaveRascunho(preview, "pdf_danfe");
-
   // Fila de auto-cadastro de parceiros (CNPJs ainda não cadastrados)
   const fila = useFilaAutoCadastroParceiro();
   const [aguardandoCadastro, setAguardandoCadastro] = useState(false);
   const [nfsParaImportar, setNfsParaImportar] = useState<NFParsed[] | null>(null);
-
-  // Restaurar rascunho ao montar
-  useEffect(() => {
-    let cancelado = false;
-    (async () => {
-      const restaurado = await restaurarRascunho("pdf_danfe");
-      if (cancelado || !restaurado) return;
-
-      // Remove _arquivo (File não serializa) e marca para re-anexar
-      const nfsRestauradas = restaurado.nfs.map((nf) => ({
-        ...nf,
-        _arquivo: undefined,
-      }));
-
-      setPreview(nfsRestauradas);
-      setRascunhoId(restaurado.id);
-
-      const semArquivo = nfsRestauradas.length;
-      toast.info(
-        `${semArquivo} NF${semArquivo === 1 ? "" : "s"} restaurada${semArquivo === 1 ? "" : "s"} da sessão anterior. ` +
-          `Re-anexe os PDFs originais antes de importar para que os arquivos fiquem nas contas.`,
-        { duration: 8000 },
-      );
-    })();
-    return () => {
-      cancelado = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   async function handleFiles(e: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files || []);
@@ -160,7 +127,6 @@ export function ImportadorPdfDanfe({ categorias, onImported }: Props) {
         `${result.sucesso} NF${result.sucesso === 1 ? "" : "s"} enviada${result.sucesso === 1 ? "" : "s"} pro Stage. Acesse "NFs em Stage" para revisar e enviar pra Contas a Pagar.`,
       );
       setPreview([]);
-      await clearRascunho();
       onImported?.();
     }
     if (result.duplicatas > 0) {
