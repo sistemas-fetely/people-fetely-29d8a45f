@@ -8535,6 +8535,20 @@ export type Database = {
           tipo_match: string
         }[]
       }
+      sugerir_match_cartao_nf: {
+        Args: { p_lancamento_id: string }
+        Returns: {
+          motivo: string
+          nf_categoria_id: string
+          nf_cnpj: string
+          nf_data: string
+          nf_fornecedor: string
+          nf_id: string
+          nf_numero: string
+          nf_valor: number
+          score: number
+        }[]
+      }
       tem_consentimento_ativo: {
         Args: { _tipo: string; _user_id: string }
         Returns: boolean

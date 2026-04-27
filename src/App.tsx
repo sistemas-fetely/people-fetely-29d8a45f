@@ -87,6 +87,7 @@ import Parceiros from "@/pages/administrativo/Parceiros";
 import ImportarDados from "@/pages/administrativo/ImportarDados";
 import NFsStage from "@/pages/administrativo/NFsStage";
 import FaturasCartao from "@/pages/administrativo/FaturasCartao";
+import ReconciliacaoCartao from "@/pages/administrativo/ReconciliacaoCartao";
 import FluxoCaixaFuturo from "@/pages/administrativo/FluxoCaixaFuturo";
 import AdminContratos from "@/pages/administrativo/Contratos";
 import AdminImoveis from "@/pages/administrativo/Imoveis";
@@ -408,6 +409,7 @@ const App = () => (
               <Route path="importar" element={<ImportarDados />} />
               <Route path="nfs-stage" element={<NFsStage />} />
               <Route path="faturas-cartao" element={<FaturasCartao />} />
+              <Route path="reconciliacao-cartao" element={<ReconciliacaoCartao />} />
               <Route path="fluxo-futuro" element={<FluxoCaixaFuturo />} />
               <Route path="configuracao-integracao" element={<ConfiguracaoIntegracao />} />
               <Route path="contratos" element={<AdminContratos />} />

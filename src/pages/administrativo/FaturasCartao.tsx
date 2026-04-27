@@ -46,6 +46,8 @@ import {
   Clock,
   Sparkles,
   ChevronRight,
+  Link2,
+  Info,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
@@ -102,6 +104,7 @@ type LancamentoRow = {
   parceiro_id: string | null;
   categoria_id: string | null;
   status: string;
+  nf_vinculada_id: string | null;
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -702,6 +705,12 @@ export default function FaturasCartao() {
                                   );
                                 })()}
                               </div>
+                              <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground mb-2 px-1 py-1 rounded bg-muted/40 border border-dashed">
+                                <Info className="h-3 w-3 shrink-0" />
+                                <span>
+                                  Lançamentos sem categoria serão classificados automaticamente na reconciliação com NF.
+                                </span>
+                              </div>
                               {!lancamentosExpanded ? (
                                 <Skeleton className="h-32 w-full" />
                               ) : lancamentosExpanded.length === 0 ? (
@@ -716,7 +725,10 @@ export default function FaturasCartao() {
                                         <th className="text-left px-2 py-1.5 font-normal">Data</th>
                                         <th className="text-left px-2 py-1.5 font-normal">Descrição</th>
                                         <th className="text-right px-2 py-1.5 font-normal">Valor</th>
-                                        <th className="text-left px-2 py-1.5 font-normal w-[220px]">
+                                        <th className="text-center px-2 py-1.5 font-normal w-[110px]">
+                                          Match NF
+                                        </th>
+                                        <th className="text-left px-2 py-1.5 font-normal w-[180px]">
                                           Categoria
                                         </th>
                                         <th className="text-center px-2 py-1.5 font-normal">Tipo</th>
@@ -759,8 +771,29 @@ export default function FaturasCartao() {
                                             }`}
                                           >
                                             {formatBRL(l.valor)}
-                                          </td>
-                                          <td className="px-2 py-1.5">
+                                           </td>
+                                           <td className="px-2 py-1.5 text-center">
+                                             {l.nf_vinculada_id ? (
+                                               <Badge
+                                                 variant="outline"
+                                                 className="text-[9px] py-0 px-1 h-4 border-emerald-300 text-emerald-700 bg-emerald-50 gap-1"
+                                                 title="Lançamento vinculado a uma NF"
+                                               >
+                                                 <Link2 className="h-2.5 w-2.5" />
+                                                 Vinculada
+                                               </Badge>
+                                             ) : (
+                                               <Badge
+                                                 variant="outline"
+                                                 className="text-[9px] py-0 px-1 h-4 border-amber-300 text-amber-700 bg-amber-50 gap-1"
+                                                 title="Aguardando match com NF na tela de Reconciliação"
+                                               >
+                                                 <Clock className="h-2.5 w-2.5" />
+                                                 Aguardando
+                                               </Badge>
+                                             )}
+                                           </td>
+                                           <td className="px-2 py-1.5">
                                             <div className="flex items-center gap-1">
                                               <Select
                                                 value={l.categoria_id || ""}
