@@ -66,6 +66,7 @@ export default function DialogNovoRecorrente({
   const [parceiroId, setParceiroId] = useState<string>("");
   const [contaBancariaId, setContaBancariaId] = useState<string>("");
   const [observacao, setObservacao] = useState("");
+  const [mostrarTodas, setMostrarTodas] = useState(false);
 
   // Pre-fill quando editando
   useEffect(() => {
