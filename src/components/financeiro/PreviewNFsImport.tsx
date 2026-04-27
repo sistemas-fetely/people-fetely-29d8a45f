@@ -1,4 +1,4 @@
-import { Fragment, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { Loader2, Download, AlertTriangle, X, ListTree, Package, Link2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -65,6 +65,17 @@ export function PreviewNFsImport({
     ).length;
     return { semCat, dup, sel, vincular, novosProntos };
   }, [nfs]);
+
+  // Scroll automático para o preview quando tem muitas NFs (>5)
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const [jaRolou, setJaRolou] = useState(false);
+  useEffect(() => {
+    if (nfs.length > 5 && !jaRolou && containerRef.current) {
+      containerRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+      setJaRolou(true);
+    }
+    if (nfs.length === 0) setJaRolou(false); // reset quando esvazia
+  }, [nfs.length, jaRolou]);
 
   const allSelectableSelected =
     nfs.filter((n) => !n._duplicata).length > 0 &&
@@ -151,7 +162,7 @@ export function PreviewNFsImport({
 
   return (
     <TooltipProvider delayDuration={150}>
-    <div className="mt-4 space-y-3">
+    <div ref={containerRef} className="mt-4 space-y-3">
       <div className="flex flex-wrap items-center gap-3 text-sm">
         <Badge variant="outline">{nfs.length} NFs</Badge>
         {totals.vincular > 0 && (
@@ -185,7 +196,7 @@ export function PreviewNFsImport({
         </button>
       </div>
 
-      <div className="border rounded-md max-h-[480px] overflow-auto">
+      <div className="border rounded-md max-h-[calc(100vh-280px)] min-h-[300px] overflow-auto">
         <Table>
           <TableHeader>
             <TableRow>

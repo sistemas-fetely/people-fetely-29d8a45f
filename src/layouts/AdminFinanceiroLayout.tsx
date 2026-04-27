@@ -7,6 +7,7 @@ import { Loader2, Landmark, Home } from "lucide-react";
 import { useTrackPageVisit } from "@/hooks/useTrackPageVisit";
 import { RecentesEFavoritos } from "@/components/navegacao/RecentesEFavoritos";
 import { CommandPaletteProvider } from "@/components/navegacao/CommandPaletteProvider";
+import { ReportarErroBotao } from "@/components/shared/ReportarErroBotao";
 
 export default function AdminFinanceiroLayout() {
   const { user, roles, loading } = useAuth();
@@ -51,8 +52,9 @@ export default function AdminFinanceiroLayout() {
               <RecentesEFavoritos />
             </div>
           </header>
-          <main className="flex-1 overflow-auto">
+          <main className="flex-1 overflow-auto relative">
             <Outlet />
+            <ReportarErroBotao />
           </main>
         </div>
       </div>
