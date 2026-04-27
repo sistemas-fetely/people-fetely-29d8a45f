@@ -22,6 +22,8 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { useCategoriasPlano } from "@/hooks/useCategoriasPlano";
+import { CategoriaCombobox } from "@/components/financeiro/CategoriaCombobox";
+import { Switch } from "@/components/ui/switch";
 
 type RecorrenteEditando = {
   id: string;
