@@ -3061,6 +3061,226 @@ export type Database = {
           },
         ]
       }
+      fatura_cartao_lancamentos: {
+        Row: {
+          categoria_id: string | null
+          centro_custo: string | null
+          cnpj_estabelecimento: string | null
+          compromisso_parcelado_id: string | null
+          cotacao: number | null
+          created_at: string
+          data_compra: string
+          descricao: string
+          descricao_normalizada: string | null
+          estabelecimento_descricao: string | null
+          estabelecimento_local: string | null
+          fatura_id: string
+          id: string
+          linha_original_csv: string | null
+          moeda: string | null
+          natureza: string
+          nf_vinculada_id: string | null
+          num_autorizacao: string | null
+          parceiro_id: string | null
+          parcela_atual: number | null
+          parcela_total: number | null
+          ramo_estabelecimento: string | null
+          status: string
+          tipo: string
+          updated_at: string
+          valor: number
+          valor_original: number | null
+        }
+        Insert: {
+          categoria_id?: string | null
+          centro_custo?: string | null
+          cnpj_estabelecimento?: string | null
+          compromisso_parcelado_id?: string | null
+          cotacao?: number | null
+          created_at?: string
+          data_compra: string
+          descricao: string
+          descricao_normalizada?: string | null
+          estabelecimento_descricao?: string | null
+          estabelecimento_local?: string | null
+          fatura_id: string
+          id?: string
+          linha_original_csv?: string | null
+          moeda?: string | null
+          natureza?: string
+          nf_vinculada_id?: string | null
+          num_autorizacao?: string | null
+          parceiro_id?: string | null
+          parcela_atual?: number | null
+          parcela_total?: number | null
+          ramo_estabelecimento?: string | null
+          status?: string
+          tipo?: string
+          updated_at?: string
+          valor: number
+          valor_original?: number | null
+        }
+        Update: {
+          categoria_id?: string | null
+          centro_custo?: string | null
+          cnpj_estabelecimento?: string | null
+          compromisso_parcelado_id?: string | null
+          cotacao?: number | null
+          created_at?: string
+          data_compra?: string
+          descricao?: string
+          descricao_normalizada?: string | null
+          estabelecimento_descricao?: string | null
+          estabelecimento_local?: string | null
+          fatura_id?: string
+          id?: string
+          linha_original_csv?: string | null
+          moeda?: string | null
+          natureza?: string
+          nf_vinculada_id?: string | null
+          num_autorizacao?: string | null
+          parceiro_id?: string | null
+          parcela_atual?: number | null
+          parcela_total?: number | null
+          ramo_estabelecimento?: string | null
+          status?: string
+          tipo?: string
+          updated_at?: string
+          valor?: number
+          valor_original?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fatura_cartao_lancamentos_categoria_id_fkey"
+            columns: ["categoria_id"]
+            isOneToOne: false
+            referencedRelation: "plano_contas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fatura_cartao_lancamentos_fatura_id_fkey"
+            columns: ["fatura_id"]
+            isOneToOne: false
+            referencedRelation: "faturas_cartao"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fatura_cartao_lancamentos_nf_vinculada_id_fkey"
+            columns: ["nf_vinculada_id"]
+            isOneToOne: false
+            referencedRelation: "contas_pagar_receber"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fatura_cartao_lancamentos_nf_vinculada_id_fkey"
+            columns: ["nf_vinculada_id"]
+            isOneToOne: false
+            referencedRelation: "vw_lancamentos_caixa_banco"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fatura_cartao_lancamentos_parceiro_id_fkey"
+            columns: ["parceiro_id"]
+            isOneToOne: false
+            referencedRelation: "parceiros_comerciais"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      faturas_cartao: {
+        Row: {
+          conta_bancaria_id: string
+          conta_pagar_id: string | null
+          created_at: string
+          criado_por: string | null
+          data_emissao: string | null
+          data_vencimento: string
+          fonte_importacao: string | null
+          id: string
+          importacao_lote_id: string | null
+          numero_documento: string | null
+          observacao: string | null
+          pdf_nome_original: string | null
+          pdf_storage_path: string | null
+          periodo_fim: string | null
+          periodo_inicio: string | null
+          status: string
+          updated_at: string
+          valor_pagamento_anterior: number | null
+          valor_saldo_atraso: number | null
+          valor_total: number
+          valor_total_calculado: number | null
+        }
+        Insert: {
+          conta_bancaria_id: string
+          conta_pagar_id?: string | null
+          created_at?: string
+          criado_por?: string | null
+          data_emissao?: string | null
+          data_vencimento: string
+          fonte_importacao?: string | null
+          id?: string
+          importacao_lote_id?: string | null
+          numero_documento?: string | null
+          observacao?: string | null
+          pdf_nome_original?: string | null
+          pdf_storage_path?: string | null
+          periodo_fim?: string | null
+          periodo_inicio?: string | null
+          status?: string
+          updated_at?: string
+          valor_pagamento_anterior?: number | null
+          valor_saldo_atraso?: number | null
+          valor_total: number
+          valor_total_calculado?: number | null
+        }
+        Update: {
+          conta_bancaria_id?: string
+          conta_pagar_id?: string | null
+          created_at?: string
+          criado_por?: string | null
+          data_emissao?: string | null
+          data_vencimento?: string
+          fonte_importacao?: string | null
+          id?: string
+          importacao_lote_id?: string | null
+          numero_documento?: string | null
+          observacao?: string | null
+          pdf_nome_original?: string | null
+          pdf_storage_path?: string | null
+          periodo_fim?: string | null
+          periodo_inicio?: string | null
+          status?: string
+          updated_at?: string
+          valor_pagamento_anterior?: number | null
+          valor_saldo_atraso?: number | null
+          valor_total?: number
+          valor_total_calculado?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "faturas_cartao_conta_bancaria_id_fkey"
+            columns: ["conta_bancaria_id"]
+            isOneToOne: false
+            referencedRelation: "contas_bancarias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "faturas_cartao_conta_pagar_id_fkey"
+            columns: ["conta_pagar_id"]
+            isOneToOne: false
+            referencedRelation: "contas_pagar_receber"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "faturas_cartao_conta_pagar_id_fkey"
+            columns: ["conta_pagar_id"]
+            isOneToOne: false
+            referencedRelation: "vw_lancamentos_caixa_banco"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ferias_periodos: {
         Row: {
           colaborador_id: string
