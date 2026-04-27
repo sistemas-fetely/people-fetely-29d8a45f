@@ -449,7 +449,13 @@ export default function CaixaBanco() {
                         <TableRow
                           key={l.id}
                           className={`cursor-pointer hover:bg-muted/50 ${isSel ? "bg-muted/40" : ""}`}
-                          onClick={() => setContaIdDrawer(l.id)}
+                          onClick={() => {
+                            if (l.origem_view === "cartao_lancamento") {
+                              navigate("/administrativo/faturas-cartao");
+                            } else {
+                              setContaIdDrawer(l.id);
+                            }
+                          }}
                         >
                           <TableCell onClick={(e) => e.stopPropagation()}>
                             <Checkbox
