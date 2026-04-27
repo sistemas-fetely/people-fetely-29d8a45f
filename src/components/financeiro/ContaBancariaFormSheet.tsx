@@ -169,7 +169,7 @@ export function ContaBancariaFormSheet({ open, onOpenChange, editing }: Props) {
       if (isEdit && editing) {
         const { error } = await supabase
           .from("contas_bancarias")
-          .update(cleanPayload)
+          .update(cleanPayload as never)
           .eq("id", editing.id);
         if (error) throw error;
       } else {
