@@ -49,6 +49,12 @@ export default function DialogNovoParceladoManual({
   const [parceiroId, setParceiroId] = useState<string>("");
   const [contaBancariaId, setContaBancariaId] = useState<string>("");
   const [observacao, setObservacao] = useState("");
+  const [mostrarTodas, setMostrarTodas] = useState(false);
+
+  const categoriasFiltradas = useMemo(() => {
+    if (mostrarTodas) return categorias || [];
+    return (categorias || []).filter((c) => !c.codigo.startsWith("01"));
+  }, [categorias, mostrarTodas]);
 
   const { data: parceiros } = useQuery({
     queryKey: ["parceiros-comerciais-lista"],
