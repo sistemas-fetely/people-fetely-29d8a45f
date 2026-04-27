@@ -132,19 +132,23 @@ export default function FluxoCaixaFuturo() {
   const [compromissoDetalhe, setCompromissoDetalhe] = useState<string | null>(null);
   const [compromissoCancelar, setCompromissoCancelar] = useState<Compromisso | null>(null);
 
-  // Parcelas previstas
+  // Parcelas previstas (parcelados + recorrentes)
   const { data: parcelas, isLoading: loadingParcelas } = useQuery({
     queryKey: ["parcelas-previstas"],
     queryFn: async () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data, error } = await (supabase as any)
         .from("contas_pagar_receber")
-        .select("id, descricao, valor, data_vencimento, numero_parcela, total_parcelas, compromisso_parcelado_id")
+        .select("id, descricao, valor, data_vencimento, numero_parcela, total_parcelas, compromisso_parcelado_id, compromisso_recorrente_id")
         .eq("status", "previsto")
-        .not("compromisso_parcelado_id", "is", null)
+        .eq("tipo", "pagar")
+        .or("compromisso_parcelado_id.not.is.null,compromisso_recorrente_id.not.is.null")
         .order("data_vencimento", { ascending: true });
       if (error) throw error;
-      return (data || []) as ParcelaPrevista[];
+      return ((data || []) as Array<Record<string, unknown>>).map((p) => ({
+        ...p,
+        origem_tipo: p.compromisso_recorrente_id ? "recorrente" : "parcelado",
+      })) as ParcelaPrevista[];
     },
   });
 
