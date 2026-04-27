@@ -248,23 +248,22 @@ export async function parsearPDFFatura(file: File): Promise<FaturaParsed> {
   const formData = new FormData();
   formData.append("file", file);
 
-  const { data: { session } } = await supabase.auth.getSession();
-  const url = `${import.meta.env.VITE_SUPABASE_URL || ""}/functions/v1/parse-fatura-cartao-pdf`;
-
-  const resp = await fetch(url, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${session?.access_token || ""}`,
+  const { data, error } = await supabase.functions.invoke(
+    "parse-fatura-cartao-pdf",
+    {
+      body: formData,
     },
-    body: formData,
-  });
+  );
 
-  if (!resp.ok) {
-    const txt = await resp.text();
-    throw new Error(`Falha na IA: ${resp.status} - ${txt.substring(0, 200)}`);
+  if (error) {
+    throw new Error(`Falha na IA: ${error.message || JSON.stringify(error)}`);
   }
-
-  const data = await resp.json();
+  if (!data) {
+    throw new Error("Edge function retornou vazio");
+  }
+  if (data.error) {
+    throw new Error(`IA retornou erro: ${data.error} ${data.detail || ""}`);
+  }
 
   // Mapear resposta da IA pra FaturaParsed
   return {
