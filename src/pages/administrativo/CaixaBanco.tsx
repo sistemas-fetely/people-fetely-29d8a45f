@@ -31,6 +31,7 @@ import {
   Link as LinkIcon,
   FileWarning,
   Pencil,
+  CreditCard,
 } from "lucide-react";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
 import { MarcarPagoDialog } from "@/components/financeiro/MarcarPagoDialog";
