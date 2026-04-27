@@ -24,7 +24,10 @@ type LancamentoSemMatch = {
   valor: number;
   cnpj_estabelecimento: string | null;
   categoria_id: string | null;
-  fatura: { id: string; cartao_nome: string | null } | null;
+  fatura: {
+    id: string;
+    conta_bancaria: { nome_exibicao: string | null } | null;
+  } | null;
 };
 
 type SugestaoMatch = {
@@ -60,11 +63,12 @@ export default function ReconciliacaoCartao() {
   const { data: lancamentos, isLoading } = useQuery({
     queryKey: ["reconciliacao-cartao-pendentes"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase as any)
         .from("fatura_cartao_lancamentos")
         .select(`
           id, data_compra, descricao, valor, cnpj_estabelecimento, categoria_id,
-          fatura:faturas_cartao(id, cartao_nome)
+          fatura:faturas_cartao(id, conta_bancaria:contas_bancarias(nome_exibicao))
         `)
         .is("nf_vinculada_id", null)
         .order("data_compra", { ascending: false })
