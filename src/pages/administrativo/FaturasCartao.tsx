@@ -91,6 +91,7 @@ type LancamentoRow = {
   cotacao: number | null;
   estabelecimento_local: string | null;
   ramo_estabelecimento: string | null;
+  cnpj_estabelecimento: string | null;
   parceiro_id: string | null;
   categoria_id: string | null;
   status: string;
