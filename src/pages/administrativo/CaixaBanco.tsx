@@ -440,7 +440,7 @@ export default function CaixaBanco() {
                   <TableBody>
                     {pageData.map((l) => {
                       const isSel = selecionados.has(l.id);
-                      const podeSel = l.status_caixa === "em_aberto";
+                      const podeSel = l.status_caixa === "em_aberto" && l.origem_view !== "cartao_lancamento";
                       const conta =
                         l.pago_em_conta_id && mapContas[l.pago_em_conta_id];
                       const formaNome =
