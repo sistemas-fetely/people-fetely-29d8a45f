@@ -247,6 +247,14 @@ export default function FaturasCartao() {
     return m;
   }, [categorias]);
 
+  const categoriasDespesa = useMemo(
+    () =>
+      (categorias || []).filter(
+        (c: { codigo: string }) => !c.codigo.startsWith("01"),
+      ),
+    [categorias],
+  );
+
   // KPIs
   const totals = useMemo(() => {
     const all = faturas || [];
