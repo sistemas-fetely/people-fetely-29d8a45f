@@ -53,6 +53,11 @@ import {
   descartarStage,
 } from "@/lib/financeiro/stage-handler";
 import { useCategoriasPlano } from "@/hooks/useCategoriasPlano";
+import {
+  SortableTableHead,
+  ordenarPor,
+  type SortState,
+} from "@/components/shared/SortableTableHead";
 
 type NFStage = {
   id: string;
@@ -109,6 +114,9 @@ export default function NFsStage() {
   const [salvandoCategoria, setSalvandoCategoria] = useState<Set<string>>(new Set());
   const [enviando, setEnviando] = useState(false);
 
+  type SortColumn = "fornecedor" | "nf" | "data" | "valor" | "categoria" | "status";
+  const [sort, setSort] = useState<SortState<SortColumn> | null>(null);
+
   const { data: categorias = [] } = useCategoriasPlano();
 
   const { data: nfs, isLoading } = useQuery({
@@ -124,7 +132,7 @@ export default function NFsStage() {
     },
   });
 
-  // Filtro aplicado
+  // Filtro + Ordenação
   const filtered = useMemo(() => {
     let list = nfs || [];
     if (filtroPill !== "todos") {
@@ -146,8 +154,19 @@ export default function NFsStage() {
           n.nf_numero?.toLowerCase().includes(t),
       );
     }
+
+    // Ordenação
+    list = ordenarPor(list, sort, {
+      fornecedor: (n) => n.fornecedor_razao_social || n.fornecedor_cliente || "",
+      nf: (n) => n.nf_numero || "",
+      data: (n) => n.nf_data_emissao || "",
+      valor: (n) => n.valor || 0,
+      categoria: (n) => n.categoria_id || "",
+      status: (n) => n.status || "",
+    });
+
     return list;
-  }, [nfs, filtroPill, busca]);
+  }, [nfs, filtroPill, busca, sort]);
 
   // KPIs (sempre baseados em todos os dados, não filtered)
   const totals = useMemo(() => {
@@ -591,12 +610,24 @@ export default function NFsStage() {
                       onCheckedChange={toggleTodas}
                     />
                   </TableHead>
-                  <TableHead>Fornecedor</TableHead>
-                  <TableHead className="w-20">NF</TableHead>
-                  <TableHead className="w-28">Data</TableHead>
-                  <TableHead className="text-right w-28">Valor</TableHead>
-                  <TableHead className="min-w-[220px]">Categoria</TableHead>
-                  <TableHead className="w-24">Status</TableHead>
+                  <SortableTableHead column="fornecedor" sort={sort} onSort={setSort}>
+                    Fornecedor
+                  </SortableTableHead>
+                  <SortableTableHead column="nf" sort={sort} onSort={setSort} className="w-20">
+                    NF
+                  </SortableTableHead>
+                  <SortableTableHead column="data" sort={sort} onSort={setSort} className="w-28">
+                    Data
+                  </SortableTableHead>
+                  <SortableTableHead column="valor" sort={sort} onSort={setSort} className="w-28" align="right">
+                    Valor
+                  </SortableTableHead>
+                  <SortableTableHead column="categoria" sort={sort} onSort={setSort} className="min-w-[220px]">
+                    Categoria
+                  </SortableTableHead>
+                  <SortableTableHead column="status" sort={sort} onSort={setSort} className="w-24">
+                    Status
+                  </SortableTableHead>
                   <TableHead className="w-24 text-center">Ações</TableHead>
                 </TableRow>
               </TableHeader>
