@@ -11,9 +11,9 @@ import { toast } from "sonner";
 import { parseNFeXml } from "@/lib/financeiro/xml-nfe-parser";
 import { aplicarRegras, useRegrasCategorizacao } from "@/hooks/useRegrasCategorizacao";
 import {
-  importarNFs,
   verificarDuplicatas,
 } from "@/lib/financeiro/import-handler";
+import { moverParaStage } from "@/lib/financeiro/stage-handler";
 import { buscarMatchPagamentos } from "@/lib/financeiro/match-pagamentos";
 import { useFilaAutoCadastroParceiro } from "@/hooks/useFilaAutoCadastroParceiro";
 import { ParceiroFormSheet } from "@/components/financeiro/ParceiroFormSheet";
@@ -56,8 +56,13 @@ export function ImportadorXmlNFe({ categorias, onImported }: Props) {
         try {
           const xml = await readFileAsText(f);
           const nf = parseNFeXml(xml);
-          if (nf) parsed.push(nf);
-          else toast.warning(`Não foi possível ler ${f.name}`);
+          if (nf) {
+            // Anexa o File pra ir pro stage também
+            nf._arquivo = f;
+            parsed.push(nf);
+          } else {
+            toast.warning(`Não foi possível ler ${f.name}`);
+          }
         } catch {
           toast.warning(`Erro lendo ${f.name}`);
         }
@@ -80,32 +85,30 @@ export function ImportadorXmlNFe({ categorias, onImported }: Props) {
     const selecionadas = preview.filter((n) => n._selecionada && !n._duplicata);
     if (selecionadas.length === 0) return;
 
-    const { nfs: nfsHidratadas, precisaCadastrar } = await fila.prepararFila(selecionadas);
-
-    if (precisaCadastrar) {
-      setNfsParaImportar(nfsHidratadas);
-      setAguardandoCadastro(true);
-      return;
-    }
-
-    await executarImportacao(nfsHidratadas);
+    // Cadastro automático de parceiro acontece no Stage > Contas a Pagar
+    await executarImportacao(selecionadas);
   }
 
   async function executarImportacao(nfs: NFParsed[]) {
     setImporting(true);
-    const result = await importarNFs(nfs);
+    const arquivosOrigem = nfs
+      .filter((n) => n._arquivo)
+      .map((n) => ({ nf: n, arquivo: n._arquivo as File }));
+    const result = await moverParaStage(nfs, arquivosOrigem);
     setImporting(false);
-    if (result.sucesso > 0 || result.vinculadas > 0) {
-      const partes: string[] = [];
-      if (result.sucesso > 0) partes.push(`${result.sucesso} nova${result.sucesso === 1 ? "" : "s"}`);
-      if (result.vinculadas > 0) partes.push(`${result.vinculadas} vinculada${result.vinculadas === 1 ? "" : "s"} a existentes`);
-      if (result.erros > 0) partes.push(`${result.erros} erro${result.erros === 1 ? "" : "s"}`);
-      toast.success(`Importação: ${partes.join(", ")}`);
+    if (result.sucesso > 0) {
+      toast.success(
+        `${result.sucesso} NF${result.sucesso === 1 ? "" : "s"} enviada${result.sucesso === 1 ? "" : "s"} pro Stage. Acesse "NFs em Stage" para revisar e enviar pra Contas a Pagar.`,
+      );
       setPreview([]);
       onImported?.();
-    } else if (result.erros > 0) {
-      toast.error(`${result.erros} erros ao importar`);
-      console.error(result.errosDetalhe);
+    }
+    if (result.duplicatas > 0) {
+      toast.info(`${result.duplicatas} duplicata${result.duplicatas === 1 ? "" : "s"} ignorada${result.duplicatas === 1 ? "" : "s"}`);
+    }
+    if (result.erros.length > 0) {
+      toast.error(`${result.erros.length} erro(s): ${result.erros[0]}`);
+      console.error(result.erros);
     }
   }
 
