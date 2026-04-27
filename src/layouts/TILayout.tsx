@@ -9,6 +9,7 @@ import { Loader2, Home, Monitor } from "lucide-react";
 import { useTrackPageVisit } from "@/hooks/useTrackPageVisit";
 import { RecentesEFavoritos } from "@/components/navegacao/RecentesEFavoritos";
 import { CommandPaletteProvider } from "@/components/navegacao/CommandPaletteProvider";
+import { ReportarErroBotao } from "@/components/shared/ReportarErroBotao";
 
 export default function TILayout() {
   const { user, roles } = useAuth();
@@ -86,8 +87,9 @@ export default function TILayout() {
               <RecentesEFavoritos />
             </div>
           </header>
-          <main className="flex-1 p-6 overflow-auto bg-background">
+          <main className="flex-1 p-6 overflow-auto bg-background relative">
             <Outlet />
+            <ReportarErroBotao />
           </main>
         </div>
       </div>
