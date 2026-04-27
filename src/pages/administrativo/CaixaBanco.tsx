@@ -200,7 +200,7 @@ export default function CaixaBanco() {
   const totals = useMemo(() => {
     const all = lancamentos || [];
     const emAberto = all
-      .filter((l) => l.status_caixa === "em_aberto")
+      .filter((l) => l.status_caixa === "em_aberto" && l.origem_view !== "cartao_lancamento")
       .reduce((s, l) => s + Number(l.valor || 0), 0);
     const pago = all
       .filter((l) => l.status_caixa === "pago")
@@ -212,7 +212,7 @@ export default function CaixaBanco() {
       emAberto,
       pago,
       conciliado,
-      countAberto: all.filter((l) => l.status_caixa === "em_aberto").length,
+      countAberto: all.filter((l) => l.status_caixa === "em_aberto" && l.origem_view !== "cartao_lancamento").length,
       countPago: all.filter((l) => l.status_caixa === "pago").length,
       countConciliado: all.filter((l) => l.status_caixa === "conciliado").length,
     };
@@ -236,13 +236,13 @@ export default function CaixaBanco() {
   function togglePagina() {
     const next = new Set(selecionados);
     const todasSelecionadas = pageData
-      .filter((l) => l.status_caixa === "em_aberto")
+      .filter((l) => l.status_caixa === "em_aberto" && l.origem_view !== "cartao_lancamento")
       .every((l) => next.has(l.id));
     if (todasSelecionadas) {
       pageData.forEach((l) => next.delete(l.id));
     } else {
       pageData
-        .filter((l) => l.status_caixa === "em_aberto")
+        .filter((l) => l.status_caixa === "em_aberto" && l.origem_view !== "cartao_lancamento")
         .forEach((l) => next.add(l.id));
     }
     setSelecionados(next);
@@ -417,9 +417,9 @@ export default function CaixaBanco() {
                       <TableHead className="w-10">
                         <Checkbox
                           checked={
-                            pageData.filter((l) => l.status_caixa === "em_aberto").length > 0 &&
+                            pageData.filter((l) => l.status_caixa === "em_aberto" && l.origem_view !== "cartao_lancamento").length > 0 &&
                             pageData
-                              .filter((l) => l.status_caixa === "em_aberto")
+                              .filter((l) => l.status_caixa === "em_aberto" && l.origem_view !== "cartao_lancamento")
                               .every((l) => selecionados.has(l.id))
                           }
                           onCheckedChange={togglePagina}
