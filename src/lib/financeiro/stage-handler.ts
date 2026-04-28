@@ -20,6 +20,7 @@ const BUCKET = "nfs-stage";
 export interface StageResult {
   sucesso: number;
   duplicatas: number;
+  enriquecidas: number;
   erros: string[];
   loteId: string;
 }
@@ -38,6 +39,7 @@ export async function moverParaStage(
   const result: StageResult = {
     sucesso: 0,
     duplicatas: 0,
+    enriquecidas: 0,
     erros: [],
     loteId,
   };
@@ -122,6 +124,8 @@ export async function moverParaStage(
       if (r?.acao === "criada") {
         result.sucesso++;
       } else if (typeof r?.acao === "string" && r.acao.startsWith("enriquecida")) {
+        result.enriquecidas++;
+      } else if (r?.acao === "duplicada_descartada" || r?.acao === "duplicada") {
         result.duplicatas++;
       } else {
         result.sucesso++;

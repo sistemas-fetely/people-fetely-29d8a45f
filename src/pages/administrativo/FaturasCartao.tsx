@@ -85,6 +85,11 @@ type FaturaRow = {
   conta_bancaria?: { nome_exibicao: string; banco: string | null } | null;
   qtd_lancamentos?: number;
   qtd_pendentes?: number;
+  qtd_conciliados?: number;
+  qtd_ignorados?: number;
+  valor_conciliado?: number;
+  valor_pendente?: number;
+  valor_ignorado?: number;
 };
 
 type LancamentoRow = {
@@ -165,41 +170,20 @@ export default function FaturasCartao() {
     },
   });
 
-  // Faturas
+  // Faturas (view agregada com KPIs por fatura)
   const { data: faturas, isLoading } = useQuery({
     queryKey: ["faturas-cartao"],
     queryFn: async () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data, error } = await (supabase as any)
-        .from("faturas_cartao")
+        .from("vw_faturas_cartao_resumo")
         .select(`
           *,
           conta_bancaria:conta_bancaria_id ( nome_exibicao, banco )
         `)
         .order("data_vencimento", { ascending: false });
       if (error) throw error;
-
-      // Contar lançamentos por fatura
-      const ids = (data || []).map((f: { id: string }) => f.id);
-      let counts: Record<string, { total: number; pendentes: number }> = {};
-      if (ids.length > 0) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { data: lancs } = await (supabase as any)
-          .from("fatura_cartao_lancamentos")
-          .select("fatura_id, status")
-          .in("fatura_id", ids);
-        for (const l of lancs || []) {
-          if (!counts[l.fatura_id]) counts[l.fatura_id] = { total: 0, pendentes: 0 };
-          counts[l.fatura_id].total++;
-          if (l.status === "pendente") counts[l.fatura_id].pendentes++;
-        }
-      }
-
-      return (data || []).map((f: FaturaRow) => ({
-        ...f,
-        qtd_lancamentos: counts[f.id]?.total || 0,
-        qtd_pendentes: counts[f.id]?.pendentes || 0,
-      })) as FaturaRow[];
+      return (data || []) as FaturaRow[];
     },
   });
 
@@ -261,6 +245,7 @@ export default function FaturasCartao() {
   const totals = useMemo(() => {
     const all = faturas || [];
     return {
+      qtdFaturas: all.length,
       total: all.length,
       abertas: all.filter((f) => f.status === "aberta").length,
       pagas: all.filter((f) => f.status === "paga").length,
@@ -269,6 +254,9 @@ export default function FaturasCartao() {
       valorAberto: all
         .filter((f) => f.status === "aberta")
         .reduce((s, f) => s + (f.valor_total || 0), 0),
+      totalGeral: all.reduce((s, f) => s + (f.valor_total || 0), 0),
+      totalConciliado: all.reduce((s, f) => s + (f.valor_conciliado || 0), 0),
+      totalPendente: all.reduce((s, f) => s + (f.valor_pendente || 0), 0),
     };
   }, [faturas]);
 
@@ -441,6 +429,36 @@ export default function FaturasCartao() {
               Importar Fatura
             </Button>
           </div>
+        </div>
+
+        {/* KPIs financeiros agregados */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <Card className="cursor-pointer hover:shadow-md transition" onClick={() => setFiltroPill("todas")}>
+            <CardContent className="p-4">
+              <div className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">Faturas</div>
+              <div className="text-2xl font-bold mt-1">{totals.qtdFaturas}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">Total geral</div>
+              <div className="text-xl font-bold mt-1">{formatBRL(totals.totalGeral)}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="text-[10px] uppercase tracking-wide text-emerald-700 font-medium">Conciliado</div>
+              <div className="text-xl font-bold mt-1 text-emerald-700">{formatBRL(totals.totalConciliado)}</div>
+              <div className="text-[10px] text-muted-foreground mt-0.5">já decidido</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="text-[10px] uppercase tracking-wide text-amber-700 font-medium">Pendente</div>
+              <div className="text-xl font-bold mt-1 text-amber-700">{formatBRL(totals.totalPendente)}</div>
+              <div className="text-[10px] text-muted-foreground mt-0.5">a decidir</div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* KPIs como pills */}
@@ -636,8 +654,18 @@ export default function FaturasCartao() {
                             ? `${formatDateBR(f.periodo_inicio)} → ${formatDateBR(f.periodo_fim)}`
                             : "—"}
                         </TableCell>
-                        <TableCell className="text-right font-mono whitespace-nowrap">
-                          {formatBRL(f.valor_total)}
+                        <TableCell className="text-right whitespace-nowrap">
+                          <div className="font-mono">{formatBRL(f.valor_total)}</div>
+                          {(f.qtd_conciliados || 0) > 0 && (
+                            <div className="text-[10px] text-emerald-700">
+                              Conciliado: {formatBRL(f.valor_conciliado || 0)}
+                            </div>
+                          )}
+                          {(f.qtd_pendentes || 0) > 0 && (
+                            <div className="text-[10px] text-amber-700">
+                              Pendente: {formatBRL(f.valor_pendente || 0)}
+                            </div>
+                          )}
                         </TableCell>
                         <TableCell className="text-center text-xs">
                           <div className="flex items-center justify-center gap-1">

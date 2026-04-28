@@ -153,8 +153,13 @@ export function ImportadorPdfDanfe({ categorias, onImported }: Props) {
       setPreview([]);
       onImported?.();
     }
+    if (result.enriquecidas > 0) {
+      toast.success(
+        `${result.enriquecidas} NF${result.enriquecidas === 1 ? "" : "s"} enriquecida${result.enriquecidas === 1 ? "" : "s"} — arquivo adicional anexado`,
+      );
+    }
     if (result.duplicatas > 0) {
-      toast.info(`${result.duplicatas} duplicata${result.duplicatas === 1 ? "" : "s"} ignorada${result.duplicatas === 1 ? "" : "s"}`);
+      toast.info(`${result.duplicatas} NF${result.duplicatas === 1 ? "" : "s"} duplicada${result.duplicatas === 1 ? "" : "s"} — já existe no repositório`);
     }
     if (result.erros.length > 0) {
       toast.error(`${result.erros.length} erro(s): ${result.erros[0]}`);
