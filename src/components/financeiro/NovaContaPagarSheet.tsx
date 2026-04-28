@@ -72,6 +72,8 @@ export function NovaContaPagarSheet({ open, onOpenChange }: Props) {
   const [unidade, setUnidade] = useState("matriz_sp");
   const [formaPgtoId, setFormaPgtoId] = useState<string>("");
   const [parcelas, setParcelas] = useState(1);
+  const [nfStageId, setNfStageId] = useState<string | null>(null);
+  const [nfStageBuscaOpen, setNfStageBuscaOpen] = useState(false);
 
   const { data: parceiros } = useQuery({
     queryKey: ["parceiros-fornecedores"],
