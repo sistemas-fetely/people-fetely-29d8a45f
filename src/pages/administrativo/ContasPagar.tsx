@@ -33,36 +33,44 @@ import { NovaContaPagarSheet } from "@/components/financeiro/NovaContaPagarSheet
 
 type Conta = {
   id: string;
-  tipo: string;
   descricao: string;
   valor: number;
   data_vencimento: string | null;
   data_pagamento: string | null;
   status: string;
-  fornecedor_cliente: string | null;
   parceiro_id: string | null;
   conta_id: string | null;
   origem: string | null;
   is_cartao: boolean | null;
-  docs_status: string | null;
+  // Campos da view consolidada
+  tags: unknown;
+  tem_doc_pendente: boolean | null;
+  atrasada: boolean | null;
+  status_efetivo: string | null;
+  nf_stage_id: string | null;
+  nf_tipo: string | null;
+  nf_fornecedor: string | null;
+  mov_conciliada: boolean | null;
+  // Joins
   plano_contas?: { codigo?: string | null; nome: string } | null;
   parceiros_comerciais?: { razao_social: string | null } | null;
   formas_pagamento?: { nome: string | null } | null;
   forma_pagamento?: string | null;
+  fornecedor_cliente?: string | null;
+};
+
+const STATUS_LABELS: Record<string, string> = {
+  aberto: "Aberto",
+  aprovado: "Aprovado",
+  aguardando_pagamento: "Aguardando pagamento",
+  cancelado: "Cancelado",
 };
 
 const STATUS_STYLES: Record<string, string> = {
   aberto: "bg-blue-100 text-blue-800 hover:bg-blue-100",
-  atrasado: "bg-red-100 text-red-800 hover:bg-red-100",
   aprovado: "bg-purple-100 text-purple-800 hover:bg-purple-100",
-  doc_pendente: "bg-amber-100 text-amber-800 hover:bg-amber-100",
-  finalizado: "bg-green-100 text-green-800 hover:bg-green-100",
-  cancelado: "bg-gray-100 text-gray-700 hover:bg-gray-100",
-  // Legados (não mais usados ativamente, mantidos para compatibilidade visual)
-  rascunho: "bg-muted text-muted-foreground",
-  agendado: "bg-amber-100 text-amber-800 hover:bg-amber-100",
-  pago: "bg-green-100 text-green-800 hover:bg-green-100",
-  conciliado: "bg-teal-100 text-teal-800 hover:bg-teal-100",
+  aguardando_pagamento: "bg-teal-100 text-teal-800 hover:bg-teal-100",
+  cancelado: "bg-red-100 text-red-800 hover:bg-red-100",
 };
 
 const PAGE_SIZE = 20;
