@@ -275,7 +275,14 @@ export default function Parceiros() {
                       >
                         <TableCell>
                           <div>
-                            <div className="font-medium">{p.razao_social}</div>
+                            <div className="font-medium flex items-center gap-2">
+                              {p.razao_social}
+                              {(p as any).origem === "auto_cartao" && !p.cnpj && (
+                                <Badge variant="outline" className="text-[10px] border-amber-500 text-amber-700 dark:text-amber-400">
+                                  CNPJ pendente
+                                </Badge>
+                              )}
+                            </div>
                             {p.nome_fantasia && (
                               <div className="text-xs text-muted-foreground">{p.nome_fantasia}</div>
                             )}

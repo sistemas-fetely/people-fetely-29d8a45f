@@ -203,6 +203,14 @@ export async function salvarFaturaCartao(
       console.warn("Falha não-bloqueante no processamento de parcelas:", e);
     }
 
+    // === FASE C: enriquecer CNPJs dos lançamentos (auto) ===
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (supabase as any).rpc("pipeline_enriquecer_cartao");
+    } catch (e) {
+      console.warn("Falha não-bloqueante no enriquecimento de CNPJs:", e);
+    }
+
     return {
       ok: true,
       fatura_id: faturaId,

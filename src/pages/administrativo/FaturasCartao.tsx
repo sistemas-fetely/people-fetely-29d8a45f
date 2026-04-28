@@ -137,6 +137,34 @@ type FiltroPill = "todas" | "aberta" | "paga" | "conciliada" | "cancelada";
 export default function FaturasCartao() {
   const qc = useQueryClient();
   const [importarOpen, setImportarOpen] = useState(false);
+  const [enriquecendo, setEnriquecendo] = useState(false);
+
+  async function handleEnriquecerCNPJs() {
+    setEnriquecendo(true);
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase as any).rpc("pipeline_enriquecer_cartao");
+      if (error) throw error;
+      const r = Array.isArray(data) ? data[0] : data;
+      toast.success(
+        `Enriquecimento concluído: ${r?.parceiros_criados || 0} parceiro(s) criado(s), ${r?.enriquecidos || 0} lançamento(s) vinculado(s).`,
+        {
+          description: r?.ambiguos > 0
+            ? `${r.ambiguos} caso(s) ambíguo(s) precisam de revisão manual.`
+            : undefined,
+        }
+      );
+      qc.invalidateQueries({ queryKey: ["faturas-cartao"] });
+      qc.invalidateQueries({ queryKey: ["fatura-lancamentos"] });
+      qc.invalidateQueries({ queryKey: ["lancamentos-caixa-banco"] });
+      qc.invalidateQueries({ queryKey: ["parceiros-comerciais"] });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      toast.error("Erro no enriquecimento: " + msg);
+    } finally {
+      setEnriquecendo(false);
+    }
+  }
   const [busca, setBusca] = useState("");
   const [filtroPill, setFiltroPill] = useState<FiltroPill>("todas");
   const [filtroCartao, setFiltroCartao] = useState<string>("__todos__");
@@ -430,13 +458,24 @@ export default function FaturasCartao() {
               Importe faturas, classifique lançamentos e acompanhe o ciclo de pagamento.
             </p>
           </div>
-          <Button
-            onClick={() => setImportarOpen(true)}
-            className="gap-2 bg-admin hover:bg-admin-accent text-admin-foreground"
-          >
-            <Plus className="h-4 w-4" />
-            Importar Fatura
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={handleEnriquecerCNPJs}
+              disabled={enriquecendo}
+              className="gap-2"
+            >
+              <Sparkles className="h-4 w-4" />
+              {enriquecendo ? "Enriquecendo..." : "Enriquecer CNPJs"}
+            </Button>
+            <Button
+              onClick={() => setImportarOpen(true)}
+              className="gap-2 bg-admin hover:bg-admin-accent text-admin-foreground"
+            >
+              <Plus className="h-4 w-4" />
+              Importar Fatura
+            </Button>
+          </div>
         </div>
 
         {/* KPIs como pills */}
