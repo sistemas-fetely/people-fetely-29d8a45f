@@ -51,7 +51,6 @@ const caixaBancoItems: MenuItem[] = [
   { title: "Contas Bancárias", url: "/administrativo/caixa-banco/contas", icon: Landmark },
   { title: "Conciliação OFX", url: "/administrativo/caixa-banco/conciliacao", icon: GitCompare },
   { title: "Faturas de Cartão", url: "/administrativo/faturas-cartao", icon: CreditCard },
-  { title: "Reconciliação Cartão ↔ NF", url: "/administrativo/reconciliacao-cartao", icon: GitMerge },
 ];
 
 const vendasBlingItems: MenuItem[] = [
