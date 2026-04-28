@@ -27,6 +27,7 @@ export function NfStageBuscadorModal({
   onOpenChange,
   valorEsperado,
   fornecedorEsperado,
+  parceiroId,
   onSelecionar,
 }: Props) {
   const [busca, setBusca] = useState("");
