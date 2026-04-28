@@ -612,9 +612,9 @@ export default function NFsStage() {
             </CardContent>
           </Card>
         ) : (
-          <div className="border rounded-md overflow-hidden">
+          <div className="border rounded-md overflow-auto max-h-[calc(100vh-280px)]">
             <Table>
-              <TableHeader className="sticky top-0 bg-muted/95 backdrop-blur z-10">
+              <TableHeader className="sticky top-0 bg-muted/95 backdrop-blur z-10 shadow-sm">
                 <TableRow>
                   <TableHead className="w-10">
                     <Checkbox
