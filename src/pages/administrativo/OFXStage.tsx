@@ -47,7 +47,7 @@ export default function OFXStage() {
       const { data } = await (supabase as any)
         .from("contas_bancarias")
         .select("id, nome_exibicao, tipo")
-        .eq("ativa", true)
+        .eq("ativo", true)
         .neq("tipo", "cartao")
         .order("nome_exibicao");
       return (data || []) as ContaBancaria[];
