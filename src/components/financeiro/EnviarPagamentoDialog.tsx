@@ -305,10 +305,44 @@ export default function EnviarPagamentoDialog({ open, onOpenChange, conta, onDon
         extras: {
           dados_pagamento_fornecedor: dadosPgto,
           forma_pagamento_id: formaPagamentoId,
+          numero_parcela: parcelas,
           enviado_pagamento_em: new Date().toISOString(),
           enviado_pagamento_por: user?.id || null,
         },
       });
+
+      // Doutrina: ações no fluxo enriquecem cadastros silenciosamente
+      // Salva dados bancários no parceiro pra próxima vez
+      if (
+        conta.parceiro_id &&
+        (dadosPgto.banco || dadosPgto.agencia || dadosPgto.conta || dadosPgto.pix)
+      ) {
+        try {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const { data: resultado } = await (supabase as any).rpc(
+            "enriquecer_parceiro_com_bancarios",
+            {
+              p_parceiro_id: conta.parceiro_id,
+              p_dados: {
+                banco: dadosPgto.banco || null,
+                agencia: dadosPgto.agencia || null,
+                conta: dadosPgto.conta || null,
+                pix: dadosPgto.pix || null,
+              },
+            },
+          );
+
+          if (resultado?.qtd_campos_atualizados > 0) {
+            toast.info(
+              `Dados bancários de ${fornecedorNome} salvos no cadastro. Não vamos pedir de novo.`,
+              { duration: 4000 },
+            );
+          }
+        } catch (e) {
+          // Falha silenciosa — não bloqueia envio do pagamento
+          console.warn("Não foi possível salvar dados bancários no parceiro:", e);
+        }
+      }
 
       // 2) Gerar URLs assinadas dos documentos selecionados (válidas por 30 dias)
       const docsParaEnviar = (documentos || []).filter((d) => docsSelecionados.has(d.id));
