@@ -100,19 +100,13 @@ type NFStage = {
 };
 
 const STATUS_LABELS: Record<string, string> = {
-  pendente: "Pendente",
-  classificada: "Pronta",
-  importada: "Importada",
-  descartada: "Descartada",
-  duplicata: "Duplicata",
+  nao_vinculada: "Não vinculada",
+  vinculada: "Vinculada",
 };
 
 const STATUS_STYLES: Record<string, string> = {
-  pendente: "bg-amber-100 text-amber-800 hover:bg-amber-100 border-amber-200",
-  classificada: "bg-emerald-100 text-emerald-800 hover:bg-emerald-100 border-emerald-200",
-  importada: "bg-blue-100 text-blue-800 hover:bg-blue-100 border-blue-200",
-  descartada: "bg-gray-100 text-gray-700 hover:bg-gray-100 border-gray-200",
-  duplicata: "bg-orange-100 text-orange-800 hover:bg-orange-100 border-orange-200",
+  nao_vinculada: "bg-amber-100 text-amber-800 hover:bg-amber-100 border-amber-200",
+  vinculada: "bg-emerald-100 text-emerald-800 hover:bg-emerald-100 border-emerald-200",
 };
 
 const FONTE_LABELS: Record<string, string> = {
