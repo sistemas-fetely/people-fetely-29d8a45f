@@ -334,7 +334,7 @@ export default function NFsStage() {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { error } = await (supabase as any)
           .from("nfs_stage")
-          .update({ categoria_id: sug.categoria_id, status: "classificada" })
+          .update({ categoria_id: sug.categoria_id })
           .eq("id", nf.id);
         if (!error) {
           ok++;
