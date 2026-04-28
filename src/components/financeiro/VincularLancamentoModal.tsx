@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Search, Link2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { formatBRL, formatDataBR } from "@/lib/financeiro/format";
+import { formatBRL, formatDateBR as formatDataBR } from "@/lib/format-currency";
 
 interface Lancamento {
   id: string;

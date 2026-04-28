@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Link2, Loader2, CheckCircle2, XCircle, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
-import { formatBRL } from "@/lib/financeiro/format";
+import { formatBRL } from "@/lib/format-currency";
 import { VincularLancamentoModal } from "./VincularLancamentoModal";
 
 interface Lancamento {
