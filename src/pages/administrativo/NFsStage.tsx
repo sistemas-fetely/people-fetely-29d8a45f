@@ -744,6 +744,28 @@ export default function NFsStage() {
                               {FONTE_LABELS[nf.fonte] || nf.fonte}
                             </Badge>
                           )}
+                          {(() => {
+                            const comp = calcularCompletude(nf);
+                            if (comp === "completo") return (
+                              <Badge variant="outline" className="text-[9px] py-0 px-1 h-4 font-normal border-emerald-300 text-emerald-700 bg-emerald-50 gap-1">
+                                <FileCheck className="h-2.5 w-2.5" />
+                                Completo
+                              </Badge>
+                            );
+                            if (comp === "sem_xml") return (
+                              <Badge variant="outline" className="text-[9px] py-0 px-1 h-4 font-normal border-amber-300 text-amber-700 bg-amber-50 gap-1" title="Falta XML — sem itens detalhados">
+                                <FileText className="h-2.5 w-2.5" />
+                                Sem XML
+                              </Badge>
+                            );
+                            if (comp === "sem_pdf") return (
+                              <Badge variant="outline" className="text-[9px] py-0 px-1 h-4 font-normal border-amber-300 text-amber-700 bg-amber-50 gap-1" title="Falta PDF — sem documento legal">
+                                <FileText className="h-2.5 w-2.5" />
+                                Sem PDF
+                              </Badge>
+                            );
+                            return null;
+                          })()}
                         </div>
                       </TableCell>
                       <TableCell className="text-xs">{nf.nf_numero || "—"}</TableCell>
