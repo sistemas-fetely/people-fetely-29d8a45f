@@ -52,7 +52,7 @@ import {
 import { toast } from "sonner";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
 import { ImportarFaturaCartaoDialog } from "@/components/financeiro/ImportarFaturaCartaoDialog";
-import { ConciliarLancamentoPopover } from "@/components/financeiro/ConciliarLancamentoPopover";
+import { AcoesLancamentoCartao } from "@/components/financeiro/AcoesLancamentoCartao";
 import { descartarFatura } from "@/lib/financeiro/fatura-cartao-handler";
 import {
   SortableTableHead,
@@ -739,7 +739,7 @@ export default function FaturasCartao() {
                                         <th className="text-left px-2 py-1.5 font-normal">Descrição</th>
                                         <th className="text-right px-2 py-1.5 font-normal">Valor</th>
                                         <th className="text-center px-2 py-1.5 font-normal w-[110px]">
-                                          Match NF
+                                          Ações
                                         </th>
                                         <th className="text-left px-2 py-1.5 font-normal w-[180px]">
                                           Categoria
@@ -786,7 +786,7 @@ export default function FaturasCartao() {
                                             {formatBRL(l.valor)}
                                            </td>
                                            <td className="px-2 py-1.5 text-center">
-                                             <ConciliarLancamentoPopover
+                                             <AcoesLancamentoCartao
                                                lancamento={{
                                                  id: l.id,
                                                  descricao: l.descricao,
