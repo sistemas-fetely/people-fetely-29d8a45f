@@ -4600,15 +4600,20 @@ export type Database = {
           itens: Json | null
           match_motivos: string | null
           match_score: number | null
+          moeda: string
           motivo_descarte: string | null
           nf_chave_acesso: string | null
           nf_data_emissao: string | null
           nf_numero: string | null
           nf_serie: string | null
+          pais_emissor: string
           parceiro_id: string | null
           status: string
+          taxa_conversao: number | null
+          tipo_documento: string
           updated_at: string
           valor: number
+          valor_origem: number | null
           xml_storage_path: string | null
         }
         Insert: {
@@ -4629,15 +4634,20 @@ export type Database = {
           itens?: Json | null
           match_motivos?: string | null
           match_score?: number | null
+          moeda?: string
           motivo_descarte?: string | null
           nf_chave_acesso?: string | null
           nf_data_emissao?: string | null
           nf_numero?: string | null
           nf_serie?: string | null
+          pais_emissor?: string
           parceiro_id?: string | null
           status?: string
+          taxa_conversao?: number | null
+          tipo_documento?: string
           updated_at?: string
           valor?: number
+          valor_origem?: number | null
           xml_storage_path?: string | null
         }
         Update: {
@@ -4658,15 +4668,20 @@ export type Database = {
           itens?: Json | null
           match_motivos?: string | null
           match_score?: number | null
+          moeda?: string
           motivo_descarte?: string | null
           nf_chave_acesso?: string | null
           nf_data_emissao?: string | null
           nf_numero?: string | null
           nf_serie?: string | null
+          pais_emissor?: string
           parceiro_id?: string | null
           status?: string
+          taxa_conversao?: number | null
+          tipo_documento?: string
           updated_at?: string
           valor?: number
+          valor_origem?: number | null
           xml_storage_path?: string | null
         }
         Relationships: [
