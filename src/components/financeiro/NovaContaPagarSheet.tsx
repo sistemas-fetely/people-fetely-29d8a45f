@@ -33,7 +33,9 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import { Plus, ChevronsUpDown, Check } from "lucide-react";
+import { Plus, ChevronsUpDown, Check, Paperclip } from "lucide-react";
+import { NfStageVinculadaCard } from "@/components/financeiro/NfStageVinculadaCard";
+import { NfStageBuscadorModal } from "@/components/financeiro/NfStageBuscadorModal";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import {
