@@ -15,7 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Receipt, Loader2 } from "lucide-react";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
 import { toast } from "sonner";
-import CategoriaCombobox, { type CategoriaOption } from "./CategoriaCombobox";
+import { CategoriaCombobox, type CategoriaOption } from "./CategoriaCombobox";
 
 type Movimentacao = {
   id: string;
