@@ -812,6 +812,46 @@ export default function NFsStage() {
                         </div>
                       </TableCell>
                     </TableRow>
+                    {isExpandida && temItens && (
+                      <TableRow className="bg-muted/20">
+                        <TableCell colSpan={99} className="p-0">
+                          <div className="px-6 py-3 border-t border-b">
+                            <div className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1.5">
+                              <Package className="h-3.5 w-3.5" />
+                              Itens da NF ({nf.itens!.length})
+                            </div>
+                            <div className="space-y-1">
+                              {nf.itens!.map((item, idx) => (
+                                <div
+                                  key={idx}
+                                  className="grid grid-cols-12 gap-2 text-xs py-1 px-2 rounded hover:bg-background"
+                                >
+                                  <div className="col-span-6 font-medium truncate" title={item.descricao}>
+                                    {item.descricao || "—"}
+                                  </div>
+                                  <div className="col-span-1 text-muted-foreground text-[10px] font-mono">
+                                    NCM {item.ncm || "—"}
+                                  </div>
+                                  <div className="col-span-1 text-muted-foreground text-[10px] font-mono">
+                                    CFOP {item.cfop || "—"}
+                                  </div>
+                                  <div className="col-span-1 text-right text-[10px] text-muted-foreground">
+                                    {item.quantidade || 0} {item.unidade || ""}
+                                  </div>
+                                  <div className="col-span-1 text-right text-[10px] text-muted-foreground font-mono">
+                                    {item.valor_unitario ? formatBRL(item.valor_unitario) : "—"}
+                                  </div>
+                                  <div className="col-span-2 text-right font-mono">
+                                    {formatBRL(item.valor_total || 0)}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                    </Fragment>
                   );
                 })}
               </TableBody>
