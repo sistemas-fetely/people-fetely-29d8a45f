@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
@@ -45,6 +45,8 @@ import {
   Calculator,
   Package,
   X,
+  ChevronDown,
+  ChevronRight,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
@@ -86,6 +88,16 @@ type NFStage = {
   match_score: number | null;
   importacao_lote_id: string | null;
   created_at: string;
+  itens: Array<{
+    codigo_produto?: string;
+    descricao?: string;
+    ncm?: string;
+    cfop?: string;
+    unidade?: string;
+    quantidade?: number;
+    valor_unitario?: number;
+    valor_total?: number;
+  }> | null;
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -120,6 +132,16 @@ export default function NFsStage() {
   const [paraDescartar, setParaDescartar] = useState<NFStage[]>([]);
   const [salvandoCategoria, setSalvandoCategoria] = useState<Set<string>>(new Set());
   const [enviando, setEnviando] = useState(false);
+  const [expandidas, setExpandidas] = useState<Set<string>>(new Set());
+
+  function toggleExpandir(id: string) {
+    setExpandidas((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
 
   type SortColumn = "fornecedor" | "nf" | "data" | "valor" | "categoria" | "status";
   const [sort, setSort] = useState<SortState<SortColumn> | null>(null);
@@ -659,17 +681,35 @@ export default function NFsStage() {
                   const sugestao =
                     nf.status === "pendente" ? sugestoesPorNf[nf.id] : null;
 
+                  const temItens = !!(nf.itens && Array.isArray(nf.itens) && nf.itens.length > 0);
+                  const isExpandida = expandidas.has(nf.id);
+
                   return (
-                    <TableRow
-                      key={nf.id}
-                      className={isSel ? "bg-admin/5" : ""}
-                    >
+                    <Fragment key={nf.id}>
+                      <TableRow className={isSel ? "bg-admin/5" : ""}>
                       <TableCell>
-                        <Checkbox
-                          checked={isSel}
-                          disabled={!podeSel}
-                          onCheckedChange={() => toggleSel(nf.id)}
-                        />
+                        <div className="flex items-center gap-1">
+                          <Checkbox
+                            checked={isSel}
+                            disabled={!podeSel}
+                            onCheckedChange={() => toggleSel(nf.id)}
+                          />
+                          {temItens && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-5 w-5 p-0"
+                              onClick={() => toggleExpandir(nf.id)}
+                              title={`${nf.itens!.length} ite${nf.itens!.length === 1 ? "m" : "ns"}`}
+                            >
+                              {isExpandida ? (
+                                <ChevronDown className="h-3.5 w-3.5" />
+                              ) : (
+                                <ChevronRight className="h-3.5 w-3.5" />
+                              )}
+                            </Button>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell className="max-w-[260px]">
                         <div className="text-sm truncate font-medium" title={nf.fornecedor_razao_social || ""}>
@@ -772,6 +812,46 @@ export default function NFsStage() {
                         </div>
                       </TableCell>
                     </TableRow>
+                    {isExpandida && temItens && (
+                      <TableRow className="bg-muted/20">
+                        <TableCell colSpan={99} className="p-0">
+                          <div className="px-6 py-3 border-t border-b">
+                            <div className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1.5">
+                              <Package className="h-3.5 w-3.5" />
+                              Itens da NF ({nf.itens!.length})
+                            </div>
+                            <div className="space-y-1">
+                              {nf.itens!.map((item, idx) => (
+                                <div
+                                  key={idx}
+                                  className="grid grid-cols-12 gap-2 text-xs py-1 px-2 rounded hover:bg-background"
+                                >
+                                  <div className="col-span-6 font-medium truncate" title={item.descricao}>
+                                    {item.descricao || "—"}
+                                  </div>
+                                  <div className="col-span-1 text-muted-foreground text-[10px] font-mono">
+                                    NCM {item.ncm || "—"}
+                                  </div>
+                                  <div className="col-span-1 text-muted-foreground text-[10px] font-mono">
+                                    CFOP {item.cfop || "—"}
+                                  </div>
+                                  <div className="col-span-1 text-right text-[10px] text-muted-foreground">
+                                    {item.quantidade || 0} {item.unidade || ""}
+                                  </div>
+                                  <div className="col-span-1 text-right text-[10px] text-muted-foreground font-mono">
+                                    {item.valor_unitario ? formatBRL(item.valor_unitario) : "—"}
+                                  </div>
+                                  <div className="col-span-2 text-right font-mono">
+                                    {formatBRL(item.valor_total || 0)}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                    </Fragment>
                   );
                 })}
               </TableBody>
