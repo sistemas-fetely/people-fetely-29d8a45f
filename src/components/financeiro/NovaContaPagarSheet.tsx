@@ -267,6 +267,32 @@ export function NovaContaPagarSheet({ open, onOpenChange }: Props) {
               <Textarea value={observacao} onChange={(e) => setObservacao(e.target.value)} rows={2} />
             </div>
 
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <Label className="m-0">Prova fiscal (NF/Recibo)</Label>
+                <span className="text-xs text-muted-foreground">opcional</span>
+              </div>
+              {nfStageId ? (
+                <NfStageVinculadaCard
+                  nfStageId={nfStageId}
+                  onRemover={() => setNfStageId(null)}
+                />
+              ) : (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full justify-start gap-2 font-normal"
+                  onClick={() => setNfStageBuscaOpen(true)}
+                >
+                  <Paperclip className="h-4 w-4" />
+                  Anexar do Repositório de NFs
+                </Button>
+              )}
+              <p className="text-xs text-muted-foreground mt-1.5">
+                Se a NF/recibo já está no repositório, vincule aqui. Se ainda não está, deixe em branco — você pode anexar depois.
+              </p>
+            </div>
+
             <div className="grid grid-cols-3 gap-3">
               <div>
                 <Label>Valor *</Label>
