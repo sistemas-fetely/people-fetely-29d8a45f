@@ -40,6 +40,7 @@ import {
 import { toast } from "sonner";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
 import { parsearOFX, type OFXResultado, type OFXTransacao } from "@/lib/financeiro/parser-ofx";
+import { gerarHashMov } from "@/lib/financeiro/hash-mov";
 
 interface Props {
   open: boolean;
