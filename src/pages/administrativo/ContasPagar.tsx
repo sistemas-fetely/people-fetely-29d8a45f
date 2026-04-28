@@ -78,7 +78,7 @@ const PAGE_SIZE = 20;
 export default function ContasPagar() {
   const qc = useQueryClient();
   const [statusFilter, setStatusFilter] = useState<string>("todos");
-  const [docsFilter, setDocsFilter] = useState<string>("todos");
+  const [tagFilter, setTagFilter] = useState<"todas" | "doc_pendente" | "atrasada">("todas");
   const [busca, setBusca] = useState("");
   const [dataDe, setDataDe] = useState("");
   const [dataAte, setDataAte] = useState("");
