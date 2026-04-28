@@ -4551,12 +4551,41 @@ export type Database = {
           },
         ]
       }
+      nf_stage_pares_verificados: {
+        Row: {
+          created_at: string
+          decisao: string
+          id: string
+          id_a: string
+          id_b: string
+          motivo: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          decisao: string
+          id?: string
+          id_a: string
+          id_b: string
+          motivo?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          decisao?: string
+          id?: string
+          id_a?: string
+          id_b?: string
+          motivo?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       nfs_stage: {
         Row: {
           arquivo_nome: string | null
           arquivo_storage_path: string | null
           categoria_id: string | null
-          conta_pagar_existente_id: string | null
           conta_pagar_id: string | null
           created_at: string
           criada_por: string | null
@@ -4568,8 +4597,6 @@ export type Database = {
           fornecedor_razao_social: string | null
           id: string
           importacao_lote_id: string | null
-          importada_em: string | null
-          importada_por: string | null
           itens: Json | null
           match_motivos: string | null
           match_score: number | null
@@ -4578,7 +4605,6 @@ export type Database = {
           nf_data_emissao: string | null
           nf_numero: string | null
           nf_serie: string | null
-          observacoes_importacao: string | null
           parceiro_id: string | null
           status: string
           updated_at: string
@@ -4589,7 +4615,6 @@ export type Database = {
           arquivo_nome?: string | null
           arquivo_storage_path?: string | null
           categoria_id?: string | null
-          conta_pagar_existente_id?: string | null
           conta_pagar_id?: string | null
           created_at?: string
           criada_por?: string | null
@@ -4601,8 +4626,6 @@ export type Database = {
           fornecedor_razao_social?: string | null
           id?: string
           importacao_lote_id?: string | null
-          importada_em?: string | null
-          importada_por?: string | null
           itens?: Json | null
           match_motivos?: string | null
           match_score?: number | null
@@ -4611,7 +4634,6 @@ export type Database = {
           nf_data_emissao?: string | null
           nf_numero?: string | null
           nf_serie?: string | null
-          observacoes_importacao?: string | null
           parceiro_id?: string | null
           status?: string
           updated_at?: string
@@ -4622,7 +4644,6 @@ export type Database = {
           arquivo_nome?: string | null
           arquivo_storage_path?: string | null
           categoria_id?: string | null
-          conta_pagar_existente_id?: string | null
           conta_pagar_id?: string | null
           created_at?: string
           criada_por?: string | null
@@ -4634,8 +4655,6 @@ export type Database = {
           fornecedor_razao_social?: string | null
           id?: string
           importacao_lote_id?: string | null
-          importada_em?: string | null
-          importada_por?: string | null
           itens?: Json | null
           match_motivos?: string | null
           match_score?: number | null
@@ -4644,7 +4663,6 @@ export type Database = {
           nf_data_emissao?: string | null
           nf_numero?: string | null
           nf_serie?: string | null
-          observacoes_importacao?: string | null
           parceiro_id?: string | null
           status?: string
           updated_at?: string
@@ -4657,13 +4675,6 @@ export type Database = {
             columns: ["categoria_id"]
             isOneToOne: false
             referencedRelation: "plano_contas"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "nfs_stage_conta_pagar_existente_id_fkey"
-            columns: ["conta_pagar_existente_id"]
-            isOneToOne: false
-            referencedRelation: "contas_pagar_receber"
             referencedColumns: ["id"]
           },
           {
@@ -8346,6 +8357,29 @@ export type Database = {
           fonte: string
         }[]
       }
+      detectar_pares_provaveis_nf: {
+        Args: { p_score_minimo?: number }
+        Returns: {
+          a_categoria_id: string
+          a_data: string
+          a_fornecedor: string
+          a_numero: string
+          a_status: string
+          a_tipo: string
+          a_valor: number
+          b_categoria_id: string
+          b_data: string
+          b_fornecedor: string
+          b_numero: string
+          b_status: string
+          b_tipo: string
+          b_valor: number
+          id_a: string
+          id_b: string
+          motivo_match: string
+          score: number
+        }[]
+      }
       detectar_tipo_pagamento: { Args: { descricao: string }; Returns: string }
       documentos_pendentes_agrupados: {
         Args: {
@@ -8394,15 +8428,6 @@ export type Database = {
           enriquecidos: number
           sem_match: number
           total_processados: number
-        }[]
-      }
-      enviar_stage_para_contas_pagar: {
-        Args: { p_stage_ids: string[]; p_user_id?: string }
-        Returns: {
-          acao: string
-          conta_pagar_id: string
-          erro: string
-          stage_id: string
         }[]
       }
       exportar_pacote_documentos: {
@@ -8498,11 +8523,34 @@ export type Database = {
         Args: { _email_destinatario: string; _nota_id: string }
         Returns: Json
       }
+      marcar_pares_diferentes: {
+        Args: { p_id_a: string; p_id_b: string; p_user_id?: string }
+        Returns: {
+          erro: string
+          ok: boolean
+        }[]
+      }
+      merge_contas_duplicadas: {
+        Args: { p_id_descartar: string; p_id_manter: string }
+        Returns: Json
+      }
       merge_nf_stage: {
         Args: { p_nf: Json; p_user_id?: string }
         Returns: {
           acao: string
           stage_id: string
+        }[]
+      }
+      mesclar_pares_nf: {
+        Args: {
+          p_id_descartar: string
+          p_id_manter: string
+          p_user_id?: string
+        }
+        Returns: {
+          erro: string
+          id_resultante: string
+          ok: boolean
         }[]
       }
       meu_contrato_pj_ativo: {
@@ -8543,6 +8591,7 @@ export type Database = {
         Args: { p_descricao: string }
         Returns: string
       }
+      normalizar_numero_nf: { Args: { p_numero: string }; Returns: string }
       org_sync_in_progress: { Args: never; Returns: boolean }
       perfil_area_do_departamento: {
         Args: { _departamento_id: string }
@@ -8665,6 +8714,8 @@ export type Database = {
         Returns: Json
       }
       revogar_acessos_ex_colaboradores: { Args: never; Returns: number }
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
       submit_convite_cadastro: {
         Args: { _dados: Json; _token: string }
         Returns: boolean
