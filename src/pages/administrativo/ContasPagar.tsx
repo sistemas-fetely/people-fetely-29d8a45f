@@ -341,27 +341,26 @@ export default function ContasPagar() {
               className={`w-full lg:w-44 ${dataAte ? filtroAtivoCls : ""}`}
             />
             <Select
-              value={docsFilter}
+              value={tagFilter}
               onValueChange={(v) => {
-                setDocsFilter(v);
+                setTagFilter(v as "todas" | "doc_pendente" | "atrasada");
                 setPage(1);
               }}
             >
               <SelectTrigger
-                className={`w-full lg:w-40 ${docsFilter !== "todos" ? filtroAtivoCls : ""}`}
+                className={`w-full lg:w-44 ${tagFilter !== "todas" ? filtroAtivoCls : ""}`}
               >
-                <SelectValue placeholder="Documentação" />
+                <SelectValue placeholder="Tags" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="todos">Docs: todas</SelectItem>
-                <SelectItem value="ok">Docs OK</SelectItem>
-                <SelectItem value="pendente">Sem docs</SelectItem>
-                <SelectItem value="parcial">Parcial</SelectItem>
+                <SelectItem value="todas">Todas as tags</SelectItem>
+                <SelectItem value="doc_pendente">Com doc pendente</SelectItem>
+                <SelectItem value="atrasada">Atrasadas</SelectItem>
               </SelectContent>
             </Select>
             <div className="flex flex-wrap gap-1">
               {(
-                ["todos", "aberto", "atrasado", "aprovado", "doc_pendente", "finalizado", "cancelado"] as const
+                ["todos", "aberto", "aprovado", "aguardando_pagamento", "cancelado"] as const
               ).map((s) => (
                 <Button
                   key={s}
@@ -373,7 +372,7 @@ export default function ContasPagar() {
                   }}
                   className="capitalize"
                 >
-                  {s === "doc_pendente" ? "Doc. Pendente" : s}
+                  {s === "todos" ? "todos" : (STATUS_LABELS[s] || s)}
                 </Button>
               ))}
             </div>
