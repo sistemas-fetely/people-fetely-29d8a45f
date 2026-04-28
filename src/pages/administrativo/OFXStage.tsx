@@ -7,10 +7,11 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Layers, Link2, Plus, X, Loader2, AlertCircle, Search, ArrowLeftRight, Layers as LayersIcon } from "lucide-react";
+import { Layers, Link2, Plus, X, Loader2, AlertCircle, Search, ArrowLeftRight, CreditCard, Layers as LayersIcon } from "lucide-react";
 import { toast } from "sonner";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
 import { BuscarMultiplosLancamentosDialog } from "@/components/financeiro/BuscarMultiplosLancamentosDialog";
+import { getFaturaInfoMap, type FaturaInfo } from "@/lib/financeiro/get-fatura-info";
 
 type ContaBancaria = { id: string; nome_exibicao: string };
 
@@ -31,6 +32,8 @@ type ContaPagarPendente = {
   data_vencimento: string;
   fornecedor_cliente: string | null;
   status: string;
+  forma_pagamento: string | null;
+  formas_pagamento: { nome: string } | null;
 };
 
 export default function OFXStage() {
@@ -77,12 +80,22 @@ export default function OFXStage() {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data } = await (supabase as any)
         .from("contas_pagar_receber")
-        .select("id, descricao, valor, data_vencimento, fornecedor_cliente, status")
+        .select(
+          "id, descricao, valor, data_vencimento, fornecedor_cliente, status, forma_pagamento, formas_pagamento:forma_pagamento_id(nome)",
+        )
         .in("status", ["aprovado", "aguardando_pagamento"])
         .is("movimentacao_bancaria_id", null)
         .order("data_vencimento", { ascending: true });
       return (data || []) as ContaPagarPendente[];
     },
+  });
+
+  // Map: conta_pagar_id -> { banco_nome, fatura_vencimento }
+  // Trazido em query separada — não polui o select acima e tolera ausência.
+  const { data: faturaInfoMap = new Map<string, FaturaInfo>() } = useQuery({
+    queryKey: ["fatura-info-map-ofx", contasPagar.map((c) => c.id).join(",")],
+    enabled: contasPagar.length > 0,
+    queryFn: () => getFaturaInfoMap(contasPagar.map((c) => c.id)),
   });
 
   const ofxFiltradas = useMemo(() => {
@@ -366,6 +379,8 @@ export default function OFXStage() {
                 contasFiltradas.map((c) => {
                   const score = c.score || 0;
                   const acao = acaoEmCurso?.includes(c.id);
+                  const meioPagamento = c.formas_pagamento?.nome || c.forma_pagamento;
+                  const faturaInfo = faturaInfoMap.get(c.id);
                   return (
                     <div
                       key={c.id}
@@ -384,6 +399,20 @@ export default function OFXStage() {
                             {c.fornecedor_cliente && <span>{c.fornecedor_cliente} · </span>}
                             venc {formatDateBR(c.data_vencimento)}
                           </div>
+                          {meioPagamento && (
+                            <div className="flex items-center gap-1 text-[10px] text-zinc-600 mt-0.5">
+                              <CreditCard className="h-3 w-3" />
+                              <span>{meioPagamento}</span>
+                              {faturaInfo?.banco_nome && (
+                                <span className="text-muted-foreground"> · {faturaInfo.banco_nome}</span>
+                              )}
+                              {faturaInfo?.fatura_vencimento && (
+                                <span className="text-muted-foreground">
+                                  {" "}· fat {formatDateBR(faturaInfo.fatura_vencimento)}
+                                </span>
+                              )}
+                            </div>
+                          )}
                         </div>
                         <div className="font-mono font-semibold whitespace-nowrap">{formatBRL(c.valor)}</div>
                       </div>
