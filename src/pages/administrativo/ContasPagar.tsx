@@ -531,24 +531,25 @@ export default function ContasPagar() {
                           <TableCell>
                             <div className="flex flex-col gap-1 items-start">
                               <Badge className={STATUS_STYLES[c.status] || "bg-muted"}>
-                                {c.status === "doc_pendente" ? "Doc. Pendente" : c.status}
-                              </Badge>
-                              {c.docs_status === "pendente" &&
-                                c.status !== "cancelado" &&
-                                c.status !== "finalizado" && (
-                                  <Badge
-                                    variant="outline"
-                                    className="text-[9px] border-amber-400 text-amber-600"
-                                  >
-                                    Sem doc
-                                  </Badge>
+                                {STATUS_LABELS[c.status] || c.status}
+                                {c.status === "aguardando_pagamento" && c.mov_conciliada && (
+                                  <span className="ml-1 text-xs">✓</span>
                                 )}
-                              {c.docs_status === "parcial" && (
+                              </Badge>
+                              {c.tem_doc_pendente && (
                                 <Badge
                                   variant="outline"
-                                  className="text-[9px] border-amber-400 text-amber-600"
+                                  className="bg-amber-50 text-amber-700 border-amber-300 text-[9px]"
                                 >
-                                  Doc parcial
+                                  Doc pendente
+                                </Badge>
+                              )}
+                              {c.atrasada && (
+                                <Badge
+                                  variant="outline"
+                                  className="bg-red-50 text-red-700 border-red-300 text-[9px]"
+                                >
+                                  Atrasada
                                 </Badge>
                               )}
                             </div>
