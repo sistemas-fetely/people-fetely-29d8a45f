@@ -74,6 +74,7 @@ type NFStage = {
   fonte: string;
   arquivo_nome: string | null;
   arquivo_storage_path: string | null;
+  xml_storage_path: string | null;
   fornecedor_cnpj: string | null;
   fornecedor_razao_social: string | null;
   fornecedor_cliente: string | null;
