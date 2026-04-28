@@ -425,7 +425,18 @@ export default function EnviarPagamentoDialog({ open, onOpenChange, conta, onDon
       onDone();
       onOpenChange(false);
     } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
+      // Tratamento robusto: extrai mensagem de Error, objetos Supabase, ou converte
+      let msg = "Erro desconhecido";
+      if (e instanceof Error) {
+        msg = e.message;
+      } else if (e && typeof e === "object") {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const err = e as any;
+        msg = err.message || err.error_description || err.details || JSON.stringify(e);
+      } else {
+        msg = String(e);
+      }
+      console.error("Erro ao enviar pagamento:", e);
       toast.error("Erro: " + msg);
     } finally {
       setEnviando(false);
