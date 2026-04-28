@@ -132,6 +132,16 @@ export default function NFsStage() {
   const [paraDescartar, setParaDescartar] = useState<NFStage[]>([]);
   const [salvandoCategoria, setSalvandoCategoria] = useState<Set<string>>(new Set());
   const [enviando, setEnviando] = useState(false);
+  const [expandidas, setExpandidas] = useState<Set<string>>(new Set());
+
+  function toggleExpandir(id: string) {
+    setExpandidas((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
 
   type SortColumn = "fornecedor" | "nf" | "data" | "valor" | "categoria" | "status";
   const [sort, setSort] = useState<SortState<SortColumn> | null>(null);
