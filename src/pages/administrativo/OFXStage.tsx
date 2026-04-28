@@ -415,6 +415,20 @@ export default function OFXStage() {
           </div>
         </div>
       )}
+
+      {ofxSelecionada && (
+        <BuscarMultiplosLancamentosDialog
+          open={buscaMultiplaOpen}
+          onOpenChange={setBuscaMultiplaOpen}
+          ofxId={ofxSelecionada.id}
+          ofxDescricao={ofxSelecionada.descricao}
+          ofxValorAbs={Math.abs(ofxSelecionada.valor)}
+          ofxData={ofxSelecionada.data_transacao}
+          onSuccess={() => {
+            setOfxSelecionada(null);
+          }}
+        />
+      )}
     </div>
   );
 }
