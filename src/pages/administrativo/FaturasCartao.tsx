@@ -431,6 +431,36 @@ export default function FaturasCartao() {
           </div>
         </div>
 
+        {/* KPIs financeiros agregados */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <Card className="cursor-pointer hover:shadow-md transition" onClick={() => setFiltroPill("todas")}>
+            <CardContent className="p-4">
+              <div className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">Faturas</div>
+              <div className="text-2xl font-bold mt-1">{totals.qtdFaturas}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">Total geral</div>
+              <div className="text-xl font-bold mt-1">{formatBRL(totals.totalGeral)}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="text-[10px] uppercase tracking-wide text-emerald-700 font-medium">Conciliado</div>
+              <div className="text-xl font-bold mt-1 text-emerald-700">{formatBRL(totals.totalConciliado)}</div>
+              <div className="text-[10px] text-muted-foreground mt-0.5">já decidido</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="text-[10px] uppercase tracking-wide text-amber-700 font-medium">Pendente</div>
+              <div className="text-xl font-bold mt-1 text-amber-700">{formatBRL(totals.totalPendente)}</div>
+              <div className="text-[10px] text-muted-foreground mt-0.5">a decidir</div>
+            </CardContent>
+          </Card>
+        </div>
+
         {/* KPIs como pills */}
         <div className="flex flex-wrap gap-2">
           <KpiPill
