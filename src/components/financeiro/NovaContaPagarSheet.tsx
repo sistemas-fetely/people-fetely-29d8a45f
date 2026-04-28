@@ -414,6 +414,7 @@ export function NovaContaPagarSheet({ open, onOpenChange }: Props) {
         onOpenChange={setNfStageBuscaOpen}
         valorEsperado={valorNum > 0 ? valorNum : undefined}
         fornecedorEsperado={parceiroSelected?.razao_social || undefined}
+        parceiroId={parceiroId}
         onSelecionar={(id) => {
           setNfStageId(id);
           setNfStageBuscaOpen(false);
