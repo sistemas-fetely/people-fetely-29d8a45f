@@ -20,6 +20,7 @@ const BUCKET = "nfs-stage";
 export interface StageResult {
   sucesso: number;
   duplicatas: number;
+  enriquecidas: number;
   erros: string[];
   loteId: string;
 }
