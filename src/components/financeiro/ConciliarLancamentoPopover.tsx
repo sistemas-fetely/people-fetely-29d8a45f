@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, Plus, X, RotateCcw, Loader2 } from "lucide-react";
+import { CheckCircle2, Plus, RotateCcw, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { formatBRL, formatDateBR as formatDataBR } from "@/lib/format-currency";
 
@@ -30,17 +30,16 @@ interface MatchSugerido {
 interface Props {
   lancamento: Lancamento;
   onSucesso?: () => void;
-  onCriarDespesa?: (lancamentoId: string) => void;
 }
 
 const STATUS_CONFIG: Record<string, { label: string; cls: string }> = {
   pendente: { label: "Pendente", cls: "bg-amber-50 text-amber-700 border-amber-300" },
-  conciliado: { label: "Conciliado", cls: "bg-emerald-50 text-emerald-700 border-emerald-300" },
+  conciliado: { label: "Vinculada", cls: "bg-emerald-50 text-emerald-700 border-emerald-300" },
   virou_despesa: { label: "Virou despesa", cls: "bg-blue-50 text-blue-700 border-blue-300" },
   ignorado: { label: "Ignorado", cls: "bg-zinc-50 text-zinc-700 border-zinc-300" },
 };
 
-export function ConciliarLancamentoPopover({ lancamento, onSucesso, onCriarDespesa }: Props) {
+export function ConciliarLancamentoPopover({ lancamento, onSucesso }: Props) {
   const [open, setOpen] = useState(false);
   const [selecionado, setSelecionado] = useState<string | null>(null);
   const [salvando, setSalvando] = useState(false);
@@ -98,26 +97,30 @@ export function ConciliarLancamentoPopover({ lancamento, onSucesso, onCriarDespe
     }
   }
 
-  async function handleIgnorar() {
-    if (!confirm(`Ignorar o lançamento "${lancamento.descricao}"? Pode reativar depois se mudar de ideia.`)) {
+  async function handleCriarDespesa() {
+    if (!confirm(`Criar despesa aprovada a partir de "${lancamento.descricao}"?`)) {
       return;
     }
     setSalvando(true);
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data: resultado, error } = await (supabase as any).rpc(
-        "ignorar_lancamento",
+        "criar_despesa_de_lancamento",
         { p_lancamento_id: lancamento.id }
       );
       if (error) throw error;
       if (!resultado?.ok) {
-        toast.error(resultado?.erro || "Não foi possível ignorar");
+        toast.error(resultado?.erro || "Erro ao criar despesa");
         return;
       }
-      toast.success("Lançamento ignorado");
+      toast.success(
+        `Despesa aprovada criada: ${resultado.descricao} — ${formatBRL(resultado.valor)}`,
+        { duration: 5000 }
+      );
       setOpen(false);
       qc.invalidateQueries({ queryKey: ["fatura-lancamentos"] });
       qc.invalidateQueries({ queryKey: ["faturas-cartao"] });
+      qc.invalidateQueries({ queryKey: ["contas-pagar"] });
       onSucesso?.();
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
@@ -253,7 +256,7 @@ export function ConciliarLancamentoPopover({ lancamento, onSucesso, onCriarDespe
                 )}
               </div>
 
-              {/* Ações */}
+              {/* Ações: 2 botões apenas */}
               <div className="space-y-1.5 pt-1 border-t">
                 <Button
                   size="sm"
@@ -262,30 +265,17 @@ export function ConciliarLancamentoPopover({ lancamento, onSucesso, onCriarDespe
                   disabled={!selecionado || salvando}
                 >
                   {salvando ? <Loader2 className="h-3 w-3 animate-spin" /> : <CheckCircle2 className="h-3 w-3" />}
-                  Conciliar selecionada
+                  Vincular selecionada
                 </Button>
                 <Button
                   size="sm"
                   variant="outline"
                   className="w-full gap-2"
-                  onClick={() => {
-                    setOpen(false);
-                    onCriarDespesa?.(lancamento.id);
-                  }}
+                  onClick={handleCriarDespesa}
                   disabled={salvando}
                 >
-                  <Plus className="h-3 w-3" />
-                  Criar despesa daqui
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="w-full gap-2 text-zinc-600"
-                  onClick={handleIgnorar}
-                  disabled={salvando}
-                >
-                  <X className="h-3 w-3" />
-                  Ignorar
+                  {salvando ? <Loader2 className="h-3 w-3 animate-spin" /> : <Plus className="h-3 w-3" />}
+                  Criar despesa
                 </Button>
               </div>
             </>
