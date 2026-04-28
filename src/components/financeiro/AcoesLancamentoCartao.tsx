@@ -48,17 +48,23 @@ export function AcoesLancamentoCartao({ lancamento }: Props) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data: resultado, error } = await (supabase as any).rpc(
         "criar_despesa_de_lancamento",
-        { p_lancamento_id: lancamento.id }
+        {
+          p_lancamento_id: lancamento.id,
+          p_total_parcelas: parcelas,
+          p_gerar_todas: parcelas > 1 ? gerarTodas : false,
+        }
       );
       if (error) throw error;
       if (!resultado?.ok) {
         toast.error(resultado?.erro || "Erro ao criar despesa");
         return;
       }
-      toast.success(
-        `Despesa aprovada criada: ${resultado.descricao} — ${formatBRL(resultado.valor)}`,
-        { duration: 5000 }
-      );
+      const qtd = resultado.qtd_contas_criadas || 1;
+      const msg = qtd > 1
+        ? `${qtd} parcelas criadas: ${resultado.descricao} — ${formatBRL(resultado.valor)} cada`
+        : `Despesa aprovada criada: ${resultado.descricao} — ${formatBRL(resultado.valor)}`;
+      toast.success(msg, { duration: 5000 });
+      setCriarOpen(false);
       qc.invalidateQueries({ queryKey: ["fatura-lancamentos"] });
       qc.invalidateQueries({ queryKey: ["faturas-cartao"] });
       qc.invalidateQueries({ queryKey: ["contas-pagar"] });
