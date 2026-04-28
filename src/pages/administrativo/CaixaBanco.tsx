@@ -57,6 +57,8 @@ type Lancamento = {
   nf_numero: string | null;
   origem_view: "conta_pagar" | "cartao_lancamento";
   fatura_id: string | null;
+  vinculada_cartao?: boolean | null;
+  fatura_vencimento?: string | null;
 };
 
 type ContaBancariaLite = {
@@ -484,13 +486,18 @@ export default function CaixaBanco() {
                             <div className="truncate text-xs text-muted-foreground" title={l.descricao}>
                               {l.descricao}
                             </div>
-                            {l.origem_view === "cartao_lancamento" && (
+                            {(l.vinculada_cartao || l.origem_view === "cartao_lancamento") && (
                               <Badge
                                 variant="outline"
                                 className="text-[9px] py-0 px-1.5 h-4 border-violet-300 text-violet-700 bg-violet-50/50 gap-1 mt-0.5"
                               >
                                 <CreditCard className="h-2.5 w-2.5" />
                                 Cartão
+                                {l.fatura_vencimento && (
+                                  <span className="ml-0.5 opacity-80">
+                                    · venc {new Date(l.fatura_vencimento).toLocaleDateString("pt-BR")}
+                                  </span>
+                                )}
                               </Badge>
                             )}
                           </TableCell>
