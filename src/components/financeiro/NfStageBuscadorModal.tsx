@@ -96,7 +96,41 @@ export function NfStageBuscadorModal({
                   <button
                     key={nf.id}
                     type="button"
-                    onClick={() => onSelecionar(nf.id)}
+                    onClick={async () => {
+                      if (parceiroId) {
+                        try {
+                          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                          const { data: resultado, error } = await (supabase as any)
+                            .rpc("vincular_nf_a_parceiro", {
+                              p_nf_stage_id: nf.id,
+                              p_parceiro_id: parceiroId,
+                            });
+                          if (error) {
+                            toast.error("Erro ao vincular: " + error.message);
+                            return;
+                          }
+                          if (resultado?.mudancas_parceiro?.length > 0) {
+                            const m = resultado.mudancas_parceiro[0];
+                            toast.success(
+                              `Parceiro atualizado: ${m.antes || "(vazio)"} → ${m.depois}`,
+                              { duration: 4000 }
+                            );
+                          }
+                          if (resultado?.cascata_outras_nfs > 0) {
+                            const n = resultado.cascata_outras_nfs;
+                            toast.info(
+                              `${n} outra${n === 1 ? "" : "s"} NF${n === 1 ? "" : "s"} do mesmo fornecedor também foi${n === 1 ? "" : "ram"} vinculada${n === 1 ? "" : "s"}`,
+                              { duration: 4000 }
+                            );
+                          }
+                        } catch (e) {
+                          const msg = e instanceof Error ? e.message : String(e);
+                          toast.error("Erro: " + msg);
+                          return;
+                        }
+                      }
+                      onSelecionar(nf.id);
+                    }}
                     className={`w-full text-left p-3 border rounded-md hover:bg-muted/50 transition-colors ${
                       valorMatch ? "border-emerald-300 bg-emerald-50/50" : ""
                     }`}
