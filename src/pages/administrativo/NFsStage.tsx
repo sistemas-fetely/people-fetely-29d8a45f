@@ -621,7 +621,6 @@ export default function NFsStage() {
                         <div className="flex items-center gap-1">
                           <Checkbox
                             checked={isSel}
-                            disabled={!podeSel}
                             onCheckedChange={() => toggleSel(nf.id)}
                           />
                           {temItens && (
