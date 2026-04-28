@@ -57,6 +57,7 @@ export function ImportarOFXDialog({ open, onOpenChange, onSuccess }: Props) {
 
   const [contaBancariaId, setContaBancariaId] = useState("");
   const [arquivoNome, setArquivoNome] = useState("");
+  const [arquivoFile, setArquivoFile] = useState<File | null>(null);
   const [parseado, setParseado] = useState<OFXResultado | null>(null);
   const [duplicatasFitids, setDuplicatasFitids] = useState<Set<string>>(new Set());
   const [etapa, setEtapa] = useState<EtapaImport>("upload");
