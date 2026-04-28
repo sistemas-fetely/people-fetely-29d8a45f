@@ -104,21 +104,13 @@ export default function ContasPagar() {
   const filtered = useMemo(() => {
     let list = data || [];
     if (statusFilter !== "todos") {
-      if (statusFilter === "atrasado") {
-        // "Atrasado" é calculado: vencimento passado + status ativo (não finalizado/cancelado)
-        const hoje = new Date().toISOString().substring(0, 10);
-        list = list.filter(
-          (c) =>
-            c.data_vencimento &&
-            c.data_vencimento < hoje &&
-            c.status !== "finalizado" &&
-            c.status !== "cancelado",
-        );
-      } else {
-        list = list.filter((c) => c.status === statusFilter);
-      }
+      list = list.filter((c) => c.status === statusFilter);
     }
-    if (docsFilter !== "todos") list = list.filter((c) => (c.docs_status || "pendente") === docsFilter);
+    if (tagFilter === "doc_pendente") {
+      list = list.filter((c) => c.tem_doc_pendente === true);
+    } else if (tagFilter === "atrasada") {
+      list = list.filter((c) => c.atrasada === true);
+    }
     if (busca.trim()) {
       const t = busca.toLowerCase();
       list = list.filter(
@@ -131,38 +123,26 @@ export default function ContasPagar() {
     if (dataDe) list = list.filter((c) => (c.data_vencimento || "") >= dataDe);
     if (dataAte) list = list.filter((c) => (c.data_vencimento || "") <= dataAte);
     return list;
-  }, [data, statusFilter, docsFilter, busca, dataDe, dataAte]);
+  }, [data, statusFilter, tagFilter, busca, dataDe, dataAte]);
 
   const totals = useMemo(() => {
     const all = data || [];
-    const hoje = new Date().toISOString().substring(0, 10);
     const aberto = all
-      .filter((c) => c.status === "aberto" || c.status === "aprovado" || c.status === "doc_pendente")
+      .filter((c) => c.status === "aberto" || c.status === "aprovado")
       .reduce((s, c) => s + Number(c.valor || 0), 0);
     const atrasado = all
-      .filter(
-        (c) =>
-          c.data_vencimento &&
-          c.data_vencimento < hoje &&
-          c.status !== "finalizado" &&
-          c.status !== "cancelado",
-      )
+      .filter((c) => c.atrasada === true)
       .reduce((s, c) => s + Number(c.valor || 0), 0);
-    const finalizadoPeriodo = (filtered || [])
-      .filter((c) => c.status === "finalizado" || c.status === "pago" || c.status === "conciliado")
+    const aguardandoPgto = (filtered || [])
+      .filter((c) => c.status === "aguardando_pagamento")
       .reduce((s, c) => s + Number(c.valor || 0), 0);
-    const countDocPendente = all.filter((c) => c.status === "doc_pendente").length;
+    const countDocPendente = all.filter(
+      (c) => c.tem_doc_pendente === true && c.status !== "cancelado",
+    ).length;
     const countSemCategoria = all.filter(
-      (c) => !c.conta_id && c.status !== "cancelado" && c.status !== "finalizado",
+      (c) => !c.conta_id && c.status !== "cancelado",
     ).length;
-    const countSemDocs = all.filter(
-      (c) =>
-        (c.docs_status === "pendente" || c.docs_status === null) &&
-        c.status !== "cancelado" &&
-        c.status !== "finalizado" &&
-        c.status !== "doc_pendente",
-    ).length;
-    return { aberto, atrasado, finalizadoPeriodo, countDocPendente, countSemCategoria, countSemDocs };
+    return { aberto, atrasado, aguardandoPgto, countDocPendente, countSemCategoria };
   }, [data, filtered]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
@@ -173,7 +153,7 @@ export default function ContasPagar() {
     !!busca.trim(),
     !!dataDe,
     !!dataAte,
-    docsFilter !== "todos",
+    tagFilter !== "todas",
     statusFilter !== "todos",
   ].filter(Boolean).length;
   const temFiltroAtivo = filtrosAtivos > 0;
@@ -181,7 +161,7 @@ export default function ContasPagar() {
     setBusca("");
     setDataDe("");
     setDataAte("");
-    setDocsFilter("todos");
+    setTagFilter("todas");
     setStatusFilter("todos");
     setPage(1);
   }
@@ -212,12 +192,11 @@ export default function ContasPagar() {
   }
   function verSemCategoria() {
     setStatusFilter("todos");
-    // sem filtro nativo de categoria — mantém clique manual
     setBusca("");
     setPage(1);
   }
   function verPendentesDocs() {
-    setDocsFilter("pendente");
+    setTagFilter("doc_pendente");
     setPage(1);
   }
 
