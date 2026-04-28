@@ -4,7 +4,7 @@ import {
   FileSignature, Building2, ShieldCheck, FolderArchive,
   Users, Monitor, Network, Landmark, LogOut, ClipboardList,
   UsersRound, Settings2, ShoppingCart, Package, GitCompare,
-  Layers, CreditCard, Calendar, GitMerge, Repeat, FileWarning,
+  Layers, CreditCard, Calendar, Repeat, FileWarning,
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { NavLink } from "@/components/NavLink";
@@ -51,7 +51,6 @@ const caixaBancoItems: MenuItem[] = [
   { title: "Contas Bancárias", url: "/administrativo/caixa-banco/contas", icon: Landmark },
   { title: "Conciliação OFX", url: "/administrativo/caixa-banco/conciliacao", icon: GitCompare },
   { title: "Faturas de Cartão", url: "/administrativo/faturas-cartao", icon: CreditCard },
-  { title: "Reconciliação Cartão ↔ NF", url: "/administrativo/reconciliacao-cartao", icon: GitMerge },
 ];
 
 const vendasBlingItems: MenuItem[] = [

@@ -82,28 +82,9 @@ export async function salvarFaturaCartao(
       .single();
     const cartaoLabel = cartao?.nome_exibicao || cartao?.banco || "Cartão";
 
-    // 4. Criar conta a pagar (a fatura como compromisso de pagamento)
+    // (Doutrina nova: fatura NÃO cria conta a pagar totalizadora.
+    //  Lançamentos viram conta a pagar individualmente quando operador clica "Criar despesa".)
     const valorTotal = parsed.valor_total || calcularTotalLancamentos(parsed.lancamentos);
-    const descricaoConta = `Fatura ${cartaoLabel} - venc ${formatDataBR(data_vencimento)}`;
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: contaCriada, error: errConta } = await (supabase as any)
-      .from("contas_pagar_receber")
-      .insert({
-        tipo: "pagar",
-        descricao: descricaoConta,
-        valor: valorTotal,
-        data_vencimento: data_vencimento,
-        fornecedor_cliente: cartaoLabel,
-        status: "aberto",
-        origem: "fatura_cartao",
-        observacao: observacao || `Fatura de cartão importada com ${parsed.lancamentos.length} lançamento(s)`,
-      })
-      .select("id")
-      .single();
-
-    if (errConta) throw new Error(`Erro ao criar conta a pagar: ${errConta.message}`);
-    const contaPagarId = contaCriada.id as string;
 
     // 5. Criar fatura
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -121,7 +102,7 @@ export async function salvarFaturaCartao(
         valor_saldo_atraso: parsed.valor_saldo_atraso || 0,
         numero_documento: parsed.numero_documento,
         status: "aberta",
-        conta_pagar_id: contaPagarId,
+        conta_pagar_id: null, // doutrina nova: fatura não nasce ligada a conta totalizadora
         pdf_storage_path: storagePath,
         pdf_nome_original: nomeOriginal,
         fonte_importacao: parsed.formato.startsWith("csv") ? "csv" : "pdf",
@@ -133,9 +114,6 @@ export async function salvarFaturaCartao(
       .single();
 
     if (errFatura) {
-      // Se a fatura falhou, tentar limpar a conta criada
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await (supabase as any).from("contas_pagar_receber").delete().eq("id", contaPagarId);
       throw new Error(`Erro ao criar fatura: ${errFatura.message}`);
     }
     const faturaId = faturaCriada.id as string;
@@ -214,7 +192,7 @@ export async function salvarFaturaCartao(
     return {
       ok: true,
       fatura_id: faturaId,
-      conta_pagar_id: contaPagarId,
+      conta_pagar_id: undefined,
       qtd_lancamentos: linhasLancamentos.length,
       ...resultadoCompromissos,
     };
