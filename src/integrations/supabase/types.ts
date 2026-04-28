@@ -5028,6 +5028,132 @@ export type Database = {
           },
         ]
       }
+      ofx_importacoes_stage: {
+        Row: {
+          arquivo_nome: string | null
+          arquivo_storage_path: string | null
+          conta_bancaria_id: string
+          created_at: string | null
+          criado_por: string | null
+          id: string
+          periodo_fim: string | null
+          periodo_inicio: string | null
+          persistido_em: string | null
+          persistido_por: string | null
+          saldo_final: number | null
+          status: string
+          total_transacoes: number
+        }
+        Insert: {
+          arquivo_nome?: string | null
+          arquivo_storage_path?: string | null
+          conta_bancaria_id: string
+          created_at?: string | null
+          criado_por?: string | null
+          id?: string
+          periodo_fim?: string | null
+          periodo_inicio?: string | null
+          persistido_em?: string | null
+          persistido_por?: string | null
+          saldo_final?: number | null
+          status?: string
+          total_transacoes?: number
+        }
+        Update: {
+          arquivo_nome?: string | null
+          arquivo_storage_path?: string | null
+          conta_bancaria_id?: string
+          created_at?: string | null
+          criado_por?: string | null
+          id?: string
+          periodo_fim?: string | null
+          periodo_inicio?: string | null
+          persistido_em?: string | null
+          persistido_por?: string | null
+          saldo_final?: number | null
+          status?: string
+          total_transacoes?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ofx_importacoes_stage_conta_bancaria_id_fkey"
+            columns: ["conta_bancaria_id"]
+            isOneToOne: false
+            referencedRelation: "contas_bancarias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ofx_transacoes_stage: {
+        Row: {
+          conta_bancaria_id: string
+          created_at: string | null
+          data_transacao: string
+          descricao: string
+          duplicada_de: string | null
+          hash_unico: string
+          id: string
+          id_transacao_banco: string | null
+          importacao_stage_id: string
+          saldo_pos_transacao: number | null
+          status: string
+          tipo: string | null
+          valor: number
+        }
+        Insert: {
+          conta_bancaria_id: string
+          created_at?: string | null
+          data_transacao: string
+          descricao: string
+          duplicada_de?: string | null
+          hash_unico: string
+          id?: string
+          id_transacao_banco?: string | null
+          importacao_stage_id: string
+          saldo_pos_transacao?: number | null
+          status?: string
+          tipo?: string | null
+          valor: number
+        }
+        Update: {
+          conta_bancaria_id?: string
+          created_at?: string | null
+          data_transacao?: string
+          descricao?: string
+          duplicada_de?: string | null
+          hash_unico?: string
+          id?: string
+          id_transacao_banco?: string | null
+          importacao_stage_id?: string
+          saldo_pos_transacao?: number | null
+          status?: string
+          tipo?: string | null
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ofx_transacoes_stage_conta_bancaria_id_fkey"
+            columns: ["conta_bancaria_id"]
+            isOneToOne: false
+            referencedRelation: "contas_bancarias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ofx_transacoes_stage_duplicada_de_fkey"
+            columns: ["duplicada_de"]
+            isOneToOne: false
+            referencedRelation: "movimentacoes_bancarias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ofx_transacoes_stage_importacao_stage_id_fkey"
+            columns: ["importacao_stage_id"]
+            isOneToOne: false
+            referencedRelation: "ofx_importacoes_stage"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       onboarding_checklists: {
         Row: {
           aviso_previo: boolean | null
@@ -8768,6 +8894,10 @@ export type Database = {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
       }
+      descartar_ofx_stage: {
+        Args: { p_importacao_stage_id: string }
+        Returns: Json
+      }
       detectar_duplicatas_nf: {
         Args: { p_chaves: string[]; p_cnpj_numero?: Json }
         Returns: {
@@ -9024,6 +9154,10 @@ export type Database = {
           perfil_codigo: string
           perfil_nome: string
         }[]
+      }
+      persistir_ofx_stage: {
+        Args: { p_importacao_stage_id: string }
+        Returns: Json
       }
       pessoa_aparece_no_mural: { Args: { _user_id: string }; Returns: boolean }
       pipeline_enriquecer_cartao: {

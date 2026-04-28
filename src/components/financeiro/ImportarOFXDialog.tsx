@@ -40,6 +40,7 @@ import {
 import { toast } from "sonner";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
 import { parsearOFX, type OFXResultado, type OFXTransacao } from "@/lib/financeiro/parser-ofx";
+import { gerarHashMov } from "@/lib/financeiro/hash-mov";
 
 interface Props {
   open: boolean;
@@ -56,6 +57,7 @@ export function ImportarOFXDialog({ open, onOpenChange, onSuccess }: Props) {
 
   const [contaBancariaId, setContaBancariaId] = useState("");
   const [arquivoNome, setArquivoNome] = useState("");
+  const [arquivoFile, setArquivoFile] = useState<File | null>(null);
   const [parseado, setParseado] = useState<OFXResultado | null>(null);
   const [duplicatasFitids, setDuplicatasFitids] = useState<Set<string>>(new Set());
   const [etapa, setEtapa] = useState<EtapaImport>("upload");
@@ -83,6 +85,7 @@ export function ImportarOFXDialog({ open, onOpenChange, onSuccess }: Props) {
       // Reset ao fechar
       setContaBancariaId("");
       setArquivoNome("");
+      setArquivoFile(null);
       setParseado(null);
       setDuplicatasFitids(new Set());
       setEtapa("upload");
@@ -103,6 +106,7 @@ export function ImportarOFXDialog({ open, onOpenChange, onSuccess }: Props) {
 
     setErro("");
     setArquivoNome(file.name);
+    setArquivoFile(file);
 
     try {
       const conteudo = await file.text();
@@ -135,73 +139,77 @@ export function ImportarOFXDialog({ open, onOpenChange, onSuccess }: Props) {
   }
 
   async function handleConfirmarImportacao() {
-    if (!parseado || !contaBancariaId) return;
+    if (!parseado || !contaBancariaId || !arquivoFile) return;
 
     setEtapa("salvando");
     try {
-      const transacoesNovas = parseado.transacoes.filter(
-        (t) => !duplicatasFitids.has(t.fitid),
-      );
+      // 1) Upload do arquivo OFX no bucket "ofx-stage"
+      const nomeLimpo = arquivoFile.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+      const loteId = crypto.randomUUID();
+      const storagePath = `lote-${loteId}/${Date.now()}_${nomeLimpo}`;
+      const { error: upErr } = await supabase.storage
+        .from("ofx-stage")
+        .upload(storagePath, arquivoFile, {
+          contentType: "application/x-ofx",
+          upsert: false,
+        });
+      if (upErr) throw upErr;
 
-      // 1) Cria registro de auditoria da importação
-      const transacoesNovasFiltradas = parseado.transacoes.filter(
-        (t) => !duplicatasFitids.has(t.fitid),
-      );
+      // 2) Insert do lote em ofx_importacoes_stage
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: importacao, error: errImport } = await (supabase as any)
-        .from("importacoes_extrato")
+      const { data: imp, error: errImp } = await (supabase as any)
+        .from("ofx_importacoes_stage")
         .insert({
           conta_bancaria_id: contaBancariaId,
-          arquivo_nome: arquivoNome,
-          formato: "ofx",
+          arquivo_nome: arquivoFile.name,
+          arquivo_storage_path: storagePath,
           periodo_inicio: parseado.periodo.inicio,
           periodo_fim: parseado.periodo.fim,
-          saldo_final_extrato: parseado.saldo.final,
-          registros_importados: transacoesNovasFiltradas.length,
-          registros_duplicados: duplicatasFitids.size,
-          registros_erro: 0,
-          importado_por: user?.id || null,
+          saldo_final: parseado.saldo.final,
+          total_transacoes: parseado.transacoes.length,
+          status: "rascunho",
+          criado_por: user?.id || null,
         })
         .select("id")
         .single();
-      if (errImport) throw errImport;
+      if (errImp) throw errImp;
 
-      // 2) Insere movimentações novas
-      if (transacoesNovasFiltradas.length > 0) {
-        const rows = transacoesNovasFiltradas.map((t) => ({
+      // 3) Insert das transações em ofx_transacoes_stage (lotes de 50)
+      const linhas = await Promise.all(
+        parseado.transacoes.map(async (t) => ({
+          importacao_stage_id: imp.id,
           conta_bancaria_id: contaBancariaId,
           data_transacao: t.data,
-          descricao: t.descricao,
           valor: t.valor,
-          // Mapeia tipo: valor positivo = credito (entrada), negativo = debito (saida)
+          descricao: t.descricao,
           tipo: t.valor >= 0 ? "credito" : "debito",
-          id_transacao_banco: t.fitid,
-          conciliado: false,
-          origem: "ofx",
-          importacao_id: importacao.id,
-        }));
-        const { error: errMov } = await supabase
-          .from("movimentacoes_bancarias")
-          .insert(rows);
-        if (errMov) throw errMov;
-      }
+          id_transacao_banco: t.fitid || null,
+          hash_unico: await gerarHashMov(
+            contaBancariaId,
+            t.data,
+            t.valor,
+            t.descricao,
+          ),
+          saldo_pos_transacao: null,
+          status: "pendente",
+        })),
+      );
 
-      // 3) Atualiza saldo da conta bancária se houver saldo final no OFX
-      if (parseado.saldo.final !== null) {
-        await supabase
-          .from("contas_bancarias")
-          .update({
-            saldo_atual: parseado.saldo.final,
-            saldo_atualizado_em: new Date().toISOString(),
-          })
-          .eq("id", contaBancariaId);
+      for (let i = 0; i < linhas.length; i += 50) {
+        const lote = linhas.slice(i, i + 50);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { error: errLote } = await (supabase as any)
+          .from("ofx_transacoes_stage")
+          .insert(lote);
+        if (errLote) throw errLote;
       }
 
       setResultadoFinal({
-        novas: transacoesNovasFiltradas.length,
-        duplicatas: duplicatasFitids.size,
+        novas: parseado.transacoes.length,
+        duplicatas: 0,
       });
       setEtapa("concluido");
+      qc.invalidateQueries({ queryKey: ["ofx-stage"] });
       qc.invalidateQueries({ queryKey: ["lancamentos-caixa-banco"] });
       qc.invalidateQueries({ queryKey: ["contas-bancarias"] });
       onSuccess?.();
@@ -331,6 +339,7 @@ export function ImportarOFXDialog({ open, onOpenChange, onSuccess }: Props) {
                     setEtapa("upload");
                     setParseado(null);
                     setArquivoNome("");
+                    setArquivoFile(null);
                   }}
                 >
                   <X className="h-3 w-3" /> Trocar
@@ -457,20 +466,13 @@ export function ImportarOFXDialog({ open, onOpenChange, onSuccess }: Props) {
           <div className="py-12 text-center space-y-4">
             <CheckCircle2 className="h-12 w-12 text-green-600 mx-auto" />
             <div>
-              <h3 className="text-lg font-semibold">Importação concluída!</h3>
+              <h3 className="text-lg font-semibold">Importado no Stage!</h3>
               <p className="text-sm text-muted-foreground mt-1">
-                <strong className="text-green-700">{resultadoFinal.novas}</strong> movimentações importadas
-                {resultadoFinal.duplicatas > 0 && (
-                  <>
-                    {" "}
-                    · <strong className="text-amber-700">{resultadoFinal.duplicatas}</strong>{" "}
-                    duplicatas ignoradas
-                  </>
-                )}
+                <strong className="text-green-700">{resultadoFinal.novas}</strong> transações enviadas pra rascunho
               </p>
             </div>
             <p className="text-xs text-muted-foreground">
-              Próximo passo: a Conciliação Automática vai sugerir matches entre essas movimentações e suas contas a pagar (em breve).
+              Próximo passo: vá em <strong>Stage OFX</strong> para validar e persistir as movimentações. Duplicatas serão detectadas lá.
             </p>
           </div>
         )}
