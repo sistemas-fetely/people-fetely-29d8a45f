@@ -106,6 +106,7 @@ export function ImportarOFXDialog({ open, onOpenChange, onSuccess }: Props) {
 
     setErro("");
     setArquivoNome(file.name);
+    setArquivoFile(file);
 
     try {
       const conteudo = await file.text();
