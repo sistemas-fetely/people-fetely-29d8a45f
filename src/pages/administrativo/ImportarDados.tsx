@@ -147,11 +147,12 @@ export default function ImportarDados() {
       <div>
         <h2 className="text-lg font-semibold mb-1">Importar NFs</h2>
         <p className="text-sm text-muted-foreground mb-3">
-          Categorização automática por regras (parceiro, NCM, descrição). NFs entram como
-          rascunho — você revisa antes de aprovar.
+          Importação no repositório fiscal. XML cobre NF-e (produto) e NFS-e ABRASF (serviço).
+          Recibos virão como próximo formato suportado.
         </p>
         <div className="grid gap-4 md:grid-cols-1">
-          <ImportadorCsvQive categorias={categorias} />
+          {/* CSV Qive ocultado — código preservado pra reativar quando necessário */}
+          {/* <ImportadorCsvQive categorias={categorias} /> */}
           <ImportadorXmlNFe categorias={categorias} />
           <ImportadorPdfDanfe categorias={categorias} />
         </div>
