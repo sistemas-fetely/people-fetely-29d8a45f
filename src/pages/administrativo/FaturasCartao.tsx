@@ -582,16 +582,6 @@ export default function FaturasCartao() {
                     Cartão
                   </SortableTableHead>
                   <SortableTableHead
-                    column="vencimento"
-                    sort={sort}
-                    onSort={setSort}
-                    className="w-32"
-                  >
-                    Vencimento
-                  </SortableTableHead>
-                  <TableHead className="w-44">Período</TableHead>
-                  <TableHead className="whitespace-nowrap">Resumo</TableHead>
-                  <SortableTableHead
                     column="valor"
                     sort={sort}
                     onSort={setSort}
@@ -600,6 +590,7 @@ export default function FaturasCartao() {
                   >
                     Valor Total
                   </SortableTableHead>
+                  <TableHead className="whitespace-nowrap">Resumo</TableHead>
                   <SortableTableHead
                     column="lancamentos"
                     sort={sort}
@@ -609,6 +600,15 @@ export default function FaturasCartao() {
                   >
                     Lançamentos
                   </SortableTableHead>
+                  <SortableTableHead
+                    column="vencimento"
+                    sort={sort}
+                    onSort={setSort}
+                    className="w-32"
+                  >
+                    Vencimento
+                  </SortableTableHead>
+                  <TableHead className="w-44">Período</TableHead>
                   <SortableTableHead
                     column="status"
                     sort={sort}
