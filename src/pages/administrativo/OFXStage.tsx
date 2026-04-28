@@ -301,6 +301,17 @@ export default function OFXStage() {
                           </Button>
                           <Button
                             size="sm"
+                            variant="outline"
+                            className="h-6 px-2 text-[10px] gap-1"
+                            onClick={(e) => { e.stopPropagation(); setBuscaMultiplaOpen(true); }}
+                            disabled={!!acao}
+                            title="SISPAG: 1 OFX = N contas a pagar"
+                          >
+                            <LayersIcon className="h-3 w-3" />
+                            Buscar Múltiplos
+                          </Button>
+                          <Button
+                            size="sm"
                             variant="ghost"
                             className="h-6 px-2 text-[10px] gap-1 text-zinc-600"
                             onClick={(e) => { e.stopPropagation(); handleIgnorar(ofx); }}
