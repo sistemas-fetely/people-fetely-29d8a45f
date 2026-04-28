@@ -8,7 +8,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { toast } from "sonner";
-import { parseNFeXml } from "@/lib/financeiro/xml-nfe-parser";
+import { parseXmlAny } from "@/lib/financeiro/xml-parser";
 import { aplicarRegras, useRegrasCategorizacao } from "@/hooks/useRegrasCategorizacao";
 import {
   verificarDuplicatas,
@@ -55,13 +55,15 @@ export function ImportadorXmlNFe({ categorias, onImported }: Props) {
       for (const f of files) {
         try {
           const xml = await readFileAsText(f);
-          const nf = parseNFeXml(xml);
+          const nf = parseXmlAny(xml);
           if (nf) {
             // Anexa o File pra ir pro stage também
             nf._arquivo = f;
             parsed.push(nf);
           } else {
-            toast.warning(`Não foi possível ler ${f.name}`);
+            toast.warning(
+              `Não foi possível ler ${f.name} — pode ser NFS-e municipal não-ABRASF (SP, Rio, etc.). Sprint dedicada futura.`,
+            );
           }
         } catch {
           toast.warning(`Erro lendo ${f.name}`);
@@ -128,10 +130,10 @@ export function ImportadorXmlNFe({ categorias, onImported }: Props) {
       <CardHeader>
         <CardTitle className="text-base flex items-center gap-2">
           <FileCode className="h-5 w-5 text-admin" />
-          XML NF-e
+          Importar XML
         </CardTitle>
         <CardDescription>
-          Upload de um ou vários XMLs de NF-e (v4.00). Extração 100% automática no navegador.
+          Upload de um ou vários XMLs — NF-e (produto) ou NFS-e ABRASF (serviço). Detecção automática no navegador.
         </CardDescription>
       </CardHeader>
       <CardContent>
