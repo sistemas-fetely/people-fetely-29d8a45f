@@ -8261,6 +8261,10 @@ export type Database = {
           unidade_nome: string
         }[]
       }
+      aprender_regra_de_classificacao: {
+        Args: { p_stage_id: string; p_user_id?: string }
+        Returns: Json
+      }
       aprovar_nf_pj: {
         Args: { _nota_id: string; _observacao_rh?: string }
         Returns: Json

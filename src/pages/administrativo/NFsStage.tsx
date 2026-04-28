@@ -48,6 +48,7 @@ import {
   X,
   ChevronDown,
   ChevronRight,
+  AlertCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
@@ -124,7 +125,7 @@ function calcularCompletude(nf: NFStage): "completo" | "sem_xml" | "sem_pdf" | "
   return "sem_documentos";
 }
 
-type FiltroPill = "todas" | "nao_vinculadas" | "vinculadas";
+type FiltroPill = "todas" | "nao_vinculadas" | "vinculadas" | "sem_categoria";
 
 export default function NFsStage() {
   const qc = useQueryClient();
@@ -169,6 +170,8 @@ export default function NFsStage() {
       list = list.filter((n) => n.status === "nao_vinculada");
     } else if (filtroPill === "vinculadas") {
       list = list.filter((n) => n.status === "vinculada");
+    } else if (filtroPill === "sem_categoria") {
+      list = list.filter((n) => !n.categoria_id && n.status !== "descartada");
     }
     // "todas" não filtra
     if (busca.trim()) {
@@ -201,6 +204,7 @@ export default function NFsStage() {
     return {
       naoVinculadas: all.filter((n) => n.status === "nao_vinculada").length,
       vinculadas: all.filter((n) => n.status === "vinculada").length,
+      semCategoria: all.filter((n) => !n.categoria_id && n.status !== "descartada").length,
       total: all.length,
     };
   }, [nfs]);
@@ -297,6 +301,13 @@ export default function NFsStage() {
 
       qc.invalidateQueries({ queryKey: ["nfs-stage"] });
       qc.invalidateQueries({ queryKey: ["engine-regras-ativas"] });
+
+      // Feedback visual
+      if (categoriaId) {
+        toast.success("Categoria salva");
+      } else {
+        toast.success("Categoria removida");
+      }
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       toast.error("Erro: " + msg);
@@ -490,6 +501,14 @@ export default function NFsStage() {
             active={filtroPill === "vinculadas"}
             onClick={() => setFiltroPill("vinculadas")}
             icon={<CheckCircle2 className="h-3 w-3" />}
+          />
+          <KpiPill
+            label="Sem categoria"
+            count={totals.semCategoria}
+            color="violet"
+            active={filtroPill === "sem_categoria"}
+            onClick={() => setFiltroPill("sem_categoria")}
+            icon={<AlertCircle className="h-3 w-3" />}
           />
         </div>
 
@@ -852,7 +871,7 @@ export default function NFsStage() {
 interface KpiPillProps {
   label: string;
   count: number;
-  color: "admin" | "amber" | "emerald" | "blue" | "gray";
+  color: "admin" | "amber" | "emerald" | "blue" | "gray" | "violet";
   active: boolean;
   onClick: () => void;
   icon?: React.ReactNode;
@@ -890,6 +909,12 @@ function KpiPill({ label, count, color, active, onClick, icon, description }: Kp
       text: "text-gray-700",
       border: "border-gray-200",
       activeBg: "bg-gray-700 text-white border-gray-700",
+    },
+    violet: {
+      bg: "bg-violet-50",
+      text: "text-violet-700",
+      border: "border-violet-200",
+      activeBg: "bg-violet-600 text-white border-violet-600",
     },
   };
   const c = colorMap[color];
