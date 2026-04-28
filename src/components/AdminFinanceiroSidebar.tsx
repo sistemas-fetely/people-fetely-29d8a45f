@@ -4,7 +4,7 @@ import {
   FileSignature, Building2, ShieldCheck, FolderArchive,
   Users, Monitor, Network, Landmark, LogOut, ClipboardList,
   UsersRound, Settings2, ShoppingCart, Package, GitCompare,
-  Layers, CreditCard, Calendar, GitMerge, Repeat,
+  Layers, CreditCard, Calendar, GitMerge, Repeat, FileWarning,
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { NavLink } from "@/components/NavLink";
@@ -42,6 +42,7 @@ const financeiroItems: MenuItem[] = [
   { title: "Parceiros Comerciais", url: "/administrativo/parceiros", icon: Users },
   { title: "Importar Dados", url: "/administrativo/importar", icon: Upload },
   { title: "NFs em Stage", url: "/administrativo/nfs-stage", icon: Layers },
+  { title: "Documentos Pendentes", url: "/administrativo/documentos-pendentes", icon: FileWarning },
   { title: "Configuração Integração", url: "/administrativo/configuracao-integracao", icon: Settings2 },
 ];
 
