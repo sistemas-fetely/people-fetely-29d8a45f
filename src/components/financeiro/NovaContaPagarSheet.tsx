@@ -409,6 +409,16 @@ export function NovaContaPagarSheet({ open, onOpenChange }: Props) {
         options={categorias || []}
         onSaved={(id) => setCategoriaId(id)}
       />
+      <NfStageBuscadorModal
+        open={nfStageBuscaOpen}
+        onOpenChange={setNfStageBuscaOpen}
+        valorEsperado={valorNum > 0 ? valorNum : undefined}
+        fornecedorEsperado={parceiroSelected?.razao_social || undefined}
+        onSelecionar={(id) => {
+          setNfStageId(id);
+          setNfStageBuscaOpen(false);
+        }}
+      />
     </>
   );
 }
