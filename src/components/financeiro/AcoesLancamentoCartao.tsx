@@ -33,6 +33,9 @@ const STATUS_CONFIG: Record<string, { label: string; cls: string; icon: typeof C
 export function AcoesLancamentoCartao({ lancamento }: Props) {
   const [salvando, setSalvando] = useState(false);
   const [vincularOpen, setVincularOpen] = useState(false);
+  const [criarOpen, setCriarOpen] = useState(false);
+  const [parcelas, setParcelas] = useState(1);
+  const [gerarTodas, setGerarTodas] = useState(false);
   const qc = useQueryClient();
 
   // Se lançamento já tem ação tomada (conciliado, virou_despesa, ignorado),
