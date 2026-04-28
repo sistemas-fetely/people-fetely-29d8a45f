@@ -24,6 +24,8 @@ import {
   Search,
   Zap,
   Upload,
+  Layers,
+  Receipt,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
@@ -36,6 +38,8 @@ import {
 import { BuscarMatchManualDialog } from "@/components/financeiro/BuscarMatchManualDialog";
 import { ImportarOFXDialog } from "@/components/financeiro/ImportarOFXDialog";
 import { ConfirmarMatchDialog } from "@/components/financeiro/ConfirmarMatchDialog";
+import { ConciliarLoteDialog } from "@/components/financeiro/ConciliarLoteDialog";
+import { DespesaDiretaDialog } from "@/components/financeiro/DespesaDiretaDialog";
 
 type Movimentacao = {
   id: string;
@@ -93,6 +97,9 @@ export default function Conciliacao() {
     mov: Movimentacao;
     conta: ContaParaMatch;
   } | null>(null);
+  const [loteOpen, setLoteOpen] = useState(false);
+  const [despesaOpen, setDespesaOpen] = useState(false);
+  const [movParaAcao, setMovParaAcao] = useState<Movimentacao | null>(null);
 
   const { data: contasBancarias } = useQuery({
     queryKey: ["contas-bancarias-conciliacao"],
@@ -509,7 +516,7 @@ export default function Conciliacao() {
                       <div className="font-mono text-sm text-red-700 whitespace-nowrap">
                         {formatBRL(mov.valor)}
                       </div>
-                      <div className="flex gap-1">
+                      <div className="flex gap-1 flex-wrap">
                         <Button
                           size="sm"
                           variant="outline"
@@ -519,6 +526,34 @@ export default function Conciliacao() {
                         >
                           <Search className="h-3 w-3 mr-1" />
                           Buscar match
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-xs h-8"
+                          onClick={() => {
+                            setMovParaAcao(mov);
+                            setLoteOpen(true);
+                          }}
+                          disabled={processando}
+                          title="Várias contas pagas em 1 débito (SISPAG)"
+                        >
+                          <Layers className="h-3 w-3 mr-1" />
+                          Em Lote
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-xs h-8"
+                          onClick={() => {
+                            setMovParaAcao(mov);
+                            setDespesaOpen(true);
+                          }}
+                          disabled={processando}
+                          title="Taxa bancária, IOF, juros (sem conta prévia)"
+                        >
+                          <Receipt className="h-3 w-3 mr-1" />
+                          Despesa Direta
                         </Button>
                         <Button
                           size="sm"
@@ -626,6 +661,30 @@ export default function Conciliacao() {
           qc.invalidateQueries({ queryKey: ["contas-para-match"] });
           qc.invalidateQueries({ queryKey: ["lancamentos-caixa-banco"] });
           setMatchPendente(null);
+        }}
+      />
+
+      <ConciliarLoteDialog
+        open={loteOpen}
+        onClose={() => setLoteOpen(false)}
+        movimentacao={movParaAcao}
+        onConciliado={() => {
+          qc.invalidateQueries({ queryKey: ["movs-nao-conciliadas"] });
+          qc.invalidateQueries({ queryKey: ["contas-para-match"] });
+          qc.invalidateQueries({ queryKey: ["contas-para-match-ofx"] });
+          qc.invalidateQueries({ queryKey: ["lancamentos-caixa-banco"] });
+        }}
+      />
+
+      <DespesaDiretaDialog
+        open={despesaOpen}
+        onClose={() => setDespesaOpen(false)}
+        movimentacao={movParaAcao}
+        onConciliado={() => {
+          qc.invalidateQueries({ queryKey: ["movs-nao-conciliadas"] });
+          qc.invalidateQueries({ queryKey: ["contas-para-match"] });
+          qc.invalidateQueries({ queryKey: ["contas-para-match-ofx"] });
+          qc.invalidateQueries({ queryKey: ["lancamentos-caixa-banco"] });
         }}
       />
     </div>
