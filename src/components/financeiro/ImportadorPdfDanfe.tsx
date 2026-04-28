@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/card";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { aplicarRegras, useRegrasCategorizacao } from "@/hooks/useRegrasCategorizacao";
+
 import {
   verificarDuplicatas,
 } from "@/lib/financeiro/import-handler";
@@ -31,7 +31,7 @@ export function ImportadorPdfDanfe({ categorias, onImported }: Props) {
   const [parsing, setParsing] = useState(false);
   const [importing, setImporting] = useState(false);
   const [preview, setPreview] = useState<NFParsed[]>([]);
-  const { data: regras } = useRegrasCategorizacao();
+  
 
   // Fila de auto-cadastro de parceiros (CNPJs ainda não cadastrados)
   const fila = useFilaAutoCadastroParceiro();
@@ -115,7 +115,7 @@ export function ImportadorPdfDanfe({ categorias, onImported }: Props) {
           toast.error(`Erro no PDF ${f.name}: ${err.message || err}`);
         }
       }
-      let processadas = novas.map((n) => aplicarRegras(n, regras));
+      let processadas = [...novas];
       processadas = await verificarDuplicatas(processadas);
       processadas = await buscarMatchPagamentos(processadas);
       processadas = processadas.map((n) => ({ ...n, _selecionada: !n._duplicata }));

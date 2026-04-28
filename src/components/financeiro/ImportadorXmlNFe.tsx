@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/card";
 import { toast } from "sonner";
 import { parseXmlAny } from "@/lib/financeiro/xml-parser";
-import { aplicarRegras, useRegrasCategorizacao } from "@/hooks/useRegrasCategorizacao";
+
 import {
   verificarDuplicatas,
 } from "@/lib/financeiro/import-handler";
@@ -39,7 +39,7 @@ export function ImportadorXmlNFe({ categorias, onImported }: Props) {
   const [parsing, setParsing] = useState(false);
   const [importing, setImporting] = useState(false);
   const [preview, setPreview] = useState<NFParsed[]>([]);
-  const { data: regras } = useRegrasCategorizacao();
+  
 
   // Fila de auto-cadastro de parceiros
   const fila = useFilaAutoCadastroParceiro();
@@ -69,7 +69,7 @@ export function ImportadorXmlNFe({ categorias, onImported }: Props) {
           toast.warning(`Erro lendo ${f.name}`);
         }
       }
-      let nfs = parsed.map((n) => aplicarRegras(n, regras));
+      let nfs = [...parsed];
       nfs = await verificarDuplicatas(nfs);
       nfs = await buscarMatchPagamentos(nfs);
       nfs = nfs.map((n) => ({ ...n, _selecionada: !n._duplicata }));
