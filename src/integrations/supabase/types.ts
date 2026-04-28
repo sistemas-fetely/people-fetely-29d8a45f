@@ -8360,6 +8360,15 @@ export type Database = {
           total_processados: number
         }[]
       }
+      enviar_stage_para_contas_pagar: {
+        Args: { p_stage_ids: string[]; p_user_id?: string }
+        Returns: {
+          acao: string
+          conta_pagar_id: string
+          erro: string
+          stage_id: string
+        }[]
+      }
       exportar_pacote_documentos: {
         Args: { p_periodo_fim: string; p_periodo_inicio: string }
         Returns: {
