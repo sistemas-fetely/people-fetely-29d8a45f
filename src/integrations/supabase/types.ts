@@ -8303,6 +8303,13 @@ export type Database = {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
       }
+      detectar_duplicatas_nf: {
+        Args: { p_chaves: string[]; p_cnpj_numero?: Json }
+        Returns: {
+          chave_ou_par: string
+          fonte: string
+        }[]
+      }
       detectar_tipo_pagamento: { Args: { descricao: string }; Returns: string }
       documentos_pendentes_agrupados: {
         Args: {
