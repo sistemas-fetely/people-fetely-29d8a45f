@@ -280,51 +280,30 @@ export default function ContasPagar() {
             size="sm"
             variant="outline"
             className="border-amber-400 text-amber-800 hover:bg-amber-100"
-            onClick={() => { setStatusFilter("doc_pendente"); setPage(1); }}
+            onClick={() => { setTagFilter("doc_pendente"); setPage(1); }}
           >
             Ver pendentes
           </Button>
         </div>
       )}
 
-      {/* Alertas: sem categoria + sem docs */}
-      {(totals.countSemCategoria > 0 || totals.countSemDocs > 0) && (
+      {/* Alerta: sem categoria */}
+      {totals.countSemCategoria > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {totals.countSemCategoria > 0 && (
-            <div className="p-3 rounded-lg border border-amber-200 bg-amber-50/60 flex items-center justify-between">
-              <div className="flex items-center gap-2 text-amber-800 text-sm">
-                <FileWarning className="h-4 w-4" />
-                {totals.countSemCategoria} sem categoria
-              </div>
-              <Button
-                size="sm"
-                variant="outline"
-                className="text-amber-700 border-amber-300"
-                onClick={verSemCategoria}
-              >
-                Ver
-              </Button>
+          <div className="p-3 rounded-lg border border-amber-200 bg-amber-50/60 flex items-center justify-between">
+            <div className="flex items-center gap-2 text-amber-800 text-sm">
+              <FileWarning className="h-4 w-4" />
+              {totals.countSemCategoria} sem categoria
             </div>
-          )}
-          {totals.countSemDocs > 0 && (
-            <div className="p-3 rounded-lg border border-blue-200 bg-blue-50/60 flex items-center justify-between">
-              <div className="flex items-center gap-2 text-blue-800 text-sm">
-                <FileWarning className="h-4 w-4" />
-                <span>
-                  {totals.countSemDocs} {totals.countSemDocs === 1 ? "conta sem NF/Recibo" : "contas sem NF/Recibo"}
-                  <span className="text-blue-600 text-xs ml-1">— anexar antes de enviar ao financeiro</span>
-                </span>
-              </div>
-              <Button
-                size="sm"
-                variant="outline"
-                className="text-blue-700 border-blue-300 hover:bg-blue-100"
-                onClick={verPendentesDocs}
-              >
-                Ver
-              </Button>
-            </div>
-          )}
+            <Button
+              size="sm"
+              variant="outline"
+              className="text-amber-700 border-amber-300"
+              onClick={verSemCategoria}
+            >
+              Ver
+            </Button>
+          </div>
         </div>
       )}
 
