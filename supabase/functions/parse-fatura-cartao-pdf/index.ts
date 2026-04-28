@@ -31,7 +31,7 @@ Analise o PDF fornecido e extraia os seguintes campos em JSON:
   "lancamentos": [
     {
       "data_compra": "2026-02-12",  // YYYY-MM-DD
-      "descricao": "Nespresso 02/10",  // EXATAMENTE como aparece (incluindo parcela)
+      "descricao": "Nespresso 01/10",  // EXATAMENTE como aparece no PDF (incluindo parcela)
       "valor": 53.73,  // positivo = compra, negativo = estorno
       "natureza": "NACIONAL",  // ou "INTERNACIONAL"
       "moeda": "BRL",  // ou "USD", "EUR", etc
@@ -48,10 +48,11 @@ REGRAS IMPORTANTES:
 2. Estornos (valores negativos no PDF, geralmente próximos de compras) devem ter valor negativo
 3. IOF de operação internacional deve aparecer como lançamento separado com descrição contendo "IOF"
 4. NÃO simule dados - se não conseguir ler algo, use null
-5. Mantenha a descrição EXATAMENTE como no PDF, incluindo parcela (ex: "Nespresso 02/10")
+5. Mantenha a descrição EXATAMENTE como no PDF, incluindo parcela atual (ex: se o PDF diz "Nespresso 01/10", retorne "Nespresso 01/10" — NÃO invente outras parcelas como 02/10, 03/10. Cada lançamento aparece UMA vez na fatura.)
 6. valor_total é o "Total desta fatura" / "Total da sua fatura é"
 7. Datas SEMPRE no formato YYYY-MM-DD
 8. Valores como números (não strings, sem R$, ponto como decimal)
+9. CRÍTICO: NÃO multiplique nem expanda lançamentos parcelados. Se o PDF tem UMA linha "Nespresso 01/10", retorne UMA linha. Não gere 02/10, 03/10, etc. — essas parcelas só aparecem em faturas futuras.
 
 Responda APENAS com o JSON, sem markdown, sem explicações.`;
 
