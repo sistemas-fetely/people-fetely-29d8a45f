@@ -655,22 +655,24 @@ export default function FaturasCartao() {
                             ? `${formatDateBR(f.periodo_inicio)} → ${formatDateBR(f.periodo_fim)}`
                             : "—"}
                         </TableCell>
-                        <TableCell className="text-right whitespace-nowrap">
-                          <div className="font-mono">{formatBRL(f.valor_total)}</div>
+                        <TableCell className="whitespace-nowrap text-xs">
                           {(f.qtd_conciliados || 0) > 0 && (
-                            <div className="text-[10px] text-emerald-700">
-                              Conciliado: {formatBRL(f.valor_conciliado || 0)}
+                            <div className="text-emerald-700">
+                              Conciliado: <span className="font-mono">{formatBRL(f.valor_conciliado || 0)}</span>
                             </div>
                           )}
                           {(f.qtd_pendentes || 0) > 0 && (
-                            <div className="text-[10px] text-amber-700">
-                              Pendente: {formatBRL(f.valor_pendente || 0)}
+                            <div className="text-amber-700">
+                              Pendente: <span className="font-mono">{formatBRL(f.valor_pendente || 0)}</span>
                             </div>
                           )}
                         </TableCell>
-                        <TableCell className="text-center text-xs">
-                          <div className="flex items-center justify-center gap-1">
-                            <span>{f.qtd_lancamentos || 0}</span>
+                        <TableCell className="text-right whitespace-nowrap">
+                          <div className="font-mono text-base font-semibold">{formatBRL(f.valor_total)}</div>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <div className="flex flex-col items-center gap-1">
+                            <div className="text-base font-semibold">{f.qtd_lancamentos || 0}</div>
                             {(f.qtd_pendentes || 0) > 0 && (
                               <Badge
                                 variant="outline"
