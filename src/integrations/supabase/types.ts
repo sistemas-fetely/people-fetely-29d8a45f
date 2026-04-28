@@ -8993,6 +8993,10 @@ export type Database = {
       validar_nf_pj: { Args: { _nota_id: string }; Returns: Json }
       validar_prontidao_sistema: { Args: never; Returns: Json }
       verificar_user_orfao: { Args: { _user_id: string }; Returns: boolean }
+      vincular_nf_a_parceiro: {
+        Args: { p_nf_stage_id: string; p_parceiro_id: string }
+        Returns: Json
+      }
     }
     Enums: {
       app_role:

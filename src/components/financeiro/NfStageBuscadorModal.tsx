@@ -5,12 +5,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Search } from "lucide-react";
+import { toast } from "sonner";
 
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   valorEsperado?: number;
   fornecedorEsperado?: string;
+  parceiroId?: string | null;
   onSelecionar: (nfStageId: string) => void;
 }
 
