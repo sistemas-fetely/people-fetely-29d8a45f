@@ -39,6 +39,7 @@ export async function moverParaStage(
   const result: StageResult = {
     sucesso: 0,
     duplicatas: 0,
+    enriquecidas: 0,
     erros: [],
     loteId,
   };
