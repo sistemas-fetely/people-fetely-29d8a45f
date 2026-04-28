@@ -60,47 +60,46 @@ async function anexarPdfNF(
 }
 
 export async function verificarDuplicatas(nfs: NFParsed[]): Promise<NFParsed[]> {
-  // Estratégia 1: chave de acesso (XML, alguns PDFs)
-  const chaves = nfs.map((n) => n.nf_chave_acesso).filter((c): c is string => !!c);
-  let existentesPorChave = new Set<string>();
-  if (chaves.length > 0) {
-    const { data } = await supabase
-      .from("contas_pagar_receber")
-      .select("nf_chave_acesso")
-      .in("nf_chave_acesso", chaves);
-    existentesPorChave = new Set((data || []).map((r: any) => r.nf_chave_acesso as string));
-  }
+  // Coleta chaves e pares cnpj+numero
+  const chaves = nfs
+    .map((n) => n.nf_chave_acesso)
+    .filter((c): c is string => !!c);
 
-  // Estratégia 2: CNPJ emitente + número da NF (PDFs DANFE não têm chave de acesso)
-  // Coleta pares (cnpj, numero) das NFs que NÃO têm chave de acesso
   const paresCnpjNumero = nfs
     .filter((n) => !n.nf_chave_acesso && n.fornecedor_cnpj && n.nf_numero)
     .map((n) => ({ cnpj: n.fornecedor_cnpj!, numero: n.nf_numero! }));
 
-  const existentesPorCnpjNumero = new Set<string>();
-  if (paresCnpjNumero.length > 0) {
-    const cnpjsBusca = Array.from(new Set(paresCnpjNumero.map((p) => p.cnpj)));
-    const numerosBusca = Array.from(new Set(paresCnpjNumero.map((p) => p.numero)));
-    const { data } = await supabase
-      .from("contas_pagar_receber")
-      .select("nf_cnpj_emitente, nf_numero")
-      .in("nf_cnpj_emitente", cnpjsBusca)
-      .in("nf_numero", numerosBusca);
-    for (const r of data || []) {
-      const row = r as { nf_cnpj_emitente: string | null; nf_numero: string | null };
-      if (row.nf_cnpj_emitente && row.nf_numero) {
-        existentesPorCnpjNumero.add(`${row.nf_cnpj_emitente}|${row.nf_numero}`);
-      }
+  // Chama RPC que verifica em STAGE (ativas) E em CONTAS_PAGAR_RECEBER
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any).rpc("detectar_duplicatas_nf", {
+    p_chaves: chaves.length > 0 ? chaves : null,
+    p_cnpj_numero: paresCnpjNumero.length > 0 ? paresCnpjNumero : [],
+  });
+
+  if (error) {
+    console.warn("Falha na detecção de duplicatas (seguindo sem bloqueio):", error);
+    return nfs.map((n) => ({ ...n, _duplicata: false }));
+  }
+
+  // Monta sets de existentes
+  const existentesChave = new Set<string>();
+  const existentesCnpjNum = new Set<string>();
+
+  for (const r of (data || []) as { chave_ou_par: string; fonte: string }[]) {
+    if (chaves.includes(r.chave_ou_par)) {
+      existentesChave.add(r.chave_ou_par);
+    } else if (r.chave_ou_par.includes("|")) {
+      existentesCnpjNum.add(r.chave_ou_par);
     }
   }
 
   return nfs.map((n) => {
-    const dupChave = !!n.nf_chave_acesso && existentesPorChave.has(n.nf_chave_acesso);
+    const dupChave = !!n.nf_chave_acesso && existentesChave.has(n.nf_chave_acesso);
     const dupCnpjNum =
       !n.nf_chave_acesso &&
       !!n.fornecedor_cnpj &&
       !!n.nf_numero &&
-      existentesPorCnpjNumero.has(`${n.fornecedor_cnpj}|${n.nf_numero}`);
+      existentesCnpjNum.has(`${n.fornecedor_cnpj}|${n.nf_numero}`);
     return {
       ...n,
       _duplicata: dupChave || dupCnpjNum,
