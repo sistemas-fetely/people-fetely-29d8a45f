@@ -457,7 +457,7 @@ export default function ContaPagarDetalheDrawer({ contaId, onClose }: Props) {
                       </Button>
                       <button
                         className="text-[11px] text-muted-foreground hover:text-foreground underline w-full text-center"
-                        onClick={() => avancar("finalizado", "Finalizado manualmente (NF entregue fisicamente)")}
+                        onClick={() => avancar("aguardando_pagamento", "Marcado como aguardando pagamento (documentação OK)")}
                       >
                         Finalizar manualmente (NF entregue fora do sistema)
                       </button>

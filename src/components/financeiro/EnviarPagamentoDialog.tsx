@@ -278,30 +278,18 @@ export default function EnviarPagamentoDialog({ open, onOpenChange, conta, onDon
     }
     setEnviando(true);
     try {
-      // PR2: detectar automaticamente se há NF/Recibo anexado
-      // Se sim → finalizado direto. Se não → doc_pendente.
-      const temNFNaConta = !!conta.nf_chave_acesso || !!conta.nf_pdf_url;
-      let temDocFiscal = temNFNaConta;
-      if (!temDocFiscal) {
-        const { count } = await supabase
-          .from("contas_pagar_documentos")
-          .select("id", { count: "exact", head: true })
-          .eq("conta_id", conta.id)
-          .in("tipo", ["nf", "recibo"]);
-        temDocFiscal = !!(count && count > 0);
-      }
+      // Doutrina nova: ao enviar, status SEMPRE vira aguardando_pagamento.
+      // Tag doc_pendente é calculada por trigger no banco (sem doc anexado → tag aparece).
+      const isReenvio = conta.status === "aguardando_pagamento";
 
-      const novoStatusFinal = temDocFiscal ? "finalizado" : "doc_pendente";
-      const isReenvio = conta.status === "finalizado" || conta.status === "doc_pendente";
-
-      // 1) Salvar dados bancários + atualizar status (se não for reenvio mantém status atual)
+      // 1) Salvar dados bancários + atualizar status
       await mudarStatus.mutateAsync({
         contaId: conta.id,
         statusAnterior: conta.status,
-        novoStatus: isReenvio ? (conta.status as typeof novoStatusFinal) : novoStatusFinal,
+        novoStatus: "aguardando_pagamento",
         observacao: isReenvio
           ? `Reenvio de e-mail para ${emailDestinatario}${obsEnvio ? ` — ${obsEnvio}` : ""}`
-          : `Enviado para pagamento: ${emailDestinatario}${obsEnvio ? ` — ${obsEnvio}` : ""}${temDocFiscal ? "" : " (documentação fiscal pendente)"}`,
+          : `Enviado para pagamento: ${emailDestinatario}${obsEnvio ? ` — ${obsEnvio}` : ""}`,
         extras: {
           dados_pagamento_fornecedor: dadosPgto,
           forma_pagamento_id: formaPagamentoId,
@@ -437,7 +425,18 @@ export default function EnviarPagamentoDialog({ open, onOpenChange, conta, onDon
       onDone();
       onOpenChange(false);
     } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
+      // Tratamento robusto: extrai mensagem de Error, objetos Supabase, ou converte
+      let msg = "Erro desconhecido";
+      if (e instanceof Error) {
+        msg = e.message;
+      } else if (e && typeof e === "object") {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const err = e as any;
+        msg = err.message || err.error_description || err.details || JSON.stringify(e);
+      } else {
+        msg = String(e);
+      }
+      console.error("Erro ao enviar pagamento:", e);
       toast.error("Erro: " + msg);
     } finally {
       setEnviando(false);

@@ -86,7 +86,7 @@ export default function AcoesMassaButtons({ contas, onDone }: Props) {
 
   const nAberto = countStatus("aberto", "atrasado");
   const nAprovado = countStatus("aprovado");
-  const nDocPendente = countStatus("doc_pendente");
+  const nDocPendente = 0;
 
   return (
     <>
@@ -103,17 +103,7 @@ export default function AcoesMassaButtons({ contas, onDone }: Props) {
         </Button>
       )}
 
-      {nDocPendente > 0 && (
-        <Button
-          size="sm"
-          variant="outline"
-          className="gap-1"
-          disabled={executando}
-          onClick={() => executarLote("finalizado", ["doc_pendente"], "Finalizado manualmente em massa")}
-        >
-          <Check className="h-3.5 w-3.5" /> Finalizar {nDocPendente}
-        </Button>
-      )}
+      {/* Botão "Finalizar" obsoleto após nova doutrina (status finalizado removido) */}
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
