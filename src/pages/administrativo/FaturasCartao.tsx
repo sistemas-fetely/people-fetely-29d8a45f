@@ -832,10 +832,8 @@ export default function FaturasCartao() {
                                                  status: l.status,
                                                  conta_pagar_id: l.conta_pagar_id,
                                                }}
-                                               onCriarDespesa={() => {
-                                                 toast.info("Em breve: abrir Sheet Nova Despesa pré-preenchido com dados do lançamento");
-                                               }}
                                              />
+
                                            </td>
                                            <td className="px-2 py-1.5">
                                             <div className="flex items-center gap-1">
