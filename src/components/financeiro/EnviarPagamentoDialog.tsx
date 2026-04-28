@@ -482,26 +482,69 @@ export default function EnviarPagamentoDialog({ open, onOpenChange, conta, onDon
                 {categoriaTxt}
               </p>
             )}
+            {formaPagamentoLabel && (
+              <p className="flex items-center gap-2">
+                <span className="text-muted-foreground">Forma de pagamento:</span>{" "}
+                <span className="font-medium">{formaPagamentoLabel}</span>
+                <button
+                  type="button"
+                  onClick={() => setEditandoFormaPgto(true)}
+                  className="text-xs text-blue-600 hover:underline"
+                >
+                  alterar
+                </button>
+              </p>
+            )}
+            {formaEhCartao && (
+              <p>
+                <span className="text-muted-foreground">Parcelas:</span>{" "}
+                <span className="font-medium">{parcelas}x</span>
+              </p>
+            )}
           </div>
 
-          {/* Forma de Pagamento - OBRIGATÓRIO */}
-          <div className="space-y-1">
-            <Label className="text-xs uppercase tracking-wide text-muted-foreground">
-              Forma de pagamento *
-            </Label>
-            <Select value={formaPagamentoId} onValueChange={setFormaPagamentoId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione (PIX, Boleto, Transferência...)" />
-              </SelectTrigger>
-              <SelectContent>
-                {(formasPagamento || []).map((fp) => (
-                  <SelectItem key={fp.id} value={fp.id}>
-                    {fp.nome}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          {/* Forma de Pagamento - editável só se usuário clicou "alterar" no resumo */}
+          {editandoFormaPgto && (
+            <div className="space-y-2 p-3 rounded-lg border border-blue-200 bg-blue-50/50">
+              <Label className="text-xs uppercase tracking-wide text-blue-700">
+                Alterar forma de pagamento
+              </Label>
+              <div className="flex items-center gap-2">
+                <Select value={formaPagamentoId} onValueChange={setFormaPagamentoId}>
+                  <SelectTrigger className="bg-background">
+                    <SelectValue placeholder="Selecione (PIX, Boleto, Transferência...)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(formasPagamento || []).map((fp) => (
+                      <SelectItem key={fp.id} value={fp.id}>
+                        {fp.nome}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setEditandoFormaPgto(false)}
+                >
+                  Confirmar
+                </Button>
+              </div>
+              {formaEhCartao && (
+                <div className="space-y-1">
+                  <Label className="text-xs">Parcelas</Label>
+                  <Input
+                    type="number"
+                    min={1}
+                    max={48}
+                    value={parcelas}
+                    onChange={(e) => setParcelas(parseInt(e.target.value) || 1)}
+                    className="w-32 bg-background"
+                  />
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Dados bancários */}
           <div className="space-y-2">
