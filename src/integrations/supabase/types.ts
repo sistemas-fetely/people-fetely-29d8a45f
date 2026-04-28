@@ -8200,10 +8200,15 @@ export type Database = {
         Returns: Json
       }
       atualizar_contas_atrasadas: { Args: never; Returns: undefined }
+      atualizar_docs_status: {
+        Args: { p_conta_id: string }
+        Returns: undefined
+      }
       autosave_convite_cadastro: {
         Args: { _dados: Json; _token: string }
         Returns: boolean
       }
+      calcular_docs_status: { Args: { p_conta_id: string }; Returns: string }
       cancelar_parcelas_futuras_recorrente: {
         Args: { p_recorrente_id: string }
         Returns: number
@@ -8257,6 +8262,23 @@ export type Database = {
         Returns: boolean
       }
       detectar_tipo_pagamento: { Args: { descricao: string }; Returns: string }
+      documentos_pendentes_agrupados: {
+        Args: {
+          p_periodo_fim?: string
+          p_periodo_inicio?: string
+          p_status?: string
+        }
+        Returns: {
+          contas_json: Json
+          contas_parcial: number
+          contas_pendente: number
+          mais_antigo_dias: number
+          parceiro_id: string
+          parceiro_razao_social: string
+          total_contas: number
+          total_valor: number
+        }[]
+      }
       enqueue_email: {
         Args: { payload: Json; queue_name: string }
         Returns: number
@@ -8287,6 +8309,20 @@ export type Database = {
           enriquecidos: number
           sem_match: number
           total_processados: number
+        }[]
+      }
+      exportar_pacote_documentos: {
+        Args: { p_periodo_fim: string; p_periodo_inicio: string }
+        Returns: {
+          conta_data_pagamento: string
+          conta_descricao: string
+          conta_id: string
+          conta_valor: number
+          doc_id: string
+          doc_nome_arquivo: string
+          doc_storage_path: string
+          doc_tipo: string
+          parceiro_razao_social: string
         }[]
       }
       extrair_token_principal: {
