@@ -13,9 +13,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Search, Landmark, Loader2 } from "lucide-react";
+import { Search, Landmark, Loader2, CreditCard } from "lucide-react";
 import { toast } from "sonner";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
+import { getFaturaInfoMap, type FaturaInfo } from "@/lib/financeiro/get-fatura-info";
 
 type ContaPagar = {
   id: string;
@@ -24,6 +25,8 @@ type ContaPagar = {
   data_vencimento: string;
   fornecedor_cliente: string | null;
   status: string;
+  forma_pagamento: string | null;
+  formas_pagamento: { nome: string } | null;
 };
 
 interface Props {
@@ -66,12 +69,21 @@ export function BuscarMultiplosLancamentosDialog({
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data } = await (supabase as any)
         .from("contas_pagar_receber")
-        .select("id, descricao, valor, data_vencimento, fornecedor_cliente, status")
+        .select(
+          "id, descricao, valor, data_vencimento, fornecedor_cliente, status, forma_pagamento, formas_pagamento:forma_pagamento_id(nome)",
+        )
         .in("status", ["aprovado", "aguardando_pagamento"])
         .is("movimentacao_bancaria_id", null)
         .order("data_vencimento", { ascending: true });
       return (data || []) as ContaPagar[];
     },
+  });
+
+  // Map: conta_pagar_id -> { banco_nome, fatura_vencimento }
+  const { data: faturaInfoMap = new Map<string, FaturaInfo>() } = useQuery({
+    queryKey: ["fatura-info-map-multiplas", contas.map((c) => c.id).join(",")],
+    enabled: open && contas.length > 0,
+    queryFn: () => getFaturaInfoMap(contas.map((c) => c.id)),
   });
 
   // Filtra por busca (descrição, fornecedor, valor)
@@ -200,19 +212,20 @@ export function BuscarMultiplosLancamentosDialog({
                 <th className="p-2 text-left">Descrição</th>
                 <th className="p-2 text-left">Fornecedor</th>
                 <th className="p-2 text-left">Vencimento</th>
+                <th className="p-2 text-left">Meio de pagamento</th>
                 <th className="p-2 text-right">Valor</th>
               </tr>
             </thead>
             <tbody>
               {isLoading ? (
                 <tr>
-                  <td colSpan={5} className="p-6 text-center">
+                  <td colSpan={6} className="p-6 text-center">
                     <Loader2 className="h-4 w-4 animate-spin mx-auto" />
                   </td>
                 </tr>
               ) : contasFiltradas.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="p-6 text-center text-muted-foreground">
+                  <td colSpan={6} className="p-6 text-center text-muted-foreground">
                     {contas.length === 0
                       ? "Nenhuma conta a pagar pendente."
                       : "Nenhuma conta corresponde ao filtro."}
@@ -221,6 +234,8 @@ export function BuscarMultiplosLancamentosDialog({
               ) : (
                 contasFiltradas.map((c) => {
                   const sel = selecionadas.has(c.id);
+                  const meioPagamento = c.formas_pagamento?.nome || c.forma_pagamento;
+                  const faturaInfo = faturaInfoMap.get(c.id);
                   return (
                     <tr
                       key={c.id}
@@ -238,6 +253,23 @@ export function BuscarMultiplosLancamentosDialog({
                       </td>
                       <td className="p-2 text-muted-foreground">
                         {formatDateBR(c.data_vencimento)}
+                      </td>
+                      <td className="p-2 text-muted-foreground">
+                        {meioPagamento ? (
+                          <div className="flex items-center gap-1">
+                            <CreditCard className="h-3 w-3 text-zinc-500" />
+                            <span>{meioPagamento}</span>
+                            {faturaInfo?.banco_nome && (
+                              <span className="text-[10px] text-zinc-400 ml-1">
+                                · {faturaInfo.banco_nome}
+                                {faturaInfo.fatura_vencimento &&
+                                  ` · fat ${formatDateBR(faturaInfo.fatura_vencimento)}`}
+                              </span>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-[10px] italic">—</span>
+                        )}
                       </td>
                       <td className="p-2 text-right font-mono font-semibold">
                         {formatBRL(c.valor)}

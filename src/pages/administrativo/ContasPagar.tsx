@@ -30,6 +30,7 @@ import AcoesMassaButtons, {
   type ContaSelecionada,
 } from "@/components/financeiro/AcoesMassaButtons";
 import { NovaContaPagarSheet } from "@/components/financeiro/NovaContaPagarSheet";
+import { getFaturaInfoMap, type FaturaInfo } from "@/lib/financeiro/get-fatura-info";
 
 type Conta = {
   id: string;
@@ -74,7 +75,6 @@ const STATUS_STYLES: Record<string, string> = {
 };
 
 const PAGE_SIZE = 20;
-
 export default function ContasPagar() {
   const qc = useQueryClient();
   const [statusFilter, setStatusFilter] = useState<string>("todos");
@@ -99,6 +99,14 @@ export default function ContasPagar() {
       if (error) throw error;
       return data as unknown as Conta[];
     },
+  });
+
+  // Map: conta_pagar_id -> { banco_nome, fatura_vencimento }
+  // Permite mostrar sub-linha "↳ Itaú · fat dd/mm/yyyy" na coluna Meio de pagamento.
+  const { data: faturaInfoMap = new Map<string, FaturaInfo>() } = useQuery({
+    queryKey: ["fatura-info-map-contas-pagar", (data || []).map((c) => c.id).join(",")],
+    enabled: !!data && data.length > 0,
+    queryFn: () => getFaturaInfoMap((data || []).map((c) => c.id)),
   });
 
   const filtered = useMemo(() => {
@@ -509,9 +517,27 @@ export default function ContasPagar() {
                             {formatDateBR(c.data_vencimento)}
                           </TableCell>
                           <TableCell className="text-xs text-muted-foreground">
-                            {c.formas_pagamento?.nome || c.forma_pagamento || (
-                              <span className="text-[10px] italic">—</span>
-                            )}
+                            {(() => {
+                              const meioPagamento = c.formas_pagamento?.nome || c.forma_pagamento;
+                              const faturaInfo = faturaInfoMap.get(c.id);
+                              if (!meioPagamento) {
+                                return <span className="text-[10px] italic">—</span>;
+                              }
+                              return (
+                                <div className="flex flex-col">
+                                  <span>{meioPagamento}</span>
+                                  {(faturaInfo?.banco_nome || faturaInfo?.fatura_vencimento) && (
+                                    <span className="text-[10px] text-muted-foreground/70">
+                                      ↳{" "}
+                                      {faturaInfo.banco_nome}
+                                      {faturaInfo.banco_nome && faturaInfo.fatura_vencimento && " · "}
+                                      {faturaInfo.fatura_vencimento &&
+                                        `fat ${formatDateBR(faturaInfo.fatura_vencimento)}`}
+                                    </span>
+                                  )}
+                                </div>
+                              );
+                            })()}
                           </TableCell>
                           <TableCell className="text-muted-foreground text-xs">
                             {c.plano_contas?.nome ? (
