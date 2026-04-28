@@ -23,7 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { FileText, Loader2, Send } from "lucide-react";
+import { FileText, Loader2, Send, Info } from "lucide-react";
 import { toast } from "sonner";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
 import { useContaWorkflow } from "@/hooks/useContaWorkflow";
@@ -57,6 +57,7 @@ type Conta = {
   nf_pdf_url?: string | null;
   nf_xml_url?: string | null;
   forma_pagamento_id?: string | null;
+  numero_parcela?: number | null;
   plano_contas?: { codigo?: string | null; nome?: string | null } | null;
   parceiros_comerciais?: { razao_social?: string | null } | null;
   dados_pagamento_fornecedor?: {
@@ -90,6 +91,8 @@ export default function EnviarPagamentoDialog({ open, onOpenChange, conta, onDon
   const [mensagemEmail, setMensagemEmail] = useState("");
   const [docsSelecionados, setDocsSelecionados] = useState<Set<string>>(new Set());
   const [formaPagamentoId, setFormaPagamentoId] = useState<string>("");
+  const [editandoFormaPgto, setEditandoFormaPgto] = useState(false);
+  const [parcelas, setParcelas] = useState<number>(conta.numero_parcela || 1);
 
   // Buscar formas de pagamento ativas
   const { data: formasPagamento } = useQuery({
@@ -156,6 +159,22 @@ export default function EnviarPagamentoDialog({ open, onOpenChange, conta, onDon
     },
   });
 
+  // Buscar dados bancários cadastrados no parceiro
+  const { data: parceiroDadosBancarios } = useQuery({
+    queryKey: ["parceiro-dados-bancarios", conta.parceiro_id],
+    enabled: !!conta.parceiro_id && open,
+    queryFn: async () => {
+      if (!conta.parceiro_id) return null;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data } = await (supabase as any)
+        .from("parceiros_comerciais")
+        .select("dados_bancarios")
+        .eq("id", conta.parceiro_id)
+        .single();
+      return (data?.dados_bancarios as { banco?: string; agencia?: string; conta?: string; pix?: string } | null) || null;
+    },
+  });
+
   useEffect(() => {
     if (!open) return;
     if (conta.dados_pagamento_fornecedor) {
@@ -174,6 +193,18 @@ export default function EnviarPagamentoDialog({ open, onOpenChange, conta, onDon
       });
     }
   }, [open, ultimosDados, conta.dados_pagamento_fornecedor]);
+
+  // Auto-preencher dados bancários a partir do cadastro do parceiro
+  useEffect(() => {
+    if (parceiroDadosBancarios && Object.keys(parceiroDadosBancarios).length > 0) {
+      setDadosPgto((prev) => ({
+        banco: prev.banco || parceiroDadosBancarios.banco || "",
+        agencia: prev.agencia || parceiroDadosBancarios.agencia || "",
+        conta: prev.conta || parceiroDadosBancarios.conta || "",
+        pix: prev.pix || parceiroDadosBancarios.pix || "",
+      }));
+    }
+  }, [parceiroDadosBancarios]);
 
   useEffect(() => {
     if (destinatarios && destinatarios.length > 0 && !emailDestinatario) {
@@ -220,6 +251,18 @@ export default function EnviarPagamentoDialog({ open, onOpenChange, conta, onDon
     ? `${conta.plano_contas.codigo || ""} ${conta.plano_contas.nome || ""}`.trim()
     : "—";
 
+  const formaPagamentoLabel =
+    (formasPagamento || []).find((fp) => fp.id === formaPagamentoId)?.nome || "";
+
+  const formaEhCartao =
+    formaPagamentoLabel.toLowerCase().includes("cartão") ||
+    formaPagamentoLabel.toLowerCase().includes("cartao") ||
+    formaPagamentoLabel.toLowerCase().includes("crédito") ||
+    formaPagamentoLabel.toLowerCase().includes("credito");
+
+  const semDadosBancariosCadastrados =
+    !parceiroDadosBancarios || Object.keys(parceiroDadosBancarios).length === 0;
+
   async function handleEnviar() {
     if (!emailDestinatario) {
       toast.error("Selecione um destinatário");
@@ -227,6 +270,10 @@ export default function EnviarPagamentoDialog({ open, onOpenChange, conta, onDon
     }
     if (!formaPagamentoId) {
       toast.error("Selecione a forma de pagamento");
+      return;
+    }
+    if (formaEhCartao && (!parcelas || parcelas < 1)) {
+      toast.error("Informe o número de parcelas");
       return;
     }
     setEnviando(true);
@@ -258,10 +305,44 @@ export default function EnviarPagamentoDialog({ open, onOpenChange, conta, onDon
         extras: {
           dados_pagamento_fornecedor: dadosPgto,
           forma_pagamento_id: formaPagamentoId,
+          numero_parcela: parcelas,
           enviado_pagamento_em: new Date().toISOString(),
           enviado_pagamento_por: user?.id || null,
         },
       });
+
+      // Doutrina: ações no fluxo enriquecem cadastros silenciosamente
+      // Salva dados bancários no parceiro pra próxima vez
+      if (
+        conta.parceiro_id &&
+        (dadosPgto.banco || dadosPgto.agencia || dadosPgto.conta || dadosPgto.pix)
+      ) {
+        try {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const { data: resultado } = await (supabase as any).rpc(
+            "enriquecer_parceiro_com_bancarios",
+            {
+              p_parceiro_id: conta.parceiro_id,
+              p_dados: {
+                banco: dadosPgto.banco || null,
+                agencia: dadosPgto.agencia || null,
+                conta: dadosPgto.conta || null,
+                pix: dadosPgto.pix || null,
+              },
+            },
+          );
+
+          if (resultado?.qtd_campos_atualizados > 0) {
+            toast.info(
+              `Dados bancários de ${fornecedorNome} salvos no cadastro. Não vamos pedir de novo.`,
+              { duration: 4000 },
+            );
+          }
+        } catch (e) {
+          // Falha silenciosa — não bloqueia envio do pagamento
+          console.warn("Não foi possível salvar dados bancários no parceiro:", e);
+        }
+      }
 
       // 2) Gerar URLs assinadas dos documentos selecionados (válidas por 30 dias)
       const docsParaEnviar = (documentos || []).filter((d) => docsSelecionados.has(d.id));
@@ -401,32 +482,83 @@ export default function EnviarPagamentoDialog({ open, onOpenChange, conta, onDon
                 {categoriaTxt}
               </p>
             )}
+            {formaPagamentoLabel && (
+              <p className="flex items-center gap-2">
+                <span className="text-muted-foreground">Forma de pagamento:</span>{" "}
+                <span className="font-medium">{formaPagamentoLabel}</span>
+                <button
+                  type="button"
+                  onClick={() => setEditandoFormaPgto(true)}
+                  className="text-xs text-blue-600 hover:underline"
+                >
+                  alterar
+                </button>
+              </p>
+            )}
+            {formaEhCartao && (
+              <p>
+                <span className="text-muted-foreground">Parcelas:</span>{" "}
+                <span className="font-medium">{parcelas}x</span>
+              </p>
+            )}
           </div>
 
-          {/* Forma de Pagamento - OBRIGATÓRIO */}
-          <div className="space-y-1">
-            <Label className="text-xs uppercase tracking-wide text-muted-foreground">
-              Forma de pagamento *
-            </Label>
-            <Select value={formaPagamentoId} onValueChange={setFormaPagamentoId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione (PIX, Boleto, Transferência...)" />
-              </SelectTrigger>
-              <SelectContent>
-                {(formasPagamento || []).map((fp) => (
-                  <SelectItem key={fp.id} value={fp.id}>
-                    {fp.nome}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          {/* Forma de Pagamento - editável só se usuário clicou "alterar" no resumo */}
+          {editandoFormaPgto && (
+            <div className="space-y-2 p-3 rounded-lg border border-blue-200 bg-blue-50/50">
+              <Label className="text-xs uppercase tracking-wide text-blue-700">
+                Alterar forma de pagamento
+              </Label>
+              <div className="flex items-center gap-2">
+                <Select value={formaPagamentoId} onValueChange={setFormaPagamentoId}>
+                  <SelectTrigger className="bg-background">
+                    <SelectValue placeholder="Selecione (PIX, Boleto, Transferência...)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(formasPagamento || []).map((fp) => (
+                      <SelectItem key={fp.id} value={fp.id}>
+                        {fp.nome}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setEditandoFormaPgto(false)}
+                >
+                  Confirmar
+                </Button>
+              </div>
+              {formaEhCartao && (
+                <div className="space-y-1">
+                  <Label className="text-xs">Parcelas</Label>
+                  <Input
+                    type="number"
+                    min={1}
+                    max={48}
+                    value={parcelas}
+                    onChange={(e) => setParcelas(parseInt(e.target.value) || 1)}
+                    className="w-32 bg-background"
+                  />
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Dados bancários */}
           <div className="space-y-2">
             <Label className="text-xs uppercase tracking-wide text-muted-foreground">
               Dados bancários do fornecedor
             </Label>
+            {conta.parceiro_id && semDadosBancariosCadastrados && (
+              <div className="flex items-start gap-2 p-2 rounded-md border border-blue-200 bg-blue-50 text-xs text-blue-800">
+                <Info className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                <span>
+                  Sem dados bancários cadastrados pra este fornecedor. Preencha aqui — vamos salvar no cadastro pra próxima vez.
+                </span>
+              </div>
+            )}
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <Label className="text-xs">Banco</Label>

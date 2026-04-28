@@ -5191,6 +5191,7 @@ export type Database = {
           cnpj: string | null
           cpf: string | null
           created_at: string | null
+          dados_bancarios: Json | null
           email: string | null
           id: string
           logradouro: string | null
@@ -5219,6 +5220,7 @@ export type Database = {
           cnpj?: string | null
           cpf?: string | null
           created_at?: string | null
+          dados_bancarios?: Json | null
           email?: string | null
           id?: string
           logradouro?: string | null
@@ -5247,6 +5249,7 @@ export type Database = {
           cnpj?: string | null
           cpf?: string | null
           created_at?: string | null
+          dados_bancarios?: Json | null
           email?: string | null
           id?: string
           logradouro?: string | null
@@ -8606,6 +8609,10 @@ export type Database = {
           out_parceiro_id: string
           out_score: number
         }[]
+      }
+      enriquecer_parceiro_com_bancarios: {
+        Args: { p_dados: Json; p_parceiro_id: string }
+        Returns: Json
       }
       enriquecer_todos_lancamentos_cartao: {
         Args: never
