@@ -687,7 +687,7 @@ export default function NFsStage() {
                         {formatBRL(nf.valor)}
                       </TableCell>
                       <TableCell>
-                        {podeSel ? (
+                        {podeClassificar ? (
                           <div className="flex items-center gap-1.5">
                             <CategoriaCombobox
                               options={categorias}
