@@ -8805,6 +8805,10 @@ export type Database = {
         Args: { p_conta_pagar_id: string; p_lancamento_id: string }
         Returns: Json
       }
+      conciliar_transacao_ofx: {
+        Args: { p_conta_pagar_id: string; p_ofx_id: string }
+        Returns: Json
+      }
       contar_uso_template: { Args: { _template_id: string }; Returns: Json }
       contas_para_match_ofx: {
         Args: never
@@ -9071,6 +9075,11 @@ export type Database = {
         Returns: boolean
       }
       ignorar_lancamento: { Args: { p_lancamento_id: string }; Returns: Json }
+      ignorar_ofx: { Args: { p_ofx_id: string }; Returns: Json }
+      lancar_ofx_como_movimentacao: {
+        Args: { p_ofx_id: string }
+        Returns: Json
+      }
       limpar_rascunhos_antigos: { Args: never; Returns: number }
       marcar_nf_enviada_pagamento: {
         Args: { _email_destinatario: string; _nota_id: string }
@@ -9319,6 +9328,18 @@ export type Database = {
       }
       sugerir_matches_lancamento: {
         Args: { p_lancamento_id: string }
+        Returns: {
+          conta_pagar_id: string
+          data_vencimento: string
+          descricao: string
+          fornecedor_cliente: string
+          score: number
+          status: string
+          valor: number
+        }[]
+      }
+      sugerir_matches_ofx: {
+        Args: { p_ofx_id: string }
         Returns: {
           conta_pagar_id: string
           data_vencimento: string
