@@ -3,8 +3,8 @@ import {
   TrendingUp, ArrowDownToLine, ArrowUpFromLine, Upload,
   FileSignature, Building2, ShieldCheck, FolderArchive,
   Users, Monitor, Network, Landmark, LogOut, ClipboardList,
-  UsersRound, Settings2, ShoppingCart, Package, GitCompare,
-  Layers, CreditCard, Calendar, Repeat, FileWarning,
+  UsersRound, Settings2, ShoppingCart, Package,
+  Layers, CreditCard, Calendar, Repeat, FileWarning, ArrowLeftRight,
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { NavLink } from "@/components/NavLink";
@@ -42,6 +42,7 @@ const financeiroItems: MenuItem[] = [
   { title: "Parceiros Comerciais", url: "/administrativo/parceiros", icon: Users },
   { title: "Importar Dados", url: "/administrativo/importar", icon: Upload },
   { title: "NFs em Stage", url: "/administrativo/nfs-stage", icon: Layers },
+  { title: "OFX em Stage", url: "/administrativo/ofx-stage", icon: ArrowLeftRight },
   { title: "Documentos Pendentes", url: "/administrativo/documentos-pendentes", icon: FileWarning },
   { title: "Configuração Integração", url: "/administrativo/configuracao-integracao", icon: Settings2 },
 ];
@@ -49,7 +50,7 @@ const financeiroItems: MenuItem[] = [
 const caixaBancoItems: MenuItem[] = [
   { title: "Movimentações", url: "/administrativo/caixa-banco", icon: Wallet },
   { title: "Contas Bancárias", url: "/administrativo/caixa-banco/contas", icon: Landmark },
-  { title: "Conciliação OFX", url: "/administrativo/caixa-banco/conciliacao", icon: GitCompare },
+  
   { title: "Faturas de Cartão", url: "/administrativo/faturas-cartao", icon: CreditCard },
 ];
 
