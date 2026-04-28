@@ -124,6 +124,8 @@ export async function moverParaStage(
       if (r?.acao === "criada") {
         result.sucesso++;
       } else if (typeof r?.acao === "string" && r.acao.startsWith("enriquecida")) {
+        result.enriquecidas++;
+      } else if (r?.acao === "duplicada_descartada" || r?.acao === "duplicada") {
         result.duplicatas++;
       } else {
         result.sucesso++;
