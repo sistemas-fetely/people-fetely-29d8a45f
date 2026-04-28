@@ -502,6 +502,14 @@ export default function NFsStage() {
             onClick={() => setFiltroPill("vinculadas")}
             icon={<CheckCircle2 className="h-3 w-3" />}
           />
+          <KpiPill
+            label="Sem categoria"
+            count={totals.semCategoria}
+            color="violet"
+            active={filtroPill === "sem_categoria"}
+            onClick={() => setFiltroPill("sem_categoria")}
+            icon={<AlertCircle className="h-3 w-3" />}
+          />
         </div>
 
         {/* Busca + Ações */}
