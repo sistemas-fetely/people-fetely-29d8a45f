@@ -681,17 +681,35 @@ export default function NFsStage() {
                   const sugestao =
                     nf.status === "pendente" ? sugestoesPorNf[nf.id] : null;
 
+                  const temItens = !!(nf.itens && Array.isArray(nf.itens) && nf.itens.length > 0);
+                  const isExpandida = expandidas.has(nf.id);
+
                   return (
-                    <TableRow
-                      key={nf.id}
-                      className={isSel ? "bg-admin/5" : ""}
-                    >
+                    <Fragment key={nf.id}>
+                      <TableRow className={isSel ? "bg-admin/5" : ""}>
                       <TableCell>
-                        <Checkbox
-                          checked={isSel}
-                          disabled={!podeSel}
-                          onCheckedChange={() => toggleSel(nf.id)}
-                        />
+                        <div className="flex items-center gap-1">
+                          <Checkbox
+                            checked={isSel}
+                            disabled={!podeSel}
+                            onCheckedChange={() => toggleSel(nf.id)}
+                          />
+                          {temItens && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-5 w-5 p-0"
+                              onClick={() => toggleExpandir(nf.id)}
+                              title={`${nf.itens!.length} ite${nf.itens!.length === 1 ? "m" : "ns"}`}
+                            >
+                              {isExpandida ? (
+                                <ChevronDown className="h-3.5 w-3.5" />
+                              ) : (
+                                <ChevronRight className="h-3.5 w-3.5" />
+                              )}
+                            </Button>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell className="max-w-[260px]">
                         <div className="text-sm truncate font-medium" title={nf.fornecedor_razao_social || ""}>
