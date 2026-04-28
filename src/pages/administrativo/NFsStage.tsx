@@ -749,17 +749,19 @@ export default function NFsStage() {
                               <Eye className="h-3.5 w-3.5" />
                             </Button>
                           )}
-                          {podeSel && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
-                              onClick={() => setParaDescartar([nf])}
-                              title="Descartar"
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </Button>
-                          )}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
+                            onClick={() => {
+                              if (confirm("Remover esta NF do repositório? Esta ação é permanente.")) {
+                                handleRemover(nf.id);
+                              }
+                            }}
+                            title="Remover"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
                         </div>
                       </TableCell>
                     </TableRow>
