@@ -360,56 +360,27 @@ export default function NFsStage() {
     toast.success(`${ok} sugestão${ok === 1 ? "" : "ões"} aplicada${ok === 1 ? "" : "s"}`);
   }
 
-  async function handleEnviarSelecionadas() {
-    if (selecionadas.size === 0) {
-      toast.info("Selecione NFs primeiro");
-      return;
-    }
-    const ids = Array.from(selecionadas);
-    const lista = (nfs || []).filter((n) => ids.includes(n.id));
-    const naoClassificadas = lista.filter((n) => !n.categoria_id);
-    if (naoClassificadas.length > 0) {
-      toast.error(
-        `${naoClassificadas.length} NF${naoClassificadas.length === 1 ? "" : "s"} sem categoria. Classifique antes de enviar.`,
-      );
+  async function handleRemover(id: string) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await (supabase as any)
+      .from("nfs_stage")
+      .delete()
+      .eq("id", id);
+
+    if (error) {
+      toast.error("Erro ao remover: " + error.message);
       return;
     }
 
-    setEnviando(true);
-    try {
-      const result = await enviarStageParaContasPagar(ids);
-      if (result.sucesso > 0) {
-        const { criadas, enriquecidas } = result.detalhes;
-        const partes: string[] = [];
-        if (criadas > 0) partes.push(`${criadas} criada${criadas === 1 ? "" : "s"}`);
-        if (enriquecidas > 0)
-          partes.push(`${enriquecidas} enriquecida${enriquecidas === 1 ? "" : "s"}`);
-        toast.success(
-          partes.length > 0
-            ? partes.join(", ")
-            : `${result.sucesso} NF${result.sucesso === 1 ? "" : "s"} enviada${result.sucesso === 1 ? "" : "s"}`,
-        );
-      }
-      if (result.erros.length > 0) {
-        toast.error(`${result.erros.length} erro(s): ${result.erros[0]}`);
-        console.error(result.erros);
-      }
-      setSelecionadas(new Set());
-      qc.invalidateQueries({ queryKey: ["nfs-stage"] });
-      qc.invalidateQueries({ queryKey: ["contas-pagar"] });
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
-      toast.error("Erro: " + msg);
-    } finally {
-      setEnviando(false);
-    }
+    toast.success("NF removida do repositório");
+    qc.invalidateQueries({ queryKey: ["nfs-stage"] });
   }
 
   async function handleDescartarConfirmado() {
     const ids = paraDescartar.map((n) => n.id);
     try {
       const count = await descartarStage(ids);
-      toast.success(`${count} NF${count === 1 ? "" : "s"} descartada${count === 1 ? "" : "s"}`);
+      toast.success(`${count} NF${count === 1 ? "" : "s"} removida${count === 1 ? "" : "s"} do repositório`);
       qc.invalidateQueries({ queryKey: ["nfs-stage"] });
       setParaDescartar([]);
       setSelecionadas(new Set());
