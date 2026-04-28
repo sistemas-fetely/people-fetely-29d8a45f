@@ -91,11 +91,10 @@ export default function ContasPagar() {
     queryKey: ["contas-pagar"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("contas_pagar_receber")
+        .from("vw_contas_pagar_consolidado")
         .select(
           "*, plano_contas:conta_id(codigo,nome), parceiros_comerciais:parceiro_id(razao_social), formas_pagamento:forma_pagamento_id(nome)",
         )
-        .eq("tipo", "pagar")
         .order("data_vencimento", { ascending: true });
       if (error) throw error;
       return data as unknown as Conta[];
