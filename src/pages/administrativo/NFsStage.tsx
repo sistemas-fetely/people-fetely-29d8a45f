@@ -124,16 +124,15 @@ function calcularCompletude(nf: NFStage): "completo" | "sem_xml" | "sem_pdf" | "
   return "sem_documentos";
 }
 
-type FiltroPill = "ativos" | "pendente" | "classificada" | "importada" | "descartada" | "todos";
+type FiltroPill = "todas" | "nao_vinculadas" | "vinculadas";
 
 export default function NFsStage() {
   const qc = useQueryClient();
   const [busca, setBusca] = useState("");
-  const [filtroPill, setFiltroPill] = useState<FiltroPill>("ativos");
+  const [filtroPill, setFiltroPill] = useState<FiltroPill>("todas");
   const [selecionadas, setSelecionadas] = useState<Set<string>>(new Set());
   const [paraDescartar, setParaDescartar] = useState<NFStage[]>([]);
   const [salvandoCategoria, setSalvandoCategoria] = useState<Set<string>>(new Set());
-  const [enviando, setEnviando] = useState(false);
   const [expandidas, setExpandidas] = useState<Set<string>>(new Set());
 
   function toggleExpandir(id: string) {
