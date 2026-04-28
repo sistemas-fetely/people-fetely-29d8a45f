@@ -8227,6 +8227,10 @@ export type Database = {
       }
     }
     Functions: {
+      aplicar_regras_categorizacao_stage: {
+        Args: { p_stage_id: string }
+        Returns: Json
+      }
       aplicar_template_cargo: {
         Args: {
           _area_perfil_codigo: string
@@ -8660,6 +8664,14 @@ export type Database = {
           message: Json
           msg_id: number
           read_ct: number
+        }[]
+      }
+      reaplicar_regras_stage_em_lote: {
+        Args: { p_ids?: string[] }
+        Returns: {
+          acao: string
+          categoria_id: string
+          stage_id: string
         }[]
       }
       registrar_aceite_termo_uso: {

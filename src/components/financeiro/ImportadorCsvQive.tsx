@@ -14,7 +14,7 @@ import {
   processarCsvDetalhado,
   processarCsvResumo,
 } from "@/lib/financeiro/csv-qive-parser";
-import { aplicarRegras, useRegrasCategorizacao } from "@/hooks/useRegrasCategorizacao";
+
 import {
   verificarDuplicatas,
 } from "@/lib/financeiro/import-handler";
@@ -35,7 +35,7 @@ export function ImportadorCsvQive({ categorias, onImported }: Props) {
   const [parsing, setParsing] = useState(false);
   const [importing, setImporting] = useState(false);
   const [preview, setPreview] = useState<NFParsed[]>([]);
-  const { data: regras } = useRegrasCategorizacao();
+  
 
   // Fila de auto-cadastro de parceiros
   const fila = useFilaAutoCadastroParceiro();
@@ -63,7 +63,7 @@ export function ImportadorCsvQive({ categorias, onImported }: Props) {
           let nfs = isCsvDetalhado(rows)
             ? processarCsvDetalhado(rows)
             : processarCsvResumo(rows);
-          nfs = nfs.map((n) => aplicarRegras(n, regras));
+          // Engine de regras agora roda no banco via trigger AFTER INSERT em nfs_stage
           nfs = await verificarDuplicatas(nfs);
           // Buscar matches com pagamentos existentes (sem NF)
           nfs = await buscarMatchPagamentos(nfs);
