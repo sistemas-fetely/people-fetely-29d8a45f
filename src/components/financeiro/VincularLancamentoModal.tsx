@@ -77,7 +77,15 @@ export function VincularLancamentoModal({ open, onOpenChange, lancamento }: Prop
         toast.error(resultado?.erro || "Erro ao vincular");
         return;
       }
-      toast.success(`Vinculado a: ${descricao}`, { duration: 4000 });
+      // Constrói toast informativo: se valor mudou, avisa
+      let mensagem = `Vinculado a: ${descricao}`;
+      if (resultado.valor_alterado) {
+        mensagem += ` — valor atualizado pra R$ ${Number(resultado.valor_novo).toFixed(2).replace('.', ',')}`;
+      }
+      if (resultado.movimentacao_atualizada) {
+        mensagem += ` (movimentação também atualizada)`;
+      }
+      toast.success(mensagem, { duration: 5000 });
       onOpenChange(false);
       qc.invalidateQueries({ queryKey: ["fatura-lancamentos"] });
       qc.invalidateQueries({ queryKey: ["faturas-cartao"] });
