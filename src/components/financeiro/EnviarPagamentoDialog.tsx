@@ -174,6 +174,10 @@ export default function EnviarPagamentoDialog({ open, onOpenChange, conta, onDon
       return (data?.dados_bancarios as { banco?: string; agencia?: string; conta?: string; pix?: string } | null) || null;
     },
   });
+
+  useEffect(() => {
+    if (!open) return;
+    if (conta.dados_pagamento_fornecedor) {
       setDadosPgto({
         banco: conta.dados_pagamento_fornecedor.banco || "",
         agencia: conta.dados_pagamento_fornecedor.agencia || "",
@@ -189,6 +193,18 @@ export default function EnviarPagamentoDialog({ open, onOpenChange, conta, onDon
       });
     }
   }, [open, ultimosDados, conta.dados_pagamento_fornecedor]);
+
+  // Auto-preencher dados bancários a partir do cadastro do parceiro
+  useEffect(() => {
+    if (parceiroDadosBancarios && Object.keys(parceiroDadosBancarios).length > 0) {
+      setDadosPgto((prev) => ({
+        banco: prev.banco || parceiroDadosBancarios.banco || "",
+        agencia: prev.agencia || parceiroDadosBancarios.agencia || "",
+        conta: prev.conta || parceiroDadosBancarios.conta || "",
+        pix: prev.pix || parceiroDadosBancarios.pix || "",
+      }));
+    }
+  }, [parceiroDadosBancarios]);
 
   useEffect(() => {
     if (destinatarios && destinatarios.length > 0 && !emailDestinatario) {
