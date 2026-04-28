@@ -654,8 +654,18 @@ export default function FaturasCartao() {
                             ? `${formatDateBR(f.periodo_inicio)} → ${formatDateBR(f.periodo_fim)}`
                             : "—"}
                         </TableCell>
-                        <TableCell className="text-right font-mono whitespace-nowrap">
-                          {formatBRL(f.valor_total)}
+                        <TableCell className="text-right whitespace-nowrap">
+                          <div className="font-mono">{formatBRL(f.valor_total)}</div>
+                          {(f.qtd_conciliados || 0) > 0 && (
+                            <div className="text-[10px] text-emerald-700">
+                              Conciliado: {formatBRL(f.valor_conciliado || 0)}
+                            </div>
+                          )}
+                          {(f.qtd_pendentes || 0) > 0 && (
+                            <div className="text-[10px] text-amber-700">
+                              Pendente: {formatBRL(f.valor_pendente || 0)}
+                            </div>
+                          )}
                         </TableCell>
                         <TableCell className="text-center text-xs">
                           <div className="flex items-center justify-center gap-1">
