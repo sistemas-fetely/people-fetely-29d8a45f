@@ -251,6 +251,18 @@ export default function EnviarPagamentoDialog({ open, onOpenChange, conta, onDon
     ? `${conta.plano_contas.codigo || ""} ${conta.plano_contas.nome || ""}`.trim()
     : "—";
 
+  const formaPagamentoLabel =
+    (formasPagamento || []).find((fp) => fp.id === formaPagamentoId)?.nome || "";
+
+  const formaEhCartao =
+    formaPagamentoLabel.toLowerCase().includes("cartão") ||
+    formaPagamentoLabel.toLowerCase().includes("cartao") ||
+    formaPagamentoLabel.toLowerCase().includes("crédito") ||
+    formaPagamentoLabel.toLowerCase().includes("credito");
+
+  const semDadosBancariosCadastrados =
+    !parceiroDadosBancarios || Object.keys(parceiroDadosBancarios).length === 0;
+
   async function handleEnviar() {
     if (!emailDestinatario) {
       toast.error("Selecione um destinatário");
@@ -258,6 +270,10 @@ export default function EnviarPagamentoDialog({ open, onOpenChange, conta, onDon
     }
     if (!formaPagamentoId) {
       toast.error("Selecione a forma de pagamento");
+      return;
+    }
+    if (formaEhCartao && (!parcelas || parcelas < 1)) {
+      toast.error("Informe o número de parcelas");
       return;
     }
     setEnviando(true);
