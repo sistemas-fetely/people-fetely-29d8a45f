@@ -82,11 +82,18 @@ Responda APENAS com JSON neste formato (sem markdown, sem explicações):
   "fornecedor_razao_social": string (razão social do prestador/emissor)
 }
 
-REGRAS:
-- Se documento brasileiro com CNPJ → pais_emissor="BR", moeda="BRL"
-- Se documento estrangeiro (Anthropic/Lovable/etc) → pais_emissor sigla do país, moeda da cobrança original
-- Para recibos com conversão (ex: "Charged R$51.78 using 1 USD = 5.1777 BRL") → valor=51.78, valor_origem=10.00, taxa_conversao=5.1777, moeda="USD"
-- Para recibos sem conversão explícita mas em moeda não-BRL → valor=valor original, valor_origem=null, taxa_conversao=null, moeda=moeda original
+REGRAS DE MOEDA — LEIA COM ATENÇÃO:
+
+REGRA DE OURO: Se documento contém TEXTO de conversão de moeda (ex: "Charged R$51.78 using 1 USD = 5.1777 BRL"), a MOEDA do documento é a ORIGINAL (USD), NÃO a final (BRL).
+
+- Se documento brasileiro com CNPJ → pais_emissor="BR", moeda="BRL", valor_origem=null, taxa_conversao=null
+- Se documento estrangeiro SEM conversão (cobrança nativa em USD/EUR) → moeda=moeda da cobrança, valor=valor original, valor_origem=null, taxa_conversao=null
+- Se documento estrangeiro COM conversão explícita (texto tipo "Charged R$X using 1 USD = Y BRL") → moeda=moeda ORIGINAL (USD/EUR), valor=valor BRL convertido, valor_origem=valor na moeda original, taxa_conversao=taxa explicitada
+- Se documento estrangeiro emitido DIRETAMENTE em BRL (ex: Anthropic emite R$1.001,06 nativo) → moeda="BRL", valor_origem=null, taxa_conversao=null
+
+REGRA INVIOLÁVEL: NUNCA preencher valor_origem ou taxa_conversao quando moeda="BRL". Se moeda="BRL", esses 2 campos DEVEM ser null. Se documento tem conversão explícita, moeda NÃO É "BRL".
+
+REGRAS GERAIS:
 - numero_documento: pra NF-e/NFS-e use o número da nota; pra recibo use invoice number ou receipt number
 - Se não conseguir extrair algum campo opcional, use null
 - Se não conseguir identificar o tipo com certeza, escolha o mais provável e prossiga`;
@@ -174,6 +181,31 @@ REGRAS:
       fornecedor_cnpj: parsed.fornecedor_cnpj || null,
       fornecedor_razao_social: parsed.fornecedor_razao_social || null,
     };
+
+    // ============================================
+    // DEFESA EM PROFUNDIDADE: corrige inconsistências de moeda
+    // ============================================
+    // Caso 1: moeda='BRL' mas tem valor_origem/taxa preenchidos
+    //         → IA confundiu moeda. Se há conversão, moeda original NÃO é BRL.
+    //         → Limpa valor_origem e taxa_conversao (mantém moeda BRL coerente)
+    if (data.moeda === "BRL" && (data.valor_origem !== null || data.taxa_conversao !== null)) {
+      console.warn("Inconsistência detectada: moeda=BRL com conversão preenchida. Limpando campos de conversão.");
+      data.valor_origem = null;
+      data.taxa_conversao = null;
+    }
+
+    // Caso 2: valor_origem preenchido mas taxa_conversao NULL (ou vice-versa)
+    //         → constraint "ambos ou nenhum". Limpa ambos.
+    if ((data.valor_origem === null) !== (data.taxa_conversao === null)) {
+      console.warn("Inconsistência: apenas um de valor_origem/taxa_conversao preenchido. Limpando ambos.");
+      data.valor_origem = null;
+      data.taxa_conversao = null;
+    }
+
+    // Caso 3: moeda != BRL mas SEM valor_origem/taxa
+    //         → cobrança nativa em moeda estrangeira. valor já está na moeda dela.
+    //         → Sistema espera valor SEMPRE em BRL. Se não tem como converter, falha graciosa.
+    //         → Por enquanto: deixa passar (campo valor pode ficar incoerente, mas não bloqueia)
 
     return new Response(JSON.stringify({ success: true, data }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
