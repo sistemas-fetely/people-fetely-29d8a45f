@@ -910,6 +910,12 @@ function KpiPill({ label, count, color, active, onClick, icon, description }: Kp
       border: "border-gray-200",
       activeBg: "bg-gray-700 text-white border-gray-700",
     },
+    violet: {
+      bg: "bg-violet-50",
+      text: "text-violet-700",
+      border: "border-violet-200",
+      activeBg: "bg-violet-600 text-white border-violet-600",
+    },
   };
   const c = colorMap[color];
   const cls = active
