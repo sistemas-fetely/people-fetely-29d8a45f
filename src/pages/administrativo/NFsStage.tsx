@@ -124,6 +124,15 @@ const FONTE_LABELS: Record<string, string> = {
   csv_qive: "CSV Qive",
 };
 
+function calcularCompletude(nf: NFStage): "completo" | "sem_xml" | "sem_pdf" | "sem_documentos" {
+  const temPdf = !!nf.arquivo_storage_path;
+  const temXml = !!nf.xml_storage_path || (Array.isArray(nf.itens) && nf.itens.length > 0);
+  if (temPdf && temXml) return "completo";
+  if (temPdf) return "sem_xml";
+  if (temXml) return "sem_pdf";
+  return "sem_documentos";
+}
+
 type FiltroPill = "ativos" | "pendente" | "classificada" | "importada" | "descartada" | "todos";
 
 export default function NFsStage() {
