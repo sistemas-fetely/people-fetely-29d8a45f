@@ -165,15 +165,12 @@ export default function NFsStage() {
   // Filtro + Ordenação
   const filtered = useMemo(() => {
     let list = nfs || [];
-    if (filtroPill !== "todos") {
-      if (filtroPill === "ativos") {
-        list = list.filter(
-          (n) => n.status === "pendente" || n.status === "classificada",
-        );
-      } else {
-        list = list.filter((n) => n.status === filtroPill);
-      }
+    if (filtroPill === "nao_vinculadas") {
+      list = list.filter((n) => n.status === "nao_vinculada");
+    } else if (filtroPill === "vinculadas") {
+      list = list.filter((n) => n.status === "vinculada");
     }
+    // "todas" não filtra
     if (busca.trim()) {
       const t = busca.toLowerCase();
       list = list.filter(
@@ -202,13 +199,12 @@ export default function NFsStage() {
   const totals = useMemo(() => {
     const all = nfs || [];
     return {
-      pendentes: all.filter((n) => n.status === "pendente").length,
-      prontas: all.filter((n) => n.status === "classificada").length,
-      importadas: all.filter((n) => n.status === "importada").length,
-      descartadas: all.filter((n) => n.status === "descartada").length,
+      naoVinculadas: all.filter((n) => n.status === "nao_vinculada").length,
+      vinculadas: all.filter((n) => n.status === "vinculada").length,
       total: all.length,
     };
   }, [nfs]);
+
 
   // Soma do valor das selecionadas
   const totalSelecionadas = useMemo(() => {
