@@ -158,28 +158,14 @@ export async function salvarFaturaCartao(
       }
     }
 
-    // === FASE B: processar compromissos parcelados ===
-    let resultadoCompromissos: {
-      compromissos_criados: number;
-      parcelas_previstas_criadas: number;
-      parcelas_pagas_marcadas: number;
-    } = { compromissos_criados: 0, parcelas_previstas_criadas: 0, parcelas_pagas_marcadas: 0 };
-
-    try {
-      const { processarParcelasDaFatura } = await import("./compromissos-handler");
-      const r = await processarParcelasDaFatura(
-        faturaId,
-        parsed.lancamentos,
-        idsLancamentosCriados,
-      );
-      resultadoCompromissos = {
-        compromissos_criados: r.compromissos_criados,
-        parcelas_previstas_criadas: r.parcelas_previstas_criadas,
-        parcelas_pagas_marcadas: r.parcelas_pagas_marcadas,
-      };
-    } catch (e) {
-      console.warn("Falha não-bloqueante no processamento de parcelas:", e);
-    }
+    // === FASE B: DESATIVADA ===
+    // Gerador automático de parcelas previstas foi desligado.
+    // Só importa o que está no PDF. Próximas parcelas chegam mês a mês na fatura.
+    const resultadoCompromissos = {
+      compromissos_criados: 0,
+      parcelas_previstas_criadas: 0,
+      parcelas_pagas_marcadas: 0,
+    };
 
     // === FASE C: enriquecer CNPJs dos lançamentos (auto) ===
     try {
