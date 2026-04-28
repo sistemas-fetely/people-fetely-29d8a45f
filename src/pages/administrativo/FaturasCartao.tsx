@@ -647,15 +647,10 @@ export default function FaturasCartao() {
                             </div>
                           )}
                         </TableCell>
-                        <TableCell className="text-xs whitespace-nowrap">
-                          {formatDateBR(f.data_vencimento)}
+                        <TableCell className="text-right whitespace-nowrap">
+                          <div className="font-mono text-base font-semibold">{formatBRL(f.valor_total)}</div>
                         </TableCell>
-                        <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
-                          {f.periodo_inicio && f.periodo_fim
-                            ? `${formatDateBR(f.periodo_inicio)} → ${formatDateBR(f.periodo_fim)}`
-                            : "—"}
-                        </TableCell>
-                        <TableCell className="whitespace-nowrap text-xs">
+                        <TableCell className="whitespace-nowrap text-sm">
                           {(f.qtd_conciliados || 0) > 0 && (
                             <div className="text-emerald-700">
                               Conciliado: <span className="font-mono">{formatBRL(f.valor_conciliado || 0)}</span>
@@ -666,9 +661,6 @@ export default function FaturasCartao() {
                               Pendente: <span className="font-mono">{formatBRL(f.valor_pendente || 0)}</span>
                             </div>
                           )}
-                        </TableCell>
-                        <TableCell className="text-right whitespace-nowrap">
-                          <div className="font-mono text-base font-semibold">{formatBRL(f.valor_total)}</div>
                         </TableCell>
                         <TableCell className="text-center">
                           <div className="flex flex-col items-center gap-1">
@@ -682,6 +674,14 @@ export default function FaturasCartao() {
                               </Badge>
                             )}
                           </div>
+                        </TableCell>
+                        <TableCell className="text-xs whitespace-nowrap">
+                          {formatDateBR(f.data_vencimento)}
+                        </TableCell>
+                        <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
+                          {f.periodo_inicio && f.periodo_fim
+                            ? `${formatDateBR(f.periodo_inicio)} → ${formatDateBR(f.periodo_fim)}`
+                            : "—"}
                         </TableCell>
                         <TableCell>
                           <Badge className={STATUS_STYLES[f.status]}>
