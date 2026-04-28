@@ -8499,6 +8499,10 @@ export type Database = {
           valor: number
         }[]
       }
+      criar_despesa_de_lancamento: {
+        Args: { p_lancamento_id: string }
+        Returns: Json
+      }
       criar_despesa_direta_ofx: {
         Args: {
           p_categoria_id: string
