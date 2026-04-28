@@ -74,10 +74,12 @@ export interface NFParsed {
   // Metadado de origem do import
   _source: "csv_qive" | "xml_nfe" | "xml_nfse" | "pdf_nfe";
 
-  // Tipo de documento fiscal (preenchido pelo dispatcher xml-parser)
-  tipo_documento?: "nfe" | "nfse" | string;
+  // Tipo de documento fiscal (preenchido pelo dispatcher xml-parser ou edge function de PDF)
+  tipo_documento?: "nfe" | "nfse" | "recibo" | string;
   pais_emissor?: string;
   moeda?: string;
+  valor_origem?: number | null;
+  taxa_conversao?: number | null;
 
   // Arquivo original (apenas PDFs - usado para anexar à conta criada)
   _arquivo?: File;

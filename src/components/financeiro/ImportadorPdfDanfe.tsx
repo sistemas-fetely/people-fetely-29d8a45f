@@ -52,28 +52,45 @@ export function ImportadorPdfDanfe({ categorias, onImported }: Props) {
             body: formData,
           });
           if (error) throw error;
-          // Edge function devolve { success: true, data: {...} } ou objeto direto
+          // Edge function devolve { success: true, data: {...} }
           const payload = (data?.data || data || {}) as Record<string, any>;
-          if (!payload || !payload.razao_social_prestador && !payload.emitente_nome) {
+
+          // Validação: precisa pelo menos de fornecedor identificável
+          if (!payload || (!payload.fornecedor_razao_social && !payload.razao_social_prestador && !payload.emitente_nome)) {
             toast.warning(`PDF ${f.name}: sem dados extraídos`);
             continue;
           }
+
+          const tipoDoc = payload.tipo_documento || "nfe";
+
           const nf: NFParsed = {
-            nf_numero: String(payload.numero || ""),
+            // Identificação
+            nf_numero: String(payload.numero_documento || payload.numero || ""),
             nf_serie: payload.serie ? String(payload.serie) : "",
             nf_data_emissao: parseDataBR(payload.data_emissao) || payload.data_emissao || null,
-            nf_natureza_operacao: payload.natureza_operacao || payload.descricao || "",
+            nf_natureza_operacao: payload.descricao || payload.natureza_operacao || "",
             nf_chave_acesso: payload.chave_acesso || undefined,
+
+            // Fornecedor (com fallback pra schema antigo)
             fornecedor_nome:
+              payload.fornecedor_razao_social ||
               payload.razao_social_prestador ||
               payload.emitente_nome ||
-              payload.fornecedor_nome ||
               "Fornecedor",
             fornecedor_cnpj: limparCnpj(
-              payload.cnpj_prestador || payload.emitente_cnpj || payload.fornecedor_cnpj || ""
-            ),
+              payload.fornecedor_cnpj ||
+              payload.cnpj_prestador ||
+              payload.emitente_cnpj ||
+              ""
+            ) || undefined,
+
+            // Valores (sempre em BRL no campo principal)
             valor: parseValorBR(payload.valor || payload.valor_total),
+
+            // Pagamento
             meio_pagamento: null,
+
+            // Itens (NF-e produto tem; recibo geralmente não)
             itens: Array.isArray(payload.itens)
               ? payload.itens.map((it: any) => ({
                   descricao: String(it.descricao || ""),
@@ -83,8 +100,15 @@ export function ImportadorPdfDanfe({ categorias, onImported }: Props) {
                   valor_total: parseValorBR(it.valor_total),
                 }))
               : [],
+
+            // Metadados de origem e tipo
             _source: "pdf_nfe",
             _arquivo: f,
+            tipo_documento: tipoDoc,
+            pais_emissor: payload.pais_emissor || "BR",
+            moeda: payload.moeda || "BRL",
+            valor_origem: payload.valor_origem ?? null,
+            taxa_conversao: payload.taxa_conversao ?? null,
           };
           novas.push(nf);
         } catch (err: any) {
@@ -155,10 +179,10 @@ export function ImportadorPdfDanfe({ categorias, onImported }: Props) {
       <CardHeader>
         <CardTitle className="text-base flex items-center gap-2">
           <FileText className="h-5 w-5 text-admin" />
-          PDF (DANFE)
+          PDFs (NF-e, NFS-e, Recibo)
         </CardTitle>
         <CardDescription>
-          Upload de DANFE em PDF. Lê os dados com IA — pode levar alguns segundos por arquivo.
+          DANFE de NF-e, recibos NFS-e municipais ou recibos estrangeiros (Anthropic, Lovable, etc.). Lê os dados com IA — pode levar alguns segundos por arquivo.
         </CardDescription>
       </CardHeader>
       <CardContent>

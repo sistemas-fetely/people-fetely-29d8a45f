@@ -77,7 +77,7 @@ export async function moverParaStage(
 
       // Monta payload pra RPC merge_nf_stage
       // RPC vai decidir CRIAR ou ENRIQUECER por chave_acesso
-      const status = nf._categoria_id ? "classificada" : "pendente";
+      const status = "nao_vinculada"; // Stage virou repositório — vínculo é decisão futura
 
       const payload: Record<string, unknown> = {
         fonte: nf._source || "pdf_nfe",
@@ -98,9 +98,12 @@ export async function moverParaStage(
         data_vencimento: nf.nf_data_emissao || null,
         status,
         itens: nf.itens || null,
-        tipo_documento: nf.tipo_documento || null,
-        pais_emissor: nf.pais_emissor || null,
-        moeda: nf.moeda || null,
+        // Tipo de documento + moeda estrangeira
+        tipo_documento: nf.tipo_documento || "nfe",
+        pais_emissor: nf.pais_emissor || "BR",
+        moeda: nf.moeda || "BRL",
+        valor_origem: nf.valor_origem ?? null,
+        taxa_conversao: nf.taxa_conversao ?? null,
       };
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
