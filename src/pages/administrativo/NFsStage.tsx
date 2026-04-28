@@ -35,7 +35,7 @@ import {
 import {
   Layers,
   Search,
-  Send,
+  
   Trash2,
   CheckCircle2,
   Clock,
@@ -51,10 +51,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
-import {
-  enviarStageParaContasPagar,
-  descartarStage,
-} from "@/lib/financeiro/stage-handler";
+import { descartarStage } from "@/lib/financeiro/stage-handler";
 import { useCategoriasPlano } from "@/hooks/useCategoriasPlano";
 import { CategoriaCombobox } from "@/components/financeiro/CategoriaCombobox";
 import {
@@ -103,19 +100,13 @@ type NFStage = {
 };
 
 const STATUS_LABELS: Record<string, string> = {
-  pendente: "Pendente",
-  classificada: "Pronta",
-  importada: "Importada",
-  descartada: "Descartada",
-  duplicata: "Duplicata",
+  nao_vinculada: "Não vinculada",
+  vinculada: "Vinculada",
 };
 
 const STATUS_STYLES: Record<string, string> = {
-  pendente: "bg-amber-100 text-amber-800 hover:bg-amber-100 border-amber-200",
-  classificada: "bg-emerald-100 text-emerald-800 hover:bg-emerald-100 border-emerald-200",
-  importada: "bg-blue-100 text-blue-800 hover:bg-blue-100 border-blue-200",
-  descartada: "bg-gray-100 text-gray-700 hover:bg-gray-100 border-gray-200",
-  duplicata: "bg-orange-100 text-orange-800 hover:bg-orange-100 border-orange-200",
+  nao_vinculada: "bg-amber-100 text-amber-800 hover:bg-amber-100 border-amber-200",
+  vinculada: "bg-emerald-100 text-emerald-800 hover:bg-emerald-100 border-emerald-200",
 };
 
 const FONTE_LABELS: Record<string, string> = {
@@ -133,16 +124,15 @@ function calcularCompletude(nf: NFStage): "completo" | "sem_xml" | "sem_pdf" | "
   return "sem_documentos";
 }
 
-type FiltroPill = "ativos" | "pendente" | "classificada" | "importada" | "descartada" | "todos";
+type FiltroPill = "todas" | "nao_vinculadas" | "vinculadas";
 
 export default function NFsStage() {
   const qc = useQueryClient();
   const [busca, setBusca] = useState("");
-  const [filtroPill, setFiltroPill] = useState<FiltroPill>("ativos");
+  const [filtroPill, setFiltroPill] = useState<FiltroPill>("todas");
   const [selecionadas, setSelecionadas] = useState<Set<string>>(new Set());
   const [paraDescartar, setParaDescartar] = useState<NFStage[]>([]);
   const [salvandoCategoria, setSalvandoCategoria] = useState<Set<string>>(new Set());
-  const [enviando, setEnviando] = useState(false);
   const [expandidas, setExpandidas] = useState<Set<string>>(new Set());
 
   function toggleExpandir(id: string) {
@@ -175,15 +165,12 @@ export default function NFsStage() {
   // Filtro + Ordenação
   const filtered = useMemo(() => {
     let list = nfs || [];
-    if (filtroPill !== "todos") {
-      if (filtroPill === "ativos") {
-        list = list.filter(
-          (n) => n.status === "pendente" || n.status === "classificada",
-        );
-      } else {
-        list = list.filter((n) => n.status === filtroPill);
-      }
+    if (filtroPill === "nao_vinculadas") {
+      list = list.filter((n) => n.status === "nao_vinculada");
+    } else if (filtroPill === "vinculadas") {
+      list = list.filter((n) => n.status === "vinculada");
     }
+    // "todas" não filtra
     if (busca.trim()) {
       const t = busca.toLowerCase();
       list = list.filter(
@@ -212,13 +199,12 @@ export default function NFsStage() {
   const totals = useMemo(() => {
     const all = nfs || [];
     return {
-      pendentes: all.filter((n) => n.status === "pendente").length,
-      prontas: all.filter((n) => n.status === "classificada").length,
-      importadas: all.filter((n) => n.status === "importada").length,
-      descartadas: all.filter((n) => n.status === "descartada").length,
+      naoVinculadas: all.filter((n) => n.status === "nao_vinculada").length,
+      vinculadas: all.filter((n) => n.status === "vinculada").length,
       total: all.length,
     };
   }, [nfs]);
+
 
   // Soma do valor das selecionadas
   const totalSelecionadas = useMemo(() => {
@@ -274,27 +260,23 @@ export default function NFsStage() {
   }
 
   function toggleTodas() {
-    const ativasIds = filtered
-      .filter((n) => n.status === "pendente" || n.status === "classificada")
-      .map((n) => n.id);
-    const todasSel = ativasIds.length > 0 && ativasIds.every((id) => selecionadas.has(id));
+    const ids = filtered.map((n) => n.id);
+    const todasSel = ids.length > 0 && ids.every((id) => selecionadas.has(id));
     if (todasSel) {
       setSelecionadas(new Set());
     } else {
-      setSelecionadas(new Set(ativasIds));
+      setSelecionadas(new Set(ids));
     }
   }
 
   async function alterarCategoria(id: string, categoriaId: string) {
     setSalvandoCategoria((prev) => new Set(prev).add(id));
     try {
-      const novoStatus = categoriaId ? "classificada" : "pendente";
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { error } = await (supabase as any)
         .from("nfs_stage")
         .update({
           categoria_id: categoriaId || null,
-          status: novoStatus,
         })
         .eq("id", id);
       if (error) throw error;
@@ -337,7 +319,7 @@ export default function NFsStage() {
   async function aceitarTodasSugestoes() {
     if (!nfs) return;
     const aplicar = nfs.filter(
-      (n) => n.status === "pendente" && sugestoesPorNf[n.id],
+      (n) => !n.categoria_id && sugestoesPorNf[n.id],
     );
     if (aplicar.length === 0) {
       toast.info("Nenhuma sugestão automática disponível.");
@@ -352,7 +334,7 @@ export default function NFsStage() {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { error } = await (supabase as any)
           .from("nfs_stage")
-          .update({ categoria_id: sug.categoria_id, status: "classificada" })
+          .update({ categoria_id: sug.categoria_id })
           .eq("id", nf.id);
         if (!error) {
           ok++;
@@ -374,56 +356,27 @@ export default function NFsStage() {
     toast.success(`${ok} sugestão${ok === 1 ? "" : "ões"} aplicada${ok === 1 ? "" : "s"}`);
   }
 
-  async function handleEnviarSelecionadas() {
-    if (selecionadas.size === 0) {
-      toast.info("Selecione NFs primeiro");
-      return;
-    }
-    const ids = Array.from(selecionadas);
-    const lista = (nfs || []).filter((n) => ids.includes(n.id));
-    const naoClassificadas = lista.filter((n) => !n.categoria_id);
-    if (naoClassificadas.length > 0) {
-      toast.error(
-        `${naoClassificadas.length} NF${naoClassificadas.length === 1 ? "" : "s"} sem categoria. Classifique antes de enviar.`,
-      );
+  async function handleRemover(id: string) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await (supabase as any)
+      .from("nfs_stage")
+      .delete()
+      .eq("id", id);
+
+    if (error) {
+      toast.error("Erro ao remover: " + error.message);
       return;
     }
 
-    setEnviando(true);
-    try {
-      const result = await enviarStageParaContasPagar(ids);
-      if (result.sucesso > 0) {
-        const { criadas, enriquecidas } = result.detalhes;
-        const partes: string[] = [];
-        if (criadas > 0) partes.push(`${criadas} criada${criadas === 1 ? "" : "s"}`);
-        if (enriquecidas > 0)
-          partes.push(`${enriquecidas} enriquecida${enriquecidas === 1 ? "" : "s"}`);
-        toast.success(
-          partes.length > 0
-            ? partes.join(", ")
-            : `${result.sucesso} NF${result.sucesso === 1 ? "" : "s"} enviada${result.sucesso === 1 ? "" : "s"}`,
-        );
-      }
-      if (result.erros.length > 0) {
-        toast.error(`${result.erros.length} erro(s): ${result.erros[0]}`);
-        console.error(result.erros);
-      }
-      setSelecionadas(new Set());
-      qc.invalidateQueries({ queryKey: ["nfs-stage"] });
-      qc.invalidateQueries({ queryKey: ["contas-pagar"] });
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
-      toast.error("Erro: " + msg);
-    } finally {
-      setEnviando(false);
-    }
+    toast.success("NF removida do repositório");
+    qc.invalidateQueries({ queryKey: ["nfs-stage"] });
   }
 
   async function handleDescartarConfirmado() {
     const ids = paraDescartar.map((n) => n.id);
     try {
       const count = await descartarStage(ids);
-      toast.success(`${count} NF${count === 1 ? "" : "s"} descartada${count === 1 ? "" : "s"}`);
+      toast.success(`${count} NF${count === 1 ? "" : "s"} removida${count === 1 ? "" : "s"} do repositório`);
       qc.invalidateQueries({ queryKey: ["nfs-stage"] });
       setParaDescartar([]);
       setSelecionadas(new Set());
@@ -456,12 +409,7 @@ export default function NFsStage() {
       if (tag === "input" || tag === "select" || tag === "textarea") return;
       if (e.metaKey || e.ctrlKey || e.altKey) return;
 
-      if (e.key === "e" || e.key === "E") {
-        if (selecionadas.size > 0) {
-          e.preventDefault();
-          handleEnviarSelecionadas();
-        }
-      } else if (e.key === "d" || e.key === "D") {
+      if (e.key === "Delete" || e.key === "Backspace") {
         if (selecionadas.size > 0) {
           e.preventDefault();
           const lista = filtered.filter((n) => selecionadas.has(n.id));
@@ -483,7 +431,7 @@ export default function NFsStage() {
   }, [selecionadas, filtered]);
 
   const sugestoesDisponiveis = (nfs || []).filter(
-    (n) => n.status === "pendente" && sugestoesPorNf[n.id],
+    (n) => n.status === "nao_vinculada" && sugestoesPorNf[n.id],
   ).length;
 
   return (
@@ -494,14 +442,13 @@ export default function NFsStage() {
           <div>
             <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
               <Layers className="h-6 w-6 text-admin" />
-              NFs em Stage
+              Repositório de NFs
             </h1>
             <p className="text-muted-foreground text-sm mt-0.5">
-              Revise, classifique e envie pra Contas a Pagar.{" "}
+              Biblioteca de notas fiscais. Vincule manualmente quando necessário.{" "}
               <span className="text-[11px] opacity-70">
                 Atalhos: <kbd className="px-1 py-0.5 border rounded text-[10px]">/</kbd> buscar ·{" "}
-                <kbd className="px-1 py-0.5 border rounded text-[10px]">E</kbd> enviar ·{" "}
-                <kbd className="px-1 py-0.5 border rounded text-[10px]">D</kbd> descartar ·{" "}
+                <kbd className="px-1 py-0.5 border rounded text-[10px]">Del</kbd> remover ·{" "}
                 <kbd className="px-1 py-0.5 border rounded text-[10px]">Esc</kbd> limpar
               </span>
             </p>
@@ -521,55 +468,28 @@ export default function NFsStage() {
         {/* KPI pills (clicáveis = filtros) */}
         <div className="flex flex-wrap gap-2">
           <KpiPill
-            label="Ativas"
-            count={totals.pendentes + totals.prontas}
-            color="admin"
-            active={filtroPill === "ativos"}
-            onClick={() => setFiltroPill("ativos")}
-            icon={<Package className="h-3 w-3" />}
-            description="pendente + pronta"
-          />
-          <KpiPill
-            label="Pendentes"
-            count={totals.pendentes}
-            color="amber"
-            active={filtroPill === "pendente"}
-            onClick={() => setFiltroPill("pendente")}
-            icon={<Clock className="h-3 w-3" />}
-            description="sem categoria"
-          />
-          <KpiPill
-            label="Prontas"
-            count={totals.prontas}
-            color="emerald"
-            active={filtroPill === "classificada"}
-            onClick={() => setFiltroPill("classificada")}
-            icon={<CheckCircle2 className="h-3 w-3" />}
-            description="podem enviar"
-          />
-          <KpiPill
-            label="Importadas"
-            count={totals.importadas}
-            color="blue"
-            active={filtroPill === "importada"}
-            onClick={() => setFiltroPill("importada")}
-            icon={<Send className="h-3 w-3" />}
-            description="já em CP"
-          />
-          <KpiPill
-            label="Descartadas"
-            count={totals.descartadas}
-            color="gray"
-            active={filtroPill === "descartada"}
-            onClick={() => setFiltroPill("descartada")}
-            icon={<Trash2 className="h-3 w-3" />}
-          />
-          <KpiPill
             label="Todas"
             count={totals.total}
-            color="gray"
-            active={filtroPill === "todos"}
-            onClick={() => setFiltroPill("todos")}
+            color="admin"
+            active={filtroPill === "todas"}
+            onClick={() => setFiltroPill("todas")}
+            icon={<Package className="h-3 w-3" />}
+          />
+          <KpiPill
+            label="Não vinculadas"
+            count={totals.naoVinculadas}
+            color="amber"
+            active={filtroPill === "nao_vinculadas"}
+            onClick={() => setFiltroPill("nao_vinculadas")}
+            icon={<Clock className="h-3 w-3" />}
+          />
+          <KpiPill
+            label="Vinculadas"
+            count={totals.vinculadas}
+            color="emerald"
+            active={filtroPill === "vinculadas"}
+            onClick={() => setFiltroPill("vinculadas")}
+            icon={<CheckCircle2 className="h-3 w-3" />}
           />
         </div>
 
@@ -610,14 +530,6 @@ export default function NFsStage() {
                 <span className="font-mono">{formatBRL(totalSelecionadas)}</span>
               </Badge>
               <Button
-                onClick={handleEnviarSelecionadas}
-                disabled={enviando}
-                className="gap-2 bg-emerald-700 hover:bg-emerald-800 text-white"
-              >
-                <Send className="h-4 w-4" />
-                Enviar pra Contas a Pagar
-              </Button>
-              <Button
                 variant="outline"
                 size="icon"
                 onClick={() => {
@@ -625,7 +537,7 @@ export default function NFsStage() {
                   setParaDescartar(lista);
                 }}
                 className="text-destructive border-destructive/30 hover:bg-destructive/5"
-                title="Descartar (D)"
+                title="Remover (Del)"
               >
                 <Trash2 className="h-4 w-4" />
               </Button>
@@ -693,11 +605,11 @@ export default function NFsStage() {
               <TableBody>
                 {filtered.map((nf) => {
                   const isSel = selecionadas.has(nf.id);
-                  const podeSel =
-                    nf.status === "pendente" || nf.status === "classificada";
+                  const podeSel = nf.status === "nao_vinculada";
+                  const podeClassificar = nf.status === "nao_vinculada";
                   const salvando = salvandoCategoria.has(nf.id);
                   const sugestao =
-                    nf.status === "pendente" ? sugestoesPorNf[nf.id] : null;
+                    !nf.categoria_id ? sugestoesPorNf[nf.id] : null;
 
                   const temItens = !!(nf.itens && Array.isArray(nf.itens) && nf.itens.length > 0);
                   const isExpandida = expandidas.has(nf.id);
@@ -709,7 +621,6 @@ export default function NFsStage() {
                         <div className="flex items-center gap-1">
                           <Checkbox
                             checked={isSel}
-                            disabled={!podeSel}
                             onCheckedChange={() => toggleSel(nf.id)}
                           />
                           {temItens && (
@@ -776,7 +687,7 @@ export default function NFsStage() {
                         {formatBRL(nf.valor)}
                       </TableCell>
                       <TableCell>
-                        {podeSel ? (
+                        {podeClassificar ? (
                           <div className="flex items-center gap-1.5">
                             <CategoriaCombobox
                               options={categorias}
@@ -838,17 +749,19 @@ export default function NFsStage() {
                               <Eye className="h-3.5 w-3.5" />
                             </Button>
                           )}
-                          {podeSel && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
-                              onClick={() => setParaDescartar([nf])}
-                              title="Descartar"
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </Button>
-                          )}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
+                            onClick={() => {
+                              if (confirm("Remover esta NF do repositório? Esta ação é permanente.")) {
+                                handleRemover(nf.id);
+                              }
+                            }}
+                            title="Remover"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -900,16 +813,16 @@ export default function NFsStage() {
         )}
       </div>
 
-      {/* AlertDialog descartar */}
+      {/* AlertDialog remover */}
       <AlertDialog
         open={paraDescartar.length > 0}
         onOpenChange={(v) => !v && setParaDescartar([])}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Descartar NFs do stage?</AlertDialogTitle>
+            <AlertDialogTitle>Remover NFs do repositório?</AlertDialogTitle>
             <AlertDialogDescription>
-              Você está prestes a descartar {paraDescartar.length} NF{paraDescartar.length === 1 ? "" : "s"}.
+              Você está prestes a remover {paraDescartar.length} NF{paraDescartar.length === 1 ? "" : "s"} do repositório.
               Os arquivos PDF/XML serão apagados do storage.
               <br /><br />
               Esta ação não pode ser desfeita.
@@ -924,7 +837,7 @@ export default function NFsStage() {
               }}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Descartar
+              Remover
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
