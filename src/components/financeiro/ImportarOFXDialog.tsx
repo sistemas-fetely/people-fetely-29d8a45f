@@ -85,6 +85,7 @@ export function ImportarOFXDialog({ open, onOpenChange, onSuccess }: Props) {
       // Reset ao fechar
       setContaBancariaId("");
       setArquivoNome("");
+      setArquivoFile(null);
       setParseado(null);
       setDuplicatasFitids(new Set());
       setEtapa("upload");
