@@ -3313,6 +3313,7 @@ export type Database = {
           centro_custo: string | null
           cnpj_estabelecimento: string | null
           compromisso_parcelado_id: string | null
+          conta_pagar_id: string | null
           cotacao: number | null
           created_at: string
           data_compra: string
@@ -3342,6 +3343,7 @@ export type Database = {
           centro_custo?: string | null
           cnpj_estabelecimento?: string | null
           compromisso_parcelado_id?: string | null
+          conta_pagar_id?: string | null
           cotacao?: number | null
           created_at?: string
           data_compra: string
@@ -3371,6 +3373,7 @@ export type Database = {
           centro_custo?: string | null
           cnpj_estabelecimento?: string | null
           compromisso_parcelado_id?: string | null
+          conta_pagar_id?: string | null
           cotacao?: number | null
           created_at?: string
           data_compra?: string
@@ -3401,6 +3404,20 @@ export type Database = {
             columns: ["categoria_id"]
             isOneToOne: false
             referencedRelation: "plano_contas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fatura_cartao_lancamentos_conta_pagar_id_fkey"
+            columns: ["conta_pagar_id"]
+            isOneToOne: false
+            referencedRelation: "contas_pagar_receber"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fatura_cartao_lancamentos_conta_pagar_id_fkey"
+            columns: ["conta_pagar_id"]
+            isOneToOne: false
+            referencedRelation: "vw_contas_pagar_consolidado"
             referencedColumns: ["id"]
           },
           {
@@ -8462,6 +8479,10 @@ export type Database = {
           valor_total: number
         }[]
       }
+      conciliar_lancamento: {
+        Args: { p_conta_pagar_id: string; p_lancamento_id: string }
+        Returns: Json
+      }
       contar_uso_template: { Args: { _template_id: string }; Returns: Json }
       contas_para_match_ofx: {
         Args: never
@@ -8513,6 +8534,10 @@ export type Database = {
         Returns: string
       }
       criar_tarefas_emissao_nf_pj_mensal: { Args: never; Returns: number }
+      dados_lancamento_para_despesa: {
+        Args: { p_lancamento_id: string }
+        Returns: Json
+      }
       decisao_salario: {
         Args: {
           _alvo_user_id: string
@@ -8711,6 +8736,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      ignorar_lancamento: { Args: { p_lancamento_id: string }; Returns: Json }
       limpar_rascunhos_antigos: { Args: never; Returns: number }
       marcar_nf_enviada_pagamento: {
         Args: { _email_destinatario: string; _nota_id: string }
@@ -8848,6 +8874,7 @@ export type Database = {
           stage_id: string
         }[]
       }
+      reativar_lancamento: { Args: { p_lancamento_id: string }; Returns: Json }
       registrar_aceite_termo_uso: {
         Args: { _versao: string }
         Returns: undefined
@@ -8950,6 +8977,18 @@ export type Database = {
           nf_numero: string
           nf_valor: number
           score: number
+        }[]
+      }
+      sugerir_matches_lancamento: {
+        Args: { p_lancamento_id: string }
+        Returns: {
+          conta_pagar_id: string
+          data_vencimento: string
+          descricao: string
+          fornecedor_cliente: string
+          score: number
+          status: string
+          valor: number
         }[]
       }
       tem_consentimento_ativo: {

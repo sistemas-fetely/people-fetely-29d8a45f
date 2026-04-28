@@ -52,6 +52,7 @@ import {
 import { toast } from "sonner";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
 import { ImportarFaturaCartaoDialog } from "@/components/financeiro/ImportarFaturaCartaoDialog";
+import { ConciliarLancamentoPopover } from "@/components/financeiro/ConciliarLancamentoPopover";
 import { descartarFatura } from "@/lib/financeiro/fatura-cartao-handler";
 import {
   SortableTableHead,
@@ -106,6 +107,7 @@ type LancamentoRow = {
   categoria_id: string | null;
   status: string;
   nf_vinculada_id: string | null;
+  conta_pagar_id?: string | null;
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -821,25 +823,19 @@ export default function FaturasCartao() {
                                             {formatBRL(l.valor)}
                                            </td>
                                            <td className="px-2 py-1.5 text-center">
-                                             {l.nf_vinculada_id ? (
-                                               <Badge
-                                                 variant="outline"
-                                                 className="text-[9px] py-0 px-1 h-4 border-emerald-300 text-emerald-700 bg-emerald-50 gap-1"
-                                                 title="Lançamento vinculado a uma NF"
-                                               >
-                                                 <Link2 className="h-2.5 w-2.5" />
-                                                 Vinculada
-                                               </Badge>
-                                             ) : (
-                                               <Badge
-                                                 variant="outline"
-                                                 className="text-[9px] py-0 px-1 h-4 border-amber-300 text-amber-700 bg-amber-50 gap-1"
-                                                 title="Aguardando match com NF na tela de Reconciliação"
-                                               >
-                                                 <Clock className="h-2.5 w-2.5" />
-                                                 Aguardando
-                                               </Badge>
-                                             )}
+                                             <ConciliarLancamentoPopover
+                                               lancamento={{
+                                                 id: l.id,
+                                                 descricao: l.descricao,
+                                                 valor: l.valor,
+                                                 data_compra: l.data_compra,
+                                                 status: l.status,
+                                                 conta_pagar_id: l.conta_pagar_id,
+                                               }}
+                                               onCriarDespesa={() => {
+                                                 toast.info("Em breve: abrir Sheet Nova Despesa pré-preenchido com dados do lançamento");
+                                               }}
+                                             />
                                            </td>
                                            <td className="px-2 py-1.5">
                                             <div className="flex items-center gap-1">
