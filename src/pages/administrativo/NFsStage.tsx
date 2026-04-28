@@ -204,6 +204,7 @@ export default function NFsStage() {
     return {
       naoVinculadas: all.filter((n) => n.status === "nao_vinculada").length,
       vinculadas: all.filter((n) => n.status === "vinculada").length,
+      semCategoria: all.filter((n) => !n.categoria_id && n.status !== "descartada").length,
       total: all.length,
     };
   }, [nfs]);
