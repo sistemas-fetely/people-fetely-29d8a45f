@@ -40,6 +40,7 @@ import {
   CheckCircle2,
   Clock,
   FileText,
+  FileCheck,
   Eye,
   Sparkles,
   Calculator,
@@ -73,6 +74,7 @@ type NFStage = {
   fonte: string;
   arquivo_nome: string | null;
   arquivo_storage_path: string | null;
+  xml_storage_path: string | null;
   fornecedor_cnpj: string | null;
   fornecedor_razao_social: string | null;
   fornecedor_cliente: string | null;
@@ -121,6 +123,15 @@ const FONTE_LABELS: Record<string, string> = {
   xml_nfe: "XML NF-e",
   csv_qive: "CSV Qive",
 };
+
+function calcularCompletude(nf: NFStage): "completo" | "sem_xml" | "sem_pdf" | "sem_documentos" {
+  const temPdf = !!nf.arquivo_storage_path;
+  const temXml = !!nf.xml_storage_path || (Array.isArray(nf.itens) && nf.itens.length > 0);
+  if (temPdf && temXml) return "completo";
+  if (temPdf) return "sem_xml";
+  if (temXml) return "sem_pdf";
+  return "sem_documentos";
+}
 
 type FiltroPill = "ativos" | "pendente" | "classificada" | "importada" | "descartada" | "todos";
 
@@ -733,6 +744,28 @@ export default function NFsStage() {
                               {FONTE_LABELS[nf.fonte] || nf.fonte}
                             </Badge>
                           )}
+                          {(() => {
+                            const comp = calcularCompletude(nf);
+                            if (comp === "completo") return (
+                              <Badge variant="outline" className="text-[9px] py-0 px-1 h-4 font-normal border-emerald-300 text-emerald-700 bg-emerald-50 gap-1">
+                                <FileCheck className="h-2.5 w-2.5" />
+                                Completo
+                              </Badge>
+                            );
+                            if (comp === "sem_xml") return (
+                              <Badge variant="outline" className="text-[9px] py-0 px-1 h-4 font-normal border-amber-300 text-amber-700 bg-amber-50 gap-1" title="Falta XML — sem itens detalhados">
+                                <FileText className="h-2.5 w-2.5" />
+                                Sem XML
+                              </Badge>
+                            );
+                            if (comp === "sem_pdf") return (
+                              <Badge variant="outline" className="text-[9px] py-0 px-1 h-4 font-normal border-amber-300 text-amber-700 bg-amber-50 gap-1" title="Falta PDF — sem documento legal">
+                                <FileText className="h-2.5 w-2.5" />
+                                Sem PDF
+                              </Badge>
+                            );
+                            return null;
+                          })()}
                         </div>
                       </TableCell>
                       <TableCell className="text-xs">{nf.nf_numero || "—"}</TableCell>

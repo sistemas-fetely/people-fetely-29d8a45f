@@ -51,17 +51,16 @@ export async function moverParaStage(
 
   for (const nf of nfs) {
     try {
-      // Skip duplicata
+      // Skip duplicata explícita (flag legada)
       if (nf._duplicata) {
         result.duplicatas++;
         continue;
       }
 
-      // Upload do arquivo (se houver) - PDF ou XML
+      // Upload do arquivo (PDF ou XML, conforme a fonte)
       let storagePath: string | null = null;
       const arquivo = mapaArquivos.get(chaveArquivo(nf));
       if (arquivo) {
-        const ext = arquivo.name.split(".").pop() || "pdf";
         const nomeLimpo = arquivo.name.replace(/[^a-zA-Z0-9._-]/g, "_");
         storagePath = `lote-${loteId}/${Date.now()}_${nomeLimpo}`;
         const { error: upErr } = await supabase.storage
@@ -76,44 +75,51 @@ export async function moverParaStage(
         }
       }
 
-      // Status: pendente se não tem categoria, classificada se tem
+      // Monta payload pra RPC merge_nf_stage
+      // RPC vai decidir CRIAR ou ENRIQUECER por chave_acesso
       const status = nf._categoria_id ? "classificada" : "pendente";
 
-      // Insert
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error: insErr } = await (supabase as any)
-        .from("nfs_stage")
-        .insert({
-          fonte: nf._source || "pdf_nfe",
-          arquivo_nome: arquivo?.name || null,
-          arquivo_storage_path: storagePath,
-          importacao_lote_id: loteId,
-          fornecedor_cnpj: nf.fornecedor_cnpj || null,
-          fornecedor_razao_social: nf.fornecedor_nome || null,
-          fornecedor_cliente: nf.fornecedor_nome || null,
-          parceiro_id: nf._parceiro_id_resolvido || null,
-          nf_numero: nf.nf_numero || null,
-          nf_chave_acesso: nf.nf_chave_acesso || null,
-          nf_data_emissao: nf.nf_data_emissao || null,
-          nf_serie: nf.nf_serie || null,
-          valor: nf.valor || 0,
-          descricao: nf._categoria_nome || null,
-          categoria_id: nf._categoria_id || null,
-          data_vencimento: nf.nf_data_emissao || null,
-          status,
-          conta_pagar_existente_id: nf._match_pagamento?.conta_id || null,
-          match_score: nf._match_pagamento?.score || null,
-          match_motivos: null,
-          itens: nf.itens || null,
-          criada_por: userId,
-        });
+      const payload: Record<string, unknown> = {
+        fonte: nf._source || "pdf_nfe",
+        arquivo_nome: arquivo?.name || null,
+        arquivo_storage_path: storagePath,
+        importacao_lote_id: loteId,
+        fornecedor_cnpj: nf.fornecedor_cnpj || null,
+        fornecedor_razao_social: nf.fornecedor_nome || null,
+        fornecedor_cliente: nf.fornecedor_nome || null,
+        parceiro_id: nf._parceiro_id_resolvido || null,
+        nf_numero: nf.nf_numero || null,
+        nf_chave_acesso: nf.nf_chave_acesso || null,
+        nf_data_emissao: nf.nf_data_emissao || null,
+        nf_serie: nf.nf_serie || null,
+        valor: nf.valor || 0,
+        descricao: nf._categoria_nome || null,
+        categoria_id: nf._categoria_id || null,
+        data_vencimento: nf.nf_data_emissao || null,
+        status,
+        itens: nf.itens || null,
+      };
 
-      if (insErr) {
-        result.erros.push(`Insert: ${insErr.message}`);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: rpcResult, error: rpcErr } = await (supabase as any).rpc(
+        "merge_nf_stage",
+        { p_nf: payload, p_user_id: userId },
+      );
+
+      if (rpcErr) {
+        result.erros.push(`Merge: ${rpcErr.message}`);
         continue;
       }
 
-      result.sucesso++;
+      const r = Array.isArray(rpcResult) ? rpcResult[0] : rpcResult;
+
+      if (r?.acao === "criada") {
+        result.sucesso++;
+      } else if (typeof r?.acao === "string" && r.acao.startsWith("enriquecida")) {
+        result.duplicatas++;
+      } else {
+        result.sucesso++;
+      }
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       result.erros.push(msg);

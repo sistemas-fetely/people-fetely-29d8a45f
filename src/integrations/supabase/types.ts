@@ -4583,6 +4583,7 @@ export type Database = {
           status: string
           updated_at: string
           valor: number
+          xml_storage_path: string | null
         }
         Insert: {
           arquivo_nome?: string | null
@@ -4615,6 +4616,7 @@ export type Database = {
           status?: string
           updated_at?: string
           valor?: number
+          xml_storage_path?: string | null
         }
         Update: {
           arquivo_nome?: string | null
@@ -4647,6 +4649,7 @@ export type Database = {
           status?: string
           updated_at?: string
           valor?: number
+          xml_storage_path?: string | null
         }
         Relationships: [
           {
@@ -8163,6 +8166,39 @@ export type Database = {
         }
         Relationships: []
       }
+      vw_nfs_stage_completude: {
+        Row: {
+          completude: string | null
+          fornecedor_razao_social: string | null
+          id: string | null
+          nf_chave_acesso: string | null
+          nf_numero: string | null
+          status: string | null
+          tem_pdf: boolean | null
+          tem_xml: boolean | null
+        }
+        Insert: {
+          completude?: never
+          fornecedor_razao_social?: string | null
+          id?: string | null
+          nf_chave_acesso?: string | null
+          nf_numero?: string | null
+          status?: string | null
+          tem_pdf?: never
+          tem_xml?: never
+        }
+        Update: {
+          completude?: never
+          fornecedor_razao_social?: string | null
+          id?: string | null
+          nf_chave_acesso?: string | null
+          nf_numero?: string | null
+          status?: string | null
+          tem_pdf?: never
+          tem_xml?: never
+        }
+        Relationships: []
+      }
     }
     Functions: {
       aplicar_template_cargo: {
@@ -8461,6 +8497,13 @@ export type Database = {
       marcar_nf_enviada_pagamento: {
         Args: { _email_destinatario: string; _nota_id: string }
         Returns: Json
+      }
+      merge_nf_stage: {
+        Args: { p_nf: Json; p_user_id?: string }
+        Returns: {
+          acao: string
+          stage_id: string
+        }[]
       }
       meu_contrato_pj_ativo: {
         Args: never
