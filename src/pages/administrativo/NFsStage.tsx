@@ -260,14 +260,12 @@ export default function NFsStage() {
   }
 
   function toggleTodas() {
-    const ativasIds = filtered
-      .filter((n) => n.status === "pendente" || n.status === "classificada")
-      .map((n) => n.id);
-    const todasSel = ativasIds.length > 0 && ativasIds.every((id) => selecionadas.has(id));
+    const ids = filtered.map((n) => n.id);
+    const todasSel = ids.length > 0 && ids.every((id) => selecionadas.has(id));
     if (todasSel) {
       setSelecionadas(new Set());
     } else {
-      setSelecionadas(new Set(ativasIds));
+      setSelecionadas(new Set(ids));
     }
   }
 
