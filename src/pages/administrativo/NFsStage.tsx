@@ -319,7 +319,7 @@ export default function NFsStage() {
   async function aceitarTodasSugestoes() {
     if (!nfs) return;
     const aplicar = nfs.filter(
-      (n) => n.status === "pendente" && sugestoesPorNf[n.id],
+      (n) => !n.categoria_id && sugestoesPorNf[n.id],
     );
     if (aplicar.length === 0) {
       toast.info("Nenhuma sugestão automática disponível.");
