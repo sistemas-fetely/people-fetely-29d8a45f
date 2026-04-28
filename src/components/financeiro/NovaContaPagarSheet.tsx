@@ -140,6 +140,7 @@ export function NovaContaPagarSheet({ open, onOpenChange }: Props) {
       setUnidade("matriz_sp");
       setFormaPgtoId("");
       setParcelas(1);
+      setNfStageId(null);
     }
   }, [open]);
 
