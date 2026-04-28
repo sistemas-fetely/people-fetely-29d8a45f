@@ -48,7 +48,7 @@ export default function OFXStage() {
         .from("contas_bancarias")
         .select("id, nome_exibicao, tipo")
         .eq("ativo", true)
-        .neq("tipo", "cartao")
+        .eq("tipo", "corrente")
         .order("nome_exibicao");
       return (data || []) as ContaBancaria[];
     },
