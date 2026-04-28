@@ -465,20 +465,13 @@ export function ImportarOFXDialog({ open, onOpenChange, onSuccess }: Props) {
           <div className="py-12 text-center space-y-4">
             <CheckCircle2 className="h-12 w-12 text-green-600 mx-auto" />
             <div>
-              <h3 className="text-lg font-semibold">Importação concluída!</h3>
+              <h3 className="text-lg font-semibold">Importado no Stage!</h3>
               <p className="text-sm text-muted-foreground mt-1">
-                <strong className="text-green-700">{resultadoFinal.novas}</strong> movimentações importadas
-                {resultadoFinal.duplicatas > 0 && (
-                  <>
-                    {" "}
-                    · <strong className="text-amber-700">{resultadoFinal.duplicatas}</strong>{" "}
-                    duplicatas ignoradas
-                  </>
-                )}
+                <strong className="text-green-700">{resultadoFinal.novas}</strong> transações enviadas pra rascunho
               </p>
             </div>
             <p className="text-xs text-muted-foreground">
-              Próximo passo: a Conciliação Automática vai sugerir matches entre essas movimentações e suas contas a pagar (em breve).
+              Próximo passo: vá em <strong>Stage OFX</strong> para validar e persistir as movimentações. Duplicatas serão detectadas lá.
             </p>
           </div>
         )}
