@@ -245,6 +245,7 @@ export default function FaturasCartao() {
   const totals = useMemo(() => {
     const all = faturas || [];
     return {
+      qtdFaturas: all.length,
       total: all.length,
       abertas: all.filter((f) => f.status === "aberta").length,
       pagas: all.filter((f) => f.status === "paga").length,
@@ -253,6 +254,9 @@ export default function FaturasCartao() {
       valorAberto: all
         .filter((f) => f.status === "aberta")
         .reduce((s, f) => s + (f.valor_total || 0), 0),
+      totalGeral: all.reduce((s, f) => s + (f.valor_total || 0), 0),
+      totalConciliado: all.reduce((s, f) => s + (f.valor_conciliado || 0), 0),
+      totalPendente: all.reduce((s, f) => s + (f.valor_pendente || 0), 0),
     };
   }, [faturas]);
 
