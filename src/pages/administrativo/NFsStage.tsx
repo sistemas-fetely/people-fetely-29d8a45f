@@ -40,6 +40,7 @@ import {
   CheckCircle2,
   Clock,
   FileText,
+  FileCheck,
   Eye,
   Sparkles,
   Calculator,
