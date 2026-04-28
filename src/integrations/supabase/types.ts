@@ -1452,6 +1452,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "compromissos_parcelados_fatura_origem_id_fkey"
+            columns: ["fatura_origem_id"]
+            isOneToOne: false
+            referencedRelation: "vw_faturas_cartao_resumo"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "compromissos_parcelados_nf_origem_id_fkey"
             columns: ["nf_origem_id"]
             isOneToOne: false
@@ -3460,6 +3467,13 @@ export type Database = {
             columns: ["fatura_id"]
             isOneToOne: false
             referencedRelation: "faturas_cartao"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fatura_cartao_lancamentos_fatura_id_fkey"
+            columns: ["fatura_id"]
+            isOneToOne: false
+            referencedRelation: "vw_faturas_cartao_resumo"
             referencedColumns: ["id"]
           },
           {
@@ -8384,6 +8398,40 @@ export type Database = {
             columns: ["parceiro_id"]
             isOneToOne: false
             referencedRelation: "parceiros_comerciais"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vw_faturas_cartao_resumo: {
+        Row: {
+          conta_bancaria_id: string | null
+          created_at: string | null
+          data_emissao: string | null
+          data_vencimento: string | null
+          fonte_importacao: string | null
+          id: string | null
+          numero_documento: string | null
+          observacao: string | null
+          pdf_nome_original: string | null
+          pdf_storage_path: string | null
+          periodo_fim: string | null
+          periodo_inicio: string | null
+          qtd_conciliados: number | null
+          qtd_ignorados: number | null
+          qtd_lancamentos: number | null
+          qtd_pendentes: number | null
+          status: string | null
+          valor_conciliado: number | null
+          valor_ignorado: number | null
+          valor_pendente: number | null
+          valor_total: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "faturas_cartao_conta_bancaria_id_fkey"
+            columns: ["conta_bancaria_id"]
+            isOneToOne: false
+            referencedRelation: "contas_bancarias"
             referencedColumns: ["id"]
           },
         ]
