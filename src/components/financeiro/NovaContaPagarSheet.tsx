@@ -33,7 +33,9 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import { Plus, ChevronsUpDown, Check } from "lucide-react";
+import { Plus, ChevronsUpDown, Check, Paperclip } from "lucide-react";
+import { NfStageVinculadaCard } from "@/components/financeiro/NfStageVinculadaCard";
+import { NfStageBuscadorModal } from "@/components/financeiro/NfStageBuscadorModal";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import {
@@ -70,6 +72,8 @@ export function NovaContaPagarSheet({ open, onOpenChange }: Props) {
   const [unidade, setUnidade] = useState("matriz_sp");
   const [formaPgtoId, setFormaPgtoId] = useState<string>("");
   const [parcelas, setParcelas] = useState(1);
+  const [nfStageId, setNfStageId] = useState<string | null>(null);
+  const [nfStageBuscaOpen, setNfStageBuscaOpen] = useState(false);
 
   const { data: parceiros } = useQuery({
     queryKey: ["parceiros-fornecedores"],
@@ -136,6 +140,7 @@ export function NovaContaPagarSheet({ open, onOpenChange }: Props) {
       setUnidade("matriz_sp");
       setFormaPgtoId("");
       setParcelas(1);
+      setNfStageId(null);
     }
   }, [open]);
 
@@ -175,15 +180,17 @@ export function NovaContaPagarSheet({ open, onOpenChange }: Props) {
           parcela_atual: i + 1,
           parcela_grupo_id: grupoId,
           status: "aberto",
-          origem: "manual",
+          origem: "nova_despesa",
+          nf_stage_id: nfStageId,
         });
       }
       const { error } = await supabase.from("contas_pagar_receber").insert(rows);
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success(parcelas > 1 ? `${parcelas} parcelas registradas!` : "Conta registrada!");
+      toast.success(parcelas > 1 ? `${parcelas} parcelas registradas!` : "Despesa registrada!");
       qc.invalidateQueries({ queryKey: ["contas-pagar"] });
+      setNfStageId(null);
       onOpenChange(false);
     },
     onError: (e: Error) => toast.error(e.message),
@@ -196,7 +203,7 @@ export function NovaContaPagarSheet({ open, onOpenChange }: Props) {
       <Sheet open={open} onOpenChange={onOpenChange}>
         <SheetContent className="w-full sm:max-w-xl overflow-y-auto">
           <SheetHeader>
-            <SheetTitle>Nova conta a pagar</SheetTitle>
+            <SheetTitle>Nova Despesa</SheetTitle>
             <SheetDescription>Registre um novo compromisso financeiro.</SheetDescription>
           </SheetHeader>
 
@@ -258,6 +265,32 @@ export function NovaContaPagarSheet({ open, onOpenChange }: Props) {
             <div>
               <Label>Observação</Label>
               <Textarea value={observacao} onChange={(e) => setObservacao(e.target.value)} rows={2} />
+            </div>
+
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <Label className="m-0">Prova fiscal (NF/Recibo)</Label>
+                <span className="text-xs text-muted-foreground">opcional</span>
+              </div>
+              {nfStageId ? (
+                <NfStageVinculadaCard
+                  nfStageId={nfStageId}
+                  onRemover={() => setNfStageId(null)}
+                />
+              ) : (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full justify-start gap-2 font-normal"
+                  onClick={() => setNfStageBuscaOpen(true)}
+                >
+                  <Paperclip className="h-4 w-4" />
+                  Anexar do Repositório de NFs
+                </Button>
+              )}
+              <p className="text-xs text-muted-foreground mt-1.5">
+                Se a NF/recibo já está no repositório, vincule aqui. Se ainda não está, deixe em branco — você pode anexar depois.
+              </p>
             </div>
 
             <div className="grid grid-cols-3 gap-3">
@@ -375,6 +408,16 @@ export function NovaContaPagarSheet({ open, onOpenChange }: Props) {
         onOpenChange={setCategoriaFormOpen}
         options={categorias || []}
         onSaved={(id) => setCategoriaId(id)}
+      />
+      <NfStageBuscadorModal
+        open={nfStageBuscaOpen}
+        onOpenChange={setNfStageBuscaOpen}
+        valorEsperado={valorNum > 0 ? valorNum : undefined}
+        fornecedorEsperado={parceiroSelected?.razao_social || undefined}
+        onSelecionar={(id) => {
+          setNfStageId(id);
+          setNfStageBuscaOpen(false);
+        }}
       />
     </>
   );

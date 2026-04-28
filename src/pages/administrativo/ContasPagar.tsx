@@ -225,7 +225,7 @@ export default function ContasPagar() {
           className="gap-2 bg-admin hover:bg-admin-accent text-admin-foreground"
         >
           <Plus className="h-4 w-4" />
-          Nova conta manual
+          Nova Despesa
         </Button>
       </div>
 
