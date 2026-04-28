@@ -203,7 +203,7 @@ export function NovaContaPagarSheet({ open, onOpenChange }: Props) {
       <Sheet open={open} onOpenChange={onOpenChange}>
         <SheetContent className="w-full sm:max-w-xl overflow-y-auto">
           <SheetHeader>
-            <SheetTitle>Nova conta a pagar</SheetTitle>
+            <SheetTitle>Nova Despesa</SheetTitle>
             <SheetDescription>Registre um novo compromisso financeiro.</SheetDescription>
           </SheetHeader>
 
