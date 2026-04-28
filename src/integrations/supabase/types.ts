@@ -8209,6 +8209,14 @@ export type Database = {
         Returns: number
       }
       contar_uso_template: { Args: { _template_id: string }; Returns: Json }
+      criar_parceiros_auto_cartao: {
+        Args: never
+        Returns: {
+          out_lancamentos_afetados: number
+          out_parceiro_id: string
+          out_token: string
+        }[]
+      }
       criar_tarefa_aprovacao_nf_pj: {
         Args: { _nota_id: string }
         Returns: string
@@ -8253,7 +8261,38 @@ export type Database = {
         Args: { payload: Json; queue_name: string }
         Returns: number
       }
-      extrair_token_principal: { Args: { p_desc: string }; Returns: string }
+      enriquecer_fatura_cartao: {
+        Args: { p_fatura_id: string }
+        Returns: {
+          ambiguos: number
+          enriquecidos: number
+          ja_enriquecidos: number
+          sem_match: number
+          total_processados: number
+        }[]
+      }
+      enriquecer_lancamento_cartao: {
+        Args: { p_lancamento_id: string }
+        Returns: {
+          out_cnpj: string
+          out_fonte: string
+          out_parceiro_id: string
+          out_score: number
+        }[]
+      }
+      enriquecer_todos_lancamentos_cartao: {
+        Args: never
+        Returns: {
+          ambiguos: number
+          enriquecidos: number
+          sem_match: number
+          total_processados: number
+        }[]
+      }
+      extrair_token_principal: {
+        Args: { p_descricao: string }
+        Returns: string
+      }
       fix_lancamentos_origem_constraint: { Args: never; Returns: string }
       gerar_celebracoes_aniversario_mural: { Args: never; Returns: number }
       gerar_celebracoes_tempo_casa_mural: { Args: never; Returns: number }
@@ -8363,6 +8402,10 @@ export type Database = {
         Returns: number
       }
       nivel_rank: { Args: { _nivel: string }; Returns: number }
+      normalizar_descricao_cartao: {
+        Args: { p_descricao: string }
+        Returns: string
+      }
       org_sync_in_progress: { Args: never; Returns: boolean }
       perfil_area_do_departamento: {
         Args: { _departamento_id: string }
@@ -8374,6 +8417,16 @@ export type Database = {
         }[]
       }
       pessoa_aparece_no_mural: { Args: { _user_id: string }; Returns: boolean }
+      pipeline_enriquecer_cartao: {
+        Args: never
+        Returns: {
+          ambiguos: number
+          enriquecidos: number
+          parceiros_criados: number
+          sem_match: number
+          total_processados: number
+        }[]
+      }
       preview_template_cargo: {
         Args: {
           _area_perfil_codigo: string
@@ -8532,6 +8585,7 @@ export type Database = {
         Returns: string
       }
       termo_uso_versao_vigente: { Args: never; Returns: string }
+      unaccent: { Args: { "": string }; Returns: string }
       user_perfis_detalhados: {
         Args: { _user_id: string }
         Returns: {
