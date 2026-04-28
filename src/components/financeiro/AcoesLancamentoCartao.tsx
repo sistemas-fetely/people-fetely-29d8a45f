@@ -7,6 +7,9 @@ import { Plus, Link2, Loader2, CheckCircle2, XCircle, RotateCcw } from "lucide-r
 import { toast } from "sonner";
 import { formatBRL } from "@/lib/format-currency";
 import { VincularLancamentoModal } from "./VincularLancamentoModal";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 interface Lancamento {
   id: string;

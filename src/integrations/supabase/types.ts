@@ -8648,7 +8648,11 @@ export type Database = {
         }[]
       }
       criar_despesa_de_lancamento: {
-        Args: { p_lancamento_id: string }
+        Args: {
+          p_gerar_todas?: boolean
+          p_lancamento_id: string
+          p_total_parcelas?: number
+        }
         Returns: Json
       }
       criar_despesa_direta_ofx: {
