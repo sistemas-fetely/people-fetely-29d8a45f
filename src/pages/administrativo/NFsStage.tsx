@@ -45,6 +45,8 @@ import {
   Calculator,
   Package,
   X,
+  ChevronDown,
+  ChevronRight,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
