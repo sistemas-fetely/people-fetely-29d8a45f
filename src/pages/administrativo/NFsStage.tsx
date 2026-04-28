@@ -448,7 +448,7 @@ export default function NFsStage() {
   return (
     <div className="flex flex-col h-[calc(100vh-64px)] overflow-hidden">
       {/* HEADER FIXO - Título, KPIs como filtros, busca */}
-      <div className="px-6 pt-6 pb-3 border-b bg-background/95 backdrop-blur sticky top-0 z-20 space-y-4">
+      <div className="sticky top-0 z-10 bg-background px-6 pt-6 pb-3 border-b space-y-4 backdrop-blur">
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
             <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
