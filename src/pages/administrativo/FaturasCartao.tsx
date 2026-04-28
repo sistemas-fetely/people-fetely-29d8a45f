@@ -85,6 +85,11 @@ type FaturaRow = {
   conta_bancaria?: { nome_exibicao: string; banco: string | null } | null;
   qtd_lancamentos?: number;
   qtd_pendentes?: number;
+  qtd_conciliados?: number;
+  qtd_ignorados?: number;
+  valor_conciliado?: number;
+  valor_pendente?: number;
+  valor_ignorado?: number;
 };
 
 type LancamentoRow = {
