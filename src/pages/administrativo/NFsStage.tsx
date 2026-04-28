@@ -272,13 +272,11 @@ export default function NFsStage() {
   async function alterarCategoria(id: string, categoriaId: string) {
     setSalvandoCategoria((prev) => new Set(prev).add(id));
     try {
-      const novoStatus = categoriaId ? "classificada" : "pendente";
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { error } = await (supabase as any)
         .from("nfs_stage")
         .update({
           categoria_id: categoriaId || null,
-          status: novoStatus,
         })
         .eq("id", id);
       if (error) throw error;
