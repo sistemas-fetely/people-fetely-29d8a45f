@@ -125,7 +125,7 @@ function calcularCompletude(nf: NFStage): "completo" | "sem_xml" | "sem_pdf" | "
   return "sem_documentos";
 }
 
-type FiltroPill = "todas" | "nao_vinculadas" | "vinculadas";
+type FiltroPill = "todas" | "nao_vinculadas" | "vinculadas" | "sem_categoria";
 
 export default function NFsStage() {
   const qc = useQueryClient();
