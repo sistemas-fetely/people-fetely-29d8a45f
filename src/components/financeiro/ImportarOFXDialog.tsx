@@ -339,6 +339,7 @@ export function ImportarOFXDialog({ open, onOpenChange, onSuccess }: Props) {
                     setEtapa("upload");
                     setParseado(null);
                     setArquivoNome("");
+                    setArquivoFile(null);
                   }}
                 >
                   <X className="h-3 w-3" /> Trocar
