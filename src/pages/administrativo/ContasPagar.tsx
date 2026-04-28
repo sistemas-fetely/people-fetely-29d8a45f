@@ -253,11 +253,11 @@ export default function ContasPagar() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-normal text-muted-foreground">
-              Finalizado no período
+              Aguardando pagamento
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-700">{formatBRL(totals.finalizadoPeriodo)}</div>
+            <div className="text-2xl font-bold text-teal-700">{formatBRL(totals.aguardandoPgto)}</div>
           </CardContent>
         </Card>
       </div>
