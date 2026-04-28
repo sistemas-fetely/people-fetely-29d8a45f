@@ -40,6 +40,7 @@ export default function OFXStage() {
   const [filtroDescOFX, setFiltroDescOFX] = useState("");
   const [filtroDescCP, setFiltroDescCP] = useState("");
   const [acaoEmCurso, setAcaoEmCurso] = useState<string | null>(null);
+  const [buscaMultiplaOpen, setBuscaMultiplaOpen] = useState(false);
 
   const { data: contas } = useQuery({
     queryKey: ["contas-bancarias-ofx-stage"],
