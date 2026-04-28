@@ -413,12 +413,7 @@ export default function NFsStage() {
       if (tag === "input" || tag === "select" || tag === "textarea") return;
       if (e.metaKey || e.ctrlKey || e.altKey) return;
 
-      if (e.key === "e" || e.key === "E") {
-        if (selecionadas.size > 0) {
-          e.preventDefault();
-          handleEnviarSelecionadas();
-        }
-      } else if (e.key === "d" || e.key === "D") {
+      if (e.key === "Delete" || e.key === "Backspace") {
         if (selecionadas.size > 0) {
           e.preventDefault();
           const lista = filtered.filter((n) => selecionadas.has(n.id));
@@ -440,7 +435,7 @@ export default function NFsStage() {
   }, [selecionadas, filtered]);
 
   const sugestoesDisponiveis = (nfs || []).filter(
-    (n) => n.status === "pendente" && sugestoesPorNf[n.id],
+    (n) => n.status === "nao_vinculada" && sugestoesPorNf[n.id],
   ).length;
 
   return (
@@ -451,14 +446,13 @@ export default function NFsStage() {
           <div>
             <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
               <Layers className="h-6 w-6 text-admin" />
-              NFs em Stage
+              Repositório de NFs
             </h1>
             <p className="text-muted-foreground text-sm mt-0.5">
-              Revise, classifique e envie pra Contas a Pagar.{" "}
+              Biblioteca de notas fiscais. Vincule manualmente quando necessário.{" "}
               <span className="text-[11px] opacity-70">
                 Atalhos: <kbd className="px-1 py-0.5 border rounded text-[10px]">/</kbd> buscar ·{" "}
-                <kbd className="px-1 py-0.5 border rounded text-[10px]">E</kbd> enviar ·{" "}
-                <kbd className="px-1 py-0.5 border rounded text-[10px]">D</kbd> descartar ·{" "}
+                <kbd className="px-1 py-0.5 border rounded text-[10px]">Del</kbd> remover ·{" "}
                 <kbd className="px-1 py-0.5 border rounded text-[10px]">Esc</kbd> limpar
               </span>
             </p>
@@ -478,55 +472,28 @@ export default function NFsStage() {
         {/* KPI pills (clicáveis = filtros) */}
         <div className="flex flex-wrap gap-2">
           <KpiPill
-            label="Ativas"
-            count={totals.pendentes + totals.prontas}
-            color="admin"
-            active={filtroPill === "ativos"}
-            onClick={() => setFiltroPill("ativos")}
-            icon={<Package className="h-3 w-3" />}
-            description="pendente + pronta"
-          />
-          <KpiPill
-            label="Pendentes"
-            count={totals.pendentes}
-            color="amber"
-            active={filtroPill === "pendente"}
-            onClick={() => setFiltroPill("pendente")}
-            icon={<Clock className="h-3 w-3" />}
-            description="sem categoria"
-          />
-          <KpiPill
-            label="Prontas"
-            count={totals.prontas}
-            color="emerald"
-            active={filtroPill === "classificada"}
-            onClick={() => setFiltroPill("classificada")}
-            icon={<CheckCircle2 className="h-3 w-3" />}
-            description="podem enviar"
-          />
-          <KpiPill
-            label="Importadas"
-            count={totals.importadas}
-            color="blue"
-            active={filtroPill === "importada"}
-            onClick={() => setFiltroPill("importada")}
-            icon={<Send className="h-3 w-3" />}
-            description="já em CP"
-          />
-          <KpiPill
-            label="Descartadas"
-            count={totals.descartadas}
-            color="gray"
-            active={filtroPill === "descartada"}
-            onClick={() => setFiltroPill("descartada")}
-            icon={<Trash2 className="h-3 w-3" />}
-          />
-          <KpiPill
             label="Todas"
             count={totals.total}
-            color="gray"
-            active={filtroPill === "todos"}
-            onClick={() => setFiltroPill("todos")}
+            color="admin"
+            active={filtroPill === "todas"}
+            onClick={() => setFiltroPill("todas")}
+            icon={<Package className="h-3 w-3" />}
+          />
+          <KpiPill
+            label="Não vinculadas"
+            count={totals.naoVinculadas}
+            color="amber"
+            active={filtroPill === "nao_vinculadas"}
+            onClick={() => setFiltroPill("nao_vinculadas")}
+            icon={<Clock className="h-3 w-3" />}
+          />
+          <KpiPill
+            label="Vinculadas"
+            count={totals.vinculadas}
+            color="emerald"
+            active={filtroPill === "vinculadas"}
+            onClick={() => setFiltroPill("vinculadas")}
+            icon={<CheckCircle2 className="h-3 w-3" />}
           />
         </div>
 
@@ -567,14 +534,6 @@ export default function NFsStage() {
                 <span className="font-mono">{formatBRL(totalSelecionadas)}</span>
               </Badge>
               <Button
-                onClick={handleEnviarSelecionadas}
-                disabled={enviando}
-                className="gap-2 bg-emerald-700 hover:bg-emerald-800 text-white"
-              >
-                <Send className="h-4 w-4" />
-                Enviar pra Contas a Pagar
-              </Button>
-              <Button
                 variant="outline"
                 size="icon"
                 onClick={() => {
@@ -582,7 +541,7 @@ export default function NFsStage() {
                   setParaDescartar(lista);
                 }}
                 className="text-destructive border-destructive/30 hover:bg-destructive/5"
-                title="Descartar (D)"
+                title="Remover (Del)"
               >
                 <Trash2 className="h-4 w-4" />
               </Button>
