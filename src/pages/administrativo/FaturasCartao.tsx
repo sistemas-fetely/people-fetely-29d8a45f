@@ -720,7 +720,7 @@ export default function FaturasCartao() {
                       {/* Linha expandida com lançamentos */}
                       {isExpanded && (
                         <TableRow>
-                          <TableCell colSpan={8} className="bg-muted/20 p-0">
+                          <TableCell colSpan={9} className="bg-muted/20 p-0">
                             <div className="p-4">
                               <div className="flex items-center justify-between mb-2">
                                 <p className="text-xs font-semibold flex items-center gap-2">
