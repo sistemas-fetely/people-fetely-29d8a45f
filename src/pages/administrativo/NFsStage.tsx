@@ -813,16 +813,16 @@ export default function NFsStage() {
         )}
       </div>
 
-      {/* AlertDialog descartar */}
+      {/* AlertDialog remover */}
       <AlertDialog
         open={paraDescartar.length > 0}
         onOpenChange={(v) => !v && setParaDescartar([])}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Descartar NFs do stage?</AlertDialogTitle>
+            <AlertDialogTitle>Remover NFs do repositório?</AlertDialogTitle>
             <AlertDialogDescription>
-              Você está prestes a descartar {paraDescartar.length} NF{paraDescartar.length === 1 ? "" : "s"}.
+              Você está prestes a remover {paraDescartar.length} NF{paraDescartar.length === 1 ? "" : "s"} do repositório.
               Os arquivos PDF/XML serão apagados do storage.
               <br /><br />
               Esta ação não pode ser desfeita.
@@ -837,7 +837,7 @@ export default function NFsStage() {
               }}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Descartar
+              Remover
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
