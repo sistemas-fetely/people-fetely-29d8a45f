@@ -102,7 +102,7 @@ export async function salvarFaturaCartao(
         valor_saldo_atraso: parsed.valor_saldo_atraso || 0,
         numero_documento: parsed.numero_documento,
         status: "aberta",
-        conta_pagar_id: contaPagarId,
+        conta_pagar_id: null, // doutrina nova: fatura não nasce ligada a conta totalizadora
         pdf_storage_path: storagePath,
         pdf_nome_original: nomeOriginal,
         fonte_importacao: parsed.formato.startsWith("csv") ? "csv" : "pdf",
@@ -114,9 +114,6 @@ export async function salvarFaturaCartao(
       .single();
 
     if (errFatura) {
-      // Se a fatura falhou, tentar limpar a conta criada
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await (supabase as any).from("contas_pagar_receber").delete().eq("id", contaPagarId);
       throw new Error(`Erro ao criar fatura: ${errFatura.message}`);
     }
     const faturaId = faturaCriada.id as string;
@@ -195,7 +192,7 @@ export async function salvarFaturaCartao(
     return {
       ok: true,
       fatura_id: faturaId,
-      conta_pagar_id: contaPagarId,
+      conta_pagar_id: undefined,
       qtd_lancamentos: linhasLancamentos.length,
       ...resultadoCompromissos,
     };
