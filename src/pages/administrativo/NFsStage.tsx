@@ -170,6 +170,8 @@ export default function NFsStage() {
       list = list.filter((n) => n.status === "nao_vinculada");
     } else if (filtroPill === "vinculadas") {
       list = list.filter((n) => n.status === "vinculada");
+    } else if (filtroPill === "sem_categoria") {
+      list = list.filter((n) => !n.categoria_id && n.status !== "descartada");
     }
     // "todas" não filtra
     if (busca.trim()) {
