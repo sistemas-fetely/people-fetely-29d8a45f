@@ -8213,7 +8213,49 @@ export type Database = {
         Args: { p_recorrente_id: string }
         Returns: number
       }
+      conciliar_em_lote_ofx: {
+        Args: {
+          p_conta_ids: string[]
+          p_movimentacao_id: string
+          p_user_id?: string
+        }
+        Returns: {
+          contas_conciliadas: number
+          erro: string
+          ok: boolean
+          valor_total: number
+        }[]
+      }
       contar_uso_template: { Args: { _template_id: string }; Returns: Json }
+      contas_para_match_ofx: {
+        Args: never
+        Returns: {
+          data_pagamento: string
+          data_vencimento: string
+          fornecedor_cliente: string
+          id: string
+          nf_numero: string
+          parceiro_cnpj: string
+          parceiro_id: string
+          parceiro_razao_social: string
+          status: string
+          valor: number
+        }[]
+      }
+      criar_despesa_direta_ofx: {
+        Args: {
+          p_categoria_id: string
+          p_descricao: string
+          p_movimentacao_id: string
+          p_parceiro_id?: string
+          p_user_id?: string
+        }
+        Returns: {
+          conta_pagar_id: string
+          erro: string
+          ok: boolean
+        }[]
+      }
       criar_parceiros_auto_cartao: {
         Args: never
         Returns: {
