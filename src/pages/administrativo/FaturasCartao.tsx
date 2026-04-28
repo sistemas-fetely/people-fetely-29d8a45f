@@ -590,6 +590,7 @@ export default function FaturasCartao() {
                     Vencimento
                   </SortableTableHead>
                   <TableHead className="w-44">Período</TableHead>
+                  <TableHead className="whitespace-nowrap">Resumo</TableHead>
                   <SortableTableHead
                     column="valor"
                     sort={sort}
