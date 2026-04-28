@@ -551,6 +551,14 @@ export default function EnviarPagamentoDialog({ open, onOpenChange, conta, onDon
             <Label className="text-xs uppercase tracking-wide text-muted-foreground">
               Dados bancários do fornecedor
             </Label>
+            {conta.parceiro_id && semDadosBancariosCadastrados && (
+              <div className="flex items-start gap-2 p-2 rounded-md border border-blue-200 bg-blue-50 text-xs text-blue-800">
+                <Info className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                <span>
+                  Sem dados bancários cadastrados pra este fornecedor. Preencha aqui — vamos salvar no cadastro pra próxima vez.
+                </span>
+              </div>
+            )}
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <Label className="text-xs">Banco</Label>
