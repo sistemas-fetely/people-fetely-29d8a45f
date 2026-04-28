@@ -88,6 +88,16 @@ type NFStage = {
   match_score: number | null;
   importacao_lote_id: string | null;
   created_at: string;
+  itens: Array<{
+    codigo_produto?: string;
+    descricao?: string;
+    ncm?: string;
+    cfop?: string;
+    unidade?: string;
+    quantidade?: number;
+    valor_unitario?: number;
+    valor_total?: number;
+  }> | null;
 };
 
 const STATUS_LABELS: Record<string, string> = {
