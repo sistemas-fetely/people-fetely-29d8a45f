@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, Plus, X, RotateCcw, Loader2 } from "lucide-react";
+import { CheckCircle2, Plus, RotateCcw, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { formatBRL, formatDateBR as formatDataBR } from "@/lib/format-currency";
 
