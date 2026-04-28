@@ -871,7 +871,7 @@ export default function NFsStage() {
 interface KpiPillProps {
   label: string;
   count: number;
-  color: "admin" | "amber" | "emerald" | "blue" | "gray";
+  color: "admin" | "amber" | "emerald" | "blue" | "gray" | "violet";
   active: boolean;
   onClick: () => void;
   icon?: React.ReactNode;
