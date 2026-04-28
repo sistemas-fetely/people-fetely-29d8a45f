@@ -170,41 +170,20 @@ export default function FaturasCartao() {
     },
   });
 
-  // Faturas
+  // Faturas (view agregada com KPIs por fatura)
   const { data: faturas, isLoading } = useQuery({
     queryKey: ["faturas-cartao"],
     queryFn: async () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data, error } = await (supabase as any)
-        .from("faturas_cartao")
+        .from("vw_faturas_cartao_resumo")
         .select(`
           *,
           conta_bancaria:conta_bancaria_id ( nome_exibicao, banco )
         `)
         .order("data_vencimento", { ascending: false });
       if (error) throw error;
-
-      // Contar lançamentos por fatura
-      const ids = (data || []).map((f: { id: string }) => f.id);
-      let counts: Record<string, { total: number; pendentes: number }> = {};
-      if (ids.length > 0) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { data: lancs } = await (supabase as any)
-          .from("fatura_cartao_lancamentos")
-          .select("fatura_id, status")
-          .in("fatura_id", ids);
-        for (const l of lancs || []) {
-          if (!counts[l.fatura_id]) counts[l.fatura_id] = { total: 0, pendentes: 0 };
-          counts[l.fatura_id].total++;
-          if (l.status === "pendente") counts[l.fatura_id].pendentes++;
-        }
-      }
-
-      return (data || []).map((f: FaturaRow) => ({
-        ...f,
-        qtd_lancamentos: counts[f.id]?.total || 0,
-        qtd_pendentes: counts[f.id]?.pendentes || 0,
-      })) as FaturaRow[];
+      return (data || []) as FaturaRow[];
     },
   });
 
