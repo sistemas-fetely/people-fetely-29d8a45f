@@ -19,6 +19,7 @@ import { useCategoriasPlano } from "@/hooks/useCategoriasPlano";
 import { ImportadorCsvQive } from "@/components/financeiro/ImportadorCsvQive";
 import { ImportadorXmlNFe } from "@/components/financeiro/ImportadorXmlNFe";
 import { ImportadorPdfDanfe } from "@/components/financeiro/ImportadorPdfDanfe";
+import { ImportadorOFX } from "@/components/financeiro/ImportadorOFX";
 
 export default function ImportarDados() {
   const [syncing, setSyncing] = useState(false);
@@ -155,6 +156,17 @@ export default function ImportarDados() {
           {/* <ImportadorCsvQive categorias={categorias} /> */}
           <ImportadorXmlNFe categorias={categorias} />
           <ImportadorPdfDanfe categorias={categorias} />
+        </div>
+      </div>
+
+      {/* Extrato Bancário */}
+      <div>
+        <h2 className="text-lg font-semibold mb-1">Extrato Bancário</h2>
+        <p className="text-sm text-muted-foreground mb-3">
+          Importe arquivos OFX dos bancos. As transações vão para o Stage OFX para validação posterior.
+        </p>
+        <div className="grid gap-4 md:grid-cols-1">
+          <ImportadorOFX />
         </div>
       </div>
     </div>
