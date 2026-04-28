@@ -143,7 +143,11 @@ export function AcoesLancamentoCartao({ lancamento }: Props) {
           size="sm"
           variant="outline"
           className="h-6 px-2 text-[10px] gap-1 border-blue-300 text-blue-700 hover:bg-blue-50"
-          onClick={handleCriarDespesa}
+          onClick={() => {
+            setParcelas(1);
+            setGerarTodas(false);
+            setCriarOpen(true);
+          }}
           disabled={salvando}
         >
           {salvando ? <Loader2 className="h-2.5 w-2.5 animate-spin" /> : <Plus className="h-2.5 w-2.5" />}
@@ -156,6 +160,79 @@ export function AcoesLancamentoCartao({ lancamento }: Props) {
         onOpenChange={setVincularOpen}
         lancamento={lancamento}
       />
+
+      <Dialog open={criarOpen} onOpenChange={setCriarOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Criar conta a pagar</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="rounded-md border bg-muted/40 p-3">
+              <div className="text-sm font-medium">{lancamento.descricao}</div>
+              <div className="text-lg font-bold text-foreground">{formatBRL(lancamento.valor)}</div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="parcelas-input">Parcelas</Label>
+              <Input
+                id="parcelas-input"
+                type="number"
+                min={1}
+                max={48}
+                value={parcelas}
+                onChange={(e) => setParcelas(Math.max(1, parseInt(e.target.value) || 1))}
+              />
+              <p className="text-xs text-muted-foreground">
+                Forma de pagamento: Cartão de Crédito (preenchido automaticamente)
+              </p>
+            </div>
+
+            {parcelas > 1 && (
+              <div className="rounded-md border border-blue-200 bg-blue-50 p-3 space-y-2">
+                <div className="text-sm font-medium text-blue-900">
+                  Compra parcelada em {parcelas}x — gerar todas as parcelas agora?
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={gerarTodas ? "default" : "outline"}
+                    onClick={() => setGerarTodas(true)}
+                    className="flex-1"
+                  >
+                    Sim, gerar {parcelas} parcelas
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={!gerarTodas ? "default" : "outline"}
+                    onClick={() => setGerarTodas(false)}
+                    className="flex-1"
+                  >
+                    Não, só essa
+                  </Button>
+                </div>
+                <p className="text-xs text-blue-800">
+                  {gerarTodas
+                    ? `${parcelas} contas serão criadas com vencimento mensal`
+                    : "Só esta parcela será criada agora — as próximas você cria conforme aparecerem nas próximas faturas"}
+                </p>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCriarOpen(false)} disabled={salvando}>
+              Cancelar
+            </Button>
+            <Button onClick={handleCriarDespesa} disabled={salvando}>
+              {salvando ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+              Criar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
