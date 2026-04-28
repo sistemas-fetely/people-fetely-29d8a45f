@@ -7,9 +7,10 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Layers, Link2, Plus, X, Loader2, AlertCircle, Search, ArrowLeftRight } from "lucide-react";
+import { Layers, Link2, Plus, X, Loader2, AlertCircle, Search, ArrowLeftRight, Layers as LayersIcon } from "lucide-react";
 import { toast } from "sonner";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
+import { BuscarMultiplosLancamentosDialog } from "@/components/financeiro/BuscarMultiplosLancamentosDialog";
 
 type ContaBancaria = { id: string; nome_exibicao: string };
 
@@ -39,6 +40,7 @@ export default function OFXStage() {
   const [filtroDescOFX, setFiltroDescOFX] = useState("");
   const [filtroDescCP, setFiltroDescCP] = useState("");
   const [acaoEmCurso, setAcaoEmCurso] = useState<string | null>(null);
+  const [buscaMultiplaOpen, setBuscaMultiplaOpen] = useState(false);
 
   const { data: contas } = useQuery({
     queryKey: ["contas-bancarias-ofx-stage"],
@@ -299,6 +301,17 @@ export default function OFXStage() {
                           </Button>
                           <Button
                             size="sm"
+                            variant="outline"
+                            className="h-6 px-2 text-[10px] gap-1"
+                            onClick={(e) => { e.stopPropagation(); setBuscaMultiplaOpen(true); }}
+                            disabled={!!acao}
+                            title="SISPAG: 1 OFX = N contas a pagar"
+                          >
+                            <LayersIcon className="h-3 w-3" />
+                            Buscar Múltiplos
+                          </Button>
+                          <Button
+                            size="sm"
                             variant="ghost"
                             className="h-6 px-2 text-[10px] gap-1 text-zinc-600"
                             onClick={(e) => { e.stopPropagation(); handleIgnorar(ofx); }}
@@ -401,6 +414,20 @@ export default function OFXStage() {
             <strong>Como usar:</strong> Clique em uma transação OFX (esquerda) para ver as contas a pagar candidatas (direita) ranqueadas por valor próximo. Depois clique "Conciliar" na conta correspondente. Sem match? Use "Lançar como movimentação" (taxa, IOF) ou "Ignorar".
           </div>
         </div>
+      )}
+
+      {ofxSelecionada && (
+        <BuscarMultiplosLancamentosDialog
+          open={buscaMultiplaOpen}
+          onOpenChange={setBuscaMultiplaOpen}
+          ofxId={ofxSelecionada.id}
+          ofxDescricao={ofxSelecionada.descricao}
+          ofxValorAbs={Math.abs(ofxSelecionada.valor)}
+          ofxData={ofxSelecionada.data_transacao}
+          onSuccess={() => {
+            setOfxSelecionada(null);
+          }}
+        />
       )}
     </div>
   );
