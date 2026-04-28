@@ -23,7 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { FileText, Loader2, Send } from "lucide-react";
+import { FileText, Loader2, Send, Info } from "lucide-react";
 import { toast } from "sonner";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
 import { useContaWorkflow } from "@/hooks/useContaWorkflow";
@@ -57,6 +57,7 @@ type Conta = {
   nf_pdf_url?: string | null;
   nf_xml_url?: string | null;
   forma_pagamento_id?: string | null;
+  numero_parcela?: number | null;
   plano_contas?: { codigo?: string | null; nome?: string | null } | null;
   parceiros_comerciais?: { razao_social?: string | null } | null;
   dados_pagamento_fornecedor?: {
@@ -90,6 +91,8 @@ export default function EnviarPagamentoDialog({ open, onOpenChange, conta, onDon
   const [mensagemEmail, setMensagemEmail] = useState("");
   const [docsSelecionados, setDocsSelecionados] = useState<Set<string>>(new Set());
   const [formaPagamentoId, setFormaPagamentoId] = useState<string>("");
+  const [editandoFormaPgto, setEditandoFormaPgto] = useState(false);
+  const [parcelas, setParcelas] = useState<number>(conta.numero_parcela || 1);
 
   // Buscar formas de pagamento ativas
   const { data: formasPagamento } = useQuery({
