@@ -4320,6 +4320,62 @@ export type Database = {
           },
         ]
       }
+      movimentacao_conta_pagar_link: {
+        Row: {
+          conta_pagar_id: string
+          created_at: string | null
+          created_by: string | null
+          id: string
+          movimentacao_bancaria_id: string
+          valor_alocado: number
+        }
+        Insert: {
+          conta_pagar_id: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          movimentacao_bancaria_id: string
+          valor_alocado: number
+        }
+        Update: {
+          conta_pagar_id?: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          movimentacao_bancaria_id?: string
+          valor_alocado?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "movimentacao_conta_pagar_link_conta_pagar_id_fkey"
+            columns: ["conta_pagar_id"]
+            isOneToOne: false
+            referencedRelation: "contas_pagar_receber"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "movimentacao_conta_pagar_link_conta_pagar_id_fkey"
+            columns: ["conta_pagar_id"]
+            isOneToOne: false
+            referencedRelation: "vw_contas_pagar_consolidado"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "movimentacao_conta_pagar_link_conta_pagar_id_fkey"
+            columns: ["conta_pagar_id"]
+            isOneToOne: false
+            referencedRelation: "vw_lancamentos_caixa_banco"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "movimentacao_conta_pagar_link_movimentacao_bancaria_id_fkey"
+            columns: ["movimentacao_bancaria_id"]
+            isOneToOne: false
+            referencedRelation: "movimentacoes_bancarias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       movimentacoes: {
         Row: {
           cargo_anterior: string | null
@@ -8803,6 +8859,10 @@ export type Database = {
       }
       conciliar_lancamento: {
         Args: { p_conta_pagar_id: string; p_lancamento_id: string }
+        Returns: Json
+      }
+      conciliar_multiplas_contas_a_ofx: {
+        Args: { p_contas_pagar_ids: string[]; p_ofx_id: string }
         Returns: Json
       }
       conciliar_transacao_ofx: {
