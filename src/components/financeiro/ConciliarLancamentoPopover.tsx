@@ -97,26 +97,30 @@ export function ConciliarLancamentoPopover({ lancamento, onSucesso }: Props) {
     }
   }
 
-  async function handleIgnorar() {
-    if (!confirm(`Ignorar o lançamento "${lancamento.descricao}"? Pode reativar depois se mudar de ideia.`)) {
+  async function handleCriarDespesa() {
+    if (!confirm(`Criar despesa aprovada a partir de "${lancamento.descricao}"?`)) {
       return;
     }
     setSalvando(true);
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data: resultado, error } = await (supabase as any).rpc(
-        "ignorar_lancamento",
+        "criar_despesa_de_lancamento",
         { p_lancamento_id: lancamento.id }
       );
       if (error) throw error;
       if (!resultado?.ok) {
-        toast.error(resultado?.erro || "Não foi possível ignorar");
+        toast.error(resultado?.erro || "Erro ao criar despesa");
         return;
       }
-      toast.success("Lançamento ignorado");
+      toast.success(
+        `Despesa aprovada criada: ${resultado.descricao} — ${formatBRL(resultado.valor)}`,
+        { duration: 5000 }
+      );
       setOpen(false);
       qc.invalidateQueries({ queryKey: ["fatura-lancamentos"] });
       qc.invalidateQueries({ queryKey: ["faturas-cartao"] });
+      qc.invalidateQueries({ queryKey: ["contas-pagar"] });
       onSucesso?.();
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
