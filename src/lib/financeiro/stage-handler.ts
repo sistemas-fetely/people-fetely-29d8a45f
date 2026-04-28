@@ -98,6 +98,9 @@ export async function moverParaStage(
         data_vencimento: nf.nf_data_emissao || null,
         status,
         itens: nf.itens || null,
+        tipo_documento: nf.tipo_documento || null,
+        pais_emissor: nf.pais_emissor || null,
+        moeda: nf.moeda || null,
       };
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
