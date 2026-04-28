@@ -365,7 +365,7 @@ export default function FaturasCartao() {
         .from("fatura_cartao_lancamentos")
         .update({
           categoria_id: categoriaId || null,
-          status: categoriaId ? "classificado" : "pendente",
+          // status do lançamento NÃO muda ao classificar — categorização é dimensão separada
         })
         .eq("id", lancId);
       if (error) throw error;
@@ -421,7 +421,7 @@ export default function FaturasCartao() {
           .from("fatura_cartao_lancamentos")
           .update({
             categoria_id: sug!.categoria_id,
-            status: "classificado",
+            // status NÃO muda ao classificar — categorização é dimensão separada
           })
           .eq("id", l.id);
         if (!error) {
