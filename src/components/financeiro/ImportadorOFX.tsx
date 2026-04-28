@@ -31,7 +31,7 @@ export function ImportadorOFX() {
         .from("contas_bancarias")
         .select("id, nome_exibicao, banco, tipo")
         .eq("ativo", true)
-        .neq("tipo", "cartao")
+        .eq("tipo", "corrente")
         .order("nome_exibicao");
       return (data || []) as ContaBancaria[];
     },
