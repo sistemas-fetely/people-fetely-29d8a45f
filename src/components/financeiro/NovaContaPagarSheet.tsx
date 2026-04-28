@@ -180,15 +180,17 @@ export function NovaContaPagarSheet({ open, onOpenChange }: Props) {
           parcela_atual: i + 1,
           parcela_grupo_id: grupoId,
           status: "aberto",
-          origem: "manual",
+          origem: "nova_despesa",
+          nf_stage_id: nfStageId,
         });
       }
       const { error } = await supabase.from("contas_pagar_receber").insert(rows);
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success(parcelas > 1 ? `${parcelas} parcelas registradas!` : "Conta registrada!");
+      toast.success(parcelas > 1 ? `${parcelas} parcelas registradas!` : "Despesa registrada!");
       qc.invalidateQueries({ queryKey: ["contas-pagar"] });
+      setNfStageId(null);
       onOpenChange(false);
     },
     onError: (e: Error) => toast.error(e.message),
