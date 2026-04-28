@@ -256,7 +256,7 @@ export function ConciliarLancamentoPopover({ lancamento, onSucesso }: Props) {
                 )}
               </div>
 
-              {/* Ações */}
+              {/* Ações: 2 botões apenas */}
               <div className="space-y-1.5 pt-1 border-t">
                 <Button
                   size="sm"
@@ -265,30 +265,17 @@ export function ConciliarLancamentoPopover({ lancamento, onSucesso }: Props) {
                   disabled={!selecionado || salvando}
                 >
                   {salvando ? <Loader2 className="h-3 w-3 animate-spin" /> : <CheckCircle2 className="h-3 w-3" />}
-                  Conciliar selecionada
+                  Vincular selecionada
                 </Button>
                 <Button
                   size="sm"
                   variant="outline"
                   className="w-full gap-2"
-                  onClick={() => {
-                    setOpen(false);
-                    onCriarDespesa?.(lancamento.id);
-                  }}
+                  onClick={handleCriarDespesa}
                   disabled={salvando}
                 >
-                  <Plus className="h-3 w-3" />
-                  Criar despesa daqui
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="w-full gap-2 text-zinc-600"
-                  onClick={handleIgnorar}
-                  disabled={salvando}
-                >
-                  <X className="h-3 w-3" />
-                  Ignorar
+                  {salvando ? <Loader2 className="h-3 w-3 animate-spin" /> : <Plus className="h-3 w-3" />}
+                  Criar despesa
                 </Button>
               </div>
             </>
