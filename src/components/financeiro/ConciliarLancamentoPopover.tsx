@@ -30,17 +30,16 @@ interface MatchSugerido {
 interface Props {
   lancamento: Lancamento;
   onSucesso?: () => void;
-  onCriarDespesa?: (lancamentoId: string) => void;
 }
 
 const STATUS_CONFIG: Record<string, { label: string; cls: string }> = {
   pendente: { label: "Pendente", cls: "bg-amber-50 text-amber-700 border-amber-300" },
-  conciliado: { label: "Conciliado", cls: "bg-emerald-50 text-emerald-700 border-emerald-300" },
+  conciliado: { label: "Vinculada", cls: "bg-emerald-50 text-emerald-700 border-emerald-300" },
   virou_despesa: { label: "Virou despesa", cls: "bg-blue-50 text-blue-700 border-blue-300" },
   ignorado: { label: "Ignorado", cls: "bg-zinc-50 text-zinc-700 border-zinc-300" },
 };
 
-export function ConciliarLancamentoPopover({ lancamento, onSucesso, onCriarDespesa }: Props) {
+export function ConciliarLancamentoPopover({ lancamento, onSucesso }: Props) {
   const [open, setOpen] = useState(false);
   const [selecionado, setSelecionado] = useState<string | null>(null);
   const [salvando, setSalvando] = useState(false);
