@@ -605,11 +605,11 @@ export default function NFsStage() {
               <TableBody>
                 {filtered.map((nf) => {
                   const isSel = selecionadas.has(nf.id);
-                  const podeSel =
-                    nf.status === "pendente" || nf.status === "classificada";
+                  const podeSel = nf.status === "nao_vinculada";
+                  const podeClassificar = nf.status === "nao_vinculada";
                   const salvando = salvandoCategoria.has(nf.id);
                   const sugestao =
-                    nf.status === "pendente" ? sugestoesPorNf[nf.id] : null;
+                    !nf.categoria_id ? sugestoesPorNf[nf.id] : null;
 
                   const temItens = !!(nf.itens && Array.isArray(nf.itens) && nf.itens.length > 0);
                   const isExpandida = expandidas.has(nf.id);
