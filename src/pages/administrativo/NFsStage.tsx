@@ -301,6 +301,13 @@ export default function NFsStage() {
 
       qc.invalidateQueries({ queryKey: ["nfs-stage"] });
       qc.invalidateQueries({ queryKey: ["engine-regras-ativas"] });
+
+      // Feedback visual
+      if (categoriaId) {
+        toast.success("Categoria salva");
+      } else {
+        toast.success("Categoria removida");
+      }
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       toast.error("Erro: " + msg);
