@@ -159,9 +159,21 @@ export default function EnviarPagamentoDialog({ open, onOpenChange, conta, onDon
     },
   });
 
-  useEffect(() => {
-    if (!open) return;
-    if (conta.dados_pagamento_fornecedor) {
+  // Buscar dados bancários cadastrados no parceiro
+  const { data: parceiroDadosBancarios } = useQuery({
+    queryKey: ["parceiro-dados-bancarios", conta.parceiro_id],
+    enabled: !!conta.parceiro_id && open,
+    queryFn: async () => {
+      if (!conta.parceiro_id) return null;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data } = await (supabase as any)
+        .from("parceiros_comerciais")
+        .select("dados_bancarios")
+        .eq("id", conta.parceiro_id)
+        .single();
+      return (data?.dados_bancarios as { banco?: string; agencia?: string; conta?: string; pix?: string } | null) || null;
+    },
+  });
       setDadosPgto({
         banco: conta.dados_pagamento_fornecedor.banco || "",
         agencia: conta.dados_pagamento_fornecedor.agencia || "",
