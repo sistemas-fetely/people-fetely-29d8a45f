@@ -33,36 +33,44 @@ import { NovaContaPagarSheet } from "@/components/financeiro/NovaContaPagarSheet
 
 type Conta = {
   id: string;
-  tipo: string;
   descricao: string;
   valor: number;
   data_vencimento: string | null;
   data_pagamento: string | null;
   status: string;
-  fornecedor_cliente: string | null;
   parceiro_id: string | null;
   conta_id: string | null;
   origem: string | null;
   is_cartao: boolean | null;
-  docs_status: string | null;
+  // Campos da view consolidada
+  tags: unknown;
+  tem_doc_pendente: boolean | null;
+  atrasada: boolean | null;
+  status_efetivo: string | null;
+  nf_stage_id: string | null;
+  nf_tipo: string | null;
+  nf_fornecedor: string | null;
+  mov_conciliada: boolean | null;
+  // Joins
   plano_contas?: { codigo?: string | null; nome: string } | null;
   parceiros_comerciais?: { razao_social: string | null } | null;
   formas_pagamento?: { nome: string | null } | null;
   forma_pagamento?: string | null;
+  fornecedor_cliente?: string | null;
+};
+
+const STATUS_LABELS: Record<string, string> = {
+  aberto: "Aberto",
+  aprovado: "Aprovado",
+  aguardando_pagamento: "Aguardando pagamento",
+  cancelado: "Cancelado",
 };
 
 const STATUS_STYLES: Record<string, string> = {
   aberto: "bg-blue-100 text-blue-800 hover:bg-blue-100",
-  atrasado: "bg-red-100 text-red-800 hover:bg-red-100",
   aprovado: "bg-purple-100 text-purple-800 hover:bg-purple-100",
-  doc_pendente: "bg-amber-100 text-amber-800 hover:bg-amber-100",
-  finalizado: "bg-green-100 text-green-800 hover:bg-green-100",
-  cancelado: "bg-gray-100 text-gray-700 hover:bg-gray-100",
-  // Legados (não mais usados ativamente, mantidos para compatibilidade visual)
-  rascunho: "bg-muted text-muted-foreground",
-  agendado: "bg-amber-100 text-amber-800 hover:bg-amber-100",
-  pago: "bg-green-100 text-green-800 hover:bg-green-100",
-  conciliado: "bg-teal-100 text-teal-800 hover:bg-teal-100",
+  aguardando_pagamento: "bg-teal-100 text-teal-800 hover:bg-teal-100",
+  cancelado: "bg-red-100 text-red-800 hover:bg-red-100",
 };
 
 const PAGE_SIZE = 20;
@@ -70,7 +78,7 @@ const PAGE_SIZE = 20;
 export default function ContasPagar() {
   const qc = useQueryClient();
   const [statusFilter, setStatusFilter] = useState<string>("todos");
-  const [docsFilter, setDocsFilter] = useState<string>("todos");
+  const [tagFilter, setTagFilter] = useState<"todas" | "doc_pendente" | "atrasada">("todas");
   const [busca, setBusca] = useState("");
   const [dataDe, setDataDe] = useState("");
   const [dataAte, setDataAte] = useState("");
@@ -83,11 +91,10 @@ export default function ContasPagar() {
     queryKey: ["contas-pagar"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("contas_pagar_receber")
+        .from("vw_contas_pagar_consolidado")
         .select(
           "*, plano_contas:conta_id(codigo,nome), parceiros_comerciais:parceiro_id(razao_social), formas_pagamento:forma_pagamento_id(nome)",
         )
-        .eq("tipo", "pagar")
         .order("data_vencimento", { ascending: true });
       if (error) throw error;
       return data as unknown as Conta[];
@@ -97,21 +104,13 @@ export default function ContasPagar() {
   const filtered = useMemo(() => {
     let list = data || [];
     if (statusFilter !== "todos") {
-      if (statusFilter === "atrasado") {
-        // "Atrasado" é calculado: vencimento passado + status ativo (não finalizado/cancelado)
-        const hoje = new Date().toISOString().substring(0, 10);
-        list = list.filter(
-          (c) =>
-            c.data_vencimento &&
-            c.data_vencimento < hoje &&
-            c.status !== "finalizado" &&
-            c.status !== "cancelado",
-        );
-      } else {
-        list = list.filter((c) => c.status === statusFilter);
-      }
+      list = list.filter((c) => c.status === statusFilter);
     }
-    if (docsFilter !== "todos") list = list.filter((c) => (c.docs_status || "pendente") === docsFilter);
+    if (tagFilter === "doc_pendente") {
+      list = list.filter((c) => c.tem_doc_pendente === true);
+    } else if (tagFilter === "atrasada") {
+      list = list.filter((c) => c.atrasada === true);
+    }
     if (busca.trim()) {
       const t = busca.toLowerCase();
       list = list.filter(
@@ -124,38 +123,26 @@ export default function ContasPagar() {
     if (dataDe) list = list.filter((c) => (c.data_vencimento || "") >= dataDe);
     if (dataAte) list = list.filter((c) => (c.data_vencimento || "") <= dataAte);
     return list;
-  }, [data, statusFilter, docsFilter, busca, dataDe, dataAte]);
+  }, [data, statusFilter, tagFilter, busca, dataDe, dataAte]);
 
   const totals = useMemo(() => {
     const all = data || [];
-    const hoje = new Date().toISOString().substring(0, 10);
     const aberto = all
-      .filter((c) => c.status === "aberto" || c.status === "aprovado" || c.status === "doc_pendente")
+      .filter((c) => c.status === "aberto" || c.status === "aprovado")
       .reduce((s, c) => s + Number(c.valor || 0), 0);
     const atrasado = all
-      .filter(
-        (c) =>
-          c.data_vencimento &&
-          c.data_vencimento < hoje &&
-          c.status !== "finalizado" &&
-          c.status !== "cancelado",
-      )
+      .filter((c) => c.atrasada === true)
       .reduce((s, c) => s + Number(c.valor || 0), 0);
-    const finalizadoPeriodo = (filtered || [])
-      .filter((c) => c.status === "finalizado" || c.status === "pago" || c.status === "conciliado")
+    const aguardandoPgto = (filtered || [])
+      .filter((c) => c.status === "aguardando_pagamento")
       .reduce((s, c) => s + Number(c.valor || 0), 0);
-    const countDocPendente = all.filter((c) => c.status === "doc_pendente").length;
+    const countDocPendente = all.filter(
+      (c) => c.tem_doc_pendente === true && c.status !== "cancelado",
+    ).length;
     const countSemCategoria = all.filter(
-      (c) => !c.conta_id && c.status !== "cancelado" && c.status !== "finalizado",
+      (c) => !c.conta_id && c.status !== "cancelado",
     ).length;
-    const countSemDocs = all.filter(
-      (c) =>
-        (c.docs_status === "pendente" || c.docs_status === null) &&
-        c.status !== "cancelado" &&
-        c.status !== "finalizado" &&
-        c.status !== "doc_pendente",
-    ).length;
-    return { aberto, atrasado, finalizadoPeriodo, countDocPendente, countSemCategoria, countSemDocs };
+    return { aberto, atrasado, aguardandoPgto, countDocPendente, countSemCategoria };
   }, [data, filtered]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
@@ -166,7 +153,7 @@ export default function ContasPagar() {
     !!busca.trim(),
     !!dataDe,
     !!dataAte,
-    docsFilter !== "todos",
+    tagFilter !== "todas",
     statusFilter !== "todos",
   ].filter(Boolean).length;
   const temFiltroAtivo = filtrosAtivos > 0;
@@ -174,7 +161,7 @@ export default function ContasPagar() {
     setBusca("");
     setDataDe("");
     setDataAte("");
-    setDocsFilter("todos");
+    setTagFilter("todas");
     setStatusFilter("todos");
     setPage(1);
   }
@@ -205,12 +192,11 @@ export default function ContasPagar() {
   }
   function verSemCategoria() {
     setStatusFilter("todos");
-    // sem filtro nativo de categoria — mantém clique manual
     setBusca("");
     setPage(1);
   }
   function verPendentesDocs() {
-    setDocsFilter("pendente");
+    setTagFilter("doc_pendente");
     setPage(1);
   }
 
@@ -267,11 +253,11 @@ export default function ContasPagar() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-normal text-muted-foreground">
-              Finalizado no período
+              Aguardando pagamento
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-700">{formatBRL(totals.finalizadoPeriodo)}</div>
+            <div className="text-2xl font-bold text-teal-700">{formatBRL(totals.aguardandoPgto)}</div>
           </CardContent>
         </Card>
       </div>
@@ -294,51 +280,30 @@ export default function ContasPagar() {
             size="sm"
             variant="outline"
             className="border-amber-400 text-amber-800 hover:bg-amber-100"
-            onClick={() => { setStatusFilter("doc_pendente"); setPage(1); }}
+            onClick={() => { setTagFilter("doc_pendente"); setPage(1); }}
           >
             Ver pendentes
           </Button>
         </div>
       )}
 
-      {/* Alertas: sem categoria + sem docs */}
-      {(totals.countSemCategoria > 0 || totals.countSemDocs > 0) && (
+      {/* Alerta: sem categoria */}
+      {totals.countSemCategoria > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {totals.countSemCategoria > 0 && (
-            <div className="p-3 rounded-lg border border-amber-200 bg-amber-50/60 flex items-center justify-between">
-              <div className="flex items-center gap-2 text-amber-800 text-sm">
-                <FileWarning className="h-4 w-4" />
-                {totals.countSemCategoria} sem categoria
-              </div>
-              <Button
-                size="sm"
-                variant="outline"
-                className="text-amber-700 border-amber-300"
-                onClick={verSemCategoria}
-              >
-                Ver
-              </Button>
+          <div className="p-3 rounded-lg border border-amber-200 bg-amber-50/60 flex items-center justify-between">
+            <div className="flex items-center gap-2 text-amber-800 text-sm">
+              <FileWarning className="h-4 w-4" />
+              {totals.countSemCategoria} sem categoria
             </div>
-          )}
-          {totals.countSemDocs > 0 && (
-            <div className="p-3 rounded-lg border border-blue-200 bg-blue-50/60 flex items-center justify-between">
-              <div className="flex items-center gap-2 text-blue-800 text-sm">
-                <FileWarning className="h-4 w-4" />
-                <span>
-                  {totals.countSemDocs} {totals.countSemDocs === 1 ? "conta sem NF/Recibo" : "contas sem NF/Recibo"}
-                  <span className="text-blue-600 text-xs ml-1">— anexar antes de enviar ao financeiro</span>
-                </span>
-              </div>
-              <Button
-                size="sm"
-                variant="outline"
-                className="text-blue-700 border-blue-300 hover:bg-blue-100"
-                onClick={verPendentesDocs}
-              >
-                Ver
-              </Button>
-            </div>
-          )}
+            <Button
+              size="sm"
+              variant="outline"
+              className="text-amber-700 border-amber-300"
+              onClick={verSemCategoria}
+            >
+              Ver
+            </Button>
+          </div>
         </div>
       )}
 
@@ -376,27 +341,26 @@ export default function ContasPagar() {
               className={`w-full lg:w-44 ${dataAte ? filtroAtivoCls : ""}`}
             />
             <Select
-              value={docsFilter}
+              value={tagFilter}
               onValueChange={(v) => {
-                setDocsFilter(v);
+                setTagFilter(v as "todas" | "doc_pendente" | "atrasada");
                 setPage(1);
               }}
             >
               <SelectTrigger
-                className={`w-full lg:w-40 ${docsFilter !== "todos" ? filtroAtivoCls : ""}`}
+                className={`w-full lg:w-44 ${tagFilter !== "todas" ? filtroAtivoCls : ""}`}
               >
-                <SelectValue placeholder="Documentação" />
+                <SelectValue placeholder="Tags" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="todos">Docs: todas</SelectItem>
-                <SelectItem value="ok">Docs OK</SelectItem>
-                <SelectItem value="pendente">Sem docs</SelectItem>
-                <SelectItem value="parcial">Parcial</SelectItem>
+                <SelectItem value="todas">Todas as tags</SelectItem>
+                <SelectItem value="doc_pendente">Com doc pendente</SelectItem>
+                <SelectItem value="atrasada">Atrasadas</SelectItem>
               </SelectContent>
             </Select>
             <div className="flex flex-wrap gap-1">
               {(
-                ["todos", "aberto", "atrasado", "aprovado", "doc_pendente", "finalizado", "cancelado"] as const
+                ["todos", "aberto", "aprovado", "aguardando_pagamento", "cancelado"] as const
               ).map((s) => (
                 <Button
                   key={s}
@@ -408,7 +372,7 @@ export default function ContasPagar() {
                   }}
                   className="capitalize"
                 >
-                  {s === "doc_pendente" ? "Doc. Pendente" : s}
+                  {s === "todos" ? "todos" : (STATUS_LABELS[s] || s)}
                 </Button>
               ))}
             </div>
@@ -567,24 +531,25 @@ export default function ContasPagar() {
                           <TableCell>
                             <div className="flex flex-col gap-1 items-start">
                               <Badge className={STATUS_STYLES[c.status] || "bg-muted"}>
-                                {c.status === "doc_pendente" ? "Doc. Pendente" : c.status}
-                              </Badge>
-                              {c.docs_status === "pendente" &&
-                                c.status !== "cancelado" &&
-                                c.status !== "finalizado" && (
-                                  <Badge
-                                    variant="outline"
-                                    className="text-[9px] border-amber-400 text-amber-600"
-                                  >
-                                    Sem doc
-                                  </Badge>
+                                {STATUS_LABELS[c.status] || c.status}
+                                {c.status === "aguardando_pagamento" && c.mov_conciliada && (
+                                  <span className="ml-1 text-xs">✓</span>
                                 )}
-                              {c.docs_status === "parcial" && (
+                              </Badge>
+                              {c.tem_doc_pendente && (
                                 <Badge
                                   variant="outline"
-                                  className="text-[9px] border-amber-400 text-amber-600"
+                                  className="bg-amber-50 text-amber-700 border-amber-300 text-[9px]"
                                 >
-                                  Doc parcial
+                                  Doc pendente
+                                </Badge>
+                              )}
+                              {c.atrasada && (
+                                <Badge
+                                  variant="outline"
+                                  className="bg-red-50 text-red-700 border-red-300 text-[9px]"
+                                >
+                                  Atrasada
                                 </Badge>
                               )}
                             </div>
