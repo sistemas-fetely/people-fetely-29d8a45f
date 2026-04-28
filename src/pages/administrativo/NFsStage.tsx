@@ -382,8 +382,15 @@ export default function NFsStage() {
     try {
       const result = await enviarStageParaContasPagar(ids);
       if (result.sucesso > 0) {
+        const { criadas, enriquecidas } = result.detalhes;
+        const partes: string[] = [];
+        if (criadas > 0) partes.push(`${criadas} criada${criadas === 1 ? "" : "s"}`);
+        if (enriquecidas > 0)
+          partes.push(`${enriquecidas} enriquecida${enriquecidas === 1 ? "" : "s"}`);
         toast.success(
-          `${result.sucesso} NF${result.sucesso === 1 ? "" : "s"} enviada${result.sucesso === 1 ? "" : "s"} pra Contas a Pagar`,
+          partes.length > 0
+            ? partes.join(", ")
+            : `${result.sucesso} NF${result.sucesso === 1 ? "" : "s"} enviada${result.sucesso === 1 ? "" : "s"}`,
         );
       }
       if (result.erros.length > 0) {

@@ -129,148 +129,71 @@ export async function moverParaStage(
  */
 export async function enviarStageParaContasPagar(
   stageIds: string[],
-): Promise<{ sucesso: number; erros: string[] }> {
+): Promise<{
+  sucesso: number;
+  erros: string[];
+  detalhes: { criadas: number; enriquecidas: number };
+}> {
   const { data: userData } = await supabase.auth.getUser();
   const userId = userData?.user?.id || null;
-  const result = { sucesso: 0, erros: [] as string[] };
+  const result = {
+    sucesso: 0,
+    erros: [] as string[],
+    detalhes: { criadas: 0, enriquecidas: 0 },
+  };
 
-  // Busca NFs do stage
+  if (stageIds.length === 0) return result;
+
+  // Chama RPC que faz match→enriquece OU cria, com proteção contra duplicata
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: nfs, error: errBusca } = await (supabase as any)
-    .from("nfs_stage")
-    .select("*")
-    .in("id", stageIds)
-    .neq("status", "importada");
+  const { data, error } = await (supabase as any).rpc(
+    "enviar_stage_para_contas_pagar",
+    {
+      p_stage_ids: stageIds,
+      p_user_id: userId,
+    },
+  );
 
-  if (errBusca) {
-    result.erros.push(`Erro ao buscar stage: ${errBusca.message}`);
+  if (error) {
+    result.erros.push(`RPC falhou: ${error.message}`);
     return result;
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  for (const nf of (nfs || []) as any[]) {
+  type ResultadoRPC = {
+    stage_id: string;
+    conta_pagar_id: string | null;
+    acao: string;
+    erro: string | null;
+  };
+
+  for (const r of (data || []) as ResultadoRPC[]) {
+    if (r.acao === "erro") {
+      result.erros.push(`Stage ${r.stage_id}: ${r.erro || "erro desconhecido"}`);
+      continue;
+    }
+
+    result.sucesso++;
+    if (r.acao === "criada") result.detalhes.criadas++;
+    else if (r.acao.startsWith("enriquecida")) result.detalhes.enriquecidas++;
+
+    // Move PDF do bucket nfs-stage pra financeiro-docs (mantém comportamento existente)
     try {
-      // Auto-cadastro de parceiro se necessário
-      // Se tem CNPJ mas não tem parceiro_id, cria parceiro automaticamente
-      // Nome Fantasia = Razão Social (atalho - usuário pode ajustar depois)
-      let parceiroId = nf.parceiro_id;
-      if (!parceiroId && nf.fornecedor_cnpj) {
-        // Verifica se já existe parceiro com esse CNPJ
-        const { data: existente } = await supabase
-          .from("parceiros_comerciais")
-          .select("id")
-          .eq("cnpj", nf.fornecedor_cnpj)
-          .maybeSingle();
-
-        if (existente) {
-          parceiroId = existente.id;
-        } else if (nf.fornecedor_razao_social) {
-          // Cria automático com Nome Fantasia = Razão Social
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const { data: novoParceiro, error: errParc } = await (supabase as any)
-            .from("parceiros_comerciais")
-            .insert({
-              cnpj: nf.fornecedor_cnpj,
-              razao_social: nf.fornecedor_razao_social,
-              nome_fantasia: nf.fornecedor_razao_social, // atalho
-              tipo: "fornecedor",
-              ativo: true,
-            })
-            .select("id")
-            .single();
-
-          if (!errParc && novoParceiro) {
-            parceiroId = novoParceiro.id;
-            // Atualiza o stage também
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            await (supabase as any)
-              .from("nfs_stage")
-              .update({ parceiro_id: parceiroId })
-              .eq("id", nf.id);
-          }
-        }
-      }
-
-      // Caso 1: vincular a conta existente (atualizar a CP existente)
-      if (nf.conta_pagar_existente_id) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { error: errUpd } = await (supabase as any)
-          .from("contas_pagar_receber")
-          .update({
-            nf_numero: nf.nf_numero,
-            nf_chave_acesso: nf.nf_chave_acesso,
-            nf_data_emissao: nf.nf_data_emissao,
-            nf_cnpj_emitente: nf.fornecedor_cnpj,
-            descricao: nf.descricao,
-            origem: "vinculacao_nf",
-          })
-          .eq("id", nf.conta_pagar_existente_id);
-        if (errUpd) {
-          result.erros.push(`Erro vinculação: ${errUpd.message}`);
-          continue;
-        }
-        // Marca stage como importada
-        await marcarComoImportada(nf.id, nf.conta_pagar_existente_id, userId);
-
-        // Move PDF do bucket nfs-stage pra financeiro-docs
-        if (nf.arquivo_storage_path) {
-          await moverArquivoParaContasPagar(
-            nf.arquivo_storage_path,
-            nf.conta_pagar_existente_id,
-            nf.arquivo_nome || "documento.pdf",
-          );
-        }
-        result.sucesso++;
-        continue;
-      }
-
-      // Caso 2: criar nova conta a pagar
-      const descricao = montarDescricao(nf);
-
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: novaConta, error: errIns } = await (supabase as any)
-        .from("contas_pagar_receber")
-        .insert({
-          tipo: "pagar",
-          descricao,
-          fornecedor_cliente:
-            nf.fornecedor_razao_social || nf.fornecedor_cliente || "Sem identificação",
-          parceiro_id: parceiroId,
-          valor: nf.valor,
-          data_emissao: nf.nf_data_emissao,
-          data_vencimento: nf.data_vencimento || nf.nf_data_emissao,
-          status: "aberto",
-          conta_id: nf.categoria_id,
-          nf_numero: nf.nf_numero,
-          nf_chave_acesso: nf.nf_chave_acesso,
-          nf_data_emissao: nf.nf_data_emissao,
-          nf_serie: nf.nf_serie,
-          nf_cnpj_emitente: nf.fornecedor_cnpj,
-          origem: nf.fonte || "pdf_nfe",
-        })
-        .select("id")
-        .single();
+      const { data: stageInfo } = await (supabase as any)
+        .from("nfs_stage")
+        .select("arquivo_storage_path, arquivo_nome")
+        .eq("id", r.stage_id)
+        .maybeSingle();
 
-      if (errIns) {
-        result.erros.push(`Erro insert: ${errIns.message}`);
-        continue;
-      }
-
-      // Move PDF do bucket nfs-stage pra financeiro-docs (vinculado à conta nova)
-      if (nf.arquivo_storage_path) {
+      if (stageInfo?.arquivo_storage_path && r.conta_pagar_id) {
         await moverArquivoParaContasPagar(
-          nf.arquivo_storage_path,
-          novaConta.id,
-          nf.arquivo_nome || "documento.pdf",
+          stageInfo.arquivo_storage_path,
+          r.conta_pagar_id,
+          stageInfo.arquivo_nome || "documento.pdf",
         );
       }
-
-      // Marca stage como importada
-      await marcarComoImportada(nf.id, novaConta.id, userId);
-      result.sucesso++;
     } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
-      result.erros.push(msg);
+      console.warn(`Falha ao mover arquivo para conta ${r.conta_pagar_id}:`, e);
     }
   }
 
