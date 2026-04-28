@@ -7,9 +7,10 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Layers, Link2, Plus, X, Loader2, AlertCircle, Search, ArrowLeftRight } from "lucide-react";
+import { Layers, Link2, Plus, X, Loader2, AlertCircle, Search, ArrowLeftRight, Layers as LayersIcon } from "lucide-react";
 import { toast } from "sonner";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
+import { BuscarMultiplosLancamentosDialog } from "@/components/financeiro/BuscarMultiplosLancamentosDialog";
 
 type ContaBancaria = { id: string; nome_exibicao: string };
 
