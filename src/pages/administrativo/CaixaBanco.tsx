@@ -38,6 +38,7 @@ import { MarcarPagoDialog } from "@/components/financeiro/MarcarPagoDialog";
 import ContaPagarDetalheDrawer from "@/components/financeiro/ContaPagarDetalheDrawer";
 import { getCompromissoInfoMap, type CompromissoInfo } from "@/lib/financeiro/get-compromisso-info";
 import { getMeioPagamentoIcon } from "@/lib/financeiro/meio-pagamento-icon";
+import { getStatusFlagsMap, type FlagsContaPagar } from "@/lib/financeiro/get-status-flags";
 
 type Lancamento = {
   id: string;
@@ -221,6 +222,14 @@ export default function CaixaBanco() {
     queryKey: ["compromisso-info-map-caixa-banco", idsParaCompromisso.join(",")],
     enabled: idsParaCompromisso.length > 0,
     queryFn: () => getCompromissoInfoMap(idsParaCompromisso),
+  });
+
+  // Map: lancamento.id -> { tem_doc_pendente, atrasada }
+  // Necessário porque vw_lancamentos_caixa_banco não expõe esses derivados.
+  const { data: statusFlagsMap = new Map<string, FlagsContaPagar>() } = useQuery({
+    queryKey: ["status-flags-map-caixa-banco", idsParaCompromisso.join(",")],
+    enabled: idsParaCompromisso.length > 0,
+    queryFn: () => getStatusFlagsMap(idsParaCompromisso),
   });
 
   // Mapas de lookup
@@ -541,7 +550,8 @@ export default function CaixaBanco() {
                       const categoriaNome =
                         l.categoria_id && mapCategorias[l.categoria_id];
                       const conciliada = !!l.movimentacao_bancaria_id;
-                      const docPendente = l.status_conta_pagar === "doc_pendente";
+                      const flags = statusFlagsMap.get(l.id);
+                      const docPendente = !!flags?.tem_doc_pendente;
                       return (
                         <TableRow
                           key={l.id}

@@ -495,6 +495,7 @@ export default function ContasPagar() {
                       <TableHead>Categoria</TableHead>
                       <TableHead className="text-right">Valor</TableHead>
                       <TableHead>Status</TableHead>
+                      <TableHead>Tags</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -605,15 +606,19 @@ export default function ContasPagar() {
                             {formatBRL(c.valor)}
                           </TableCell>
                           <TableCell>
-                            <div className="flex flex-col gap-1 items-start">
-                              <Badge className={STATUS_STYLES[c.status] || "bg-muted"}>
-                                {STATUS_LABELS[c.status] || c.status}
-                              </Badge>
+                            <Badge className={STATUS_STYLES[c.status] || "bg-muted"}>
+                              {STATUS_LABELS[c.status] || c.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex flex-wrap gap-1 items-start">
                               {c.tem_doc_pendente && (
                                 <Badge
                                   variant="outline"
-                                  className="bg-amber-50 text-amber-700 border-amber-300 text-[9px]"
+                                  className="text-[9px] py-0 px-1.5 h-4 border-amber-400 text-amber-700 bg-amber-50 gap-1"
+                                  title="Pagamento foi enviado ao financeiro mas falta NF/Recibo"
                                 >
+                                  <FileWarning className="h-2.5 w-2.5" />
                                   Doc pendente
                                 </Badge>
                               )}
