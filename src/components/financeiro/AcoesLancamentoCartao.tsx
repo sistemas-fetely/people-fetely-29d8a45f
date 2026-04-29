@@ -17,8 +17,14 @@ interface Lancamento {
   descricao: string;
   valor: number;
   data_compra: string;
+interface Lancamento {
+  id: string;
+  descricao: string;
+  valor: number;
+  data_compra: string;
   status: string;
   conta_pagar_id?: string | null;
+  fatura_id?: string | null;
 }
 
 interface Props {
