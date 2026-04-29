@@ -3,7 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Link2, Loader2, CheckCircle2, XCircle, RotateCcw, Layers } from "lucide-react";
+import { Plus, Link2, Loader2, CheckCircle2, XCircle, RotateCcw, Layers, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { formatBRL } from "@/lib/format-currency";
 import { VincularLancamentoModal } from "./VincularLancamentoModal";
@@ -103,6 +103,28 @@ export function AcoesLancamentoCartao({ lancamento }: Props) {
     }
   }
 
+  async function handleIgnorar() {
+    setSalvando(true);
+    try {
+      const { error } = await supabase
+        .from("fatura_cartao_lancamentos")
+        .update({
+          status: "ignorado",
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", lancamento.id);
+      if (error) throw error;
+      toast.success("Lançamento ignorado");
+      qc.invalidateQueries({ queryKey: ["fatura-lancamentos"] });
+      qc.invalidateQueries({ queryKey: ["faturas-cartao"] });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      toast.error("Erro: " + msg);
+    } finally {
+      setSalvando(false);
+    }
+  }
+
   // Estado FINALIZADO: mostra status + reativar
   if (finalizado) {
     const cfg = STATUS_CONFIG[lancamento.status];
@@ -166,6 +188,17 @@ export function AcoesLancamentoCartao({ lancamento }: Props) {
         >
           <Layers className="h-2.5 w-2.5" />
           Agrupar
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          className="h-6 px-2 text-[10px] gap-1 border-zinc-300 text-zinc-600 hover:bg-zinc-50"
+          onClick={handleIgnorar}
+          disabled={salvando}
+          title="Ocultar este lançamento"
+        >
+          {salvando ? <Loader2 className="h-2.5 w-2.5 animate-spin" /> : <EyeOff className="h-2.5 w-2.5" />}
+          Ignorar
         </Button>
       </div>
 
