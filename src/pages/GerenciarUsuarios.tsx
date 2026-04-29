@@ -36,6 +36,7 @@ import { ConfirmacaoDupla } from "@/components/ConfirmacaoDupla";
 import { DrawerUsuario } from "@/components/DrawerUsuario";
 import { HubDaPessoaDialog } from "@/components/gerenciar-usuarios/HubDaPessoaDialog";
 import { TemplatesTab } from "@/components/gerenciar-usuarios/TemplatesTab";
+import NovoUsuarioDialog from "@/components/gerenciar-usuarios/NovoUsuarioDialog";
 import { usePerfisV2 } from "@/hooks/usePerfisV2";
 import { useUnidades } from "@/hooks/useUnidades";
 import { useTemplates } from "@/hooks/useTemplates";
