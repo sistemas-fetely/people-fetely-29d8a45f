@@ -83,10 +83,49 @@ const SPECIAL_PERMISSIONS = [
 ] as const;
 
 /** Returns the colaborador_tipo expected for a given module category */
-function getColaboradorTipoForCategory(category: string): string {
+function getColaboradorTipoForCategory(_category: string): string {
   // All current categories are role-based, not colaborador_tipo-based.
   return "all";
 }
+
+/**
+ * MAPEAMENTO permModule (antigo) → permissoes_catalogo.slug (novo)
+ *
+ * Sprint C1 (29/04/2026). Compat layer para integrar o novo modelo
+ * de permissões (grupo_acesso_permissoes) com os ~16 permModule
+ * espalhados pelo App.tsx em ProtectedRoute.
+ *
+ * Quando uma rota usa <ProtectedRoute permModule="folha_pagamento">,
+ * traduzimos para o slug "people:folha-pagamento" pra checar no novo
+ * sistema. Se não encontrar mapeamento, cai no modelo antigo.
+ */
+const PERM_MODULE_TO_SLUG: Record<string, string> = {
+  // People Fetely
+  colaboradores: "people:pessoa",
+  contratos_pj: "people:pessoa",
+  organograma: "people:organograma",
+  movimentacoes: "people:movimentacoes",
+  ferias: "people:ferias",
+  beneficios: "people:beneficios",
+  folha_pagamento: "people:folha-pagamento",
+  notas_fiscais: "people:notas-fiscais-pj",
+  pagamentos_pj: "people:pagamentos-pj",
+  recrutamento: "people:recrutamento",
+  avaliacoes: "people:avaliacoes",
+  treinamentos: "people:treinamentos",
+  // Admin
+  convites: "people:convites",
+  parametros: "adm-sncf:parametros",
+  usuarios: "adm-sncf:usuarios",
+  relatorios: "gestao-vista:relatorios",
+};
+
+const ACTION_TO_FIELD: Record<string, "pode_ver" | "pode_criar" | "pode_editar" | "pode_apagar"> = {
+  view: "pode_ver",
+  create: "pode_criar",
+  edit: "pode_editar",
+  delete: "pode_apagar",
+};
 
 /**
  * Pure helper to check permission given a permissions list and user roles.
@@ -114,6 +153,19 @@ export function hasPermission(
 
 export { MODULES, MODULE_CATEGORIES, CRUD_PERMISSIONS, SPECIAL_PERMISSIONS, getColaboradorTipoForCategory };
 
+/**
+ * Sprint C1 (29/04/2026): Permission do NOVO modelo.
+ * Estrutura achatada das permissões via grupo_acesso_permissoes
+ * para checagem em runtime (sem RPC, ler em batch).
+ */
+interface PermissaoNovoModelo {
+  slug: string;
+  pode_ver: boolean;
+  pode_criar: boolean;
+  pode_editar: boolean;
+  pode_apagar: boolean;
+}
+
 export function usePermissions() {
   const { user } = useAuth();
 
@@ -128,6 +180,58 @@ export function usePermissions() {
     enabled: !!user?.id,
   });
 
+  // ===================================
+  // NOVO MODELO — permissões via grupo_acesso_permissoes
+  // ===================================
+  const { data: permsNovoModelo = [] } = useQuery({
+    queryKey: ["user-permissoes-v2", user?.id],
+    enabled: !!user?.id,
+    queryFn: async (): Promise<PermissaoNovoModelo[]> => {
+      // 1. Pega grupos do usuário (ativos)
+      const { data: vinculos } = await supabase
+        .from("grupo_acesso_usuarios")
+        .select("grupo_acesso_id")
+        .eq("user_id", user!.id)
+        .is("inativado_em", null);
+
+      const grupoIds = (vinculos || []).map((v) => v.grupo_acesso_id);
+      if (grupoIds.length === 0) return [];
+
+      // 2. Pega permissões dos grupos com slug
+      const { data: perms } = await supabase
+        .from("grupo_acesso_permissoes")
+        .select("pode_ver, pode_criar, pode_editar, pode_apagar, permissoes_catalogo!inner(slug)")
+        .in("grupo_acesso_id", grupoIds);
+
+      if (!perms) return [];
+
+      // 3. Achata: se múltiplos grupos liberam mesmo slug, OR booleano
+      const map = new Map<string, PermissaoNovoModelo>();
+      for (const p of perms as Array<{
+        pode_ver: boolean;
+        pode_criar: boolean;
+        pode_editar: boolean;
+        pode_apagar: boolean;
+        permissoes_catalogo: { slug: string } | null;
+      }>) {
+        const slug = p.permissoes_catalogo?.slug;
+        if (!slug) continue;
+        const cur = map.get(slug);
+        map.set(slug, {
+          slug,
+          pode_ver: !!cur?.pode_ver || !!p.pode_ver,
+          pode_criar: !!cur?.pode_criar || !!p.pode_criar,
+          pode_editar: !!cur?.pode_editar || !!p.pode_editar,
+          pode_apagar: !!cur?.pode_apagar || !!p.pode_apagar,
+        });
+      }
+      return Array.from(map.values());
+    },
+  });
+
+  // ===================================
+  // MODELO ANTIGO — fallback (role_permissions)
+  // ===================================
   const { data: allPermissions = [] } = useQuery({
     queryKey: ["role-permissions-all"],
     queryFn: async () => {
@@ -175,9 +279,34 @@ export function usePermissions() {
   const isAdminRH =
     userRoles.includes("admin_rh" as any) || userRoles.includes("rh" as any);
 
+  /**
+   * Verifica permissão (compat layer).
+   *
+   * Ordem de checagem:
+   *   1. Super admin → sempre TRUE
+   *   2. Tenta NOVO modelo (slug derivado de PERM_MODULE_TO_SLUG)
+   *   3. Fallback no MODELO ANTIGO (role_permissions)
+   *
+   * Sprint D futura: drop do fallback antigo após migrar 100% das chamadas.
+   */
   const hasPermissionLocal = (module: string, permission: string): boolean => {
-    // Super Admin bypasses all permission checks
+    // 1. Super admin sempre passa
     if (isSuperAdmin) return true;
+
+    // 2. Tenta o NOVO modelo
+    const slug = PERM_MODULE_TO_SLUG[module];
+    if (slug && permsNovoModelo.length > 0) {
+      const perm = permsNovoModelo.find((p) => p.slug === slug);
+      if (perm) {
+        const field = ACTION_TO_FIELD[permission] || "pode_ver";
+        if (perm[field]) return true;
+        // Se o slug existe mas a ação não está liberada, NÃO cai no fallback —
+        // o novo modelo é a verdade. Retorna false.
+        return false;
+      }
+    }
+
+    // 3. Fallback no MODELO ANTIGO (compat com 490 RLS atuais)
     if (!userRoles.length || !allPermissions.length) return false;
     return allPermissions.some(
       (p) =>
@@ -187,6 +316,24 @@ export function usePermissions() {
         p.granted &&
         (p.colaborador_tipo === "all" || userTipos.includes(p.colaborador_tipo))
     );
+  };
+
+  /**
+   * Sprint C1: checagem direta por slug do novo modelo.
+   * Útil pra novas telas que já usam o catálogo permissoes_catalogo.
+   *
+   * Exemplo: hasPermissionBySlug("financeiro:contas-pagar", "criar")
+   */
+  const hasPermissionBySlug = (slug: string, action: string = "ver"): boolean => {
+    if (isSuperAdmin) return true;
+    const field = ACTION_TO_FIELD[action] || ACTION_TO_FIELD.view || "pode_ver";
+    const fieldNovo = action === "ver" ? "pode_ver"
+      : action === "criar" ? "pode_criar"
+      : action === "editar" ? "pode_editar"
+      : action === "apagar" ? "pode_apagar"
+      : field;
+    const perm = permsNovoModelo.find((p) => p.slug === slug);
+    return !!perm?.[fieldNovo as keyof PermissaoNovoModelo];
   };
 
   /**
@@ -211,7 +358,9 @@ export function usePermissions() {
     userRoles,
     userTipos,
     allPermissions,
+    permsNovoModelo,
     hasPermission: hasPermissionLocal,
+    hasPermissionBySlug,
     canAccess,
     canView,
     canCreate,
