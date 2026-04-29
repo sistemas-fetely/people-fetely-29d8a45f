@@ -39,6 +39,8 @@ import ContaPagarDetalheDrawer from "@/components/financeiro/ContaPagarDetalheDr
 import { getCompromissoInfoMap, type CompromissoInfo } from "@/lib/financeiro/get-compromisso-info";
 import { getMeioPagamentoIcon } from "@/lib/financeiro/meio-pagamento-icon";
 import { getStatusFlagsMap, type FlagsContaPagar } from "@/lib/financeiro/get-status-flags";
+import { classFundoFuturo } from "@/lib/financeiro/is-vencimento-futuro";
+import { cn } from "@/lib/utils";
 
 type Lancamento = {
   id: string;
@@ -555,9 +557,12 @@ export default function CaixaBanco() {
                       return (
                         <TableRow
                           key={l.id}
-                          className={`cursor-pointer hover:bg-muted/50 ${
-                            atrasada ? "bg-red-50/60 hover:bg-red-50" : ""
-                          } ${isSel ? "bg-muted/40" : ""}`}
+                          className={cn(
+                            "cursor-pointer hover:bg-muted/50 transition-colors",
+                            atrasada && "bg-red-50/60 hover:bg-red-50",
+                            !atrasada && classFundoFuturo(l.data_vencimento),
+                            isSel && "bg-muted/40",
+                          )}
                           onClick={() => {
                             if (l.origem_view === "cartao_lancamento") {
                               navigate("/administrativo/faturas-cartao");
