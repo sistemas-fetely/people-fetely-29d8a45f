@@ -3,7 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Link2, Loader2, CheckCircle2, XCircle, RotateCcw, Layers } from "lucide-react";
+import { Plus, Link2, Loader2, CheckCircle2, XCircle, RotateCcw, Layers, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { formatBRL } from "@/lib/format-currency";
 import { VincularLancamentoModal } from "./VincularLancamentoModal";
