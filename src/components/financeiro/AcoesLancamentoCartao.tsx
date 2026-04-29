@@ -123,7 +123,6 @@ export function AcoesLancamentoCartao({ lancamento }: Props) {
       setSalvando(false);
     }
   }
-  }
 
   // Estado FINALIZADO: mostra status + reativar
   if (finalizado) {
