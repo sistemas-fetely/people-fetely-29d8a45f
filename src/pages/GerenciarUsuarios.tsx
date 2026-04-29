@@ -741,8 +741,13 @@ export default function GerenciarUsuarios() {
 
         <TabsContent value="usuarios" className="mt-4">
           <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between gap-3">
               <CardTitle className="text-lg">Usuários do Sistema</CardTitle>
+              {(isSuperAdmin || isAdminRH) && (
+                <Button size="sm" onClick={() => setNovoUsuarioOpen(true)}>
+                  <UserPlus className="h-4 w-4" /> Novo Usuário
+                </Button>
+              )}
             </CardHeader>
             <CardContent>
               <Table>
