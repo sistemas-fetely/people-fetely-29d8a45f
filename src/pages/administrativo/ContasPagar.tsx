@@ -33,6 +33,7 @@ import { NovaContaPagarSheet } from "@/components/financeiro/NovaContaPagarSheet
 import { getFaturaInfoMap, type FaturaInfo } from "@/lib/financeiro/get-fatura-info";
 import { getCompromissoInfoMap, type CompromissoInfo } from "@/lib/financeiro/get-compromisso-info";
 import { getMeioPagamentoIcon } from "@/lib/financeiro/meio-pagamento-icon";
+import { getVinculoOrigemIcon } from "@/lib/financeiro/vinculo-origem-icon";
 import { Repeat, CheckCircle2 } from "lucide-react";
 import { classFundoFuturo } from "@/lib/financeiro/is-vencimento-futuro";
 import { cn } from "@/lib/utils";
@@ -548,6 +549,16 @@ export default function ContasPagar() {
                                   <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
                                 </span>
                               )}
+                              {(() => {
+                                const vinc = getVinculoOrigemIcon(c.origem);
+                                if (!vinc) return null;
+                                const VIcon = vinc.Icon;
+                                return (
+                                  <span className="shrink-0" title={vinc.tooltip}>
+                                    <VIcon className={`h-3.5 w-3.5 ${vinc.cor}`} />
+                                  </span>
+                                );
+                              })()}
                               {c.origem === "nf_pj_interno" && (
                                 <Badge
                                   variant="outline"
