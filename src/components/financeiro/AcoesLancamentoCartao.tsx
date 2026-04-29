@@ -175,6 +175,12 @@ export function AcoesLancamentoCartao({ lancamento }: Props) {
         lancamento={lancamento}
       />
 
+      <AgruparLancamentosModal
+        open={agruparOpen}
+        onOpenChange={setAgruparOpen}
+        lancamentoPrincipal={lancamento}
+      />
+
       <Dialog open={criarOpen} onOpenChange={setCriarOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
