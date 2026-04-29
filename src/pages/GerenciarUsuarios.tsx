@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import GruposAcessoTab from "@/components/grupos-acesso/GruposAcessoTab";
+import GruposAcessoTabV2 from "@/components/grupos-acesso/GruposAcessoTabV2";
 
 import MatrizPermissoes from "@/components/gerenciar-usuarios/MatrizPermissoes";
 import { supabase } from "@/integrations/supabase/client";
@@ -948,7 +948,7 @@ export default function GerenciarUsuarios() {
         </TabsContent>
 
         <TabsContent value="grupos" className="mt-4">
-          <GruposAcessoTab />
+          <GruposAcessoTabV2 />
         </TabsContent>
 
         {(isSuperAdmin || isAdminRH) && (

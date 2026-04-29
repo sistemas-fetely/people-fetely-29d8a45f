@@ -3926,37 +3926,141 @@ export type Database = {
         }
         Relationships: []
       }
+      grupo_acesso_permissoes: {
+        Row: {
+          condicao_extra: Json | null
+          created_at: string | null
+          criado_por: string | null
+          grupo_acesso_id: string
+          id: string
+          permissao_id: string
+          pode_apagar: boolean | null
+          pode_criar: boolean | null
+          pode_editar: boolean | null
+          pode_ver: boolean | null
+          updated_at: string | null
+        }
+        Insert: {
+          condicao_extra?: Json | null
+          created_at?: string | null
+          criado_por?: string | null
+          grupo_acesso_id: string
+          id?: string
+          permissao_id: string
+          pode_apagar?: boolean | null
+          pode_criar?: boolean | null
+          pode_editar?: boolean | null
+          pode_ver?: boolean | null
+          updated_at?: string | null
+        }
+        Update: {
+          condicao_extra?: Json | null
+          created_at?: string | null
+          criado_por?: string | null
+          grupo_acesso_id?: string
+          id?: string
+          permissao_id?: string
+          pode_apagar?: boolean | null
+          pode_criar?: boolean | null
+          pode_editar?: boolean | null
+          pode_ver?: boolean | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "grupo_acesso_permissoes_grupo_acesso_id_fkey"
+            columns: ["grupo_acesso_id"]
+            isOneToOne: false
+            referencedRelation: "grupos_acesso"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "grupo_acesso_permissoes_permissao_id_fkey"
+            columns: ["permissao_id"]
+            isOneToOne: false
+            referencedRelation: "permissoes_catalogo"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      grupo_acesso_usuarios: {
+        Row: {
+          adicionado_por: string | null
+          ativo_em: string | null
+          created_at: string | null
+          grupo_acesso_id: string
+          id: string
+          inativado_em: string | null
+          user_id: string
+        }
+        Insert: {
+          adicionado_por?: string | null
+          ativo_em?: string | null
+          created_at?: string | null
+          grupo_acesso_id: string
+          id?: string
+          inativado_em?: string | null
+          user_id: string
+        }
+        Update: {
+          adicionado_por?: string | null
+          ativo_em?: string | null
+          created_at?: string | null
+          grupo_acesso_id?: string
+          id?: string
+          inativado_em?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "grupo_acesso_usuarios_grupo_acesso_id_fkey"
+            columns: ["grupo_acesso_id"]
+            isOneToOne: false
+            referencedRelation: "grupos_acesso"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       grupos_acesso: {
         Row: {
           ativo: boolean
           created_at: string
+          criado_por: string | null
           descricao: string | null
           id: string
           is_system: boolean
           nome: string
+          pre_cadastrado: boolean | null
           role_automatico: Database["public"]["Enums"]["app_role"]
+          slug: string | null
           tipo_colaborador: string
           updated_at: string
         }
         Insert: {
           ativo?: boolean
           created_at?: string
+          criado_por?: string | null
           descricao?: string | null
           id?: string
           is_system?: boolean
           nome: string
+          pre_cadastrado?: boolean | null
           role_automatico?: Database["public"]["Enums"]["app_role"]
+          slug?: string | null
           tipo_colaborador: string
           updated_at?: string
         }
         Update: {
           ativo?: boolean
           created_at?: string
+          criado_por?: string | null
           descricao?: string | null
           id?: string
           is_system?: boolean
           nome?: string
+          pre_cadastrado?: boolean | null
           role_automatico?: Database["public"]["Enums"]["app_role"]
+          slug?: string | null
           tipo_colaborador?: string
           updated_at?: string
         }
@@ -5819,6 +5923,54 @@ export type Database = {
           id?: string
           is_sistema?: boolean
           nome?: string
+        }
+        Relationships: []
+      }
+      permissoes_catalogo: {
+        Row: {
+          ativo: boolean | null
+          categoria_sod: string | null
+          contem_dado_sensivel: boolean | null
+          created_at: string | null
+          descricao: string | null
+          feature_em_teste: boolean | null
+          id: string
+          nome_exibicao: string
+          ordem: number | null
+          pilar: string
+          slug: string
+          tipo: string
+          updated_at: string | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          categoria_sod?: string | null
+          contem_dado_sensivel?: boolean | null
+          created_at?: string | null
+          descricao?: string | null
+          feature_em_teste?: boolean | null
+          id?: string
+          nome_exibicao: string
+          ordem?: number | null
+          pilar: string
+          slug: string
+          tipo: string
+          updated_at?: string | null
+        }
+        Update: {
+          ativo?: boolean | null
+          categoria_sod?: string | null
+          contem_dado_sensivel?: boolean | null
+          created_at?: string | null
+          descricao?: string | null
+          feature_em_teste?: boolean | null
+          id?: string
+          nome_exibicao?: string
+          ordem?: number | null
+          pilar?: string
+          slug?: string
+          tipo?: string
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -8056,6 +8208,51 @@ export type Database = {
           },
         ]
       }
+      user_colaborador_link: {
+        Row: {
+          colaborador_clt_id: string | null
+          contrato_pj_id: string | null
+          inativado_em: string | null
+          tipo_externo: string | null
+          user_id: string
+          vinculado_em: string | null
+          vinculado_por: string | null
+        }
+        Insert: {
+          colaborador_clt_id?: string | null
+          contrato_pj_id?: string | null
+          inativado_em?: string | null
+          tipo_externo?: string | null
+          user_id: string
+          vinculado_em?: string | null
+          vinculado_por?: string | null
+        }
+        Update: {
+          colaborador_clt_id?: string | null
+          contrato_pj_id?: string | null
+          inativado_em?: string | null
+          tipo_externo?: string | null
+          user_id?: string
+          vinculado_em?: string | null
+          vinculado_por?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_colaborador_link_colaborador_clt_id_fkey"
+            columns: ["colaborador_clt_id"]
+            isOneToOne: false
+            referencedRelation: "colaboradores_clt"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_colaborador_link_contrato_pj_id_fkey"
+            columns: ["contrato_pj_id"]
+            isOneToOne: false
+            referencedRelation: "contratos_pj"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           atribuido_manualmente: boolean
@@ -9461,6 +9658,10 @@ export type Database = {
           unidade_id: string
           unidade_nome: string
         }[]
+      }
+      usuario_pode: {
+        Args: { p_acao?: string; p_permissao_slug: string; p_user_id: string }
+        Returns: boolean
       }
       validar_email_corporativo: { Args: { _email: string }; Returns: Json }
       validar_nf_pj: { Args: { _nota_id: string }; Returns: Json }
