@@ -19,10 +19,11 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { ThumbsUp, Check, ChevronDown, X, Loader2, Zap, CreditCard } from "lucide-react";
+import { ThumbsUp, Check, ChevronDown, X, Loader2, Zap, CreditCard, Mail } from "lucide-react";
 import { useContaWorkflow, type ContaStatus } from "@/hooks/useContaWorkflow";
 import { usePermissions } from "@/hooks/usePermissions";
 import { AcaoMassaSuperAdminDialog } from "./AcaoMassaSuperAdminDialog";
+import { PularEmailMassaDialog } from "./PularEmailMassaDialog";
 import { toast } from "sonner";
 
 export interface ContaSelecionada {
@@ -39,6 +40,7 @@ interface Props {
 export default function AcoesMassaButtons({ contas, onDone }: Props) {
   const [executando, setExecutando] = useState(false);
   const [superAcaoOpen, setSuperAcaoOpen] = useState(false);
+  const [pularEmailOpen, setPularEmailOpen] = useState(false);
   const [superAcaoModo, setSuperAcaoModo] = useState<"finalizar_legado" | "definir_meio">(
     "finalizar_legado",
   );
@@ -100,6 +102,18 @@ export default function AcoesMassaButtons({ contas, onDone }: Props) {
           onClick={() => executarLote("aprovado", ["aberto", "atrasado"], "Aprovado em massa")}
         >
           <ThumbsUp className="h-3.5 w-3.5" /> Aprovar {nAberto}
+        </Button>
+      )}
+
+      {nAprovado > 0 && (
+        <Button
+          size="sm"
+          variant="outline"
+          className="gap-1 border-blue-200 text-blue-700 hover:bg-blue-50"
+          disabled={executando}
+          onClick={() => setPularEmailOpen(true)}
+        >
+          <Mail className="h-3.5 w-3.5" /> Pular email ({nAprovado})
         </Button>
       )}
 
@@ -188,6 +202,13 @@ export default function AcoesMassaButtons({ contas, onDone }: Props) {
         onOpenChange={setSuperAcaoOpen}
         contas={contas}
         modo={superAcaoModo}
+        onDone={onDone}
+      />
+
+      <PularEmailMassaDialog
+        open={pularEmailOpen}
+        onOpenChange={setPularEmailOpen}
+        contas={contas}
         onDone={onDone}
       />
     </>

@@ -34,6 +34,8 @@ import { getFaturaInfoMap, type FaturaInfo } from "@/lib/financeiro/get-fatura-i
 import { getCompromissoInfoMap, type CompromissoInfo } from "@/lib/financeiro/get-compromisso-info";
 import { getMeioPagamentoIcon } from "@/lib/financeiro/meio-pagamento-icon";
 import { Repeat, CheckCircle2 } from "lucide-react";
+import { classFundoFuturo } from "@/lib/financeiro/is-vencimento-futuro";
+import { cn } from "@/lib/utils";
 
 type Conta = {
   id: string;
@@ -505,9 +507,12 @@ export default function ContasPagar() {
                       return (
                         <TableRow
                           key={c.id}
-                          className={`cursor-pointer hover:bg-muted/50 ${
-                            c.atrasada ? "bg-red-50/60 hover:bg-red-50" : ""
-                          } ${isSel ? "bg-muted/40" : ""}`}
+                          className={cn(
+                            "cursor-pointer hover:bg-muted/50 transition-colors",
+                            c.atrasada && "bg-red-50/60 hover:bg-red-50",
+                            !c.atrasada && classFundoFuturo(c.data_vencimento),
+                            isSel && "bg-muted/40",
+                          )}
                           onClick={() => setContaIdSelecionada(c.id)}
                         >
                           <TableCell onClick={(e) => e.stopPropagation()}>
