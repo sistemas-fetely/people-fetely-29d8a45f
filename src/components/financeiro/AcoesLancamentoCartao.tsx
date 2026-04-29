@@ -36,6 +36,7 @@ export function AcoesLancamentoCartao({ lancamento }: Props) {
   const [salvando, setSalvando] = useState(false);
   const [vincularOpen, setVincularOpen] = useState(false);
   const [criarOpen, setCriarOpen] = useState(false);
+  const [agruparOpen, setAgruparOpen] = useState(false);
   const [parcelas, setParcelas] = useState(1);
   const [gerarTodas, setGerarTodas] = useState(false);
   const qc = useQueryClient();
