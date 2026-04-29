@@ -36,6 +36,7 @@ import { ConfirmacaoDupla } from "@/components/ConfirmacaoDupla";
 import { DrawerUsuario } from "@/components/DrawerUsuario";
 import { HubDaPessoaDialog } from "@/components/gerenciar-usuarios/HubDaPessoaDialog";
 import { TemplatesTab } from "@/components/gerenciar-usuarios/TemplatesTab";
+import NovoUsuarioDialog from "@/components/gerenciar-usuarios/NovoUsuarioDialog";
 import { usePerfisV2 } from "@/hooks/usePerfisV2";
 import { useUnidades } from "@/hooks/useUnidades";
 import { useTemplates } from "@/hooks/useTemplates";
@@ -196,6 +197,7 @@ export default function GerenciarUsuarios() {
   const [linkColaboradorId, setLinkColaboradorId] = useState("");
   const [linkContratoPjId, setLinkContratoPjId] = useState("");
   const [drawerUsuarioId, setDrawerUsuarioId] = useState<string | null>(null);
+  const [novoUsuarioOpen, setNovoUsuarioOpen] = useState(false);
 
   // V3 — Template / Departamento / Unidade para Novo Usuário
   const [templateId, setTemplateId] = useState<string>("");
@@ -739,8 +741,13 @@ export default function GerenciarUsuarios() {
 
         <TabsContent value="usuarios" className="mt-4">
           <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between gap-3">
               <CardTitle className="text-lg">Usuários do Sistema</CardTitle>
+              {(isSuperAdmin || isAdminRH) && (
+                <Button size="sm" onClick={() => setNovoUsuarioOpen(true)}>
+                  <UserPlus className="h-4 w-4" /> Novo Usuário
+                </Button>
+              )}
             </CardHeader>
             <CardContent>
               <Table>
@@ -1138,6 +1145,8 @@ export default function GerenciarUsuarios() {
         open={!!drawerUsuarioId}
         onOpenChange={(open) => !open && setDrawerUsuarioId(null)}
       />
+
+      <NovoUsuarioDialog open={novoUsuarioOpen} onOpenChange={setNovoUsuarioOpen} />
     </div>
   );
 }
