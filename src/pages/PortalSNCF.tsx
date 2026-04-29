@@ -38,12 +38,20 @@ function getIcon(name: string) {
 
 export default function PortalSNCF() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, roles } = useAuth();
   const [sistemas, setSistemas] = useState<Sistema[]>([]);
   const [userSystems, setUserSystems] = useState<UserSystem[]>([]);
   const [loading, setLoading] = useState(true);
   const [totalPendentes, setTotalPendentes] = useState(0);
   const { data: atalhos } = useMeusAtalhos(5);
+
+  /**
+   * Sprint 2 (29/04/2026): super_admin e admin_rh têm acesso universal.
+   * Antes a checagem dependia 100% de sncf_user_systems, o que esconde
+   * sistemas novos do próprio dono do sistema. Doutrina: "se você é
+   * super_admin, vê tudo, sem precisar de cadastro adicional".
+   */
+  const isAdmin = roles.includes("super_admin") || roles.includes("admin_rh");
 
   useEffect(() => {
     if (!user) return;
@@ -65,8 +73,10 @@ export default function PortalSNCF() {
     void load();
   }, [user]);
 
-  const hasAccess = (sistemaId: string) =>
-    userSystems.some((us) => us.sistema_id === sistemaId && us.ativo);
+  const hasAccess = (sistemaId: string) => {
+    if (isAdmin) return true; // super_admin/admin_rh veem todos os sistemas
+    return userSystems.some((us) => us.sistema_id === sistemaId && us.ativo);
+  };
 
   const isExternal = (sistema: Sistema) => sistema.rota_base.startsWith("http");
 

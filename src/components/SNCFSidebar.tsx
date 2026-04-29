@@ -104,9 +104,9 @@ export function SNCFSidebar() {
     refetchInterval: 30000,
   });
 
-  // Sistemas externos para mostrar no sidebar
-  const { data: sistemasExternos = [] } = useQuery({
-    queryKey: ["sncf-sistemas-externos", user?.id],
+  // Sistemas (internos + externos) para mostrar no sidebar
+  const { data: sistemasData } = useQuery({
+    queryKey: ["sncf-sistemas-sidebar", user?.id, isAdminRHOrSuper],
     enabled: !!user,
     queryFn: async () => {
       const { data: sistemas } = await supabase
@@ -121,11 +121,18 @@ export function SNCFSidebar() {
       const acessiveis = new Set(
         (userSystems || []).filter((u: any) => u.ativo).map((u: any) => u.sistema_id)
       );
-      return ((sistemas || []) as SistemaExterno[]).filter(
-        (s) => s.rota_base?.startsWith("http") && acessiveis.has(s.id)
-      );
+      // Sprint 2 (29/04/2026): super_admin e admin_rh têm acesso universal,
+      // sem precisar de cadastro em sncf_user_systems.
+      const podeVer = (id: string) => isAdminRHOrSuper || acessiveis.has(id);
+      const todos = ((sistemas || []) as SistemaExterno[]).filter((s) => podeVer(s.id));
+      return {
+        internos: todos.filter((s) => !s.rota_base?.startsWith("http")),
+        externos: todos.filter((s) => s.rota_base?.startsWith("http")),
+      };
     },
   });
+  const sistemasInternos = sistemasData?.internos ?? [];
+  const sistemasExternos = sistemasData?.externos ?? [];
 
   const isItemActive = (url: string, end?: boolean) =>
     end ? location.pathname === url : location.pathname.startsWith(url);
@@ -222,6 +229,39 @@ export function SNCFSidebar() {
         {renderGroup("Celebração & Conversa", celebracaoItems)}
         {canSee("admin_rh_or_super") && <div className="mx-4 border-t border-sidebar-border/40" />}
         {renderGroup("Curadoria", adminItems)}
+
+        {sistemasInternos.length > 0 && (
+          <>
+            <div className="mx-4 border-t border-sidebar-border/40" />
+            <SidebarGroup>
+              {!collapsed && (
+                <SidebarGroupLabel className="text-sidebar-muted text-[10px] uppercase tracking-widest font-semibold mb-1 px-4">
+                  Sistemas Fetely
+                </SidebarGroupLabel>
+              )}
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {sistemasInternos.map((s) => {
+                    const Icon = getIcon(s.icone);
+                    return (
+                      <SidebarMenuItem key={s.id}>
+                        <SidebarMenuButton asChild>
+                          <NavLink
+                            to={s.rota_base}
+                            className="flex w-full items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-all duration-200"
+                          >
+                            <Icon className="h-[18px] w-[18px] shrink-0" style={s.cor ? { color: s.cor } : undefined} />
+                            {!collapsed && <span>{s.nome}</span>}
+                          </NavLink>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          </>
+        )}
 
         {sistemasExternos.length > 0 && (
           <>
