@@ -30,12 +30,10 @@ import {
   Clock,
   Link as LinkIcon,
   FileWarning,
-  Pencil,
   CreditCard,
 } from "lucide-react";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
 import { MarcarPagoDialog } from "@/components/financeiro/MarcarPagoDialog";
-import { EditarLancamentoDialog } from "@/components/financeiro/EditarLancamentoDialog";
 import ContaPagarDetalheDrawer from "@/components/financeiro/ContaPagarDetalheDrawer";
 
 type Lancamento = {
@@ -53,6 +51,7 @@ type Lancamento = {
   fornecedor_cliente: string | null;
   parceiro_id: string | null;
   forma_pagamento_id: string | null;
+  categoria_id: string | null;
   unidade: string | null;
   nf_numero: string | null;
   origem_view: "conta_pagar" | "cartao_lancamento";
@@ -75,6 +74,11 @@ type FormaPgtoLite = {
 type Parceiro = {
   id: string;
   razao_social: string | null;
+};
+
+type CategoriaLite = {
+  id: string;
+  nome: string;
 };
 
 const STATUS_STYLES: Record<string, string> = {
@@ -102,8 +106,6 @@ export default function CaixaBanco() {
   const [contasParaPagar, setContasParaPagar] = useState<Lancamento[]>([]);
   const [contaIdDrawer, setContaIdDrawer] = useState<string | null>(null);
   const navigate = useNavigate();
-  const [editarOpen, setEditarOpen] = useState(false);
-  const [lancamentoEditando, setLancamentoEditando] = useState<Lancamento | null>(null);
 
   // Query da view unificada
   const { data: lancamentos, isLoading } = useQuery({
@@ -131,7 +133,7 @@ export default function CaixaBanco() {
     },
   });
 
-  // Formas de pagamento (pra exibir nome na tabela)
+  // Formas de pagamento
   const { data: formasPagamento } = useQuery({
     queryKey: ["formas-pagamento-lite"],
     queryFn: async () => {
@@ -142,7 +144,7 @@ export default function CaixaBanco() {
     },
   });
 
-  // Parceiros (pra mostrar razão social em vez de fornecedor_cliente texto)
+  // Parceiros
   const { data: parceiros } = useQuery({
     queryKey: ["parceiros-lite"],
     queryFn: async () => {
@@ -150,6 +152,17 @@ export default function CaixaBanco() {
         .from("parceiros_comerciais")
         .select("id, razao_social");
       return (data || []) as Parceiro[];
+    },
+  });
+
+  // Plano de contas (categorias)
+  const { data: categorias } = useQuery({
+    queryKey: ["plano-contas-lite"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("plano_contas")
+        .select("id, nome");
+      return (data || []) as CategoriaLite[];
     },
   });
 
@@ -173,6 +186,12 @@ export default function CaixaBanco() {
     });
     return m;
   }, [parceiros]);
+
+  const mapCategorias = useMemo(() => {
+    const m: Record<string, string> = {};
+    (categorias || []).forEach((c) => (m[c.id] = c.nome));
+    return m;
+  }, [categorias]);
 
   // Filtros
   const filtered = useMemo(() => {
@@ -198,7 +217,7 @@ export default function CaixaBanco() {
     return list;
   }, [lancamentos, statusFilter, contaBancariaFilter, busca, mapParceiros]);
 
-  // Totais (sempre calcula do dataset completo, não filtrado)
+  // Totais
   const totals = useMemo(() => {
     const all = lancamentos || [];
     const emAberto = all
@@ -250,11 +269,6 @@ export default function CaixaBanco() {
     setSelecionados(next);
   }
 
-  function handleMarcarPagoIndividual(l: Lancamento) {
-    setContasParaPagar([l]);
-    setMarcarPagoOpen(true);
-  }
-
   function handleMarcarPagoMassa() {
     if (lancamentosSelecionados.length === 0) {
       return;
@@ -286,7 +300,7 @@ export default function CaixaBanco() {
             Caixa e Banco
           </h1>
           <p className="text-muted-foreground text-sm mt-1">
-            Lançamentos de pagamento — em aberto, pagos e conciliados.
+            Movimentações — espinha dorsal financeira (realizado + comprometido).
           </p>
         </div>
       </div>
@@ -430,23 +444,25 @@ export default function CaixaBanco() {
                       </TableHead>
                       <TableHead>Parceiro</TableHead>
                       <TableHead>Descrição</TableHead>
-                      <TableHead>Vencimento</TableHead>
+                      <TableHead>Dt. Vencimento</TableHead>
+                      <TableHead>Categoria</TableHead>
                       <TableHead>Dt. Pagamento</TableHead>
-                      <TableHead>Conta</TableHead>
-                      <TableHead>Meio Pgto</TableHead>
+                      <TableHead>Meio PG</TableHead>
                       <TableHead className="text-right">Valor</TableHead>
                       <TableHead>Status</TableHead>
-                      <TableHead className="w-[180px]">Ações</TableHead>
+                      <TableHead>Tags</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {pageData.map((l) => {
                       const isSel = selecionados.has(l.id);
                       const podeSel = l.status_caixa === "em_aberto" && l.origem_view !== "cartao_lancamento";
-                      const conta =
-                        l.pago_em_conta_id && mapContas[l.pago_em_conta_id];
                       const formaNome =
                         l.forma_pagamento_id && mapFormas[l.forma_pagamento_id];
+                      const categoriaNome =
+                        l.categoria_id && mapCategorias[l.categoria_id];
+                      const conciliada = !!l.movimentacao_bancaria_id;
+                      const docPendente = l.status_conta_pagar === "doc_pendente";
                       return (
                         <TableRow
                           key={l.id}
@@ -471,16 +487,6 @@ export default function CaixaBanco() {
                             <div className="truncate" title={nomeParceiro(l)}>
                               {nomeParceiro(l)}
                             </div>
-                            {l.status_conta_pagar === "doc_pendente" && (
-                              <Badge
-                                variant="outline"
-                                className="mt-1 text-[9px] py-0 px-1.5 border-amber-400 text-amber-700 bg-amber-50 gap-1"
-                                title="Pagamento foi enviado ao financeiro mas falta NF/Recibo do fornecedor"
-                              >
-                                <FileWarning className="h-2.5 w-2.5" />
-                                Doc. Pendente
-                              </Badge>
-                            )}
                           </TableCell>
                           <TableCell className="max-w-[200px]">
                             <div className="truncate text-xs text-muted-foreground" title={l.descricao}>
@@ -504,26 +510,21 @@ export default function CaixaBanco() {
                           <TableCell className="whitespace-nowrap text-xs">
                             {formatDateBR(l.data_vencimento)}
                           </TableCell>
-                          <TableCell className="whitespace-nowrap text-xs">
-                            {l.data_pagamento ? (
-                              formatDateBR(l.data_pagamento)
+                          <TableCell className="text-xs">
+                            {categoriaNome ? (
+                              <div
+                                className="truncate max-w-[160px]"
+                                title={categoriaNome}
+                              >
+                                {categoriaNome}
+                              </div>
                             ) : (
                               <span className="text-muted-foreground">—</span>
                             )}
                           </TableCell>
-                          <TableCell className="text-xs">
-                            {conta ? (
-                              <div className="flex items-center gap-1.5">
-                                {conta.cor && (
-                                  <div
-                                    className="w-2 h-2 rounded-full shrink-0"
-                                    style={{ backgroundColor: conta.cor }}
-                                  />
-                                )}
-                                <span className="truncate max-w-[120px]">
-                                  {conta.nome_exibicao}
-                                </span>
-                              </div>
+                          <TableCell className="whitespace-nowrap text-xs">
+                            {l.data_pagamento ? (
+                              formatDateBR(l.data_pagamento)
                             ) : (
                               <span className="text-muted-foreground">—</span>
                             )}
@@ -539,30 +540,27 @@ export default function CaixaBanco() {
                               {STATUS_LABEL[l.status_caixa]}
                             </Badge>
                           </TableCell>
-                          <TableCell onClick={(e) => e.stopPropagation()}>
-                            <div className="flex gap-1">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="h-7 px-2 text-xs"
-                                onClick={() => {
-                                  setLancamentoEditando(l);
-                                  setEditarOpen(true);
-                                }}
-                                title="Editar conta, meio e data"
-                              >
-                                <Pencil className="h-3 w-3" />
-                              </Button>
-                              {l.status_caixa === "em_aberto" && l.origem_view !== "cartao_lancamento" && (
-                                <Button
-                                  size="sm"
+                          <TableCell>
+                            <div className="flex flex-wrap gap-1">
+                              {docPendente && (
+                                <Badge
                                   variant="outline"
-                                  className="text-green-700 border-green-300 hover:bg-green-50 h-7 text-xs gap-1"
-                                  onClick={() => handleMarcarPagoIndividual(l)}
+                                  className="text-[9px] py-0 px-1.5 h-4 border-amber-400 text-amber-700 bg-amber-50 gap-1"
+                                  title="Pagamento foi enviado ao financeiro mas falta NF/Recibo"
                                 >
-                                  <CheckCircle2 className="h-3 w-3" />
-                                  Pagar
-                                </Button>
+                                  <FileWarning className="h-2.5 w-2.5" />
+                                  Doc pendente
+                                </Badge>
+                              )}
+                              {conciliada && (
+                                <Badge
+                                  variant="outline"
+                                  className="text-[9px] py-0 px-1.5 h-4 border-emerald-400 text-emerald-800 bg-emerald-50 gap-1"
+                                  title="Bateu com extrato OFX"
+                                >
+                                  <LinkIcon className="h-2.5 w-2.5" />
+                                  Conciliada
+                                </Badge>
                               )}
                             </div>
                           </TableCell>
@@ -611,13 +609,6 @@ export default function CaixaBanco() {
       <ContaPagarDetalheDrawer
         contaId={contaIdDrawer}
         onClose={() => setContaIdDrawer(null)}
-      />
-
-      <EditarLancamentoDialog
-        open={editarOpen}
-        onOpenChange={setEditarOpen}
-        lancamento={lancamentoEditando}
-        onSuccess={() => qc.invalidateQueries({ queryKey: ["lancamentos-caixa-banco"] })}
       />
     </div>
   );
