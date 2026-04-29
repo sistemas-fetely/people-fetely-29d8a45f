@@ -189,6 +189,17 @@ export function AcoesLancamentoCartao({ lancamento }: Props) {
           <Layers className="h-2.5 w-2.5" />
           Agrupar
         </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          className="h-6 px-2 text-[10px] gap-1 border-zinc-300 text-zinc-600 hover:bg-zinc-50"
+          onClick={handleIgnorar}
+          disabled={salvando}
+          title="Ocultar este lançamento"
+        >
+          {salvando ? <Loader2 className="h-2.5 w-2.5 animate-spin" /> : <EyeOff className="h-2.5 w-2.5" />}
+          Ignorar
+        </Button>
       </div>
 
       <VincularLancamentoModal
