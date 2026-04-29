@@ -100,7 +100,29 @@ export function AcoesLancamentoCartao({ lancamento }: Props) {
       toast.error("Erro: " + msg);
     } finally {
       setSalvando(false);
+  }
+
+  async function handleIgnorar() {
+    setSalvando(true);
+    try {
+      const { error } = await supabase
+        .from("fatura_cartao_lancamentos")
+        .update({
+          status: "ignorado",
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", lancamento.id);
+      if (error) throw error;
+      toast.success("Lançamento ignorado");
+      qc.invalidateQueries({ queryKey: ["fatura-lancamentos"] });
+      qc.invalidateQueries({ queryKey: ["faturas-cartao"] });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      toast.error("Erro: " + msg);
+    } finally {
+      setSalvando(false);
     }
+  }
   }
 
   // Estado FINALIZADO: mostra status + reativar
