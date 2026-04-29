@@ -556,7 +556,7 @@ export default function ContasPagar() {
                           <TableCell className="whitespace-nowrap">
                             {formatDateBR(c.data_vencimento)}
                           </TableCell>
-                          <TableCell className="text-xs text-muted-foreground">
+                          <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
                             {(() => {
                               const meioPagamento = c.formas_pagamento?.nome || c.forma_pagamento;
                               const faturaInfo = faturaInfoMap.get(c.id);
@@ -568,17 +568,17 @@ export default function ContasPagar() {
                                 <div className="flex flex-col">
                                   {ico ? (
                                     <span
-                                      className="flex items-center gap-1.5"
+                                      className="flex items-center gap-1.5 whitespace-nowrap"
                                       title={meioPagamento}
                                     >
-                                      <ico.Icon className={`h-4 w-4 ${ico.cor}`} />
+                                      <ico.Icon className={`h-4 w-4 ${ico.cor} shrink-0`} />
                                       <span className="text-xs">{meioPagamento}</span>
                                     </span>
                                   ) : (
-                                    <span>{meioPagamento}</span>
+                                    <span className="whitespace-nowrap">{meioPagamento}</span>
                                   )}
                                   {(faturaInfo?.banco_nome || faturaInfo?.fatura_vencimento) && (
-                                    <span className="text-[10px] text-muted-foreground/70 ml-5">
+                                    <span className="text-[10px] text-muted-foreground/70 ml-5 whitespace-nowrap">
                                       ↳{" "}
                                       {faturaInfo.banco_nome}
                                       {faturaInfo.banco_nome && faturaInfo.fatura_vencimento && " · "}
@@ -610,12 +610,12 @@ export default function ContasPagar() {
                               {STATUS_LABELS[c.status] || c.status}
                             </Badge>
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="min-w-[140px]">
                             <div className="flex flex-wrap gap-1 items-start">
                               {c.tem_doc_pendente && (
                                 <Badge
                                   variant="outline"
-                                  className="text-[9px] py-0 px-1.5 h-4 border-amber-400 text-amber-700 bg-amber-50 gap-1"
+                                  className="text-[9px] py-0 px-1.5 h-4 border-amber-400 text-amber-700 bg-amber-50 gap-1 whitespace-nowrap"
                                   title="Pagamento foi enviado ao financeiro mas falta NF/Recibo"
                                 >
                                   <FileWarning className="h-2.5 w-2.5" />

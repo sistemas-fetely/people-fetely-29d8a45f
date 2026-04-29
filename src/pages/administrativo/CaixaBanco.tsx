@@ -644,17 +644,17 @@ export default function CaixaBanco() {
                               <span className="text-muted-foreground">—</span>
                             )}
                           </TableCell>
-                          <TableCell className="text-xs text-muted-foreground">
+                          <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
                             {(() => {
                               if (!formaNome) return "—";
                               const ico = getMeioPagamentoIcon(formaNome);
                               if (ico) {
                                 return (
                                   <span
-                                    className="flex items-center gap-1.5"
+                                    className="flex items-center gap-1.5 whitespace-nowrap"
                                     title={formaNome}
                                   >
-                                    <ico.Icon className={`h-4 w-4 ${ico.cor}`} />
+                                    <ico.Icon className={`h-4 w-4 ${ico.cor} shrink-0`} />
                                     <span>{formaNome}</span>
                                   </span>
                                 );
@@ -670,12 +670,12 @@ export default function CaixaBanco() {
                               {STATUS_LABEL[sVisual] || sVisual}
                             </Badge>
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="min-w-[140px]">
                             <div className="flex flex-wrap gap-1">
                               {docPendente && (
                                 <Badge
                                   variant="outline"
-                                  className="text-[9px] py-0 px-1.5 h-4 border-amber-400 text-amber-700 bg-amber-50 gap-1"
+                                  className="text-[9px] py-0 px-1.5 h-4 border-amber-400 text-amber-700 bg-amber-50 gap-1 whitespace-nowrap"
                                   title="Pagamento foi enviado ao financeiro mas falta NF/Recibo"
                                 >
                                   <FileWarning className="h-2.5 w-2.5" />

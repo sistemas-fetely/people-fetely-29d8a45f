@@ -153,7 +153,16 @@ export default function OFXStage() {
       qc.invalidateQueries({ queryKey: ["ofx-transacoes-pendentes"] });
       qc.invalidateQueries({ queryKey: ["contas-pagar-pendentes-ofx"] });
     } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
+      // Extrai mensagem útil de erros Supabase (message, details, hint) ou padrão JS
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const err = e as any;
+      const msg =
+        err?.message ||
+        err?.details ||
+        err?.hint ||
+        (e instanceof Error ? e.message : null) ||
+        JSON.stringify(e);
+      console.error("[OFXStage] erro:", e);
       toast.error("Erro: " + msg);
     } finally {
       setAcaoEmCurso(null);
@@ -177,7 +186,16 @@ export default function OFXStage() {
       if (ofxSelecionada?.id === ofx.id) setOfxSelecionada(null);
       qc.invalidateQueries({ queryKey: ["ofx-transacoes-pendentes"] });
     } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
+      // Extrai mensagem útil de erros Supabase (message, details, hint) ou padrão JS
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const err = e as any;
+      const msg =
+        err?.message ||
+        err?.details ||
+        err?.hint ||
+        (e instanceof Error ? e.message : null) ||
+        JSON.stringify(e);
+      console.error("[OFXStage] erro:", e);
       toast.error("Erro: " + msg);
     } finally {
       setAcaoEmCurso(null);
@@ -201,7 +219,16 @@ export default function OFXStage() {
       if (ofxSelecionada?.id === ofx.id) setOfxSelecionada(null);
       qc.invalidateQueries({ queryKey: ["ofx-transacoes-pendentes"] });
     } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
+      // Extrai mensagem útil de erros Supabase (message, details, hint) ou padrão JS
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const err = e as any;
+      const msg =
+        err?.message ||
+        err?.details ||
+        err?.hint ||
+        (e instanceof Error ? e.message : null) ||
+        JSON.stringify(e);
+      console.error("[OFXStage] erro:", e);
       toast.error("Erro: " + msg);
     } finally {
       setAcaoEmCurso(null);
