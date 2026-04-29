@@ -197,6 +197,7 @@ export default function GerenciarUsuarios() {
   const [linkColaboradorId, setLinkColaboradorId] = useState("");
   const [linkContratoPjId, setLinkContratoPjId] = useState("");
   const [drawerUsuarioId, setDrawerUsuarioId] = useState<string | null>(null);
+  const [novoUsuarioOpen, setNovoUsuarioOpen] = useState(false);
 
   // V3 — Template / Departamento / Unidade para Novo Usuário
   const [templateId, setTemplateId] = useState<string>("");
