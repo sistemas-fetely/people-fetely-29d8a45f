@@ -1985,6 +1985,7 @@ export type Database = {
           dados_bancarios_fornecedor: Json | null
           dados_enriquecidos_qive: boolean | null
           dados_pagamento_fornecedor: Json | null
+          data_compra: string | null
           data_pagamento: string | null
           data_vencimento: string
           descricao: string
@@ -2055,6 +2056,7 @@ export type Database = {
           dados_bancarios_fornecedor?: Json | null
           dados_enriquecidos_qive?: boolean | null
           dados_pagamento_fornecedor?: Json | null
+          data_compra?: string | null
           data_pagamento?: string | null
           data_vencimento: string
           descricao: string
@@ -2125,6 +2127,7 @@ export type Database = {
           dados_bancarios_fornecedor?: Json | null
           dados_enriquecidos_qive?: boolean | null
           dados_pagamento_fornecedor?: Json | null
+          data_compra?: string | null
           data_pagamento?: string | null
           data_vencimento?: string
           descricao?: string
@@ -9081,6 +9084,10 @@ export type Database = {
           status: string
           valor: number
         }[]
+      }
+      criar_despesa_agrupada: {
+        Args: { p_lancamento_ids: string[] }
+        Returns: Json
       }
       criar_despesa_de_lancamento: {
         Args: {
