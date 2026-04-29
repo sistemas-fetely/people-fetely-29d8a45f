@@ -9214,6 +9214,10 @@ export type Database = {
         Returns: string
       }
       normalizar_numero_nf: { Args: { p_numero: string }; Returns: string }
+      normalizar_tipo_movimentacao: {
+        Args: { p_tipo_ofx: string; p_valor: number }
+        Returns: string
+      }
       org_sync_in_progress: { Args: never; Returns: boolean }
       perfil_area_do_departamento: {
         Args: { _departamento_id: string }
@@ -9282,6 +9286,10 @@ export type Database = {
         }[]
       }
       reativar_lancamento: { Args: { p_lancamento_id: string }; Returns: Json }
+      recalcular_status_fatura: {
+        Args: { p_conta_pagar_id: string }
+        Returns: undefined
+      }
       registrar_aceite_termo_uso: {
         Args: { _versao: string }
         Returns: undefined

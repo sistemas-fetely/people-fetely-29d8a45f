@@ -54,17 +54,12 @@ const caixaBancoItems: MenuItem[] = [
   { title: "Faturas de Cartão", url: "/administrativo/faturas-cartao", icon: CreditCard },
 ];
 
-const vendasBlingItems: MenuItem[] = [
-  { title: "Pedidos de Venda", url: "/administrativo/pedidos", icon: ShoppingCart },
-  { title: "Produtos", url: "/administrativo/produtos", icon: Package },
-];
+// MIGRADOS na Sprint 2 (29/04/2026) → Administrativo Fetely:
+//   - Pedidos de Venda, Produtos (provisórios em Adm, podem migrar pra Produto Fetely depois)
+//   - Contratos, Imóveis, Seguros, GED
+const vendasBlingItems: MenuItem[] = [];
 
-const futurosItems: MenuItem[] = [
-  { title: "Contratos", url: "/administrativo/contratos", icon: FileSignature, badge: "Em breve" },
-  { title: "Imóveis", url: "/administrativo/imoveis", icon: Building2, badge: "Em breve" },
-  { title: "Seguros", url: "/administrativo/seguros", icon: ShieldCheck, badge: "Em breve" },
-  { title: "GED", url: "/administrativo/ged", icon: FolderArchive, badge: "Em breve" },
-];
+const futurosItems: MenuItem[] = [];
 
 export function AdminFinanceiroSidebar() {
   const { state } = useSidebar();

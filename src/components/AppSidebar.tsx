@@ -60,11 +60,10 @@ interface MenuItem {
 }
 
 // Grupo 1: Dashboards & Análise (topo)
-const analiseItems: MenuItem[] = [
-  { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard, permModule: "dashboard" },
-  { title: "Gestão à Vista", url: "/gestao-a-vista", icon: Tv },
-  { title: "Relatórios", url: "/relatorios", icon: BarChart3, permModule: "relatorios" },
-];
+// MIGRADOS na Sprint 2 (29/04/2026):
+//   - Dashboard, Relatórios, Gestão à Vista → sistema "Gestão à Vista" (novo)
+// Mantido vazio aqui pra preservar grupo caso volte item de análise focado em People.
+const analiseItems: MenuItem[] = [];
 
 // Grupo 2: Pessoas (núcleo operacional)
 const pessoasItems: MenuItem[] = [

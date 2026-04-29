@@ -2,6 +2,7 @@ import { useLocation } from "react-router-dom";
 import {
   Banknote, Sliders, Settings, UserCog, MessageSquareWarning, Shield,
   LayoutGrid, Users, Monitor, ClipboardList, UsersRound, Landmark,
+  FileText, BookOpen, Workflow, FilePlus,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { cn } from "@/lib/utils";
@@ -22,23 +23,28 @@ interface MenuItem {
   end?: boolean;
 }
 
-// Grupo 1: Pessoas & Cargos
+// Grupo 1: Documentação & Processos (vindos do SNCF na Sprint 2)
+const docItems: MenuItem[] = [
+  { title: "Documentação", url: "/documentacao", icon: FileText },
+  { title: "Processos", url: "/processos", icon: Workflow },
+  { title: "Base de Conhecimento", url: "/fala-fetely/conhecimento", icon: BookOpen },
+];
+
+// Grupo 2: Pessoas & Acessos
 const pessoasItems: MenuItem[] = [
-  { title: "Cargos e Salários", url: "/admin/cargos", icon: Banknote },
   { title: "Gerenciar Usuários", url: "/admin/usuarios", icon: UserCog },
 ];
 
-// Grupo 2: Sistema
+// Grupo 3: Sistema
 const sistemaItems: MenuItem[] = [
   { title: "Parâmetros", url: "/admin/parametros", icon: Sliders },
   { title: "Configurações", url: "/admin/configuracoes", icon: Settings },
+  { title: "Importações PDF", url: "/admin/importacoes-pdf", icon: FilePlus },
 ];
 
-// Grupo 3: Saúde do Sistema
-const monitoramentoItems: MenuItem[] = [
-  { title: "Reportes do Sistema", url: "/admin/reportes", icon: MessageSquareWarning },
-  // { title: "Importações PDF", url: "/admin/importacoes-pdf", icon: FileText }, // Oculto V1: tela apenas histórica, reabilitar quando ganhar status/reprocessamento
-];
+// MIGRADOS na Sprint 2 (29/04/2026):
+//   - Cargos e Salários → People Fetely (já estava lá; removido daqui pra evitar duplicação)
+//   - Reportes do Sistema → TI Fetely
 
 export function AdminSidebar() {
   const location = useLocation();
@@ -143,11 +149,11 @@ export function AdminSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
         <div className="mx-4 border-t border-sidebar-border/40" />
-        {renderGroup("Pessoas & Cargos", pessoasItems)}
+        {renderGroup("Documentação & Processos", docItems)}
+        <div className="mx-4 border-t border-sidebar-border/40" />
+        {renderGroup("Pessoas & Acessos", pessoasItems)}
         <div className="mx-4 border-t border-sidebar-border/40" />
         {renderGroup("Sistema", sistemaItems)}
-        <div className="mx-4 border-t border-sidebar-border/40" />
-        {renderGroup("Saúde do Sistema", monitoramentoItems)}
 
         {/* Sistemas Fetely — navegação cross-pilar */}
         <div className="mx-4 border-t border-sidebar-border/40" />
