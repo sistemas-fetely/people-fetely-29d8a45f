@@ -356,7 +356,7 @@ function AdicionarUsuarioDialog({
     queryFn: async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("user_id, full_name, email")
+        .select("user_id, full_name")
         .order("full_name");
       return (data || []).filter((p) => !jaInclusos.includes(p.user_id));
     },
@@ -382,7 +382,7 @@ function AdicionarUsuarioDialog({
           <SelectContent>
             {usuarios.map((u) => (
               <SelectItem key={u.user_id} value={u.user_id}>
-                {u.full_name} ({u.email})
+                {u.full_name}
               </SelectItem>
             ))}
             {usuarios.length === 0 && (
