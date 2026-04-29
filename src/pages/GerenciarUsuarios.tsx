@@ -1145,6 +1145,8 @@ export default function GerenciarUsuarios() {
         open={!!drawerUsuarioId}
         onOpenChange={(open) => !open && setDrawerUsuarioId(null)}
       />
+
+      <NovoUsuarioDialog open={novoUsuarioOpen} onOpenChange={setNovoUsuarioOpen} />
     </div>
   );
 }
