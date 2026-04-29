@@ -31,6 +31,9 @@ import AcoesMassaButtons, {
 } from "@/components/financeiro/AcoesMassaButtons";
 import { NovaContaPagarSheet } from "@/components/financeiro/NovaContaPagarSheet";
 import { getFaturaInfoMap, type FaturaInfo } from "@/lib/financeiro/get-fatura-info";
+import { getCompromissoInfoMap, type CompromissoInfo } from "@/lib/financeiro/get-compromisso-info";
+import { getMeioPagamentoIcon } from "@/lib/financeiro/meio-pagamento-icon";
+import { Repeat, CheckCircle2 } from "lucide-react";
 
 type Conta = {
   id: string;
@@ -64,6 +67,7 @@ const STATUS_LABELS: Record<string, string> = {
   aberto: "Aberto",
   aprovado: "Aprovado",
   aguardando_pagamento: "Aguardando pagamento",
+  paga: "Paga",
   cancelado: "Cancelado",
 };
 
@@ -71,6 +75,7 @@ const STATUS_STYLES: Record<string, string> = {
   aberto: "bg-blue-100 text-blue-800 hover:bg-blue-100",
   aprovado: "bg-purple-100 text-purple-800 hover:bg-purple-100",
   aguardando_pagamento: "bg-teal-100 text-teal-800 hover:bg-teal-100",
+  paga: "bg-emerald-100 text-emerald-800 hover:bg-emerald-100",
   cancelado: "bg-red-100 text-red-800 hover:bg-red-100",
 };
 
@@ -107,6 +112,14 @@ export default function ContasPagar() {
     queryKey: ["fatura-info-map-contas-pagar", (data || []).map((c) => c.id).join(",")],
     enabled: !!data && data.length > 0,
     queryFn: () => getFaturaInfoMap((data || []).map((c) => c.id)),
+  });
+
+  // Map: conta_pagar_id -> { tipo: 'recorrente'|'parcelado', titulo }
+  // Permite ícone 🔁 (recorrente) ou tooltip "vem do compromisso X".
+  const { data: compromissoInfoMap = new Map<string, CompromissoInfo>() } = useQuery({
+    queryKey: ["compromisso-info-map-contas-pagar", (data || []).map((c) => c.id).join(",")],
+    enabled: !!data && data.length > 0,
+    queryFn: () => getCompromissoInfoMap((data || []).map((c) => c.id)),
   });
 
   const filtered = useMemo(() => {
@@ -368,7 +381,14 @@ export default function ContasPagar() {
             </Select>
             <div className="flex flex-wrap gap-1">
               {(
-                ["todos", "aberto", "aprovado", "aguardando_pagamento", "cancelado"] as const
+                [
+                  "todos",
+                  "aberto",
+                  "aprovado",
+                  "aguardando_pagamento",
+                  "paga",
+                  "cancelado",
+                ] as const
               ).map((s) => (
                 <Button
                   key={s}
@@ -480,10 +500,13 @@ export default function ContasPagar() {
                   <TableBody>
                     {pageData.map((c) => {
                       const isSel = selecionadas.has(c.id);
+                      const compromissoInfo = compromissoInfoMap.get(c.id);
                       return (
                         <TableRow
                           key={c.id}
-                          className={`cursor-pointer hover:bg-muted/50 ${isSel ? "bg-muted/40" : ""}`}
+                          className={`cursor-pointer hover:bg-muted/50 ${
+                            c.atrasada ? "bg-red-50/60 hover:bg-red-50" : ""
+                          } ${isSel ? "bg-muted/40" : ""}`}
                           onClick={() => setContaIdSelecionada(c.id)}
                         >
                           <TableCell onClick={(e) => e.stopPropagation()}>
@@ -503,6 +526,22 @@ export default function ContasPagar() {
                           <TableCell className="max-w-xs" title={c.descricao}>
                             <div className="flex items-center gap-2 min-w-0">
                               <span className="truncate">{c.descricao}</span>
+                              {compromissoInfo?.tipo === "recorrente" && (
+                                <span
+                                  className="shrink-0"
+                                  title={`Recorrente — ${compromissoInfo.titulo}`}
+                                >
+                                  <Repeat className="h-3.5 w-3.5 text-indigo-600" />
+                                </span>
+                              )}
+                              {c.mov_conciliada && (
+                                <span
+                                  className="shrink-0"
+                                  title="Conciliada — bateu com extrato bancário"
+                                >
+                                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+                                </span>
+                              )}
                               {c.origem === "nf_pj_interno" && (
                                 <Badge
                                   variant="outline"
@@ -523,11 +562,22 @@ export default function ContasPagar() {
                               if (!meioPagamento) {
                                 return <span className="text-[10px] italic">—</span>;
                               }
+                              const ico = getMeioPagamentoIcon(meioPagamento);
                               return (
                                 <div className="flex flex-col">
-                                  <span>{meioPagamento}</span>
+                                  {ico ? (
+                                    <span
+                                      className="flex items-center gap-1.5"
+                                      title={meioPagamento}
+                                    >
+                                      <ico.Icon className={`h-4 w-4 ${ico.cor}`} />
+                                      <span className="text-xs">{meioPagamento}</span>
+                                    </span>
+                                  ) : (
+                                    <span>{meioPagamento}</span>
+                                  )}
                                   {(faturaInfo?.banco_nome || faturaInfo?.fatura_vencimento) && (
-                                    <span className="text-[10px] text-muted-foreground/70">
+                                    <span className="text-[10px] text-muted-foreground/70 ml-5">
                                       ↳{" "}
                                       {faturaInfo.banco_nome}
                                       {faturaInfo.banco_nome && faturaInfo.fatura_vencimento && " · "}
@@ -558,9 +608,6 @@ export default function ContasPagar() {
                             <div className="flex flex-col gap-1 items-start">
                               <Badge className={STATUS_STYLES[c.status] || "bg-muted"}>
                                 {STATUS_LABELS[c.status] || c.status}
-                                {c.status === "aguardando_pagamento" && c.mov_conciliada && (
-                                  <span className="ml-1 text-xs">✓</span>
-                                )}
                               </Badge>
                               {c.tem_doc_pendente && (
                                 <Badge
@@ -568,14 +615,6 @@ export default function ContasPagar() {
                                   className="bg-amber-50 text-amber-700 border-amber-300 text-[9px]"
                                 >
                                   Doc pendente
-                                </Badge>
-                              )}
-                              {c.atrasada && (
-                                <Badge
-                                  variant="outline"
-                                  className="bg-red-50 text-red-700 border-red-300 text-[9px]"
-                                >
-                                  Atrasada
                                 </Badge>
                               )}
                             </div>

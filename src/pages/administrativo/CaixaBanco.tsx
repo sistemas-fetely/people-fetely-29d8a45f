@@ -31,10 +31,13 @@ import {
   Link as LinkIcon,
   FileWarning,
   CreditCard,
+  Repeat,
 } from "lucide-react";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
 import { MarcarPagoDialog } from "@/components/financeiro/MarcarPagoDialog";
 import ContaPagarDetalheDrawer from "@/components/financeiro/ContaPagarDetalheDrawer";
+import { getCompromissoInfoMap, type CompromissoInfo } from "@/lib/financeiro/get-compromisso-info";
+import { getMeioPagamentoIcon } from "@/lib/financeiro/meio-pagamento-icon";
 
 type Lancamento = {
   id: string;
@@ -60,6 +63,38 @@ type Lancamento = {
   fatura_vencimento?: string | null;
 };
 
+/**
+ * Status visual = espelho do status decisório de Contas a Pagar.
+ * Lançamentos de cartão (que ainda não viraram conta a pagar individual)
+ * não têm status_conta_pagar — caem em fallback derivado.
+ */
+function statusVisual(l: Lancamento): string {
+  if (l.origem_view === "cartao_lancamento") {
+    // Lançamentos de fatura ainda não viraram conta a pagar autônoma.
+    // Usa derivação simples: se conciliado/pago, "paga"; senão "aguardando_pagamento".
+    if (l.movimentacao_bancaria_id || l.status_caixa === "conciliado") return "paga";
+    if (l.status_caixa === "pago") return "paga";
+    return "aguardando_pagamento";
+  }
+  // Conta a pagar normal: espelha direto
+  return l.status_conta_pagar || "aberto";
+}
+
+/**
+ * Conta a pagar é "atrasada" quando vencimento passou e não foi paga/cancelada.
+ * Computado client-side (view não expõe campo equivalente).
+ */
+function isAtrasada(l: Lancamento): boolean {
+  if (!l.data_vencimento) return false;
+  const status = statusVisual(l);
+  if (status === "paga" || status === "cancelado") return false;
+  // Comparação de data sem hora (evita TZ surpresas)
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+  const venc = new Date(l.data_vencimento + "T00:00:00");
+  return venc < hoje;
+}
+
 type ContaBancariaLite = {
   id: string;
   nome_exibicao: string;
@@ -81,16 +116,22 @@ type CategoriaLite = {
   nome: string;
 };
 
+// Status visual em Caixa & Banco ESPELHA status decisório de Contas a Pagar.
+// Doutrina: status é status — sem tradução, sem derivação.
 const STATUS_STYLES: Record<string, string> = {
-  em_aberto: "bg-blue-100 text-blue-800 hover:bg-blue-100",
-  pago: "bg-green-100 text-green-800 hover:bg-green-100",
-  conciliado: "bg-emerald-100 text-emerald-900 hover:bg-emerald-100",
+  aberto: "bg-blue-100 text-blue-800 hover:bg-blue-100",
+  aprovado: "bg-purple-100 text-purple-800 hover:bg-purple-100",
+  aguardando_pagamento: "bg-teal-100 text-teal-800 hover:bg-teal-100",
+  paga: "bg-emerald-100 text-emerald-800 hover:bg-emerald-100",
+  cancelado: "bg-red-100 text-red-800 hover:bg-red-100",
 };
 
 const STATUS_LABEL: Record<string, string> = {
-  em_aberto: "Em aberto",
-  pago: "Pago",
-  conciliado: "Conciliado",
+  aberto: "Aberto",
+  aprovado: "Aprovado",
+  aguardando_pagamento: "Aguardando pagamento",
+  paga: "Paga",
+  cancelado: "Cancelado",
 };
 
 const PAGE_SIZE = 25;
@@ -166,6 +207,22 @@ export default function CaixaBanco() {
     },
   });
 
+  // Map: lancamento.id -> { tipo: 'recorrente'|'parcelado', titulo }
+  // Só busca pra lançamentos vindos de contas a pagar (não pra cartão_lancamento)
+  const idsParaCompromisso = useMemo(
+    () =>
+      (lancamentos || [])
+        .filter((l) => l.origem_view === "conta_pagar")
+        .map((l) => l.id),
+    [lancamentos],
+  );
+
+  const { data: compromissoInfoMap = new Map<string, CompromissoInfo>() } = useQuery({
+    queryKey: ["compromisso-info-map-caixa-banco", idsParaCompromisso.join(",")],
+    enabled: idsParaCompromisso.length > 0,
+    queryFn: () => getCompromissoInfoMap(idsParaCompromisso),
+  });
+
   // Mapas de lookup
   const mapContas = useMemo(() => {
     const m: Record<string, ContaBancariaLite> = {};
@@ -197,7 +254,7 @@ export default function CaixaBanco() {
   const filtered = useMemo(() => {
     let list = lancamentos || [];
     if (statusFilter !== "todos") {
-      list = list.filter((l) => l.status_caixa === statusFilter);
+      list = list.filter((l) => statusVisual(l) === statusFilter);
     }
     if (contaBancariaFilter !== "todas") {
       list = list.filter((l) => l.pago_em_conta_id === contaBancariaFilter);
@@ -221,21 +278,27 @@ export default function CaixaBanco() {
   const totals = useMemo(() => {
     const all = lancamentos || [];
     const emAberto = all
-      .filter((l) => l.status_caixa === "em_aberto" && l.origem_view !== "cartao_lancamento")
+      .filter((l) => {
+        const s = statusVisual(l);
+        return s !== "paga" && s !== "cancelado" && l.origem_view !== "cartao_lancamento";
+      })
       .reduce((s, l) => s + Number(l.valor || 0), 0);
     const pago = all
-      .filter((l) => l.status_caixa === "pago")
+      .filter((l) => statusVisual(l) === "paga")
       .reduce((s, l) => s + Number(l.valor || 0), 0);
     const conciliado = all
-      .filter((l) => l.status_caixa === "conciliado")
+      .filter((l) => l.movimentacao_bancaria_id)
       .reduce((s, l) => s + Number(l.valor || 0), 0);
     return {
       emAberto,
       pago,
       conciliado,
-      countAberto: all.filter((l) => l.status_caixa === "em_aberto" && l.origem_view !== "cartao_lancamento").length,
-      countPago: all.filter((l) => l.status_caixa === "pago").length,
-      countConciliado: all.filter((l) => l.status_caixa === "conciliado").length,
+      countAberto: all.filter((l) => {
+        const s = statusVisual(l);
+        return s !== "paga" && s !== "cancelado" && l.origem_view !== "cartao_lancamento";
+      }).length,
+      countPago: all.filter((l) => statusVisual(l) === "paga").length,
+      countConciliado: all.filter((l) => l.movimentacao_bancaria_id).length,
     };
   }, [lancamentos]);
 
@@ -243,7 +306,13 @@ export default function CaixaBanco() {
   const pageData = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const lancamentosSelecionados = useMemo(
-    () => filtered.filter((l) => selecionados.has(l.id) && l.status_caixa === "em_aberto" && l.origem_view !== "cartao_lancamento"),
+    () =>
+      filtered.filter((l) => {
+        if (!selecionados.has(l.id)) return false;
+        if (l.origem_view === "cartao_lancamento") return false;
+        const s = statusVisual(l);
+        return s !== "paga" && s !== "cancelado";
+      }),
     [filtered, selecionados],
   );
 
@@ -256,15 +325,18 @@ export default function CaixaBanco() {
 
   function togglePagina() {
     const next = new Set(selecionados);
+    const isSelecionavel = (l: Lancamento) => {
+      if (l.origem_view === "cartao_lancamento") return false;
+      const s = statusVisual(l);
+      return s !== "paga" && s !== "cancelado";
+    };
     const todasSelecionadas = pageData
-      .filter((l) => l.status_caixa === "em_aberto" && l.origem_view !== "cartao_lancamento")
+      .filter(isSelecionavel)
       .every((l) => next.has(l.id));
     if (todasSelecionadas) {
       pageData.forEach((l) => next.delete(l.id));
     } else {
-      pageData
-        .filter((l) => l.status_caixa === "em_aberto" && l.origem_view !== "cartao_lancamento")
-        .forEach((l) => next.add(l.id));
+      pageData.filter(isSelecionavel).forEach((l) => next.add(l.id));
     }
     setSelecionados(next);
   }
@@ -432,12 +504,14 @@ export default function CaixaBanco() {
                     <TableRow>
                       <TableHead className="w-10">
                         <Checkbox
-                          checked={
-                            pageData.filter((l) => l.status_caixa === "em_aberto" && l.origem_view !== "cartao_lancamento").length > 0 &&
-                            pageData
-                              .filter((l) => l.status_caixa === "em_aberto" && l.origem_view !== "cartao_lancamento")
-                              .every((l) => selecionados.has(l.id))
-                          }
+                          checked={(() => {
+                            const sel = pageData.filter((l) => {
+                              if (l.origem_view === "cartao_lancamento") return false;
+                              const s = statusVisual(l);
+                              return s !== "paga" && s !== "cancelado";
+                            });
+                            return sel.length > 0 && sel.every((l) => selecionados.has(l.id));
+                          })()}
                           onCheckedChange={togglePagina}
                           aria-label="Selecionar página"
                         />
@@ -456,7 +530,12 @@ export default function CaixaBanco() {
                   <TableBody>
                     {pageData.map((l) => {
                       const isSel = selecionados.has(l.id);
-                      const podeSel = l.status_caixa === "em_aberto" && l.origem_view !== "cartao_lancamento";
+                      const sVisual = statusVisual(l);
+                      const podeSel =
+                        l.origem_view !== "cartao_lancamento" &&
+                        sVisual !== "paga" &&
+                        sVisual !== "cancelado";
+                      const atrasada = isAtrasada(l);
                       const formaNome =
                         l.forma_pagamento_id && mapFormas[l.forma_pagamento_id];
                       const categoriaNome =
@@ -466,7 +545,9 @@ export default function CaixaBanco() {
                       return (
                         <TableRow
                           key={l.id}
-                          className={`cursor-pointer hover:bg-muted/50 ${isSel ? "bg-muted/40" : ""}`}
+                          className={`cursor-pointer hover:bg-muted/50 ${
+                            atrasada ? "bg-red-50/60 hover:bg-red-50" : ""
+                          } ${isSel ? "bg-muted/40" : ""}`}
                           onClick={() => {
                             if (l.origem_view === "cartao_lancamento") {
                               navigate("/administrativo/faturas-cartao");
@@ -489,8 +570,32 @@ export default function CaixaBanco() {
                             </div>
                           </TableCell>
                           <TableCell className="max-w-[200px]">
-                            <div className="truncate text-xs text-muted-foreground" title={l.descricao}>
-                              {l.descricao}
+                            <div className="flex items-center gap-2 min-w-0">
+                              <span className="truncate text-xs text-muted-foreground" title={l.descricao}>
+                                {l.descricao}
+                              </span>
+                              {(() => {
+                                const ci = compromissoInfoMap.get(l.id);
+                                if (ci?.tipo === "recorrente") {
+                                  return (
+                                    <span
+                                      className="shrink-0"
+                                      title={`Recorrente — ${ci.titulo}`}
+                                    >
+                                      <Repeat className="h-3.5 w-3.5 text-indigo-600" />
+                                    </span>
+                                  );
+                                }
+                                return null;
+                              })()}
+                              {conciliada && (
+                                <span
+                                  className="shrink-0"
+                                  title="Conciliada — bateu com extrato bancário"
+                                >
+                                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+                                </span>
+                              )}
                             </div>
                             {(l.vinculada_cartao || l.origem_view === "cartao_lancamento") && (
                               <Badge
@@ -530,14 +635,29 @@ export default function CaixaBanco() {
                             )}
                           </TableCell>
                           <TableCell className="text-xs text-muted-foreground">
-                            {formaNome || "—"}
+                            {(() => {
+                              if (!formaNome) return "—";
+                              const ico = getMeioPagamentoIcon(formaNome);
+                              if (ico) {
+                                return (
+                                  <span
+                                    className="flex items-center gap-1.5"
+                                    title={formaNome}
+                                  >
+                                    <ico.Icon className={`h-4 w-4 ${ico.cor}`} />
+                                    <span>{formaNome}</span>
+                                  </span>
+                                );
+                              }
+                              return formaNome;
+                            })()}
                           </TableCell>
                           <TableCell className="text-right font-mono whitespace-nowrap">
                             {formatBRL(l.valor)}
                           </TableCell>
                           <TableCell>
-                            <Badge className={STATUS_STYLES[l.status_caixa]}>
-                              {STATUS_LABEL[l.status_caixa]}
+                            <Badge className={STATUS_STYLES[sVisual] || "bg-muted"}>
+                              {STATUS_LABEL[sVisual] || sVisual}
                             </Badge>
                           </TableCell>
                           <TableCell>
@@ -550,16 +670,6 @@ export default function CaixaBanco() {
                                 >
                                   <FileWarning className="h-2.5 w-2.5" />
                                   Doc pendente
-                                </Badge>
-                              )}
-                              {conciliada && (
-                                <Badge
-                                  variant="outline"
-                                  className="text-[9px] py-0 px-1.5 h-4 border-emerald-400 text-emerald-800 bg-emerald-50 gap-1"
-                                  title="Bateu com extrato OFX"
-                                >
-                                  <LinkIcon className="h-2.5 w-2.5" />
-                                  Conciliada
                                 </Badge>
                               )}
                             </div>
