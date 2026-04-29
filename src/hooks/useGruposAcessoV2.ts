@@ -167,7 +167,7 @@ export function useUsuariosDoGrupo(grupoId: string | null) {
 
       const { data: profiles } = await supabase
         .from("profiles")
-        .select("user_id, full_name, email")
+        .select("user_id, full_name")
         .in("user_id", userIds);
 
       const profMap = new Map(
@@ -177,7 +177,7 @@ export function useUsuariosDoGrupo(grupoId: string | null) {
       return (vinculos || []).map((v) => ({
         ...v,
         nome: profMap.get(v.user_id)?.full_name || "(sem nome)",
-        email: profMap.get(v.user_id)?.email || "",
+        email: "",
       }));
     },
   });
@@ -306,9 +306,10 @@ export function useTogglePermissao() {
         .maybeSingle();
 
       if (existing) {
+        const updatePayload: Record<string, boolean> = { [campo]: valor };
         const { error } = await supabase
           .from("grupo_acesso_permissoes")
-          .update({ [campo]: valor })
+          .update(updatePayload as never)
           .eq("id", existing.id);
         if (error) throw error;
       } else {
