@@ -97,38 +97,30 @@ export function useColaboradoresDisponiveis(tipo: "clt" | "pj" | null) {
       if (tipo === "clt") {
         const { data, error } = await supabase
           .from("colaboradores_clt")
-          .select("id, nome_completo, email, user_id, cargo:cargos(titulo)")
+          .select("id, nome_completo, email_corporativo, email_pessoal, cargo, user_id")
           .is("user_id", null)
           .order("nome_completo");
         if (error) throw error;
-        return (data || []).map((c: {
-          id: string;
-          nome_completo: string;
-          email: string | null;
-          cargo?: { titulo: string } | null;
-        }) => ({
+        return (data || []).map((c) => ({
           id: c.id,
           nome: c.nome_completo,
-          email: c.email,
+          email: c.email_corporativo || c.email_pessoal || null,
           tipo: "clt" as const,
-          cargo: c.cargo?.titulo,
+          cargo: c.cargo,
         }));
       } else if (tipo === "pj") {
         const { data, error } = await supabase
           .from("contratos_pj")
-          .select("id, nome_pessoa, email_pessoa, user_id")
+          .select("id, contato_nome, contato_email, tipo_servico, user_id")
           .is("user_id", null)
-          .order("nome_pessoa");
+          .order("contato_nome");
         if (error) throw error;
-        return (data || []).map((c: {
-          id: string;
-          nome_pessoa: string;
-          email_pessoa: string | null;
-        }) => ({
+        return (data || []).map((c) => ({
           id: c.id,
-          nome: c.nome_pessoa,
-          email: c.email_pessoa,
+          nome: c.contato_nome,
+          email: c.contato_email,
           tipo: "pj" as const,
+          cargo: c.tipo_servico,
         }));
       }
       return [];
