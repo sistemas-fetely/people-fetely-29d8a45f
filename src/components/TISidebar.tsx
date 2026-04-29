@@ -1,4 +1,4 @@
-import { LayoutDashboard, Monitor, Package, LogOut, LayoutGrid, ClipboardList, Users, Shield, UsersRound, Landmark } from "lucide-react";
+import { LayoutDashboard, Monitor, Package, LogOut, LayoutGrid, ClipboardList, Users, Shield, UsersRound, Landmark, MessageSquareWarning } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { cn } from "@/lib/utils";
 import { useLocation } from "react-router-dom";
@@ -16,6 +16,8 @@ const TI_COLOR = "#3A7D6B";
 const items = [
   { title: "Dashboard", url: "/ti", icon: LayoutDashboard, end: true },
   { title: "Ativos", url: "/ti/ativos", icon: Package, end: false },
+  // Vindo do SNCF na Sprint 2 (29/04/2026): saúde do sistema é responsabilidade de TI
+  { title: "Reportes do Sistema", url: "/admin/reportes", icon: MessageSquareWarning, end: false },
 ];
 
 export function TISidebar() {
