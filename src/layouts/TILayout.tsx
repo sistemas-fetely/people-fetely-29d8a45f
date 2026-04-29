@@ -1,19 +1,17 @@
 import { useEffect, useState } from "react";
-import { Navigate, Outlet, useNavigate } from "react-router-dom";
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { Navigate, Outlet } from "react-router-dom";
+import { SidebarProvider } from "@/components/ui/sidebar";
 import { TISidebar } from "@/components/TISidebar";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Loader2, Home, Monitor } from "lucide-react";
+import { Loader2, Monitor } from "lucide-react";
 import { useTrackPageVisit } from "@/hooks/useTrackPageVisit";
-import { RecentesEFavoritos } from "@/components/navegacao/RecentesEFavoritos";
 import { CommandPaletteProvider } from "@/components/navegacao/CommandPaletteProvider";
 import { ReportarErroBotao } from "@/components/shared/ReportarErroBotao";
+import { LayoutHeader } from "@/components/shared/LayoutHeader";
 
 export default function TILayout() {
   const { user, roles } = useAuth();
-  const navigate = useNavigate();
   const [checking, setChecking] = useState(true);
   const [hasAccess, setHasAccess] = useState(false);
   useTrackPageVisit();
@@ -24,7 +22,6 @@ export default function TILayout() {
       return;
     }
 
-    // Super admin e admin_rh sempre têm acesso
     if (roles.includes("super_admin") || roles.includes("admin_rh")) {
       setHasAccess(true);
       setChecking(false);
@@ -68,25 +65,7 @@ export default function TILayout() {
       <div className="min-h-screen flex w-full">
         <TISidebar />
         <div className="flex-1 flex flex-col">
-          <header className="h-14 flex items-center gap-3 border-b border-border bg-card px-4">
-            <SidebarTrigger />
-            {/* Saída pro Portal */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate("/sncf")}
-              className="gap-1.5 text-xs text-muted-foreground hover:text-foreground"
-            >
-              <Home className="h-3.5 w-3.5" />
-              Voltar ao Portal
-            </Button>
-            <span className="text-muted-foreground/40">|</span>
-            <Monitor className="h-4 w-4 text-muted-foreground" />
-            <h1 className="text-sm font-semibold">TI Fetely</h1>
-            <div className="ml-auto">
-              <RecentesEFavoritos />
-            </div>
-          </header>
+          <LayoutHeader icon={Monitor} nome="TI Fetély" />
           <main className="flex-1 p-6 overflow-auto bg-background relative">
             <Outlet />
             <ReportarErroBotao />

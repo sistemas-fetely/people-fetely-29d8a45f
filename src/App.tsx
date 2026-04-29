@@ -53,6 +53,10 @@ import PortalSNCF from "@/pages/PortalSNCF";
 import TILayout from "@/layouts/TILayout";
 import AdminLayout from "@/layouts/AdminLayout";
 import SNCFLayout from "@/layouts/SNCFLayout";
+import AdministrativoLayout from "@/layouts/AdministrativoLayout";
+import GestaoVistaLayout from "@/layouts/GestaoVistaLayout";
+import ProdutoLayout from "@/layouts/ProdutoLayout";
+import ProdutoIndex from "@/pages/produto/ProdutoIndex";
 import TIDashboard from "@/pages/ti/TIDashboard";
 import TIAtivos from "@/pages/ti/TIAtivos";
 
@@ -187,8 +191,7 @@ const App = () => (
             {/* Protected routes */}
             <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
               <Route path="/" element={<Navigate to="/sncf" replace />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/gestao-a-vista" element={<GestaoAVista />} />
+              {/* /dashboard, /gestao-a-vista, /relatorios MIGRADOS pra GestaoVistaLayout (Sprint 2 — 29/04/2026) */}
               <Route path="/desligamento/:id" element={<DesligamentoDetalhe />} />
               <Route path="/pessoas" element={<Pessoas />} />
               <Route path="/colaboradores" element={
@@ -327,11 +330,7 @@ const App = () => (
                   <PlaceholderPage title="Treinamentos" description="Controle de capacitação e certificados" />
                 </ProtectedRoute>
               } />
-              <Route path="/relatorios" element={
-                <ProtectedRoute permModule="relatorios">
-                  <PlaceholderPage title="Relatórios e BI" description="Relatórios gerenciais e exportação" />
-                </ProtectedRoute>
-              } />
+              {/* /relatorios MIGRADO pra GestaoVistaLayout (Sprint 2 — 29/04/2026) */}
 
               {/* Redirects legados → Admin */}
               <Route path="/parametros" element={<Navigate to="/admin/parametros" replace />} />
@@ -405,8 +404,6 @@ const App = () => (
               <Route path="ofx-stage" element={<OFXStage />} />
               <Route path="contas-receber" element={<ContasReceber />} />
               <Route path="parceiros" element={<Parceiros />} />
-              <Route path="pedidos" element={<PedidosVenda />} />
-              <Route path="produtos" element={<Produtos />} />
               <Route path="importar" element={<ImportarDados />} />
               <Route path="nfs-stage" element={<NFsStage />} />
               <Route path="documentos-pendentes" element={<DocumentosPendentes />} />
@@ -415,10 +412,51 @@ const App = () => (
               <Route path="fluxo-futuro" element={<FluxoCaixaFuturo />} />
               <Route path="compromissos" element={<Compromissos />} />
               <Route path="configuracao-integracao" element={<ConfiguracaoIntegracao />} />
+              {/* MIGRADOS na Sprint 2 (29/04/2026) → Administrativo Fetely:
+                  pedidos, produtos, contratos, imoveis, seguros, ged.
+                  Redirects logo abaixo mantêm compatibilidade com URLs antigas. */}
+              <Route path="pedidos" element={<Navigate to="/administrativo-fetely/pedidos" replace />} />
+              <Route path="produtos" element={<Navigate to="/administrativo-fetely/produtos" replace />} />
+              <Route path="contratos" element={<Navigate to="/administrativo-fetely/contratos" replace />} />
+              <Route path="imoveis" element={<Navigate to="/administrativo-fetely/imoveis" replace />} />
+              <Route path="seguros" element={<Navigate to="/administrativo-fetely/seguros" replace />} />
+              <Route path="ged" element={<Navigate to="/administrativo-fetely/ged" replace />} />
+            </Route>
+
+            {/* ═══════════════════════════════════════════════
+                ADMINISTRATIVO FETELY — Pilar novo (Sprint 2 — 29/04/2026)
+                Recebe Contratos, Imóveis, Seguros, GED + Pedidos/Produtos (provisórios)
+                ═══════════════════════════════════════════════ */}
+            <Route path="/administrativo-fetely" element={<AdministrativoLayout />}>
+              <Route index element={<Navigate to="/administrativo-fetely/contratos" replace />} />
               <Route path="contratos" element={<AdminContratos />} />
               <Route path="imoveis" element={<AdminImoveis />} />
               <Route path="seguros" element={<AdminSeguros />} />
               <Route path="ged" element={<AdminGED />} />
+              <Route path="pedidos" element={<PedidosVenda />} />
+              <Route path="produtos" element={<Produtos />} />
+            </Route>
+
+            {/* ═══════════════════════════════════════════════
+                GESTÃO À VISTA — Sistema novo (Sprint 2 — 29/04/2026)
+                Recebe Dashboard + Relatórios (vindos do People).
+                URLs preservadas (/dashboard, /relatorios) — só layout muda.
+                ═══════════════════════════════════════════════ */}
+            <Route element={<ProtectedRoute><GestaoVistaLayout /></ProtectedRoute>}>
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/gestao-a-vista" element={<GestaoAVista />} />
+              <Route path="/relatorios" element={
+                <ProtectedRoute permModule="relatorios">
+                  <PlaceholderPage title="Relatórios e BI" description="Relatórios gerenciais e exportação" />
+                </ProtectedRoute>
+              } />
+            </Route>
+
+            {/* ═══════════════════════════════════════════════
+                PRODUTO FETELY — Sistema novo placeholder (Sprint 2 — 29/04/2026)
+                ═══════════════════════════════════════════════ */}
+            <Route path="/produto" element={<ProtectedRoute><ProdutoLayout /></ProtectedRoute>}>
+              <Route index element={<ProdutoIndex />} />
             </Route>
 
             <Route path="*" element={<NotFound />} />

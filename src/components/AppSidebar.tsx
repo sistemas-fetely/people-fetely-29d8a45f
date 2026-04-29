@@ -245,68 +245,6 @@ export function AppSidebar() {
         <MenuGroup label="Pessoas" items={pessoasItems} collapsed={collapsed} canViewModule={canView} userRoles={roles} />
         <div className="mx-4 border-t border-sidebar-border/40" />
         <MenuGroup label="Benefícios & Financeiro" items={beneficiosItems} collapsed={collapsed} canViewModule={canView} userRoles={roles} />
-
-        {/* Sistemas Fetely — navegação cross-pilar */}
-        <div className="mx-4 border-t border-sidebar-border/40" />
-        <SidebarGroup>
-          {!collapsed && (
-            <SidebarGroupLabel className="text-sidebar-muted text-[10px] uppercase tracking-widest font-semibold mb-1 px-4">
-              Sistemas Fetely
-            </SidebarGroupLabel>
-          )}
-          <SidebarGroupContent>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <NavLink
-                    to="/sncf"
-                    className="flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-all duration-200"
-                  >
-                    <LayoutGrid className="h-[18px] w-[18px] shrink-0" />
-                    {!collapsed && <span>Portal Uauuu</span>}
-                  </NavLink>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <NavLink
-                    to="/ti"
-                    className="flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-all duration-200"
-                  >
-                    <Monitor className="h-[18px] w-[18px] shrink-0" />
-                    {!collapsed && <span>TI Fetely</span>}
-                  </NavLink>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              {(roles.includes("super_admin") || roles.includes("admin_rh")) && (
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild>
-                    <NavLink
-                      to="/admin"
-                      className="flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-all duration-200"
-                    >
-                      <Shield className="h-[18px] w-[18px] shrink-0" />
-                      {!collapsed && <span>ADM SNCF</span>}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              )}
-              {roles.includes("super_admin") && (
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild>
-                    <NavLink
-                      to="/administrativo"
-                      className="flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-all duration-200"
-                    >
-                      <Landmark className="h-[18px] w-[18px] shrink-0" style={{ color: "hsl(var(--admin))" }} />
-                      {!collapsed && <span>Administrativo</span>}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              )}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
       </SidebarContent>
 
       <SidebarFooter className="p-4">
