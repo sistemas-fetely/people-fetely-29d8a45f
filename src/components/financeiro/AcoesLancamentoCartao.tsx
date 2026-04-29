@@ -156,6 +156,17 @@ export function AcoesLancamentoCartao({ lancamento }: Props) {
           {salvando ? <Loader2 className="h-2.5 w-2.5 animate-spin" /> : <Plus className="h-2.5 w-2.5" />}
           Criar Conta
         </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          className="h-6 px-2 text-[10px] gap-1 border-amber-300 text-amber-700 hover:bg-amber-50"
+          onClick={() => setAgruparOpen(true)}
+          disabled={salvando}
+          title="Agrupar com outro lançamento (estorno/complemento)"
+        >
+          <Layers className="h-2.5 w-2.5" />
+          Agrupar
+        </Button>
       </div>
 
       <VincularLancamentoModal
