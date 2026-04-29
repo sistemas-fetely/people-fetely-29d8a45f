@@ -100,6 +100,7 @@ export function AcoesLancamentoCartao({ lancamento }: Props) {
       toast.error("Erro: " + msg);
     } finally {
       setSalvando(false);
+    }
   }
 
   async function handleIgnorar() {
