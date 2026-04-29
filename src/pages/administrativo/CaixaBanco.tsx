@@ -38,6 +38,7 @@ import { MarcarPagoDialog } from "@/components/financeiro/MarcarPagoDialog";
 import ContaPagarDetalheDrawer from "@/components/financeiro/ContaPagarDetalheDrawer";
 import { getCompromissoInfoMap, type CompromissoInfo } from "@/lib/financeiro/get-compromisso-info";
 import { getMeioPagamentoIcon } from "@/lib/financeiro/meio-pagamento-icon";
+import { getVinculoOrigemIcon } from "@/lib/financeiro/vinculo-origem-icon";
 import { getStatusFlagsMap, type FlagsContaPagar } from "@/lib/financeiro/get-status-flags";
 import { classFundoFuturo } from "@/lib/financeiro/is-vencimento-futuro";
 import { cn } from "@/lib/utils";
@@ -61,6 +62,7 @@ type Lancamento = {
   unidade: string | null;
   nf_numero: string | null;
   origem_view: "conta_pagar" | "cartao_lancamento";
+  origem?: string | null;
   fatura_id: string | null;
   vinculada_cartao?: boolean | null;
   fatura_vencimento?: string | null;
@@ -611,6 +613,16 @@ export default function CaixaBanco() {
                                   <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
                                 </span>
                               )}
+                              {(() => {
+                                const vinc = getVinculoOrigemIcon(l.origem);
+                                if (!vinc) return null;
+                                const VIcon = vinc.Icon;
+                                return (
+                                  <span className="shrink-0" title={vinc.tooltip}>
+                                    <VIcon className={`h-3.5 w-3.5 ${vinc.cor}`} />
+                                  </span>
+                                );
+                              })()}
                             </div>
                             {(l.vinculada_cartao || l.origem_view === "cartao_lancamento") && (
                               <Badge
