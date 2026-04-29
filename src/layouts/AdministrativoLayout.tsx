@@ -1,0 +1,27 @@
+import { Outlet } from "react-router-dom";
+import { SidebarProvider } from "@/components/ui/sidebar";
+import { Landmark } from "lucide-react";
+import { AdministrativoSidebar } from "@/components/AdministrativoSidebar";
+import { ReportarErroBotao } from "@/components/shared/ReportarErroBotao";
+import { useTrackPageVisit } from "@/hooks/useTrackPageVisit";
+import { CommandPaletteProvider } from "@/components/navegacao/CommandPaletteProvider";
+import { LayoutHeader } from "@/components/shared/LayoutHeader";
+
+export default function AdministrativoLayout() {
+  useTrackPageVisit();
+  return (
+    <SidebarProvider>
+      <div className="min-h-screen flex w-full bg-background">
+        <AdministrativoSidebar />
+        <div className="flex-1 flex flex-col">
+          <LayoutHeader icon={Landmark} nome="Administrativo Fetély" iconColor="#6B5B45" />
+          <main className="flex-1 overflow-auto relative">
+            <Outlet />
+            <ReportarErroBotao />
+          </main>
+        </div>
+      </div>
+      <CommandPaletteProvider />
+    </SidebarProvider>
+  );
+}
