@@ -432,16 +432,6 @@ export default function CaixaBanco() {
               </SelectContent>
             </Select>
 
-            {/* Botão massa */}
-            {lancamentosSelecionados.length > 0 && (
-              <Button
-                onClick={handleMarcarPagoMassa}
-                className="ml-auto gap-2 bg-green-600 hover:bg-green-700 text-white"
-              >
-                <CheckCircle2 className="h-4 w-4" />
-                Marcar {lancamentosSelecionados.length} como pago
-              </Button>
-            )}
           </div>
         </CardContent>
       </Card>
