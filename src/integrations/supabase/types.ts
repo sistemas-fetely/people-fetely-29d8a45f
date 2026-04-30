@@ -8994,6 +8994,7 @@ export type Database = {
       }
     }
     Functions: {
+      apagar_conta_pagar: { Args: { p_id: string }; Returns: Json }
       aplicar_regras_categorizacao_stage: {
         Args: { p_stage_id: string }
         Returns: Json

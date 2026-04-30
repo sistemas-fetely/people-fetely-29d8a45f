@@ -383,8 +383,10 @@ export default function ContasPagar() {
         </Card>
       </div>
 
-      {/* Banner Doc Pendente */}
-      {totals.countDocPendente > 0 && (
+      {/* Banner Doc Pendente
+          OCULTO 29/04/2026 — info migrará pra outro lugar (ainda não decidido).
+          Mantida no código pra reativar facilmente trocando false por totals... */}
+      {false && totals.countDocPendente > 0 && (
         <div className="p-4 rounded-lg border border-amber-300 bg-amber-50 flex items-center justify-between gap-4 flex-wrap">
           <div className="flex items-start gap-3 flex-1 min-w-[260px]">
             <Sparkles className="h-5 w-5 text-amber-700 mt-0.5 shrink-0" />
@@ -408,8 +410,10 @@ export default function ContasPagar() {
         </div>
       )}
 
-      {/* Alerta: sem categoria */}
-      {totals.countSemCategoria > 0 && (
+      {/* Alerta: sem categoria
+          OCULTO 29/04/2026 — info migrará pra outro lugar (ainda não decidido).
+          Mantida no código pra reativar facilmente trocando false por totals... */}
+      {false && totals.countSemCategoria > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div className="p-3 rounded-lg border border-amber-200 bg-amber-50/60 flex items-center justify-between">
             <div className="flex items-center gap-2 text-amber-800 text-sm">
