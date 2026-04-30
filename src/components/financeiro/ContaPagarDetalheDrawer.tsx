@@ -249,6 +249,28 @@ export default function ContaPagarDetalheDrawer({ contaId, onClose }: Props) {
               )}
             </SheetHeader>
 
+            {modoEdit ? (
+              <div className="mt-4">
+                <ContaPagarFormEdit
+                  conta={{
+                    id: conta.id,
+                    descricao: conta.descricao,
+                    data_vencimento: conta.data_vencimento,
+                    conta_id: conta.conta_id,
+                    centro_custo: conta.centro_custo,
+                    forma_pagamento_id: conta.forma_pagamento_id,
+                    observacao: conta.observacao ?? null,
+                    nf_numero: conta.nf_numero ?? null,
+                    nf_serie: conta.nf_serie ?? null,
+                    nf_chave_acesso: conta.nf_chave_acesso ?? null,
+                    status: conta.status,
+                  }}
+                  onSaved={() => setModoEdit(false)}
+                  onCancel={() => setModoEdit(false)}
+                />
+              </div>
+            ) : (
+              <>
             <div className="mt-4">
               <StatusProgressBar statusAtual={conta.status} isCartao={isCartao} />
             </div>
@@ -559,6 +581,8 @@ export default function ContaPagarDetalheDrawer({ contaId, onClose }: Props) {
 
             <Separator className="my-4" />
             <TimelineHistorico contaId={conta.id} />
+              </>
+            )}
           </>
         )}
       </SheetContent>
