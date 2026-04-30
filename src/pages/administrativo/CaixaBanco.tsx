@@ -317,10 +317,6 @@ export default function CaixaBanco() {
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const pageData = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
-  function handleSucessoPagamento() {
-    qc.invalidateQueries({ queryKey: ["lancamentos-caixa-banco"] });
-  }
-
   function nomeParceiro(l: Lancamento): string {
     return (
       (l.parceiro_id && mapParceiros[l.parceiro_id]) ||
