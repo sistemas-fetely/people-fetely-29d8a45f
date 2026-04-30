@@ -516,7 +516,7 @@ export default function CaixaBanco() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-10">
+                      <TableHead className="w-12 px-3">
                         <Checkbox
                           checked={(() => {
                             const sel = pageData.filter((l) => {
@@ -528,6 +528,7 @@ export default function CaixaBanco() {
                           })()}
                           onCheckedChange={togglePagina}
                           aria-label="Selecionar página"
+                          className="h-5 w-5"
                         />
                       </TableHead>
                       <TableHead>Parceiro</TableHead>
@@ -564,9 +565,15 @@ export default function CaixaBanco() {
                             "cursor-pointer hover:bg-muted/50 transition-colors",
                             atrasada && "bg-red-50/60 hover:bg-red-50",
                             !atrasada && classFundoFuturo(l.data_vencimento),
-                            isSel && "bg-muted/40",
+                            isSel && "bg-primary/5 hover:bg-primary/10",
                           )}
-                          onClick={() => {
+                          onClick={(e) => {
+                            // Modo seleção: se já existe alguma seleção ativa,
+                            // clique na linha alterna a seleção em vez de abrir drawer.
+                            if (selecionados.size > 0 && podeSel) {
+                              toggleSelecionado(l.id);
+                              return;
+                            }
                             if (l.origem_view === "cartao_lancamento") {
                               navigate("/administrativo/faturas-cartao");
                             } else {
@@ -574,13 +581,22 @@ export default function CaixaBanco() {
                             }
                           }}
                         >
-                          <TableCell onClick={(e) => e.stopPropagation()}>
-                            <Checkbox
-                              checked={isSel}
-                              disabled={!podeSel}
-                              onCheckedChange={() => toggleSelecionado(l.id)}
-                              aria-label="Selecionar"
-                            />
+                          <TableCell
+                            className="px-3 py-2 cursor-pointer"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (podeSel) toggleSelecionado(l.id);
+                            }}
+                          >
+                            <div className="flex items-center justify-center -m-2 p-2">
+                              <Checkbox
+                                checked={isSel}
+                                disabled={!podeSel}
+                                onCheckedChange={() => podeSel && toggleSelecionado(l.id)}
+                                aria-label="Selecionar"
+                                className="h-5 w-5 pointer-events-none"
+                              />
+                            </div>
                           </TableCell>
                           <TableCell className="max-w-[180px]">
                             <div className="truncate" title={nomeParceiro(l)}>
