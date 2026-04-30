@@ -464,7 +464,7 @@ export default function ContasPagar() {
             <Select
               value={tagFilter}
               onValueChange={(v) => {
-                setTagFilter(v as "todas" | "doc_pendente" | "atrasada");
+                setTagFilter(v as "todas" | "doc_pendente" | "atrasada" | "qualidade_alerta");
                 setPage(1);
               }}
             >
