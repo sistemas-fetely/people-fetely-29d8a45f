@@ -70,6 +70,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const applySession = (nextSession: Session | null) => {
+      const nextUserId = nextSession?.user?.id ?? null;
+
+      // Bug fix (29/04/2026): TOKEN_REFRESHED do Supabase Auth dispara
+      // periodicamente (a cada ~50min ou quando a aba volta de inativa).
+      // Antes: cada disparo chamava fetchUserData → setLoading(true) →
+      // ProtectedRoute mostrava spinner → toda árvore desmontava →
+      // useState locais (faturaExpanded, selecionados, etc.) RESETAVAM.
+      //
+      // Fix: se o userId é o MESMO que já está logado, só atualiza
+      // session/user silenciosamente (sem mexer em loading/roles/profile).
+      // Token refresh é renovação, não mudança de identidade.
+      if (nextUserId && nextUserId === currentUserIdRef.current) {
+        setSession(nextSession);
+        setUser(nextSession?.user ?? null);
+        return;
+      }
+
+      // Caminho normal: login inicial, troca de usuário, ou logout
       setSession(nextSession);
       setUser(nextSession?.user ?? null);
 
