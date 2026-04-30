@@ -134,13 +134,28 @@ export default function ContasPagar() {
 
   const filtered = useMemo(() => {
     let list = data || [];
-    if (statusFilter !== "todos") {
-      list = list.filter((c) => c.status === statusFilter);
+    if (modoOperacional === "para_agir") {
+      list = list.filter((c) => c.status === "aberto" || c.status === "aprovado");
+    } else if (modoOperacional === "aguardando_ofx") {
+      list = list.filter((c) => c.status === "aguardando_pagamento");
+    } else if (modoOperacional === "pagas_mes") {
+      const inicioMes = new Date();
+      inicioMes.setDate(1);
+      inicioMes.setHours(0, 0, 0, 0);
+      const inicioISO = inicioMes.toISOString().slice(0, 10);
+      list = list.filter((c) => c.status === "paga" && (c.data_pagamento || "") >= inicioISO);
+    } else if (modoOperacional === "canceladas") {
+      list = list.filter((c) => c.status === "cancelado");
     }
     if (tagFilter === "doc_pendente") {
       list = list.filter((c) => c.tem_doc_pendente === true);
     } else if (tagFilter === "atrasada") {
       list = list.filter((c) => c.atrasada === true);
+    } else if (tagFilter === "qualidade_alerta") {
+      list = list.filter((c) => {
+        const q = qualidadeMap?.get(c.id);
+        return q && q.nivel !== "verde";
+      });
     }
     if (busca.trim()) {
       const t = busca.toLowerCase();
@@ -154,27 +169,49 @@ export default function ContasPagar() {
     if (dataDe) list = list.filter((c) => (c.data_vencimento || "") >= dataDe);
     if (dataAte) list = list.filter((c) => (c.data_vencimento || "") <= dataAte);
     return list;
-  }, [data, statusFilter, tagFilter, busca, dataDe, dataAte]);
+  }, [data, modoOperacional, tagFilter, busca, dataDe, dataAte, qualidadeMap]);
 
   const totals = useMemo(() => {
     const all = data || [];
-    const aberto = all
-      .filter((c) => c.status === "aberto" || c.status === "aprovado")
-      .reduce((s, c) => s + Number(c.valor || 0), 0);
-    const atrasado = all
-      .filter((c) => c.atrasada === true)
-      .reduce((s, c) => s + Number(c.valor || 0), 0);
-    const aguardandoPgto = (filtered || [])
-      .filter((c) => c.status === "aguardando_pagamento")
-      .reduce((s, c) => s + Number(c.valor || 0), 0);
+
+    // 🔥 Para agir = aberto + aprovado
+    const paraAgir = all.filter((c) => c.status === "aberto" || c.status === "aprovado");
+    const paraAgirValor = paraAgir.reduce((s, c) => s + Number(c.valor || 0), 0);
+
+    // ⚠️ Atrasados (subset de para_agir com vencimento passado)
+    const atrasados = paraAgir.filter((c) => c.atrasada === true);
+    const atrasadosValor = atrasados.reduce((s, c) => s + Number(c.valor || 0), 0);
+
+    // 🩺 Saúde do dado
+    const semSaude = all.filter((c) => {
+      const q = qualidadeMap?.get(c.id);
+      return q && q.nivel !== "verde" && c.status !== "cancelado";
+    });
+    const totalAtivas = all.filter((c) => c.status !== "cancelado").length;
+    const percentSaudavel = totalAtivas > 0
+      ? Math.round(((totalAtivas - semSaude.length) / totalAtivas) * 100)
+      : 100;
+
+    // ⏳ Aguardando OFX
+    const aguardandoPgto = all.filter((c) => c.status === "aguardando_pagamento");
+    const aguardandoValor = aguardandoPgto.reduce((s, c) => s + Number(c.valor || 0), 0);
+
     const countDocPendente = all.filter(
       (c) => c.tem_doc_pendente === true && c.status !== "cancelado",
     ).length;
     const countSemCategoria = all.filter(
       (c) => !c.conta_id && c.status !== "cancelado",
     ).length;
-    return { aberto, atrasado, aguardandoPgto, countDocPendente, countSemCategoria };
-  }, [data, filtered]);
+
+    return {
+      paraAgir: { count: paraAgir.length, valor: paraAgirValor },
+      atrasados: { count: atrasados.length, valor: atrasadosValor },
+      saude: { semSaude: semSaude.length, percent: percentSaudavel },
+      aguardandoOfx: { count: aguardandoPgto.length, valor: aguardandoValor },
+      countDocPendente,
+      countSemCategoria,
+    };
+  }, [data, qualidadeMap]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const pageData = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
