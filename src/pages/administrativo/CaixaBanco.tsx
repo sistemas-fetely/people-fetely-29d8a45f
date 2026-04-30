@@ -516,7 +516,7 @@ export default function CaixaBanco() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-10">
+                      <TableHead className="w-12 px-3">
                         <Checkbox
                           checked={(() => {
                             const sel = pageData.filter((l) => {
@@ -528,6 +528,7 @@ export default function CaixaBanco() {
                           })()}
                           onCheckedChange={togglePagina}
                           aria-label="Selecionar página"
+                          className="h-5 w-5"
                         />
                       </TableHead>
                       <TableHead>Parceiro</TableHead>
