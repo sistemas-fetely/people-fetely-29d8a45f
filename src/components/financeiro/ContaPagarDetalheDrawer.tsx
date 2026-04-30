@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -18,6 +18,7 @@ import {
   Clock,
   ChevronDown,
   CreditCard,
+  Pencil,
 } from "lucide-react";
 import {
   AlertDialog,
@@ -37,6 +38,7 @@ import StatusProgressBar from "./StatusProgressBar";
 import TimelineHistorico from "./TimelineHistorico";
 import EnviarPagamentoDialog from "./EnviarPagamentoDialog";
 import DocumentosCP from "./DocumentosCP";
+import ContaPagarFormEdit from "./ContaPagarFormEdit";
 import { useContaWorkflow, type ContaStatus } from "@/hooks/useContaWorkflow";
 
 type Conta = {
@@ -105,7 +107,12 @@ interface Props {
 export default function ContaPagarDetalheDrawer({ contaId, onClose }: Props) {
   const [showPag, setShowPag] = useState(false);
   const [showEnviar, setShowEnviar] = useState(false);
+  const [modoEdit, setModoEdit] = useState(false);
   const workflow = useContaWorkflow();
+
+  useEffect(() => {
+    setModoEdit(false);
+  }, [contaId]);
 
   const { data: conta } = useQuery({
     queryKey: ["conta-pagar-detalhe", contaId],
@@ -219,6 +226,17 @@ export default function ContaPagarDetalheDrawer({ contaId, onClose }: Props) {
                 <Badge className={STATUS_STYLE[conta.status] || "bg-muted"}>
                   {STATUS_LABEL[conta.status] || conta.status}
                 </Badge>
+                {!modoEdit && conta.status !== "cancelado" && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="ml-2"
+                    onClick={() => setModoEdit(true)}
+                  >
+                    <Pencil className="h-3.5 w-3.5 mr-1" />
+                    {conta.status === "paga" ? "Ver dados" : "Editar"}
+                  </Button>
+                )}
               </div>
               <div className="text-2xl font-bold mt-2">{formatBRL(conta.valor)}</div>
               {conta.origem === "nf_pj_interno" && nfPjId && (
@@ -231,6 +249,28 @@ export default function ContaPagarDetalheDrawer({ contaId, onClose }: Props) {
               )}
             </SheetHeader>
 
+            {modoEdit ? (
+              <div className="mt-4">
+                <ContaPagarFormEdit
+                  conta={{
+                    id: conta.id,
+                    descricao: conta.descricao,
+                    data_vencimento: conta.data_vencimento,
+                    conta_id: conta.conta_id,
+                    centro_custo: conta.centro_custo,
+                    forma_pagamento_id: conta.forma_pagamento_id,
+                    observacao: conta.observacao ?? null,
+                    nf_numero: conta.nf_numero ?? null,
+                    nf_serie: conta.nf_serie ?? null,
+                    nf_chave_acesso: conta.nf_chave_acesso ?? null,
+                    status: conta.status,
+                  }}
+                  onSaved={() => setModoEdit(false)}
+                  onCancel={() => setModoEdit(false)}
+                />
+              </div>
+            ) : (
+              <>
             <div className="mt-4">
               <StatusProgressBar statusAtual={conta.status} isCartao={isCartao} />
             </div>
@@ -541,6 +581,8 @@ export default function ContaPagarDetalheDrawer({ contaId, onClose }: Props) {
 
             <Separator className="my-4" />
             <TimelineHistorico contaId={conta.id} />
+              </>
+            )}
           </>
         )}
       </SheetContent>

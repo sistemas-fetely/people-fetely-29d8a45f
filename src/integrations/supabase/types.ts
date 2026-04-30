@@ -1990,6 +1990,8 @@ export type Database = {
           data_vencimento: string
           descricao: string
           docs_status: string | null
+          editado_em: string | null
+          editado_por: string | null
           email_pagamento_enviado: boolean | null
           enviado_pagamento_em: string | null
           enviado_pagamento_por: string | null
@@ -2061,6 +2063,8 @@ export type Database = {
           data_vencimento: string
           descricao: string
           docs_status?: string | null
+          editado_em?: string | null
+          editado_por?: string | null
           email_pagamento_enviado?: boolean | null
           enviado_pagamento_em?: string | null
           enviado_pagamento_por?: string | null
@@ -2132,6 +2136,8 @@ export type Database = {
           data_vencimento?: string
           descricao?: string
           docs_status?: string | null
+          editado_em?: string | null
+          editado_por?: string | null
           email_pagamento_enviado?: boolean | null
           enviado_pagamento_em?: string | null
           enviado_pagamento_por?: string | null
@@ -9028,6 +9034,21 @@ export type Database = {
       }
       aprovar_nf_pj: {
         Args: { _nota_id: string; _observacao_rh?: string }
+        Returns: Json
+      }
+      atualizar_conta_pagar_v2: {
+        Args: {
+          p_centro_custo?: string
+          p_conta_id?: string
+          p_data_vencimento?: string
+          p_descricao?: string
+          p_forma_pagamento_id?: string
+          p_id: string
+          p_nf_chave_acesso?: string
+          p_nf_numero?: string
+          p_nf_serie?: string
+          p_observacao?: string
+        }
         Returns: Json
       }
       atualizar_contas_atrasadas: { Args: never; Returns: undefined }
