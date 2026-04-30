@@ -477,30 +477,27 @@ export default function ContasPagar() {
                 <SelectItem value="todas">Todas as tags</SelectItem>
                 <SelectItem value="doc_pendente">Com doc pendente</SelectItem>
                 <SelectItem value="atrasada">Atrasadas</SelectItem>
+                <SelectItem value="qualidade_alerta">Alerta de qualidade</SelectItem>
               </SelectContent>
             </Select>
-            <div className="flex flex-wrap gap-1">
-              {(
-                [
-                  "todos",
-                  "aberto",
-                  "aprovado",
-                  "aguardando_pagamento",
-                  "paga",
-                  "cancelado",
-                ] as const
-              ).map((s) => (
+            <div className="flex flex-wrap gap-2">
+              {[
+                { value: "para_agir", label: "🔥 Para agir" },
+                { value: "aguardando_ofx", label: "⏳ Aguardando OFX" },
+                { value: "pagas_mes", label: "✅ Pagas (mês)" },
+                { value: "canceladas", label: "❌ Canceladas" },
+                { value: "todos", label: "🔍 Todos" },
+              ].map((modo) => (
                 <Button
-                  key={s}
+                  key={modo.value}
                   size="sm"
-                  variant={statusFilter === s ? "default" : "outline"}
-                  onClick={() => {
-                    setStatusFilter(s);
-                    setPage(1);
-                  }}
-                  className="capitalize"
+                  variant={modoOperacional === modo.value ? "default" : "outline"}
+                  onClick={() => { setModoOperacional(modo.value as ModoOperacional); setPage(1); }}
+                  className={cn(
+                    modoOperacional === modo.value && "bg-admin text-admin-foreground hover:bg-admin/90"
+                  )}
                 >
-                  {s === "todos" ? "todos" : (STATUS_LABELS[s] || s)}
+                  {modo.label}
                 </Button>
               ))}
             </div>
