@@ -42,6 +42,7 @@ import { getMeioPagamentoIcon } from "@/lib/financeiro/meio-pagamento-icon";
 import { getStatusFlagsMap, type FlagsContaPagar } from "@/lib/financeiro/get-status-flags";
 import { classFundoFuturo } from "@/lib/financeiro/is-vencimento-futuro";
 import { cn } from "@/lib/utils";
+import { useFiltrosPersistentes } from "@/hooks/useFiltrosPersistentes";
 
 type Lancamento = {
   id: string;
