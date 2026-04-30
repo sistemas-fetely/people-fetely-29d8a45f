@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -18,6 +18,7 @@ import {
   Clock,
   ChevronDown,
   CreditCard,
+  Pencil,
 } from "lucide-react";
 import {
   AlertDialog,
@@ -37,6 +38,7 @@ import StatusProgressBar from "./StatusProgressBar";
 import TimelineHistorico from "./TimelineHistorico";
 import EnviarPagamentoDialog from "./EnviarPagamentoDialog";
 import DocumentosCP from "./DocumentosCP";
+import ContaPagarFormEdit from "./ContaPagarFormEdit";
 import { useContaWorkflow, type ContaStatus } from "@/hooks/useContaWorkflow";
 
 type Conta = {
@@ -105,7 +107,12 @@ interface Props {
 export default function ContaPagarDetalheDrawer({ contaId, onClose }: Props) {
   const [showPag, setShowPag] = useState(false);
   const [showEnviar, setShowEnviar] = useState(false);
+  const [modoEdit, setModoEdit] = useState(false);
   const workflow = useContaWorkflow();
+
+  useEffect(() => {
+    setModoEdit(false);
+  }, [contaId]);
 
   const { data: conta } = useQuery({
     queryKey: ["conta-pagar-detalhe", contaId],
