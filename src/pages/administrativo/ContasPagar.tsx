@@ -87,8 +87,9 @@ const STATUS_STYLES: Record<string, string> = {
 const PAGE_SIZE = 20;
 export default function ContasPagar() {
   const qc = useQueryClient();
-  const [statusFilter, setStatusFilter] = useState<string>("todos");
-  const [tagFilter, setTagFilter] = useState<"todas" | "doc_pendente" | "atrasada">("todas");
+  type ModoOperacional = "para_agir" | "aguardando_ofx" | "pagas_mes" | "canceladas" | "todos";
+  const [modoOperacional, setModoOperacional] = useState<ModoOperacional>("para_agir");
+  const [tagFilter, setTagFilter] = useState<"todas" | "doc_pendente" | "atrasada" | "qualidade_alerta">("todas");
   const [busca, setBusca] = useState("");
   const [dataDe, setDataDe] = useState("");
   const [dataAte, setDataAte] = useState("");
