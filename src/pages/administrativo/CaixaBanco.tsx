@@ -34,7 +34,7 @@ import {
   Repeat,
 } from "lucide-react";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
-import { MarcarPagoDialog } from "@/components/financeiro/MarcarPagoDialog";
+
 import ContaPagarDetalheDrawer from "@/components/financeiro/ContaPagarDetalheDrawer";
 import { getCompromissoInfoMap, type CompromissoInfo } from "@/lib/financeiro/get-compromisso-info";
 import { getMeioPagamentoIcon } from "@/lib/financeiro/meio-pagamento-icon";
