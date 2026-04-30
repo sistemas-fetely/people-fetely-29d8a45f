@@ -259,7 +259,7 @@ export default function ContasPagar() {
     setSelecionadas(new Set());
   }
   function verSemCategoria() {
-    setStatusFilter("todos");
+    setModoOperacional("todos");
     setBusca("");
     setPage(1);
   }
