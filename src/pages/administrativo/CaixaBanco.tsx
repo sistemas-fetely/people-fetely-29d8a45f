@@ -148,9 +148,6 @@ export default function CaixaBanco() {
   const [contaBancariaFilter, setContaBancariaFilter] = useFiltrosPersistentes<string>("caixabanco_conta", "todas");
   const [busca, setBusca] = useFiltrosPersistentes<string>("caixabanco_busca", "");
   const [page, setPage] = useFiltrosPersistentes<number>("caixabanco_page", 1);
-  const [selecionados, setSelecionados] = useState<Set<string>>(new Set());
-  const [marcarPagoOpen, setMarcarPagoOpen] = useState(false);
-  const [contasParaPagar, setContasParaPagar] = useState<Lancamento[]>([]);
   const [contaIdDrawer, setContaIdDrawer] = useState<string | null>(null);
   const navigate = useNavigate();
 
