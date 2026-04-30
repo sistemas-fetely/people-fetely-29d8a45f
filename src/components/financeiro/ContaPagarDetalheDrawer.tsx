@@ -226,6 +226,17 @@ export default function ContaPagarDetalheDrawer({ contaId, onClose }: Props) {
                 <Badge className={STATUS_STYLE[conta.status] || "bg-muted"}>
                   {STATUS_LABEL[conta.status] || conta.status}
                 </Badge>
+                {!modoEdit && conta.status !== "cancelado" && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="ml-2"
+                    onClick={() => setModoEdit(true)}
+                  >
+                    <Pencil className="h-3.5 w-3.5 mr-1" />
+                    {conta.status === "paga" ? "Ver dados" : "Editar"}
+                  </Button>
+                )}
               </div>
               <div className="text-2xl font-bold mt-2">{formatBRL(conta.valor)}</div>
               {conta.origem === "nf_pj_interno" && nfPjId && (
