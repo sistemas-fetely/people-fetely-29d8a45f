@@ -458,21 +458,6 @@ export default function CaixaBanco() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-12 px-3">
-                        <Checkbox
-                          checked={(() => {
-                            const sel = pageData.filter((l) => {
-                              if (l.origem_view === "cartao_lancamento") return false;
-                              const s = statusVisual(l);
-                              return s !== "paga" && s !== "cancelado";
-                            });
-                            return sel.length > 0 && sel.every((l) => selecionados.has(l.id));
-                          })()}
-                          onCheckedChange={togglePagina}
-                          aria-label="Selecionar página"
-                          className="h-5 w-5"
-                        />
-                      </TableHead>
                       <TableHead>Parceiro</TableHead>
                       <TableHead>Descrição</TableHead>
                       <TableHead>Dt. Vencimento</TableHead>
