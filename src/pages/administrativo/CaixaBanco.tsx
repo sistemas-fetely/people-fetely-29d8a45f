@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
+
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -34,7 +34,7 @@ import {
   Repeat,
 } from "lucide-react";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
-import { MarcarPagoDialog } from "@/components/financeiro/MarcarPagoDialog";
+
 import ContaPagarDetalheDrawer from "@/components/financeiro/ContaPagarDetalheDrawer";
 import { getCompromissoInfoMap, type CompromissoInfo } from "@/lib/financeiro/get-compromisso-info";
 import { getMeioPagamentoIcon } from "@/lib/financeiro/meio-pagamento-icon";
@@ -148,9 +148,6 @@ export default function CaixaBanco() {
   const [contaBancariaFilter, setContaBancariaFilter] = useFiltrosPersistentes<string>("caixabanco_conta", "todas");
   const [busca, setBusca] = useFiltrosPersistentes<string>("caixabanco_busca", "");
   const [page, setPage] = useFiltrosPersistentes<number>("caixabanco_page", 1);
-  const [selecionados, setSelecionados] = useState<Set<string>>(new Set());
-  const [marcarPagoOpen, setMarcarPagoOpen] = useState(false);
-  const [contasParaPagar, setContasParaPagar] = useState<Lancamento[]>([]);
   const [contaIdDrawer, setContaIdDrawer] = useState<string | null>(null);
   const navigate = useNavigate();
 
@@ -320,56 +317,6 @@ export default function CaixaBanco() {
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const pageData = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
-  const lancamentosSelecionados = useMemo(
-    () =>
-      filtered.filter((l) => {
-        if (!selecionados.has(l.id)) return false;
-        if (l.origem_view === "cartao_lancamento") return false;
-        const s = statusVisual(l);
-        return s !== "paga" && s !== "cancelado";
-      }),
-    [filtered, selecionados],
-  );
-
-  function toggleSelecionado(id: string) {
-    const next = new Set(selecionados);
-    if (next.has(id)) next.delete(id);
-    else next.add(id);
-    setSelecionados(next);
-  }
-
-  function togglePagina() {
-    const next = new Set(selecionados);
-    const isSelecionavel = (l: Lancamento) => {
-      if (l.origem_view === "cartao_lancamento") return false;
-      const s = statusVisual(l);
-      return s !== "paga" && s !== "cancelado";
-    };
-    const todasSelecionadas = pageData
-      .filter(isSelecionavel)
-      .every((l) => next.has(l.id));
-    if (todasSelecionadas) {
-      pageData.forEach((l) => next.delete(l.id));
-    } else {
-      pageData.filter(isSelecionavel).forEach((l) => next.add(l.id));
-    }
-    setSelecionados(next);
-  }
-
-  function handleMarcarPagoMassa() {
-    if (lancamentosSelecionados.length === 0) {
-      return;
-    }
-    setContasParaPagar(lancamentosSelecionados);
-    setMarcarPagoOpen(true);
-  }
-
-  function handleSucessoPagamento() {
-    setSelecionados(new Set());
-    setContasParaPagar([]);
-    qc.invalidateQueries({ queryKey: ["lancamentos-caixa-banco"] });
-  }
-
   function nomeParceiro(l: Lancamento): string {
     return (
       (l.parceiro_id && mapParceiros[l.parceiro_id]) ||
@@ -481,16 +428,6 @@ export default function CaixaBanco() {
               </SelectContent>
             </Select>
 
-            {/* Botão massa */}
-            {lancamentosSelecionados.length > 0 && (
-              <Button
-                onClick={handleMarcarPagoMassa}
-                className="ml-auto gap-2 bg-green-600 hover:bg-green-700 text-white"
-              >
-                <CheckCircle2 className="h-4 w-4" />
-                Marcar {lancamentosSelecionados.length} como pago
-              </Button>
-            )}
           </div>
         </CardContent>
       </Card>
@@ -517,21 +454,6 @@ export default function CaixaBanco() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-12 px-3">
-                        <Checkbox
-                          checked={(() => {
-                            const sel = pageData.filter((l) => {
-                              if (l.origem_view === "cartao_lancamento") return false;
-                              const s = statusVisual(l);
-                              return s !== "paga" && s !== "cancelado";
-                            });
-                            return sel.length > 0 && sel.every((l) => selecionados.has(l.id));
-                          })()}
-                          onCheckedChange={togglePagina}
-                          aria-label="Selecionar página"
-                          className="h-5 w-5"
-                        />
-                      </TableHead>
                       <TableHead>Parceiro</TableHead>
                       <TableHead>Descrição</TableHead>
                       <TableHead>Dt. Vencimento</TableHead>
@@ -545,12 +467,7 @@ export default function CaixaBanco() {
                   </TableHeader>
                   <TableBody>
                     {pageData.map((l) => {
-                      const isSel = selecionados.has(l.id);
                       const sVisual = statusVisual(l);
-                      const podeSel =
-                        l.origem_view !== "cartao_lancamento" &&
-                        sVisual !== "paga" &&
-                        sVisual !== "cancelado";
                       const atrasada = isAtrasada(l);
                       const formaNome =
                         l.forma_pagamento_id && mapFormas[l.forma_pagamento_id];
@@ -566,15 +483,8 @@ export default function CaixaBanco() {
                             "cursor-pointer hover:bg-muted/50 transition-colors",
                             atrasada && "bg-red-50/60 hover:bg-red-50",
                             !atrasada && classFundoFuturo(l.data_vencimento),
-                            isSel && "bg-primary/5 hover:bg-primary/10",
                           )}
-                          onClick={(e) => {
-                            // Modo seleção: se já existe alguma seleção ativa,
-                            // clique na linha alterna a seleção em vez de abrir drawer.
-                            if (selecionados.size > 0 && podeSel) {
-                              toggleSelecionado(l.id);
-                              return;
-                            }
+                          onClick={() => {
                             if (l.origem_view === "cartao_lancamento") {
                               navigate("/administrativo/faturas-cartao");
                             } else {
@@ -582,23 +492,6 @@ export default function CaixaBanco() {
                             }
                           }}
                         >
-                          <TableCell
-                            className="px-3 py-2 cursor-pointer"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              if (podeSel) toggleSelecionado(l.id);
-                            }}
-                          >
-                            <div className="flex items-center justify-center -m-2 p-2">
-                              <Checkbox
-                                checked={isSel}
-                                disabled={!podeSel}
-                                onCheckedChange={() => podeSel && toggleSelecionado(l.id)}
-                                aria-label="Selecionar"
-                                className="h-5 w-5 pointer-events-none"
-                              />
-                            </div>
-                          </TableCell>
                           <TableCell className="max-w-[180px]">
                             <div className="truncate" title={nomeParceiro(l)}>
                               {nomeParceiro(l)}
@@ -743,13 +636,6 @@ export default function CaixaBanco() {
           )}
         </CardContent>
       </Card>
-
-      <MarcarPagoDialog
-        open={marcarPagoOpen}
-        onOpenChange={setMarcarPagoOpen}
-        contas={contasParaPagar}
-        onSuccess={handleSucessoPagamento}
-      />
 
       <ContaPagarDetalheDrawer
         contaId={contaIdDrawer}
