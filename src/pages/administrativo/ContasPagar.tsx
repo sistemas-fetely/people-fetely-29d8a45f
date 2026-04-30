@@ -33,6 +33,8 @@ import { NovaContaPagarSheet } from "@/components/financeiro/NovaContaPagarSheet
 import { getFaturaInfoMap, type FaturaInfo } from "@/lib/financeiro/get-fatura-info";
 import { getCompromissoInfoMap, type CompromissoInfo } from "@/lib/financeiro/get-compromisso-info";
 import { getMeioPagamentoIcon } from "@/lib/financeiro/meio-pagamento-icon";
+import { useQualidadeDadoMap } from "@/hooks/useQualidadeDadoMap";
+import { getQualidadeDadoIcon } from "@/lib/financeiro/qualidade-dado-icon";
 
 import { Repeat, CheckCircle2 } from "lucide-react";
 import { classFundoFuturo } from "@/lib/financeiro/is-vencimento-futuro";
@@ -124,6 +126,10 @@ export default function ContasPagar() {
     enabled: !!data && data.length > 0,
     queryFn: () => getCompromissoInfoMap((data || []).map((c) => c.id)),
   });
+
+  // Map de qualidade do dado por conta_id (bolinha 🔴/🟡 na coluna Tags).
+  const idsContas = useMemo(() => (data || []).map((c) => c.id), [data]);
+  const { data: qualidadeMap } = useQualidadeDadoMap(idsContas);
 
   const filtered = useMemo(() => {
     let list = data || [];
@@ -617,7 +623,18 @@ export default function ContasPagar() {
                             </Badge>
                           </TableCell>
                           <TableCell className="min-w-[140px]">
-                            <div className="flex flex-wrap gap-1 items-start">
+                            <div className="flex flex-wrap gap-1 items-center">
+                              {(() => {
+                                const q = qualidadeMap?.get(c.id);
+                                const visual = getQualidadeDadoIcon(q?.nivel, q?.motivos);
+                                if (!visual) return null;
+                                const QIcon = visual.Icon;
+                                return (
+                                  <span title={visual.tooltip} className="inline-flex items-center mr-1">
+                                    <QIcon className={`h-2.5 w-2.5 ${visual.cor} ${visual.bg}`} />
+                                  </span>
+                                );
+                              })()}
                               {c.tem_doc_pendente && (
                                 <Badge
                                   variant="outline"

@@ -38,6 +38,8 @@ import { formatBRL, formatDateBR } from "@/lib/format-currency";
 import ContaPagarDetalheDrawer from "@/components/financeiro/ContaPagarDetalheDrawer";
 import { getCompromissoInfoMap, type CompromissoInfo } from "@/lib/financeiro/get-compromisso-info";
 import { getMeioPagamentoIcon } from "@/lib/financeiro/meio-pagamento-icon";
+import { useQualidadeDadoMap } from "@/hooks/useQualidadeDadoMap";
+import { getQualidadeDadoIcon } from "@/lib/financeiro/qualidade-dado-icon";
 
 import { getStatusFlagsMap, type FlagsContaPagar } from "@/lib/financeiro/get-status-flags";
 import { classFundoFuturo } from "@/lib/financeiro/is-vencimento-futuro";
@@ -234,6 +236,9 @@ export default function CaixaBanco() {
     enabled: idsParaCompromisso.length > 0,
     queryFn: () => getStatusFlagsMap(idsParaCompromisso),
   });
+
+  // Map de qualidade do dado por id (bolinha 🔴/🟡 na coluna Tags).
+  const { data: qualidadeMap } = useQualidadeDadoMap(idsParaCompromisso);
 
   // Mapas de lookup
   const mapContas = useMemo(() => {
@@ -589,7 +594,18 @@ export default function CaixaBanco() {
                             </Badge>
                           </TableCell>
                           <TableCell className="min-w-[140px]">
-                            <div className="flex flex-wrap gap-1">
+                            <div className="flex flex-wrap gap-1 items-center">
+                              {(() => {
+                                const q = qualidadeMap?.get(l.id);
+                                const visual = getQualidadeDadoIcon(q?.nivel, q?.motivos);
+                                if (!visual) return null;
+                                const QIcon = visual.Icon;
+                                return (
+                                  <span title={visual.tooltip} className="inline-flex items-center mr-1">
+                                    <QIcon className={`h-2.5 w-2.5 ${visual.cor} ${visual.bg}`} />
+                                  </span>
+                                );
+                              })()}
                               {docPendente && (
                                 <Badge
                                   variant="outline"
