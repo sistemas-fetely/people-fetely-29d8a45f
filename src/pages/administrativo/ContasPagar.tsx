@@ -302,7 +302,7 @@ export default function ContasPagar() {
         <Card
           className={cn(
             "cursor-pointer transition-all hover:shadow-md",
-            modoOperacional === "para_agir" && tagFilter === "todas" && "ring-2 ring-red-500"
+            modoOperacional === "para_agir" && tagFilter === "todas" && "bg-blue-50 border-blue-300"
           )}
           onClick={() => { setModoOperacional("para_agir"); setTagFilter("todas"); setPage(1); }}
         >
@@ -323,7 +323,7 @@ export default function ContasPagar() {
         <Card
           className={cn(
             "cursor-pointer transition-all hover:shadow-md",
-            modoOperacional === "para_agir" && tagFilter === "atrasada" && "ring-2 ring-red-500"
+            modoOperacional === "para_agir" && tagFilter === "atrasada" && "bg-red-50 border-red-300"
           )}
           onClick={() => { setModoOperacional("para_agir"); setTagFilter("atrasada"); setPage(1); }}
         >
@@ -344,7 +344,7 @@ export default function ContasPagar() {
         <Card
           className={cn(
             "cursor-pointer transition-all hover:shadow-md",
-            tagFilter === "qualidade_alerta" && "ring-2 ring-red-500"
+            tagFilter === "qualidade_alerta" && "bg-amber-50 border-amber-300"
           )}
           onClick={() => { setModoOperacional("para_agir"); setTagFilter("qualidade_alerta"); setPage(1); }}
         >
@@ -365,7 +365,7 @@ export default function ContasPagar() {
         <Card
           className={cn(
             "cursor-pointer transition-all hover:shadow-md",
-            modoOperacional === "aguardando_ofx" && "ring-2 ring-red-500"
+            modoOperacional === "aguardando_ofx" && "bg-teal-50 border-teal-300"
           )}
           onClick={() => { setModoOperacional("aguardando_ofx"); setTagFilter("todas"); setPage(1); }}
         >
