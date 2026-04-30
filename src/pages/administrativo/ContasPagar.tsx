@@ -302,7 +302,7 @@ export default function ContasPagar() {
         <Card
           className={cn(
             "cursor-pointer transition-all hover:shadow-md",
-            modoOperacional === "para_agir" && tagFilter === "todas" && "ring-2 ring-admin"
+            modoOperacional === "para_agir" && tagFilter === "todas" && "ring-2 ring-red-500"
           )}
           onClick={() => { setModoOperacional("para_agir"); setTagFilter("todas"); setPage(1); }}
         >
@@ -344,7 +344,7 @@ export default function ContasPagar() {
         <Card
           className={cn(
             "cursor-pointer transition-all hover:shadow-md",
-            tagFilter === "qualidade_alerta" && "ring-2 ring-amber-500"
+            tagFilter === "qualidade_alerta" && "ring-2 ring-red-500"
           )}
           onClick={() => { setModoOperacional("para_agir"); setTagFilter("qualidade_alerta"); setPage(1); }}
         >
@@ -365,7 +365,7 @@ export default function ContasPagar() {
         <Card
           className={cn(
             "cursor-pointer transition-all hover:shadow-md",
-            modoOperacional === "aguardando_ofx" && "ring-2 ring-teal-500"
+            modoOperacional === "aguardando_ofx" && "ring-2 ring-red-500"
           )}
           onClick={() => { setModoOperacional("aguardando_ofx"); setTagFilter("todas"); setPage(1); }}
         >
@@ -486,8 +486,6 @@ export default function ContasPagar() {
             </Select>
             <div className="flex flex-wrap gap-2">
               {[
-                { value: "para_agir", label: "🔥 Para agir" },
-                { value: "aguardando_ofx", label: "⏳ Aguardando OFX" },
                 { value: "pagas_mes", label: "✅ Pagas (mês)" },
                 { value: "canceladas", label: "❌ Canceladas" },
                 { value: "todos", label: "🔍 Todos" },
@@ -498,7 +496,7 @@ export default function ContasPagar() {
                   variant={modoOperacional === modo.value ? "default" : "outline"}
                   onClick={() => { setModoOperacional(modo.value as ModoOperacional); setPage(1); }}
                   className={cn(
-                    modoOperacional === modo.value && "bg-admin text-admin-foreground hover:bg-admin/90"
+                    modoOperacional === modo.value && "bg-red-600 text-white hover:bg-red-700"
                   )}
                 >
                   {modo.label}
