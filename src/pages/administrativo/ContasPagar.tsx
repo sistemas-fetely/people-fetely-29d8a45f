@@ -222,7 +222,7 @@ export default function ContasPagar() {
     !!dataDe,
     !!dataAte,
     tagFilter !== "todas",
-    statusFilter !== "todos",
+    modoOperacional !== "para_agir",
   ].filter(Boolean).length;
   const temFiltroAtivo = filtrosAtivos > 0;
   function limparFiltros() {
@@ -230,7 +230,7 @@ export default function ContasPagar() {
     setDataDe("");
     setDataAte("");
     setTagFilter("todas");
-    setStatusFilter("todos");
+    setModoOperacional("para_agir");
     setPage(1);
   }
   const filtroAtivoCls = "border-admin bg-admin/5 ring-1 ring-admin/30";
