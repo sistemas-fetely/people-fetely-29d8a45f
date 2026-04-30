@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,7 @@ import {
   ChevronDown,
   CreditCard,
   Pencil,
+  Trash2,
 } from "lucide-react";
 import {
   AlertDialog,
@@ -108,7 +110,34 @@ export default function ContaPagarDetalheDrawer({ contaId, onClose }: Props) {
   const [showPag, setShowPag] = useState(false);
   const [showEnviar, setShowEnviar] = useState(false);
   const [modoEdit, setModoEdit] = useState(false);
+  const [apagando, setApagando] = useState(false);
   const workflow = useContaWorkflow();
+  const qc = useQueryClient();
+
+  async function handleApagar() {
+    if (!conta) return;
+    setApagando(true);
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: result, error } = await (supabase as any).rpc("apagar_conta_pagar", {
+        p_id: conta.id,
+      });
+      if (error) throw error;
+      if (!result?.ok) {
+        toast.error(result?.erro || "Erro ao apagar");
+        return;
+      }
+      toast.success("Conta apagada");
+      qc.invalidateQueries({ queryKey: ["contas-pagar"] });
+      qc.invalidateQueries({ queryKey: ["qualidade-dado-map"] });
+      onClose();
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      toast.error("Erro: " + msg);
+    } finally {
+      setApagando(false);
+    }
+  }
 
   useEffect(() => {
     setModoEdit(false);
@@ -236,6 +265,38 @@ export default function ContaPagarDetalheDrawer({ contaId, onClose }: Props) {
                     <Pencil className="h-3.5 w-3.5 mr-1" />
                     {conta.status === "paga" ? "Ver dados" : "Editar"}
                   </Button>
+                )}
+                {!modoEdit && ["rascunho", "aberto", "aprovado", "aguardando_pagamento"].includes(conta.status) && (
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="ml-1 text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
+                        disabled={apagando}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Apagar conta?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Apagar permanentemente "{conta.descricao}" — {formatBRL(conta.valor)}.
+                          Essa ação não pode ser desfeita.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction
+                          className="bg-red-600 hover:bg-red-700 text-white"
+                          onClick={handleApagar}
+                        >
+                          Apagar
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 )}
               </div>
               <div className="text-2xl font-bold mt-2">{formatBRL(conta.valor)}</div>
