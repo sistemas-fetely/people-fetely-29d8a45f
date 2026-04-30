@@ -9469,6 +9469,14 @@ export type Database = {
         Args: { _motivo?: string; _processo_id: string }
         Returns: number
       }
+      qualidade_dado_contas: {
+        Args: { p_conta_ids: string[] }
+        Returns: {
+          conta_id: string
+          motivos: string[]
+          nivel: string
+        }[]
+      }
       reabrir_nf_pj: {
         Args: { _motivo: string; _nota_id: string }
         Returns: Json
