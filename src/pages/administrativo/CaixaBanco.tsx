@@ -317,53 +317,7 @@ export default function CaixaBanco() {
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const pageData = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
-  const lancamentosSelecionados = useMemo(
-    () =>
-      filtered.filter((l) => {
-        if (!selecionados.has(l.id)) return false;
-        if (l.origem_view === "cartao_lancamento") return false;
-        const s = statusVisual(l);
-        return s !== "paga" && s !== "cancelado";
-      }),
-    [filtered, selecionados],
-  );
-
-  function toggleSelecionado(id: string) {
-    const next = new Set(selecionados);
-    if (next.has(id)) next.delete(id);
-    else next.add(id);
-    setSelecionados(next);
-  }
-
-  function togglePagina() {
-    const next = new Set(selecionados);
-    const isSelecionavel = (l: Lancamento) => {
-      if (l.origem_view === "cartao_lancamento") return false;
-      const s = statusVisual(l);
-      return s !== "paga" && s !== "cancelado";
-    };
-    const todasSelecionadas = pageData
-      .filter(isSelecionavel)
-      .every((l) => next.has(l.id));
-    if (todasSelecionadas) {
-      pageData.forEach((l) => next.delete(l.id));
-    } else {
-      pageData.filter(isSelecionavel).forEach((l) => next.add(l.id));
-    }
-    setSelecionados(next);
-  }
-
-  function handleMarcarPagoMassa() {
-    if (lancamentosSelecionados.length === 0) {
-      return;
-    }
-    setContasParaPagar(lancamentosSelecionados);
-    setMarcarPagoOpen(true);
-  }
-
   function handleSucessoPagamento() {
-    setSelecionados(new Set());
-    setContasParaPagar([]);
     qc.invalidateQueries({ queryKey: ["lancamentos-caixa-banco"] });
   }
 
