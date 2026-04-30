@@ -297,35 +297,88 @@ export default function ContasPagar() {
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Card>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* 🔥 Para agir (default) */}
+        <Card
+          className={cn(
+            "cursor-pointer transition-all hover:shadow-md",
+            modoOperacional === "para_agir" && tagFilter === "todas" && "ring-2 ring-admin"
+          )}
+          onClick={() => { setModoOperacional("para_agir"); setTagFilter("todas"); setPage(1); }}
+        >
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-normal text-muted-foreground">
-              Total em aberto
+            <CardTitle className="text-sm font-normal text-muted-foreground flex items-center gap-1">
+              🔥 Para agir
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-700">{formatBRL(totals.aberto)}</div>
+            <div className="text-2xl font-bold text-blue-700">{formatBRL(totals.paraAgir.valor)}</div>
+            <div className="text-xs text-muted-foreground mt-1">
+              {totals.paraAgir.count} {totals.paraAgir.count === 1 ? "conta" : "contas"}
+            </div>
           </CardContent>
         </Card>
-        <Card>
+
+        {/* ⚠️ Atrasados */}
+        <Card
+          className={cn(
+            "cursor-pointer transition-all hover:shadow-md",
+            modoOperacional === "para_agir" && tagFilter === "atrasada" && "ring-2 ring-red-500"
+          )}
+          onClick={() => { setModoOperacional("para_agir"); setTagFilter("atrasada"); setPage(1); }}
+        >
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-normal text-muted-foreground">
-              Total atrasado
+            <CardTitle className="text-sm font-normal text-muted-foreground flex items-center gap-1">
+              ⚠️ Atrasados
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-700">{formatBRL(totals.atrasado)}</div>
+            <div className="text-2xl font-bold text-red-700">{formatBRL(totals.atrasados.valor)}</div>
+            <div className="text-xs text-muted-foreground mt-1">
+              {totals.atrasados.count} {totals.atrasados.count === 1 ? "conta" : "contas"}
+            </div>
           </CardContent>
         </Card>
-        <Card>
+
+        {/* 🩺 Saúde do dado */}
+        <Card
+          className={cn(
+            "cursor-pointer transition-all hover:shadow-md",
+            tagFilter === "qualidade_alerta" && "ring-2 ring-amber-500"
+          )}
+          onClick={() => { setModoOperacional("para_agir"); setTagFilter("qualidade_alerta"); setPage(1); }}
+        >
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-normal text-muted-foreground">
-              Aguardando pagamento
+            <CardTitle className="text-sm font-normal text-muted-foreground flex items-center gap-1">
+              🩺 Saúde do dado
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-teal-700">{formatBRL(totals.aguardandoPgto)}</div>
+            <div className="text-2xl font-bold text-amber-700">{totals.saude.percent}%</div>
+            <div className="text-xs text-muted-foreground mt-1">
+              {totals.saude.semSaude} {totals.saude.semSaude === 1 ? "conta com alerta" : "contas com alerta"}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* ⏳ Aguardando OFX */}
+        <Card
+          className={cn(
+            "cursor-pointer transition-all hover:shadow-md",
+            modoOperacional === "aguardando_ofx" && "ring-2 ring-teal-500"
+          )}
+          onClick={() => { setModoOperacional("aguardando_ofx"); setTagFilter("todas"); setPage(1); }}
+        >
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-normal text-muted-foreground flex items-center gap-1">
+              ⏳ Aguardando OFX
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-teal-700">{formatBRL(totals.aguardandoOfx.valor)}</div>
+            <div className="text-xs text-muted-foreground mt-1">
+              {totals.aguardandoOfx.count} {totals.aguardandoOfx.count === 1 ? "conta" : "contas"}
+            </div>
           </CardContent>
         </Card>
       </div>
