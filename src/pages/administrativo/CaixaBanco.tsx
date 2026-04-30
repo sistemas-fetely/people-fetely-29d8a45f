@@ -641,13 +641,6 @@ export default function CaixaBanco() {
         </CardContent>
       </Card>
 
-      <MarcarPagoDialog
-        open={marcarPagoOpen}
-        onOpenChange={setMarcarPagoOpen}
-        contas={contasParaPagar}
-        onSuccess={handleSucessoPagamento}
-      />
-
       <ContaPagarDetalheDrawer
         contaId={contaIdDrawer}
         onClose={() => setContaIdDrawer(null)}
