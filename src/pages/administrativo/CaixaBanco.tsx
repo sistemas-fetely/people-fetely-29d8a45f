@@ -42,6 +42,7 @@ import { getMeioPagamentoIcon } from "@/lib/financeiro/meio-pagamento-icon";
 import { getStatusFlagsMap, type FlagsContaPagar } from "@/lib/financeiro/get-status-flags";
 import { classFundoFuturo } from "@/lib/financeiro/is-vencimento-futuro";
 import { cn } from "@/lib/utils";
+import { useFiltrosPersistentes } from "@/hooks/useFiltrosPersistentes";
 
 type Lancamento = {
   id: string;
@@ -143,10 +144,10 @@ const PAGE_SIZE = 25;
 
 export default function CaixaBanco() {
   const qc = useQueryClient();
-  const [statusFilter, setStatusFilter] = useState<string>("todos");
-  const [contaBancariaFilter, setContaBancariaFilter] = useState<string>("todas");
-  const [busca, setBusca] = useState("");
-  const [page, setPage] = useState(1);
+  const [statusFilter, setStatusFilter] = useFiltrosPersistentes<string>("caixabanco_status", "todos");
+  const [contaBancariaFilter, setContaBancariaFilter] = useFiltrosPersistentes<string>("caixabanco_conta", "todas");
+  const [busca, setBusca] = useFiltrosPersistentes<string>("caixabanco_busca", "");
+  const [page, setPage] = useFiltrosPersistentes<number>("caixabanco_page", 1);
   const [selecionados, setSelecionados] = useState<Set<string>>(new Set());
   const [marcarPagoOpen, setMarcarPagoOpen] = useState(false);
   const [contasParaPagar, setContasParaPagar] = useState<Lancamento[]>([]);
