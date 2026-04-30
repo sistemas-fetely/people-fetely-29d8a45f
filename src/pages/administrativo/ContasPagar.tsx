@@ -371,7 +371,7 @@ export default function ContasPagar() {
         >
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-normal text-muted-foreground flex items-center gap-1">
-              ⏳ Aguardando OFX
+              ⏳ Aguardando Pagamento
             </CardTitle>
           </CardHeader>
           <CardContent>
