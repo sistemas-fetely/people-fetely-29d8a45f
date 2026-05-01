@@ -242,6 +242,47 @@ export function ContaPagarFormEdit({ conta, onSaved, onCancel }: Props) {
             ))}
           </SelectContent>
         </Select>
+
+        {topSugestao
+          && semCategoria
+          && !sugestaoAplicada
+          && topSugestao.score >= 60
+          && !isReadOnly && (
+            <div className="mt-2 rounded-md border border-blue-200 bg-blue-50/60 p-2.5">
+              <div className="flex items-start gap-2">
+                <Sparkles className="h-4 w-4 text-blue-600 mt-0.5 shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <div className="text-xs font-medium text-blue-900">
+                    ✨ Sugestão IA: {topSugestao.categoria_codigo} {topSugestao.categoria_nome}
+                  </div>
+                  <div className="text-[11px] text-blue-700 mt-0.5">
+                    {topSugestao.motivo} · baseado em {topSugestao.amostra_count}{" "}
+                    {topSugestao.amostra_count === 1 ? "lançamento" : "lançamentos"} similar
+                    {topSugestao.amostra_count === 1 ? "" : "es"}
+                  </div>
+                  {topSugestao.amostra_descricao && (
+                    <div className="text-[11px] text-blue-600/80 mt-0.5 italic truncate">
+                      ex: "{topSugestao.amostra_descricao}"
+                    </div>
+                  )}
+                </div>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="h-7 px-2 border-blue-300 text-blue-700 hover:bg-blue-100 shrink-0"
+                  onClick={() => {
+                    setContaId(topSugestao.categoria_id);
+                    setSugestaoAplicada(true);
+                    toast.success("Categoria aplicada");
+                  }}
+                >
+                  <Check className="h-3.5 w-3.5 mr-1" />
+                  Aplicar
+                </Button>
+              </div>
+            </div>
+          )}
       </div>
 
       {/* Centro de custo */}
