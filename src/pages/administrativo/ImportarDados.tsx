@@ -103,39 +103,38 @@ export default function ImportarDados() {
                 )}
               </CardDescription>
             </div>
-            <div className="flex items-center gap-2">
-              <Badge
-                variant={integracaoAtiva ? "default" : "outline"}
-                className={
-                  integracaoAtiva ? "bg-success hover:bg-success text-success-foreground" : ""
-                }
+            <div className="flex flex-col items-end gap-2">
+              <div className="flex items-center gap-2">
+                <Badge
+                  variant={integracaoAtiva ? "default" : "outline"}
+                  className={
+                    integracaoAtiva ? "bg-success hover:bg-success text-success-foreground" : ""
+                  }
+                >
+                  {integracaoAtiva ? "Conectado" : "Desconectado"}
+                </Badge>
+                <Button
+                  onClick={sync}
+                  disabled={syncing || !integracaoAtiva}
+                  className="bg-admin hover:bg-admin/90 text-admin-foreground"
+                >
+                  {syncing ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                  )}
+                  {syncing ? "Sincronizando..." : "Sincronizar agora"}
+                </Button>
+              </div>
+              <Link
+                to="/administrativo/configuracao-integracao"
+                className="inline-flex items-center gap-1.5 text-xs text-admin hover:underline"
               >
-                {integracaoAtiva ? "Conectado" : "Desconectado"}
-              </Badge>
-              <Button
-                onClick={sync}
-                disabled={syncing || !integracaoAtiva}
-                className="bg-admin hover:bg-admin/90 text-admin-foreground"
-              >
-                {syncing ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                )}
-                {syncing ? "Sincronizando..." : "Sincronizar agora"}
-              </Button>
+                <Settings2 className="h-3.5 w-3.5" />
+                Configuração da integração
+              </Link>
             </div>
           </div>
-
-          {!integracaoAtiva && (
-            <Link
-              to="/administrativo/configuracao-integracao"
-              className="inline-flex items-center gap-1.5 text-sm text-admin hover:underline mt-3"
-            >
-              <Settings2 className="h-3.5 w-3.5" />
-              Configure a integração com o Bling →
-            </Link>
-          )}
 
           {syncResult && (
             <div className="mt-3 p-3 rounded-md bg-success/10 text-sm text-success">
