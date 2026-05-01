@@ -542,13 +542,8 @@ export default function FaturasCartao() {
               const ativo = filtroCartao === cartao.id;
 
               return (
-                <Card
-                  key={cartao.id}
-                  className={cn(
-                    "transition bg-card",
-                    ativo && "ring-2 ring-admin border-admin",
-                  )}
-                >
+                <Card key={cartao.id} className="transition bg-card">
+
                   <CardContent className="p-4 space-y-3">
                     <div className="flex items-center gap-2">
                       <CreditCard className="h-4 w-4 text-admin shrink-0" />
