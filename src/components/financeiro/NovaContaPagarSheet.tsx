@@ -181,6 +181,8 @@ export function NovaContaPagarSheet({ open, onOpenChange }: Props) {
       setFormaPgtoId("");
       setParcelas(1);
       setNfStageId(null);
+      setDescricaoDebounced("");
+      setSugestaoAplicada(false);
     }
   }, [open]);
 
