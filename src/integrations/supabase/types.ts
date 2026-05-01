@@ -9188,6 +9188,7 @@ export type Database = {
         Args: { p_importacao_stage_id: string }
         Returns: Json
       }
+      desfazer_conciliacao_ofx: { Args: { p_ofx_id: string }; Returns: Json }
       detectar_duplicatas_nf: {
         Args: { p_chaves: string[]; p_cnpj_numero?: Json }
         Returns: {
