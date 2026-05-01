@@ -281,60 +281,53 @@ export default function FaturasCartao() {
     [categorias],
   );
 
-  // KPIs
+  // KPIs — totais por mês de vencimento (atual / anterior)
   const totals = useMemo(() => {
     const all = faturas || [];
-    const escopo =
+    const filtradas =
       filtroCartao !== "__todos__"
         ? all.filter((f) => f.conta_bancaria_id === filtroCartao)
         : all;
 
-    const abertasArr = escopo.filter((f) => f.status === "aberta");
-    const valorTotalAbertas = abertasArr.reduce(
-      (s, f) => s + (f.valor_total || 0),
-      0,
-    );
-    const valorVinculado = abertasArr.reduce(
-      (s, f) => s + (f.valor_conciliado || 0),
-      0,
-    );
-    const valorNaoVinculado = valorTotalAbertas - valorVinculado;
+    const hoje = new Date();
+    const inicioMesAtual = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+    const inicioMesSeguinte = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 1);
+    const inicioMesAnterior = new Date(hoje.getFullYear(), hoje.getMonth() - 1, 1);
+    const fimMesAnterior = new Date(hoje.getFullYear(), hoje.getMonth(), 0);
 
-    const base = {
-      qtdFaturas: all.length,
-      total: all.length,
-      abertas: abertasArr.length,
-      qtdAbertas: abertasArr.length,
-      pagas: all.filter((f) => f.status === "paga").length,
-      conciliadas: all.filter((f) => f.status === "conciliada").length,
-      canceladas: all.filter((f) => f.status === "cancelada").length,
-      valorAberto: valorTotalAbertas,
-      valorTotalAbertas,
-      valorVinculado,
-      valorNaoVinculado,
-      totalGeral: all.reduce((s, f) => s + (f.valor_total || 0), 0),
-      totalConciliado: all.reduce((s, f) => s + (f.valor_conciliado || 0), 0),
-      totalPendente: all.reduce((s, f) => s + (f.valor_pendente || 0), 0),
-      modoFocado: false as boolean,
-      faturaFocada: null as null | (typeof all)[0],
+    const calcular = (lista: typeof filtradas) => {
+      const total = lista.reduce((s, f) => s + (f.valor_total || 0), 0);
+      const vinculado = lista.reduce((s, f) => s + (f.valor_conciliado || 0), 0);
+      return {
+        qtd: lista.length,
+        total,
+        vinculado,
+        naoVinculado: total - vinculado,
+      };
     };
 
-    if (faturaExpanded) {
-      const f = all.find((x) => x.id === faturaExpanded);
-      if (f) {
-        return {
-          ...base,
-          qtdFaturas: 1,
-          totalGeral: f.valor_total || 0,
-          totalConciliado: f.valor_conciliado || 0,
-          totalPendente: f.valor_pendente || 0,
-          modoFocado: true,
-          faturaFocada: f,
-        };
-      }
-    }
+    const fatMesAtual = filtradas.filter((f) => {
+      if (!f.data_vencimento) return false;
+      const venc = new Date(f.data_vencimento);
+      return venc >= inicioMesAtual && venc < inicioMesSeguinte;
+    });
 
-    return base;
+    const fatMesAnterior = filtradas.filter((f) => {
+      if (!f.data_vencimento) return false;
+      const venc = new Date(f.data_vencimento);
+      return venc >= inicioMesAnterior && venc <= fimMesAnterior;
+    });
+
+    const faturaFocada = faturaExpanded
+      ? all.find((x) => x.id === faturaExpanded) || null
+      : null;
+
+    return {
+      mesAtual: calcular(fatMesAtual),
+      mesAnterior: calcular(fatMesAnterior),
+      modoFocado: !!faturaFocada,
+      faturaFocada,
+    };
   }, [faturas, faturaExpanded, filtroCartao]);
 
   // Filtragem + Ordenação
