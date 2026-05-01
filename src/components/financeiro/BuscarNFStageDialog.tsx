@@ -163,6 +163,23 @@ export default function BuscarNFStageDialog({
                   <p className="text-xs text-muted-foreground">
                     NF nº {c.nf_numero || "—"} · {formatDate(c.nf_data_emissao)} ·{" "}
                     {formatBRL(c.valor_total)}
+                    {(() => {
+                      if (!contaValor || contaValor <= 0) return null;
+                      const ratio = c.valor_total / contaValor;
+                      const ratioRounded = Math.round(ratio);
+                      if (
+                        ratioRounded >= 2 &&
+                        ratioRounded <= 36 &&
+                        Math.abs(ratio - ratioRounded) <= 0.02
+                      ) {
+                        return (
+                          <span className="text-blue-700 font-medium">
+                            {" "}({ratioRounded}x {formatBRL(contaValor)})
+                          </span>
+                        );
+                      }
+                      return null;
+                    })()}
                   </p>
                   {c.fornecedor_cnpj && (
                     <p className="text-xs text-muted-foreground">
