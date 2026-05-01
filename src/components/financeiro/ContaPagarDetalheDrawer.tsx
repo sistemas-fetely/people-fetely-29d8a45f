@@ -282,8 +282,14 @@ export default function ContaPagarDetalheDrawer({ contaId, onClose }: Props) {
                       </Badge>
                     )}
                     {isCartao && (
-                      <Badge variant="outline" className="gap-1 text-xs border-blue-300 text-blue-700">
+                    <Badge variant="outline" className="gap-1 text-xs border-blue-300 text-blue-700">
                         <CreditCard className="h-3 w-3" /> Cartão
+                      </Badge>
+                    )}
+                    {conta.movimentacao_bancaria_id && (
+                      <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-300 gap-1">
+                        <ArrowRightLeft className="h-3 w-3" />
+                        Já em Movimentação
                       </Badge>
                     )}
                   </SheetDescription>
