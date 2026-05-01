@@ -188,33 +188,63 @@ export default function FaturasCartao() {
     },
   });
 
-  // Comprometido por cartão (contas a pagar abertas vinculadas via lançamentos da fatura)
+  // Comprometido por cartão (via lançamentos da fatura → conta a pagar)
   const { data: comprometidoMap = new Map<string, number>() } = useQuery({
-    queryKey: ["cartoes-comprometido"],
+    queryKey: ["cartoes-comprometido-v2"],
     queryFn: async () => {
+      // 1) Lançamentos de fatura com conta_pagar associada
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data, error } = await (supabase as any)
-        .from("contas_pagar_receber")
+        .from("fatura_cartao_lancamentos")
         .select(`
-          valor,
-          fatura_cartao_lancamentos!inner (
-            faturas_cartao!inner (
-              conta_bancaria_id
-            )
+          conta_pagar_id,
+          fatura_id,
+          contas_pagar_receber!inner (
+            valor,
+            status,
+            is_cartao
           )
         `)
-        .eq("is_cartao", true)
-        .in("status", ["aberto", "aprovado", "aguardando_pagamento"]);
+        .not("conta_pagar_id", "is", null);
       if (error) throw error;
 
+      // 2) Faturas → conta_bancaria_id
+      const faturaIds = Array.from(
+        new Set(
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          ((data || []) as any[])
+            .map((r) => r.fatura_id)
+            .filter((id): id is string => Boolean(id)),
+        ),
+      );
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: faturasData } = await (supabase as any)
+        .from("faturas_cartao")
+        .select("id, conta_bancaria_id")
+        .in("id", faturaIds);
+
+      const faturaToConta = new Map<string, string>();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (faturasData || []).forEach((f: any) => {
+        if (f.conta_bancaria_id) faturaToConta.set(f.id, f.conta_bancaria_id);
+      });
+
+      // 3) Soma por conta bancária
       const map = new Map<string, number>();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       for (const row of (data || []) as any[]) {
-        const lancs = row.fatura_cartao_lancamentos;
-        if (!lancs || lancs.length === 0) continue;
-        const contaId = lancs[0]?.faturas_cartao?.conta_bancaria_id;
+        const cpr = row.contas_pagar_receber;
+        if (!cpr) continue;
+        if (!cpr.is_cartao) continue;
+        if (
+          !["aberto", "aprovado", "aguardando_pagamento"].includes(cpr.status)
+        )
+          continue;
+
+        const contaId = faturaToConta.get(row.fatura_id);
         if (!contaId) continue;
-        map.set(contaId, (map.get(contaId) || 0) + Number(row.valor || 0));
+
+        map.set(contaId, (map.get(contaId) || 0) + Number(cpr.valor || 0));
       }
       return map;
     },
