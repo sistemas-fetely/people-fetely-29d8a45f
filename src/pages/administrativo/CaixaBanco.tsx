@@ -397,6 +397,16 @@ export default function CaixaBanco() {
     };
   }, [lancamentos]);
 
+  // Saúde do dado (binário: vermelho/verde) — usa lancamentosEnriched p/ pegar inconsistência.
+  const qtdComProblema = useMemo(
+    () => lancamentosEnriched.filter((m) => getQualidadeMov(m).vermelho).length,
+    [lancamentosEnriched],
+  );
+  const totalLancamentos = lancamentosEnriched.length;
+  const pctSaude = totalLancamentos > 0
+    ? Math.round((1 - qtdComProblema / totalLancamentos) * 100)
+    : 100;
+
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const pageData = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
