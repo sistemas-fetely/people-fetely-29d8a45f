@@ -185,7 +185,14 @@ export function ContaPagarFormEdit({ conta, onSaved, onCancel }: Props) {
       qc.invalidateQueries({ queryKey: ["qualidade-dado-map"] });
       onSaved();
     } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
+      let msg = "Erro desconhecido";
+      if (e instanceof Error) msg = e.message;
+      else if (typeof e === "string") msg = e;
+      else if (e && typeof e === "object") {
+        const obj = e as Record<string, unknown>;
+        msg = String(obj.message || obj.error || obj.details || JSON.stringify(e));
+      }
+      console.error("Erro ao salvar conta:", e);
       toast.error("Erro: " + msg);
     } finally {
       setSalvando(false);
