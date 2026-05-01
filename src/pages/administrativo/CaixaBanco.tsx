@@ -865,16 +865,6 @@ export default function CaixaBanco() {
                                   </span>
                                 );
                               })()}
-                              {docPendente && (
-                                <Badge
-                                  variant="outline"
-                                  className="text-[9px] py-0 px-1.5 h-4 border-amber-400 text-amber-700 bg-amber-50 gap-1 whitespace-nowrap"
-                                  title="Pagamento foi enviado ao financeiro mas falta NF/Recibo"
-                                >
-                                  <FileWarning className="h-2.5 w-2.5" />
-                                  Doc pendente
-                                </Badge>
-                              )}
                             </div>
                           </TableCell>
                         </TableRow>
