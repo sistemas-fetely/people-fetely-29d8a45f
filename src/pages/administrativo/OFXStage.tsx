@@ -419,7 +419,11 @@ export default function OFXStage() {
                         </div>
                       </div>
                       <div className="flex items-center gap-1 mt-2 pt-2 border-t flex-wrap">
-
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-6 px-2 text-[10px] gap-1"
+                          onClick={(e) => { e.stopPropagation(); handleLancarMovimentacao(ofx); }}
                           disabled={!!acao}
                         >
                           <Plus className="h-3 w-3" />
