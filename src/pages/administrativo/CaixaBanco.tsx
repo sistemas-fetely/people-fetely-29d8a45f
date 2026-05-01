@@ -230,7 +230,9 @@ type FiltroOperacional =
   | "sem_conciliacao"
   | "qualidade_nf"
   | "qualidade_categoria"
-  | "qualidade_doc";
+  | "qualidade_doc"
+  | "qualidade_vinculado"
+  | "qualidade_conciliado";
 
 function CardKPI({
   titulo,
