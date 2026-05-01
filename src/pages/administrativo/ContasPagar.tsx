@@ -562,7 +562,12 @@ export default function ContasPagar() {
             </div>
           )}
         </CardHeader>
-        <CardContent>
+      </Card>
+      </div>
+      {/* /CONTAINER STICKY */}
+
+      <Card>
+        <CardContent className="pt-6">
           {/* Barra de ações em massa */}
           {selecionadas.size > 0 && (
             <div className="flex items-center gap-3 p-3 rounded-lg border bg-muted/50 mb-4 flex-wrap">
