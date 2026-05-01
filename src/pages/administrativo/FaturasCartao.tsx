@@ -188,21 +188,31 @@ export default function FaturasCartao() {
     },
   });
 
-  // Comprometido por cartão (contas a pagar abertas vinculadas a cada cartão)
+  // Comprometido por cartão (contas a pagar abertas vinculadas via lançamentos da fatura)
   const { data: comprometidoMap = new Map<string, number>() } = useQuery({
     queryKey: ["cartoes-comprometido"],
     queryFn: async () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data, error } = await (supabase as any)
         .from("contas_pagar_receber")
-        .select("valor, pago_em_conta_id, is_cartao")
+        .select(`
+          valor,
+          fatura_cartao_lancamentos!inner (
+            faturas_cartao!inner (
+              conta_bancaria_id
+            )
+          )
+        `)
         .eq("is_cartao", true)
         .in("status", ["aberto", "aprovado", "aguardando_pagamento"]);
       if (error) throw error;
 
       const map = new Map<string, number>();
-      for (const row of (data || []) as Array<{ valor: number | null; pago_em_conta_id: string | null }>) {
-        const contaId = row.pago_em_conta_id;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      for (const row of (data || []) as any[]) {
+        const lancs = row.fatura_cartao_lancamentos;
+        if (!lancs || lancs.length === 0) continue;
+        const contaId = lancs[0]?.faturas_cartao?.conta_bancaria_id;
         if (!contaId) continue;
         map.set(contaId, (map.get(contaId) || 0) + Number(row.valor || 0));
       }
