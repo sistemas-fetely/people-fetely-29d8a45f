@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Save, X } from "lucide-react";
+import { Loader2, Save, X, Sparkles, Check } from "lucide-react";
 import { toast } from "sonner";
 import { useCategoriasPlano } from "@/hooks/useCategoriasPlano";
 
@@ -33,6 +33,7 @@ type ContaEditavel = {
   nf_serie: string | null;
   nf_chave_acesso: string | null;
   status: string;
+  parceiro_id?: string | null;
 };
 
 interface Props {
@@ -59,6 +60,45 @@ export function ContaPagarFormEdit({ conta, onSaved, onCancel }: Props) {
   const [nfNumero, setNfNumero] = useState(conta.nf_numero || "");
   const [nfSerie, setNfSerie] = useState(conta.nf_serie || "");
   const [nfChave, setNfChave] = useState(conta.nf_chave_acesso || "");
+
+  // Debounce da descrição (não dispara IA a cada tecla)
+  const [descricaoDebounced, setDescricaoDebounced] = useState(descricao);
+  useEffect(() => {
+    const t = setTimeout(() => setDescricaoDebounced(descricao), 600);
+    return () => clearTimeout(t);
+  }, [descricao]);
+
+  // Sugestão de categoria via RPC (só se ainda não há categoria definida)
+  const semCategoria = !contaId || contaId === "__none__";
+  const { data: sugestoes = [] } = useQuery({
+    queryKey: ["sugerir-categoria-edit", conta.id, descricaoDebounced],
+    enabled: descricaoDebounced.length >= 4 && semCategoria && !isReadOnly,
+    staleTime: 30_000,
+    queryFn: async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase as any).rpc(
+        "sugerir_categoria_para_lancamento",
+        {
+          p_descricao: descricaoDebounced || null,
+          p_cnpj: null,
+          p_parceiro_id: conta.parceiro_id || null,
+        },
+      );
+      if (error) throw error;
+      return (data || []) as Array<{
+        categoria_id: string;
+        categoria_codigo: string;
+        categoria_nome: string;
+        score: number;
+        motivo: string;
+        amostra_descricao: string;
+        amostra_count: number;
+      }>;
+    },
+  });
+
+  const topSugestao = sugestoes[0];
+  const [sugestaoAplicada, setSugestaoAplicada] = useState(false);
 
   // Reseta form quando conta muda
   useEffect(() => {
@@ -202,6 +242,47 @@ export function ContaPagarFormEdit({ conta, onSaved, onCancel }: Props) {
             ))}
           </SelectContent>
         </Select>
+
+        {topSugestao
+          && semCategoria
+          && !sugestaoAplicada
+          && topSugestao.score >= 60
+          && !isReadOnly && (
+            <div className="mt-2 rounded-md border border-blue-200 bg-blue-50/60 p-2.5">
+              <div className="flex items-start gap-2">
+                <Sparkles className="h-4 w-4 text-blue-600 mt-0.5 shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <div className="text-xs font-medium text-blue-900">
+                    ✨ Sugestão IA: {topSugestao.categoria_codigo} {topSugestao.categoria_nome}
+                  </div>
+                  <div className="text-[11px] text-blue-700 mt-0.5">
+                    {topSugestao.motivo} · baseado em {topSugestao.amostra_count}{" "}
+                    {topSugestao.amostra_count === 1 ? "lançamento" : "lançamentos"} similar
+                    {topSugestao.amostra_count === 1 ? "" : "es"}
+                  </div>
+                  {topSugestao.amostra_descricao && (
+                    <div className="text-[11px] text-blue-600/80 mt-0.5 italic truncate">
+                      ex: "{topSugestao.amostra_descricao}"
+                    </div>
+                  )}
+                </div>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="h-7 px-2 border-blue-300 text-blue-700 hover:bg-blue-100 shrink-0"
+                  onClick={() => {
+                    setContaId(topSugestao.categoria_id);
+                    setSugestaoAplicada(true);
+                    toast.success("Categoria aplicada");
+                  }}
+                >
+                  <Check className="h-3.5 w-3.5 mr-1" />
+                  Aplicar
+                </Button>
+              </div>
+            </div>
+          )}
       </div>
 
       {/* Centro de custo */}
