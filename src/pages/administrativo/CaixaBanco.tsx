@@ -71,6 +71,8 @@ type Lancamento = {
   fatura_id: string | null;
   vinculada_cartao?: boolean | null;
   fatura_vencimento?: string | null;
+  categoria_inconsistente?: boolean | null;
+  inconsistencia_motivo?: string | null;
 };
 
 /**
