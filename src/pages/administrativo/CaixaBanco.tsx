@@ -399,7 +399,7 @@ export default function CaixaBanco() {
 
   // Saúde do dado (binário: vermelho/verde) — usa lancamentosEnriched p/ pegar inconsistência.
   const qtdComProblema = useMemo(
-    () => lancamentosEnriched.filter((m) => getQualidadeMov(m).vermelho).length,
+    () => lancamentosEnriched.filter((m) => getQualidadeCategoria(m).cor === "vermelho").length,
     [lancamentosEnriched],
   );
   const totalLancamentos = lancamentosEnriched.length;
