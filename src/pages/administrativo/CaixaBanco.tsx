@@ -299,6 +299,31 @@ export default function CaixaBanco() {
     },
   });
 
+  // NF vinculada a cada lançamento (pra validar categoria mesmo sem mov criada).
+  const lancamentoIds = useMemo(
+    () => (lancamentos || []).map((l) => l.id).filter(Boolean),
+    [lancamentos],
+  );
+
+  const { data: nfMap } = useQuery({
+    queryKey: ["nfs-vinculadas-mov", lancamentoIds.join(",")],
+    enabled: lancamentoIds.length > 0,
+    staleTime: 30_000,
+    queryFn: async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase as any)
+        .from("nfs_stage")
+        .select("conta_pagar_id, categoria_id")
+        .in("conta_pagar_id", lancamentoIds);
+      if (error) throw error;
+      const map = new Map<string, string | null>();
+      (data || []).forEach((nf: { conta_pagar_id: string | null; categoria_id: string | null }) => {
+        if (nf.conta_pagar_id) map.set(nf.conta_pagar_id, nf.categoria_id);
+      });
+      return map;
+    },
+  });
+
   // Lançamentos enriquecidos com flags de inconsistência da movimentação vinculada.
   const lancamentosEnriched = useMemo(() => {
     return (lancamentos || []).map((l) => {
