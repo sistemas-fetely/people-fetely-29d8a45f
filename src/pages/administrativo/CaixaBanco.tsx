@@ -351,6 +351,9 @@ export default function CaixaBanco() {
     if (mostrarSoInconsistentes) {
       list = list.filter((l) => l.categoria_inconsistente === true);
     }
+    if (filtroSoVermelhas) {
+      list = list.filter((l) => getQualidadeMov(l).vermelho);
+    }
     if (busca.trim()) {
       const t = busca.toLowerCase();
       list = list.filter((l) => {
