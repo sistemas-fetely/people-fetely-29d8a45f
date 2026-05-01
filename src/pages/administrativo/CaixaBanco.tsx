@@ -316,12 +316,15 @@ export default function CaixaBanco() {
 
   // Filtros
   const filtered = useMemo(() => {
-    let list = lancamentos || [];
+    let list = lancamentosEnriched;
     if (statusFilter !== "todos") {
       list = list.filter((l) => statusVisual(l) === statusFilter);
     }
     if (contaBancariaFilter !== "todas") {
       list = list.filter((l) => l.pago_em_conta_id === contaBancariaFilter);
+    }
+    if (mostrarSoInconsistentes) {
+      list = list.filter((l) => l.categoria_inconsistente === true);
     }
     if (busca.trim()) {
       const t = busca.toLowerCase();
@@ -336,7 +339,7 @@ export default function CaixaBanco() {
       });
     }
     return list;
-  }, [lancamentos, statusFilter, contaBancariaFilter, busca, mapParceiros]);
+  }, [lancamentosEnriched, statusFilter, contaBancariaFilter, busca, mapParceiros, mostrarSoInconsistentes]);
 
   // Totais
   const totals = useMemo(() => {
