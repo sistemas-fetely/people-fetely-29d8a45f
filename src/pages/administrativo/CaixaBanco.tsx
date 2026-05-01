@@ -538,51 +538,74 @@ export default function CaixaBanco() {
     return list;
   }, [lancamentosEnriched, statusFilter, contaBancariaFilter, busca, mapParceiros, mostrarSoInconsistentes, filtroOp, nfMap, statusFlagsMap]);
 
-  // Totais
-  const totals = useMemo(() => {
-    const all = lancamentos || [];
-    const emAberto = all
-      .filter((l) => {
-        const s = statusVisual(l);
-        return s !== "paga" && s !== "cancelado" && l.origem_view !== "cartao_lancamento";
-      })
-      .reduce((s, l) => s + Number(l.valor || 0), 0);
-    const pago = all
-      .filter((l) => statusVisual(l) === "paga")
-      .reduce((s, l) => s + Number(l.valor || 0), 0);
-    const conciliado = all
-      .filter((l) => l.movimentacao_bancaria_id)
-      .reduce((s, l) => s + Number(l.valor || 0), 0);
-    return {
-      emAberto,
-      pago,
-      conciliado,
-      countAberto: all.filter((l) => {
-        const s = statusVisual(l);
-        return s !== "paga" && s !== "cancelado" && l.origem_view !== "cartao_lancamento";
-      }).length,
-      countPago: all.filter((l) => statusVisual(l) === "paga").length,
-      countConciliado: all.filter((l) => l.movimentacao_bancaria_id).length,
+  // KPIs operacionais (8 cards)
+  const kpis = useMemo(() => {
+    const todos = lancamentosEnriched;
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+
+    const inicioMesAtual = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+    const fimMesAtual = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0, 23, 59, 59);
+    const inicioProximoMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 1);
+    const fimProximoMes = new Date(hoje.getFullYear(), hoje.getMonth() + 2, 0, 23, 59, 59);
+    const fim3Meses = new Date(hoje.getFullYear(), hoje.getMonth() + 4, 0, 23, 59, 59);
+
+    const emAberto = todos.filter((l) => statusVisual(l) === "aguardando_pagamento");
+    const noMesAtual = (l: Lancamento) => {
+      if (!l.data_vencimento) return false;
+      const v = new Date(l.data_vencimento + "T00:00:00");
+      return v >= inicioMesAtual && v <= fimMesAtual;
     };
-  }, [lancamentos]);
 
-  // Saúde do dado (binário: vermelho/verde) — usa lancamentosEnriched p/ pegar inconsistência.
-  const qtdComProblema = useMemo(
-    () =>
-      lancamentosEnriched.filter((m) => {
-        const qNF = getQualidadeNF(m, nfMap);
-        const qCat = getQualidadeCategoria(m, nfMap);
-        return qNF.cor === "vermelho" || qCat.cor === "vermelho";
-      }).length,
-    [lancamentosEnriched, nfMap],
-  );
-  const totalLancamentos = lancamentosEnriched.length;
-  const pctSaude = totalLancamentos > 0
-    ? Math.round((1 - qtdComProblema / totalLancamentos) * 100)
-    : 100;
+    const atrasados = emAberto.filter((l) => {
+      if (!l.data_vencimento) return false;
+      const v = new Date(l.data_vencimento + "T00:00:00");
+      return v < hoje;
+    });
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const pageData = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+    const mesAtual = emAberto.filter(noMesAtual);
+
+    const proximoMes = emAberto.filter((l) => {
+      if (!l.data_vencimento) return false;
+      const v = new Date(l.data_vencimento + "T00:00:00");
+      return v >= inicioProximoMes && v <= fimProximoMes;
+    });
+
+    const tresMeses = emAberto.filter((l) => {
+      if (!l.data_vencimento) return false;
+      const v = new Date(l.data_vencimento + "T00:00:00");
+      return v >= inicioProximoMes && v <= fim3Meses;
+    });
+
+    const semConciliacao = todos.filter((l) => {
+      if (!noMesAtual(l)) return false;
+      return statusVisual(l) === "paga" && !l.conciliado_em;
+    });
+
+    // Qualidade — base = mês atual
+    const baseQualidade = todos.filter(noMesAtual);
+    const totalBase = baseQualidade.length;
+
+    const comNF = baseQualidade.filter((l) => getQualidadeNF(l, nfMap).cor === "verde").length;
+    const comCategoriaOK = baseQualidade.filter((l) => getQualidadeCategoria(l, nfMap).cor === "verde").length;
+    const comDocOK = baseQualidade.filter((l) => statusFlagsMap.get(l.id)?.tem_doc_pendente !== true).length;
+
+    const sumValor = (arr: Lancamento[]) => arr.reduce((s, l) => s + Number(l.valor || 0), 0);
+    const pct = (parte: number, total: number) => (total > 0 ? Math.round((parte / total) * 100) : 100);
+
+    return {
+      atrasados: { qtd: atrasados.length, valor: sumValor(atrasados) },
+      mesAtual: { qtd: mesAtual.length, valor: sumValor(mesAtual) },
+      proximoMes: { qtd: proximoMes.length, valor: sumValor(proximoMes) },
+      tresMeses: { qtd: tresMeses.length, valor: sumValor(tresMeses) },
+      semConciliacao: { qtd: semConciliacao.length, valor: sumValor(semConciliacao) },
+      qualidadeNF: { pct: pct(comNF, totalBase), atendidos: comNF, total: totalBase },
+      qualidadeCategoria: { pct: pct(comCategoriaOK, totalBase), atendidos: comCategoriaOK, total: totalBase },
+      qualidadeDoc: { pct: pct(comDocOK, totalBase), atendidos: comDocOK, total: totalBase },
+    };
+  }, [lancamentosEnriched, nfMap, statusFlagsMap]);
+
+
 
   function nomeParceiro(l: Lancamento): string {
     return (
