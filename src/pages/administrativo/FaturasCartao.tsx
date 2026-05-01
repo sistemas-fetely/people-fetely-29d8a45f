@@ -509,7 +509,7 @@ export default function FaturasCartao() {
           </Card>
           <Card className={cn(totals.modoFocado && "bg-amber-50 border-amber-300")}>
             <CardContent className="p-4">
-              <div className="text-[10px] uppercase tracking-wide text-emerald-700 font-medium">Conciliado</div>
+              <div className="text-[10px] uppercase tracking-wide text-emerald-700 font-medium">Vinculado</div>
               <div className="text-xl font-bold mt-1 text-emerald-700">{formatBRL(totals.totalConciliado)}</div>
               <div className="text-[10px] text-muted-foreground mt-0.5">já decidido</div>
             </CardContent>
@@ -554,7 +554,7 @@ export default function FaturasCartao() {
             description="aguarda concil."
           />
           <KpiPill
-            label="Conciliadas"
+            label="Vinculadas"
             count={totals.conciliadas}
             color="emerald"
             active={filtroPill === "conciliada"}
@@ -1046,31 +1046,31 @@ function KpiPill({ label, count, color, active, onClick, icon, description }: Kp
       bg: "bg-admin/5",
       text: "text-admin",
       border: "border-admin/20",
-      activeBg: "bg-admin text-admin-foreground border-admin",
+      activeBg: "bg-red-50 text-red-700 border-red-300",
     },
     amber: {
       bg: "bg-amber-50",
       text: "text-amber-700",
       border: "border-amber-200",
-      activeBg: "bg-amber-600 text-white border-amber-600",
+      activeBg: "bg-amber-50 text-amber-700 border-amber-300",
     },
     emerald: {
       bg: "bg-emerald-50",
       text: "text-emerald-700",
       border: "border-emerald-200",
-      activeBg: "bg-emerald-600 text-white border-emerald-600",
+      activeBg: "bg-emerald-50 text-emerald-700 border-emerald-300",
     },
     blue: {
       bg: "bg-blue-50",
       text: "text-blue-700",
       border: "border-blue-200",
-      activeBg: "bg-blue-600 text-white border-blue-600",
+      activeBg: "bg-blue-50 text-blue-700 border-blue-300",
     },
     gray: {
       bg: "bg-gray-50",
       text: "text-gray-700",
       border: "border-gray-200",
-      activeBg: "bg-gray-700 text-white border-gray-700",
+      activeBg: "bg-gray-100 text-gray-800 border-gray-400",
     },
   };
   const c = colorMap[color];
