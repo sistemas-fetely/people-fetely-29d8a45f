@@ -230,7 +230,9 @@ type FiltroOperacional =
   | "sem_conciliacao"
   | "qualidade_nf"
   | "qualidade_categoria"
-  | "qualidade_doc";
+  | "qualidade_doc"
+  | "qualidade_vinculado"
+  | "qualidade_conciliado";
 
 function CardKPI({
   titulo,
@@ -569,6 +571,16 @@ export default function CaixaBanco() {
         list = list.filter((l) => getQualidadeCategoria(l, nfMap).cor === "vermelho");
       } else if (filtroOp === "qualidade_doc") {
         list = list.filter(flagsDoc);
+      } else if (filtroOp === "qualidade_vinculado") {
+        list = list.filter((l) =>
+          !l.vinculada_cartao
+          && l.origem_view !== "cartao_lancamento"
+          && !l.movimentacao_bancaria_id
+        );
+      } else if (filtroOp === "qualidade_conciliado") {
+        list = list.filter((l) =>
+          !l.conciliado_em && l.status_caixa !== "conciliado"
+        );
       }
     }
 
@@ -626,6 +638,14 @@ export default function CaixaBanco() {
     const comNF = baseQualidade.filter((l) => getQualidadeNF(l, nfMap).cor === "verde").length;
     const comCategoriaOK = baseQualidade.filter((l) => getQualidadeCategoria(l, nfMap).cor === "verde").length;
     const comDocOK = baseQualidade.filter((l) => statusFlagsMap.get(l.id)?.tem_doc_pendente !== true).length;
+    const comVinculadoOK = baseQualidade.filter((l) =>
+      l.vinculada_cartao
+      || l.origem_view === "cartao_lancamento"
+      || l.movimentacao_bancaria_id
+    ).length;
+    const comConciliadoOK = baseQualidade.filter((l) =>
+      l.conciliado_em || l.status_caixa === "conciliado"
+    ).length;
 
     const sumValor = (arr: Lancamento[]) => arr.reduce((s, l) => s + Number(l.valor || 0), 0);
     const pct = (parte: number, total: number) => (total > 0 ? Math.round((parte / total) * 100) : 100);
@@ -639,6 +659,8 @@ export default function CaixaBanco() {
       qualidadeNF: { pct: pct(comNF, totalBase), atendidos: comNF, total: totalBase },
       qualidadeCategoria: { pct: pct(comCategoriaOK, totalBase), atendidos: comCategoriaOK, total: totalBase },
       qualidadeDoc: { pct: pct(comDocOK, totalBase), atendidos: comDocOK, total: totalBase },
+      qualidadeVinculado: { pct: pct(comVinculadoOK, totalBase), atendidos: comVinculadoOK, total: totalBase },
+      qualidadeConciliado: { pct: pct(comConciliadoOK, totalBase), atendidos: comConciliadoOK, total: totalBase },
     };
   }, [lancamentosEnriched, nfMap, statusFlagsMap]);
 
@@ -718,8 +740,8 @@ export default function CaixaBanco() {
           />
         </div>
 
-        {/* LINHA 2 — Cards Qualidade (3 cards) */}
-        <div className="grid grid-cols-3 gap-3">
+        {/* LINHA 2 — Cards Qualidade (5 cards) */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
           <CardKPI
             titulo="NF — qualidade"
             valor={`${kpis.qualidadeNF.pct}%`}
@@ -746,6 +768,24 @@ export default function CaixaBanco() {
             ativo={filtroOp === "qualidade_doc"}
             onClick={() => setFiltroOp(filtroOp === "qualidade_doc" ? "todos" : "qualidade_doc")}
             icone={Paperclip}
+          />
+          <CardKPI
+            titulo="Vinculado — qualidade"
+            valor={`${kpis.qualidadeVinculado.pct}%`}
+            sublinha={`${kpis.qualidadeVinculado.atendidos}/${kpis.qualidadeVinculado.total} no mês`}
+            cor="fetely"
+            ativo={filtroOp === "qualidade_vinculado"}
+            onClick={() => setFiltroOp(filtroOp === "qualidade_vinculado" ? "todos" : "qualidade_vinculado")}
+            icone={Link2}
+          />
+          <CardKPI
+            titulo="Conciliado — qualidade"
+            valor={`${kpis.qualidadeConciliado.pct}%`}
+            sublinha={`${kpis.qualidadeConciliado.atendidos}/${kpis.qualidadeConciliado.total} no mês`}
+            cor="fetely"
+            ativo={filtroOp === "qualidade_conciliado"}
+            onClick={() => setFiltroOp(filtroOp === "qualidade_conciliado" ? "todos" : "qualidade_conciliado")}
+            icone={CircleDollarSign}
           />
         </div>
 
