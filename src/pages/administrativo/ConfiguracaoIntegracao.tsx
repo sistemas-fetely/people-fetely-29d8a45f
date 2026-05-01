@@ -9,6 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Eye, EyeOff, Loader2, RefreshCw, CheckCircle2, XCircle, AlertCircle, Settings2, ExternalLink, Mail, Plus, Pencil, Trash2 } from "lucide-react";
@@ -29,6 +30,7 @@ export default function ConfiguracaoIntegracao() {
   const [manualCode, setManualCode] = useState("");
   const [processingCode, setProcessingCode] = useState(false);
   const [fixExecutado, setFixExecutado] = useState(false);
+  const [logsLimit, setLogsLimit] = useState(5);
 
   // Financeiro externo
   const [showDialogFin, setShowDialogFin] = useState(false);
@@ -68,14 +70,14 @@ export default function ConfiguracaoIntegracao() {
   });
 
   const { data: logs = [] } = useQuery({
-    queryKey: ["integracao-bling-logs"],
+    queryKey: ["integracao-bling-logs", logsLimit],
     queryFn: async () => {
       const { data } = await supabase
         .from("integracoes_sync_log")
         .select("*")
         .eq("sistema", "bling")
         .order("created_at", { ascending: false })
-        .limit(20);
+        .limit(logsLimit);
       return data || [];
     },
     refetchInterval: syncing ? 2000 : false,
@@ -671,28 +673,41 @@ export default function ConfiguracaoIntegracao() {
           <div className="flex items-center justify-between gap-2">
             <div>
               <CardTitle>Histórico de sincronizações</CardTitle>
-              <CardDescription>Últimas 20 execuções</CardDescription>
+              <CardDescription>Últimas {logsLimit} execuções</CardDescription>
             </div>
-            {logs.some((l: any) => l.status === "executando") && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={async () => {
-                  const { data, error } = await supabase.functions.invoke(
-                    "sync-bling-financeiro",
-                    { body: { tipo: "limpar_travados" } }
-                  );
-                  if (error) {
-                    toast.error("Falha: " + error.message);
-                  } else {
-                    toast.success(`${data?.cancelados ?? 0} sync(s) marcadas como canceladas`);
-                    qc.invalidateQueries({ queryKey: ["integracao-bling-logs"] });
-                  }
-                }}
-              >
-                Limpar travados
-              </Button>
-            )}
+            <div className="flex items-center gap-2">
+              <Select value={String(logsLimit)} onValueChange={(v) => setLogsLimit(Number(v))}>
+                <SelectTrigger className="w-[110px] h-9">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="5">Últimos 5</SelectItem>
+                  <SelectItem value="10">Últimos 10</SelectItem>
+                  <SelectItem value="20">Últimos 20</SelectItem>
+                  <SelectItem value="50">Últimos 50</SelectItem>
+                </SelectContent>
+              </Select>
+              {logs.some((l: any) => l.status === "executando") && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={async () => {
+                    const { data, error } = await supabase.functions.invoke(
+                      "sync-bling-financeiro",
+                      { body: { tipo: "limpar_travados" } }
+                    );
+                    if (error) {
+                      toast.error("Falha: " + error.message);
+                    } else {
+                      toast.success(`${data?.cancelados ?? 0} sync(s) marcadas como canceladas`);
+                      qc.invalidateQueries({ queryKey: ["integracao-bling-logs"] });
+                    }
+                  }}
+                >
+                  Limpar travados
+                </Button>
+              )}
+            </div>
           </div>
         </CardHeader>
         <CardContent>
