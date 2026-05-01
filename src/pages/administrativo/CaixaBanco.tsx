@@ -155,6 +155,7 @@ export default function CaixaBanco() {
   const [busca, setBusca] = useFiltrosPersistentes<string>("caixabanco_busca", "");
   const [page, setPage] = useFiltrosPersistentes<number>("caixabanco_page", 1);
   const [contaIdDrawer, setContaIdDrawer] = useState<string | null>(null);
+  const [mostrarSoInconsistentes, setMostrarSoInconsistentes] = useState(false);
   const navigate = useNavigate();
 
   // Query da view unificada
