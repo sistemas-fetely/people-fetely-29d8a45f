@@ -26,7 +26,6 @@ import {
 import {
   Wallet,
   Search,
-  CheckCircle2,
   Clock,
   Link as LinkIcon,
   FileWarning,
@@ -37,6 +36,8 @@ import {
   Receipt,
   FolderTree,
   Paperclip,
+  Link2,
+  CircleDollarSign,
   Flame,
   AlertOctagon,
   CalendarClock,
@@ -50,8 +51,6 @@ import { formatBRL, formatDateBR } from "@/lib/format-currency";
 import ContaPagarDetalheDrawer from "@/components/financeiro/ContaPagarDetalheDrawer";
 import { getCompromissoInfoMap, type CompromissoInfo } from "@/lib/financeiro/get-compromisso-info";
 import { getMeioPagamentoIcon } from "@/lib/financeiro/meio-pagamento-icon";
-import { useQualidadeDadoMap } from "@/hooks/useQualidadeDadoMap";
-import { getQualidadeDadoIcon } from "@/lib/financeiro/qualidade-dado-icon";
 
 import { getStatusFlagsMap, type FlagsContaPagar } from "@/lib/financeiro/get-status-flags";
 import { classFundoFuturo } from "@/lib/financeiro/is-vencimento-futuro";
@@ -157,6 +156,30 @@ function getQualidadeCategoria(
     };
   }
   return { cor: "verde", motivo: "Categoria validada por NF" };
+}
+
+function getQualidadeVinculado(m: {
+  origem_view?: string | null;
+  vinculada_cartao?: boolean | null;
+  movimentacao_bancaria_id?: string | null;
+}): { cor: "verde" | "vermelho"; motivo: string } {
+  if (m.vinculada_cartao || m.origem_view === "cartao_lancamento") {
+    return { cor: "verde", motivo: "Vinculado a lançamento de cartão" };
+  }
+  if (m.movimentacao_bancaria_id) {
+    return { cor: "verde", motivo: "Vinculado a movimentação bancária" };
+  }
+  return { cor: "vermelho", motivo: "Sem vínculo de origem" };
+}
+
+function getQualidadeConciliado(m: {
+  conciliado_em?: string | null;
+  status_caixa?: string;
+}): { cor: "verde" | "vermelho"; motivo: string } {
+  if (m.conciliado_em || m.status_caixa === "conciliado") {
+    return { cor: "verde", motivo: "Conciliado — bateu com extrato bancário" };
+  }
+  return { cor: "vermelho", motivo: "Não conciliado bancariamente" };
 }
 
 type ContaBancariaLite = {
@@ -357,9 +380,6 @@ export default function CaixaBanco() {
     enabled: idsParaCompromisso.length > 0,
     queryFn: () => getStatusFlagsMap(idsParaCompromisso),
   });
-
-  // Map de qualidade do dado por id (bolinha 🔴/🟡 na coluna Tags).
-  const { data: qualidadeMap } = useQualidadeDadoMap(idsParaCompromisso);
 
   // Inconsistência de categoria (NF vs Conta) — vive em movimentacoes_bancarias.
   const movIds = useMemo(
@@ -849,14 +869,6 @@ export default function CaixaBanco() {
                                 }
                                 return null;
                               })()}
-                              {conciliada && (
-                                <span
-                                  className="shrink-0"
-                                  title="Conciliada — bateu com extrato bancário"
-                                >
-                                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
-                                </span>
-                              )}
                             </div>
                             {(l.vinculada_cartao || l.origem_view === "cartao_lancamento") && (
                               <Badge
@@ -949,6 +961,8 @@ export default function CaixaBanco() {
                                 const qNF = getQualidadeNF(l, nfMap);
                                 const qCat = getQualidadeCategoria(l, nfMap);
                                 const docOk = !docPendente;
+                                const qVinc = getQualidadeVinculado(l);
+                                const qConc = getQualidadeConciliado(l);
                                 const corClass = (cor: "verde" | "amarelo" | "vermelho") => {
                                   if (cor === "verde") return "text-emerald-600";
                                   if (cor === "amarelo") return "text-amber-500";
@@ -989,19 +1003,24 @@ export default function CaixaBanco() {
                                           </p>
                                         </TooltipContent>
                                       </Tooltip>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <Link2 className={cn("h-3.5 w-3.5 cursor-help", corClass(qVinc.cor))} strokeWidth={2.2} />
+                                        </TooltipTrigger>
+                                        <TooltipContent className="max-w-xs">
+                                          <p className="text-xs">🔗 {qVinc.motivo}</p>
+                                        </TooltipContent>
+                                      </Tooltip>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <CircleDollarSign className={cn("h-3.5 w-3.5 cursor-help", corClass(qConc.cor))} strokeWidth={2.2} />
+                                        </TooltipTrigger>
+                                        <TooltipContent className="max-w-xs">
+                                          <p className="text-xs">💰 {qConc.motivo}</p>
+                                        </TooltipContent>
+                                      </Tooltip>
                                     </div>
                                   </TooltipProvider>
-                                );
-                              })()}
-                              {(() => {
-                                const q = qualidadeMap?.get(l.id);
-                                const visual = getQualidadeDadoIcon(q?.nivel, q?.motivos);
-                                if (!visual) return null;
-                                const QIcon = visual.Icon;
-                                return (
-                                  <span title={visual.tooltip} className="inline-flex items-center mr-1">
-                                    <QIcon className={`h-2.5 w-2.5 ${visual.cor} ${visual.bg}`} />
-                                  </span>
                                 );
                               })()}
                             </div>
