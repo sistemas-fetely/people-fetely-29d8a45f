@@ -26,7 +26,6 @@ import {
 import {
   Wallet,
   Search,
-  CheckCircle2,
   Clock,
   Link as LinkIcon,
   FileWarning,
@@ -37,6 +36,8 @@ import {
   Receipt,
   FolderTree,
   Paperclip,
+  Link2,
+  CircleDollarSign,
   Flame,
   AlertOctagon,
   CalendarClock,
