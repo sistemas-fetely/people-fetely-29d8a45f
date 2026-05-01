@@ -43,12 +43,16 @@ import {
   CalendarClock,
   CalendarRange,
   RefreshCcw,
+  Sparkles,
+  Loader2,
   type LucideIcon,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
+import { toast } from "sonner";
 
 import ContaPagarDetalheDrawer from "@/components/financeiro/ContaPagarDetalheDrawer";
+import SugestaoIADialog from "@/components/financeiro/SugestaoIADialog";
 import { getCompromissoInfoMap, type CompromissoInfo } from "@/lib/financeiro/get-compromisso-info";
 import { getMeioPagamentoIcon } from "@/lib/financeiro/meio-pagamento-icon";
 
@@ -82,6 +86,7 @@ type Lancamento = {
   fatura_vencimento?: string | null;
   categoria_inconsistente?: boolean | null;
   inconsistencia_motivo?: string | null;
+  categoria_sugerida_ia?: boolean | null;
 };
 
 /**
@@ -136,10 +141,25 @@ function getQualidadeNF(
  * Vermelho = sem categoria OU diverge da NF
  */
 function getQualidadeCategoria(
-  m: { id: string; categoria_id: string | null },
+  m: {
+    id: string;
+    categoria_id: string | null;
+    categoria_sugerida_ia?: boolean | null;
+  },
   nfMap?: Map<string, string | null>,
-): { cor: "verde" | "amarelo" | "vermelho"; motivo: string } {
+): {
+  cor: "verde" | "amarelo" | "vermelho";
+  motivo: string;
+  temSugestaoIA?: boolean;
+} {
   if (!m.categoria_id) {
+    if (m.categoria_sugerida_ia === true) {
+      return {
+        cor: "amarelo",
+        motivo: "Sugestão IA pendente — clique pra revisar",
+        temSugestaoIA: true,
+      };
+    }
     return { cor: "vermelho", motivo: "Sem categoria" };
   }
   const categoriaDaNF = nfMap?.get(m.id);
@@ -314,6 +334,35 @@ export default function CaixaBanco() {
   const [contaIdDrawer, setContaIdDrawer] = useState<string | null>(null);
   const [mostrarSoInconsistentes, setMostrarSoInconsistentes] = useState(false);
   const [filtroOp, setFiltroOp] = useState<FiltroOperacional>("todos");
+  const [aplicandoIA, setAplicandoIA] = useState(false);
+  const [sugestaoMovId, setSugestaoMovId] = useState<string | null>(null);
+
+  async function handleAplicarIAEmMassa() {
+    setAplicandoIA(true);
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase as any).rpc(
+        "aplicar_ia_categoria_em_massa",
+      );
+      if (error) throw error;
+      const aplicadas = (data as { aplicadas?: number; sugeridas?: number } | null)?.aplicadas || 0;
+      const sugeridas = (data as { aplicadas?: number; sugeridas?: number } | null)?.sugeridas || 0;
+      if (aplicadas > 0 || sugeridas > 0) {
+        toast.success(
+          `IA: ${aplicadas} aplicadas direto, ${sugeridas} sugestões pra revisar`,
+        );
+      } else {
+        toast.info("IA não encontrou novos matches — todas as movs já foram processadas");
+      }
+      qc.invalidateQueries({ queryKey: ["lancamentos-caixa-banco"] });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      toast.error("Erro: " + msg);
+    } finally {
+      setAplicandoIA(false);
+    }
+  }
+
   const navigate = useNavigate();
 
   // Query da view unificada
@@ -789,6 +838,24 @@ export default function CaixaBanco() {
           />
         </div>
 
+        {/* Ação IA — resolve categorias em massa */}
+        <div className="flex justify-end">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={handleAplicarIAEmMassa}
+            disabled={aplicandoIA}
+            className="gap-2 border-amber-300 text-amber-700 hover:bg-amber-50"
+          >
+            {aplicandoIA ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Sparkles className="h-3.5 w-3.5" />
+            )}
+            Resolver com IA
+          </Button>
+        </div>
+
         {/* Filtros */}
         <div className="flex gap-2 flex-wrap items-center">
           <div className="relative w-full sm:w-72">
@@ -1038,7 +1105,24 @@ export default function CaixaBanco() {
                                       </Tooltip>
                                       <Tooltip>
                                         <TooltipTrigger asChild>
-                                          <FolderTree className={cn("h-3.5 w-3.5 cursor-help", corClass(qCat.cor))} strokeWidth={2.2} />
+                                          <FolderTree
+                                            className={cn(
+                                              "h-3.5 w-3.5",
+                                              corClass(qCat.cor),
+                                              qCat.temSugestaoIA
+                                                ? "cursor-pointer hover:scale-125 transition-transform"
+                                                : "cursor-help",
+                                            )}
+                                            strokeWidth={2.2}
+                                            onClick={
+                                              qCat.temSugestaoIA
+                                                ? (e) => {
+                                                    e.stopPropagation();
+                                                    setSugestaoMovId(l.id);
+                                                  }
+                                                : undefined
+                                            }
+                                          />
                                         </TooltipTrigger>
                                         <TooltipContent className="max-w-xs">
                                           <p className="text-xs">🏷️ {qCat.motivo}</p>
@@ -1100,6 +1184,17 @@ export default function CaixaBanco() {
         contaId={contaIdDrawer}
         onClose={() => setContaIdDrawer(null)}
       />
+
+      {sugestaoMovId && (
+        <SugestaoIADialog
+          movId={sugestaoMovId}
+          onClose={() => setSugestaoMovId(null)}
+          onApply={() => {
+            qc.invalidateQueries({ queryKey: ["lancamentos-caixa-banco"] });
+            setSugestaoMovId(null);
+          }}
+        />
+      )}
     </div>
   );
 }
