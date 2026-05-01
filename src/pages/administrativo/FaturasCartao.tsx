@@ -263,16 +263,26 @@ export default function FaturasCartao() {
   const totals = useMemo(() => {
     const all = faturas || [];
 
+    const abertasArr = all.filter((f) => f.status === "aberta");
+    const valorTotalAbertas = abertasArr.reduce((s, f) => s + (f.valor_total || 0), 0);
+    const valorVinculado = all.reduce((s, f) => s + (f.valor_conciliado || 0), 0);
+    const valorNaoVinculado = abertasArr.reduce(
+      (s, f) => s + ((f.valor_total || 0) - (f.valor_conciliado || 0)),
+      0,
+    );
+
     const base = {
       qtdFaturas: all.length,
       total: all.length,
-      abertas: all.filter((f) => f.status === "aberta").length,
+      abertas: abertasArr.length,
+      qtdAbertas: abertasArr.length,
       pagas: all.filter((f) => f.status === "paga").length,
       conciliadas: all.filter((f) => f.status === "conciliada").length,
       canceladas: all.filter((f) => f.status === "cancelada").length,
-      valorAberto: all
-        .filter((f) => f.status === "aberta")
-        .reduce((s, f) => s + (f.valor_total || 0), 0),
+      valorAberto: valorTotalAbertas,
+      valorTotalAbertas,
+      valorVinculado,
+      valorNaoVinculado,
       totalGeral: all.reduce((s, f) => s + (f.valor_total || 0), 0),
       totalConciliado: all.reduce((s, f) => s + (f.valor_conciliado || 0), 0),
       totalPendente: all.reduce((s, f) => s + (f.valor_pendente || 0), 0),
