@@ -257,23 +257,21 @@ export default function OFXStage() {
         </p>
       </div>
 
-      <Card>
-        <CardContent className="pt-6">
-          <Label className="text-xs">Conta bancária</Label>
-          <Select value={contaBancariaId} onValueChange={setContaBancariaId}>
-            <SelectTrigger className="w-[320px] mt-1">
-              <SelectValue placeholder="Selecione a conta" />
-            </SelectTrigger>
-            <SelectContent>
-              {(contas || []).map((c) => (
-                <SelectItem key={c.id} value={c.id}>
-                  {c.nome_exibicao}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </CardContent>
-      </Card>
+      <div className="flex items-center gap-3 mb-3">
+        <span className="text-xs text-muted-foreground font-medium">Conta bancária:</span>
+        <Select value={contaBancariaId} onValueChange={setContaBancariaId}>
+          <SelectTrigger className="h-8 text-xs w-auto min-w-[200px]">
+            <SelectValue placeholder="Selecione a conta" />
+          </SelectTrigger>
+          <SelectContent>
+            {(contas || []).map((c) => (
+              <SelectItem key={c.id} value={c.id}>
+                {c.nome_exibicao}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
       {!contaBancariaId ? (
         <Card>
