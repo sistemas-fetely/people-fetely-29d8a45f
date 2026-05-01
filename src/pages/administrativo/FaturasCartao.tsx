@@ -539,12 +539,9 @@ export default function FaturasCartao() {
                 <Card
                   key={cartao.id}
                   className={cn(
-                    "cursor-pointer hover:shadow-md transition bg-card",
+                    "transition bg-card",
                     ativo && "ring-2 ring-admin border-admin",
                   )}
-                  onClick={() =>
-                    setFiltroCartao(ativo ? "__todos__" : cartao.id)
-                  }
                 >
                   <CardContent className="p-4 space-y-3">
                     <div className="flex items-center gap-2">
