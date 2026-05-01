@@ -377,6 +377,7 @@ export default function OFXStage() {
               ) : (
                 ofxFiltradas.map((ofx) => {
                   const selected = ofxSelecionada?.id === ofx.id;
+                  const checked = selecionadasMassa.has(ofx.id);
                   const eh_debito = ofx.valor < 0;
                   const acao = acaoEmCurso?.includes(ofx.id);
                   return (
@@ -385,31 +386,46 @@ export default function OFXStage() {
                       className={`p-2 border rounded text-xs transition-all ${
                         selected
                           ? "border-blue-500 bg-blue-50 ring-2 ring-blue-200"
-                          : "border-zinc-200 hover:border-zinc-300 cursor-pointer"
+                          : checked
+                            ? "border-amber-400 bg-amber-50/60"
+                            : "border-zinc-200 hover:border-zinc-300"
                       }`}
-                      onClick={() => !acao && setOfxSelecionada(selected ? null : ofx)}
                     >
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex-1 min-w-0">
-                          <div className="font-medium truncate">{ofx.descricao}</div>
-                          <div className="text-muted-foreground text-[10px]">{formatDateBR(ofx.data_transacao)}</div>
-                        </div>
-                        <div className={`font-mono font-semibold ${eh_debito ? "text-red-700" : "text-emerald-700"}`}>
-                          {formatBRL(ofx.valor)}
+                      <div className="flex items-start gap-2">
+                        <Checkbox
+                          checked={checked}
+                          onCheckedChange={() => !acao && toggleSelMassa(ofx.id)}
+                          onClick={(e) => e.stopPropagation()}
+                          className="mt-0.5"
+                          disabled={!!acao}
+                        />
+                        <div
+                          className="flex-1 min-w-0 cursor-pointer"
+                          onClick={() => !acao && setOfxSelecionada(selected ? null : ofx)}
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1 min-w-0">
+                              <div className="font-medium truncate">{ofx.descricao}</div>
+                              <div className="text-muted-foreground text-[10px]">{formatDateBR(ofx.data_transacao)}</div>
+                            </div>
+                            <div className={`font-mono font-semibold ${eh_debito ? "text-red-700" : "text-emerald-700"}`}>
+                              {formatBRL(ofx.valor)}
+                            </div>
+                          </div>
                         </div>
                       </div>
-                      {selected && (
-                        <div className="flex items-center gap-1 mt-2 pt-2 border-t">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="h-6 px-2 text-[10px] gap-1"
-                            onClick={(e) => { e.stopPropagation(); handleLancarMovimentacao(ofx); }}
-                            disabled={!!acao}
-                          >
-                            <Plus className="h-3 w-3" />
-                            Lançar como movimentação
-                          </Button>
+                      <div className="flex items-center gap-1 mt-2 pt-2 border-t flex-wrap">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-6 px-2 text-[10px] gap-1"
+                          onClick={(e) => { e.stopPropagation(); handleLancarMovimentacao(ofx); }}
+                          disabled={!!acao}
+                        >
+                          <Plus className="h-3 w-3" />
+                          Lançar como mov
+                        </Button>
+                        {selected && (
                           <Button
                             size="sm"
                             variant="outline"
@@ -421,18 +437,18 @@ export default function OFXStage() {
                             <LayersIcon className="h-3 w-3" />
                             Buscar Múltiplos
                           </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="h-6 px-2 text-[10px] gap-1 text-zinc-600"
-                            onClick={(e) => { e.stopPropagation(); handleIgnorar(ofx); }}
-                            disabled={!!acao}
-                          >
-                            <X className="h-3 w-3" />
-                            Ignorar
-                          </Button>
-                        </div>
-                      )}
+                        )}
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-6 px-2 text-[10px] gap-1 text-zinc-600"
+                          onClick={(e) => { e.stopPropagation(); handleIgnorar(ofx); }}
+                          disabled={!!acao}
+                        >
+                          <X className="h-3 w-3" />
+                          Ignorar
+                        </Button>
+                      </div>
                     </div>
                   );
                 })
