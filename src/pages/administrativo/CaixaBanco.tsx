@@ -244,20 +244,32 @@ function CardKPI({
   titulo: string;
   valor: string;
   sublinha: string;
-  cor: "red" | "blue" | "purple" | "teal" | "fetely";
+  cor: "red" | "amber" | "blue" | "purple" | "teal" | "fetely";
   ativo: boolean;
   onClick: () => void;
   icone?: LucideIcon;
 }) {
-  const corMap: Record<string, string> = {
-    red: ativo ? "bg-red-50 border-red-300" : "",
-    blue: ativo ? "bg-blue-50 border-blue-300" : "",
-    purple: ativo ? "bg-purple-50 border-purple-300" : "",
-    teal: ativo ? "bg-teal-50 border-teal-300" : "",
-    fetely: ativo ? "bg-emerald-50 border-emerald-300" : "",
+  const corBase: Record<string, string> = {
+    red: "bg-red-50/70 border-red-200",
+    amber: "bg-amber-50/70 border-amber-200",
+    blue: "bg-blue-50/70 border-blue-200",
+    purple: "bg-purple-50/70 border-purple-200",
+    teal: "bg-teal-50/70 border-teal-200",
+    fetely: "bg-emerald-50/70 border-emerald-200",
   };
+
+  const corAtivo: Record<string, string> = {
+    red: "bg-red-100 border-red-400 ring-2 ring-red-200",
+    amber: "bg-amber-100 border-amber-400 ring-2 ring-amber-200",
+    blue: "bg-blue-100 border-blue-400 ring-2 ring-blue-200",
+    purple: "bg-purple-100 border-purple-400 ring-2 ring-purple-200",
+    teal: "bg-teal-100 border-teal-400 ring-2 ring-teal-200",
+    fetely: "bg-emerald-100 border-emerald-400 ring-2 ring-emerald-200",
+  };
+
   const textMap: Record<string, string> = {
     red: "text-red-700",
+    amber: "text-amber-700",
     blue: "text-blue-700",
     purple: "text-purple-700",
     teal: "text-teal-700",
@@ -267,12 +279,17 @@ function CardKPI({
     <Card
       className={cn(
         "cursor-pointer transition-all hover:shadow-md",
-        corMap[cor],
+        ativo ? corAtivo[cor] : corBase[cor],
       )}
       onClick={onClick}
     >
       <CardHeader className="pb-1 pt-3 px-3">
-        <CardTitle className="text-[11px] font-normal text-muted-foreground flex items-center gap-1">
+        <CardTitle
+          className={cn(
+            "text-[11px] font-normal flex items-center gap-1",
+            ativo ? "text-foreground" : "text-muted-foreground",
+          )}
+        >
           {Icon && <Icon className="h-3 w-3" />}
           {titulo}
         </CardTitle>
