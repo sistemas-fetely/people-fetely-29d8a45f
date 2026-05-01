@@ -292,9 +292,9 @@ export default function ContasPagar() {
   }, [data, selecionadas]);
 
   return (
-    <div>
-      {/* HEADER STICKY 1 — título + botão Nova Despesa */}
-      <div className="sticky top-0 z-30 bg-background px-6 pt-6 pb-3">
+    <div className="flex flex-col h-[calc(100vh-64px)] overflow-hidden">
+      {/* HEADER STICKY ÚNICO — título + cards + filtros */}
+      <div className="sticky top-0 z-20 bg-background px-6 pt-6 pb-3 border-b space-y-4 backdrop-blur">
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
             <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
@@ -313,10 +313,6 @@ export default function ContasPagar() {
             Nova Despesa
           </Button>
         </div>
-      </div>
-
-      {/* HEADER STICKY 2 — KPIs + filtros (cola logo abaixo do header 1) */}
-      <div className="sticky top-[88px] z-20 bg-background px-6 pt-2 pb-4 space-y-4 border-b shadow-sm">
       {totals.modoFocado === "selecao" && (
         <div className="flex items-center justify-between text-xs px-1 -mb-1">
           <div className="text-emerald-700 font-medium">
@@ -567,9 +563,10 @@ export default function ContasPagar() {
         </CardHeader>
       </Card>
       </div>
-      {/* /HEADER STICKY 2 */}
+      {/* /HEADER STICKY */}
 
-      <div className="px-6 pb-6 space-y-6">
+      {/* CONTEÚDO COM SCROLL PRÓPRIO */}
+      <div className="flex-1 overflow-auto px-6 pb-6 pt-4 space-y-6">
       <Card>
         <CardContent className="pt-6">
           {/* Barra de ações em massa */}
