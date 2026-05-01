@@ -334,6 +334,35 @@ export default function CaixaBanco() {
   const [contaIdDrawer, setContaIdDrawer] = useState<string | null>(null);
   const [mostrarSoInconsistentes, setMostrarSoInconsistentes] = useState(false);
   const [filtroOp, setFiltroOp] = useState<FiltroOperacional>("todos");
+  const [aplicandoIA, setAplicandoIA] = useState(false);
+  const [sugestaoMovId, setSugestaoMovId] = useState<string | null>(null);
+
+  async function handleAplicarIAEmMassa() {
+    setAplicandoIA(true);
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase as any).rpc(
+        "aplicar_ia_categoria_em_massa",
+      );
+      if (error) throw error;
+      const aplicadas = (data as { aplicadas?: number; sugeridas?: number } | null)?.aplicadas || 0;
+      const sugeridas = (data as { aplicadas?: number; sugeridas?: number } | null)?.sugeridas || 0;
+      if (aplicadas > 0 || sugeridas > 0) {
+        toast.success(
+          `IA: ${aplicadas} aplicadas direto, ${sugeridas} sugestões pra revisar`,
+        );
+      } else {
+        toast.info("IA não encontrou novos matches — todas as movs já foram processadas");
+      }
+      qc.invalidateQueries({ queryKey: ["lancamentos-caixa-banco"] });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      toast.error("Erro: " + msg);
+    } finally {
+      setAplicandoIA(false);
+    }
+  }
+
   const navigate = useNavigate();
 
   // Query da view unificada
