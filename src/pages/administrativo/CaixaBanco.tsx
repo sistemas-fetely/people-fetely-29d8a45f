@@ -110,25 +110,45 @@ function isAtrasada(l: Lancamento): boolean {
 }
 
 /**
- * Qualidade binária da movimentação (Doutrina Flavio — KEEP IT SIMPLE).
- * Vermelho = sem categoria OU categoria inconsistente com a NF vinculada.
- * Verde = ok (sem bolinha).
+ * Qualidade da NF: vermelho se nenhum NF anexada; verde caso contrário.
  */
-function getQualidadeCategoria(m: {
-  categoria_id: string | null;
-  categoria_inconsistente?: boolean | null;
-  inconsistencia_motivo?: string | null;
-}): { cor: "vermelho" | "verde"; motivo: string } {
+function getQualidadeNF(
+  m: { id: string },
+  nfMap?: Map<string, string | null>,
+): { cor: "verde" | "vermelho"; motivo: string } {
+  const temNF = nfMap?.has(m.id) === true;
+  return temNF
+    ? { cor: "verde", motivo: "NF vinculada" }
+    : { cor: "vermelho", motivo: "Sem NF anexada" };
+}
+
+/**
+ * Qualidade da Categoria: compara com a categoria da NF vinculada.
+ * Verde = validada por NF (ou NF não tem categoria pra comparar)
+ * Amarelo = tem categoria mas sem NF pra validar
+ * Vermelho = sem categoria OU diverge da NF
+ */
+function getQualidadeCategoria(
+  m: { id: string; categoria_id: string | null },
+  nfMap?: Map<string, string | null>,
+): { cor: "verde" | "amarelo" | "vermelho"; motivo: string } {
   if (!m.categoria_id) {
     return { cor: "vermelho", motivo: "Sem categoria" };
   }
-  if (m.categoria_inconsistente === true) {
+  const categoriaDaNF = nfMap?.get(m.id);
+  if (categoriaDaNF === undefined) {
+    return { cor: "amarelo", motivo: "Tem categoria mas não validada por NF" };
+  }
+  if (categoriaDaNF === null) {
+    return { cor: "verde", motivo: "Categoria OK (NF sem categoria pra comparar)" };
+  }
+  if (m.categoria_id !== categoriaDaNF) {
     return {
       cor: "vermelho",
-      motivo: m.inconsistencia_motivo || "Categoria inconsistente com NF",
+      motivo: "Categoria diverge da NF — edite na NF pra resolver",
     };
   }
-  return { cor: "verde", motivo: "Categoria OK" };
+  return { cor: "verde", motivo: "Categoria validada por NF" };
 }
 
 type ContaBancariaLite = {
