@@ -114,8 +114,41 @@ export default function ContaPagarDetalheDrawer({ contaId, onClose }: Props) {
   const [showEnviar, setShowEnviar] = useState(false);
   const [modoEdit, setModoEdit] = useState(false);
   const [apagando, setApagando] = useState(false);
+  const [lancandoMov, setLancandoMov] = useState(false);
   const workflow = useContaWorkflow();
   const qc = useQueryClient();
+
+  async function handleLancarMov() {
+    if (!conta) return;
+    setLancandoMov(true);
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: result, error } = await (supabase as any).rpc(
+        "gerar_movimentacao_de_conta",
+        { p_conta_id: conta.id }
+      );
+      if (error) throw error;
+      if (!result?.ok) {
+        toast.error(result?.erro || "Erro ao lançar em movimentação");
+        return;
+      }
+
+      if (result?.ja_existia) {
+        toast.info("Esta conta já tinha movimentação vinculada");
+      } else {
+        toast.success("Lançada em Movimentação");
+      }
+
+      qc.invalidateQueries({ queryKey: ["contas-pagar"] });
+      qc.invalidateQueries({ queryKey: ["conta-pagar-detalhe", conta.id] });
+      qc.invalidateQueries({ queryKey: ["lancamentos-caixa-banco"] });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      toast.error("Erro: " + msg);
+    } finally {
+      setLancandoMov(false);
+    }
+  }
 
   async function handleApagar() {
     if (!conta) return;
