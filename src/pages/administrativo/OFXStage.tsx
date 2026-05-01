@@ -327,6 +327,34 @@ export default function OFXStage() {
                   <Badge variant="outline" className="ml-1">{transacoesOFX.length}</Badge>
                 </h2>
               </div>
+              {selecionadasMassa.size > 0 && (
+                <div className="mt-2 flex items-center justify-between gap-2 bg-amber-50 border border-amber-200 rounded p-2">
+                  <span className="text-xs text-amber-800 font-medium">
+                    {selecionadasMassa.size} {selecionadasMassa.size === 1 ? "transação selecionada" : "transações selecionadas"}
+                  </span>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 px-2 text-[11px]"
+                      onClick={() => setSelecionadasMassa(new Set())}
+                      disabled={ignorandoMassa}
+                    >
+                      Limpar
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 px-2 text-[11px] gap-1 border-amber-400 text-amber-800 hover:bg-amber-100"
+                      onClick={handleIgnorarMassa}
+                      disabled={ignorandoMassa}
+                    >
+                      {ignorandoMassa ? <Loader2 className="h-3 w-3 animate-spin" /> : <X className="h-3 w-3" />}
+                      Ignorar selecionadas
+                    </Button>
+                  </div>
+                </div>
+              )}
               <Input
                 placeholder="Filtrar por descrição..."
                 value={filtroDescOFX}
