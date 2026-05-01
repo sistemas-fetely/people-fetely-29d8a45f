@@ -188,6 +188,28 @@ export default function FaturasCartao() {
     },
   });
 
+  // Comprometido por cartão (contas a pagar abertas vinculadas a cada cartão)
+  const { data: comprometidoMap = new Map<string, number>() } = useQuery({
+    queryKey: ["cartoes-comprometido"],
+    queryFn: async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase as any)
+        .from("contas_pagar_receber")
+        .select("valor, pago_em_conta_id, is_cartao")
+        .eq("is_cartao", true)
+        .in("status", ["aberto", "aprovado", "aguardando_pagamento"]);
+      if (error) throw error;
+
+      const map = new Map<string, number>();
+      for (const row of (data || []) as Array<{ valor: number | null; pago_em_conta_id: string | null }>) {
+        const contaId = row.pago_em_conta_id;
+        if (!contaId) continue;
+        map.set(contaId, (map.get(contaId) || 0) + Number(row.valor || 0));
+      }
+      return map;
+    },
+  });
+
   // Faturas (view agregada com KPIs por fatura)
   const { data: faturas, isLoading } = useQuery({
     queryKey: ["faturas-cartao"],
@@ -262,14 +284,21 @@ export default function FaturasCartao() {
   // KPIs
   const totals = useMemo(() => {
     const all = faturas || [];
+    const escopo =
+      filtroCartao !== "__todos__"
+        ? all.filter((f) => f.conta_bancaria_id === filtroCartao)
+        : all;
 
-    const abertasArr = all.filter((f) => f.status === "aberta");
-    const valorTotalAbertas = abertasArr.reduce((s, f) => s + (f.valor_total || 0), 0);
-    const valorVinculado = all.reduce((s, f) => s + (f.valor_conciliado || 0), 0);
-    const valorNaoVinculado = abertasArr.reduce(
-      (s, f) => s + ((f.valor_total || 0) - (f.valor_conciliado || 0)),
+    const abertasArr = escopo.filter((f) => f.status === "aberta");
+    const valorTotalAbertas = abertasArr.reduce(
+      (s, f) => s + (f.valor_total || 0),
       0,
     );
+    const valorVinculado = abertasArr.reduce(
+      (s, f) => s + (f.valor_conciliado || 0),
+      0,
+    );
+    const valorNaoVinculado = valorTotalAbertas - valorVinculado;
 
     const base = {
       qtdFaturas: all.length,
@@ -306,7 +335,7 @@ export default function FaturasCartao() {
     }
 
     return base;
-  }, [faturas, faturaExpanded]);
+  }, [faturas, faturaExpanded, filtroCartao]);
 
   // Filtragem + Ordenação
   const filtered = useMemo(() => {
@@ -499,121 +528,162 @@ export default function FaturasCartao() {
             </button>
           </div>
         )}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          {/* CARDS DOS CARTÕES */}
-          {cartoes.map((cartao) => (
-            <Card
-              key={cartao.id}
-              className={cn(
-                "cursor-pointer hover:shadow-md transition bg-card",
-                filtroCartao === cartao.id && "ring-2 ring-admin border-admin",
-              )}
-              onClick={() =>
-                setFiltroCartao(filtroCartao === cartao.id ? "__todos__" : cartao.id)
-              }
-            >
-              <CardContent className="p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <CreditCard className="h-4 w-4 text-admin shrink-0" />
-                  <div className="min-w-0">
-                    <div className="text-sm font-semibold truncate">{cartao.nome_exibicao}</div>
-                    {cartao.banco && (
-                      <div className="text-[10px] text-muted-foreground truncate">{cartao.banco}</div>
-                    )}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {/* CARDS DOS CARTÕES — clique filtra */}
+          {cartoes.map((cartao) => {
+            const comprometido = comprometidoMap.get(cartao.id) || 0;
+            const limite = cartao.limite_credito || 0;
+            const disponivel = limite - comprometido;
+            const percentUsado = limite > 0 ? (comprometido / limite) * 100 : 0;
+            const ativo = filtroCartao === cartao.id;
+
+            return (
+              <Card
+                key={cartao.id}
+                className={cn(
+                  "cursor-pointer hover:shadow-md transition bg-card",
+                  ativo && "ring-2 ring-admin border-admin",
+                )}
+                onClick={() =>
+                  setFiltroCartao(ativo ? "__todos__" : cartao.id)
+                }
+              >
+                <CardContent className="p-4 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <CreditCard className="h-4 w-4 text-admin shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm font-semibold truncate">
+                        {cartao.nome_exibicao}
+                      </div>
+                      <div className="text-[10px] text-muted-foreground truncate">
+                        {cartao.banco}
+                        {cartao.dia_fechamento &&
+                          ` · Fecha dia ${cartao.dia_fechamento}`}
+                        {cartao.dia_vencimento &&
+                          ` · Vence dia ${cartao.dia_vencimento}`}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2">
+                    <div>
+                      <div className="text-[9px] uppercase tracking-wide text-muted-foreground">
+                        Limite
+                      </div>
+                      <div className="text-xs font-semibold font-mono">
+                        {formatBRL(limite)}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-[9px] uppercase tracking-wide text-muted-foreground">
+                        Comprometido
+                      </div>
+                      <div className="text-xs font-semibold font-mono text-amber-700">
+                        {formatBRL(comprometido)}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-[9px] uppercase tracking-wide text-muted-foreground">
+                        Disponível
+                      </div>
+                      <div className="text-xs font-semibold font-mono text-emerald-700">
+                        {formatBRL(disponivel)}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+                      <div
+                        className={cn(
+                          "h-full transition-all",
+                          percentUsado > 90
+                            ? "bg-red-500"
+                            : percentUsado > 70
+                              ? "bg-amber-500"
+                              : "bg-emerald-500",
+                        )}
+                        style={{ width: `${Math.min(100, percentUsado)}%` }}
+                      />
+                    </div>
+                    <div className="text-[9px] text-muted-foreground mt-1">
+                      {percentUsado.toFixed(0)}% usado
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+
+          {/* CARD CONSOLIDADO — Fatura(s) em aberto */}
+          <Card className="bg-amber-50/30 border-amber-200">
+            <CardContent className="p-4 space-y-3">
+              <div className="flex items-center gap-2">
+                <Receipt className="h-4 w-4 text-amber-700 shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <div className="text-sm font-semibold text-amber-900">
+                    Fatura(s) em aberto
+                  </div>
+                  <div className="text-[10px] text-muted-foreground">
+                    {totals.qtdAbertas}{" "}
+                    {totals.qtdAbertas === 1 ? "fatura" : "faturas"}
                   </div>
                 </div>
-                <div className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">Limite</div>
-                <div className="text-base font-bold mt-0.5">{formatBRL(cartao.limite_credito || 0)}</div>
-                {(cartao.dia_fechamento || cartao.dia_vencimento) && (
-                  <div className="text-[10px] text-muted-foreground mt-1">
-                    {cartao.dia_fechamento && `Fecha dia ${cartao.dia_fechamento}`}
-                    {cartao.dia_fechamento && cartao.dia_vencimento && " · "}
-                    {cartao.dia_vencimento && `Vence dia ${cartao.dia_vencimento}`}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          ))}
+              </div>
 
-          {/* KPI 1 — Faturas em aberto */}
-          <Card className="bg-amber-50/50 border-amber-200">
-            <CardContent className="p-4">
-              <div className="text-[10px] uppercase tracking-wide text-amber-700 font-medium">📑 Em aberto</div>
-              <div className="text-xl font-bold mt-1 text-amber-800">{formatBRL(totals.valorTotalAbertas)}</div>
-              <div className="text-[10px] text-muted-foreground mt-0.5">
-                {totals.qtdAbertas} {totals.qtdAbertas === 1 ? "fatura" : "faturas"}
+              <div className="grid grid-cols-3 gap-2">
+                <div>
+                  <div className="text-[9px] uppercase tracking-wide text-muted-foreground">
+                    Total
+                  </div>
+                  <div className="text-xs font-semibold font-mono">
+                    {formatBRL(totals.valorTotalAbertas)}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-[9px] uppercase tracking-wide text-muted-foreground">
+                    Vinculado
+                  </div>
+                  <div className="text-xs font-semibold font-mono text-emerald-700">
+                    {formatBRL(totals.valorVinculado)}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-[9px] uppercase tracking-wide text-muted-foreground">
+                    Falta
+                  </div>
+                  <div className="text-xs font-semibold font-mono text-red-700">
+                    {formatBRL(totals.valorNaoVinculado)}
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-emerald-500 transition-all"
+                    style={{
+                      width: `${
+                        totals.valorTotalAbertas > 0
+                          ? (totals.valorVinculado / totals.valorTotalAbertas) *
+                            100
+                          : 0
+                      }%`,
+                    }}
+                  />
+                </div>
+                <div className="text-[9px] text-muted-foreground mt-1">
+                  {totals.valorTotalAbertas > 0
+                    ? (
+                        (totals.valorVinculado / totals.valorTotalAbertas) *
+                        100
+                      ).toFixed(0)
+                    : 0}
+                  % vinculado
+                </div>
               </div>
             </CardContent>
           </Card>
-
-          {/* KPI 2 — Vinculado */}
-          <Card className="bg-emerald-50/50 border-emerald-200">
-            <CardContent className="p-4">
-              <div className="text-[10px] uppercase tracking-wide text-emerald-700 font-medium">✓ Vinculado</div>
-              <div className="text-xl font-bold mt-1 text-emerald-800">{formatBRL(totals.valorVinculado)}</div>
-              <div className="text-[10px] text-muted-foreground mt-0.5">já decidido</div>
-            </CardContent>
-          </Card>
-
-          {/* KPI 3 — Não Vinculado */}
-          <Card className="bg-red-50/50 border-red-200">
-            <CardContent className="p-4">
-              <div className="text-[10px] uppercase tracking-wide text-red-700 font-medium">⚠️ Não vinculado</div>
-              <div className="text-xl font-bold mt-1 text-red-800">{formatBRL(totals.valorNaoVinculado)}</div>
-              <div className="text-[10px] text-muted-foreground mt-0.5">a decidir</div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* KPIs como pills */}
-        <div className="flex flex-wrap gap-2">
-          <KpiPill
-            label="Todas"
-            count={totals.total}
-            color="admin"
-            active={filtroPill === "todas"}
-            onClick={() => setFiltroPill("todas")}
-            icon={<Receipt className="h-3 w-3" />}
-          />
-          <KpiPill
-            label="Abertas"
-            count={totals.abertas}
-            color="amber"
-            active={filtroPill === "aberta"}
-            onClick={() => setFiltroPill("aberta")}
-            icon={<Clock className="h-3 w-3" />}
-            description={
-              totals.valorAberto > 0 ? formatBRL(totals.valorAberto) : "a pagar"
-            }
-          />
-          <KpiPill
-            label="Pagas"
-            count={totals.pagas}
-            color="blue"
-            active={filtroPill === "paga"}
-            onClick={() => setFiltroPill("paga")}
-            icon={<CheckCircle2 className="h-3 w-3" />}
-            description="aguarda concil."
-          />
-          <KpiPill
-            label="Vinculadas"
-            count={totals.conciliadas}
-            color="emerald"
-            active={filtroPill === "conciliada"}
-            onClick={() => setFiltroPill("conciliada")}
-            icon={<Sparkles className="h-3 w-3" />}
-            description="ciclo completo"
-          />
-          {totals.canceladas > 0 && (
-            <KpiPill
-              label="Canceladas"
-              count={totals.canceladas}
-              color="gray"
-              active={filtroPill === "cancelada"}
-              onClick={() => setFiltroPill("cancelada")}
-              icon={<X className="h-3 w-3" />}
-            />
-          )}
         </div>
 
         {/* Filtros + busca */}
@@ -635,20 +705,6 @@ export default function FaturasCartao() {
               </button>
             )}
           </div>
-
-          <Select value={filtroCartao} onValueChange={setFiltroCartao}>
-            <SelectTrigger className="w-[200px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="__todos__">Todos os cartões</SelectItem>
-              {(cartoes || []).map((c) => (
-                <SelectItem key={c.id} value={c.id}>
-                  {c.nome_exibicao}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
 
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground ml-auto">
             <Calculator className="h-3.5 w-3.5" />
