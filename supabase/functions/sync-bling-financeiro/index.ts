@@ -401,6 +401,17 @@ serve(async (req) => {
       return ok({ sucesso: true, mensagem: "Bling conectado com sucesso!" });
     }
 
+    if (tipo === "limpar_travados") {
+      // Marca como "cancelado" qualquer log "executando" há mais de 3 minutos
+      var limite = new Date(Date.now() - 3 * 60 * 1000).toISOString();
+      var upd = await supabase.from("integracoes_sync_log")
+        .update({ status: "cancelado", detalhes: "Cancelado automaticamente (timeout)" })
+        .eq("status", "executando")
+        .lt("created_at", limite)
+        .select("id");
+      return ok({ sucesso: true, cancelados: upd.data ? upd.data.length : 0 });
+    }
+
     if (tipo === "contas_receber" || tipo === "pedidos" || tipo === "produtos") {
       var configResult = await supabase
         .from("integracoes_config")
@@ -422,6 +433,13 @@ serve(async (req) => {
         }
       }
 
+      // Limpa logs travados antes de iniciar (>3 min em "executando")
+      var limiteTravado = new Date(Date.now() - 3 * 60 * 1000).toISOString();
+      await supabase.from("integracoes_sync_log")
+        .update({ status: "cancelado", detalhes: "Cancelado automaticamente (timeout)" })
+        .eq("status", "executando")
+        .lt("created_at", limiteTravado);
+
       var logResult = await supabase.from("integracoes_sync_log").insert({
         sistema: "bling", tipo: tipo, status: "executando", iniciado_por: user.id
       }).select("id").maybeSingle();
@@ -431,12 +449,24 @@ serve(async (req) => {
       execStartTs = startTime;
       var result = { criados: 0, atualizados: 0, erros: 0 };
 
-      if (tipo === "contas_receber") {
-        result = await syncContasReceber(supabase, accessToken, config.ultima_sync_at);
-      } else if (tipo === "pedidos") {
-        result = await syncPedidos(supabase, accessToken, config.ultima_sync_at);
-      } else if (tipo === "produtos") {
-        result = await syncProdutos(supabase, accessToken);
+      try {
+        if (tipo === "contas_receber") {
+          result = await syncContasReceber(supabase, accessToken, config.ultima_sync_at);
+        } else if (tipo === "pedidos") {
+          result = await syncPedidos(supabase, accessToken, config.ultima_sync_at);
+        } else if (tipo === "produtos") {
+          result = await syncProdutos(supabase, accessToken);
+        }
+      } catch (eSync) {
+        var msgSync = (eSync instanceof Error) ? eSync.message : String(eSync);
+        if (logId) {
+          await supabase.from("integracoes_sync_log").update({
+            status: "erro",
+            detalhes: "Falha: " + msgSync,
+            duracao_ms: Date.now() - startTime
+          }).eq("id", logId);
+        }
+        throw eSync;
       }
 
       var duracao = Date.now() - startTime;
