@@ -479,6 +479,37 @@ export default function CaixaBanco() {
             </p>
           </CardContent>
         </Card>
+        <Card
+          className={cn(
+            "cursor-pointer transition-colors",
+            filtroSoVermelhas && "ring-2 ring-red-400",
+          )}
+          onClick={() => setFiltroSoVermelhas(!filtroSoVermelhas)}
+        >
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-normal text-muted-foreground flex items-center gap-1.5">
+              <Stethoscope className="h-3.5 w-3.5 text-emerald-600" /> Saúde do dado
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div
+              className={cn(
+                "text-2xl font-bold",
+                pctSaude >= 95
+                  ? "text-emerald-700"
+                  : pctSaude >= 70
+                    ? "text-amber-700"
+                    : "text-red-700",
+              )}
+            >
+              {pctSaude}%
+            </div>
+            <p className="text-[11px] text-muted-foreground mt-1">
+              {qtdComProblema} {qtdComProblema === 1 ? "lançamento" : "lançamentos"} com alerta
+              {filtroSoVermelhas && " · filtro ativo"}
+            </p>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Filtros + Ações em massa */}
