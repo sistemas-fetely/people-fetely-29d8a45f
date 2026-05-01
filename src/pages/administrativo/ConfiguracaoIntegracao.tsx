@@ -70,14 +70,14 @@ export default function ConfiguracaoIntegracao() {
   });
 
   const { data: logs = [] } = useQuery({
-    queryKey: ["integracao-bling-logs"],
+    queryKey: ["integracao-bling-logs", logsLimit],
     queryFn: async () => {
       const { data } = await supabase
         .from("integracoes_sync_log")
         .select("*")
         .eq("sistema", "bling")
         .order("created_at", { ascending: false })
-        .limit(20);
+        .limit(logsLimit);
       return data || [];
     },
     refetchInterval: syncing ? 2000 : false,
