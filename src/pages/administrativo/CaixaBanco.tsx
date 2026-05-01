@@ -1087,7 +1087,24 @@ export default function CaixaBanco() {
                                       </Tooltip>
                                       <Tooltip>
                                         <TooltipTrigger asChild>
-                                          <FolderTree className={cn("h-3.5 w-3.5 cursor-help", corClass(qCat.cor))} strokeWidth={2.2} />
+                                          <FolderTree
+                                            className={cn(
+                                              "h-3.5 w-3.5",
+                                              corClass(qCat.cor),
+                                              qCat.temSugestaoIA
+                                                ? "cursor-pointer hover:scale-125 transition-transform"
+                                                : "cursor-help",
+                                            )}
+                                            strokeWidth={2.2}
+                                            onClick={
+                                              qCat.temSugestaoIA
+                                                ? (e) => {
+                                                    e.stopPropagation();
+                                                    setSugestaoMovId(l.id);
+                                                  }
+                                                : undefined
+                                            }
+                                          />
                                         </TooltipTrigger>
                                         <TooltipContent className="max-w-xs">
                                           <p className="text-xs">🏷️ {qCat.motivo}</p>
