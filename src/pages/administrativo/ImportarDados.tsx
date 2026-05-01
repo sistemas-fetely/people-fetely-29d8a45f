@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { RefreshCw, Loader2, Settings2, Upload, CreditCard } from "lucide-react";
+import { RefreshCw, Loader2, Settings2, Upload, CreditCard, X } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
@@ -26,6 +26,7 @@ export default function ImportarDados() {
   const [syncing, setSyncing] = useState(false);
   const [syncResult, setSyncResult] = useState<any>(null);
   const [importarFaturaOpen, setImportarFaturaOpen] = useState(false);
+  const [abortController, setAbortController] = useState<AbortController | null>(null);
   const { data: categorias = [] } = useCategoriasPlano();
 
   const { data: config, refetch } = useQuery({
@@ -42,17 +43,29 @@ export default function ImportarDados() {
 
   const integracaoAtiva = !!(config?.ativo && config?.access_token);
 
+  function cancelSync() {
+    if (abortController) {
+      abortController.abort();
+      toast.info("Sincronização cancelada");
+    }
+  }
+
   async function sync() {
+    if (syncing) return; // proteção contra duplo clique
+    const controller = new AbortController();
+    setAbortController(controller);
     setSyncing(true);
     setSyncResult(null);
     try {
       const tipos = ["contas_receber", "pedidos", "produtos"] as const;
       const totals = { criados: 0, atualizados: 0, duracao_ms: 0 };
       for (const tipo of tipos) {
+        if (controller.signal.aborted) throw new Error("Cancelado pelo usuário");
         const { data, error } = await supabase.functions.invoke(
           "sync-bling-financeiro",
           { body: { tipo } }
         );
+        if (controller.signal.aborted) throw new Error("Cancelado pelo usuário");
         if (error) throw new Error(error.message);
         if (data?.sucesso === false) throw new Error(data.erro || `Erro em ${tipo}`);
         totals.criados += data?.criados || 0;
@@ -63,9 +76,14 @@ export default function ImportarDados() {
       toast.success("Sincronização concluída");
       refetch();
     } catch (e: any) {
-      toast.error("Falha: " + (e.message || e));
+      if (controller.signal.aborted) {
+        // já notificado no cancelSync
+      } else {
+        toast.error("Falha: " + (e.message || e));
+      }
     } finally {
       setSyncing(false);
+      setAbortController(null);
     }
   }
 
@@ -125,6 +143,16 @@ export default function ImportarDados() {
                   )}
                   {syncing ? "Sincronizando..." : "Sincronizar agora"}
                 </Button>
+                {syncing && (
+                  <Button
+                    onClick={cancelSync}
+                    variant="outline"
+                    className="border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                  >
+                    <X className="h-4 w-4 mr-2" />
+                    Cancelar
+                  </Button>
+                )}
               </div>
               <Link
                 to="/administrativo/configuracao-integracao"
