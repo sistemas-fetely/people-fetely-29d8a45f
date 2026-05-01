@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Layers, Link2, Plus, X, Loader2, AlertCircle, Search, ArrowLeftRight, CreditCard, Layers as LayersIcon } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
 import { BuscarMultiplosLancamentosDialog } from "@/components/financeiro/BuscarMultiplosLancamentosDialog";
