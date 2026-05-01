@@ -195,24 +195,14 @@ export default function FaturasCartao() {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data, error } = await (supabase as any)
         .from("contas_pagar_receber")
-        .select("valor, forma_pagamento_id, is_cartao")
+        .select("valor, pago_em_conta_id, is_cartao")
         .eq("is_cartao", true)
         .in("status", ["aberto", "aprovado", "aguardando_pagamento"]);
       if (error) throw error;
 
-      const { data: formasPgto } = await supabase
-        .from("formas_pagamento")
-        .select("id, conta_bancaria_id")
-        .not("conta_bancaria_id", "is", null);
-
-      const formaToConta = new Map<string, string>();
-      (formasPgto || []).forEach((f: { id: string; conta_bancaria_id: string | null }) => {
-        if (f.conta_bancaria_id) formaToConta.set(f.id, f.conta_bancaria_id);
-      });
-
       const map = new Map<string, number>();
-      for (const row of (data || []) as Array<{ valor: number | null; forma_pagamento_id: string | null }>) {
-        const contaId = row.forma_pagamento_id ? formaToConta.get(row.forma_pagamento_id) : null;
+      for (const row of (data || []) as Array<{ valor: number | null; pago_em_conta_id: string | null }>) {
+        const contaId = row.pago_em_conta_id;
         if (!contaId) continue;
         map.set(contaId, (map.get(contaId) || 0) + Number(row.valor || 0));
       }
