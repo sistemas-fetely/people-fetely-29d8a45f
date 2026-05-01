@@ -312,6 +312,8 @@ export default function ContasPagar() {
         </Button>
       </div>
 
+      {/* CONTAINER STICKY — KPIs + filtros congelados no topo durante scroll */}
+      <div className="sticky top-0 z-20 bg-background -mx-6 px-6 pt-2 pb-3 space-y-4 shadow-sm">
       {totals.modoFocado === "selecao" && (
         <div className="flex items-center justify-between text-xs px-1 -mb-1">
           <div className="text-emerald-700 font-medium">
@@ -560,7 +562,12 @@ export default function ContasPagar() {
             </div>
           )}
         </CardHeader>
-        <CardContent>
+      </Card>
+      </div>
+      {/* /CONTAINER STICKY */}
+
+      <Card>
+        <CardContent className="pt-6">
           {/* Barra de ações em massa */}
           {selecionadas.size > 0 && (
             <div className="flex items-center gap-3 p-3 rounded-lg border bg-muted/50 mb-4 flex-wrap">
@@ -616,7 +623,7 @@ export default function ContasPagar() {
             <>
               <div className="border rounded-md overflow-x-auto">
                 <Table>
-                  <TableHeader>
+                  <TableHeader className="sticky top-0 z-10 bg-background border-b shadow-sm">
                     <TableRow>
                       <TableHead className="w-10">
                         <Checkbox
