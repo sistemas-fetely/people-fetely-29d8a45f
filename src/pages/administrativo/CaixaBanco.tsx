@@ -838,6 +838,24 @@ export default function CaixaBanco() {
           />
         </div>
 
+        {/* Ação IA — resolve categorias em massa */}
+        <div className="flex justify-end">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={handleAplicarIAEmMassa}
+            disabled={aplicandoIA}
+            className="gap-2 border-amber-300 text-amber-700 hover:bg-amber-50"
+          >
+            {aplicandoIA ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Sparkles className="h-3.5 w-3.5" />
+            )}
+            Resolver com IA
+          </Button>
+        </div>
+
         {/* Filtros */}
         <div className="flex gap-2 flex-wrap items-center">
           <div className="relative w-full sm:w-72">
