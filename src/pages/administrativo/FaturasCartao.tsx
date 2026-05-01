@@ -453,27 +453,52 @@ export default function FaturasCartao() {
         </div>
 
         {/* KPIs financeiros agregados */}
+        {totals.modoFocado && totals.faturaFocada && (
+          <div className="flex items-center justify-between text-xs px-1 -mb-1">
+            <div className="text-amber-700 font-medium">
+              📌 Mostrando dados de:{" "}
+              <span className="font-semibold">
+                {totals.faturaFocada.conta_bancaria?.nome_exibicao || "fatura"}
+              </span>
+              {" — venc "}
+              {formatDateBR(totals.faturaFocada.data_vencimento)}
+            </div>
+            <button
+              type="button"
+              onClick={() => setFaturaExpanded(null)}
+              className="text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
+            >
+              Voltar à visão geral
+            </button>
+          </div>
+        )}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <Card className="cursor-pointer hover:shadow-md transition" onClick={() => setFiltroPill("todas")}>
+          <Card
+            className={cn(
+              "cursor-pointer hover:shadow-md transition",
+              totals.modoFocado && "bg-amber-50 border-amber-300",
+            )}
+            onClick={() => setFiltroPill("todas")}
+          >
             <CardContent className="p-4">
               <div className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">Faturas</div>
               <div className="text-2xl font-bold mt-1">{totals.qtdFaturas}</div>
             </CardContent>
           </Card>
-          <Card>
+          <Card className={cn(totals.modoFocado && "bg-amber-50 border-amber-300")}>
             <CardContent className="p-4">
               <div className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">Total geral</div>
               <div className="text-xl font-bold mt-1">{formatBRL(totals.totalGeral)}</div>
             </CardContent>
           </Card>
-          <Card>
+          <Card className={cn(totals.modoFocado && "bg-amber-50 border-amber-300")}>
             <CardContent className="p-4">
               <div className="text-[10px] uppercase tracking-wide text-emerald-700 font-medium">Conciliado</div>
               <div className="text-xl font-bold mt-1 text-emerald-700">{formatBRL(totals.totalConciliado)}</div>
               <div className="text-[10px] text-muted-foreground mt-0.5">já decidido</div>
             </CardContent>
           </Card>
-          <Card>
+          <Card className={cn(totals.modoFocado && "bg-amber-50 border-amber-300")}>
             <CardContent className="p-4">
               <div className="text-[10px] uppercase tracking-wide text-amber-700 font-medium">Pendente</div>
               <div className="text-xl font-bold mt-1 text-amber-700">{formatBRL(totals.totalPendente)}</div>
