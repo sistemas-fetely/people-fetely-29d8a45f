@@ -32,7 +32,7 @@ const dashboardItem: MenuItem = {
 
 const financeiroItems: MenuItem[] = [
   { title: "Plano de Contas", url: "/administrativo/plano-contas", icon: ListTree },
-  { title: "Lançamentos", url: "/administrativo/lancamentos", icon: Receipt },
+  
   { title: "Compromissos", url: "/administrativo/compromissos", icon: Repeat },
   { title: "Fluxo Futuro", url: "/administrativo/fluxo-futuro", icon: Calendar },
   { title: "Contas a Pagar", url: "/administrativo/contas-pagar", icon: ArrowUpFromLine },
