@@ -114,21 +114,21 @@ function isAtrasada(l: Lancamento): boolean {
  * Vermelho = sem categoria OU categoria inconsistente com a NF vinculada.
  * Verde = ok (sem bolinha).
  */
-function getQualidadeMov(m: {
+function getQualidadeCategoria(m: {
   categoria_id: string | null;
   categoria_inconsistente?: boolean | null;
   inconsistencia_motivo?: string | null;
-}): { vermelho: boolean; motivo: string | null } {
+}): { cor: "vermelho" | "verde"; motivo: string } {
+  if (!m.categoria_id) {
+    return { cor: "vermelho", motivo: "Sem categoria" };
+  }
   if (m.categoria_inconsistente === true) {
     return {
-      vermelho: true,
+      cor: "vermelho",
       motivo: m.inconsistencia_motivo || "Categoria inconsistente com NF",
     };
   }
-  if (!m.categoria_id) {
-    return { vermelho: true, motivo: "Sem categoria" };
-  }
-  return { vermelho: false, motivo: null };
+  return { cor: "verde", motivo: "Categoria OK" };
 }
 
 type ContaBancariaLite = {
