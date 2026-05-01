@@ -284,14 +284,21 @@ export default function FaturasCartao() {
   // KPIs
   const totals = useMemo(() => {
     const all = faturas || [];
+    const escopo =
+      filtroCartao !== "__todos__"
+        ? all.filter((f) => f.conta_bancaria_id === filtroCartao)
+        : all;
 
-    const abertasArr = all.filter((f) => f.status === "aberta");
-    const valorTotalAbertas = abertasArr.reduce((s, f) => s + (f.valor_total || 0), 0);
-    const valorVinculado = all.reduce((s, f) => s + (f.valor_conciliado || 0), 0);
-    const valorNaoVinculado = abertasArr.reduce(
-      (s, f) => s + ((f.valor_total || 0) - (f.valor_conciliado || 0)),
+    const abertasArr = escopo.filter((f) => f.status === "aberta");
+    const valorTotalAbertas = abertasArr.reduce(
+      (s, f) => s + (f.valor_total || 0),
       0,
     );
+    const valorVinculado = abertasArr.reduce(
+      (s, f) => s + (f.valor_conciliado || 0),
+      0,
+    );
+    const valorNaoVinculado = valorTotalAbertas - valorVinculado;
 
     const base = {
       qtdFaturas: all.length,
