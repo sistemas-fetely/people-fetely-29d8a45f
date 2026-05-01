@@ -700,7 +700,24 @@ export default function FaturasCartao() {
           </Card>
 
           {/* CARD FATURA MÊS ANTERIOR */}
-          <Card className="bg-zinc-50 border-zinc-200">
+          <Card
+            className={cn(
+              "bg-zinc-50 border-zinc-200 transition",
+              totals.mesAnterior.faturaId &&
+                "cursor-pointer hover:shadow-md hover:border-zinc-400",
+              totals.mesAnterior.faturaId &&
+                faturaExpanded === totals.mesAnterior.faturaId &&
+                "ring-2 ring-zinc-400",
+            )}
+            onClick={() => {
+              if (!totals.mesAnterior.faturaId) return;
+              setFaturaExpanded(
+                faturaExpanded === totals.mesAnterior.faturaId
+                  ? null
+                  : totals.mesAnterior.faturaId,
+              );
+            }}
+          >
             <CardContent className="p-4">
               <div className="flex items-center gap-2 mb-3">
                 <span className="text-base">🗂</span>
