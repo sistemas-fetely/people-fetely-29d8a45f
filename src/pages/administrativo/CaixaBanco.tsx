@@ -1184,6 +1184,17 @@ export default function CaixaBanco() {
         contaId={contaIdDrawer}
         onClose={() => setContaIdDrawer(null)}
       />
+
+      {sugestaoMovId && (
+        <SugestaoIADialog
+          movId={sugestaoMovId}
+          onClose={() => setSugestaoMovId(null)}
+          onApply={() => {
+            qc.invalidateQueries({ queryKey: ["lancamentos-caixa-banco"] });
+            setSugestaoMovId(null);
+          }}
+        />
+      )}
     </div>
   );
 }
