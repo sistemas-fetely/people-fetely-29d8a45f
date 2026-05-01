@@ -114,21 +114,21 @@ function isAtrasada(l: Lancamento): boolean {
  * Vermelho = sem categoria OU categoria inconsistente com a NF vinculada.
  * Verde = ok (sem bolinha).
  */
-function getQualidadeMov(m: {
+function getQualidadeCategoria(m: {
   categoria_id: string | null;
   categoria_inconsistente?: boolean | null;
   inconsistencia_motivo?: string | null;
-}): { vermelho: boolean; motivo: string | null } {
+}): { cor: "vermelho" | "verde"; motivo: string } {
+  if (!m.categoria_id) {
+    return { cor: "vermelho", motivo: "Sem categoria" };
+  }
   if (m.categoria_inconsistente === true) {
     return {
-      vermelho: true,
+      cor: "vermelho",
       motivo: m.inconsistencia_motivo || "Categoria inconsistente com NF",
     };
   }
-  if (!m.categoria_id) {
-    return { vermelho: true, motivo: "Sem categoria" };
-  }
-  return { vermelho: false, motivo: null };
+  return { cor: "verde", motivo: "Categoria OK" };
 }
 
 type ContaBancariaLite = {
@@ -352,7 +352,7 @@ export default function CaixaBanco() {
       list = list.filter((l) => l.categoria_inconsistente === true);
     }
     if (filtroSoVermelhas) {
-      list = list.filter((l) => getQualidadeMov(l).vermelho);
+      list = list.filter((l) => getQualidadeCategoria(l).cor === "vermelho");
     }
     if (busca.trim()) {
       const t = busca.toLowerCase();
@@ -399,7 +399,7 @@ export default function CaixaBanco() {
 
   // Saúde do dado (binário: vermelho/verde) — usa lancamentosEnriched p/ pegar inconsistência.
   const qtdComProblema = useMemo(
-    () => lancamentosEnriched.filter((m) => getQualidadeMov(m).vermelho).length,
+    () => lancamentosEnriched.filter((m) => getQualidadeCategoria(m).cor === "vermelho").length,
     [lancamentosEnriched],
   );
   const totalLancamentos = lancamentosEnriched.length;
@@ -751,14 +751,21 @@ export default function CaixaBanco() {
                           <TableCell className="min-w-[140px]">
                             <div className="flex flex-wrap gap-1 items-center">
                               {(() => {
-                                const qm = getQualidadeMov(l);
-                                if (!qm.vermelho) return null;
+                                const qm = getQualidadeCategoria(l);
+                                const isVermelho = qm.cor === "vermelho";
                                 return (
                                   <TooltipProvider>
                                     <Tooltip>
                                       <TooltipTrigger asChild>
                                         <span className="inline-flex items-center mr-1">
-                                          <Circle className="h-2.5 w-2.5 text-red-600 fill-red-500" />
+                                          <Circle
+                                            className={cn(
+                                              "h-2.5 w-2.5 cursor-help",
+                                              isVermelho
+                                                ? "fill-red-500 text-red-500"
+                                                : "fill-emerald-500 text-emerald-500",
+                                            )}
+                                          />
                                         </span>
                                       </TooltipTrigger>
                                       <TooltipContent className="max-w-xs">
