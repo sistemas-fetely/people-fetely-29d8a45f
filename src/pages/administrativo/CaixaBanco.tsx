@@ -357,9 +357,6 @@ export default function CaixaBanco() {
     queryFn: () => getStatusFlagsMap(idsParaCompromisso),
   });
 
-  // Map de qualidade do dado por id (bolinha 🔴/🟡 na coluna Tags).
-  const { data: qualidadeMap } = useQualidadeDadoMap(idsParaCompromisso);
-
   // Inconsistência de categoria (NF vs Conta) — vive em movimentacoes_bancarias.
   const movIds = useMemo(
     () =>
