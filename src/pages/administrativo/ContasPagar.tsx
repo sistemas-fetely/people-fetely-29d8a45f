@@ -172,17 +172,22 @@ export default function ContasPagar() {
   }, [data, modoOperacional, tagFilter, busca, dataDe, dataAte, qualidadeMap]);
 
   const totals = useMemo(() => {
-    // Cards refletem recorte temporal (dataDe / dataAte) — não modo/tag/busca.
     let escopo = data || [];
+    let modoFocado: "selecao" | "datas" | "total" = "total";
 
-    if (dataDe) {
-      escopo = escopo.filter((c) => (c.data_vencimento || "") >= dataDe);
+    // 1) PRIORIDADE: itens selecionados (se há)
+    if (selecionadas.size > 0) {
+      escopo = escopo.filter((c) => selecionadas.has(c.id));
+      modoFocado = "selecao";
     }
-    if (dataAte) {
-      escopo = escopo.filter((c) => (c.data_vencimento || "") <= dataAte);
+    // 2) DATAS — só se não há seleção
+    else if (dataDe || dataAte) {
+      if (dataDe) escopo = escopo.filter((c) => (c.data_vencimento || "") >= dataDe);
+      if (dataAte) escopo = escopo.filter((c) => (c.data_vencimento || "") <= dataAte);
+      modoFocado = "datas";
     }
 
-    // 🔥 Para agir = aberto + aprovado
+    // 🔥 Para agir
     const paraAgir = escopo.filter((c) => c.status === "aberto" || c.status === "aprovado");
     const paraAgirValor = paraAgir.reduce((s, c) => s + Number(c.valor || 0), 0);
 
@@ -200,11 +205,10 @@ export default function ContasPagar() {
       ? Math.round(((totalAtivas - semSaude.length) / totalAtivas) * 100)
       : 100;
 
-    // ⏳ Aguardando OFX
+    // ⏳ Aguardando pagamento
     const aguardandoPgto = escopo.filter((c) => c.status === "aguardando_pagamento");
     const aguardandoValor = aguardandoPgto.reduce((s, c) => s + Number(c.valor || 0), 0);
 
-    // legados ainda usados em alertas/banners
     const countDocPendente = escopo.filter(
       (c) => c.tem_doc_pendente === true && c.status !== "cancelado",
     ).length;
@@ -219,8 +223,10 @@ export default function ContasPagar() {
       aguardandoOfx: { count: aguardandoPgto.length, valor: aguardandoValor },
       countDocPendente,
       countSemCategoria,
+      modoFocado,
+      qtdSelecionadas: selecionadas.size,
     };
-  }, [data, qualidadeMap, dataDe, dataAte]);
+  }, [data, qualidadeMap, dataDe, dataAte, selecionadas]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const pageData = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
