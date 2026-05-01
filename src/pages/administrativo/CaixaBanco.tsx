@@ -571,6 +571,16 @@ export default function CaixaBanco() {
         list = list.filter((l) => getQualidadeCategoria(l, nfMap).cor === "vermelho");
       } else if (filtroOp === "qualidade_doc") {
         list = list.filter(flagsDoc);
+      } else if (filtroOp === "qualidade_vinculado") {
+        list = list.filter((l) =>
+          !l.vinculada_cartao
+          && l.origem_view !== "cartao_lancamento"
+          && !l.movimentacao_bancaria_id
+        );
+      } else if (filtroOp === "qualidade_conciliado") {
+        list = list.filter((l) =>
+          !l.conciliado_em && l.status_caixa !== "conciliado"
+        );
       }
     }
 
