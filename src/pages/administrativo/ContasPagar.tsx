@@ -227,7 +227,7 @@ export default function ContasPagar() {
   }, [data, qualidadeMap, dataDe, dataAte, selecionadas]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const pageData = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const filtered = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   // Filtros ativos
   const filtrosAtivos = [
@@ -258,13 +258,13 @@ export default function ContasPagar() {
     });
   }
   function toggleTodas() {
-    if (pageData.every((c) => selecionadas.has(c.id))) {
+    if (filtered.every((c) => selecionadas.has(c.id))) {
       const next = new Set(selecionadas);
-      pageData.forEach((c) => next.delete(c.id));
+      filtered.forEach((c) => next.delete(c.id));
       setSelecionadas(next);
     } else {
       const next = new Set(selecionadas);
-      pageData.forEach((c) => next.add(c.id));
+      filtered.forEach((c) => next.add(c.id));
       setSelecionadas(next);
     }
   }
@@ -614,7 +614,7 @@ export default function ContasPagar() {
                 </Link>
               </Button>
             </div>
-          ) : pageData.length === 0 ? (
+          ) : filtered.length === 0 ? (
             <div className="py-12 text-center text-sm text-muted-foreground">
               Nenhum registro encontrado para os filtros aplicados.
             </div>
@@ -627,7 +627,7 @@ export default function ContasPagar() {
                       <TableHead className="w-10">
                         <Checkbox
                           checked={
-                            pageData.length > 0 && pageData.every((c) => selecionadas.has(c.id))
+                            filtered.length > 0 && filtered.every((c) => selecionadas.has(c.id))
                           }
                           onCheckedChange={toggleTodas}
                           aria-label="Selecionar todos"
@@ -644,7 +644,7 @@ export default function ContasPagar() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {pageData.map((c) => {
+                    {filtered.map((c) => {
                       const isSel = selecionadas.has(c.id);
                       const compromissoInfo = compromissoInfoMap.get(c.id);
                       return (
