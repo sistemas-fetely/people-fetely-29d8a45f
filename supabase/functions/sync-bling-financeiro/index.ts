@@ -428,6 +428,7 @@ serve(async (req) => {
       var logId = logResult.data ? logResult.data.id : null;
 
       var startTime = Date.now();
+      execStartTs = startTime;
       var result = { criados: 0, atualizados: 0, erros: 0 };
 
       if (tipo === "contas_receber") {
