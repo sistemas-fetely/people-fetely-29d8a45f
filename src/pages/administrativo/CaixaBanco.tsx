@@ -198,6 +198,70 @@ const STATUS_LABEL: Record<string, string> = {
   cancelado: "Cancelado",
 };
 
+type FiltroOperacional =
+  | "todos"
+  | "atrasados"
+  | "mes_atual"
+  | "proximo_mes"
+  | "tres_meses"
+  | "sem_conciliacao"
+  | "qualidade_nf"
+  | "qualidade_categoria"
+  | "qualidade_doc";
+
+function CardKPI({
+  titulo,
+  valor,
+  sublinha,
+  cor,
+  ativo,
+  onClick,
+  icone: Icon,
+}: {
+  titulo: string;
+  valor: string;
+  sublinha: string;
+  cor: "red" | "blue" | "purple" | "teal" | "fetely";
+  ativo: boolean;
+  onClick: () => void;
+  icone?: LucideIcon;
+}) {
+  const corMap: Record<string, string> = {
+    red: ativo ? "bg-red-50 border-red-300" : "",
+    blue: ativo ? "bg-blue-50 border-blue-300" : "",
+    purple: ativo ? "bg-purple-50 border-purple-300" : "",
+    teal: ativo ? "bg-teal-50 border-teal-300" : "",
+    fetely: ativo ? "bg-emerald-50 border-emerald-300" : "",
+  };
+  const textMap: Record<string, string> = {
+    red: "text-red-700",
+    blue: "text-blue-700",
+    purple: "text-purple-700",
+    teal: "text-teal-700",
+    fetely: "text-emerald-700",
+  };
+  return (
+    <Card
+      className={cn(
+        "cursor-pointer transition-all hover:shadow-md",
+        corMap[cor],
+      )}
+      onClick={onClick}
+    >
+      <CardHeader className="pb-1 pt-3 px-3">
+        <CardTitle className="text-[11px] font-normal text-muted-foreground flex items-center gap-1">
+          {Icon && <Icon className="h-3 w-3" />}
+          {titulo}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="pb-3 px-3">
+        <div className={cn("text-lg font-bold", textMap[cor])}>{valor}</div>
+        <div className="text-[10px] text-muted-foreground mt-0.5">{sublinha}</div>
+      </CardContent>
+    </Card>
+  );
+}
+
 const PAGE_SIZE = 25;
 
 export default function CaixaBanco() {
@@ -205,10 +269,9 @@ export default function CaixaBanco() {
   const [statusFilter, setStatusFilter] = useFiltrosPersistentes<string>("caixabanco_status", "todos");
   const [contaBancariaFilter, setContaBancariaFilter] = useFiltrosPersistentes<string>("caixabanco_conta", "todas");
   const [busca, setBusca] = useFiltrosPersistentes<string>("caixabanco_busca", "");
-  const [page, setPage] = useFiltrosPersistentes<number>("caixabanco_page", 1);
   const [contaIdDrawer, setContaIdDrawer] = useState<string | null>(null);
   const [mostrarSoInconsistentes, setMostrarSoInconsistentes] = useState(false);
-  const [filtroSoVermelhas, setFiltroSoVermelhas] = useState(false);
+  const [filtroOp, setFiltroOp] = useState<FiltroOperacional>("todos");
   const navigate = useNavigate();
 
   // Query da view unificada
