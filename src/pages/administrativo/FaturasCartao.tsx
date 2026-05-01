@@ -298,11 +298,17 @@ export default function FaturasCartao() {
     const calcular = (lista: typeof filtradas) => {
       const total = lista.reduce((s, f) => s + (f.valor_total || 0), 0);
       const vinculado = lista.reduce((s, f) => s + (f.valor_conciliado || 0), 0);
+      // pega a fatura mais recente do mês (maior data_vencimento) pra "expandir"
+      const principal =
+        [...lista].sort((a, b) =>
+          (b.data_vencimento || "").localeCompare(a.data_vencimento || ""),
+        )[0] || null;
       return {
         qtd: lista.length,
         total,
         vinculado,
         naoVinculado: total - vinculado,
+        faturaId: principal?.id || null,
       };
     };
 
@@ -536,13 +542,8 @@ export default function FaturasCartao() {
               const ativo = filtroCartao === cartao.id;
 
               return (
-                <Card
-                  key={cartao.id}
-                  className={cn(
-                    "transition bg-card",
-                    ativo && "ring-2 ring-admin border-admin",
-                  )}
-                >
+                <Card key={cartao.id} className="transition bg-card">
+
                   <CardContent className="p-4 space-y-3">
                     <div className="flex items-center gap-2">
                       <CreditCard className="h-4 w-4 text-admin shrink-0" />
@@ -611,7 +612,24 @@ export default function FaturasCartao() {
             })}
 
           {/* CARD FATURA MÊS ATUAL */}
-          <Card className="bg-amber-50/50 border-amber-200">
+          <Card
+            className={cn(
+              "bg-amber-50/50 border-amber-200 transition",
+              totals.mesAtual.faturaId &&
+                "cursor-pointer hover:shadow-md hover:border-amber-400",
+              totals.mesAtual.faturaId &&
+                faturaExpanded === totals.mesAtual.faturaId &&
+                "ring-2 ring-amber-400",
+            )}
+            onClick={() => {
+              if (!totals.mesAtual.faturaId) return;
+              setFaturaExpanded(
+                faturaExpanded === totals.mesAtual.faturaId
+                  ? null
+                  : totals.mesAtual.faturaId,
+              );
+            }}
+          >
             <CardContent className="p-4">
               <div className="flex items-center gap-2 mb-3">
                 <span className="text-base">📑</span>
@@ -682,7 +700,24 @@ export default function FaturasCartao() {
           </Card>
 
           {/* CARD FATURA MÊS ANTERIOR */}
-          <Card className="bg-zinc-50 border-zinc-200">
+          <Card
+            className={cn(
+              "bg-zinc-50 border-zinc-200 transition",
+              totals.mesAnterior.faturaId &&
+                "cursor-pointer hover:shadow-md hover:border-zinc-400",
+              totals.mesAnterior.faturaId &&
+                faturaExpanded === totals.mesAnterior.faturaId &&
+                "ring-2 ring-zinc-400",
+            )}
+            onClick={() => {
+              if (!totals.mesAnterior.faturaId) return;
+              setFaturaExpanded(
+                faturaExpanded === totals.mesAnterior.faturaId
+                  ? null
+                  : totals.mesAnterior.faturaId,
+              );
+            }}
+          >
             <CardContent className="p-4">
               <div className="flex items-center gap-2 mb-3">
                 <span className="text-base">🗂</span>
