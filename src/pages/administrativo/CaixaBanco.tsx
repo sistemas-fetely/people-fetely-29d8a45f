@@ -467,13 +467,6 @@ export default function CaixaBanco() {
     if (mostrarSoInconsistentes) {
       list = list.filter((l) => l.categoria_inconsistente === true);
     }
-    if (filtroSoVermelhas) {
-      list = list.filter((m) => {
-        const qNF = getQualidadeNF(m, nfMap);
-        const qCat = getQualidadeCategoria(m, nfMap);
-        return qNF.cor === "vermelho" || qCat.cor === "vermelho";
-      });
-    }
     if (busca.trim()) {
       const t = busca.toLowerCase();
       list = list.filter((l) => {
@@ -486,8 +479,64 @@ export default function CaixaBanco() {
         );
       });
     }
+
+    // Filtros operacionais (cards clicáveis)
+    if (filtroOp !== "todos") {
+      const h = new Date();
+      h.setHours(0, 0, 0, 0);
+      const iniMes = new Date(h.getFullYear(), h.getMonth(), 1);
+      const fimMes = new Date(h.getFullYear(), h.getMonth() + 1, 0, 23, 59, 59);
+      const iniProx = new Date(h.getFullYear(), h.getMonth() + 1, 1);
+      const fimProx = new Date(h.getFullYear(), h.getMonth() + 2, 0, 23, 59, 59);
+      const fim3 = new Date(h.getFullYear(), h.getMonth() + 4, 0, 23, 59, 59);
+      const flagsDoc = (l: Lancamento) => statusFlagsMap.get(l.id)?.tem_doc_pendente === true;
+
+      if (filtroOp === "atrasados") {
+        list = list.filter((l) => {
+          if (!l.data_vencimento) return false;
+          const v = new Date(l.data_vencimento + "T00:00:00");
+          return v < h && statusVisual(l) === "aguardando_pagamento";
+        });
+      } else if (filtroOp === "mes_atual") {
+        list = list.filter((l) => {
+          if (!l.data_vencimento) return false;
+          const v = new Date(l.data_vencimento + "T00:00:00");
+          return v >= iniMes && v <= fimMes && statusVisual(l) === "aguardando_pagamento";
+        });
+      } else if (filtroOp === "proximo_mes") {
+        list = list.filter((l) => {
+          if (!l.data_vencimento) return false;
+          const v = new Date(l.data_vencimento + "T00:00:00");
+          return v >= iniProx && v <= fimProx && statusVisual(l) === "aguardando_pagamento";
+        });
+      } else if (filtroOp === "tres_meses") {
+        list = list.filter((l) => {
+          if (!l.data_vencimento) return false;
+          const v = new Date(l.data_vencimento + "T00:00:00");
+          return v >= iniProx && v <= fim3 && statusVisual(l) === "aguardando_pagamento";
+        });
+      } else if (filtroOp === "sem_conciliacao") {
+        list = list.filter((l) => {
+          if (!l.data_vencimento) return false;
+          const v = new Date(l.data_vencimento + "T00:00:00");
+          return (
+            v >= iniMes &&
+            v <= fimMes &&
+            statusVisual(l) === "paga" &&
+            !l.conciliado_em
+          );
+        });
+      } else if (filtroOp === "qualidade_nf") {
+        list = list.filter((l) => getQualidadeNF(l, nfMap).cor === "vermelho");
+      } else if (filtroOp === "qualidade_categoria") {
+        list = list.filter((l) => getQualidadeCategoria(l, nfMap).cor === "vermelho");
+      } else if (filtroOp === "qualidade_doc") {
+        list = list.filter(flagsDoc);
+      }
+    }
+
     return list;
-  }, [lancamentosEnriched, statusFilter, contaBancariaFilter, busca, mapParceiros, mostrarSoInconsistentes, filtroSoVermelhas, nfMap]);
+  }, [lancamentosEnriched, statusFilter, contaBancariaFilter, busca, mapParceiros, mostrarSoInconsistentes, filtroOp, nfMap, statusFlagsMap]);
 
   // Totais
   const totals = useMemo(() => {
