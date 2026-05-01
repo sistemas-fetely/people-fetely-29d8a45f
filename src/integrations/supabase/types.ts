@@ -9826,6 +9826,24 @@ export type Database = {
         }[]
       }
       detectar_tipo_pagamento: { Args: { descricao: string }; Returns: string }
+      diagnostico_match_mov_sem_cnpj: {
+        Args: never
+        Returns: {
+          match_data: string
+          match_valor: string
+          mov_data_compra: string
+          mov_descricao: string
+          mov_id: string
+          mov_valor: number
+          nf_data_emissao: string
+          nf_id: string
+          nf_razao_social: string
+          nf_valor: number
+          score_total: number
+          similaridade_texto: number
+          token_extraido: string
+        }[]
+      }
       documentos_pendentes_agrupados: {
         Args: {
           p_periodo_fim?: string
