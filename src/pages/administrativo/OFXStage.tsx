@@ -332,41 +332,39 @@ export default function OFXStage() {
                           {formatBRL(ofx.valor)}
                         </div>
                       </div>
-                      {selected && (
-                        <div className="flex items-center gap-1 mt-2 pt-2 border-t flex-wrap">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="h-6 px-2 text-[10px] gap-1"
-                            onClick={(e) => { e.stopPropagation(); handleLancarMovimentacao(ofx); }}
-                            disabled={!!acao}
-                          >
-                            <Plus className="h-3 w-3" />
-                            Lançar como movimentação
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="h-6 px-2 text-[10px] gap-1"
-                            onClick={(e) => { e.stopPropagation(); setBuscaMultiplaOpen(true); }}
-                            disabled={!!acao}
-                            title="SISPAG: 1 OFX = N contas a pagar"
-                          >
-                            <LayersIcon className="h-3 w-3" />
-                            Buscar Múltiplos
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="h-6 px-2 text-[10px] gap-1 text-zinc-600"
-                            onClick={(e) => { e.stopPropagation(); handleIgnorar(ofx); }}
-                            disabled={!!acao}
-                          >
-                            <X className="h-3 w-3" />
-                            Ignorar
-                          </Button>
-                        </div>
-                      )}
+                      <div className="flex items-center gap-1 mt-2 pt-2 border-t flex-wrap">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-6 px-2 text-[10px] gap-1"
+                          onClick={(e) => { e.stopPropagation(); handleLancarMovimentacao(ofx); }}
+                          disabled={!!acao}
+                        >
+                          <Plus className="h-3 w-3" />
+                          Lançar como movimentação
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-6 px-2 text-[10px] gap-1"
+                          onClick={(e) => { e.stopPropagation(); setBuscaMultiplaOpen(true); }}
+                          disabled={!!acao}
+                          title="SISPAG: 1 OFX = N contas a pagar"
+                        >
+                          <LayersIcon className="h-3 w-3" />
+                          Buscar Múltiplos
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-6 px-2 text-[10px] gap-1 text-zinc-600"
+                          onClick={(e) => { e.stopPropagation(); handleIgnorar(ofx); }}
+                          disabled={!!acao}
+                        >
+                          <X className="h-3 w-3" />
+                          Ignorar
+                        </Button>
+                      </div>
                     </div>
                   );
                 })
