@@ -43,12 +43,16 @@ import {
   CalendarClock,
   CalendarRange,
   RefreshCcw,
+  Sparkles,
+  Loader2,
   type LucideIcon,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
+import { toast } from "sonner";
 
 import ContaPagarDetalheDrawer from "@/components/financeiro/ContaPagarDetalheDrawer";
+import SugestaoIADialog from "@/components/financeiro/SugestaoIADialog";
 import { getCompromissoInfoMap, type CompromissoInfo } from "@/lib/financeiro/get-compromisso-info";
 import { getMeioPagamentoIcon } from "@/lib/financeiro/meio-pagamento-icon";
 
