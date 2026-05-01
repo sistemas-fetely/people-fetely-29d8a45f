@@ -1011,11 +1011,12 @@ export default function CaixaBanco() {
                     })}
                   </TableBody>
                 </Table>
+              </div>
 
-            <p className="text-xs text-muted-foreground">
-              {filtered.length} {filtered.length === 1 ? "lançamento" : "lançamentos"}
-            </p>
-          </>
+              <p className="text-xs text-muted-foreground">
+                {filtered.length} {filtered.length === 1 ? "lançamento" : "lançamentos"}
+              </p>
+            </>
         )}
       </div>
 
