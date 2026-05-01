@@ -740,8 +740,8 @@ export default function CaixaBanco() {
           />
         </div>
 
-        {/* LINHA 2 — Cards Qualidade (3 cards) */}
-        <div className="grid grid-cols-3 gap-3">
+        {/* LINHA 2 — Cards Qualidade (5 cards) */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
           <CardKPI
             titulo="NF — qualidade"
             valor={`${kpis.qualidadeNF.pct}%`}
@@ -768,6 +768,24 @@ export default function CaixaBanco() {
             ativo={filtroOp === "qualidade_doc"}
             onClick={() => setFiltroOp(filtroOp === "qualidade_doc" ? "todos" : "qualidade_doc")}
             icone={Paperclip}
+          />
+          <CardKPI
+            titulo="Vinculado — qualidade"
+            valor={`${kpis.qualidadeVinculado.pct}%`}
+            sublinha={`${kpis.qualidadeVinculado.atendidos}/${kpis.qualidadeVinculado.total} no mês`}
+            cor="fetely"
+            ativo={filtroOp === "qualidade_vinculado"}
+            onClick={() => setFiltroOp(filtroOp === "qualidade_vinculado" ? "todos" : "qualidade_vinculado")}
+            icone={Link2}
+          />
+          <CardKPI
+            titulo="Conciliado — qualidade"
+            valor={`${kpis.qualidadeConciliado.pct}%`}
+            sublinha={`${kpis.qualidadeConciliado.atendidos}/${kpis.qualidadeConciliado.total} no mês`}
+            cor="fetely"
+            ativo={filtroOp === "qualidade_conciliado"}
+            onClick={() => setFiltroOp(filtroOp === "qualidade_conciliado" ? "todos" : "qualidade_conciliado")}
+            icone={CircleDollarSign}
           />
         </div>
 
