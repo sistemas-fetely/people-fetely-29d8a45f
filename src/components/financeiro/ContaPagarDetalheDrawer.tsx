@@ -117,6 +117,7 @@ export default function ContaPagarDetalheDrawer({ contaId, onClose }: Props) {
   const [modoEdit, setModoEdit] = useState(false);
   const [apagando, setApagando] = useState(false);
   const [lancandoMov, setLancandoMov] = useState(false);
+  const [buscarNFOpen, setBuscarNFOpen] = useState(false);
   const workflow = useContaWorkflow();
   const qc = useQueryClient();
 
