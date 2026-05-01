@@ -817,10 +817,10 @@ export default function CaixaBanco() {
                                 };
                                 return (
                                   <TooltipProvider>
-                                    <div className="flex items-center gap-1.5 mr-1">
+                                    <div className="flex items-center gap-2 mr-1">
                                       <Tooltip>
                                         <TooltipTrigger asChild>
-                                          <Circle className={cn("h-2.5 w-2.5 cursor-help", corClass(qNF.cor))} />
+                                          <Receipt className={cn("h-3.5 w-3.5 cursor-help", corClass(qNF.cor))} strokeWidth={2.2} />
                                         </TooltipTrigger>
                                         <TooltipContent className="max-w-xs">
                                           <p className="text-xs">📄 {qNF.motivo}</p>
@@ -828,10 +828,26 @@ export default function CaixaBanco() {
                                       </Tooltip>
                                       <Tooltip>
                                         <TooltipTrigger asChild>
-                                          <Circle className={cn("h-2.5 w-2.5 cursor-help", corClass(qCat.cor))} />
+                                          <FolderTree className={cn("h-3.5 w-3.5 cursor-help", corClass(qCat.cor))} strokeWidth={2.2} />
                                         </TooltipTrigger>
                                         <TooltipContent className="max-w-xs">
                                           <p className="text-xs">🏷️ {qCat.motivo}</p>
+                                        </TooltipContent>
+                                      </Tooltip>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <Paperclip
+                                            className={cn(
+                                              "h-3.5 w-3.5 cursor-help",
+                                              docOk ? "text-emerald-600" : "text-red-500"
+                                            )}
+                                            strokeWidth={2.2}
+                                          />
+                                        </TooltipTrigger>
+                                        <TooltipContent className="max-w-xs">
+                                          <p className="text-xs">
+                                            {docOk ? "Documento anexado/OK" : "Documento pendente"}
+                                          </p>
                                         </TooltipContent>
                                       </Tooltip>
                                     </div>
