@@ -48,6 +48,8 @@ export default function OFXStage() {
   const [ofxSelecionada, setOfxSelecionada] = useState<TransacaoOFX | null>(null);
   const [filtroDescOFX, setFiltroDescOFX] = useState("");
   const [filtroDescCP, setFiltroDescCP] = useState("");
+  const [filtroValorOFX, setFiltroValorOFX] = useState("");
+  const [filtroValorCP, setFiltroValorCP] = useState("");
   const [acaoEmCurso, setAcaoEmCurso] = useState<string | null>(null);
   const [buscaMultiplaOpen, setBuscaMultiplaOpen] = useState(false);
   const [ofxIgnorar, setOfxIgnorar] = useState<TransacaoOFX | null>(null);
@@ -106,10 +108,19 @@ export default function OFXStage() {
   });
 
   const ofxFiltradas = useMemo(() => {
-    if (!filtroDescOFX.trim()) return transacoesOFX;
-    const t = filtroDescOFX.toLowerCase();
-    return transacoesOFX.filter((o) => o.descricao.toLowerCase().includes(t));
-  }, [transacoesOFX, filtroDescOFX]);
+    let lista = transacoesOFX;
+    if (filtroDescOFX.trim()) {
+      const t = filtroDescOFX.toLowerCase();
+      lista = lista.filter((o) => o.descricao.toLowerCase().includes(t));
+    }
+    if (filtroValorOFX.trim()) {
+      const v = parseFloat(filtroValorOFX.replace(",", "."));
+      if (!isNaN(v)) {
+        lista = lista.filter((o) => Math.abs(Math.abs(o.valor) - v) <= 0.01);
+      }
+    }
+    return lista;
+  }, [transacoesOFX, filtroDescOFX, filtroValorOFX]);
 
   const contasFiltradas = useMemo(() => {
     let lista: (ContaPagarPendente & { score?: number })[] = contasPagar;
@@ -138,8 +149,15 @@ export default function OFXStage() {
       );
     }
 
+    if (filtroValorCP.trim()) {
+      const v = parseFloat(filtroValorCP.replace(",", "."));
+      if (!isNaN(v)) {
+        lista = lista.filter((c) => Math.abs(c.valor - v) <= 0.01);
+      }
+    }
+
     return lista;
-  }, [contasPagar, ofxSelecionada, filtroDescCP]);
+  }, [contasPagar, ofxSelecionada, filtroDescCP, filtroValorCP]);
 
 
 
@@ -292,12 +310,22 @@ export default function OFXStage() {
                   <Badge variant="outline" className="ml-1">{transacoesOFX.length}</Badge>
                 </h2>
               </div>
-              <Input
-                placeholder="Filtrar por descrição..."
-                value={filtroDescOFX}
-                onChange={(e) => setFiltroDescOFX(e.target.value)}
-                className="h-8 text-xs mt-2"
-              />
+              <div className="flex gap-2 mt-2">
+                <Input
+                  placeholder="Filtrar por descrição..."
+                  value={filtroDescOFX}
+                  onChange={(e) => setFiltroDescOFX(e.target.value)}
+                  className="h-8 text-xs flex-1"
+                />
+                <Input
+                  type="text"
+                  inputMode="decimal"
+                  placeholder="Valor..."
+                  value={filtroValorOFX}
+                  onChange={(e) => setFiltroValorOFX(e.target.value)}
+                  className="h-8 text-xs w-28"
+                />
+              </div>
             </CardHeader>
             <CardContent className="space-y-1.5 max-h-[600px] overflow-y-auto">
               {loadingOFX ? (
@@ -385,12 +413,22 @@ export default function OFXStage() {
                   <Badge variant="outline" className="ml-1">{contasPagar.length}</Badge>
                 </h2>
               </div>
-              <Input
-                placeholder="Filtrar por descrição ou fornecedor..."
-                value={filtroDescCP}
-                onChange={(e) => setFiltroDescCP(e.target.value)}
-                className="h-8 text-xs mt-2"
-              />
+              <div className="flex gap-2 mt-2">
+                <Input
+                  placeholder="Filtrar por descrição ou fornecedor..."
+                  value={filtroDescCP}
+                  onChange={(e) => setFiltroDescCP(e.target.value)}
+                  className="h-8 text-xs flex-1"
+                />
+                <Input
+                  type="text"
+                  inputMode="decimal"
+                  placeholder="Valor..."
+                  value={filtroValorCP}
+                  onChange={(e) => setFiltroValorCP(e.target.value)}
+                  className="h-8 text-xs w-28"
+                />
+              </div>
               {ofxSelecionada && (
                 <div className="text-[10px] text-blue-700 bg-blue-50 border border-blue-200 rounded p-1.5 mt-1 flex items-center gap-1">
                   <Search className="h-3 w-3" />
