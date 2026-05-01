@@ -612,7 +612,24 @@ export default function FaturasCartao() {
             })}
 
           {/* CARD FATURA MÊS ATUAL */}
-          <Card className="bg-amber-50/50 border-amber-200">
+          <Card
+            className={cn(
+              "bg-amber-50/50 border-amber-200 transition",
+              totals.mesAtual.faturaId &&
+                "cursor-pointer hover:shadow-md hover:border-amber-400",
+              totals.mesAtual.faturaId &&
+                faturaExpanded === totals.mesAtual.faturaId &&
+                "ring-2 ring-amber-400",
+            )}
+            onClick={() => {
+              if (!totals.mesAtual.faturaId) return;
+              setFaturaExpanded(
+                faturaExpanded === totals.mesAtual.faturaId
+                  ? null
+                  : totals.mesAtual.faturaId,
+              );
+            }}
+          >
             <CardContent className="p-4">
               <div className="flex items-center gap-2 mb-3">
                 <span className="text-base">📑</span>
