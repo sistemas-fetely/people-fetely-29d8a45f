@@ -616,192 +616,190 @@ export default function CaixaBanco() {
   }
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            <Wallet className="h-6 w-6 text-admin" />
-            Caixa e Banco
-          </h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            Movimentações — espinha dorsal financeira (realizado + comprometido).
-          </p>
+    <div className="flex flex-col h-[calc(100vh-64px)] overflow-hidden">
+      {/* HEADER STICKY ÚNICO — título + cards + filtros */}
+      <div className="sticky top-0 z-20 bg-background px-6 pt-6 pb-3 border-b space-y-4 backdrop-blur">
+        {/* Título */}
+        <div className="flex items-start justify-between gap-4 flex-wrap">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+              <Wallet className="h-6 w-6 text-admin" />
+              Movimentações
+            </h1>
+            <p className="text-muted-foreground text-sm mt-1">
+              Espinha dorsal financeira (realizado + comprometido).
+            </p>
+          </div>
+        </div>
+
+        {/* LINHA 1 — Cards Operação (5 cards) */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+          <CardKPI
+            titulo="Atrasados"
+            valor={formatBRL(kpis.atrasados.valor)}
+            sublinha={`${kpis.atrasados.qtd} ${kpis.atrasados.qtd === 1 ? "conta" : "contas"}`}
+            cor="red"
+            ativo={filtroOp === "atrasados"}
+            onClick={() => setFiltroOp(filtroOp === "atrasados" ? "todos" : "atrasados")}
+            icone={Flame}
+          />
+          <CardKPI
+            titulo="Este mês"
+            valor={formatBRL(kpis.mesAtual.valor)}
+            sublinha={`${kpis.mesAtual.qtd} a vencer`}
+            cor="red"
+            ativo={filtroOp === "mes_atual"}
+            onClick={() => setFiltroOp(filtroOp === "mes_atual" ? "todos" : "mes_atual")}
+            icone={AlertOctagon}
+          />
+          <CardKPI
+            titulo="Próximo mês"
+            valor={formatBRL(kpis.proximoMes.valor)}
+            sublinha={`${kpis.proximoMes.qtd} previstas`}
+            cor="blue"
+            ativo={filtroOp === "proximo_mes"}
+            onClick={() => setFiltroOp(filtroOp === "proximo_mes" ? "todos" : "proximo_mes")}
+            icone={CalendarClock}
+          />
+          <CardKPI
+            titulo="Próx. 3 meses"
+            valor={formatBRL(kpis.tresMeses.valor)}
+            sublinha={`${kpis.tresMeses.qtd} contas`}
+            cor="purple"
+            ativo={filtroOp === "tres_meses"}
+            onClick={() => setFiltroOp(filtroOp === "tres_meses" ? "todos" : "tres_meses")}
+            icone={CalendarRange}
+          />
+          <CardKPI
+            titulo="Sem conciliação"
+            valor={formatBRL(kpis.semConciliacao.valor)}
+            sublinha={`${kpis.semConciliacao.qtd} pagas s/ OFX`}
+            cor="teal"
+            ativo={filtroOp === "sem_conciliacao"}
+            onClick={() => setFiltroOp(filtroOp === "sem_conciliacao" ? "todos" : "sem_conciliacao")}
+            icone={RefreshCcw}
+          />
+        </div>
+
+        {/* LINHA 2 — Cards Qualidade (3 cards) */}
+        <div className="grid grid-cols-3 gap-3">
+          <CardKPI
+            titulo="NF — qualidade"
+            valor={`${kpis.qualidadeNF.pct}%`}
+            sublinha={`${kpis.qualidadeNF.atendidos}/${kpis.qualidadeNF.total} no mês`}
+            cor="fetely"
+            ativo={filtroOp === "qualidade_nf"}
+            onClick={() => setFiltroOp(filtroOp === "qualidade_nf" ? "todos" : "qualidade_nf")}
+            icone={Receipt}
+          />
+          <CardKPI
+            titulo="Categoria — qualidade"
+            valor={`${kpis.qualidadeCategoria.pct}%`}
+            sublinha={`${kpis.qualidadeCategoria.atendidos}/${kpis.qualidadeCategoria.total} no mês`}
+            cor="fetely"
+            ativo={filtroOp === "qualidade_categoria"}
+            onClick={() => setFiltroOp(filtroOp === "qualidade_categoria" ? "todos" : "qualidade_categoria")}
+            icone={FolderTree}
+          />
+          <CardKPI
+            titulo="Documento — qualidade"
+            valor={`${kpis.qualidadeDoc.pct}%`}
+            sublinha={`${kpis.qualidadeDoc.atendidos}/${kpis.qualidadeDoc.total} no mês`}
+            cor="fetely"
+            ativo={filtroOp === "qualidade_doc"}
+            onClick={() => setFiltroOp(filtroOp === "qualidade_doc" ? "todos" : "qualidade_doc")}
+            icone={Paperclip}
+          />
+        </div>
+
+        {/* Filtros */}
+        <div className="flex gap-2 flex-wrap items-center">
+          <div className="relative w-full sm:w-72">
+            <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={busca}
+              onChange={(e) => setBusca(e.target.value)}
+              placeholder="Buscar parceiro, descrição ou NF..."
+              className="pl-9"
+            />
+          </div>
+
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-[160px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todos status</SelectItem>
+              <SelectItem value="em_aberto">Em aberto</SelectItem>
+              <SelectItem value="pago">Pago</SelectItem>
+              <SelectItem value="conciliado">Conciliado</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select value={contaBancariaFilter} onValueChange={setContaBancariaFilter}>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Conta bancária" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todas">Todas as contas</SelectItem>
+              {(contasBancarias || []).map((cb) => (
+                <SelectItem key={cb.id} value={cb.id}>
+                  {cb.nome_exibicao}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setMostrarSoInconsistentes(!mostrarSoInconsistentes)}
+            className={cn(
+              "gap-1",
+              mostrarSoInconsistentes && "bg-amber-600 hover:bg-amber-700 text-white border-amber-600",
+            )}
+          >
+            <AlertTriangle className="h-3.5 w-3.5" />
+            Inconsistências
+          </Button>
         </div>
       </div>
 
-      {/* KPIs */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-normal text-muted-foreground flex items-center gap-1.5">
-              <Clock className="h-3.5 w-3.5 text-blue-600" /> Em aberto
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-700">
-              {formatBRL(totals.emAberto)}
-            </div>
-            <p className="text-[11px] text-muted-foreground mt-1">
-              {totals.countAberto} {totals.countAberto === 1 ? "lançamento" : "lançamentos"}
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-normal text-muted-foreground flex items-center gap-1.5">
-              <CheckCircle2 className="h-3.5 w-3.5 text-green-600" /> Pago
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-700">
-              {formatBRL(totals.pago)}
-            </div>
-            <p className="text-[11px] text-muted-foreground mt-1">
-              {totals.countPago} {totals.countPago === 1 ? "pagamento" : "pagamentos"} aguardando conciliação
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-normal text-muted-foreground flex items-center gap-1.5">
-              <LinkIcon className="h-3.5 w-3.5 text-emerald-700" /> Conciliado
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-emerald-800">
-              {formatBRL(totals.conciliado)}
-            </div>
-            <p className="text-[11px] text-muted-foreground mt-1">
-              {totals.countConciliado} batem com extrato
-            </p>
-          </CardContent>
-        </Card>
-        <Card
-          className={cn(
-            "cursor-pointer transition-colors",
-            filtroSoVermelhas && "ring-2 ring-red-400",
-          )}
-          onClick={() => setFiltroSoVermelhas(!filtroSoVermelhas)}
-        >
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-normal text-muted-foreground flex items-center gap-1.5">
-              <Stethoscope className="h-3.5 w-3.5 text-emerald-600" /> Saúde do dado
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div
-              className={cn(
-                "text-2xl font-bold",
-                pctSaude >= 95
-                  ? "text-emerald-700"
-                  : pctSaude >= 70
-                    ? "text-amber-700"
-                    : "text-red-700",
-              )}
-            >
-              {pctSaude}%
-            </div>
-            <p className="text-[11px] text-muted-foreground mt-1">
-              {qtdComProblema} {qtdComProblema === 1 ? "lançamento" : "lançamentos"} com alerta
-              {filtroSoVermelhas && " · filtro ativo"}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Filtros + Ações em massa */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex gap-2 flex-wrap items-center">
-            <div className="relative w-full sm:w-72">
-              <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                value={busca}
-                onChange={(e) => setBusca(e.target.value)}
-                placeholder="Buscar parceiro, descrição ou NF..."
-                className="pl-9"
-              />
-            </div>
-
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[160px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todos">Todos status</SelectItem>
-                <SelectItem value="em_aberto">Em aberto</SelectItem>
-                <SelectItem value="pago">Pago</SelectItem>
-                <SelectItem value="conciliado">Conciliado</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select value={contaBancariaFilter} onValueChange={setContaBancariaFilter}>
-              <SelectTrigger className="w-[200px]">
-                <SelectValue placeholder="Conta bancária" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todas">Todas as contas</SelectItem>
-                {(contasBancarias || []).map((cb) => (
-                  <SelectItem key={cb.id} value={cb.id}>
-                    {cb.nome_exibicao}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setMostrarSoInconsistentes(!mostrarSoInconsistentes)}
-              className={cn(
-                "gap-1",
-                mostrarSoInconsistentes && "bg-amber-600 hover:bg-amber-700 text-white border-amber-600",
-              )}
-            >
-              <AlertTriangle className="h-3.5 w-3.5" />
-              Inconsistências
-            </Button>
-
+      {/* CONTEÚDO COM SCROLL PRÓPRIO */}
+      <div className="flex-1 overflow-auto px-6 pb-6 pt-2 space-y-4">
+        {isLoading ? (
+          <div className="space-y-2">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Skeleton key={i} className="h-12 w-full" />
+            ))}
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Tabela */}
-      <Card>
-        <CardContent className="pt-6">
-          {isLoading ? (
-            <div className="space-y-2">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <Skeleton key={i} className="h-12 w-full" />
-              ))}
-            </div>
-          ) : filtered.length === 0 ? (
-            <div className="py-12 text-center text-sm text-muted-foreground">
-              Nenhum lançamento encontrado.
-              <p className="text-xs mt-2">
-                Quando uma conta a pagar for finalizada, aparece aqui automaticamente.
-              </p>
-            </div>
-          ) : (
-            <>
-              <div className="border rounded-md overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Parceiro</TableHead>
-                      <TableHead>Descrição</TableHead>
-                      <TableHead>Dt. Vencimento</TableHead>
-                      <TableHead>Categoria</TableHead>
-                      <TableHead>Dt. Pagamento</TableHead>
-                      <TableHead>Meio PG</TableHead>
-                      <TableHead className="text-right">Valor</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Tags</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {pageData.map((l) => {
+        ) : filtered.length === 0 ? (
+          <div className="py-12 text-center text-sm text-muted-foreground">
+            Nenhum lançamento encontrado.
+            <p className="text-xs mt-2">
+              Quando uma conta a pagar for finalizada, aparece aqui automaticamente.
+            </p>
+          </div>
+        ) : (
+          <>
+            <div className="border rounded-md overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Parceiro</TableHead>
+                    <TableHead>Descrição</TableHead>
+                    <TableHead>Dt. Vencimento</TableHead>
+                    <TableHead>Categoria</TableHead>
+                    <TableHead>Dt. Pagamento</TableHead>
+                    <TableHead>Meio PG</TableHead>
+                    <TableHead className="text-right">Valor</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Tags</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filtered.map((l) => {
                       const sVisual = statusVisual(l);
                       const atrasada = isAtrasada(l);
                       const formaNome =
