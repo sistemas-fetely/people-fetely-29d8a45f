@@ -116,8 +116,8 @@ function isAtrasada(l: Lancamento): boolean {
  */
 function getQualidadeMov(m: {
   categoria_id: string | null;
-  categoria_inconsistente: boolean | null | undefined;
-  inconsistencia_motivo: string | null | undefined;
+  categoria_inconsistente?: boolean | null;
+  inconsistencia_motivo?: string | null;
 }): { vermelho: boolean; motivo: string | null } {
   if (m.categoria_inconsistente === true) {
     return {
