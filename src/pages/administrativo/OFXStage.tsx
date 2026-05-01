@@ -12,6 +12,11 @@ import { Layers, Link2, Plus, X, Loader2, AlertCircle, Search, ArrowLeftRight, C
 import { toast } from "sonner";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
 import { BuscarMultiplosLancamentosDialog } from "@/components/financeiro/BuscarMultiplosLancamentosDialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel,
+  AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
+  AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { getFaturaInfoMap, type FaturaInfo } from "@/lib/financeiro/get-fatura-info";
 
 type ContaBancaria = { id: string; nome_exibicao: string };
@@ -45,6 +50,7 @@ export default function OFXStage() {
   const [filtroDescCP, setFiltroDescCP] = useState("");
   const [acaoEmCurso, setAcaoEmCurso] = useState<string | null>(null);
   const [buscaMultiplaOpen, setBuscaMultiplaOpen] = useState(false);
+  const [ofxIgnorar, setOfxIgnorar] = useState<TransacaoOFX | null>(null);
 
   const { data: contas } = useQuery({
     queryKey: ["contas-bancarias-ofx-stage"],
@@ -208,7 +214,6 @@ export default function OFXStage() {
   }
 
   async function handleIgnorar(ofx: TransacaoOFX) {
-    if (!confirm(`Ignorar esta transação?\n\n${ofx.descricao} — ${formatBRL(ofx.valor)}`)) return;
     setAcaoEmCurso("ignorar:" + ofx.id);
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -358,7 +363,7 @@ export default function OFXStage() {
                           size="sm"
                           variant="ghost"
                           className="h-6 px-2 text-[10px] gap-1 text-zinc-600"
-                          onClick={(e) => { e.stopPropagation(); handleIgnorar(ofx); }}
+                          onClick={(e) => { e.stopPropagation(); setOfxIgnorar(ofx); }}
                           disabled={!!acao}
                         >
                           <X className="h-3 w-3" />
@@ -488,6 +493,36 @@ export default function OFXStage() {
           }}
         />
       )}
+
+      <AlertDialog open={!!ofxIgnorar} onOpenChange={(open) => !open && setOfxIgnorar(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Ignorar transação?</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              {ofxIgnorar ? (
+                <div>
+                  <span className="font-medium block mt-2">{ofxIgnorar.descricao}</span>
+                  <span className="text-sm text-muted-foreground">
+                    {formatBRL(ofxIgnorar.valor)} · {formatDateBR(ofxIgnorar.data_transacao)}
+                  </span>
+                </div>
+              ) : <span />}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (ofxIgnorar) handleIgnorar(ofxIgnorar);
+                setOfxIgnorar(null);
+              }}
+              className="bg-zinc-700 hover:bg-zinc-800 text-white"
+            >
+              Ignorar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
