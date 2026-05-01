@@ -298,11 +298,17 @@ export default function FaturasCartao() {
     const calcular = (lista: typeof filtradas) => {
       const total = lista.reduce((s, f) => s + (f.valor_total || 0), 0);
       const vinculado = lista.reduce((s, f) => s + (f.valor_conciliado || 0), 0);
+      // pega a fatura mais recente do mês (maior data_vencimento) pra "expandir"
+      const principal =
+        [...lista].sort((a, b) =>
+          (b.data_vencimento || "").localeCompare(a.data_vencimento || ""),
+        )[0] || null;
       return {
         qtd: lista.length,
         total,
         vinculado,
         naoVinculado: total - vinculado,
+        faturaId: principal?.id || null,
       };
     };
 
