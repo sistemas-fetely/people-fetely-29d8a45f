@@ -150,6 +150,16 @@ const App = () => (
             <Route path="/vagas/:id/teste" element={<EntregaTeste />} />
             <Route path="/unsubscribe" element={<Unsubscribe />} />
 
+            {/* Standalone print routes (sem layout/sidebar) */}
+            <Route
+              path="/imprimir/fatura-cartao/:faturaId"
+              element={
+                <ProtectedRoute>
+                  <ImprimirFaturaCartao />
+                </ProtectedRoute>
+              }
+            />
+
             {/* SNCF — Portal + transversais (Tarefas, Templates, Usuários) */}
             <Route element={<ProtectedRoute><SNCFLayout /></ProtectedRoute>}>
               <Route path="/sncf" element={<PortalSNCF />} />
