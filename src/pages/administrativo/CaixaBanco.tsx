@@ -809,10 +809,11 @@ export default function CaixaBanco() {
                               {(() => {
                                 const qNF = getQualidadeNF(l, nfMap);
                                 const qCat = getQualidadeCategoria(l, nfMap);
+                                const docOk = !docPendente;
                                 const corClass = (cor: "verde" | "amarelo" | "vermelho") => {
-                                  if (cor === "verde") return "fill-emerald-500 text-emerald-500";
-                                  if (cor === "amarelo") return "fill-amber-500 text-amber-500";
-                                  return "fill-red-500 text-red-500";
+                                  if (cor === "verde") return "text-emerald-600";
+                                  if (cor === "amarelo") return "text-amber-500";
+                                  return "text-red-500";
                                 };
                                 return (
                                   <TooltipProvider>
