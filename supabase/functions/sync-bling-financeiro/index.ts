@@ -268,6 +268,7 @@ async function syncProdutos(supabase: any, accessToken: string) {
   var temMais = true;
 
   while (temMais) {
+    if (timeUp()) { temMais = false; break; }
     try {
       var url = "/produtos?limite=100&pagina=" + pagina;
       var data = await blingGet(url, accessToken);
