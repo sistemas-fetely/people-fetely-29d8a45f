@@ -384,8 +384,6 @@ export default function OFXStage() {
                   const checked = selecionadasMassa.has(ofx.id);
                   const eh_debito = ofx.valor < 0;
                   const acao = acaoEmCurso?.includes(ofx.id) || acaoEmCurso === "conciliar:" + ofx.id;
-                  const top = topMatchPorOfx.get(ofx.id);
-                  const temTopMatch = !!top;
                   return (
                     <div
                       key={ofx.id}
@@ -394,9 +392,7 @@ export default function OFXStage() {
                           ? "border-blue-500 bg-blue-50 ring-2 ring-blue-200"
                           : checked
                             ? "border-amber-400 bg-amber-50/60"
-                            : temTopMatch
-                              ? "border-emerald-300 bg-emerald-50/40 hover:border-emerald-400"
-                              : "border-zinc-200 hover:border-zinc-300"
+                            : "border-zinc-200 hover:border-zinc-300"
                       }`}
                     >
                       <div className="flex items-start gap-2">
@@ -420,38 +416,10 @@ export default function OFXStage() {
                               {formatBRL(ofx.valor)}
                             </div>
                           </div>
-                          {temTopMatch && top && (
-                            <div className="mt-1 text-[10px] text-emerald-700 flex items-center gap-1 truncate">
-                              <Zap className="h-3 w-3 shrink-0" />
-                              <span className="truncate">
-                                {top.score}% match: {top.conta.descricao}
-                                {top.conta.fornecedor_cliente && ` · ${top.conta.fornecedor_cliente}`}
-                              </span>
-                            </div>
-                          )}
                         </div>
                       </div>
                       <div className="flex items-center gap-1 mt-2 pt-2 border-t flex-wrap">
-                        {temTopMatch && top && (
-                          <Button
-                            size="sm"
-                            className="h-6 px-2 text-[10px] gap-1 bg-emerald-600 hover:bg-emerald-700 text-white"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleConciliarExpress(ofx, top.conta.id, top.conta.descricao);
-                            }}
-                            disabled={!!acao}
-                            title={`${top.score}% match · ${top.motivos.join(", ")}`}
-                          >
-                            <Zap className="h-3 w-3" />
-                            Conciliar ({top.score}%)
-                          </Button>
-                        )}
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="h-6 px-2 text-[10px] gap-1"
-                          onClick={(e) => { e.stopPropagation(); handleLancarMovimentacao(ofx); }}
+
                           disabled={!!acao}
                         >
                           <Plus className="h-3 w-3" />
