@@ -153,7 +153,7 @@ export default function ImportarDados() {
           Importação no repositório fiscal. XML cobre NF-e (produto) e NFS-e ABRASF (serviço).
           Recibos virão como próximo formato suportado.
         </p>
-        <div className="grid gap-4 md:grid-cols-1">
+        <div className="grid gap-4 md:grid-cols-2">
           {/* CSV Qive ocultado — código preservado pra reativar quando necessário */}
           {/* <ImportadorCsvQive categorias={categorias} /> */}
           <ImportadorXmlNFe categorias={categorias} />
@@ -167,7 +167,7 @@ export default function ImportarDados() {
         <p className="text-sm text-muted-foreground mb-3">
           Importe arquivos OFX dos bancos. As transações vão para o Stage OFX para validação posterior.
         </p>
-        <div className="grid gap-4 md:grid-cols-1">
+        <div className="grid gap-4 md:grid-cols-2">
           <ImportadorOFX />
         </div>
       </div>
@@ -179,25 +179,27 @@ export default function ImportarDados() {
           Importe faturas (PDF/CSV) de cartão de crédito. Os lançamentos
           são classificados e ficam disponíveis em Faturas Cartão.
         </p>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex flex-wrap items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <CreditCard className="h-8 w-8 text-admin" />
-                <div>
-                  <CardTitle className="text-base">Importar Fatura</CardTitle>
-                  <CardDescription className="mt-1">
-                    Selecione o cartão, fatura e período
-                  </CardDescription>
+        <div className="grid gap-4 md:grid-cols-2">
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <CreditCard className="h-8 w-8 text-admin" />
+                  <div>
+                    <CardTitle className="text-base">Importar Fatura</CardTitle>
+                    <CardDescription className="mt-1">
+                      Selecione o cartão, fatura e período
+                    </CardDescription>
+                  </div>
                 </div>
+                <Button onClick={() => setImportarFaturaOpen(true)} className="gap-2">
+                  <Upload className="h-4 w-4" />
+                  Importar Fatura
+                </Button>
               </div>
-              <Button onClick={() => setImportarFaturaOpen(true)} className="gap-2">
-                <Upload className="h-4 w-4" />
-                Importar Fatura
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       <ImportarFaturaCartaoDialog
