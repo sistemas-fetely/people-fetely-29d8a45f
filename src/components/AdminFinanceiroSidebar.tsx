@@ -162,25 +162,6 @@ export function AdminFinanceiroSidebar() {
           <SidebarGroupContent>{renderItems(configFinanceiroItems)}</SidebarGroupContent>
         </SidebarGroup>
 
-        <div className="mx-4 border-t border-sidebar-border/40" />
-        <SidebarGroup>
-          {!collapsed && (
-            <SidebarGroupLabel className="text-sidebar-muted text-[10px] uppercase tracking-widest font-semibold mb-1 px-4">
-              Vendas Bling
-            </SidebarGroupLabel>
-          )}
-          <SidebarGroupContent>{renderItems(vendasBlingItems)}</SidebarGroupContent>
-        </SidebarGroup>
-
-        <div className="mx-4 border-t border-sidebar-border/40" />
-        <SidebarGroup>
-          {!collapsed && (
-            <SidebarGroupLabel className="text-sidebar-muted text-[10px] uppercase tracking-widest font-semibold mb-1 px-4">
-              Em construção
-            </SidebarGroupLabel>
-          )}
-          <SidebarGroupContent>{renderItems(futurosItems)}</SidebarGroupContent>
-        </SidebarGroup>
 
         <div className="mx-4 border-t border-sidebar-border/40" />
         <SidebarGroup>
