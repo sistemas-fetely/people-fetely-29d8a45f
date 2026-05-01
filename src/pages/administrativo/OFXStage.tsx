@@ -7,7 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Layers, Link2, Plus, X, Loader2, AlertCircle, Search, ArrowLeftRight, CreditCard, Layers as LayersIcon } from "lucide-react";
+import { Layers, Link2, Plus, X, Loader2, AlertCircle, Search, ArrowLeftRight, CreditCard, Layers as LayersIcon, Zap, Undo2 } from "lucide-react";
+import { melhorMatch } from "@/lib/financeiro/score-ofx-conta";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
@@ -136,6 +137,18 @@ export default function OFXStage() {
 
     return lista;
   }, [contasPagar, ofxSelecionada, filtroDescCP]);
+
+  // Top match por OFX (modo express) — só entra se score ≥ 95
+  const topMatchPorOfx = useMemo(() => {
+    const map = new Map<string, ReturnType<typeof melhorMatch>>();
+    for (const ofx of ofxFiltradas) {
+      const top = melhorMatch(ofx, contasPagar);
+      if (top && top.score >= 95) {
+        map.set(ofx.id, top);
+      }
+    }
+    return map;
+  }, [ofxFiltradas, contasPagar]);
 
   async function handleConciliar(contaPagarId: string, contaPagarDesc: string) {
     if (!ofxSelecionada) return;
