@@ -33,7 +33,7 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import { Plus, ChevronsUpDown, Check, Paperclip } from "lucide-react";
+import { Plus, ChevronsUpDown, Check, Paperclip, Sparkles } from "lucide-react";
 import { NfStageVinculadaCard } from "@/components/financeiro/NfStageVinculadaCard";
 import { NfStageBuscadorModal } from "@/components/financeiro/NfStageBuscadorModal";
 import { cn } from "@/lib/utils";
@@ -74,6 +74,46 @@ export function NovaContaPagarSheet({ open, onOpenChange }: Props) {
   const [parcelas, setParcelas] = useState(1);
   const [nfStageId, setNfStageId] = useState<string | null>(null);
   const [nfStageBuscaOpen, setNfStageBuscaOpen] = useState(false);
+
+  // Debounce da descrição (não dispara IA a cada tecla)
+  const [descricaoDebounced, setDescricaoDebounced] = useState("");
+  useEffect(() => {
+    const t = setTimeout(() => setDescricaoDebounced(descricao), 600);
+    return () => clearTimeout(t);
+  }, [descricao]);
+
+  // Estado: usuário aplicou a sugestão (não mostra mais)
+  const [sugestaoAplicada, setSugestaoAplicada] = useState(false);
+
+  // Busca sugestão de categoria
+  const { data: sugestoes = [] } = useQuery({
+    queryKey: ["sugerir-categoria", parceiroId, descricaoDebounced],
+    enabled: descricaoDebounced.length >= 4 || !!parceiroId,
+    staleTime: 30_000,
+    queryFn: async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase as any).rpc(
+        "sugerir_categoria_para_lancamento",
+        {
+          p_descricao: descricaoDebounced || null,
+          p_cnpj: null,
+          p_parceiro_id: parceiroId,
+        }
+      );
+      if (error) throw error;
+      return (data || []) as Array<{
+        categoria_id: string;
+        categoria_codigo: string;
+        categoria_nome: string;
+        score: number;
+        motivo: string;
+        amostra_descricao: string;
+        amostra_count: number;
+      }>;
+    },
+  });
+
+  const topSugestao = sugestoes[0];
 
   const { data: parceiros } = useQuery({
     queryKey: ["parceiros-fornecedores"],
@@ -141,6 +181,8 @@ export function NovaContaPagarSheet({ open, onOpenChange }: Props) {
       setFormaPgtoId("");
       setParcelas(1);
       setNfStageId(null);
+      setDescricaoDebounced("");
+      setSugestaoAplicada(false);
     }
   }, [open]);
 
@@ -327,6 +369,42 @@ export function NovaContaPagarSheet({ open, onOpenChange }: Props) {
                   onChange={setCategoriaId}
                   placeholder="Selecione uma categoria"
                 />
+                {topSugestao && !categoriaId && !sugestaoAplicada && topSugestao.score >= 60 && (
+                  <div className="mt-2 rounded-md border border-blue-200 bg-blue-50 p-3 dark:border-blue-900 dark:bg-blue-950/40">
+                    <div className="flex items-start gap-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5 text-sm font-medium text-blue-900 dark:text-blue-200">
+                          <Sparkles className="h-3.5 w-3.5" />
+                          Sugestão IA: {topSugestao.categoria_codigo} {topSugestao.categoria_nome}
+                        </div>
+                        <div className="text-xs text-blue-800/80 dark:text-blue-300/80 mt-0.5">
+                          {topSugestao.motivo} · baseado em {topSugestao.amostra_count}{" "}
+                          {topSugestao.amostra_count === 1 ? "lançamento" : "lançamentos"} similar
+                          {topSugestao.amostra_count === 1 ? "" : "es"}
+                        </div>
+                        {topSugestao.amostra_descricao && (
+                          <div className="text-xs text-blue-700/70 dark:text-blue-300/60 mt-1 italic truncate">
+                            ex: "{topSugestao.amostra_descricao}"
+                          </div>
+                        )}
+                      </div>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className="shrink-0 border-blue-300 bg-white hover:bg-blue-100 dark:bg-blue-900/40"
+                        onClick={() => {
+                          setCategoriaId(topSugestao.categoria_id);
+                          setSugestaoAplicada(true);
+                          toast.success("Categoria aplicada");
+                        }}
+                      >
+                        <Check className="h-3.5 w-3.5 mr-1" />
+                        Aplicar
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>

@@ -10190,6 +10190,18 @@ export type Database = {
           tipo_match: string
         }[]
       }
+      sugerir_categoria_para_lancamento: {
+        Args: { p_cnpj?: string; p_descricao?: string; p_parceiro_id?: string }
+        Returns: {
+          amostra_count: number
+          amostra_descricao: string
+          categoria_codigo: string
+          categoria_id: string
+          categoria_nome: string
+          motivo: string
+          score: number
+        }[]
+      }
       sugerir_match_cartao_nf: {
         Args: { p_lancamento_id: string }
         Returns: {
