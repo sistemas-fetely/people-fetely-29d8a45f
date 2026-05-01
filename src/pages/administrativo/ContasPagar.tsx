@@ -84,7 +84,6 @@ const STATUS_STYLES: Record<string, string> = {
   cancelado: "bg-red-100 text-red-800 hover:bg-red-100",
 };
 
-const PAGE_SIZE = 20;
 export default function ContasPagar() {
   const qc = useQueryClient();
   type ModoOperacional = "para_agir" | "aguardando_ofx" | "pagas_mes" | "canceladas" | "todos";
@@ -93,7 +92,6 @@ export default function ContasPagar() {
   const [busca, setBusca] = useState("");
   const [dataDe, setDataDe] = useState("");
   const [dataAte, setDataAte] = useState("");
-  const [page, setPage] = useState(1);
   const [contaIdSelecionada, setContaIdSelecionada] = useState<string | null>(null);
   const [selecionadas, setSelecionadas] = useState<Set<string>>(new Set());
   const [novaContaOpen, setNovaContaOpen] = useState(false);
@@ -228,8 +226,6 @@ export default function ContasPagar() {
     };
   }, [data, qualidadeMap, dataDe, dataAte, selecionadas]);
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const pageData = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   // Filtros ativos
   const filtrosAtivos = [
@@ -246,7 +242,7 @@ export default function ContasPagar() {
     setDataAte("");
     setTagFilter("todas");
     setModoOperacional("para_agir");
-    setPage(1);
+
   }
   const filtroAtivoCls = "border-admin bg-admin/5 ring-1 ring-admin/30";
 
@@ -260,13 +256,13 @@ export default function ContasPagar() {
     });
   }
   function toggleTodas() {
-    if (pageData.every((c) => selecionadas.has(c.id))) {
+    if (filtered.every((c) => selecionadas.has(c.id))) {
       const next = new Set(selecionadas);
-      pageData.forEach((c) => next.delete(c.id));
+      filtered.forEach((c) => next.delete(c.id));
       setSelecionadas(next);
     } else {
       const next = new Set(selecionadas);
-      pageData.forEach((c) => next.add(c.id));
+      filtered.forEach((c) => next.add(c.id));
       setSelecionadas(next);
     }
   }
@@ -276,11 +272,11 @@ export default function ContasPagar() {
   function verSemCategoria() {
     setModoOperacional("todos");
     setBusca("");
-    setPage(1);
+
   }
   function verPendentesDocs() {
     setTagFilter("doc_pendente");
-    setPage(1);
+
   }
 
   const contasSelecionadas: ContaSelecionada[] = useMemo(() => {
@@ -342,16 +338,16 @@ export default function ContasPagar() {
             totals.modoFocado === "selecao" && "bg-emerald-50 border-emerald-200",
             modoOperacional === "para_agir" && tagFilter === "todas" && totals.modoFocado !== "selecao" && "bg-blue-50 border-blue-300"
           )}
-          onClick={() => { setModoOperacional("para_agir"); setTagFilter("todas"); setPage(1); }}
+          onClick={() => { setModoOperacional("para_agir"); setTagFilter("todas"); }}
         >
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-normal text-muted-foreground flex items-center gap-1">
+          <CardHeader className="pb-1 pt-3 px-4">
+            <CardTitle className="text-xs font-normal text-muted-foreground flex items-center gap-1">
               🔥 Para agir
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-700">{formatBRL(totals.paraAgir.valor)}</div>
-            <div className="text-xs text-muted-foreground mt-1">
+          <CardContent className="pt-0 px-4 pb-3">
+            <div className="text-lg font-bold text-blue-700">{formatBRL(totals.paraAgir.valor)}</div>
+            <div className="text-[10px] text-muted-foreground">
               {totals.paraAgir.count} {totals.paraAgir.count === 1 ? "conta" : "contas"}
             </div>
           </CardContent>
@@ -364,16 +360,16 @@ export default function ContasPagar() {
             totals.modoFocado === "selecao" && "bg-emerald-50 border-emerald-200",
             modoOperacional === "para_agir" && tagFilter === "atrasada" && totals.modoFocado !== "selecao" && "bg-red-50 border-red-300"
           )}
-          onClick={() => { setModoOperacional("para_agir"); setTagFilter("atrasada"); setPage(1); }}
+          onClick={() => { setModoOperacional("para_agir"); setTagFilter("atrasada"); }}
         >
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-normal text-muted-foreground flex items-center gap-1">
+          <CardHeader className="pb-1 pt-3 px-4">
+            <CardTitle className="text-xs font-normal text-muted-foreground flex items-center gap-1">
               ⚠️ Atrasados
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-700">{formatBRL(totals.atrasados.valor)}</div>
-            <div className="text-xs text-muted-foreground mt-1">
+          <CardContent className="pt-0 px-4 pb-3">
+            <div className="text-lg font-bold text-red-700">{formatBRL(totals.atrasados.valor)}</div>
+            <div className="text-[10px] text-muted-foreground">
               {totals.atrasados.count} {totals.atrasados.count === 1 ? "conta" : "contas"}
             </div>
           </CardContent>
@@ -386,16 +382,16 @@ export default function ContasPagar() {
             totals.modoFocado === "selecao" && "bg-emerald-50 border-emerald-200",
             tagFilter === "qualidade_alerta" && totals.modoFocado !== "selecao" && "bg-amber-50 border-amber-300"
           )}
-          onClick={() => { setModoOperacional("para_agir"); setTagFilter("qualidade_alerta"); setPage(1); }}
+          onClick={() => { setModoOperacional("para_agir"); setTagFilter("qualidade_alerta"); }}
         >
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-normal text-muted-foreground flex items-center gap-1">
+          <CardHeader className="pb-1 pt-3 px-4">
+            <CardTitle className="text-xs font-normal text-muted-foreground flex items-center gap-1">
               🩺 Saúde do dado
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-amber-700">{totals.saude.percent}%</div>
-            <div className="text-xs text-muted-foreground mt-1">
+          <CardContent className="pt-0 px-4 pb-3">
+            <div className="text-lg font-bold text-amber-700">{totals.saude.percent}%</div>
+            <div className="text-[10px] text-muted-foreground">
               {totals.saude.semSaude} {totals.saude.semSaude === 1 ? "conta com alerta" : "contas com alerta"}
             </div>
           </CardContent>
@@ -408,16 +404,16 @@ export default function ContasPagar() {
             totals.modoFocado === "selecao" && "bg-emerald-50 border-emerald-200",
             modoOperacional === "aguardando_ofx" && totals.modoFocado !== "selecao" && "bg-teal-50 border-teal-300"
           )}
-          onClick={() => { setModoOperacional("aguardando_ofx"); setTagFilter("todas"); setPage(1); }}
+          onClick={() => { setModoOperacional("aguardando_ofx"); setTagFilter("todas"); }}
         >
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-normal text-muted-foreground flex items-center gap-1">
+          <CardHeader className="pb-1 pt-3 px-4">
+            <CardTitle className="text-xs font-normal text-muted-foreground flex items-center gap-1">
               ⏳ Aguardando Pagamento
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-teal-700">{formatBRL(totals.aguardandoOfx.valor)}</div>
-            <div className="text-xs text-muted-foreground mt-1">
+          <CardContent className="pt-0 px-4 pb-3">
+            <div className="text-lg font-bold text-teal-700">{formatBRL(totals.aguardandoOfx.valor)}</div>
+            <div className="text-[10px] text-muted-foreground">
               {totals.aguardandoOfx.count} {totals.aguardandoOfx.count === 1 ? "conta" : "contas"}
             </div>
           </CardContent>
@@ -444,7 +440,7 @@ export default function ContasPagar() {
             size="sm"
             variant="outline"
             className="border-amber-400 text-amber-800 hover:bg-amber-100"
-            onClick={() => { setTagFilter("doc_pendente"); setPage(1); }}
+            onClick={() => { setTagFilter("doc_pendente"); }}
           >
             Ver pendentes
           </Button>
@@ -483,7 +479,7 @@ export default function ContasPagar() {
                 value={busca}
                 onChange={(e) => {
                   setBusca(e.target.value);
-                  setPage(1);
+
                 }}
                 className={`pl-9 ${busca ? filtroAtivoCls : ""}`}
               />
@@ -493,7 +489,7 @@ export default function ContasPagar() {
               value={dataDe}
               onChange={(e) => {
                 setDataDe(e.target.value);
-                setPage(1);
+
               }}
               className={`w-full lg:w-44 ${dataDe ? filtroAtivoCls : ""}`}
             />
@@ -502,7 +498,7 @@ export default function ContasPagar() {
               value={dataAte}
               onChange={(e) => {
                 setDataAte(e.target.value);
-                setPage(1);
+
               }}
               className={`w-full lg:w-44 ${dataAte ? filtroAtivoCls : ""}`}
             />
@@ -510,7 +506,7 @@ export default function ContasPagar() {
               value={tagFilter}
               onValueChange={(v) => {
                 setTagFilter(v as "todas" | "doc_pendente" | "atrasada" | "qualidade_alerta");
-                setPage(1);
+
               }}
             >
               <SelectTrigger
@@ -535,7 +531,7 @@ export default function ContasPagar() {
                   key={modo.value}
                   size="sm"
                   variant={modoOperacional === modo.value ? "default" : "outline"}
-                  onClick={() => { setModoOperacional(modo.value as ModoOperacional); setPage(1); }}
+                  onClick={() => { setModoOperacional(modo.value as ModoOperacional); }}
                   className={cn(
                     modoOperacional === modo.value && "bg-red-600 text-white hover:bg-red-700"
                   )}
@@ -616,7 +612,7 @@ export default function ContasPagar() {
                 </Link>
               </Button>
             </div>
-          ) : pageData.length === 0 ? (
+          ) : filtered.length === 0 ? (
             <div className="py-12 text-center text-sm text-muted-foreground">
               Nenhum registro encontrado para os filtros aplicados.
             </div>
@@ -629,7 +625,7 @@ export default function ContasPagar() {
                       <TableHead className="w-10">
                         <Checkbox
                           checked={
-                            pageData.length > 0 && pageData.every((c) => selecionadas.has(c.id))
+                            filtered.length > 0 && filtered.every((c) => selecionadas.has(c.id))
                           }
                           onCheckedChange={toggleTodas}
                           aria-label="Selecionar todos"
@@ -646,7 +642,7 @@ export default function ContasPagar() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {pageData.map((c) => {
+                    {filtered.map((c) => {
                       const isSel = selecionadas.has(c.id);
                       const compromissoInfo = compromissoInfoMap.get(c.id);
                       return (
@@ -791,29 +787,10 @@ export default function ContasPagar() {
                   </TableBody>
                 </Table>
               </div>
-              <div className="flex items-center justify-between mt-4">
+              <div className="mt-4">
                 <span className="text-sm text-muted-foreground">
-                  {filtered.length} registro{filtered.length === 1 ? "" : "s"} • Página {page} de{" "}
-                  {totalPages}
+                  {filtered.length} registro{filtered.length === 1 ? "" : "s"}
                 </span>
-                <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    disabled={page === 1}
-                    onClick={() => setPage((p) => p - 1)}
-                  >
-                    Anterior
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    disabled={page === totalPages}
-                    onClick={() => setPage((p) => p + 1)}
-                  >
-                    Próxima
-                  </Button>
-                </div>
               </div>
             </>
           )}
