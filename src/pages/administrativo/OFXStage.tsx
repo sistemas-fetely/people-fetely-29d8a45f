@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Layers, Link2, Plus, X, Loader2, AlertCircle, Search, ArrowLeftRight, CreditCard, Layers as LayersIcon } from "lucide-react";
-import { Checkbox } from "@/components/ui/checkbox";
+
 import { toast } from "sonner";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
 import { BuscarMultiplosLancamentosDialog } from "@/components/financeiro/BuscarMultiplosLancamentosDialog";
@@ -45,8 +45,6 @@ export default function OFXStage() {
   const [filtroDescCP, setFiltroDescCP] = useState("");
   const [acaoEmCurso, setAcaoEmCurso] = useState<string | null>(null);
   const [buscaMultiplaOpen, setBuscaMultiplaOpen] = useState(false);
-  const [selecionadasMassa, setSelecionadasMassa] = useState<Set<string>>(new Set());
-  const [ignorandoMassa, setIgnorandoMassa] = useState(false);
 
   const { data: contas } = useQuery({
     queryKey: ["contas-bancarias-ofx-stage"],
@@ -242,46 +240,6 @@ export default function OFXStage() {
     }
   }
 
-  async function handleIgnorarMassa() {
-    if (selecionadasMassa.size === 0) return;
-    setIgnorandoMassa(true);
-    try {
-      const ids = Array.from(selecionadasMassa);
-      let okCount = 0;
-      let firstErr: string | null = null;
-      for (const id of ids) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { data, error } = await (supabase as any).rpc("ignorar_ofx", { p_ofx_id: id });
-        if (error) { firstErr = firstErr || error.message; continue; }
-        if (data?.ok) okCount++;
-        else firstErr = firstErr || data?.erro || null;
-      }
-      if (okCount > 0) {
-        toast.success(`${okCount} ${okCount === 1 ? "transação ignorada" : "transações ignoradas"}`);
-      }
-      if (firstErr && okCount < ids.length) {
-        toast.error(`Falhas: ${ids.length - okCount}. ${firstErr}`);
-      }
-      setSelecionadasMassa(new Set());
-      if (ofxSelecionada && selecionadasMassa.has(ofxSelecionada.id)) setOfxSelecionada(null);
-      qc.invalidateQueries({ queryKey: ["ofx-transacoes-pendentes"] });
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
-      toast.error("Erro: " + msg);
-    } finally {
-      setIgnorandoMassa(false);
-    }
-  }
-
-  function toggleSelMassa(id: string) {
-    setSelecionadasMassa((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  }
-
   return (
     <div className="p-6 space-y-4">
       <div>
@@ -331,34 +289,6 @@ export default function OFXStage() {
                   <Badge variant="outline" className="ml-1">{transacoesOFX.length}</Badge>
                 </h2>
               </div>
-              {selecionadasMassa.size > 0 && (
-                <div className="mt-2 flex items-center justify-between gap-2 bg-amber-50 border border-amber-200 rounded p-2">
-                  <span className="text-xs text-amber-800 font-medium">
-                    {selecionadasMassa.size} {selecionadasMassa.size === 1 ? "transação selecionada" : "transações selecionadas"}
-                  </span>
-                  <div className="flex items-center gap-1">
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="h-7 px-2 text-[11px]"
-                      onClick={() => setSelecionadasMassa(new Set())}
-                      disabled={ignorandoMassa}
-                    >
-                      Limpar
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="h-7 px-2 text-[11px] gap-1 border-amber-400 text-amber-800 hover:bg-amber-100"
-                      onClick={handleIgnorarMassa}
-                      disabled={ignorandoMassa}
-                    >
-                      {ignorandoMassa ? <Loader2 className="h-3 w-3 animate-spin" /> : <X className="h-3 w-3" />}
-                      Ignorar selecionadas
-                    </Button>
-                  </div>
-                </div>
-              )}
               <Input
                 placeholder="Filtrar por descrição..."
                 value={filtroDescOFX}
@@ -381,55 +311,39 @@ export default function OFXStage() {
               ) : (
                 ofxFiltradas.map((ofx) => {
                   const selected = ofxSelecionada?.id === ofx.id;
-                  const checked = selecionadasMassa.has(ofx.id);
                   const eh_debito = ofx.valor < 0;
                   const acao = acaoEmCurso?.includes(ofx.id) || acaoEmCurso === "conciliar:" + ofx.id;
                   return (
                     <div
                       key={ofx.id}
-                      className={`p-2 border rounded text-xs transition-all ${
+                      className={`p-2 border rounded text-xs transition-all cursor-pointer ${
                         selected
                           ? "border-blue-500 bg-blue-50 ring-2 ring-blue-200"
-                          : checked
-                            ? "border-amber-400 bg-amber-50/60"
-                            : "border-zinc-200 hover:border-zinc-300"
+                          : "border-zinc-200 hover:border-zinc-300"
                       }`}
+                      onClick={() => !acao && setOfxSelecionada(selected ? null : ofx)}
                     >
-                      <div className="flex items-start gap-2">
-                        <Checkbox
-                          checked={checked}
-                          onCheckedChange={() => !acao && toggleSelMassa(ofx.id)}
-                          onClick={(e) => e.stopPropagation()}
-                          className="mt-0.5"
-                          disabled={!!acao}
-                        />
-                        <div
-                          className="flex-1 min-w-0 cursor-pointer"
-                          onClick={() => !acao && setOfxSelecionada(selected ? null : ofx)}
-                        >
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="flex-1 min-w-0">
-                              <div className="font-medium truncate">{ofx.descricao}</div>
-                              <div className="text-muted-foreground text-[10px]">{formatDateBR(ofx.data_transacao)}</div>
-                            </div>
-                            <div className={`font-mono font-semibold ${eh_debito ? "text-red-700" : "text-emerald-700"}`}>
-                              {formatBRL(ofx.valor)}
-                            </div>
-                          </div>
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium truncate">{ofx.descricao}</div>
+                          <div className="text-muted-foreground text-[10px]">{formatDateBR(ofx.data_transacao)}</div>
+                        </div>
+                        <div className={`font-mono font-semibold ${eh_debito ? "text-red-700" : "text-emerald-700"}`}>
+                          {formatBRL(ofx.valor)}
                         </div>
                       </div>
-                      <div className="flex items-center gap-1 mt-2 pt-2 border-t flex-wrap">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="h-6 px-2 text-[10px] gap-1"
-                          onClick={(e) => { e.stopPropagation(); handleLancarMovimentacao(ofx); }}
-                          disabled={!!acao}
-                        >
-                          <Plus className="h-3 w-3" />
-                          Lançar como mov
-                        </Button>
-                        {selected && (
+                      {selected && (
+                        <div className="flex items-center gap-1 mt-2 pt-2 border-t flex-wrap">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-6 px-2 text-[10px] gap-1"
+                            onClick={(e) => { e.stopPropagation(); handleLancarMovimentacao(ofx); }}
+                            disabled={!!acao}
+                          >
+                            <Plus className="h-3 w-3" />
+                            Lançar como movimentação
+                          </Button>
                           <Button
                             size="sm"
                             variant="outline"
@@ -441,18 +355,18 @@ export default function OFXStage() {
                             <LayersIcon className="h-3 w-3" />
                             Buscar Múltiplos
                           </Button>
-                        )}
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="h-6 px-2 text-[10px] gap-1 text-zinc-600"
-                          onClick={(e) => { e.stopPropagation(); handleIgnorar(ofx); }}
-                          disabled={!!acao}
-                        >
-                          <X className="h-3 w-3" />
-                          Ignorar
-                        </Button>
-                      </div>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-6 px-2 text-[10px] gap-1 text-zinc-600"
+                            onClick={(e) => { e.stopPropagation(); handleIgnorar(ofx); }}
+                            disabled={!!acao}
+                          >
+                            <X className="h-3 w-3" />
+                            Ignorar
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   );
                 })
