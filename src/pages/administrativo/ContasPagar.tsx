@@ -84,7 +84,6 @@ const STATUS_STYLES: Record<string, string> = {
   cancelado: "bg-red-100 text-red-800 hover:bg-red-100",
 };
 
-const PAGE_SIZE = 20;
 export default function ContasPagar() {
   const qc = useQueryClient();
   type ModoOperacional = "para_agir" | "aguardando_ofx" | "pagas_mes" | "canceladas" | "todos";
