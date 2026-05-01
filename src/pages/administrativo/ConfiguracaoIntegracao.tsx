@@ -741,6 +741,11 @@ export default function ConfiguracaoIntegracao() {
                           <Loader2 className="h-3 w-3 mr-1 animate-spin" /> Executando
                         </Badge>
                       )}
+                      {l.status === "cancelado" && (
+                        <Badge variant="outline" className="text-muted-foreground">
+                          <XCircle className="h-3 w-3 mr-1" /> Cancelado
+                        </Badge>
+                      )}
                     </TableCell>
                     <TableCell className="text-right text-xs">{l.registros_criados ?? 0}</TableCell>
                     <TableCell className="text-right text-xs">{l.registros_atualizados ?? 0}</TableCell>
