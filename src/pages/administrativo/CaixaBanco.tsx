@@ -109,6 +109,28 @@ function isAtrasada(l: Lancamento): boolean {
   return venc < hoje;
 }
 
+/**
+ * Qualidade binária da movimentação (Doutrina Flavio — KEEP IT SIMPLE).
+ * Vermelho = sem categoria OU categoria inconsistente com a NF vinculada.
+ * Verde = ok (sem bolinha).
+ */
+function getQualidadeMov(m: {
+  categoria_id: string | null;
+  categoria_inconsistente: boolean | null | undefined;
+  inconsistencia_motivo: string | null | undefined;
+}): { vermelho: boolean; motivo: string | null } {
+  if (m.categoria_inconsistente === true) {
+    return {
+      vermelho: true,
+      motivo: m.inconsistencia_motivo || "Categoria inconsistente com NF",
+    };
+  }
+  if (!m.categoria_id) {
+    return { vermelho: true, motivo: "Sem categoria" };
+  }
+  return { vermelho: false, motivo: null };
+}
+
 type ContaBancariaLite = {
   id: string;
   nome_exibicao: string;
