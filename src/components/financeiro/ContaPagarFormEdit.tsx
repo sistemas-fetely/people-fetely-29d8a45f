@@ -61,6 +61,45 @@ export function ContaPagarFormEdit({ conta, onSaved, onCancel }: Props) {
   const [nfSerie, setNfSerie] = useState(conta.nf_serie || "");
   const [nfChave, setNfChave] = useState(conta.nf_chave_acesso || "");
 
+  // Debounce da descrição (não dispara IA a cada tecla)
+  const [descricaoDebounced, setDescricaoDebounced] = useState(descricao);
+  useEffect(() => {
+    const t = setTimeout(() => setDescricaoDebounced(descricao), 600);
+    return () => clearTimeout(t);
+  }, [descricao]);
+
+  // Sugestão de categoria via RPC (só se ainda não há categoria definida)
+  const semCategoria = !contaId || contaId === "__none__";
+  const { data: sugestoes = [] } = useQuery({
+    queryKey: ["sugerir-categoria-edit", conta.id, descricaoDebounced],
+    enabled: descricaoDebounced.length >= 4 && semCategoria && !isReadOnly,
+    staleTime: 30_000,
+    queryFn: async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase as any).rpc(
+        "sugerir_categoria_para_lancamento",
+        {
+          p_descricao: descricaoDebounced || null,
+          p_cnpj: null,
+          p_parceiro_id: conta.parceiro_id || null,
+        },
+      );
+      if (error) throw error;
+      return (data || []) as Array<{
+        categoria_id: string;
+        categoria_codigo: string;
+        categoria_nome: string;
+        score: number;
+        motivo: string;
+        amostra_descricao: string;
+        amostra_count: number;
+      }>;
+    },
+  });
+
+  const topSugestao = sugestoes[0];
+  const [sugestaoAplicada, setSugestaoAplicada] = useState(false);
+
   // Reseta form quando conta muda
   useEffect(() => {
     setDescricao(conta.descricao || "");
