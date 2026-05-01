@@ -312,6 +312,8 @@ export default function ContasPagar() {
         </Button>
       </div>
 
+      {/* CONTAINER STICKY — KPIs + filtros congelados no topo durante scroll */}
+      <div className="sticky top-0 z-20 bg-background -mx-6 px-6 pt-2 pb-3 space-y-4 shadow-sm">
       {totals.modoFocado === "selecao" && (
         <div className="flex items-center justify-between text-xs px-1 -mb-1">
           <div className="text-emerald-700 font-medium">
