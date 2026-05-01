@@ -845,14 +845,6 @@ export default function CaixaBanco() {
                                 }
                                 return null;
                               })()}
-                              {conciliada && (
-                                <span
-                                  className="shrink-0"
-                                  title="Conciliada — bateu com extrato bancário"
-                                >
-                                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
-                                </span>
-                              )}
                             </div>
                             {(l.vinculada_cartao || l.origem_view === "cartao_lancamento") && (
                               <Badge
