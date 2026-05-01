@@ -21,6 +21,8 @@ import {
   CreditCard,
   Pencil,
   Trash2,
+  ArrowRightLeft,
+  Loader2,
 } from "lucide-react";
 import {
   AlertDialog,
@@ -77,6 +79,7 @@ type Conta = {
   plano_contas?: { codigo?: string | null; nome?: string | null } | null;
   formas_pagamento?: { nome?: string | null; codigo?: string | null } | null;
   parceiros_comerciais?: { razao_social?: string | null } | null;
+  movimentacao_bancaria_id?: string | null;
 };
 
 const STATUS_LABEL: Record<string, string> = {
@@ -111,8 +114,41 @@ export default function ContaPagarDetalheDrawer({ contaId, onClose }: Props) {
   const [showEnviar, setShowEnviar] = useState(false);
   const [modoEdit, setModoEdit] = useState(false);
   const [apagando, setApagando] = useState(false);
+  const [lancandoMov, setLancandoMov] = useState(false);
   const workflow = useContaWorkflow();
   const qc = useQueryClient();
+
+  async function handleLancarMov() {
+    if (!conta) return;
+    setLancandoMov(true);
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: result, error } = await (supabase as any).rpc(
+        "gerar_movimentacao_de_conta",
+        { p_conta_id: conta.id }
+      );
+      if (error) throw error;
+      if (!result?.ok) {
+        toast.error(result?.erro || "Erro ao lançar em movimentação");
+        return;
+      }
+
+      if (result?.ja_existia) {
+        toast.info("Esta conta já tinha movimentação vinculada");
+      } else {
+        toast.success("Lançada em Movimentação");
+      }
+
+      qc.invalidateQueries({ queryKey: ["contas-pagar"] });
+      qc.invalidateQueries({ queryKey: ["conta-pagar-detalhe", conta.id] });
+      qc.invalidateQueries({ queryKey: ["lancamentos-caixa-banco"] });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      toast.error("Erro: " + msg);
+    } finally {
+      setLancandoMov(false);
+    }
+  }
 
   async function handleApagar() {
     if (!conta) return;
@@ -246,8 +282,14 @@ export default function ContaPagarDetalheDrawer({ contaId, onClose }: Props) {
                       </Badge>
                     )}
                     {isCartao && (
-                      <Badge variant="outline" className="gap-1 text-xs border-blue-300 text-blue-700">
+                    <Badge variant="outline" className="gap-1 text-xs border-blue-300 text-blue-700">
                         <CreditCard className="h-3 w-3" /> Cartão
+                      </Badge>
+                    )}
+                    {conta.movimentacao_bancaria_id && (
+                      <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-300 gap-1">
+                        <ArrowRightLeft className="h-3 w-3" />
+                        Já em Movimentação
                       </Badge>
                     )}
                   </SheetDescription>
@@ -264,6 +306,25 @@ export default function ContaPagarDetalheDrawer({ contaId, onClose }: Props) {
                   >
                     <Pencil className="h-3.5 w-3.5 mr-1" />
                     {conta.status === "paga" ? "Ver dados" : "Editar"}
+                  </Button>
+                )}
+                {!modoEdit
+                  && conta.status === "aguardando_pagamento"
+                  && !conta.movimentacao_bancaria_id && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="ml-1 border-blue-300 text-blue-700 hover:bg-blue-50 gap-1"
+                    onClick={handleLancarMov}
+                    disabled={lancandoMov}
+                    title="Antecipar lançamento em Movimentação (paga fora do sistema)"
+                  >
+                    {lancandoMov ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <ArrowRightLeft className="h-3.5 w-3.5" />
+                    )}
+                    <span className="text-xs">Lançar em Mov</span>
                   </Button>
                 )}
                 {!modoEdit && ["rascunho", "aberto", "aprovado", "aguardando_pagamento"].includes(conta.status) && (
