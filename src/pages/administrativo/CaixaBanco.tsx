@@ -638,6 +638,14 @@ export default function CaixaBanco() {
     const comNF = baseQualidade.filter((l) => getQualidadeNF(l, nfMap).cor === "verde").length;
     const comCategoriaOK = baseQualidade.filter((l) => getQualidadeCategoria(l, nfMap).cor === "verde").length;
     const comDocOK = baseQualidade.filter((l) => statusFlagsMap.get(l.id)?.tem_doc_pendente !== true).length;
+    const comVinculadoOK = baseQualidade.filter((l) =>
+      l.vinculada_cartao
+      || l.origem_view === "cartao_lancamento"
+      || l.movimentacao_bancaria_id
+    ).length;
+    const comConciliadoOK = baseQualidade.filter((l) =>
+      l.conciliado_em || l.status_caixa === "conciliado"
+    ).length;
 
     const sumValor = (arr: Lancamento[]) => arr.reduce((s, l) => s + Number(l.valor || 0), 0);
     const pct = (parte: number, total: number) => (total > 0 ? Math.round((parte / total) * 100) : 100);
