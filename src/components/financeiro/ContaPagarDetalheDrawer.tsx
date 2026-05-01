@@ -23,6 +23,7 @@ import {
   Trash2,
   ArrowRightLeft,
   Loader2,
+  Sparkles,
 } from "lucide-react";
 import {
   AlertDialog,
