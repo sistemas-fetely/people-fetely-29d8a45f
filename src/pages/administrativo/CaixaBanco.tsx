@@ -32,7 +32,9 @@ import {
   FileWarning,
   CreditCard,
   Repeat,
+  AlertTriangle,
 } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
 
 import ContaPagarDetalheDrawer from "@/components/financeiro/ContaPagarDetalheDrawer";
