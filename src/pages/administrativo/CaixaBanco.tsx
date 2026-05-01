@@ -937,6 +937,8 @@ export default function CaixaBanco() {
                                 const qNF = getQualidadeNF(l, nfMap);
                                 const qCat = getQualidadeCategoria(l, nfMap);
                                 const docOk = !docPendente;
+                                const qVinc = getQualidadeVinculado(l);
+                                const qConc = getQualidadeConciliado(l);
                                 const corClass = (cor: "verde" | "amarelo" | "vermelho") => {
                                   if (cor === "verde") return "text-emerald-600";
                                   if (cor === "amarelo") return "text-amber-500";
@@ -977,19 +979,24 @@ export default function CaixaBanco() {
                                           </p>
                                         </TooltipContent>
                                       </Tooltip>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <Link2 className={cn("h-3.5 w-3.5 cursor-help", corClass(qVinc.cor))} strokeWidth={2.2} />
+                                        </TooltipTrigger>
+                                        <TooltipContent className="max-w-xs">
+                                          <p className="text-xs">🔗 {qVinc.motivo}</p>
+                                        </TooltipContent>
+                                      </Tooltip>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <CircleDollarSign className={cn("h-3.5 w-3.5 cursor-help", corClass(qConc.cor))} strokeWidth={2.2} />
+                                        </TooltipTrigger>
+                                        <TooltipContent className="max-w-xs">
+                                          <p className="text-xs">💰 {qConc.motivo}</p>
+                                        </TooltipContent>
+                                      </Tooltip>
                                     </div>
                                   </TooltipProvider>
-                                );
-                              })()}
-                              {(() => {
-                                const q = qualidadeMap?.get(l.id);
-                                const visual = getQualidadeDadoIcon(q?.nivel, q?.motivos);
-                                if (!visual) return null;
-                                const QIcon = visual.Icon;
-                                return (
-                                  <span title={visual.tooltip} className="inline-flex items-center mr-1">
-                                    <QIcon className={`h-2.5 w-2.5 ${visual.cor} ${visual.bg}`} />
-                                  </span>
                                 );
                               })()}
                             </div>
