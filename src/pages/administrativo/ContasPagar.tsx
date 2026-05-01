@@ -312,12 +312,34 @@ export default function ContasPagar() {
         </Button>
       </div>
 
+      {totals.modoFocado === "selecao" && (
+        <div className="flex items-center justify-between text-xs px-1 -mb-1">
+          <div className="text-emerald-700 font-medium">
+            📌 Cards refletem {totals.qtdSelecionadas}{" "}
+            {totals.qtdSelecionadas === 1 ? "conta selecionada" : "contas selecionadas"}
+          </div>
+          <button
+            type="button"
+            onClick={() => setSelecionadas(new Set())}
+            className="text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
+          >
+            Limpar seleção
+          </button>
+        </div>
+      )}
+      {totals.modoFocado === "datas" && (
+        <div className="text-xs px-1 -mb-1 text-blue-700 font-medium">
+          📅 Cards refletem o período filtrado
+        </div>
+      )}
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* 🔥 Para agir (default) */}
         <Card
           className={cn(
             "cursor-pointer transition-all hover:shadow-md",
-            modoOperacional === "para_agir" && tagFilter === "todas" && "bg-blue-50 border-blue-300"
+            totals.modoFocado === "selecao" && "bg-emerald-50 border-emerald-200",
+            modoOperacional === "para_agir" && tagFilter === "todas" && totals.modoFocado !== "selecao" && "bg-blue-50 border-blue-300"
           )}
           onClick={() => { setModoOperacional("para_agir"); setTagFilter("todas"); setPage(1); }}
         >
@@ -338,7 +360,8 @@ export default function ContasPagar() {
         <Card
           className={cn(
             "cursor-pointer transition-all hover:shadow-md",
-            modoOperacional === "para_agir" && tagFilter === "atrasada" && "bg-red-50 border-red-300"
+            totals.modoFocado === "selecao" && "bg-emerald-50 border-emerald-200",
+            modoOperacional === "para_agir" && tagFilter === "atrasada" && totals.modoFocado !== "selecao" && "bg-red-50 border-red-300"
           )}
           onClick={() => { setModoOperacional("para_agir"); setTagFilter("atrasada"); setPage(1); }}
         >
@@ -359,7 +382,8 @@ export default function ContasPagar() {
         <Card
           className={cn(
             "cursor-pointer transition-all hover:shadow-md",
-            tagFilter === "qualidade_alerta" && "bg-amber-50 border-amber-300"
+            totals.modoFocado === "selecao" && "bg-emerald-50 border-emerald-200",
+            tagFilter === "qualidade_alerta" && totals.modoFocado !== "selecao" && "bg-amber-50 border-amber-300"
           )}
           onClick={() => { setModoOperacional("para_agir"); setTagFilter("qualidade_alerta"); setPage(1); }}
         >
@@ -376,11 +400,12 @@ export default function ContasPagar() {
           </CardContent>
         </Card>
 
-        {/* ⏳ Aguardando OFX */}
+        {/* ⏳ Aguardando Pagamento */}
         <Card
           className={cn(
             "cursor-pointer transition-all hover:shadow-md",
-            modoOperacional === "aguardando_ofx" && "bg-teal-50 border-teal-300"
+            totals.modoFocado === "selecao" && "bg-emerald-50 border-emerald-200",
+            modoOperacional === "aguardando_ofx" && totals.modoFocado !== "selecao" && "bg-teal-50 border-teal-300"
           )}
           onClick={() => { setModoOperacional("aguardando_ofx"); setTagFilter("todas"); setPage(1); }}
         >
