@@ -700,7 +700,23 @@ export default function FaturasCartao() {
               <div className="flex items-center gap-2 mb-3">
                 <span className="text-base">📑</span>
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm font-semibold">Fatura mês atual</div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-semibold">Fatura mês atual</span>
+                    {totals.mesAtual.status && (
+                      <Badge
+                        variant="outline"
+                        className={cn(
+                          "text-[10px] uppercase",
+                          totals.mesAtual.status === "paga" && "bg-emerald-50 text-emerald-700 border-emerald-300",
+                          totals.mesAtual.status === "aberta" && "bg-amber-50 text-amber-700 border-amber-300",
+                          totals.mesAtual.status === "conciliada" && "bg-blue-50 text-blue-700 border-blue-300",
+                          totals.mesAtual.status === "cancelada" && "bg-zinc-50 text-zinc-600 border-zinc-300"
+                        )}
+                      >
+                        {totals.mesAtual.status}
+                      </Badge>
+                    )}
+                  </div>
                   <div className="text-[10px] text-muted-foreground">
                     {new Date().toLocaleDateString("pt-BR", {
                       month: "long",
