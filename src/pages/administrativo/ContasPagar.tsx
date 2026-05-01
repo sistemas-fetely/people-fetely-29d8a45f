@@ -92,7 +92,6 @@ export default function ContasPagar() {
   const [busca, setBusca] = useState("");
   const [dataDe, setDataDe] = useState("");
   const [dataAte, setDataAte] = useState("");
-  const [page, setPage] = useState(1);
   const [contaIdSelecionada, setContaIdSelecionada] = useState<string | null>(null);
   const [selecionadas, setSelecionadas] = useState<Set<string>>(new Set());
   const [novaContaOpen, setNovaContaOpen] = useState(false);
