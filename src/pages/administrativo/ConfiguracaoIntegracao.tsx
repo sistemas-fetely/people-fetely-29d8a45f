@@ -30,6 +30,7 @@ export default function ConfiguracaoIntegracao() {
   const [manualCode, setManualCode] = useState("");
   const [processingCode, setProcessingCode] = useState(false);
   const [fixExecutado, setFixExecutado] = useState(false);
+  const [logsLimit, setLogsLimit] = useState(5);
 
   // Financeiro externo
   const [showDialogFin, setShowDialogFin] = useState(false);
