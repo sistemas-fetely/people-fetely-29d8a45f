@@ -179,6 +179,7 @@ async function syncPedidos(supabase: any, accessToken: string, ultimaSync: any) 
   var temMais = true;
 
   while (temMais) {
+    if (timeUp()) { temMais = false; break; }
     try {
       var url = "/pedidos/vendas?limite=100&pagina=" + pagina;
       if (ultimaSync) {
