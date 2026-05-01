@@ -180,6 +180,7 @@ export default function CaixaBanco() {
   const [page, setPage] = useFiltrosPersistentes<number>("caixabanco_page", 1);
   const [contaIdDrawer, setContaIdDrawer] = useState<string | null>(null);
   const [mostrarSoInconsistentes, setMostrarSoInconsistentes] = useState(false);
+  const [filtroSoVermelhas, setFiltroSoVermelhas] = useState(false);
   const navigate = useNavigate();
 
   // Query da view unificada
