@@ -172,34 +172,43 @@ export default function ContasPagar() {
   }, [data, modoOperacional, tagFilter, busca, dataDe, dataAte, qualidadeMap]);
 
   const totals = useMemo(() => {
-    const all = data || [];
+    // Cards refletem recorte temporal (dataDe / dataAte) — não modo/tag/busca.
+    let escopo = data || [];
+
+    if (dataDe) {
+      escopo = escopo.filter((c) => (c.data_vencimento || "") >= dataDe);
+    }
+    if (dataAte) {
+      escopo = escopo.filter((c) => (c.data_vencimento || "") <= dataAte);
+    }
 
     // 🔥 Para agir = aberto + aprovado
-    const paraAgir = all.filter((c) => c.status === "aberto" || c.status === "aprovado");
+    const paraAgir = escopo.filter((c) => c.status === "aberto" || c.status === "aprovado");
     const paraAgirValor = paraAgir.reduce((s, c) => s + Number(c.valor || 0), 0);
 
-    // ⚠️ Atrasados (subset de para_agir com vencimento passado)
+    // ⚠️ Atrasados
     const atrasados = paraAgir.filter((c) => c.atrasada === true);
     const atrasadosValor = atrasados.reduce((s, c) => s + Number(c.valor || 0), 0);
 
     // 🩺 Saúde do dado
-    const semSaude = all.filter((c) => {
+    const semSaude = escopo.filter((c) => {
       const q = qualidadeMap?.get(c.id);
       return q && q.nivel !== "verde" && c.status !== "cancelado";
     });
-    const totalAtivas = all.filter((c) => c.status !== "cancelado").length;
+    const totalAtivas = escopo.filter((c) => c.status !== "cancelado").length;
     const percentSaudavel = totalAtivas > 0
       ? Math.round(((totalAtivas - semSaude.length) / totalAtivas) * 100)
       : 100;
 
     // ⏳ Aguardando OFX
-    const aguardandoPgto = all.filter((c) => c.status === "aguardando_pagamento");
+    const aguardandoPgto = escopo.filter((c) => c.status === "aguardando_pagamento");
     const aguardandoValor = aguardandoPgto.reduce((s, c) => s + Number(c.valor || 0), 0);
 
-    const countDocPendente = all.filter(
+    // legados ainda usados em alertas/banners
+    const countDocPendente = escopo.filter(
       (c) => c.tem_doc_pendente === true && c.status !== "cancelado",
     ).length;
-    const countSemCategoria = all.filter(
+    const countSemCategoria = escopo.filter(
       (c) => !c.conta_id && c.status !== "cancelado",
     ).length;
 
@@ -211,7 +220,7 @@ export default function ContasPagar() {
       countDocPendente,
       countSemCategoria,
     };
-  }, [data, qualidadeMap]);
+  }, [data, qualidadeMap, dataDe, dataAte]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const pageData = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
