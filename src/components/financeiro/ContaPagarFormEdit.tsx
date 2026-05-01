@@ -33,6 +33,7 @@ type ContaEditavel = {
   nf_serie: string | null;
   nf_chave_acesso: string | null;
   status: string;
+  parceiro_id?: string | null;
 };
 
 interface Props {
