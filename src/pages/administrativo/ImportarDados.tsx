@@ -167,7 +167,7 @@ export default function ImportarDados() {
         <p className="text-sm text-muted-foreground mb-3">
           Importe arquivos OFX dos bancos. As transações vão para o Stage OFX para validação posterior.
         </p>
-        <div className="grid gap-4 md:grid-cols-1">
+        <div className="grid gap-4 md:grid-cols-2">
           <ImportadorOFX />
         </div>
       </div>
