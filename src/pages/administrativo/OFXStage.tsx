@@ -238,6 +238,46 @@ export default function OFXStage() {
     }
   }
 
+  async function handleIgnorarMassa() {
+    if (selecionadasMassa.size === 0) return;
+    setIgnorandoMassa(true);
+    try {
+      const ids = Array.from(selecionadasMassa);
+      let okCount = 0;
+      let firstErr: string | null = null;
+      for (const id of ids) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data, error } = await (supabase as any).rpc("ignorar_ofx", { p_ofx_id: id });
+        if (error) { firstErr = firstErr || error.message; continue; }
+        if (data?.ok) okCount++;
+        else firstErr = firstErr || data?.erro || null;
+      }
+      if (okCount > 0) {
+        toast.success(`${okCount} ${okCount === 1 ? "transação ignorada" : "transações ignoradas"}`);
+      }
+      if (firstErr && okCount < ids.length) {
+        toast.error(`Falhas: ${ids.length - okCount}. ${firstErr}`);
+      }
+      setSelecionadasMassa(new Set());
+      if (ofxSelecionada && selecionadasMassa.has(ofxSelecionada.id)) setOfxSelecionada(null);
+      qc.invalidateQueries({ queryKey: ["ofx-transacoes-pendentes"] });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      toast.error("Erro: " + msg);
+    } finally {
+      setIgnorandoMassa(false);
+    }
+  }
+
+  function toggleSelMassa(id: string) {
+    setSelecionadasMassa((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
   return (
     <div className="p-6 space-y-4">
       <div>
