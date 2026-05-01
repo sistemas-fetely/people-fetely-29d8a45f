@@ -50,7 +50,9 @@ import {
   ChevronRight,
   Link2,
   Info,
+  Loader2,
 } from "lucide-react";
+import { exportarFaturaPDF } from "@/lib/exportar-fatura-cartao";
 import { toast } from "sonner";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
 import { ImportarFaturaCartaoDialog } from "@/components/financeiro/ImportarFaturaCartaoDialog";
@@ -151,6 +153,19 @@ export default function FaturasCartao() {
   const [filtroCartao, setFiltroCartao] = useState<string>("__todos__");
   const [faturaExpanded, setFaturaExpanded] = useState<string | null>(null);
   const [paraDescartar, setParaDescartar] = useState<FaturaRow | null>(null);
+  const [exportandoPDF, setExportandoPDF] = useState<string | null>(null);
+
+  async function handleExportarPDF(fatura: FaturaRow) {
+    setExportandoPDF(fatura.id);
+    try {
+      await exportarFaturaPDF(fatura);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      toast.error("Erro ao gerar PDF: " + msg);
+    } finally {
+      setExportandoPDF(null);
+    }
+  }
 
   type SortColumn = "vencimento" | "cartao" | "valor" | "status" | "lancamentos";
   const [sort, setSort] = useState<SortState<SortColumn> | null>({
@@ -746,11 +761,16 @@ export default function FaturasCartao() {
                               className="h-7 w-7"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                window.open(`/imprimir/fatura-cartao/${f.id}`, "_blank");
+                                handleExportarPDF(f);
                               }}
-                              title="Imprimir extrato"
+                              disabled={exportandoPDF === f.id}
+                              title="Baixar extrato em PDF"
                             >
-                              <Printer className="h-3.5 w-3.5" />
+                              {exportandoPDF === f.id ? (
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              ) : (
+                                <Printer className="h-3.5 w-3.5" />
+                              )}
                             </Button>
                             {f.pdf_storage_path && (
                               <Button
