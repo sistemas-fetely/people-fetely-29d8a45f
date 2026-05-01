@@ -9865,6 +9865,10 @@ export type Database = {
       fix_lancamentos_origem_constraint: { Args: never; Returns: string }
       gerar_celebracoes_aniversario_mural: { Args: never; Returns: number }
       gerar_celebracoes_tempo_casa_mural: { Args: never; Returns: number }
+      gerar_movimentacao_de_conta: {
+        Args: { p_conta_id: string }
+        Returns: Json
+      }
       gerar_parcelas_previstas: {
         Args: {
           p_compromisso_id: string
