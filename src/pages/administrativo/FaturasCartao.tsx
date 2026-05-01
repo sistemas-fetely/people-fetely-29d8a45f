@@ -38,6 +38,7 @@ import {
   Search,
   X,
   Eye,
+  Printer,
   Trash2,
   Calculator,
   Globe,
@@ -739,6 +740,18 @@ export default function FaturasCartao() {
                             className="flex items-center justify-center gap-1"
                             onClick={(e) => e.stopPropagation()}
                           >
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                window.open(`/imprimir/fatura-cartao/${f.id}`, "_blank");
+                              }}
+                              title="Imprimir extrato"
+                            >
+                              <Printer className="h-3.5 w-3.5" />
+                            </Button>
                             {f.pdf_storage_path && (
                               <Button
                                 variant="ghost"
