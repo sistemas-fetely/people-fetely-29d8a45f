@@ -416,7 +416,7 @@ export default function CaixaBanco() {
       });
     }
     return list;
-  }, [lancamentosEnriched, statusFilter, contaBancariaFilter, busca, mapParceiros, mostrarSoInconsistentes]);
+  }, [lancamentosEnriched, statusFilter, contaBancariaFilter, busca, mapParceiros, mostrarSoInconsistentes, filtroSoVermelhas, nfMap]);
 
   // Totais
   const totals = useMemo(() => {
