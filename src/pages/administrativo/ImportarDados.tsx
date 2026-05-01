@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { RefreshCw, Loader2, Settings2, Upload } from "lucide-react";
+import { RefreshCw, Loader2, Settings2, Upload, CreditCard } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
@@ -20,6 +20,7 @@ import { ImportadorCsvQive } from "@/components/financeiro/ImportadorCsvQive";
 import { ImportadorXmlNFe } from "@/components/financeiro/ImportadorXmlNFe";
 import { ImportadorPdfDanfe } from "@/components/financeiro/ImportadorPdfDanfe";
 import { ImportadorOFX } from "@/components/financeiro/ImportadorOFX";
+import { ImportarFaturaCartaoDialog } from "@/components/financeiro/ImportarFaturaCartaoDialog";
 
 export default function ImportarDados() {
   const [syncing, setSyncing] = useState(false);
