@@ -244,7 +244,7 @@ export default function ContasPagar() {
     setDataAte("");
     setTagFilter("todas");
     setModoOperacional("para_agir");
-    setPage(1);
+
   }
   const filtroAtivoCls = "border-admin bg-admin/5 ring-1 ring-admin/30";
 
@@ -274,11 +274,11 @@ export default function ContasPagar() {
   function verSemCategoria() {
     setModoOperacional("todos");
     setBusca("");
-    setPage(1);
+
   }
   function verPendentesDocs() {
     setTagFilter("doc_pendente");
-    setPage(1);
+
   }
 
   const contasSelecionadas: ContaSelecionada[] = useMemo(() => {
@@ -340,7 +340,7 @@ export default function ContasPagar() {
             totals.modoFocado === "selecao" && "bg-emerald-50 border-emerald-200",
             modoOperacional === "para_agir" && tagFilter === "todas" && totals.modoFocado !== "selecao" && "bg-blue-50 border-blue-300"
           )}
-          onClick={() => { setModoOperacional("para_agir"); setTagFilter("todas"); setPage(1); }}
+          onClick={() => { setModoOperacional("para_agir"); setTagFilter("todas"); }}
         >
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-normal text-muted-foreground flex items-center gap-1">
@@ -362,7 +362,7 @@ export default function ContasPagar() {
             totals.modoFocado === "selecao" && "bg-emerald-50 border-emerald-200",
             modoOperacional === "para_agir" && tagFilter === "atrasada" && totals.modoFocado !== "selecao" && "bg-red-50 border-red-300"
           )}
-          onClick={() => { setModoOperacional("para_agir"); setTagFilter("atrasada"); setPage(1); }}
+          onClick={() => { setModoOperacional("para_agir"); setTagFilter("atrasada"); }}
         >
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-normal text-muted-foreground flex items-center gap-1">
@@ -384,7 +384,7 @@ export default function ContasPagar() {
             totals.modoFocado === "selecao" && "bg-emerald-50 border-emerald-200",
             tagFilter === "qualidade_alerta" && totals.modoFocado !== "selecao" && "bg-amber-50 border-amber-300"
           )}
-          onClick={() => { setModoOperacional("para_agir"); setTagFilter("qualidade_alerta"); setPage(1); }}
+          onClick={() => { setModoOperacional("para_agir"); setTagFilter("qualidade_alerta"); }}
         >
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-normal text-muted-foreground flex items-center gap-1">
@@ -406,7 +406,7 @@ export default function ContasPagar() {
             totals.modoFocado === "selecao" && "bg-emerald-50 border-emerald-200",
             modoOperacional === "aguardando_ofx" && totals.modoFocado !== "selecao" && "bg-teal-50 border-teal-300"
           )}
-          onClick={() => { setModoOperacional("aguardando_ofx"); setTagFilter("todas"); setPage(1); }}
+          onClick={() => { setModoOperacional("aguardando_ofx"); setTagFilter("todas"); }}
         >
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-normal text-muted-foreground flex items-center gap-1">
@@ -442,7 +442,7 @@ export default function ContasPagar() {
             size="sm"
             variant="outline"
             className="border-amber-400 text-amber-800 hover:bg-amber-100"
-            onClick={() => { setTagFilter("doc_pendente"); setPage(1); }}
+            onClick={() => { setTagFilter("doc_pendente"); }}
           >
             Ver pendentes
           </Button>
@@ -481,7 +481,7 @@ export default function ContasPagar() {
                 value={busca}
                 onChange={(e) => {
                   setBusca(e.target.value);
-                  setPage(1);
+
                 }}
                 className={`pl-9 ${busca ? filtroAtivoCls : ""}`}
               />
@@ -491,7 +491,7 @@ export default function ContasPagar() {
               value={dataDe}
               onChange={(e) => {
                 setDataDe(e.target.value);
-                setPage(1);
+
               }}
               className={`w-full lg:w-44 ${dataDe ? filtroAtivoCls : ""}`}
             />
@@ -500,7 +500,7 @@ export default function ContasPagar() {
               value={dataAte}
               onChange={(e) => {
                 setDataAte(e.target.value);
-                setPage(1);
+
               }}
               className={`w-full lg:w-44 ${dataAte ? filtroAtivoCls : ""}`}
             />
@@ -508,7 +508,7 @@ export default function ContasPagar() {
               value={tagFilter}
               onValueChange={(v) => {
                 setTagFilter(v as "todas" | "doc_pendente" | "atrasada" | "qualidade_alerta");
-                setPage(1);
+
               }}
             >
               <SelectTrigger
@@ -533,7 +533,7 @@ export default function ContasPagar() {
                   key={modo.value}
                   size="sm"
                   variant={modoOperacional === modo.value ? "default" : "outline"}
-                  onClick={() => { setModoOperacional(modo.value as ModoOperacional); setPage(1); }}
+                  onClick={() => { setModoOperacional(modo.value as ModoOperacional); }}
                   className={cn(
                     modoOperacional === modo.value && "bg-red-600 text-white hover:bg-red-700"
                   )}
