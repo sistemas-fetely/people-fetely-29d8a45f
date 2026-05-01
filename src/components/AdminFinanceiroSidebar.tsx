@@ -32,8 +32,6 @@ const dashboardItem: MenuItem = {
 
 const financeiroItems: MenuItem[] = [
   { title: "Plano de Contas", url: "/administrativo/plano-contas", icon: ListTree },
-  
-  { title: "Compromissos", url: "/administrativo/compromissos", icon: Repeat },
   { title: "Contas a Pagar", url: "/administrativo/contas-pagar", icon: ArrowUpFromLine },
   { title: "Contas a Receber", url: "/administrativo/contas-receber", icon: ArrowDownToLine },
   { title: "Parceiros Comerciais", url: "/administrativo/parceiros", icon: Users },
@@ -46,6 +44,7 @@ const financeiroItems: MenuItem[] = [
 
 const caixaBancoItems: MenuItem[] = [
   { title: "Movimentações", url: "/administrativo/caixa-banco", icon: Wallet },
+  { title: "Compromissos", url: "/administrativo/compromissos", icon: Repeat },
   { title: "DRE", url: "/administrativo/dre", icon: FileBarChart2 },
   { title: "Fluxo de Caixa", url: "/administrativo/fluxo-caixa", icon: TrendingUp },
   { title: "Fluxo Futuro", url: "/administrativo/fluxo-futuro", icon: Calendar },
