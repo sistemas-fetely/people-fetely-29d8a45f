@@ -106,6 +106,7 @@ import Produtos from "@/pages/administrativo/Produtos";
 import CaixaBanco from "@/pages/administrativo/CaixaBanco";
 import ContasBancarias from "@/pages/administrativo/ContasBancarias";
 import OFXStage from "@/pages/administrativo/OFXStage";
+import ImprimirFaturaCartao from "@/pages/imprimir/ImprimirFaturaCartao";
 
 const queryClient = new QueryClient();
 
