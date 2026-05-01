@@ -33,8 +33,10 @@ import {
   CreditCard,
   Repeat,
   AlertTriangle,
-  Circle,
   Stethoscope,
+  Receipt,
+  FolderTree,
+  Paperclip,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
