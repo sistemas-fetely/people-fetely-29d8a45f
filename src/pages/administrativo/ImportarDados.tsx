@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { RefreshCw, Loader2, Settings2, Upload } from "lucide-react";
+import { RefreshCw, Loader2, Settings2, Upload, CreditCard } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
@@ -20,10 +20,12 @@ import { ImportadorCsvQive } from "@/components/financeiro/ImportadorCsvQive";
 import { ImportadorXmlNFe } from "@/components/financeiro/ImportadorXmlNFe";
 import { ImportadorPdfDanfe } from "@/components/financeiro/ImportadorPdfDanfe";
 import { ImportadorOFX } from "@/components/financeiro/ImportadorOFX";
+import { ImportarFaturaCartaoDialog } from "@/components/financeiro/ImportarFaturaCartaoDialog";
 
 export default function ImportarDados() {
   const [syncing, setSyncing] = useState(false);
   const [syncResult, setSyncResult] = useState<any>(null);
+  const [importarFaturaOpen, setImportarFaturaOpen] = useState(false);
   const { data: categorias = [] } = useCategoriasPlano();
 
   const { data: config, refetch } = useQuery({
@@ -169,6 +171,39 @@ export default function ImportarDados() {
           <ImportadorOFX />
         </div>
       </div>
+
+      {/* Faturas de Cartão */}
+      <div>
+        <h2 className="text-lg font-semibold mb-1">Faturas de Cartão</h2>
+        <p className="text-sm text-muted-foreground mb-3">
+          Importe faturas (PDF/CSV) de cartão de crédito. Os lançamentos
+          são classificados e ficam disponíveis em Faturas Cartão.
+        </p>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <CreditCard className="h-8 w-8 text-admin" />
+                <div>
+                  <CardTitle className="text-base">Importar Fatura</CardTitle>
+                  <CardDescription className="mt-1">
+                    Selecione o cartão, fatura e período
+                  </CardDescription>
+                </div>
+              </div>
+              <Button onClick={() => setImportarFaturaOpen(true)} className="gap-2">
+                <Upload className="h-4 w-4" />
+                Importar Fatura
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <ImportarFaturaCartaoDialog
+        open={importarFaturaOpen}
+        onOpenChange={setImportarFaturaOpen}
+      />
     </div>
   );
 }
