@@ -33,6 +33,8 @@ import {
   CreditCard,
   Repeat,
   AlertTriangle,
+  Circle,
+  Stethoscope,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
@@ -107,6 +109,28 @@ function isAtrasada(l: Lancamento): boolean {
   return venc < hoje;
 }
 
+/**
+ * Qualidade binária da movimentação (Doutrina Flavio — KEEP IT SIMPLE).
+ * Vermelho = sem categoria OU categoria inconsistente com a NF vinculada.
+ * Verde = ok (sem bolinha).
+ */
+function getQualidadeMov(m: {
+  categoria_id: string | null;
+  categoria_inconsistente?: boolean | null;
+  inconsistencia_motivo?: string | null;
+}): { vermelho: boolean; motivo: string | null } {
+  if (m.categoria_inconsistente === true) {
+    return {
+      vermelho: true,
+      motivo: m.inconsistencia_motivo || "Categoria inconsistente com NF",
+    };
+  }
+  if (!m.categoria_id) {
+    return { vermelho: true, motivo: "Sem categoria" };
+  }
+  return { vermelho: false, motivo: null };
+}
+
 type ContaBancariaLite = {
   id: string;
   nome_exibicao: string;
@@ -156,6 +180,7 @@ export default function CaixaBanco() {
   const [page, setPage] = useFiltrosPersistentes<number>("caixabanco_page", 1);
   const [contaIdDrawer, setContaIdDrawer] = useState<string | null>(null);
   const [mostrarSoInconsistentes, setMostrarSoInconsistentes] = useState(false);
+  const [filtroSoVermelhas, setFiltroSoVermelhas] = useState(false);
   const navigate = useNavigate();
 
   // Query da view unificada
@@ -326,6 +351,9 @@ export default function CaixaBanco() {
     if (mostrarSoInconsistentes) {
       list = list.filter((l) => l.categoria_inconsistente === true);
     }
+    if (filtroSoVermelhas) {
+      list = list.filter((l) => getQualidadeMov(l).vermelho);
+    }
     if (busca.trim()) {
       const t = busca.toLowerCase();
       list = list.filter((l) => {
@@ -369,6 +397,16 @@ export default function CaixaBanco() {
     };
   }, [lancamentos]);
 
+  // Saúde do dado (binário: vermelho/verde) — usa lancamentosEnriched p/ pegar inconsistência.
+  const qtdComProblema = useMemo(
+    () => lancamentosEnriched.filter((m) => getQualidadeMov(m).vermelho).length,
+    [lancamentosEnriched],
+  );
+  const totalLancamentos = lancamentosEnriched.length;
+  const pctSaude = totalLancamentos > 0
+    ? Math.round((1 - qtdComProblema / totalLancamentos) * 100)
+    : 100;
+
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const pageData = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
@@ -395,7 +433,7 @@ export default function CaixaBanco() {
       </div>
 
       {/* KPIs */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-normal text-muted-foreground flex items-center gap-1.5">
@@ -438,6 +476,37 @@ export default function CaixaBanco() {
             </div>
             <p className="text-[11px] text-muted-foreground mt-1">
               {totals.countConciliado} batem com extrato
+            </p>
+          </CardContent>
+        </Card>
+        <Card
+          className={cn(
+            "cursor-pointer transition-colors",
+            filtroSoVermelhas && "ring-2 ring-red-400",
+          )}
+          onClick={() => setFiltroSoVermelhas(!filtroSoVermelhas)}
+        >
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-normal text-muted-foreground flex items-center gap-1.5">
+              <Stethoscope className="h-3.5 w-3.5 text-emerald-600" /> Saúde do dado
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div
+              className={cn(
+                "text-2xl font-bold",
+                pctSaude >= 95
+                  ? "text-emerald-700"
+                  : pctSaude >= 70
+                    ? "text-amber-700"
+                    : "text-red-700",
+              )}
+            >
+              {pctSaude}%
+            </div>
+            <p className="text-[11px] text-muted-foreground mt-1">
+              {qtdComProblema} {qtdComProblema === 1 ? "lançamento" : "lançamentos"} com alerta
+              {filtroSoVermelhas && " · filtro ativo"}
             </p>
           </CardContent>
         </Card>
@@ -681,6 +750,24 @@ export default function CaixaBanco() {
                           </TableCell>
                           <TableCell className="min-w-[140px]">
                             <div className="flex flex-wrap gap-1 items-center">
+                              {(() => {
+                                const qm = getQualidadeMov(l);
+                                if (!qm.vermelho) return null;
+                                return (
+                                  <TooltipProvider>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <span className="inline-flex items-center mr-1">
+                                          <Circle className="h-2.5 w-2.5 text-red-600 fill-red-500" />
+                                        </span>
+                                      </TooltipTrigger>
+                                      <TooltipContent className="max-w-xs">
+                                        <p className="text-xs">{qm.motivo}</p>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
+                                );
+                              })()}
                               {(() => {
                                 const q = qualidadeMap?.get(l.id);
                                 const visual = getQualidadeDadoIcon(q?.nivel, q?.motivos);

@@ -4852,6 +4852,7 @@ export type Database = {
           conta_bancaria_id: string
           conta_pagar_id: string | null
           conta_plano_id: string | null
+          conta_receber_id: string | null
           created_at: string | null
           data_balancete: string | null
           data_transacao: string
@@ -4876,6 +4877,7 @@ export type Database = {
           conta_bancaria_id: string
           conta_pagar_id?: string | null
           conta_plano_id?: string | null
+          conta_receber_id?: string | null
           created_at?: string | null
           data_balancete?: string | null
           data_transacao: string
@@ -4900,6 +4902,7 @@ export type Database = {
           conta_bancaria_id?: string
           conta_pagar_id?: string | null
           conta_plano_id?: string | null
+          conta_receber_id?: string | null
           created_at?: string | null
           data_balancete?: string | null
           data_transacao?: string
@@ -4928,6 +4931,13 @@ export type Database = {
             columns: ["conta_plano_id"]
             isOneToOne: false
             referencedRelation: "plano_contas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "movimentacoes_bancarias_conta_receber_id_fkey"
+            columns: ["conta_receber_id"]
+            isOneToOne: false
+            referencedRelation: "contas_receber"
             referencedColumns: ["id"]
           },
         ]
