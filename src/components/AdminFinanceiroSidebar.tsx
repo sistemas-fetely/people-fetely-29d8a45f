@@ -165,6 +165,11 @@ export function AdminFinanceiroSidebar() {
 
         <div className="mx-4 border-t border-sidebar-border/40" />
         <SidebarGroup>
+          {!collapsed && (
+            <SidebarGroupLabel className="text-sidebar-muted text-[10px] uppercase tracking-widest font-semibold mb-1 px-4">
+              Atalhos
+            </SidebarGroupLabel>
+          )}
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
