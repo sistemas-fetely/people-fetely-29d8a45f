@@ -25,6 +25,7 @@ import { ImportarFaturaCartaoDialog } from "@/components/financeiro/ImportarFatu
 export default function ImportarDados() {
   const [syncing, setSyncing] = useState(false);
   const [syncResult, setSyncResult] = useState<any>(null);
+  const [importarFaturaOpen, setImportarFaturaOpen] = useState(false);
   const { data: categorias = [] } = useCategoriasPlano();
 
   const { data: config, refetch } = useQuery({
