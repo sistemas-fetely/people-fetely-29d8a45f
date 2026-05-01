@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Loader2, Save, X, Sparkles, Check } from "lucide-react";
 import { toast } from "sonner";
 import { useCategoriasPlano } from "@/hooks/useCategoriasPlano";
+import { CategoriaCombobox } from "./CategoriaCombobox";
 
 /**
  * Form de edição de Conta a Pagar — Fase 2 (29/04/2026).
