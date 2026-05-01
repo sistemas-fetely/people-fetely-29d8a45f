@@ -185,7 +185,63 @@ export default function OFXStage() {
     }
   }
 
-  async function handleLancarMovimentacao(ofx: TransacaoOFX) {
+  // Modo express: 1 clique vincula o OFX ao top match. Toast com Undo (5s).
+  async function handleConciliarExpress(
+    ofx: TransacaoOFX,
+    contaPagarId: string,
+    contaDesc: string,
+  ) {
+    setAcaoEmCurso("conciliar:" + ofx.id);
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase as any).rpc("conciliar_transacao_ofx", {
+        p_ofx_id: ofx.id,
+        p_conta_pagar_id: contaPagarId,
+      });
+      if (error) throw error;
+      if (!data?.ok) {
+        toast.error(data?.erro || "Erro ao conciliar");
+        return;
+      }
+
+      toast.success(`✓ Conciliado: ${contaDesc}`, {
+        action: {
+          label: "Desfazer",
+          onClick: async () => {
+            try {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              const { error: errUndo } = await (supabase as any).rpc(
+                "desfazer_conciliacao_ofx",
+                { p_ofx_id: ofx.id },
+              );
+              if (errUndo) throw errUndo;
+              toast.info("Conciliação desfeita");
+              qc.invalidateQueries({ queryKey: ["ofx-transacoes-pendentes"] });
+              qc.invalidateQueries({ queryKey: ["contas-pagar-pendentes-ofx"] });
+            } catch (e) {
+              const msg = e instanceof Error ? e.message : String(e);
+              toast.error("Erro ao desfazer: " + msg);
+            }
+          },
+        },
+        duration: 5000,
+      });
+
+      qc.invalidateQueries({ queryKey: ["ofx-transacoes-pendentes"] });
+      qc.invalidateQueries({ queryKey: ["contas-pagar-pendentes-ofx"] });
+    } catch (e) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const err = e as any;
+      const msg =
+        err?.message || err?.details || err?.hint ||
+        (e instanceof Error ? e.message : null) || JSON.stringify(e);
+      console.error("[OFXStage] erro express:", e);
+      toast.error("Erro: " + msg);
+    } finally {
+      setAcaoEmCurso(null);
+    }
+  }
+
     if (!confirm(`Lançar como movimentação avulsa (sem conta a pagar)?\n\n${ofx.descricao} — ${formatBRL(ofx.valor)}`)) return;
     setAcaoEmCurso("lancar:" + ofx.id);
     try {
