@@ -751,14 +751,21 @@ export default function CaixaBanco() {
                           <TableCell className="min-w-[140px]">
                             <div className="flex flex-wrap gap-1 items-center">
                               {(() => {
-                                const qm = getQualidadeMov(l);
-                                if (!qm.vermelho) return null;
+                                const qm = getQualidadeCategoria(l);
+                                const isVermelho = qm.cor === "vermelho";
                                 return (
                                   <TooltipProvider>
                                     <Tooltip>
                                       <TooltipTrigger asChild>
                                         <span className="inline-flex items-center mr-1">
-                                          <Circle className="h-2.5 w-2.5 text-red-600 fill-red-500" />
+                                          <Circle
+                                            className={cn(
+                                              "h-2.5 w-2.5 cursor-help",
+                                              isVermelho
+                                                ? "fill-red-500 text-red-500"
+                                                : "fill-emerald-500 text-emerald-500",
+                                            )}
+                                          />
                                         </span>
                                       </TooltipTrigger>
                                       <TooltipContent className="max-w-xs">
