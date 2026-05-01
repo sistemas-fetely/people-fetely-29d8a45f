@@ -143,6 +143,16 @@ export default function ImportarDados() {
                   )}
                   {syncing ? "Sincronizando..." : "Sincronizar agora"}
                 </Button>
+                {syncing && (
+                  <Button
+                    onClick={cancelSync}
+                    variant="outline"
+                    className="border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                  >
+                    <X className="h-4 w-4 mr-2" />
+                    Cancelar
+                  </Button>
+                )}
               </div>
               <Link
                 to="/administrativo/configuracao-integracao"
