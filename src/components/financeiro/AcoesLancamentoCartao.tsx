@@ -27,7 +27,7 @@ interface Props {
 }
 
 const STATUS_CONFIG: Record<string, { label: string; cls: string; icon: typeof CheckCircle2 }> = {
-  conciliado: { label: "Vinculada", cls: "bg-emerald-50 text-emerald-700 border-emerald-300", icon: Link2 },
+  conciliado: { label: "Vinculada", cls: "bg-orange-50 text-orange-700 border-orange-300", icon: Link2 },
   virou_despesa: { label: "Virou despesa", cls: "bg-blue-50 text-blue-700 border-blue-300", icon: CheckCircle2 },
   ignorado: { label: "Ignorada", cls: "bg-zinc-50 text-zinc-700 border-zinc-300", icon: XCircle },
 };
