@@ -26,6 +26,13 @@ function sleep(ms: number) {
   return new Promise(function (resolve) { setTimeout(resolve, ms); });
 }
 
+// Tempo máximo total da execução (Edge tem limite de 150s — paramos antes pra responder).
+var MAX_EXEC_MS = 120000;
+var execStartTs = 0;
+function timeUp() {
+  return (Date.now() - execStartTs) > MAX_EXEC_MS;
+}
+
 async function blingGet(endpoint: string, accessToken: string): Promise<any> {
   var url = BLING_BASE + endpoint;
   var res = await fetch(url, {
@@ -79,6 +86,7 @@ async function syncContasReceber(supabase: any, accessToken: string, ultimaSync:
   var temMais = true;
 
   while (temMais) {
+    if (timeUp()) { temMais = false; break; }
     try {
       var url = "/contas/receber?limite=100&pagina=" + pagina;
       if (ultimaSync) {
@@ -171,6 +179,7 @@ async function syncPedidos(supabase: any, accessToken: string, ultimaSync: any) 
   var temMais = true;
 
   while (temMais) {
+    if (timeUp()) { temMais = false; break; }
     try {
       var url = "/pedidos/vendas?limite=100&pagina=" + pagina;
       if (ultimaSync) {
@@ -259,6 +268,7 @@ async function syncProdutos(supabase: any, accessToken: string) {
   var temMais = true;
 
   while (temMais) {
+    if (timeUp()) { temMais = false; break; }
     try {
       var url = "/produtos?limite=100&pagina=" + pagina;
       var data = await blingGet(url, accessToken);
@@ -418,6 +428,7 @@ serve(async (req) => {
       var logId = logResult.data ? logResult.data.id : null;
 
       var startTime = Date.now();
+      execStartTs = startTime;
       var result = { criados: 0, atualizados: 0, erros: 0 };
 
       if (tipo === "contas_receber") {
