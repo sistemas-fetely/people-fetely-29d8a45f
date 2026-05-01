@@ -608,67 +608,145 @@ export default function FaturasCartao() {
             );
           })}
 
-          {/* CARD CONSOLIDADO — Fatura(s) em aberto */}
-          <Card className="bg-amber-50/30 border-amber-200">
-            <CardContent className="p-4 space-y-3">
-              <div className="flex items-center gap-2">
-                <Receipt className="h-4 w-4 text-amber-700 shrink-0" />
-                <div className="min-w-0 flex-1">
-                  <div className="text-sm font-semibold text-amber-900">
-                    Fatura(s) em aberto
-                  </div>
+          {/* CARD FATURA MÊS ATUAL */}
+          <Card className="bg-amber-50/50 border-amber-200">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-base">📑</span>
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-semibold">Fatura mês atual</div>
                   <div className="text-[10px] text-muted-foreground">
-                    {totals.qtdAbertas}{" "}
-                    {totals.qtdAbertas === 1 ? "fatura" : "faturas"}
+                    {new Date().toLocaleDateString("pt-BR", {
+                      month: "long",
+                      year: "numeric",
+                    })}
+                    {" · "}
+                    {totals.mesAtual.qtd}{" "}
+                    {totals.mesAtual.qtd === 1 ? "fatura" : "faturas"}
                   </div>
                 </div>
               </div>
-
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <div className="text-[9px] uppercase tracking-wide text-muted-foreground">
+                  <div className="text-[10px] text-muted-foreground uppercase">
                     Total
                   </div>
-                  <div className="text-xs font-semibold font-mono">
-                    {formatBRL(totals.valorTotalAbertas)}
+                  <div className="text-sm font-bold">
+                    {formatBRL(totals.mesAtual.total)}
                   </div>
                 </div>
                 <div>
-                  <div className="text-[9px] uppercase tracking-wide text-muted-foreground">
+                  <div className="text-[10px] text-muted-foreground uppercase">
                     Vinculado
                   </div>
-                  <div className="text-xs font-semibold font-mono text-emerald-700">
-                    {formatBRL(totals.valorVinculado)}
+                  <div className="text-sm font-bold text-emerald-700">
+                    {formatBRL(totals.mesAtual.vinculado)}
                   </div>
                 </div>
                 <div>
-                  <div className="text-[9px] uppercase tracking-wide text-muted-foreground">
+                  <div className="text-[10px] text-muted-foreground uppercase">
                     Falta
                   </div>
-                  <div className="text-xs font-semibold font-mono text-red-700">
-                    {formatBRL(totals.valorNaoVinculado)}
+                  <div className="text-sm font-bold text-red-700">
+                    {formatBRL(totals.mesAtual.naoVinculado)}
                   </div>
                 </div>
               </div>
-
-              <div>
-                <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+              <div className="mt-2">
+                <div className="h-1.5 bg-zinc-100 rounded-full overflow-hidden">
                   <div
                     className="h-full bg-emerald-500 transition-all"
                     style={{
                       width: `${
-                        totals.valorTotalAbertas > 0
-                          ? (totals.valorVinculado / totals.valorTotalAbertas) *
+                        totals.mesAtual.total > 0
+                          ? (totals.mesAtual.vinculado / totals.mesAtual.total) *
                             100
                           : 0
                       }%`,
                     }}
                   />
                 </div>
-                <div className="text-[9px] text-muted-foreground mt-1">
-                  {totals.valorTotalAbertas > 0
+                <div className="text-[10px] text-muted-foreground mt-0.5">
+                  {totals.mesAtual.total > 0
                     ? (
-                        (totals.valorVinculado / totals.valorTotalAbertas) *
+                        (totals.mesAtual.vinculado / totals.mesAtual.total) *
+                        100
+                      ).toFixed(0)
+                    : 0}
+                  % vinculado
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* CARD FATURA MÊS ANTERIOR */}
+          <Card className="bg-zinc-50 border-zinc-200">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-base">🗂</span>
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-semibold">Fatura mês anterior</div>
+                  <div className="text-[10px] text-muted-foreground">
+                    {(() => {
+                      const d = new Date();
+                      d.setMonth(d.getMonth() - 1);
+                      return d.toLocaleDateString("pt-BR", {
+                        month: "long",
+                        year: "numeric",
+                      });
+                    })()}
+                    {" · "}
+                    {totals.mesAnterior.qtd}{" "}
+                    {totals.mesAnterior.qtd === 1 ? "fatura" : "faturas"}
+                  </div>
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <div className="text-[10px] text-muted-foreground uppercase">
+                    Total
+                  </div>
+                  <div className="text-sm font-bold">
+                    {formatBRL(totals.mesAnterior.total)}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-[10px] text-muted-foreground uppercase">
+                    Vinculado
+                  </div>
+                  <div className="text-sm font-bold text-emerald-700">
+                    {formatBRL(totals.mesAnterior.vinculado)}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-[10px] text-muted-foreground uppercase">
+                    Falta
+                  </div>
+                  <div className="text-sm font-bold text-red-700">
+                    {formatBRL(totals.mesAnterior.naoVinculado)}
+                  </div>
+                </div>
+              </div>
+              <div className="mt-2">
+                <div className="h-1.5 bg-zinc-100 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-emerald-500 transition-all"
+                    style={{
+                      width: `${
+                        totals.mesAnterior.total > 0
+                          ? (totals.mesAnterior.vinculado /
+                              totals.mesAnterior.total) *
+                            100
+                          : 0
+                      }%`,
+                    }}
+                  />
+                </div>
+                <div className="text-[10px] text-muted-foreground mt-0.5">
+                  {totals.mesAnterior.total > 0
+                    ? (
+                        (totals.mesAnterior.vinculado /
+                          totals.mesAnterior.total) *
                         100
                       ).toFixed(0)
                     : 0}
