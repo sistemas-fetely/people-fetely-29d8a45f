@@ -448,8 +448,13 @@ export default function CaixaBanco() {
 
   // Saúde do dado (binário: vermelho/verde) — usa lancamentosEnriched p/ pegar inconsistência.
   const qtdComProblema = useMemo(
-    () => lancamentosEnriched.filter((m) => getQualidadeCategoria(m).cor === "vermelho").length,
-    [lancamentosEnriched],
+    () =>
+      lancamentosEnriched.filter((m) => {
+        const qNF = getQualidadeNF(m, nfMap);
+        const qCat = getQualidadeCategoria(m, nfMap);
+        return qNF.cor === "vermelho" || qCat.cor === "vermelho";
+      }).length,
+    [lancamentosEnriched, nfMap],
   );
   const totalLancamentos = lancamentosEnriched.length;
   const pctSaude = totalLancamentos > 0
