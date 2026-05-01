@@ -44,7 +44,7 @@ const financeiroItems: MenuItem[] = [
   { title: "NFs em Stage", url: "/administrativo/nfs-stage", icon: Layers },
   { title: "OFX em Stage", url: "/administrativo/ofx-stage", icon: ArrowLeftRight },
   { title: "Documentos Pendentes", url: "/administrativo/documentos-pendentes", icon: FileWarning },
-  { title: "Configuração Integração", url: "/administrativo/configuracao-integracao", icon: Settings2 },
+  // { title: "Configuração Integração", url: "/administrativo/configuracao-integracao", icon: Settings2 }, // ocultado — acessível via "Importar Dados"
 ];
 
 const caixaBancoItems: MenuItem[] = [
