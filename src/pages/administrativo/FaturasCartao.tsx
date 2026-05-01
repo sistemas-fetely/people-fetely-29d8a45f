@@ -499,36 +499,67 @@ export default function FaturasCartao() {
             </button>
           </div>
         )}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <Card
-            className={cn(
-              "cursor-pointer hover:shadow-md transition",
-              totals.modoFocado && "bg-amber-50 border-amber-300",
-            )}
-            onClick={() => setFiltroPill("todas")}
-          >
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          {/* CARDS DOS CARTÕES */}
+          {cartoes.map((cartao) => (
+            <Card
+              key={cartao.id}
+              className={cn(
+                "cursor-pointer hover:shadow-md transition bg-card",
+                filtroCartao === cartao.id && "ring-2 ring-admin border-admin",
+              )}
+              onClick={() =>
+                setFiltroCartao(filtroCartao === cartao.id ? "__todos__" : cartao.id)
+              }
+            >
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <CreditCard className="h-4 w-4 text-admin shrink-0" />
+                  <div className="min-w-0">
+                    <div className="text-sm font-semibold truncate">{cartao.nome_exibicao}</div>
+                    {cartao.banco && (
+                      <div className="text-[10px] text-muted-foreground truncate">{cartao.banco}</div>
+                    )}
+                  </div>
+                </div>
+                <div className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">Limite</div>
+                <div className="text-base font-bold mt-0.5">{formatBRL(cartao.limite_credito || 0)}</div>
+                {(cartao.dia_fechamento || cartao.dia_vencimento) && (
+                  <div className="text-[10px] text-muted-foreground mt-1">
+                    {cartao.dia_fechamento && `Fecha dia ${cartao.dia_fechamento}`}
+                    {cartao.dia_fechamento && cartao.dia_vencimento && " · "}
+                    {cartao.dia_vencimento && `Vence dia ${cartao.dia_vencimento}`}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          ))}
+
+          {/* KPI 1 — Faturas em aberto */}
+          <Card className="bg-amber-50/50 border-amber-200">
             <CardContent className="p-4">
-              <div className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">Faturas</div>
-              <div className="text-2xl font-bold mt-1">{totals.qtdFaturas}</div>
+              <div className="text-[10px] uppercase tracking-wide text-amber-700 font-medium">📑 Em aberto</div>
+              <div className="text-xl font-bold mt-1 text-amber-800">{formatBRL(totals.valorTotalAbertas)}</div>
+              <div className="text-[10px] text-muted-foreground mt-0.5">
+                {totals.qtdAbertas} {totals.qtdAbertas === 1 ? "fatura" : "faturas"}
+              </div>
             </CardContent>
           </Card>
-          <Card className={cn(totals.modoFocado && "bg-amber-50 border-amber-300")}>
+
+          {/* KPI 2 — Vinculado */}
+          <Card className="bg-emerald-50/50 border-emerald-200">
             <CardContent className="p-4">
-              <div className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">Total geral</div>
-              <div className="text-xl font-bold mt-1">{formatBRL(totals.totalGeral)}</div>
-            </CardContent>
-          </Card>
-          <Card className={cn(totals.modoFocado && "bg-amber-50 border-amber-300")}>
-            <CardContent className="p-4">
-              <div className="text-[10px] uppercase tracking-wide text-emerald-700 font-medium">Vinculado</div>
-              <div className="text-xl font-bold mt-1 text-emerald-700">{formatBRL(totals.totalConciliado)}</div>
+              <div className="text-[10px] uppercase tracking-wide text-emerald-700 font-medium">✓ Vinculado</div>
+              <div className="text-xl font-bold mt-1 text-emerald-800">{formatBRL(totals.valorVinculado)}</div>
               <div className="text-[10px] text-muted-foreground mt-0.5">já decidido</div>
             </CardContent>
           </Card>
-          <Card className={cn(totals.modoFocado && "bg-amber-50 border-amber-300")}>
+
+          {/* KPI 3 — Não Vinculado */}
+          <Card className="bg-red-50/50 border-red-200">
             <CardContent className="p-4">
-              <div className="text-[10px] uppercase tracking-wide text-amber-700 font-medium">Pendente</div>
-              <div className="text-xl font-bold mt-1 text-amber-700">{formatBRL(totals.totalPendente)}</div>
+              <div className="text-[10px] uppercase tracking-wide text-red-700 font-medium">⚠️ Não vinculado</div>
+              <div className="text-xl font-bold mt-1 text-red-800">{formatBRL(totals.valorNaoVinculado)}</div>
               <div className="text-[10px] text-muted-foreground mt-0.5">a decidir</div>
             </CardContent>
           </Card>
