@@ -292,28 +292,31 @@ export default function ContasPagar() {
   }, [data, selecionadas]);
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            <ArrowUpFromLine className="h-6 w-6 text-admin" />
-            Contas a Pagar
-          </h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            Vencimentos a parceiros — abertos, pagos e atrasados.
-          </p>
+    <div>
+      {/* HEADER STICKY 1 — título + botão Nova Despesa */}
+      <div className="sticky top-0 z-30 bg-background px-6 pt-6 pb-3">
+        <div className="flex items-start justify-between gap-4 flex-wrap">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+              <ArrowUpFromLine className="h-6 w-6 text-admin" />
+              Contas a Pagar
+            </h1>
+            <p className="text-muted-foreground text-sm mt-1">
+              Vencimentos a parceiros — abertos, pagos e atrasados.
+            </p>
+          </div>
+          <Button
+            onClick={() => setNovaContaOpen(true)}
+            className="gap-2 bg-admin hover:bg-admin-accent text-admin-foreground"
+          >
+            <Plus className="h-4 w-4" />
+            Nova Despesa
+          </Button>
         </div>
-        <Button
-          onClick={() => setNovaContaOpen(true)}
-          className="gap-2 bg-admin hover:bg-admin-accent text-admin-foreground"
-        >
-          <Plus className="h-4 w-4" />
-          Nova Despesa
-        </Button>
       </div>
 
-      {/* CONTAINER STICKY — KPIs + filtros congelados no topo durante scroll */}
-      <div className="sticky top-0 z-20 bg-background -mx-6 px-6 pt-2 pb-3 space-y-4 shadow-sm">
+      {/* HEADER STICKY 2 — KPIs + filtros (cola logo abaixo do header 1) */}
+      <div className="sticky top-[88px] z-20 bg-background px-6 pt-2 pb-4 space-y-4 border-b shadow-sm">
       {totals.modoFocado === "selecao" && (
         <div className="flex items-center justify-between text-xs px-1 -mb-1">
           <div className="text-emerald-700 font-medium">
@@ -564,8 +567,9 @@ export default function ContasPagar() {
         </CardHeader>
       </Card>
       </div>
-      {/* /CONTAINER STICKY */}
+      {/* /HEADER STICKY 2 */}
 
+      <div className="px-6 pb-6 space-y-6">
       <Card>
         <CardContent className="pt-6">
           {/* Barra de ações em massa */}
@@ -828,6 +832,7 @@ export default function ContasPagar() {
         open={novaContaOpen}
         onOpenChange={setNovaContaOpen}
       />
+      </div>
     </div>
   );
 }
