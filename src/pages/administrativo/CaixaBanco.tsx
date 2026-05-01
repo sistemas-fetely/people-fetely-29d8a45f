@@ -37,6 +37,12 @@ import {
   Receipt,
   FolderTree,
   Paperclip,
+  Flame,
+  AlertOctagon,
+  CalendarClock,
+  CalendarRange,
+  RefreshCcw,
+  type LucideIcon,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
