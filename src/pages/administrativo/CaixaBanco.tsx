@@ -110,25 +110,45 @@ function isAtrasada(l: Lancamento): boolean {
 }
 
 /**
- * Qualidade binária da movimentação (Doutrina Flavio — KEEP IT SIMPLE).
- * Vermelho = sem categoria OU categoria inconsistente com a NF vinculada.
- * Verde = ok (sem bolinha).
+ * Qualidade da NF: vermelho se nenhum NF anexada; verde caso contrário.
  */
-function getQualidadeCategoria(m: {
-  categoria_id: string | null;
-  categoria_inconsistente?: boolean | null;
-  inconsistencia_motivo?: string | null;
-}): { cor: "vermelho" | "verde"; motivo: string } {
+function getQualidadeNF(
+  m: { id: string },
+  nfMap?: Map<string, string | null>,
+): { cor: "verde" | "vermelho"; motivo: string } {
+  const temNF = nfMap?.has(m.id) === true;
+  return temNF
+    ? { cor: "verde", motivo: "NF vinculada" }
+    : { cor: "vermelho", motivo: "Sem NF anexada" };
+}
+
+/**
+ * Qualidade da Categoria: compara com a categoria da NF vinculada.
+ * Verde = validada por NF (ou NF não tem categoria pra comparar)
+ * Amarelo = tem categoria mas sem NF pra validar
+ * Vermelho = sem categoria OU diverge da NF
+ */
+function getQualidadeCategoria(
+  m: { id: string; categoria_id: string | null },
+  nfMap?: Map<string, string | null>,
+): { cor: "verde" | "amarelo" | "vermelho"; motivo: string } {
   if (!m.categoria_id) {
     return { cor: "vermelho", motivo: "Sem categoria" };
   }
-  if (m.categoria_inconsistente === true) {
+  const categoriaDaNF = nfMap?.get(m.id);
+  if (categoriaDaNF === undefined) {
+    return { cor: "amarelo", motivo: "Tem categoria mas não validada por NF" };
+  }
+  if (categoriaDaNF === null) {
+    return { cor: "verde", motivo: "Categoria OK (NF sem categoria pra comparar)" };
+  }
+  if (m.categoria_id !== categoriaDaNF) {
     return {
       cor: "vermelho",
-      motivo: m.inconsistencia_motivo || "Categoria inconsistente com NF",
+      motivo: "Categoria diverge da NF — edite na NF pra resolver",
     };
   }
-  return { cor: "verde", motivo: "Categoria OK" };
+  return { cor: "verde", motivo: "Categoria validada por NF" };
 }
 
 type ContaBancariaLite = {
@@ -299,6 +319,31 @@ export default function CaixaBanco() {
     },
   });
 
+  // NF vinculada a cada lançamento (pra validar categoria mesmo sem mov criada).
+  const lancamentoIds = useMemo(
+    () => (lancamentos || []).map((l) => l.id).filter(Boolean),
+    [lancamentos],
+  );
+
+  const { data: nfMap } = useQuery({
+    queryKey: ["nfs-vinculadas-mov", lancamentoIds.join(",")],
+    enabled: lancamentoIds.length > 0,
+    staleTime: 30_000,
+    queryFn: async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase as any)
+        .from("nfs_stage")
+        .select("conta_pagar_id, categoria_id")
+        .in("conta_pagar_id", lancamentoIds);
+      if (error) throw error;
+      const map = new Map<string, string | null>();
+      (data || []).forEach((nf: { conta_pagar_id: string | null; categoria_id: string | null }) => {
+        if (nf.conta_pagar_id) map.set(nf.conta_pagar_id, nf.categoria_id);
+      });
+      return map;
+    },
+  });
+
   // Lançamentos enriquecidos com flags de inconsistência da movimentação vinculada.
   const lancamentosEnriched = useMemo(() => {
     return (lancamentos || []).map((l) => {
@@ -352,7 +397,11 @@ export default function CaixaBanco() {
       list = list.filter((l) => l.categoria_inconsistente === true);
     }
     if (filtroSoVermelhas) {
-      list = list.filter((l) => getQualidadeCategoria(l).cor === "vermelho");
+      list = list.filter((m) => {
+        const qNF = getQualidadeNF(m, nfMap);
+        const qCat = getQualidadeCategoria(m, nfMap);
+        return qNF.cor === "vermelho" || qCat.cor === "vermelho";
+      });
     }
     if (busca.trim()) {
       const t = busca.toLowerCase();
@@ -367,7 +416,7 @@ export default function CaixaBanco() {
       });
     }
     return list;
-  }, [lancamentosEnriched, statusFilter, contaBancariaFilter, busca, mapParceiros, mostrarSoInconsistentes]);
+  }, [lancamentosEnriched, statusFilter, contaBancariaFilter, busca, mapParceiros, mostrarSoInconsistentes, filtroSoVermelhas, nfMap]);
 
   // Totais
   const totals = useMemo(() => {
@@ -399,8 +448,13 @@ export default function CaixaBanco() {
 
   // Saúde do dado (binário: vermelho/verde) — usa lancamentosEnriched p/ pegar inconsistência.
   const qtdComProblema = useMemo(
-    () => lancamentosEnriched.filter((m) => getQualidadeCategoria(m).cor === "vermelho").length,
-    [lancamentosEnriched],
+    () =>
+      lancamentosEnriched.filter((m) => {
+        const qNF = getQualidadeNF(m, nfMap);
+        const qCat = getQualidadeCategoria(m, nfMap);
+        return qNF.cor === "vermelho" || qCat.cor === "vermelho";
+      }).length,
+    [lancamentosEnriched, nfMap],
   );
   const totalLancamentos = lancamentosEnriched.length;
   const pctSaude = totalLancamentos > 0
@@ -751,27 +805,33 @@ export default function CaixaBanco() {
                           <TableCell className="min-w-[140px]">
                             <div className="flex flex-wrap gap-1 items-center">
                               {(() => {
-                                const qm = getQualidadeCategoria(l);
-                                const isVermelho = qm.cor === "vermelho";
+                                const qNF = getQualidadeNF(l, nfMap);
+                                const qCat = getQualidadeCategoria(l, nfMap);
+                                const corClass = (cor: "verde" | "amarelo" | "vermelho") => {
+                                  if (cor === "verde") return "fill-emerald-500 text-emerald-500";
+                                  if (cor === "amarelo") return "fill-amber-500 text-amber-500";
+                                  return "fill-red-500 text-red-500";
+                                };
                                 return (
                                   <TooltipProvider>
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <span className="inline-flex items-center mr-1">
-                                          <Circle
-                                            className={cn(
-                                              "h-2.5 w-2.5 cursor-help",
-                                              isVermelho
-                                                ? "fill-red-500 text-red-500"
-                                                : "fill-emerald-500 text-emerald-500",
-                                            )}
-                                          />
-                                        </span>
-                                      </TooltipTrigger>
-                                      <TooltipContent className="max-w-xs">
-                                        <p className="text-xs">{qm.motivo}</p>
-                                      </TooltipContent>
-                                    </Tooltip>
+                                    <div className="flex items-center gap-1.5 mr-1">
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <Circle className={cn("h-2.5 w-2.5 cursor-help", corClass(qNF.cor))} />
+                                        </TooltipTrigger>
+                                        <TooltipContent className="max-w-xs">
+                                          <p className="text-xs">📄 {qNF.motivo}</p>
+                                        </TooltipContent>
+                                      </Tooltip>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <Circle className={cn("h-2.5 w-2.5 cursor-help", corClass(qCat.cor))} />
+                                        </TooltipTrigger>
+                                        <TooltipContent className="max-w-xs">
+                                          <p className="text-xs">🏷️ {qCat.motivo}</p>
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    </div>
                                   </TooltipProvider>
                                 );
                               })()}
