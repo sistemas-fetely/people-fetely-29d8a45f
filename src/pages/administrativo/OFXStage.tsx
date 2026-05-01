@@ -242,6 +242,7 @@ export default function OFXStage() {
     }
   }
 
+  async function handleLancarMovimentacao(ofx: TransacaoOFX) {
     if (!confirm(`Lançar como movimentação avulsa (sem conta a pagar)?\n\n${ofx.descricao} — ${formatBRL(ofx.valor)}`)) return;
     setAcaoEmCurso("lancar:" + ofx.id);
     try {
