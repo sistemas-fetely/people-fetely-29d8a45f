@@ -340,14 +340,14 @@ export default function ContasPagar() {
           )}
           onClick={() => { setModoOperacional("para_agir"); setTagFilter("todas"); }}
         >
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-normal text-muted-foreground flex items-center gap-1">
+          <CardHeader className="pb-1 pt-3 px-4">
+            <CardTitle className="text-xs font-normal text-muted-foreground flex items-center gap-1">
               🔥 Para agir
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-700">{formatBRL(totals.paraAgir.valor)}</div>
-            <div className="text-xs text-muted-foreground mt-1">
+          <CardContent className="pt-0 px-4 pb-3">
+            <div className="text-lg font-bold text-blue-700">{formatBRL(totals.paraAgir.valor)}</div>
+            <div className="text-[10px] text-muted-foreground">
               {totals.paraAgir.count} {totals.paraAgir.count === 1 ? "conta" : "contas"}
             </div>
           </CardContent>
@@ -362,14 +362,14 @@ export default function ContasPagar() {
           )}
           onClick={() => { setModoOperacional("para_agir"); setTagFilter("atrasada"); }}
         >
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-normal text-muted-foreground flex items-center gap-1">
+          <CardHeader className="pb-1 pt-3 px-4">
+            <CardTitle className="text-xs font-normal text-muted-foreground flex items-center gap-1">
               ⚠️ Atrasados
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-700">{formatBRL(totals.atrasados.valor)}</div>
-            <div className="text-xs text-muted-foreground mt-1">
+          <CardContent className="pt-0 px-4 pb-3">
+            <div className="text-lg font-bold text-red-700">{formatBRL(totals.atrasados.valor)}</div>
+            <div className="text-[10px] text-muted-foreground">
               {totals.atrasados.count} {totals.atrasados.count === 1 ? "conta" : "contas"}
             </div>
           </CardContent>
@@ -384,14 +384,14 @@ export default function ContasPagar() {
           )}
           onClick={() => { setModoOperacional("para_agir"); setTagFilter("qualidade_alerta"); }}
         >
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-normal text-muted-foreground flex items-center gap-1">
+          <CardHeader className="pb-1 pt-3 px-4">
+            <CardTitle className="text-xs font-normal text-muted-foreground flex items-center gap-1">
               🩺 Saúde do dado
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-amber-700">{totals.saude.percent}%</div>
-            <div className="text-xs text-muted-foreground mt-1">
+          <CardContent className="pt-0 px-4 pb-3">
+            <div className="text-lg font-bold text-amber-700">{totals.saude.percent}%</div>
+            <div className="text-[10px] text-muted-foreground">
               {totals.saude.semSaude} {totals.saude.semSaude === 1 ? "conta com alerta" : "contas com alerta"}
             </div>
           </CardContent>
@@ -406,14 +406,14 @@ export default function ContasPagar() {
           )}
           onClick={() => { setModoOperacional("aguardando_ofx"); setTagFilter("todas"); }}
         >
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-normal text-muted-foreground flex items-center gap-1">
+          <CardHeader className="pb-1 pt-3 px-4">
+            <CardTitle className="text-xs font-normal text-muted-foreground flex items-center gap-1">
               ⏳ Aguardando Pagamento
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-teal-700">{formatBRL(totals.aguardandoOfx.valor)}</div>
-            <div className="text-xs text-muted-foreground mt-1">
+          <CardContent className="pt-0 px-4 pb-3">
+            <div className="text-lg font-bold text-teal-700">{formatBRL(totals.aguardandoOfx.valor)}</div>
+            <div className="text-[10px] text-muted-foreground">
               {totals.aguardandoOfx.count} {totals.aguardandoOfx.count === 1 ? "conta" : "contas"}
             </div>
           </CardContent>
