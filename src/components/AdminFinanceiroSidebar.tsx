@@ -136,37 +136,6 @@ export function AdminFinanceiroSidebar() {
         <SidebarGroup>
           {!collapsed && (
             <SidebarGroupLabel className="text-sidebar-muted text-[10px] uppercase tracking-widest font-semibold mb-1 px-4">
-              Financeiro
-            </SidebarGroupLabel>
-          )}
-          <SidebarGroupContent>{renderItems(financeiroItems)}</SidebarGroupContent>
-        </SidebarGroup>
-
-        <div className="mx-4 border-t border-sidebar-border/40" />
-        <SidebarGroup>
-          {!collapsed && (
-            <SidebarGroupLabel className="text-sidebar-muted text-[10px] uppercase tracking-widest font-semibold mb-1 px-4">
-              Caixa e Banco
-            </SidebarGroupLabel>
-          )}
-          <SidebarGroupContent>{renderItems(caixaBancoItems)}</SidebarGroupContent>
-        </SidebarGroup>
-
-        <div className="mx-4 border-t border-sidebar-border/40" />
-        <SidebarGroup>
-          {!collapsed && (
-            <SidebarGroupLabel className="text-sidebar-muted text-[10px] uppercase tracking-widest font-semibold mb-1 px-4">
-              Configurações Financeiro
-            </SidebarGroupLabel>
-          )}
-          <SidebarGroupContent>{renderItems(configFinanceiroItems)}</SidebarGroupContent>
-        </SidebarGroup>
-
-
-        <div className="mx-4 border-t border-sidebar-border/40" />
-        <SidebarGroup>
-          {!collapsed && (
-            <SidebarGroupLabel className="text-sidebar-muted text-[10px] uppercase tracking-widest font-semibold mb-1 px-4">
               Atalhos
             </SidebarGroupLabel>
           )}
@@ -204,6 +173,36 @@ export function AdminFinanceiroSidebar() {
               )}
             </SidebarMenu>
           </SidebarGroupContent>
+        </SidebarGroup>
+
+        <div className="mx-4 border-t border-sidebar-border/40" />
+        <SidebarGroup>
+          {!collapsed && (
+            <SidebarGroupLabel className="text-sidebar-muted text-[10px] uppercase tracking-widest font-semibold mb-1 px-4">
+              Financeiro
+            </SidebarGroupLabel>
+          )}
+          <SidebarGroupContent>{renderItems(financeiroItems)}</SidebarGroupContent>
+        </SidebarGroup>
+
+        <div className="mx-4 border-t border-sidebar-border/40" />
+        <SidebarGroup>
+          {!collapsed && (
+            <SidebarGroupLabel className="text-sidebar-muted text-[10px] uppercase tracking-widest font-semibold mb-1 px-4">
+              Caixa e Banco
+            </SidebarGroupLabel>
+          )}
+          <SidebarGroupContent>{renderItems(caixaBancoItems)}</SidebarGroupContent>
+        </SidebarGroup>
+
+        <div className="mx-4 border-t border-sidebar-border/40" />
+        <SidebarGroup>
+          {!collapsed && (
+            <SidebarGroupLabel className="text-sidebar-muted text-[10px] uppercase tracking-widest font-semibold mb-1 px-4">
+              Configurações Financeiro
+            </SidebarGroupLabel>
+          )}
+          <SidebarGroupContent>{renderItems(configFinanceiroItems)}</SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
 
