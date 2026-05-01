@@ -153,7 +153,7 @@ export default function ImportarDados() {
           Importação no repositório fiscal. XML cobre NF-e (produto) e NFS-e ABRASF (serviço).
           Recibos virão como próximo formato suportado.
         </p>
-        <div className="grid gap-4 md:grid-cols-1">
+        <div className="grid gap-4 md:grid-cols-2">
           {/* CSV Qive ocultado — código preservado pra reativar quando necessário */}
           {/* <ImportadorCsvQive categorias={categorias} /> */}
           <ImportadorXmlNFe categorias={categorias} />
