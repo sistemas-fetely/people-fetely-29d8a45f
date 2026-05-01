@@ -374,6 +374,7 @@ export default function FaturasCartao() {
         vinculado,
         naoVinculado: total - vinculado,
         faturaId: principal?.id || null,
+        status: (principal?.status as string | undefined) || lista[0]?.status || null,
       };
     };
 
