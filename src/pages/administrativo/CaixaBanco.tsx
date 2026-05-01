@@ -352,7 +352,7 @@ export default function CaixaBanco() {
       list = list.filter((l) => l.categoria_inconsistente === true);
     }
     if (filtroSoVermelhas) {
-      list = list.filter((l) => getQualidadeMov(l).vermelho);
+      list = list.filter((l) => getQualidadeCategoria(l).cor === "vermelho");
     }
     if (busca.trim()) {
       const t = busca.toLowerCase();
