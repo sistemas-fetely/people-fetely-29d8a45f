@@ -114,9 +114,13 @@ export default function OFXStage() {
       lista = lista.filter((o) => o.descricao.toLowerCase().includes(t));
     }
     if (filtroValorOFX.trim()) {
-      const v = parseFloat(filtroValorOFX.replace(",", "."));
-      if (!isNaN(v)) {
-        lista = lista.filter((o) => Math.abs(Math.abs(o.valor) - v) <= 0.01);
+      const prefixo = filtroValorOFX.replace(/[^\d]/g, "");
+      if (prefixo) {
+        lista = lista.filter((o) => {
+          const valorInt = String(Math.round(Math.abs(o.valor) * 100));
+          const valorReais = String(Math.floor(Math.abs(o.valor)));
+          return valorReais.startsWith(prefixo) || valorInt.startsWith(prefixo);
+        });
       }
     }
     return lista;
@@ -150,9 +154,13 @@ export default function OFXStage() {
     }
 
     if (filtroValorCP.trim()) {
-      const v = parseFloat(filtroValorCP.replace(",", "."));
-      if (!isNaN(v)) {
-        lista = lista.filter((c) => Math.abs(c.valor - v) <= 0.01);
+      const prefixo = filtroValorCP.replace(/[^\d]/g, "");
+      if (prefixo) {
+        lista = lista.filter((c) => {
+          const valorInt = String(Math.round(Math.abs(c.valor) * 100));
+          const valorReais = String(Math.floor(Math.abs(c.valor)));
+          return valorReais.startsWith(prefixo) || valorInt.startsWith(prefixo);
+        });
       }
     }
 
