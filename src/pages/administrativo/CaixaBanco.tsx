@@ -158,6 +158,30 @@ function getQualidadeCategoria(
   return { cor: "verde", motivo: "Categoria validada por NF" };
 }
 
+function getQualidadeVinculado(m: {
+  origem_view?: string | null;
+  vinculada_cartao?: boolean | null;
+  movimentacao_bancaria_id?: string | null;
+}): { cor: "verde" | "vermelho"; motivo: string } {
+  if (m.vinculada_cartao || m.origem_view === "cartao_lancamento") {
+    return { cor: "verde", motivo: "Vinculado a lançamento de cartão" };
+  }
+  if (m.movimentacao_bancaria_id) {
+    return { cor: "verde", motivo: "Vinculado a movimentação bancária" };
+  }
+  return { cor: "vermelho", motivo: "Sem vínculo de origem" };
+}
+
+function getQualidadeConciliado(m: {
+  conciliado_em?: string | null;
+  status_caixa?: string;
+}): { cor: "verde" | "vermelho"; motivo: string } {
+  if (m.conciliado_em || m.status_caixa === "conciliado") {
+    return { cor: "verde", motivo: "Conciliado — bateu com extrato bancário" };
+  }
+  return { cor: "vermelho", motivo: "Não conciliado bancariamente" };
+}
+
 type ContaBancariaLite = {
   id: string;
   nome_exibicao: string;
