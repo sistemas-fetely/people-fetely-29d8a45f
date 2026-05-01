@@ -4844,6 +4844,7 @@ export type Database = {
       }
       movimentacoes_bancarias: {
         Row: {
+          categoria_inconsistente: boolean
           centro_custo: string | null
           conciliado: boolean | null
           conciliado_em: string | null
@@ -4859,6 +4860,7 @@ export type Database = {
           id: string
           id_transacao_banco: string | null
           importacao_id: string | null
+          inconsistencia_motivo: string | null
           origem: string | null
           saldo_pos_transacao: number | null
           tipo: string | null
@@ -4866,6 +4868,7 @@ export type Database = {
           valor: number
         }
         Insert: {
+          categoria_inconsistente?: boolean
           centro_custo?: string | null
           conciliado?: boolean | null
           conciliado_em?: string | null
@@ -4881,6 +4884,7 @@ export type Database = {
           id?: string
           id_transacao_banco?: string | null
           importacao_id?: string | null
+          inconsistencia_motivo?: string | null
           origem?: string | null
           saldo_pos_transacao?: number | null
           tipo?: string | null
@@ -4888,6 +4892,7 @@ export type Database = {
           valor: number
         }
         Update: {
+          categoria_inconsistente?: boolean
           centro_custo?: string | null
           conciliado?: boolean | null
           conciliado_em?: string | null
@@ -4903,6 +4908,7 @@ export type Database = {
           id?: string
           id_transacao_banco?: string | null
           importacao_id?: string | null
+          inconsistencia_motivo?: string | null
           origem?: string | null
           saldo_pos_transacao?: number | null
           tipo?: string | null

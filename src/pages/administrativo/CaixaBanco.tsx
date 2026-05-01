@@ -32,7 +32,9 @@ import {
   FileWarning,
   CreditCard,
   Repeat,
+  AlertTriangle,
 } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
 
 import ContaPagarDetalheDrawer from "@/components/financeiro/ContaPagarDetalheDrawer";
@@ -69,6 +71,8 @@ type Lancamento = {
   fatura_id: string | null;
   vinculada_cartao?: boolean | null;
   fatura_vencimento?: string | null;
+  categoria_inconsistente?: boolean | null;
+  inconsistencia_motivo?: string | null;
 };
 
 /**
@@ -151,6 +155,7 @@ export default function CaixaBanco() {
   const [busca, setBusca] = useFiltrosPersistentes<string>("caixabanco_busca", "");
   const [page, setPage] = useFiltrosPersistentes<number>("caixabanco_page", 1);
   const [contaIdDrawer, setContaIdDrawer] = useState<string | null>(null);
+  const [mostrarSoInconsistentes, setMostrarSoInconsistentes] = useState(false);
   const navigate = useNavigate();
 
   // Query da view unificada
@@ -240,6 +245,48 @@ export default function CaixaBanco() {
   // Map de qualidade do dado por id (bolinha 🔴/🟡 na coluna Tags).
   const { data: qualidadeMap } = useQualidadeDadoMap(idsParaCompromisso);
 
+  // Inconsistência de categoria (NF vs Conta) — vive em movimentacoes_bancarias.
+  const movIds = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          (lancamentos || [])
+            .map((l) => l.movimentacao_bancaria_id)
+            .filter((x): x is string => !!x),
+        ),
+      ),
+    [lancamentos],
+  );
+
+  const { data: inconsistMap = new Map<string, { categoria_inconsistente: boolean | null; inconsistencia_motivo: string | null }>() } = useQuery({
+    queryKey: ["mov-inconsist-map", movIds.join(",")],
+    enabled: movIds.length > 0,
+    queryFn: async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase as any)
+        .from("movimentacoes_bancarias")
+        .select("id, categoria_inconsistente, inconsistencia_motivo")
+        .in("id", movIds);
+      if (error) throw error;
+      const m = new Map<string, { categoria_inconsistente: boolean | null; inconsistencia_motivo: string | null }>();
+      (data || []).forEach((r: any) => m.set(r.id, { categoria_inconsistente: r.categoria_inconsistente, inconsistencia_motivo: r.inconsistencia_motivo }));
+      return m;
+    },
+  });
+
+  // Lançamentos enriquecidos com flags de inconsistência da movimentação vinculada.
+  const lancamentosEnriched = useMemo(() => {
+    return (lancamentos || []).map((l) => {
+      if (!l.movimentacao_bancaria_id) return l;
+      const inc = inconsistMap.get(l.movimentacao_bancaria_id);
+      if (!inc) return l;
+      return {
+        ...l,
+        categoria_inconsistente: inc.categoria_inconsistente,
+        inconsistencia_motivo: inc.inconsistencia_motivo,
+      };
+    });
+  }, [lancamentos, inconsistMap]);
   // Mapas de lookup
   const mapContas = useMemo(() => {
     const m: Record<string, ContaBancariaLite> = {};
@@ -269,12 +316,15 @@ export default function CaixaBanco() {
 
   // Filtros
   const filtered = useMemo(() => {
-    let list = lancamentos || [];
+    let list = lancamentosEnriched;
     if (statusFilter !== "todos") {
       list = list.filter((l) => statusVisual(l) === statusFilter);
     }
     if (contaBancariaFilter !== "todas") {
       list = list.filter((l) => l.pago_em_conta_id === contaBancariaFilter);
+    }
+    if (mostrarSoInconsistentes) {
+      list = list.filter((l) => l.categoria_inconsistente === true);
     }
     if (busca.trim()) {
       const t = busca.toLowerCase();
@@ -289,7 +339,7 @@ export default function CaixaBanco() {
       });
     }
     return list;
-  }, [lancamentos, statusFilter, contaBancariaFilter, busca, mapParceiros]);
+  }, [lancamentosEnriched, statusFilter, contaBancariaFilter, busca, mapParceiros, mostrarSoInconsistentes]);
 
   // Totais
   const totals = useMemo(() => {
@@ -433,6 +483,20 @@ export default function CaixaBanco() {
               </SelectContent>
             </Select>
 
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setMostrarSoInconsistentes(!mostrarSoInconsistentes)}
+              className={cn(
+                "gap-1",
+                mostrarSoInconsistentes && "bg-amber-600 hover:bg-amber-700 text-white border-amber-600",
+              )}
+            >
+              <AlertTriangle className="h-3.5 w-3.5" />
+              Inconsistências
+            </Button>
+
           </div>
         </CardContent>
       </Card>
@@ -549,16 +613,38 @@ export default function CaixaBanco() {
                             {formatDateBR(l.data_vencimento)}
                           </TableCell>
                           <TableCell className="text-xs">
-                            {categoriaNome ? (
-                              <div
-                                className="truncate max-w-[160px]"
-                                title={categoriaNome}
-                              >
-                                {categoriaNome}
-                              </div>
-                            ) : (
-                              <span className="text-muted-foreground">—</span>
-                            )}
+                            <div className="flex items-center gap-1.5">
+                              {categoriaNome ? (
+                                <div
+                                  className="truncate max-w-[160px]"
+                                  title={categoriaNome}
+                                >
+                                  {categoriaNome}
+                                </div>
+                              ) : (
+                                <span className="text-muted-foreground">—</span>
+                              )}
+                              {l.categoria_inconsistente && (
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Badge
+                                        variant="outline"
+                                        className="text-[9px] py-0 px-1.5 h-4 border-amber-400 text-amber-700 bg-amber-50 gap-1 whitespace-nowrap shrink-0"
+                                      >
+                                        <AlertTriangle className="h-2.5 w-2.5" />
+                                        Inconsistente
+                                      </Badge>
+                                    </TooltipTrigger>
+                                    <TooltipContent className="max-w-xs">
+                                      <p className="text-xs">
+                                        {l.inconsistencia_motivo || "Categoria diverge da NF vinculada."}
+                                      </p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                              )}
+                            </div>
                           </TableCell>
                           <TableCell className="whitespace-nowrap text-xs">
                             {l.data_pagamento ? (
