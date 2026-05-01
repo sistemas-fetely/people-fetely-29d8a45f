@@ -86,6 +86,7 @@ async function syncContasReceber(supabase: any, accessToken: string, ultimaSync:
   var temMais = true;
 
   while (temMais) {
+    if (timeUp()) { temMais = false; break; }
     try {
       var url = "/contas/receber?limite=100&pagina=" + pagina;
       if (ultimaSync) {
