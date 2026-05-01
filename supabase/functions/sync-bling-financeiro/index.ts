@@ -26,6 +26,13 @@ function sleep(ms: number) {
   return new Promise(function (resolve) { setTimeout(resolve, ms); });
 }
 
+// Tempo máximo total da execução (Edge tem limite de 150s — paramos antes pra responder).
+var MAX_EXEC_MS = 120000;
+var execStartTs = 0;
+function timeUp() {
+  return (Date.now() - execStartTs) > MAX_EXEC_MS;
+}
+
 async function blingGet(endpoint: string, accessToken: string): Promise<any> {
   var url = BLING_BASE + endpoint;
   var res = await fetch(url, {
