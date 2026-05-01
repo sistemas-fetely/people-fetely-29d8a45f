@@ -521,7 +521,98 @@ export default function FaturasCartao() {
             </button>
           </div>
         )}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          {/* CARDS DOS CARTÕES — clique filtra (oculta Safra) */}
+          {cartoes
+            .filter(
+              (c) => !(c.banco || "").toLowerCase().includes("safra") &&
+                     !(c.nome_exibicao || "").toLowerCase().includes("safra"),
+            )
+            .map((cartao) => {
+              const comprometido = comprometidoMap.get(cartao.id) || 0;
+              const limite = cartao.limite_credito || 0;
+              const disponivel = limite - comprometido;
+              const percentUsado = limite > 0 ? (comprometido / limite) * 100 : 0;
+              const ativo = filtroCartao === cartao.id;
+
+              return (
+                <Card
+                  key={cartao.id}
+                  className={cn(
+                    "cursor-pointer hover:shadow-md transition bg-card",
+                    ativo && "ring-2 ring-admin border-admin",
+                  )}
+                  onClick={() =>
+                    setFiltroCartao(ativo ? "__todos__" : cartao.id)
+                  }
+                >
+                  <CardContent className="p-4 space-y-3">
+                    <div className="flex items-center gap-2">
+                      <CreditCard className="h-4 w-4 text-admin shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <div className="text-sm font-semibold truncate">
+                          {cartao.nome_exibicao}
+                        </div>
+                        <div className="text-[10px] text-muted-foreground truncate">
+                          {cartao.banco}
+                          {cartao.dia_fechamento &&
+                            ` · Fecha dia ${cartao.dia_fechamento}`}
+                          {cartao.dia_vencimento &&
+                            ` · Vence dia ${cartao.dia_vencimento}`}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-2">
+                      <div>
+                        <div className="text-[9px] uppercase tracking-wide text-muted-foreground">
+                          Limite
+                        </div>
+                        <div className="text-xs font-semibold font-mono">
+                          {formatBRL(limite)}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-[9px] uppercase tracking-wide text-muted-foreground">
+                          Comprometido
+                        </div>
+                        <div className="text-xs font-semibold font-mono text-amber-700">
+                          {formatBRL(comprometido)}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-[9px] uppercase tracking-wide text-muted-foreground">
+                          Disponível
+                        </div>
+                        <div className="text-xs font-semibold font-mono text-emerald-700">
+                          {formatBRL(disponivel)}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+                        <div
+                          className={cn(
+                            "h-full transition-all",
+                            percentUsado > 90
+                              ? "bg-red-500"
+                              : percentUsado > 70
+                                ? "bg-amber-500"
+                                : "bg-emerald-500",
+                          )}
+                          style={{ width: `${Math.min(100, percentUsado)}%` }}
+                        />
+                      </div>
+                      <div className="text-[9px] text-muted-foreground mt-1">
+                        {percentUsado.toFixed(0)}% usado
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+
           {/* CARD FATURA MÊS ATUAL */}
           <Card className="bg-amber-50/50 border-amber-200">
             <CardContent className="p-4">
