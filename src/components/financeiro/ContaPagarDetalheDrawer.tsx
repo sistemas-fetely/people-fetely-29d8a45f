@@ -79,6 +79,7 @@ type Conta = {
   plano_contas?: { codigo?: string | null; nome?: string | null } | null;
   formas_pagamento?: { nome?: string | null; codigo?: string | null } | null;
   parceiros_comerciais?: { razao_social?: string | null } | null;
+  movimentacao_bancaria_id?: string | null;
 };
 
 const STATUS_LABEL: Record<string, string> = {
