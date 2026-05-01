@@ -244,7 +244,8 @@ export default function FaturasCartao() {
   // KPIs
   const totals = useMemo(() => {
     const all = faturas || [];
-    return {
+
+    const base = {
       qtdFaturas: all.length,
       total: all.length,
       abertas: all.filter((f) => f.status === "aberta").length,
@@ -257,8 +258,27 @@ export default function FaturasCartao() {
       totalGeral: all.reduce((s, f) => s + (f.valor_total || 0), 0),
       totalConciliado: all.reduce((s, f) => s + (f.valor_conciliado || 0), 0),
       totalPendente: all.reduce((s, f) => s + (f.valor_pendente || 0), 0),
+      modoFocado: false as boolean,
+      faturaFocada: null as null | (typeof all)[0],
     };
-  }, [faturas]);
+
+    if (faturaExpanded) {
+      const f = all.find((x) => x.id === faturaExpanded);
+      if (f) {
+        return {
+          ...base,
+          qtdFaturas: 1,
+          totalGeral: f.valor_total || 0,
+          totalConciliado: f.valor_conciliado || 0,
+          totalPendente: f.valor_pendente || 0,
+          modoFocado: true,
+          faturaFocada: f,
+        };
+      }
+    }
+
+    return base;
+  }, [faturas, faturaExpanded]);
 
   // Filtragem + Ordenação
   const filtered = useMemo(() => {
