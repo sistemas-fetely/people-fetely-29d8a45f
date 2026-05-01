@@ -33,8 +33,10 @@ import {
   CreditCard,
   Repeat,
   AlertTriangle,
-  Circle,
   Stethoscope,
+  Receipt,
+  FolderTree,
+  Paperclip,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
@@ -807,17 +809,18 @@ export default function CaixaBanco() {
                               {(() => {
                                 const qNF = getQualidadeNF(l, nfMap);
                                 const qCat = getQualidadeCategoria(l, nfMap);
+                                const docOk = !docPendente;
                                 const corClass = (cor: "verde" | "amarelo" | "vermelho") => {
-                                  if (cor === "verde") return "fill-emerald-500 text-emerald-500";
-                                  if (cor === "amarelo") return "fill-amber-500 text-amber-500";
-                                  return "fill-red-500 text-red-500";
+                                  if (cor === "verde") return "text-emerald-600";
+                                  if (cor === "amarelo") return "text-amber-500";
+                                  return "text-red-500";
                                 };
                                 return (
                                   <TooltipProvider>
-                                    <div className="flex items-center gap-1.5 mr-1">
+                                    <div className="flex items-center gap-2 mr-1">
                                       <Tooltip>
                                         <TooltipTrigger asChild>
-                                          <Circle className={cn("h-2.5 w-2.5 cursor-help", corClass(qNF.cor))} />
+                                          <Receipt className={cn("h-3.5 w-3.5 cursor-help", corClass(qNF.cor))} strokeWidth={2.2} />
                                         </TooltipTrigger>
                                         <TooltipContent className="max-w-xs">
                                           <p className="text-xs">📄 {qNF.motivo}</p>
@@ -825,10 +828,26 @@ export default function CaixaBanco() {
                                       </Tooltip>
                                       <Tooltip>
                                         <TooltipTrigger asChild>
-                                          <Circle className={cn("h-2.5 w-2.5 cursor-help", corClass(qCat.cor))} />
+                                          <FolderTree className={cn("h-3.5 w-3.5 cursor-help", corClass(qCat.cor))} strokeWidth={2.2} />
                                         </TooltipTrigger>
                                         <TooltipContent className="max-w-xs">
                                           <p className="text-xs">🏷️ {qCat.motivo}</p>
+                                        </TooltipContent>
+                                      </Tooltip>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <Paperclip
+                                            className={cn(
+                                              "h-3.5 w-3.5 cursor-help",
+                                              docOk ? "text-emerald-600" : "text-red-500"
+                                            )}
+                                            strokeWidth={2.2}
+                                          />
+                                        </TooltipTrigger>
+                                        <TooltipContent className="max-w-xs">
+                                          <p className="text-xs">
+                                            {docOk ? "Documento anexado/OK" : "Documento pendente"}
+                                          </p>
                                         </TooltipContent>
                                       </Tooltip>
                                     </div>
@@ -846,16 +865,6 @@ export default function CaixaBanco() {
                                   </span>
                                 );
                               })()}
-                              {docPendente && (
-                                <Badge
-                                  variant="outline"
-                                  className="text-[9px] py-0 px-1.5 h-4 border-amber-400 text-amber-700 bg-amber-50 gap-1 whitespace-nowrap"
-                                  title="Pagamento foi enviado ao financeiro mas falta NF/Recibo"
-                                >
-                                  <FileWarning className="h-2.5 w-2.5" />
-                                  Doc pendente
-                                </Badge>
-                              )}
                             </div>
                           </TableCell>
                         </TableRow>
