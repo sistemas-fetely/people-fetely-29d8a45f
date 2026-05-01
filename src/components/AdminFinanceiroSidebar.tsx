@@ -31,16 +31,13 @@ const dashboardItem: MenuItem = {
 };
 
 const financeiroItems: MenuItem[] = [
-  { title: "Plano de Contas", url: "/administrativo/plano-contas", icon: ListTree },
   { title: "Contas a Pagar", url: "/administrativo/contas-pagar", icon: ArrowUpFromLine },
   { title: "Faturas de Cartão", url: "/administrativo/faturas-cartao", icon: CreditCard },
   { title: "Contas a Receber", url: "/administrativo/contas-receber", icon: ArrowDownToLine },
   { title: "Parceiros Comerciais", url: "/administrativo/parceiros", icon: Users },
-  { title: "Importar Dados", url: "/administrativo/importar", icon: Upload },
   { title: "NFs em Stage", url: "/administrativo/nfs-stage", icon: Layers },
   { title: "OFX em Stage", url: "/administrativo/ofx-stage", icon: ArrowLeftRight },
   { title: "Documentos Pendentes", url: "/administrativo/documentos-pendentes", icon: FileWarning },
-  // { title: "Configuração Integração", url: "/administrativo/configuracao-integracao", icon: Settings2 }, // ocultado — acessível via "Importar Dados"
 ];
 
 const caixaBancoItems: MenuItem[] = [
@@ -50,6 +47,11 @@ const caixaBancoItems: MenuItem[] = [
   { title: "Fluxo de Caixa", url: "/administrativo/fluxo-caixa", icon: TrendingUp },
   { title: "Fluxo Futuro", url: "/administrativo/fluxo-futuro", icon: Calendar },
   { title: "Contas Bancárias", url: "/administrativo/caixa-banco/contas", icon: Landmark },
+];
+
+const configFinanceiroItems: MenuItem[] = [
+  { title: "Plano de Contas", url: "/administrativo/plano-contas", icon: ListTree },
+  { title: "Importar Dados", url: "/administrativo/importar", icon: Upload },
 ];
 
 // MIGRADOS na Sprint 2 (29/04/2026) → Administrativo Fetely:
