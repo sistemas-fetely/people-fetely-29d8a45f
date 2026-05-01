@@ -613,16 +613,38 @@ export default function CaixaBanco() {
                             {formatDateBR(l.data_vencimento)}
                           </TableCell>
                           <TableCell className="text-xs">
-                            {categoriaNome ? (
-                              <div
-                                className="truncate max-w-[160px]"
-                                title={categoriaNome}
-                              >
-                                {categoriaNome}
-                              </div>
-                            ) : (
-                              <span className="text-muted-foreground">—</span>
-                            )}
+                            <div className="flex items-center gap-1.5">
+                              {categoriaNome ? (
+                                <div
+                                  className="truncate max-w-[160px]"
+                                  title={categoriaNome}
+                                >
+                                  {categoriaNome}
+                                </div>
+                              ) : (
+                                <span className="text-muted-foreground">—</span>
+                              )}
+                              {l.categoria_inconsistente && (
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Badge
+                                        variant="outline"
+                                        className="text-[9px] py-0 px-1.5 h-4 border-amber-400 text-amber-700 bg-amber-50 gap-1 whitespace-nowrap shrink-0"
+                                      >
+                                        <AlertTriangle className="h-2.5 w-2.5" />
+                                        Inconsistente
+                                      </Badge>
+                                    </TooltipTrigger>
+                                    <TooltipContent className="max-w-xs">
+                                      <p className="text-xs">
+                                        {l.inconsistencia_motivo || "Categoria diverge da NF vinculada."}
+                                      </p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                              )}
+                            </div>
                           </TableCell>
                           <TableCell className="whitespace-nowrap text-xs">
                             {l.data_pagamento ? (
