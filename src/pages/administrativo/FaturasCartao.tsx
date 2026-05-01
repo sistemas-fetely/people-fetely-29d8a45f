@@ -335,7 +335,7 @@ export default function FaturasCartao() {
     }
 
     return base;
-  }, [faturas, faturaExpanded]);
+  }, [faturas, faturaExpanded, filtroCartao]);
 
   // Filtragem + Ordenação
   const filtered = useMemo(() => {
