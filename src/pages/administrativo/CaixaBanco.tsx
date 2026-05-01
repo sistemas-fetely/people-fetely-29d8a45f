@@ -245,6 +245,48 @@ export default function CaixaBanco() {
   // Map de qualidade do dado por id (bolinha 🔴/🟡 na coluna Tags).
   const { data: qualidadeMap } = useQualidadeDadoMap(idsParaCompromisso);
 
+  // Inconsistência de categoria (NF vs Conta) — vive em movimentacoes_bancarias.
+  const movIds = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          (lancamentos || [])
+            .map((l) => l.movimentacao_bancaria_id)
+            .filter((x): x is string => !!x),
+        ),
+      ),
+    [lancamentos],
+  );
+
+  const { data: inconsistMap = new Map<string, { categoria_inconsistente: boolean | null; inconsistencia_motivo: string | null }>() } = useQuery({
+    queryKey: ["mov-inconsist-map", movIds.join(",")],
+    enabled: movIds.length > 0,
+    queryFn: async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase as any)
+        .from("movimentacoes_bancarias")
+        .select("id, categoria_inconsistente, inconsistencia_motivo")
+        .in("id", movIds);
+      if (error) throw error;
+      const m = new Map<string, { categoria_inconsistente: boolean | null; inconsistencia_motivo: string | null }>();
+      (data || []).forEach((r: any) => m.set(r.id, { categoria_inconsistente: r.categoria_inconsistente, inconsistencia_motivo: r.inconsistencia_motivo }));
+      return m;
+    },
+  });
+
+  // Lançamentos enriquecidos com flags de inconsistência da movimentação vinculada.
+  const lancamentosEnriched = useMemo(() => {
+    return (lancamentos || []).map((l) => {
+      if (!l.movimentacao_bancaria_id) return l;
+      const inc = inconsistMap.get(l.movimentacao_bancaria_id);
+      if (!inc) return l;
+      return {
+        ...l,
+        categoria_inconsistente: inc.categoria_inconsistente,
+        inconsistencia_motivo: inc.inconsistencia_motivo,
+      };
+    });
+  }, [lancamentos, inconsistMap]);
   // Mapas de lookup
   const mapContas = useMemo(() => {
     const m: Record<string, ContaBancariaLite> = {};
