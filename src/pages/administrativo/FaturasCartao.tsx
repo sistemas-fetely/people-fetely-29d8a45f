@@ -173,16 +173,17 @@ export default function FaturasCartao() {
     direction: "desc",
   });
 
-  // Cartões pra filtro
-  const { data: cartoes } = useQuery({
+  // Cartões pra filtro + cards do topo
+  const { data: cartoes = [] } = useQuery({
     queryKey: ["cartoes-credito-listagem"],
     queryFn: async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("contas_bancarias")
-        .select("id, nome_exibicao, banco")
+        .select("id, nome_exibicao, banco, dia_fechamento, dia_vencimento, limite_credito")
         .eq("tipo", "cartao_credito")
         .eq("ativo", true)
         .order("nome_exibicao");
+      if (error) throw error;
       return data || [];
     },
   });
