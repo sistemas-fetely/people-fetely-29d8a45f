@@ -624,7 +624,6 @@ export default function ContasPagar() {
               <div className="border rounded-md overflow-x-auto">
                 <Table>
                   <TableHeader className="sticky top-0 z-10 bg-background border-b shadow-sm">
-                  </TableHeader>
                     <TableRow>
                       <TableHead className="w-10">
                         <Checkbox
