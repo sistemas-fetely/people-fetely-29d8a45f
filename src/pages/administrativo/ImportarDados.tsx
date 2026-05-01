@@ -161,35 +161,24 @@ export default function ImportarDados() {
         </div>
       </div>
 
-      {/* Extrato Bancário */}
+      {/* Extratos & Faturas */}
       <div>
-        <h2 className="text-lg font-semibold mb-1">Extrato Bancário</h2>
+        <h2 className="text-lg font-semibold mb-1">Extratos & Faturas</h2>
         <p className="text-sm text-muted-foreground mb-3">
-          Importe arquivos OFX dos bancos. As transações vão para o Stage OFX para validação posterior.
+          Importe arquivos OFX dos bancos e faturas (PDF/CSV) de cartões de crédito.
         </p>
         <div className="grid gap-4 md:grid-cols-2">
           <ImportadorOFX />
-        </div>
-      </div>
-
-      {/* Faturas de Cartão */}
-      <div>
-        <h2 className="text-lg font-semibold mb-1">Faturas de Cartão</h2>
-        <p className="text-sm text-muted-foreground mb-3">
-          Importe faturas (PDF/CSV) de cartão de crédito. Os lançamentos
-          são classificados e ficam disponíveis em Faturas Cartão.
-        </p>
-        <div className="grid gap-4 md:grid-cols-2">
           <Card>
             <CardContent className="pt-6">
-              <div className="flex flex-wrap items-center justify-between gap-4">
+              <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
-                  <CreditCard className="h-8 w-8 text-admin" />
+                  <CreditCard className="h-6 w-6 text-admin" />
                   <div>
-                    <CardTitle className="text-base">Importar Fatura</CardTitle>
-                    <CardDescription className="mt-1">
-                      Selecione o cartão, fatura e período
-                    </CardDescription>
+                    <div className="font-medium">Faturas de Cartão</div>
+                    <div className="text-xs text-muted-foreground">
+                      Selecione cartão, fatura e período
+                    </div>
                   </div>
                 </div>
                 <Button onClick={() => setImportarFaturaOpen(true)} className="gap-2">
