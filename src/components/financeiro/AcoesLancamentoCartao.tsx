@@ -157,7 +157,7 @@ export function AcoesLancamentoCartao({ lancamento }: Props) {
         <Button
           size="sm"
           variant="outline"
-          className="h-6 px-2 text-[10px] gap-1 border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+          className="h-6 px-2 text-[10px] gap-1 border-orange-300 text-orange-700 hover:bg-orange-50"
           onClick={() => setVincularOpen(true)}
           disabled={salvando}
         >
