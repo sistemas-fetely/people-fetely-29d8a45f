@@ -805,27 +805,33 @@ export default function CaixaBanco() {
                           <TableCell className="min-w-[140px]">
                             <div className="flex flex-wrap gap-1 items-center">
                               {(() => {
-                                const qm = getQualidadeCategoria(l);
-                                const isVermelho = qm.cor === "vermelho";
+                                const qNF = getQualidadeNF(l, nfMap);
+                                const qCat = getQualidadeCategoria(l, nfMap);
+                                const corClass = (cor: "verde" | "amarelo" | "vermelho") => {
+                                  if (cor === "verde") return "fill-emerald-500 text-emerald-500";
+                                  if (cor === "amarelo") return "fill-amber-500 text-amber-500";
+                                  return "fill-red-500 text-red-500";
+                                };
                                 return (
                                   <TooltipProvider>
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <span className="inline-flex items-center mr-1">
-                                          <Circle
-                                            className={cn(
-                                              "h-2.5 w-2.5 cursor-help",
-                                              isVermelho
-                                                ? "fill-red-500 text-red-500"
-                                                : "fill-emerald-500 text-emerald-500",
-                                            )}
-                                          />
-                                        </span>
-                                      </TooltipTrigger>
-                                      <TooltipContent className="max-w-xs">
-                                        <p className="text-xs">{qm.motivo}</p>
-                                      </TooltipContent>
-                                    </Tooltip>
+                                    <div className="flex items-center gap-1.5 mr-1">
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <Circle className={cn("h-2.5 w-2.5 cursor-help", corClass(qNF.cor))} />
+                                        </TooltipTrigger>
+                                        <TooltipContent className="max-w-xs">
+                                          <p className="text-xs">📄 {qNF.motivo}</p>
+                                        </TooltipContent>
+                                      </Tooltip>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <Circle className={cn("h-2.5 w-2.5 cursor-help", corClass(qCat.cor))} />
+                                        </TooltipTrigger>
+                                        <TooltipContent className="max-w-xs">
+                                          <p className="text-xs">🏷️ {qCat.motivo}</p>
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    </div>
                                   </TooltipProvider>
                                 );
                               })()}
