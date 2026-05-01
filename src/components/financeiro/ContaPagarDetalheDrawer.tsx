@@ -321,11 +321,6 @@ export default function ContaPagarDetalheDrawer({ contaId, onClose }: Props) {
                     <span className="text-xs">Lançar em Mov</span>
                   </Button>
                 )}
-                  >
-                    <Pencil className="h-3.5 w-3.5 mr-1" />
-                    {conta.status === "paga" ? "Ver dados" : "Editar"}
-                  </Button>
-                )}
                 {!modoEdit && ["rascunho", "aberto", "aprovado", "aguardando_pagamento"].includes(conta.status) && (
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
