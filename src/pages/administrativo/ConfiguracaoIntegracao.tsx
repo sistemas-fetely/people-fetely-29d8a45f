@@ -673,28 +673,41 @@ export default function ConfiguracaoIntegracao() {
           <div className="flex items-center justify-between gap-2">
             <div>
               <CardTitle>Histórico de sincronizações</CardTitle>
-              <CardDescription>Últimas 20 execuções</CardDescription>
+              <CardDescription>Últimas {logsLimit} execuções</CardDescription>
             </div>
-            {logs.some((l: any) => l.status === "executando") && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={async () => {
-                  const { data, error } = await supabase.functions.invoke(
-                    "sync-bling-financeiro",
-                    { body: { tipo: "limpar_travados" } }
-                  );
-                  if (error) {
-                    toast.error("Falha: " + error.message);
-                  } else {
-                    toast.success(`${data?.cancelados ?? 0} sync(s) marcadas como canceladas`);
-                    qc.invalidateQueries({ queryKey: ["integracao-bling-logs"] });
-                  }
-                }}
-              >
-                Limpar travados
-              </Button>
-            )}
+            <div className="flex items-center gap-2">
+              <Select value={String(logsLimit)} onValueChange={(v) => setLogsLimit(Number(v))}>
+                <SelectTrigger className="w-[110px] h-9">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="5">Últimos 5</SelectItem>
+                  <SelectItem value="10">Últimos 10</SelectItem>
+                  <SelectItem value="20">Últimos 20</SelectItem>
+                  <SelectItem value="50">Últimos 50</SelectItem>
+                </SelectContent>
+              </Select>
+              {logs.some((l: any) => l.status === "executando") && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={async () => {
+                    const { data, error } = await supabase.functions.invoke(
+                      "sync-bling-financeiro",
+                      { body: { tipo: "limpar_travados" } }
+                    );
+                    if (error) {
+                      toast.error("Falha: " + error.message);
+                    } else {
+                      toast.success(`${data?.cancelados ?? 0} sync(s) marcadas como canceladas`);
+                      qc.invalidateQueries({ queryKey: ["integracao-bling-logs"] });
+                    }
+                  }}
+                >
+                  Limpar travados
+                </Button>
+              )}
+            </div>
           </div>
         </CardHeader>
         <CardContent>
