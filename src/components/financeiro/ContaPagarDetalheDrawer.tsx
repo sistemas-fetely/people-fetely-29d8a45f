@@ -481,12 +481,34 @@ export default function ContaPagarDetalheDrawer({ contaId, onClose }: Props) {
 
             {/* Documentos */}
             <Separator className="my-4" />
+            <div className="flex items-center justify-end mb-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setBuscarNFOpen(true)}
+                className="gap-1 border-blue-300 text-blue-700 hover:bg-blue-50"
+              >
+                <Sparkles className="h-3.5 w-3.5" />
+                Buscar em NF Stage
+              </Button>
+            </div>
             <DocumentosCP
               contaId={conta.id}
               docsStatus={conta.docs_status || "pendente"}
               nfChaveAcesso={conta.nf_chave_acesso}
               nfNumero={conta.nf_numero}
               origem={conta.origem}
+            />
+
+            <BuscarNFStageDialog
+              open={buscarNFOpen}
+              onOpenChange={setBuscarNFOpen}
+              contaId={conta.id}
+              contaDescricao={conta.descricao}
+              contaValor={conta.valor}
+              onVinculado={() => {
+                qc.invalidateQueries({ queryKey: ["conta-pagar-detalhe", conta.id] });
+              }}
             />
 
             {/* NF vinculada (com PDF/XML, links) */}
