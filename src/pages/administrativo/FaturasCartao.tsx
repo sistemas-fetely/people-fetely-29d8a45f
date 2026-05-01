@@ -188,64 +188,67 @@ export default function FaturasCartao() {
     },
   });
 
-  // Comprometido por cartão (via lançamentos da fatura → conta a pagar)
+  // Comprometido por cartão (3 queries simples encadeadas)
   const { data: comprometidoMap = new Map<string, number>() } = useQuery({
-    queryKey: ["cartoes-comprometido-v2"],
+    queryKey: ["cartoes-comprometido-v3"],
     queryFn: async () => {
-      // 1) Lançamentos de fatura com conta_pagar associada
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data, error } = await (supabase as any)
-        .from("fatura_cartao_lancamentos")
-        .select(`
-          conta_pagar_id,
-          fatura_id,
-          contas_pagar_receber!inner (
-            valor,
-            status,
-            is_cartao
-          )
-        `)
-        .not("conta_pagar_id", "is", null);
-      if (error) throw error;
+      // 1) Contas a pagar de cartão em aberto/aprovado/aguardando
+      const { data: contas, error: errC } = await supabase
+        .from("contas_pagar_receber")
+        .select("id, valor")
+        .eq("is_cartao", true)
+        .in("status", ["aberto", "aprovado", "aguardando_pagamento"]);
+      if (errC) throw errC;
 
-      // 2) Faturas → conta_bancaria_id
-      const faturaIds = Array.from(
-        new Set(
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          ((data || []) as any[])
-            .map((r) => r.fatura_id)
-            .filter((id): id is string => Boolean(id)),
-        ),
-      );
+      const contaIds = (contas || []).map((c) => c.id);
+      if (contaIds.length === 0) return new Map<string, number>();
+
+      // 2) Lançamentos de fatura vinculados a essas contas → traz fatura_id
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: faturasData } = await (supabase as any)
+      const { data: lancs, error: errL } = await (supabase as any)
+        .from("fatura_cartao_lancamentos")
+        .select("conta_pagar_id, fatura_id")
+        .in("conta_pagar_id", contaIds);
+      if (errL) throw errL;
+
+      const contaToFatura = new Map<string, string>();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (lancs || []).forEach((l: any) => {
+        if (l.conta_pagar_id && l.fatura_id) {
+          contaToFatura.set(l.conta_pagar_id, l.fatura_id);
+        }
+      });
+
+      // 3) Faturas → conta_bancaria_id
+      const faturaIds = Array.from(new Set(contaToFatura.values()));
+      if (faturaIds.length === 0) return new Map<string, number>();
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: fats, error: errF } = await (supabase as any)
         .from("faturas_cartao")
         .select("id, conta_bancaria_id")
         .in("id", faturaIds);
+      if (errF) throw errF;
 
       const faturaToConta = new Map<string, string>();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (faturasData || []).forEach((f: any) => {
+      (fats || []).forEach((f: any) => {
         if (f.conta_bancaria_id) faturaToConta.set(f.id, f.conta_bancaria_id);
       });
 
-      // 3) Soma por conta bancária
+      // 4) Soma por cartão
       const map = new Map<string, number>();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      for (const row of (data || []) as any[]) {
-        const cpr = row.contas_pagar_receber;
-        if (!cpr) continue;
-        if (!cpr.is_cartao) continue;
-        if (
-          !["aberto", "aprovado", "aguardando_pagamento"].includes(cpr.status)
-        )
-          continue;
-
-        const contaId = faturaToConta.get(row.fatura_id);
-        if (!contaId) continue;
-
-        map.set(contaId, (map.get(contaId) || 0) + Number(cpr.valor || 0));
+      for (const c of contas || []) {
+        const fId = contaToFatura.get(c.id);
+        if (!fId) continue;
+        const contaBancariaId = faturaToConta.get(fId);
+        if (!contaBancariaId) continue;
+        map.set(
+          contaBancariaId,
+          (map.get(contaBancariaId) || 0) + Number(c.valor || 0),
+        );
       }
+
       return map;
     },
   });
