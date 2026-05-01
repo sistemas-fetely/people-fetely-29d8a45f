@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Loader2, Save, X, Sparkles, Check } from "lucide-react";
 import { toast } from "sonner";
 import { useCategoriasPlano } from "@/hooks/useCategoriasPlano";
+import { CategoriaCombobox } from "./CategoriaCombobox";
 
 /**
  * Form de edição de Conta a Pagar — Fase 2 (29/04/2026).
@@ -225,23 +226,14 @@ export function ContaPagarFormEdit({ conta, onSaved, onCancel }: Props) {
       {/* Categoria (plano de contas) */}
       <div className="space-y-1">
         <Label>Categoria (plano de contas)</Label>
-        <Select
-          value={contaId}
-          onValueChange={setContaId}
+        <CategoriaCombobox
+          options={categorias}
+          value={contaId === "__none__" ? null : contaId}
+          onChange={(id) => setContaId(id || "__none__")}
           disabled={isReadOnly || salvando}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Definir..." />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="__none__">— Sem categoria —</SelectItem>
-            {categorias.map((c) => (
-              <SelectItem key={c.id} value={c.id}>
-                {c.codigo} {c.nome}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          placeholder="Selecionar categoria..."
+          allowNull
+        />
 
         {topSugestao
           && semCategoria
