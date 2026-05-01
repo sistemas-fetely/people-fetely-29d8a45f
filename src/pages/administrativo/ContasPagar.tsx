@@ -787,29 +787,10 @@ export default function ContasPagar() {
                   </TableBody>
                 </Table>
               </div>
-              <div className="flex items-center justify-between mt-4">
+              <div className="mt-4">
                 <span className="text-sm text-muted-foreground">
-                  {filtered.length} registro{filtered.length === 1 ? "" : "s"} • Página {page} de{" "}
-                  {totalPages}
+                  {filtered.length} registro{filtered.length === 1 ? "" : "s"}
                 </span>
-                <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    disabled={page === 1}
-                    onClick={() => setPage((p) => p - 1)}
-                  >
-                    Anterior
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    disabled={page === totalPages}
-                    onClick={() => setPage((p) => p + 1)}
-                  >
-                    Próxima
-                  </Button>
-                </div>
               </div>
             </>
           )}
