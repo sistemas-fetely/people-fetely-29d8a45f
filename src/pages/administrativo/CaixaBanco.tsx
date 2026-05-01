@@ -483,6 +483,20 @@ export default function CaixaBanco() {
               </SelectContent>
             </Select>
 
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setMostrarSoInconsistentes(!mostrarSoInconsistentes)}
+              className={cn(
+                "gap-1",
+                mostrarSoInconsistentes && "bg-amber-600 hover:bg-amber-700 text-white border-amber-600",
+              )}
+            >
+              <AlertTriangle className="h-3.5 w-3.5" />
+              Inconsistências
+            </Button>
+
           </div>
         </CardContent>
       </Card>
