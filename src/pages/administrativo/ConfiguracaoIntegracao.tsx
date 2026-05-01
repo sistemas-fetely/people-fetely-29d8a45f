@@ -668,8 +668,32 @@ export default function ConfiguracaoIntegracao() {
       {/* Histórico */}
       <Card>
         <CardHeader>
-          <CardTitle>Histórico de sincronizações</CardTitle>
-          <CardDescription>Últimas 20 execuções</CardDescription>
+          <div className="flex items-center justify-between gap-2">
+            <div>
+              <CardTitle>Histórico de sincronizações</CardTitle>
+              <CardDescription>Últimas 20 execuções</CardDescription>
+            </div>
+            {logs.some((l: any) => l.status === "executando") && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={async () => {
+                  const { data, error } = await supabase.functions.invoke(
+                    "sync-bling-financeiro",
+                    { body: { tipo: "limpar_travados" } }
+                  );
+                  if (error) {
+                    toast.error("Falha: " + error.message);
+                  } else {
+                    toast.success(`${data?.cancelados ?? 0} sync(s) marcadas como canceladas`);
+                    qc.invalidateQueries({ queryKey: ["integracao-bling-logs"] });
+                  }
+                }}
+              >
+                Limpar travados
+              </Button>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
           {logs.length === 0 ? (
