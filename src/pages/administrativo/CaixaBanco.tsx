@@ -1011,35 +1011,13 @@ export default function CaixaBanco() {
                     })}
                   </TableBody>
                 </Table>
-              </div>
 
-              <div className="flex items-center justify-between mt-4">
-                <p className="text-xs text-muted-foreground">
-                  {filtered.length} {filtered.length === 1 ? "lançamento" : "lançamentos"} • Página {page} de {totalPages}
-                </p>
-                <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    disabled={page === 1}
-                    onClick={() => setPage((p) => p - 1)}
-                  >
-                    Anterior
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    disabled={page === totalPages}
-                    onClick={() => setPage((p) => p + 1)}
-                  >
-                    Próxima
-                  </Button>
-                </div>
-              </div>
-            </>
-          )}
-        </CardContent>
-      </Card>
+            <p className="text-xs text-muted-foreground">
+              {filtered.length} {filtered.length === 1 ? "lançamento" : "lançamentos"}
+            </p>
+          </>
+        )}
+      </div>
 
       <ContaPagarDetalheDrawer
         contaId={contaIdDrawer}
