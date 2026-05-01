@@ -51,8 +51,6 @@ import { formatBRL, formatDateBR } from "@/lib/format-currency";
 import ContaPagarDetalheDrawer from "@/components/financeiro/ContaPagarDetalheDrawer";
 import { getCompromissoInfoMap, type CompromissoInfo } from "@/lib/financeiro/get-compromisso-info";
 import { getMeioPagamentoIcon } from "@/lib/financeiro/meio-pagamento-icon";
-import { useQualidadeDadoMap } from "@/hooks/useQualidadeDadoMap";
-import { getQualidadeDadoIcon } from "@/lib/financeiro/qualidade-dado-icon";
 
 import { getStatusFlagsMap, type FlagsContaPagar } from "@/lib/financeiro/get-status-flags";
 import { classFundoFuturo } from "@/lib/financeiro/is-vencimento-futuro";
