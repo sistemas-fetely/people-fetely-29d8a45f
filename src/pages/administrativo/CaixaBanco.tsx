@@ -82,6 +82,7 @@ type Lancamento = {
   fatura_vencimento?: string | null;
   categoria_inconsistente?: boolean | null;
   inconsistencia_motivo?: string | null;
+  categoria_sugerida_ia?: boolean | null;
 };
 
 /**
