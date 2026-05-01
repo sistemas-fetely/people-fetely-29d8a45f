@@ -33,7 +33,7 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import { Plus, ChevronsUpDown, Check, Paperclip } from "lucide-react";
+import { Plus, ChevronsUpDown, Check, Paperclip, Sparkles } from "lucide-react";
 import { NfStageVinculadaCard } from "@/components/financeiro/NfStageVinculadaCard";
 import { NfStageBuscadorModal } from "@/components/financeiro/NfStageBuscadorModal";
 import { cn } from "@/lib/utils";
@@ -74,6 +74,46 @@ export function NovaContaPagarSheet({ open, onOpenChange }: Props) {
   const [parcelas, setParcelas] = useState(1);
   const [nfStageId, setNfStageId] = useState<string | null>(null);
   const [nfStageBuscaOpen, setNfStageBuscaOpen] = useState(false);
+
+  // Debounce da descrição (não dispara IA a cada tecla)
+  const [descricaoDebounced, setDescricaoDebounced] = useState("");
+  useEffect(() => {
+    const t = setTimeout(() => setDescricaoDebounced(descricao), 600);
+    return () => clearTimeout(t);
+  }, [descricao]);
+
+  // Estado: usuário aplicou a sugestão (não mostra mais)
+  const [sugestaoAplicada, setSugestaoAplicada] = useState(false);
+
+  // Busca sugestão de categoria
+  const { data: sugestoes = [] } = useQuery({
+    queryKey: ["sugerir-categoria", parceiroId, descricaoDebounced],
+    enabled: descricaoDebounced.length >= 4 || !!parceiroId,
+    staleTime: 30_000,
+    queryFn: async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase as any).rpc(
+        "sugerir_categoria_para_lancamento",
+        {
+          p_descricao: descricaoDebounced || null,
+          p_cnpj: null,
+          p_parceiro_id: parceiroId,
+        }
+      );
+      if (error) throw error;
+      return (data || []) as Array<{
+        categoria_id: string;
+        categoria_codigo: string;
+        categoria_nome: string;
+        score: number;
+        motivo: string;
+        amostra_descricao: string;
+        amostra_count: number;
+      }>;
+    },
+  });
+
+  const topSugestao = sugestoes[0];
 
   const { data: parceiros } = useQuery({
     queryKey: ["parceiros-fornecedores"],
