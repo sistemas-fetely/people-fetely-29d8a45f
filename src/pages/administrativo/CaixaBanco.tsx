@@ -684,7 +684,7 @@ export default function CaixaBanco() {
             titulo="Este mês"
             valor={formatBRL(kpis.mesAtual.valor)}
             sublinha={`${kpis.mesAtual.qtd} a vencer`}
-            cor="red"
+            cor="amber"
             ativo={filtroOp === "mes_atual"}
             onClick={() => setFiltroOp(filtroOp === "mes_atual" ? "todos" : "mes_atual")}
             icone={AlertOctagon}
