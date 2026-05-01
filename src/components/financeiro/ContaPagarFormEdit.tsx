@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Save, X } from "lucide-react";
+import { Loader2, Save, X, Sparkles, Check } from "lucide-react";
 import { toast } from "sonner";
 import { useCategoriasPlano } from "@/hooks/useCategoriasPlano";
 
