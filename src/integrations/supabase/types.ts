@@ -9632,6 +9632,25 @@ export type Database = {
         Args: { _dados: Json; _token: string }
         Returns: boolean
       }
+      buscar_nfs_stage_para_conta: {
+        Args: { p_conta_id: string }
+        Returns: {
+          categoria_codigo: string
+          categoria_id: string
+          categoria_nome: string
+          descricao: string
+          fornecedor_cliente: string
+          fornecedor_cnpj: string
+          fornecedor_razao_social: string
+          motivos: string
+          nf_chave_acesso: string
+          nf_data_emissao: string
+          nf_id: string
+          nf_numero: string
+          score: number
+          valor_total: number
+        }[]
+      }
       calcular_docs_status: { Args: { p_conta_id: string }; Returns: string }
       cancelar_parcelas_futuras_recorrente: {
         Args: { p_recorrente_id: string }
@@ -10292,6 +10311,10 @@ export type Database = {
       validar_nf_pj: { Args: { _nota_id: string }; Returns: Json }
       validar_prontidao_sistema: { Args: never; Returns: Json }
       verificar_user_orfao: { Args: { _user_id: string }; Returns: boolean }
+      vincular_nf_a_conta: {
+        Args: { p_conta_id: string; p_nf_id: string }
+        Returns: Json
+      }
       vincular_nf_a_parceiro: {
         Args: { p_nf_stage_id: string; p_parceiro_id: string }
         Returns: Json
