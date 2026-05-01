@@ -137,10 +137,25 @@ function getQualidadeNF(
  * Vermelho = sem categoria OU diverge da NF
  */
 function getQualidadeCategoria(
-  m: { id: string; categoria_id: string | null },
+  m: {
+    id: string;
+    categoria_id: string | null;
+    categoria_sugerida_ia?: boolean | null;
+  },
   nfMap?: Map<string, string | null>,
-): { cor: "verde" | "amarelo" | "vermelho"; motivo: string } {
+): {
+  cor: "verde" | "amarelo" | "vermelho";
+  motivo: string;
+  temSugestaoIA?: boolean;
+} {
   if (!m.categoria_id) {
+    if (m.categoria_sugerida_ia === true) {
+      return {
+        cor: "amarelo",
+        motivo: "Sugestão IA pendente — clique pra revisar",
+        temSugestaoIA: true,
+      };
+    }
     return { cor: "vermelho", motivo: "Sem categoria" };
   }
   const categoriaDaNF = nfMap?.get(m.id);
