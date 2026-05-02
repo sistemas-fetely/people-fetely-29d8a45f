@@ -710,8 +710,15 @@ export default function CaixaBanco() {
       return statusVisual(l) === "paga" && !l.conciliado_em;
     });
 
-    // Qualidade — base = TODOS os lançamentos (sem filtro de mês)
-    const baseQualidade = todos;
+    // Qualidade — base reage ao filtro operacional ativo
+    const baseQualidade = (() => {
+      if (filtroOp === "atrasados") return atrasados;
+      if (filtroOp === "mes_atual") return mesAtual;
+      if (filtroOp === "proximo_mes") return proximoMes;
+      if (filtroOp === "mes_anterior") return mesAnterior;
+      if (filtroOp === "sem_conciliacao") return semConciliacao;
+      return todos;
+    })();
     const totalBase = baseQualidade.length;
 
     const comNF = baseQualidade.filter((l) => getQualidadeNF(l, nfMap).cor === "verde").length;
@@ -741,7 +748,7 @@ export default function CaixaBanco() {
       qualidadeVinculado: { pct: pct(comVinculadoOK, totalBase), atendidos: comVinculadoOK, total: totalBase },
       qualidadeConciliado: { pct: pct(comConciliadoOK, totalBase), atendidos: comConciliadoOK, total: totalBase },
     };
-  }, [lancamentosEnriched, nfMap, statusFlagsMap]);
+  }, [lancamentosEnriched, nfMap, statusFlagsMap, filtroOp]);
 
 
 
