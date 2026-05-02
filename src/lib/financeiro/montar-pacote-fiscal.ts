@@ -20,6 +20,10 @@
  * Doutrina
  *   "NF cadastrada ≠ NF anexada." O envio só inclui evidência (arquivo).
  *   Se uma conta tem nf_aplicavel=false, ela passa sem NF — não erra.
+ *
+ *   #15: XML é dado, PDF é prova. Pacote ao contador exige PDF/imagem.
+ *   XML standalone é importante no banco (parsing, fiscal) mas NÃO é o que
+ *   o contador precisa receber. Filtra extensão na hora de montar o ZIP.
  */
 import { supabase } from "@/integrations/supabase/client";
 import JSZip from "jszip";
@@ -69,8 +73,6 @@ export interface MontarPacoteResult {
 // Convenção (cravada pelo backfill):
 //   - Path SEM prefixo de bucket → bucket "financeiro-docs"
 //   - Path COM prefixo "nfs-stage/" → bucket "nfs-stage" (stripa o prefixo)
-//
-// Se aparecer outro prefixo no futuro, basta adicionar aqui.
 
 function resolverBucketEPath(storagePath: string): {
   bucket: string;
@@ -88,6 +90,10 @@ function resolverBucketEPath(storagePath: string): {
 function sanitizarPasta(nome: string): string {
   return nome.replace(/[\/\\:*?"<>|]/g, "_").trim() || "Sem-fornecedor";
 }
+
+// Doutrina #15: só PDF/imagem vão pro contador. XML standalone fica no banco.
+const ehArquivoVisual = (nome: string): boolean =>
+  /\.(pdf|jpg|jpeg|png)$/i.test(nome);
 
 // -----------------------------------------------------------------------------
 // Função principal
@@ -178,10 +184,7 @@ export async function montarZipPacoteFiscal(
   }
 
   // 4. Decide se há algo pra empacotar
-  // Conta com nf_aplicavel=false e sem doc é OK (passa sem arquivo)
-  // Conta com nf_aplicavel=true e sem doc → fica no contasSemDoc (transparência)
   if (docs.length === 0 && fallbacks.length === 0) {
-    // Pode ainda ter contas dispensadas de NF — verifica
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: dispensadas } = await (supabase as any)
       .from("contas_pagar_receber")
@@ -209,6 +212,13 @@ export async function montarZipPacoteFiscal(
 
   // 5a. Docs do canal direto (incluindo paths apontando pro Stage via prefixo)
   for (const d of docs) {
+    // Doutrina #15: pula XML standalone — não vai pro contador
+    if (!ehArquivoVisual(d.nome_arquivo)) {
+      console.info(
+        `[pacote-fiscal] Ignorando ${d.nome_arquivo} (não é PDF/imagem). XML fica no banco como dado.`,
+      );
+      continue;
+    }
     const { bucket, pathReal } = resolverBucketEPath(d.storage_path);
     const fornecedor = sanitizarPasta(
       d.contas_pagar_receber?.parceiros_comerciais?.razao_social ||
@@ -251,23 +261,22 @@ export async function montarZipPacoteFiscal(
 
   // 5b. Fallback Stage (cinto + suspensório — pós backfill quase nunca dispara)
   for (const f of fallbacks) {
-    if (contasComArquivo.has(f.conta_id)) continue; // já pegou via canal direto
+    if (contasComArquivo.has(f.conta_id)) continue;
 
     const fornecedor = sanitizarPasta(f.fornecedor);
     const arquivos: Array<{ path: string; nome: string; tipo: string }> = [];
 
-    if (f.arquivo_storage_path) {
+    // Doutrina #15: só inclui arquivo_storage_path se for PDF/imagem.
+    // xml_storage_path NUNCA entra no pacote do contador.
+    if (
+      f.arquivo_storage_path &&
+      f.arquivo_nome &&
+      ehArquivoVisual(f.arquivo_nome)
+    ) {
       arquivos.push({
         path: f.arquivo_storage_path,
-        nome: f.arquivo_nome || "nf.pdf",
+        nome: f.arquivo_nome,
         tipo: "nf",
-      });
-    }
-    if (f.xml_storage_path) {
-      arquivos.push({
-        path: f.xml_storage_path,
-        nome: (f.arquivo_nome || "nf").replace(/\.pdf$/i, "") + ".xml",
-        tipo: "xml_nf",
       });
     }
 
@@ -314,7 +323,7 @@ export async function montarZipPacoteFiscal(
     fornecedor_cliente: string | null;
   }>) {
     if (contasComArquivo.has(c.id)) continue;
-    if (c.nf_aplicavel === false) continue; // dispensada — OK ficar sem
+    if (c.nf_aplicavel === false) continue;
     contasSemArquivoFinal.push(c.fornecedor_cliente || c.id);
   }
 
