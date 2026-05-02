@@ -856,187 +856,199 @@ export default function CaixaBanco() {
           </div>
         </div>
 
-        {/* LINHA 1 — Cards Operação (5 cards) */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-          <CardKPI
-            titulo="Atrasados"
-            valor={formatBRL(kpis.atrasados.valor)}
-            sublinha={`${kpis.atrasados.qtd} ${kpis.atrasados.qtd === 1 ? "conta" : "contas"}`}
-            cor="red"
-            ativo={filtroOp === "atrasados"}
-            onClick={() => setFiltroOp(filtroOp === "atrasados" ? "todos" : "atrasados")}
-            icone={Flame}
-          />
-          <CardKPI
-            titulo="Este mês"
-            valor={formatBRL(kpis.mesAtual.valor)}
-            sublinha={`${kpis.mesAtual.qtd} contas`}
-            cor="amber"
-            ativo={filtroOp === "mes_atual"}
-            onClick={() => setFiltroOp(filtroOp === "mes_atual" ? "todos" : "mes_atual")}
-            icone={AlertOctagon}
-          />
-          <CardKPI
-            titulo="Próximo mês"
-            valor={formatBRL(kpis.proximoMes.valor)}
-            sublinha={`${kpis.proximoMes.qtd} contas`}
-            cor="blue"
-            ativo={filtroOp === "proximo_mes"}
-            onClick={() => setFiltroOp(filtroOp === "proximo_mes" ? "todos" : "proximo_mes")}
-            icone={CalendarClock}
-          />
-          <CardKPI
-            titulo="Mês anterior"
-            valor={formatBRL(kpis.mesAnterior.valor)}
-            sublinha={`${kpis.mesAnterior.qtd} contas`}
-            cor="purple"
-            ativo={filtroOp === "mes_anterior"}
-            onClick={() => setFiltroOp(filtroOp === "mes_anterior" ? "todos" : "mes_anterior")}
-            icone={CalendarRange}
-          />
-          <CardKPI
-            titulo="Sem conciliação"
-            valor={formatBRL(kpis.semConciliacao.valor)}
-            sublinha={`${kpis.semConciliacao.qtd} pagas s/ OFX`}
-            cor="teal"
-            ativo={filtroOp === "sem_conciliacao"}
-            onClick={() => setFiltroOp(filtroOp === "sem_conciliacao" ? "todos" : "sem_conciliacao")}
-            icone={RefreshCcw}
-          />
-        </div>
-
-        {/* LINHA 2 — Cards Qualidade (5 cards duplos: Tem | Falta) */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-          <CardKPIDuplo
-            titulo="NF"
-            icone={Receipt}
-            cor="fetely"
-            total={kpis.qualidadeNF.total}
-            qtdTem={kpis.qualidadeNF.atendidos}
-            qtdFalta={kpis.qualidadeNF.total - kpis.qualidadeNF.atendidos}
-            ativoTem={filtroQual === "nf_tem"}
-            ativoFalta={filtroQual === "nf_falta"}
-            onClickTem={() => setFiltroQual(filtroQual === "nf_tem" ? "todos" : "nf_tem")}
-            onClickFalta={() => setFiltroQual(filtroQual === "nf_falta" ? "todos" : "nf_falta")}
-          />
-          <CardKPIDuplo
-            titulo="Categoria"
-            icone={FolderTree}
-            cor="fetely"
-            total={kpis.qualidadeCategoria.total}
-            qtdTem={kpis.qualidadeCategoria.atendidos}
-            qtdFalta={kpis.qualidadeCategoria.total - kpis.qualidadeCategoria.atendidos}
-            ativoTem={filtroQual === "categoria_tem"}
-            ativoFalta={filtroQual === "categoria_falta"}
-            onClickTem={() => setFiltroQual(filtroQual === "categoria_tem" ? "todos" : "categoria_tem")}
-            onClickFalta={() => setFiltroQual(filtroQual === "categoria_falta" ? "todos" : "categoria_falta")}
-          />
-          <CardKPIDuplo
-            titulo="Documento"
-            icone={Paperclip}
-            cor="fetely"
-            total={kpis.qualidadeDoc.total}
-            qtdTem={kpis.qualidadeDoc.atendidos}
-            qtdFalta={kpis.qualidadeDoc.total - kpis.qualidadeDoc.atendidos}
-            ativoTem={filtroQual === "doc_tem"}
-            ativoFalta={filtroQual === "doc_falta"}
-            onClickTem={() => setFiltroQual(filtroQual === "doc_tem" ? "todos" : "doc_tem")}
-            onClickFalta={() => setFiltroQual(filtroQual === "doc_falta" ? "todos" : "doc_falta")}
-          />
-          <CardKPIDuplo
-            titulo="Vinculado"
-            icone={Link2}
-            cor="fetely"
-            total={kpis.qualidadeVinculado.total}
-            qtdTem={kpis.qualidadeVinculado.atendidos}
-            qtdFalta={kpis.qualidadeVinculado.total - kpis.qualidadeVinculado.atendidos}
-            ativoTem={filtroQual === "vinculado_tem"}
-            ativoFalta={filtroQual === "vinculado_falta"}
-            onClickTem={() => setFiltroQual(filtroQual === "vinculado_tem" ? "todos" : "vinculado_tem")}
-            onClickFalta={() => setFiltroQual(filtroQual === "vinculado_falta" ? "todos" : "vinculado_falta")}
-          />
-          <CardKPIDuplo
-            titulo="Conciliado"
-            icone={CircleDollarSign}
-            cor="fetely"
-            total={kpis.qualidadeConciliado.total}
-            qtdTem={kpis.qualidadeConciliado.atendidos}
-            qtdFalta={kpis.qualidadeConciliado.total - kpis.qualidadeConciliado.atendidos}
-            ativoTem={filtroQual === "conciliado_tem"}
-            ativoFalta={filtroQual === "conciliado_falta"}
-            onClickTem={() => setFiltroQual(filtroQual === "conciliado_tem" ? "todos" : "conciliado_tem")}
-            onClickFalta={() => setFiltroQual(filtroQual === "conciliado_falta" ? "todos" : "conciliado_falta")}
-          />
-        </div>
-
-        {/* Ação IA — resolve categorias em massa */}
-        <div className="flex justify-end">
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={handleAplicarIAEmMassa}
-            disabled={aplicandoIA}
-            className="gap-2 border-amber-300 text-amber-700 hover:bg-amber-50"
-          >
-            {aplicandoIA ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            ) : (
-              <Sparkles className="h-3.5 w-3.5" />
-            )}
-            Resolver com IA
-          </Button>
-        </div>
-
-        {/* Filtros */}
-        <div className="flex gap-2 flex-wrap items-center">
-          <div className="relative w-full sm:w-72">
-            <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={busca}
-              onChange={(e) => setBusca(e.target.value)}
-              placeholder="Buscar parceiro, descrição ou NF..."
-              className="pl-9"
+        {/* SEÇÃO 1 — Período */}
+        <div className="border border-zinc-200 bg-white/60 rounded-xl p-3 space-y-2">
+          <div className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider px-1">
+            Período
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+            <CardKPI
+              titulo="Atrasados"
+              valor={formatBRL(kpis.atrasados.valor)}
+              sublinha={`${kpis.atrasados.qtd} ${kpis.atrasados.qtd === 1 ? "conta" : "contas"}`}
+              cor="red"
+              ativo={filtroOp === "atrasados"}
+              onClick={() => setFiltroOp(filtroOp === "atrasados" ? "todos" : "atrasados")}
+              icone={Flame}
+            />
+            <CardKPI
+              titulo="Este mês"
+              valor={formatBRL(kpis.mesAtual.valor)}
+              sublinha={`${kpis.mesAtual.qtd} contas`}
+              cor="amber"
+              ativo={filtroOp === "mes_atual"}
+              onClick={() => setFiltroOp(filtroOp === "mes_atual" ? "todos" : "mes_atual")}
+              icone={AlertOctagon}
+            />
+            <CardKPI
+              titulo="Próximo mês"
+              valor={formatBRL(kpis.proximoMes.valor)}
+              sublinha={`${kpis.proximoMes.qtd} contas`}
+              cor="blue"
+              ativo={filtroOp === "proximo_mes"}
+              onClick={() => setFiltroOp(filtroOp === "proximo_mes" ? "todos" : "proximo_mes")}
+              icone={CalendarClock}
+            />
+            <CardKPI
+              titulo="Mês anterior"
+              valor={formatBRL(kpis.mesAnterior.valor)}
+              sublinha={`${kpis.mesAnterior.qtd} contas`}
+              cor="purple"
+              ativo={filtroOp === "mes_anterior"}
+              onClick={() => setFiltroOp(filtroOp === "mes_anterior" ? "todos" : "mes_anterior")}
+              icone={CalendarRange}
+            />
+            <CardKPI
+              titulo="Sem conciliação"
+              valor={formatBRL(kpis.semConciliacao.valor)}
+              sublinha={`${kpis.semConciliacao.qtd} pagas s/ OFX`}
+              cor="teal"
+              ativo={filtroOp === "sem_conciliacao"}
+              onClick={() => setFiltroOp(filtroOp === "sem_conciliacao" ? "todos" : "sem_conciliacao")}
+              icone={RefreshCcw}
             />
           </div>
+        </div>
 
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[160px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="todos">Todos status</SelectItem>
-              <SelectItem value="aguardando_pagamento">Aguardando pagamento</SelectItem>
-              <SelectItem value="paga">Pago</SelectItem>
-            </SelectContent>
-          </Select>
+        {/* SEÇÃO 2 — Qualidade */}
+        <div className="border border-emerald-100 bg-emerald-50/20 rounded-xl p-3 space-y-2">
+          <div className="text-[10px] font-semibold text-emerald-700 uppercase tracking-wider px-1">
+            Qualidade
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+            <CardKPIDuplo
+              titulo="NF"
+              icone={Receipt}
+              cor="fetely"
+              total={kpis.qualidadeNF.total}
+              qtdTem={kpis.qualidadeNF.atendidos}
+              qtdFalta={kpis.qualidadeNF.total - kpis.qualidadeNF.atendidos}
+              ativoTem={filtroQual === "nf_tem"}
+              ativoFalta={filtroQual === "nf_falta"}
+              onClickTem={() => setFiltroQual(filtroQual === "nf_tem" ? "todos" : "nf_tem")}
+              onClickFalta={() => setFiltroQual(filtroQual === "nf_falta" ? "todos" : "nf_falta")}
+            />
+            <CardKPIDuplo
+              titulo="Categoria"
+              icone={FolderTree}
+              cor="fetely"
+              total={kpis.qualidadeCategoria.total}
+              qtdTem={kpis.qualidadeCategoria.atendidos}
+              qtdFalta={kpis.qualidadeCategoria.total - kpis.qualidadeCategoria.atendidos}
+              ativoTem={filtroQual === "categoria_tem"}
+              ativoFalta={filtroQual === "categoria_falta"}
+              onClickTem={() => setFiltroQual(filtroQual === "categoria_tem" ? "todos" : "categoria_tem")}
+              onClickFalta={() => setFiltroQual(filtroQual === "categoria_falta" ? "todos" : "categoria_falta")}
+            />
+            <CardKPIDuplo
+              titulo="Documento"
+              icone={Paperclip}
+              cor="fetely"
+              total={kpis.qualidadeDoc.total}
+              qtdTem={kpis.qualidadeDoc.atendidos}
+              qtdFalta={kpis.qualidadeDoc.total - kpis.qualidadeDoc.atendidos}
+              ativoTem={filtroQual === "doc_tem"}
+              ativoFalta={filtroQual === "doc_falta"}
+              onClickTem={() => setFiltroQual(filtroQual === "doc_tem" ? "todos" : "doc_tem")}
+              onClickFalta={() => setFiltroQual(filtroQual === "doc_falta" ? "todos" : "doc_falta")}
+            />
+            <CardKPIDuplo
+              titulo="Vinculado"
+              icone={Link2}
+              cor="fetely"
+              total={kpis.qualidadeVinculado.total}
+              qtdTem={kpis.qualidadeVinculado.atendidos}
+              qtdFalta={kpis.qualidadeVinculado.total - kpis.qualidadeVinculado.atendidos}
+              ativoTem={filtroQual === "vinculado_tem"}
+              ativoFalta={filtroQual === "vinculado_falta"}
+              onClickTem={() => setFiltroQual(filtroQual === "vinculado_tem" ? "todos" : "vinculado_tem")}
+              onClickFalta={() => setFiltroQual(filtroQual === "vinculado_falta" ? "todos" : "vinculado_falta")}
+            />
+            <CardKPIDuplo
+              titulo="Conciliado"
+              icone={CircleDollarSign}
+              cor="fetely"
+              total={kpis.qualidadeConciliado.total}
+              qtdTem={kpis.qualidadeConciliado.atendidos}
+              qtdFalta={kpis.qualidadeConciliado.total - kpis.qualidadeConciliado.atendidos}
+              ativoTem={filtroQual === "conciliado_tem"}
+              ativoFalta={filtroQual === "conciliado_falta"}
+              onClickTem={() => setFiltroQual(filtroQual === "conciliado_tem" ? "todos" : "conciliado_tem")}
+              onClickFalta={() => setFiltroQual(filtroQual === "conciliado_falta" ? "todos" : "conciliado_falta")}
+            />
+          </div>
+        </div>
 
-          <Select value={contaBancariaFilter} onValueChange={setContaBancariaFilter}>
-            <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="Conta bancária" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="todas">Todas as contas</SelectItem>
-              {(contasBancarias || []).map((cb) => (
-                <SelectItem key={cb.id} value={cb.id}>
-                  {cb.nome_exibicao}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        {/* SEÇÃO 3 — Filtros e ações */}
+        <div className="border border-zinc-200 bg-white/60 rounded-xl p-3 space-y-2">
+          <div className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider px-1">
+            Filtros e ações
+          </div>
+          <div className="flex gap-2 flex-wrap items-center">
+            <div className="relative w-full sm:w-72">
+              <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={busca}
+                onChange={(e) => setBusca(e.target.value)}
+                placeholder="Buscar parceiro, descrição ou NF..."
+                className="pl-9"
+              />
+            </div>
 
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => setMostrarSoInconsistentes(!mostrarSoInconsistentes)}
-            className={cn(
-              "gap-1",
-              mostrarSoInconsistentes && "bg-amber-600 hover:bg-amber-700 text-white border-amber-600",
-            )}
-          >
-            <AlertTriangle className="h-3.5 w-3.5" />
-            Inconsistências
-          </Button>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-[160px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos status</SelectItem>
+                <SelectItem value="aguardando_pagamento">Aguardando pagamento</SelectItem>
+                <SelectItem value="paga">Pago</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={contaBancariaFilter} onValueChange={setContaBancariaFilter}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="Conta bancária" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todas">Todas as contas</SelectItem>
+                {(contasBancarias || []).map((cb) => (
+                  <SelectItem key={cb.id} value={cb.id}>
+                    {cb.nome_exibicao}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setMostrarSoInconsistentes(!mostrarSoInconsistentes)}
+              className={cn(
+                "gap-1",
+                mostrarSoInconsistentes && "bg-amber-600 hover:bg-amber-700 text-white border-amber-600",
+              )}
+            >
+              <AlertTriangle className="h-3.5 w-3.5" />
+              Inconsistências
+            </Button>
+
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleAplicarIAEmMassa}
+              disabled={aplicandoIA}
+              className="gap-2 border-amber-300 text-amber-700 hover:bg-amber-50 ml-auto"
+            >
+              {aplicandoIA ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Sparkles className="h-3.5 w-3.5" />
+              )}
+              Resolver com IA
+            </Button>
+          </div>
         </div>
       </div>
 
