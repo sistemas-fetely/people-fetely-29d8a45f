@@ -70,29 +70,35 @@ export default function AcoesInlineConta({ conta }: Props) {
         ? ((e as { message?: string }).message ?? JSON.stringify(e))
         : String(e);
 
-  // ESTADOS
+  // ESTADOS — usa critérios robustos
   const status = conta.status;
-  const temNF = !!conta.nf_stage_id;
+  const statusEfetivo = conta.status_efetivo || status;
+
+  // NF: tem se tiver nf_stage_id OU nf_numero_repositorio
+  const temNF = !!conta.nf_stage_id || !!conta.nf_numero_repositorio;
+
   const aprovado =
     status === "aprovado" ||
     status === "aguardando_pagamento" ||
     status === "doc_pendente" ||
-    status === "paga";
+    status === "paga" ||
+    statusEfetivo === "paga" ||
+    statusEfetivo === "conciliado";
+
   const emailEnviado = !!conta.email_pagamento_enviado;
   const temMov = !!conta.movimentacao_bancaria_id;
 
   const estadoNF: EstadoIcone = temNF ? "feito" : "pendente";
   const estadoAprovar: EstadoIcone = aprovado ? "feito" : "pendente";
-  const estadoEmail: EstadoIcone = emailEnviado
-    ? "feito"
-    : status === "aprovado" || status === "doc_pendente"
-      ? "pendente"
-      : "na";
-  const estadoMov: EstadoIcone = temMov
-    ? "feito"
-    : status === "aprovado"
-      ? "pendente"
-      : "na";
+  const estadoEmail: EstadoIcone =
+    emailEnviado ? "feito"
+    : temMov ? "feito"
+    : (status === "aprovado" || status === "doc_pendente" || status === "aguardando_pagamento") ? "pendente"
+    : "na";
+  const estadoMov: EstadoIcone =
+    temMov ? "feito"
+    : (status === "aprovado" || status === "aguardando_pagamento") ? "pendente"
+    : "na";
 
   async function handleAprovar() {
     if (estadoAprovar !== "pendente") return;
