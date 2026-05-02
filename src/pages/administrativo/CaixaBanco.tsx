@@ -285,12 +285,12 @@ function CardKPIDuplo({
   const pctTem = total > 0 ? Math.round((qtdTem / total) * 100) : 0;
   const pctFalta = total > 0 ? Math.round((qtdFalta / total) * 100) : 0;
   return (
-    <div className="border border-emerald-100 bg-emerald-50/30 rounded-lg overflow-hidden">
+    <div className="border border-emerald-300 bg-emerald-50/30 rounded-lg overflow-hidden">
       <div className="px-3 pt-1.5 pb-0.5 flex items-center gap-1.5">
         <Icone className="h-3.5 w-3.5 text-emerald-700" />
         <span className="text-[11px] font-medium text-emerald-900">{titulo}</span>
       </div>
-      <div className="grid grid-cols-2 divide-x divide-emerald-100">
+      <div className="grid grid-cols-2 divide-x divide-emerald-200">
         <button
           type="button"
           onClick={onClickTem}
@@ -908,7 +908,7 @@ export default function CaixaBanco() {
         </div>
 
         {/* SEÇÃO 2 — Qualidade */}
-        <div className="border border-emerald-100 bg-emerald-50/20 rounded-xl p-2">
+        <div className="border border-emerald-300 bg-emerald-50/20 rounded-xl p-2">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2">
             <CardKPIDuplo
               titulo="NF"
