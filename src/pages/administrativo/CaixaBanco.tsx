@@ -252,11 +252,79 @@ type FiltroOperacional =
 
 type FiltroQualidade =
   | "todos"
-  | "qualidade_nf"
-  | "qualidade_categoria"
-  | "qualidade_doc"
-  | "qualidade_vinculado"
-  | "qualidade_conciliado";
+  | "nf_tem" | "nf_falta"
+  | "categoria_tem" | "categoria_falta"
+  | "doc_tem" | "doc_falta"
+  | "vinculado_tem" | "vinculado_falta"
+  | "conciliado_tem" | "conciliado_falta";
+
+interface CardKPIDuploProps {
+  titulo: string;
+  icone: React.ComponentType<{ className?: string }>;
+  cor: "fetely" | "blue" | "green" | "amber" | "red" | "purple";
+  total: number;
+  qtdTem: number;
+  qtdFalta: number;
+  ativoTem: boolean;
+  ativoFalta: boolean;
+  onClickTem: () => void;
+  onClickFalta: () => void;
+}
+
+function CardKPIDuplo({
+  titulo,
+  icone: Icone,
+  total,
+  qtdTem,
+  qtdFalta,
+  ativoTem,
+  ativoFalta,
+  onClickTem,
+  onClickFalta,
+}: CardKPIDuploProps) {
+  const pctTem = total > 0 ? Math.round((qtdTem / total) * 100) : 0;
+  const pctFalta = total > 0 ? Math.round((qtdFalta / total) * 100) : 0;
+  return (
+    <div className="border border-emerald-100 bg-emerald-50/30 rounded-lg overflow-hidden">
+      <div className="px-3 pt-2 pb-1 flex items-center gap-1.5">
+        <Icone className="h-3.5 w-3.5 text-emerald-700" />
+        <span className="text-[11px] font-medium text-emerald-900">{titulo}</span>
+      </div>
+      <div className="grid grid-cols-2 divide-x divide-emerald-100">
+        <button
+          type="button"
+          onClick={onClickTem}
+          className={`px-3 py-2 text-left transition-colors ${
+            ativoTem
+              ? "bg-emerald-100 ring-2 ring-inset ring-emerald-500"
+              : "hover:bg-emerald-50"
+          }`}
+        >
+          <div className="text-[10px] text-emerald-700 font-medium">Tem</div>
+          <div className="text-lg font-bold text-emerald-900 leading-tight">
+            {pctTem}%
+          </div>
+          <div className="text-[10px] text-emerald-700">{qtdTem}/{total}</div>
+        </button>
+        <button
+          type="button"
+          onClick={onClickFalta}
+          className={`px-3 py-2 text-left transition-colors ${
+            ativoFalta
+              ? "bg-rose-100 ring-2 ring-inset ring-rose-500"
+              : "hover:bg-rose-50/60"
+          }`}
+        >
+          <div className="text-[10px] text-rose-700 font-medium">Falta</div>
+          <div className="text-lg font-bold text-rose-900 leading-tight">
+            {pctFalta}%
+          </div>
+          <div className="text-[10px] text-rose-700">{qtdFalta}/{total}</div>
+        </button>
+      </div>
+    </div>
+  );
+}
 
 function CardKPI({
   titulo,
@@ -641,24 +709,35 @@ export default function CaixaBanco() {
     }
 
     if (filtroQual !== "todos") {
-      const flagsDocQ = (l: Lancamento) =>
+      const docPendente = (l: Lancamento) =>
         statusFlagsMap.get(l.id)?.tem_doc_pendente === true;
-      if (filtroQual === "qualidade_nf") {
-        list = list.filter((l) => getQualidadeNF(l, nfMap).cor === "vermelho");
-      } else if (filtroQual === "qualidade_categoria") {
-        list = list.filter((l) => getQualidadeCategoria(l, nfMap).cor === "vermelho");
-      } else if (filtroQual === "qualidade_doc") {
-        list = list.filter(flagsDocQ);
-      } else if (filtroQual === "qualidade_vinculado") {
-        list = list.filter((l) =>
-          !l.vinculada_cartao
-          && l.origem_view !== "cartao_lancamento"
-          && !l.movimentacao_bancaria_id
-        );
-      } else if (filtroQual === "qualidade_conciliado") {
-        list = list.filter((l) =>
-          !l.conciliado_em && l.status_caixa !== "conciliado"
-        );
+      const vinculadoOK = (l: Lancamento) =>
+        !!l.vinculada_cartao
+        || l.origem_view === "cartao_lancamento"
+        || !!l.movimentacao_bancaria_id;
+      const conciliadoOK = (l: Lancamento) =>
+        !!l.conciliado_em || l.status_caixa === "conciliado";
+
+      if (filtroQual === "nf_tem") {
+        list = list.filter((l) => getQualidadeNF(l, nfMap).cor === "verde");
+      } else if (filtroQual === "nf_falta") {
+        list = list.filter((l) => getQualidadeNF(l, nfMap).cor !== "verde");
+      } else if (filtroQual === "categoria_tem") {
+        list = list.filter((l) => getQualidadeCategoria(l, nfMap).cor === "verde");
+      } else if (filtroQual === "categoria_falta") {
+        list = list.filter((l) => getQualidadeCategoria(l, nfMap).cor !== "verde");
+      } else if (filtroQual === "doc_tem") {
+        list = list.filter((l) => !docPendente(l));
+      } else if (filtroQual === "doc_falta") {
+        list = list.filter((l) => docPendente(l));
+      } else if (filtroQual === "vinculado_tem") {
+        list = list.filter((l) => vinculadoOK(l));
+      } else if (filtroQual === "vinculado_falta") {
+        list = list.filter((l) => !vinculadoOK(l));
+      } else if (filtroQual === "conciliado_tem") {
+        list = list.filter((l) => conciliadoOK(l));
+      } else if (filtroQual === "conciliado_falta") {
+        list = list.filter((l) => !conciliadoOK(l));
       }
     }
 
@@ -826,52 +905,67 @@ export default function CaixaBanco() {
           />
         </div>
 
-        {/* LINHA 2 — Cards Qualidade (5 cards) */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-          <CardKPI
-            titulo="NF — qualidade"
-            valor={`${kpis.qualidadeNF.pct}%`}
-            sublinha={`${kpis.qualidadeNF.atendidos}/${kpis.qualidadeNF.total} no total`}
-            cor="fetely"
-            ativo={filtroQual === "qualidade_nf"}
-            onClick={() => setFiltroQual(filtroQual === "qualidade_nf" ? "todos" : "qualidade_nf")}
+        {/* LINHA 2 — Cards Qualidade (5 cards duplos: Tem | Falta) */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+          <CardKPIDuplo
+            titulo="NF"
             icone={Receipt}
-          />
-          <CardKPI
-            titulo="Categoria — qualidade"
-            valor={`${kpis.qualidadeCategoria.pct}%`}
-            sublinha={`${kpis.qualidadeCategoria.atendidos}/${kpis.qualidadeCategoria.total} no total`}
             cor="fetely"
-            ativo={filtroQual === "qualidade_categoria"}
-            onClick={() => setFiltroQual(filtroQual === "qualidade_categoria" ? "todos" : "qualidade_categoria")}
+            total={kpis.qualidadeNF.total}
+            qtdTem={kpis.qualidadeNF.atendidos}
+            qtdFalta={kpis.qualidadeNF.total - kpis.qualidadeNF.atendidos}
+            ativoTem={filtroQual === "nf_tem"}
+            ativoFalta={filtroQual === "nf_falta"}
+            onClickTem={() => setFiltroQual(filtroQual === "nf_tem" ? "todos" : "nf_tem")}
+            onClickFalta={() => setFiltroQual(filtroQual === "nf_falta" ? "todos" : "nf_falta")}
+          />
+          <CardKPIDuplo
+            titulo="Categoria"
             icone={FolderTree}
-          />
-          <CardKPI
-            titulo="Documento — qualidade"
-            valor={`${kpis.qualidadeDoc.pct}%`}
-            sublinha={`${kpis.qualidadeDoc.atendidos}/${kpis.qualidadeDoc.total} no total`}
             cor="fetely"
-            ativo={filtroQual === "qualidade_doc"}
-            onClick={() => setFiltroQual(filtroQual === "qualidade_doc" ? "todos" : "qualidade_doc")}
+            total={kpis.qualidadeCategoria.total}
+            qtdTem={kpis.qualidadeCategoria.atendidos}
+            qtdFalta={kpis.qualidadeCategoria.total - kpis.qualidadeCategoria.atendidos}
+            ativoTem={filtroQual === "categoria_tem"}
+            ativoFalta={filtroQual === "categoria_falta"}
+            onClickTem={() => setFiltroQual(filtroQual === "categoria_tem" ? "todos" : "categoria_tem")}
+            onClickFalta={() => setFiltroQual(filtroQual === "categoria_falta" ? "todos" : "categoria_falta")}
+          />
+          <CardKPIDuplo
+            titulo="Documento"
             icone={Paperclip}
-          />
-          <CardKPI
-            titulo="Vinculado — qualidade"
-            valor={`${kpis.qualidadeVinculado.pct}%`}
-            sublinha={`${kpis.qualidadeVinculado.atendidos}/${kpis.qualidadeVinculado.total} no total`}
             cor="fetely"
-            ativo={filtroQual === "qualidade_vinculado"}
-            onClick={() => setFiltroQual(filtroQual === "qualidade_vinculado" ? "todos" : "qualidade_vinculado")}
+            total={kpis.qualidadeDoc.total}
+            qtdTem={kpis.qualidadeDoc.atendidos}
+            qtdFalta={kpis.qualidadeDoc.total - kpis.qualidadeDoc.atendidos}
+            ativoTem={filtroQual === "doc_tem"}
+            ativoFalta={filtroQual === "doc_falta"}
+            onClickTem={() => setFiltroQual(filtroQual === "doc_tem" ? "todos" : "doc_tem")}
+            onClickFalta={() => setFiltroQual(filtroQual === "doc_falta" ? "todos" : "doc_falta")}
+          />
+          <CardKPIDuplo
+            titulo="Vinculado"
             icone={Link2}
-          />
-          <CardKPI
-            titulo="Conciliado — qualidade"
-            valor={`${kpis.qualidadeConciliado.pct}%`}
-            sublinha={`${kpis.qualidadeConciliado.atendidos}/${kpis.qualidadeConciliado.total} no total`}
             cor="fetely"
-            ativo={filtroQual === "qualidade_conciliado"}
-            onClick={() => setFiltroQual(filtroQual === "qualidade_conciliado" ? "todos" : "qualidade_conciliado")}
+            total={kpis.qualidadeVinculado.total}
+            qtdTem={kpis.qualidadeVinculado.atendidos}
+            qtdFalta={kpis.qualidadeVinculado.total - kpis.qualidadeVinculado.atendidos}
+            ativoTem={filtroQual === "vinculado_tem"}
+            ativoFalta={filtroQual === "vinculado_falta"}
+            onClickTem={() => setFiltroQual(filtroQual === "vinculado_tem" ? "todos" : "vinculado_tem")}
+            onClickFalta={() => setFiltroQual(filtroQual === "vinculado_falta" ? "todos" : "vinculado_falta")}
+          />
+          <CardKPIDuplo
+            titulo="Conciliado"
             icone={CircleDollarSign}
+            cor="fetely"
+            total={kpis.qualidadeConciliado.total}
+            qtdTem={kpis.qualidadeConciliado.atendidos}
+            qtdFalta={kpis.qualidadeConciliado.total - kpis.qualidadeConciliado.atendidos}
+            ativoTem={filtroQual === "conciliado_tem"}
+            ativoFalta={filtroQual === "conciliado_falta"}
+            onClickTem={() => setFiltroQual(filtroQual === "conciliado_tem" ? "todos" : "conciliado_tem")}
+            onClickFalta={() => setFiltroQual(filtroQual === "conciliado_falta" ? "todos" : "conciliado_falta")}
           />
         </div>
 
