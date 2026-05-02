@@ -356,6 +356,31 @@ export function ContaPagarFormEdit({ conta, onSaved, onCancel }: Props) {
         </Select>
       </div>
 
+      {/* Pago em conta (banco) */}
+      <div className="space-y-1">
+        <Label>Pago em conta (banco)</Label>
+        <Select
+          value={pagoEmContaId}
+          onValueChange={setPagoEmContaId}
+          disabled={isReadOnly || salvando}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Definir..." />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__none__">— sem definir —</SelectItem>
+            {contasBancarias.map((cb: { id: string; nome_exibicao?: string | null; banco?: string | null }) => (
+              <SelectItem key={cb.id} value={cb.id}>
+                {cb.nome_exibicao || cb.banco || cb.id}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <p className="text-[11px] text-muted-foreground">
+          Banco usado pra pagar essa conta. Necessário pra lançar em Movimentação.
+        </p>
+      </div>
+
       {/* Dados NF */}
       <div className="grid grid-cols-2 gap-2">
         <div className="space-y-1">
