@@ -1,21 +1,15 @@
+/**
+ * Movimentações (Caixa & Banco) — orchestrator.
+ *
+ * Refatorado em 2 abas (A pagar / Realizado). Esta página fica responsável
+ * por: fetch da view consolidada + maps auxiliares, filtros globais (busca +
+ * conta bancária), split via statusVisual e roteamento de prop pra cada aba.
+ */
 import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useSearchParams } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-
 import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import {
   Select,
   SelectContent,
@@ -24,439 +18,51 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Wallet,
-  Search,
-  Clock,
-  Link as LinkIcon,
-  FileWarning,
-  CreditCard,
-  Repeat,
-  AlertTriangle,
-  Stethoscope,
-  Receipt,
-  FolderTree,
-  Paperclip,
-  Link2,
-  CircleDollarSign,
-  Flame,
-  AlertOctagon,
-  CalendarClock,
-  CalendarRange,
-  RefreshCcw,
-  Sparkles,
-  Loader2,
-  MailCheck,
-  type LucideIcon,
-} from "lucide-react";
-import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
-import { formatBRL, formatDateBR } from "@/lib/format-currency";
-import { toast } from "sonner";
-
-import ContaPagarDetalheDrawer from "@/components/financeiro/ContaPagarDetalheDrawer";
-import SugestaoIADialog from "@/components/financeiro/SugestaoIADialog";
-import FilaRevisaoIADialog from "@/components/financeiro/FilaRevisaoIADialog";
-import { getCompromissoInfoMap, type CompromissoInfo } from "@/lib/financeiro/get-compromisso-info";
-import { getMeioPagamentoIcon } from "@/lib/financeiro/meio-pagamento-icon";
-
-import { getStatusFlagsMap, type FlagsContaPagar } from "@/lib/financeiro/get-status-flags";
-import { classFundoFuturo } from "@/lib/financeiro/is-vencimento-futuro";
-import { cn } from "@/lib/utils";
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+import { Wallet, Search } from "lucide-react";
 import { useFiltrosPersistentes } from "@/hooks/useFiltrosPersistentes";
+import ContaPagarDetalheDrawer from "@/components/financeiro/ContaPagarDetalheDrawer";
+import {
+  getCompromissoInfoMap,
+  type CompromissoInfo,
+} from "@/lib/financeiro/get-compromisso-info";
+import {
+  getStatusFlagsMap,
+  type FlagsContaPagar,
+} from "@/lib/financeiro/get-status-flags";
+import AbaAPagar from "./CaixaBanco/AbaAPagar";
+import AbaRealizado from "./CaixaBanco/AbaRealizado";
+import {
+  type Lancamento,
+  type ContaBancariaLite,
+  statusVisual,
+} from "./CaixaBanco/utils";
 
-type Lancamento = {
-  id: string;
-  descricao: string;
-  valor: number;
-  data_vencimento: string | null;
-  data_pagamento: string | null;
-  pago_em: string | null;
-  pago_em_conta_id: string | null;
-  conciliado_em: string | null;
-  movimentacao_bancaria_id: string | null;
-  status_conta_pagar: string;
-  status_caixa: "em_aberto" | "pago" | "conciliado";
-  fornecedor_cliente: string | null;
-  parceiro_id: string | null;
-  forma_pagamento_id: string | null;
-  categoria_id: string | null;
-  unidade: string | null;
-  nf_numero: string | null;
-  origem_view: "conta_pagar" | "cartao_lancamento";
-  origem?: string | null;
-  fatura_id: string | null;
-  vinculada_cartao?: boolean | null;
-  fatura_vencimento?: string | null;
-  categoria_inconsistente?: boolean | null;
-  inconsistencia_motivo?: string | null;
-  categoria_sugerida_ia?: boolean | null;
-};
-
-/**
- * Status visual = espelho do status decisório de Contas a Pagar.
- * Lançamentos de cartão (que ainda não viraram conta a pagar individual)
- * não têm status_conta_pagar — caem em fallback derivado.
- */
-function statusVisual(l: Lancamento): string {
-  if (l.origem_view === "cartao_lancamento") {
-    // Lançamentos de fatura ainda não viraram conta a pagar autônoma.
-    // Usa derivação simples: se conciliado/pago, "paga"; senão "aguardando_pagamento".
-    if (l.movimentacao_bancaria_id || l.status_caixa === "conciliado") return "paga";
-    if (l.status_caixa === "pago") return "paga";
-    return "aguardando_pagamento";
-  }
-  // Conta a pagar normal: espelha direto
-  return l.status_conta_pagar || "aberto";
-}
-
-/**
- * Conta a pagar é "atrasada" quando vencimento passou e não foi paga/cancelada.
- * Computado client-side (view não expõe campo equivalente).
- */
-function isAtrasada(l: Lancamento): boolean {
-  if (!l.data_vencimento) return false;
-  const status = statusVisual(l);
-  if (status === "paga" || status === "cancelado") return false;
-  // Comparação de data sem hora (evita TZ surpresas)
-  const hoje = new Date();
-  hoje.setHours(0, 0, 0, 0);
-  const venc = new Date(l.data_vencimento + "T00:00:00");
-  return venc < hoje;
-}
-
-/**
- * Qualidade da NF: vermelho se nenhum NF anexada; verde caso contrário.
- */
-function getQualidadeNF(
-  m: { id: string },
-  nfMap?: Map<string, string | null>,
-): { cor: "verde" | "vermelho"; motivo: string } {
-  const temNF = nfMap?.has(m.id) === true;
-  return temNF
-    ? { cor: "verde", motivo: "NF vinculada" }
-    : { cor: "vermelho", motivo: "Sem NF anexada" };
-}
-
-/**
- * Qualidade da Categoria: compara com a categoria da NF vinculada.
- * Verde = validada por NF (ou NF não tem categoria pra comparar)
- * Amarelo = tem categoria mas sem NF pra validar
- * Vermelho = sem categoria OU diverge da NF
- */
-function getQualidadeCategoria(
-  m: {
-    id: string;
-    categoria_id: string | null;
-    categoria_sugerida_ia?: boolean | null;
-  },
-  nfMap?: Map<string, string | null>,
-): {
-  cor: "verde" | "amarelo" | "vermelho";
-  motivo: string;
-  temSugestaoIA?: boolean;
-} {
-  if (!m.categoria_id) {
-    if (m.categoria_sugerida_ia === true) {
-      return {
-        cor: "amarelo",
-        motivo: "Sugestão IA pendente — clique pra revisar",
-        temSugestaoIA: true,
-      };
-    }
-    return { cor: "vermelho", motivo: "Sem categoria" };
-  }
-  const categoriaDaNF = nfMap?.get(m.id);
-  if (categoriaDaNF === undefined) {
-    return { cor: "amarelo", motivo: "Tem categoria mas não validada por NF" };
-  }
-  if (categoriaDaNF === null) {
-    return { cor: "verde", motivo: "Categoria OK (NF sem categoria pra comparar)" };
-  }
-  if (m.categoria_id !== categoriaDaNF) {
-    return {
-      cor: "vermelho",
-      motivo: "Categoria diverge da NF — edite na NF pra resolver",
-    };
-  }
-  return { cor: "verde", motivo: "Categoria validada por NF" };
-}
-
-function getQualidadeVinculado(m: {
-  origem_view?: string | null;
-  vinculada_cartao?: boolean | null;
-  movimentacao_bancaria_id?: string | null;
-}): { cor: "verde" | "vermelho"; motivo: string } {
-  if (m.vinculada_cartao || m.origem_view === "cartao_lancamento") {
-    return { cor: "verde", motivo: "Vinculado a lançamento de cartão" };
-  }
-  if (m.movimentacao_bancaria_id) {
-    return { cor: "verde", motivo: "Vinculado a movimentação bancária" };
-  }
-  return { cor: "vermelho", motivo: "Sem vínculo de origem" };
-}
-
-function getQualidadeConciliado(m: {
-  conciliado_em?: string | null;
-  status_caixa?: string;
-}): { cor: "verde" | "vermelho"; motivo: string } {
-  if (m.conciliado_em || m.status_caixa === "conciliado") {
-    return { cor: "verde", motivo: "Conciliado — bateu com extrato bancário" };
-  }
-  return { cor: "vermelho", motivo: "Não conciliado bancariamente" };
-}
-
-type ContaBancariaLite = {
-  id: string;
-  nome_exibicao: string;
-  cor: string | null;
-};
-
-type FormaPgtoLite = {
-  id: string;
-  nome: string;
-};
-
-type Parceiro = {
-  id: string;
-  razao_social: string | null;
-};
-
-type CategoriaLite = {
-  id: string;
-  nome: string;
-};
-
-// Status visual em Caixa & Banco ESPELHA status decisório de Contas a Pagar.
-// Doutrina: status é status — sem tradução, sem derivação.
-const STATUS_STYLES: Record<string, string> = {
-  aberto: "bg-blue-100 text-blue-800 hover:bg-blue-100",
-  aprovado: "bg-purple-100 text-purple-800 hover:bg-purple-100",
-  aguardando_pagamento: "bg-teal-100 text-teal-800 hover:bg-teal-100",
-  paga: "bg-emerald-100 text-emerald-800 hover:bg-emerald-100",
-  cancelado: "bg-red-100 text-red-800 hover:bg-red-100",
-};
-
-const STATUS_LABEL: Record<string, string> = {
-  aberto: "Aberto",
-  aprovado: "Aprovado",
-  aguardando_pagamento: "Aguardando pagamento",
-  paga: "Paga",
-  cancelado: "Cancelado",
-};
-
-type FiltroOperacional =
-  | "todos"
-  | "atrasados"
-  | "mes_atual"
-  | "proximo_mes"
-  | "mes_anterior"
-  | "sem_conciliacao";
-
-type FiltroQualidade =
-  | "todos"
-  | "nf_tem" | "nf_falta"
-  | "categoria_tem" | "categoria_falta"
-  | "doc_tem" | "doc_falta"
-  | "vinculado_tem" | "vinculado_falta"
-  | "conciliado_tem" | "conciliado_falta";
-
-interface CardKPIDuploProps {
-  titulo: string;
-  icone: React.ComponentType<{ className?: string }>;
-  cor: "fetely" | "blue" | "green" | "amber" | "red" | "purple";
-  total: number;
-  qtdTem: number;
-  qtdFalta: number;
-  ativoTem: boolean;
-  ativoFalta: boolean;
-  onClickTem: () => void;
-  onClickFalta: () => void;
-}
-
-function CardKPIDuplo({
-  titulo,
-  icone: Icone,
-  total,
-  qtdTem,
-  qtdFalta,
-  ativoTem,
-  ativoFalta,
-  onClickTem,
-  onClickFalta,
-}: CardKPIDuploProps) {
-  const pctTem = total > 0 ? Math.round((qtdTem / total) * 100) : 0;
-  const pctFalta = total > 0 ? Math.round((qtdFalta / total) * 100) : 0;
-  return (
-    <div className="border border-emerald-300 bg-emerald-50/30 rounded-lg overflow-hidden">
-      <div className="px-3 pt-1.5 pb-0.5 flex items-center gap-1.5">
-        <Icone className="h-3.5 w-3.5 text-emerald-700" />
-        <span className="text-[11px] font-medium text-emerald-900">{titulo}</span>
-      </div>
-      <div className="grid grid-cols-2 divide-x divide-emerald-200">
-        <button
-          type="button"
-          onClick={onClickTem}
-          className={`px-3 py-1.5 text-left transition-colors ${
-            ativoTem
-              ? "bg-emerald-100 ring-2 ring-inset ring-emerald-500"
-              : "hover:bg-emerald-50"
-          }`}
-        >
-          <div className="text-[10px] text-emerald-700 font-medium">Tem</div>
-          <div className="text-lg font-bold text-emerald-900 leading-tight">
-            {pctTem}%
-          </div>
-          <div className="text-[10px] text-emerald-700">{qtdTem}/{total}</div>
-        </button>
-        <button
-          type="button"
-          onClick={onClickFalta}
-          className={`px-3 py-1.5 text-left transition-colors ${
-            ativoFalta
-              ? "bg-rose-100 ring-2 ring-inset ring-rose-500"
-              : "hover:bg-rose-50/60"
-          }`}
-        >
-          <div className="text-[10px] text-rose-700 font-medium">Falta</div>
-          <div className="text-lg font-bold text-rose-900 leading-tight">
-            {pctFalta}%
-          </div>
-          <div className="text-[10px] text-rose-700">{qtdFalta}/{total}</div>
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function CardKPI({
-  titulo,
-  valor,
-  sublinha,
-  cor,
-  ativo,
-  onClick,
-  icone: Icon,
-}: {
-  titulo: string;
-  valor: string;
-  sublinha: string;
-  cor: "red" | "amber" | "blue" | "purple" | "teal" | "fetely";
-  ativo: boolean;
-  onClick: () => void;
-  icone?: LucideIcon;
-}) {
-  const corBase: Record<string, string> = {
-    red: "bg-red-50/70 border-red-200",
-    amber: "bg-amber-50/70 border-amber-200",
-    blue: "bg-blue-50/70 border-blue-200",
-    purple: "bg-purple-50/70 border-purple-200",
-    teal: "bg-teal-50/70 border-teal-200",
-    fetely: "bg-emerald-50/70 border-emerald-200",
-  };
-
-  const corAtivo: Record<string, string> = {
-    red: "bg-red-100 border-red-400 ring-2 ring-red-200",
-    amber: "bg-amber-100 border-amber-400 ring-2 ring-amber-200",
-    blue: "bg-blue-100 border-blue-400 ring-2 ring-blue-200",
-    purple: "bg-purple-100 border-purple-400 ring-2 ring-purple-200",
-    teal: "bg-teal-100 border-teal-400 ring-2 ring-teal-200",
-    fetely: "bg-emerald-100 border-emerald-400 ring-2 ring-emerald-200",
-  };
-
-  const textMap: Record<string, string> = {
-    red: "text-red-700",
-    amber: "text-amber-700",
-    blue: "text-blue-700",
-    purple: "text-purple-700",
-    teal: "text-teal-700",
-    fetely: "text-emerald-700",
-  };
-  return (
-    <Card
-      className={cn(
-        "cursor-pointer transition-all hover:shadow-md",
-        ativo ? corAtivo[cor] : corBase[cor],
-      )}
-      onClick={onClick}
-    >
-      <CardHeader className="pb-0.5 pt-2 px-3">
-        <CardTitle
-          className={cn(
-            "text-[11px] font-normal flex items-center gap-1",
-            ativo ? "text-foreground" : "text-muted-foreground",
-          )}
-        >
-          {Icon && <Icon className="h-3 w-3" />}
-          {titulo}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="pb-2 px-3">
-        <div className={cn("text-lg font-bold", textMap[cor])}>{valor}</div>
-        <div className="text-[10px] text-muted-foreground mt-0.5">{sublinha}</div>
-      </CardContent>
-    </Card>
-  );
-}
-
-const PAGE_SIZE = 25;
+type FormaPgtoLite = { id: string; nome: string };
+type Parceiro = { id: string; razao_social: string | null };
+type CategoriaLite = { id: string; nome: string };
 
 export default function CaixaBanco() {
-  const qc = useQueryClient();
-  const [statusFilter, setStatusFilter] = useFiltrosPersistentes<string>("caixabanco_status", "todos");
-  const [contaBancariaFilter, setContaBancariaFilter] = useFiltrosPersistentes<string>("caixabanco_conta", "todas");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tab = (searchParams.get("tab") as "a_pagar" | "realizado") || "a_pagar";
+  const setTab = (v: string) => {
+    const next = new URLSearchParams(searchParams);
+    next.set("tab", v);
+    setSearchParams(next, { replace: true });
+  };
+
+  const [contaBancariaFilter, setContaBancariaFilter] = useFiltrosPersistentes<string>(
+    "caixabanco_conta",
+    "todas",
+  );
   const [busca, setBusca] = useFiltrosPersistentes<string>("caixabanco_busca", "");
   const [contaIdDrawer, setContaIdDrawer] = useState<string | null>(null);
-  const [mostrarSoInconsistentes, setMostrarSoInconsistentes] = useState(false);
-  const [filtroOp, setFiltroOp] = useState<FiltroOperacional>("todos");
-  const [filtroQual, setFiltroQual] = useState<FiltroQualidade>("todos");
-  const [filtroContador, setFiltroContador] = useState<"todos" | "enviados" | "nao_enviados">("todos");
-  const [aplicandoIA, setAplicandoIA] = useState(false);
-  const [sugestaoMovId, setSugestaoMovId] = useState<string | null>(null);
-  const [filaIAOpen, setFilaIAOpen] = useState(false);
 
-  async function handleAplicarIAEmMassa() {
-    setAplicandoIA(true);
-    try {
-      // 1) Aplica óbvios silencioso
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data, error } = await (supabase as any).rpc(
-        "aplicar_ia_categoria_em_massa",
-      );
-      if (error) throw error;
-
-      const aplicadas =
-        (data as { aplicadas?: number } | null)?.aplicadas || 0;
-
-      qc.invalidateQueries({ queryKey: ["lancamentos-caixa-banco"] });
-      qc.invalidateQueries({ queryKey: ["ia-fila-ambiguos"] });
-
-      // 2) Abre fila pra revisão dos ambíguos
-      setFilaIAOpen(true);
-
-      if (aplicadas > 0) {
-        toast.info(
-          `${aplicadas} resolvidas direto. Vamos pelos ambíguos juntos.`,
-        );
-      }
-    } catch (e) {
-      console.error("[handleAplicarIAEmMassa] erro completo:", e);
-      const msg =
-        e instanceof Error ? e.message :
-        typeof e === "object" && e !== null
-          ? ((e as { message?: string }).message
-              ?? (e as { error_description?: string }).error_description
-              ?? (e as { details?: string }).details
-              ?? (e as { hint?: string }).hint
-              ?? JSON.stringify(e))
-          : String(e);
-      toast.error("Erro: " + msg);
-    } finally {
-      setAplicandoIA(false);
-    }
-  }
-
-  const navigate = useNavigate();
-
-  // Query da view unificada
+  // Query principal — view unificada
   const { data: lancamentos, isLoading } = useQuery({
     queryKey: ["lancamentos-caixa-banco"],
     queryFn: async () => {
@@ -471,7 +77,6 @@ export default function CaixaBanco() {
     },
   });
 
-  // Contas bancárias
   const { data: contasBancarias } = useQuery({
     queryKey: ["contas-bancarias-lite"],
     queryFn: async () => {
@@ -483,18 +88,14 @@ export default function CaixaBanco() {
     },
   });
 
-  // Formas de pagamento
   const { data: formasPagamento } = useQuery({
     queryKey: ["formas-pagamento-lite"],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("formas_pagamento")
-        .select("id, nome");
+      const { data } = await supabase.from("formas_pagamento").select("id, nome");
       return (data || []) as FormaPgtoLite[];
     },
   });
 
-  // Parceiros
   const { data: parceiros } = useQuery({
     queryKey: ["parceiros-lite"],
     queryFn: async () => {
@@ -505,19 +106,15 @@ export default function CaixaBanco() {
     },
   });
 
-  // Plano de contas (categorias)
   const { data: categorias } = useQuery({
     queryKey: ["plano-contas-lite"],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("plano_contas")
-        .select("id, nome");
+      const { data } = await supabase.from("plano_contas").select("id, nome");
       return (data || []) as CategoriaLite[];
     },
   });
 
-  // Map: lancamento.id -> { tipo: 'recorrente'|'parcelado', titulo }
-  // Só busca pra lançamentos vindos de contas a pagar (não pra cartão_lancamento)
+  // Compromisso info (recorrente/parcelado)
   const idsParaCompromisso = useMemo(
     () =>
       (lancamentos || [])
@@ -532,15 +129,13 @@ export default function CaixaBanco() {
     queryFn: () => getCompromissoInfoMap(idsParaCompromisso),
   });
 
-  // Map: lancamento.id -> { tem_doc_pendente, atrasada }
-  // Necessário porque vw_lancamentos_caixa_banco não expõe esses derivados.
   const { data: statusFlagsMap = new Map<string, FlagsContaPagar>() } = useQuery({
     queryKey: ["status-flags-map-caixa-banco", idsParaCompromisso.join(",")],
     enabled: idsParaCompromisso.length > 0,
     queryFn: () => getStatusFlagsMap(idsParaCompromisso),
   });
 
-  // Inconsistência de categoria (NF vs Conta) — vive em movimentacoes_bancarias.
+  // Inconsistência via movimentações vinculadas
   const movIds = useMemo(
     () =>
       Array.from(
@@ -564,12 +159,17 @@ export default function CaixaBanco() {
         .in("id", movIds);
       if (error) throw error;
       const m = new Map<string, { categoria_inconsistente: boolean | null; inconsistencia_motivo: string | null }>();
-      (data || []).forEach((r: any) => m.set(r.id, { categoria_inconsistente: r.categoria_inconsistente, inconsistencia_motivo: r.inconsistencia_motivo }));
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (data || []).forEach((r: any) =>
+        m.set(r.id, {
+          categoria_inconsistente: r.categoria_inconsistente,
+          inconsistencia_motivo: r.inconsistencia_motivo,
+        }),
+      );
       return m;
     },
   });
 
-  // NF vinculada a cada lançamento (pra validar categoria mesmo sem mov criada).
   const lancamentoIds = useMemo(
     () => (lancamentos || []).map((l) => l.id).filter(Boolean),
     [lancamentos],
@@ -587,14 +187,15 @@ export default function CaixaBanco() {
         .in("conta_pagar_id", lancamentoIds);
       if (error) throw error;
       const map = new Map<string, string | null>();
-      (data || []).forEach((nf: { conta_pagar_id: string | null; categoria_id: string | null }) => {
-        if (nf.conta_pagar_id) map.set(nf.conta_pagar_id, nf.categoria_id);
-      });
+      (data || []).forEach(
+        (nf: { conta_pagar_id: string | null; categoria_id: string | null }) => {
+          if (nf.conta_pagar_id) map.set(nf.conta_pagar_id, nf.categoria_id);
+        },
+      );
       return map;
     },
   });
 
-  // Map<conta_pagar_id, { enviada_em, descricao }> — última remessa de cada conta.
   const { data: contadorMap } = useQuery({
     queryKey: ["contador-enviados-mov", lancamentoIds.join(",")],
     enabled: lancamentoIds.length > 0,
@@ -620,7 +221,7 @@ export default function CaixaBanco() {
     },
   });
 
-  // Lançamentos enriquecidos com flags de inconsistência da movimentação vinculada.
+  // Enriquecimento com flags de inconsistência
   const lancamentosEnriched = useMemo(() => {
     return (lancamentos || []).map((l) => {
       if (!l.movimentacao_bancaria_id) return l;
@@ -633,13 +234,8 @@ export default function CaixaBanco() {
       };
     });
   }, [lancamentos, inconsistMap]);
-  // Mapas de lookup
-  const mapContas = useMemo(() => {
-    const m: Record<string, ContaBancariaLite> = {};
-    (contasBancarias || []).forEach((c) => (m[c.id] = c));
-    return m;
-  }, [contasBancarias]);
 
+  // Maps de lookup
   const mapFormas = useMemo(() => {
     const m: Record<string, string> = {};
     (formasPagamento || []).forEach((f) => (m[f.id] = f.nome));
@@ -660,17 +256,11 @@ export default function CaixaBanco() {
     return m;
   }, [categorias]);
 
-  // Filtros
-  const filtered = useMemo(() => {
+  // Filtros globais (busca + conta bancária)
+  const filteredGlobal = useMemo(() => {
     let list = lancamentosEnriched;
-    if (statusFilter !== "todos") {
-      list = list.filter((l) => statusVisual(l) === statusFilter);
-    }
     if (contaBancariaFilter !== "todas") {
       list = list.filter((l) => l.pago_em_conta_id === contaBancariaFilter);
-    }
-    if (mostrarSoInconsistentes) {
-      list = list.filter((l) => l.categoria_inconsistente === true);
     }
     if (busca.trim()) {
       const t = busca.toLowerCase();
@@ -684,203 +274,25 @@ export default function CaixaBanco() {
         );
       });
     }
-
-    // Filtros operacionais (cards clicáveis)
-    if (filtroOp !== "todos") {
-      const h = new Date();
-      h.setHours(0, 0, 0, 0);
-      const iniMes = new Date(h.getFullYear(), h.getMonth(), 1);
-      const fimMes = new Date(h.getFullYear(), h.getMonth() + 1, 0, 23, 59, 59);
-      const iniProx = new Date(h.getFullYear(), h.getMonth() + 1, 1);
-      const fimProx = new Date(h.getFullYear(), h.getMonth() + 2, 0, 23, 59, 59);
-      const fim3 = new Date(h.getFullYear(), h.getMonth() + 4, 0, 23, 59, 59);
-      const flagsDoc = (l: Lancamento) => statusFlagsMap.get(l.id)?.tem_doc_pendente === true;
-
-      if (filtroOp === "atrasados") {
-        list = list.filter((l) => {
-          if (!l.data_vencimento) return false;
-          const v = new Date(l.data_vencimento + "T00:00:00");
-          return v < h && statusVisual(l) === "aguardando_pagamento";
-        });
-      } else if (filtroOp === "mes_atual") {
-        list = list.filter((l) => {
-          if (!l.data_vencimento) return false;
-          const v = new Date(l.data_vencimento + "T00:00:00");
-          return v >= iniMes && v <= fimMes;
-        });
-      } else if (filtroOp === "proximo_mes") {
-        list = list.filter((l) => {
-          if (!l.data_vencimento) return false;
-          const v = new Date(l.data_vencimento + "T00:00:00");
-          return v >= iniProx && v <= fimProx;
-        });
-      } else if (filtroOp === "mes_anterior") {
-        list = list.filter((l) => {
-          if (!l.data_vencimento) return false;
-          const v = new Date(l.data_vencimento + "T00:00:00");
-          const iniAnt = new Date(h.getFullYear(), h.getMonth() - 1, 1);
-          const fimAnt = new Date(h.getFullYear(), h.getMonth(), 0, 23, 59, 59);
-          return v >= iniAnt && v <= fimAnt;
-        });
-      } else if (filtroOp === "sem_conciliacao") {
-        list = list.filter((l) => {
-          if (!l.data_vencimento) return false;
-          const v = new Date(l.data_vencimento + "T00:00:00");
-          return (
-            v >= iniMes &&
-            v <= fimMes &&
-            statusVisual(l) === "paga" &&
-            !l.conciliado_em
-          );
-        });
-      }
-    }
-
-    if (filtroQual !== "todos") {
-      const docPendente = (l: Lancamento) =>
-        statusFlagsMap.get(l.id)?.tem_doc_pendente === true;
-      const vinculadoOK = (l: Lancamento) =>
-        !!l.vinculada_cartao
-        || l.origem_view === "cartao_lancamento"
-        || !!l.movimentacao_bancaria_id;
-      const conciliadoOK = (l: Lancamento) =>
-        !!l.conciliado_em || l.status_caixa === "conciliado";
-
-      if (filtroQual === "nf_tem") {
-        list = list.filter((l) => getQualidadeNF(l, nfMap).cor === "verde");
-      } else if (filtroQual === "nf_falta") {
-        list = list.filter((l) => getQualidadeNF(l, nfMap).cor !== "verde");
-      } else if (filtroQual === "categoria_tem") {
-        list = list.filter((l) => getQualidadeCategoria(l, nfMap).cor === "verde");
-      } else if (filtroQual === "categoria_falta") {
-        list = list.filter((l) => getQualidadeCategoria(l, nfMap).cor !== "verde");
-      } else if (filtroQual === "doc_tem") {
-        list = list.filter((l) => !docPendente(l));
-      } else if (filtroQual === "doc_falta") {
-        list = list.filter((l) => docPendente(l));
-      } else if (filtroQual === "vinculado_tem") {
-        list = list.filter((l) => vinculadoOK(l));
-      } else if (filtroQual === "vinculado_falta") {
-        list = list.filter((l) => !vinculadoOK(l));
-      } else if (filtroQual === "conciliado_tem") {
-        list = list.filter((l) => conciliadoOK(l));
-      } else if (filtroQual === "conciliado_falta") {
-        list = list.filter((l) => !conciliadoOK(l));
-      }
-    }
-
-    // Filtro: enviado ao contador
-    if (filtroContador !== "todos") {
-      list = list.filter((l) => {
-        if (l.origem_view !== "conta_pagar") return false;
-        const enviado = contadorMap?.has(l.id) === true;
-        return filtroContador === "enviados" ? enviado : !enviado;
-      });
-    }
-
     return list;
-  }, [lancamentosEnriched, statusFilter, contaBancariaFilter, busca, mapParceiros, mostrarSoInconsistentes, filtroOp, filtroQual, filtroContador, contadorMap, nfMap, statusFlagsMap]);
+  }, [lancamentosEnriched, contaBancariaFilter, busca, mapParceiros]);
 
-  // KPIs operacionais (8 cards)
-  const kpis = useMemo(() => {
-    const todos = lancamentosEnriched;
-    const hoje = new Date();
-    hoje.setHours(0, 0, 0, 0);
-
-    const inicioMesAtual = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
-    const fimMesAtual = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0, 23, 59, 59);
-    const inicioProximoMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 1);
-    const fimProximoMes = new Date(hoje.getFullYear(), hoje.getMonth() + 2, 0, 23, 59, 59);
-    const inicioMesAnterior = new Date(hoje.getFullYear(), hoje.getMonth() - 1, 1);
-    const fimMesAnterior = new Date(hoje.getFullYear(), hoje.getMonth(), 0, 23, 59, 59);
-
-    const emAberto = todos.filter((l) => statusVisual(l) === "aguardando_pagamento");
-    const noMesAtual = (l: Lancamento) => {
-      if (!l.data_vencimento) return false;
-      const v = new Date(l.data_vencimento + "T00:00:00");
-      return v >= inicioMesAtual && v <= fimMesAtual;
-    };
-
-    const atrasados = emAberto.filter((l) => {
-      if (!l.data_vencimento) return false;
-      const v = new Date(l.data_vencimento + "T00:00:00");
-      return v < hoje;
-    });
-
-    const mesAtual = todos.filter(noMesAtual);
-
-    const proximoMes = todos.filter((l) => {
-      if (!l.data_vencimento) return false;
-      const v = new Date(l.data_vencimento + "T00:00:00");
-      return v >= inicioProximoMes && v <= fimProximoMes;
-    });
-
-    const mesAnterior = todos.filter((l) => {
-      if (!l.data_vencimento) return false;
-      const v = new Date(l.data_vencimento + "T00:00:00");
-      return v >= inicioMesAnterior && v <= fimMesAnterior;
-    });
-
-    const semConciliacao = todos.filter((l) => {
-      if (!noMesAtual(l)) return false;
-      return statusVisual(l) === "paga" && !l.conciliado_em;
-    });
-
-    // Qualidade — base reage ao filtro operacional ativo
-    const baseQualidade = (() => {
-      if (filtroOp === "atrasados") return atrasados;
-      if (filtroOp === "mes_atual") return mesAtual;
-      if (filtroOp === "proximo_mes") return proximoMes;
-      if (filtroOp === "mes_anterior") return mesAnterior;
-      if (filtroOp === "sem_conciliacao") return semConciliacao;
-      return todos;
-    })();
-    const totalBase = baseQualidade.length;
-
-    const comNF = baseQualidade.filter((l) => getQualidadeNF(l, nfMap).cor === "verde").length;
-    const comCategoriaOK = baseQualidade.filter((l) => getQualidadeCategoria(l, nfMap).cor === "verde").length;
-    const comDocOK = baseQualidade.filter((l) => statusFlagsMap.get(l.id)?.tem_doc_pendente !== true).length;
-    const comVinculadoOK = baseQualidade.filter((l) =>
-      l.vinculada_cartao
-      || l.origem_view === "cartao_lancamento"
-      || l.movimentacao_bancaria_id
-    ).length;
-    const comConciliadoOK = baseQualidade.filter((l) =>
-      l.conciliado_em || l.status_caixa === "conciliado"
-    ).length;
-
-    const sumValor = (arr: Lancamento[]) => arr.reduce((s, l) => s + Number(l.valor || 0), 0);
-    const pct = (parte: number, total: number) => (total > 0 ? Math.round((parte / total) * 100) : 100);
-
-    return {
-      atrasados: { qtd: atrasados.length, valor: sumValor(atrasados) },
-      mesAtual: { qtd: mesAtual.length, valor: sumValor(mesAtual) },
-      proximoMes: { qtd: proximoMes.length, valor: sumValor(proximoMes) },
-      mesAnterior: { qtd: mesAnterior.length, valor: sumValor(mesAnterior) },
-      semConciliacao: { qtd: semConciliacao.length, valor: sumValor(semConciliacao) },
-      qualidadeNF: { pct: pct(comNF, totalBase), atendidos: comNF, total: totalBase },
-      qualidadeCategoria: { pct: pct(comCategoriaOK, totalBase), atendidos: comCategoriaOK, total: totalBase },
-      qualidadeDoc: { pct: pct(comDocOK, totalBase), atendidos: comDocOK, total: totalBase },
-      qualidadeVinculado: { pct: pct(comVinculadoOK, totalBase), atendidos: comVinculadoOK, total: totalBase },
-      qualidadeConciliado: { pct: pct(comConciliadoOK, totalBase), atendidos: comConciliadoOK, total: totalBase },
-    };
-  }, [lancamentosEnriched, nfMap, statusFlagsMap, filtroOp]);
-
-
-
-  function nomeParceiro(l: Lancamento): string {
-    return (
-      (l.parceiro_id && mapParceiros[l.parceiro_id]) ||
-      l.fornecedor_cliente ||
-      "—"
-    );
-  }
+  // Split por status visual
+  const { listaAPagar, listaRealizado } = useMemo(() => {
+    const aPagar: Lancamento[] = [];
+    const realizado: Lancamento[] = [];
+    for (const l of filteredGlobal) {
+      const sv = statusVisual(l);
+      if (sv === "aguardando_pagamento") aPagar.push(l);
+      else if (sv === "paga") realizado.push(l);
+    }
+    return { listaAPagar: aPagar, listaRealizado: realizado };
+  }, [filteredGlobal]);
 
   return (
     <div className="flex flex-col h-[calc(100vh-64px)] overflow-hidden">
-      {/* HEADER STICKY ÚNICO — título + cards + filtros */}
-      <div className="sticky top-0 z-20 bg-background px-6 pt-6 pb-3 border-b space-y-2 backdrop-blur">
-        {/* Título */}
+      {/* HEADER STICKY GLOBAL */}
+      <div className="sticky top-0 z-20 bg-background px-6 pt-6 pb-3 border-b space-y-3 backdrop-blur">
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
             <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
@@ -893,520 +305,79 @@ export default function CaixaBanco() {
           </div>
         </div>
 
-        {/* SEÇÃO 1 — Período */}
-        <div className="border border-zinc-200 bg-white/60 rounded-xl p-2">
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
-            <CardKPI
-              titulo="Atrasados"
-              valor={formatBRL(kpis.atrasados.valor)}
-              sublinha={`${kpis.atrasados.qtd} ${kpis.atrasados.qtd === 1 ? "conta" : "contas"}`}
-              cor="red"
-              ativo={filtroOp === "atrasados"}
-              onClick={() => setFiltroOp(filtroOp === "atrasados" ? "todos" : "atrasados")}
-              icone={Flame}
-            />
-            <CardKPI
-              titulo="Este mês"
-              valor={formatBRL(kpis.mesAtual.valor)}
-              sublinha={`${kpis.mesAtual.qtd} contas`}
-              cor="amber"
-              ativo={filtroOp === "mes_atual"}
-              onClick={() => setFiltroOp(filtroOp === "mes_atual" ? "todos" : "mes_atual")}
-              icone={AlertOctagon}
-            />
-            <CardKPI
-              titulo="Próximo mês"
-              valor={formatBRL(kpis.proximoMes.valor)}
-              sublinha={`${kpis.proximoMes.qtd} contas`}
-              cor="blue"
-              ativo={filtroOp === "proximo_mes"}
-              onClick={() => setFiltroOp(filtroOp === "proximo_mes" ? "todos" : "proximo_mes")}
-              icone={CalendarClock}
-            />
-            <CardKPI
-              titulo="Mês anterior"
-              valor={formatBRL(kpis.mesAnterior.valor)}
-              sublinha={`${kpis.mesAnterior.qtd} contas`}
-              cor="purple"
-              ativo={filtroOp === "mes_anterior"}
-              onClick={() => setFiltroOp(filtroOp === "mes_anterior" ? "todos" : "mes_anterior")}
-              icone={CalendarRange}
-            />
-            <CardKPI
-              titulo="Sem conciliação"
-              valor={formatBRL(kpis.semConciliacao.valor)}
-              sublinha={`${kpis.semConciliacao.qtd} pagas s/ OFX`}
-              cor="teal"
-              ativo={filtroOp === "sem_conciliacao"}
-              onClick={() => setFiltroOp(filtroOp === "sem_conciliacao" ? "todos" : "sem_conciliacao")}
-              icone={RefreshCcw}
+        <div className="flex gap-2 flex-wrap items-center">
+          <div className="relative w-full sm:w-72">
+            <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={busca}
+              onChange={(e) => setBusca(e.target.value)}
+              placeholder="Buscar parceiro, descrição ou NF..."
+              className="pl-9"
             />
           </div>
-        </div>
 
-        {/* SEÇÃO 2 — Qualidade */}
-        <div className="border border-emerald-300 bg-emerald-50/20 rounded-xl p-2">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2">
-            <CardKPIDuplo
-              titulo="NF"
-              icone={Receipt}
-              cor="fetely"
-              total={kpis.qualidadeNF.total}
-              qtdTem={kpis.qualidadeNF.atendidos}
-              qtdFalta={kpis.qualidadeNF.total - kpis.qualidadeNF.atendidos}
-              ativoTem={filtroQual === "nf_tem"}
-              ativoFalta={filtroQual === "nf_falta"}
-              onClickTem={() => setFiltroQual(filtroQual === "nf_tem" ? "todos" : "nf_tem")}
-              onClickFalta={() => setFiltroQual(filtroQual === "nf_falta" ? "todos" : "nf_falta")}
-            />
-            <CardKPIDuplo
-              titulo="Categoria"
-              icone={FolderTree}
-              cor="fetely"
-              total={kpis.qualidadeCategoria.total}
-              qtdTem={kpis.qualidadeCategoria.atendidos}
-              qtdFalta={kpis.qualidadeCategoria.total - kpis.qualidadeCategoria.atendidos}
-              ativoTem={filtroQual === "categoria_tem"}
-              ativoFalta={filtroQual === "categoria_falta"}
-              onClickTem={() => setFiltroQual(filtroQual === "categoria_tem" ? "todos" : "categoria_tem")}
-              onClickFalta={() => setFiltroQual(filtroQual === "categoria_falta" ? "todos" : "categoria_falta")}
-            />
-            <CardKPIDuplo
-              titulo="Documento"
-              icone={Paperclip}
-              cor="fetely"
-              total={kpis.qualidadeDoc.total}
-              qtdTem={kpis.qualidadeDoc.atendidos}
-              qtdFalta={kpis.qualidadeDoc.total - kpis.qualidadeDoc.atendidos}
-              ativoTem={filtroQual === "doc_tem"}
-              ativoFalta={filtroQual === "doc_falta"}
-              onClickTem={() => setFiltroQual(filtroQual === "doc_tem" ? "todos" : "doc_tem")}
-              onClickFalta={() => setFiltroQual(filtroQual === "doc_falta" ? "todos" : "doc_falta")}
-            />
-            <CardKPIDuplo
-              titulo="Vinculado"
-              icone={Link2}
-              cor="fetely"
-              total={kpis.qualidadeVinculado.total}
-              qtdTem={kpis.qualidadeVinculado.atendidos}
-              qtdFalta={kpis.qualidadeVinculado.total - kpis.qualidadeVinculado.atendidos}
-              ativoTem={filtroQual === "vinculado_tem"}
-              ativoFalta={filtroQual === "vinculado_falta"}
-              onClickTem={() => setFiltroQual(filtroQual === "vinculado_tem" ? "todos" : "vinculado_tem")}
-              onClickFalta={() => setFiltroQual(filtroQual === "vinculado_falta" ? "todos" : "vinculado_falta")}
-            />
-            <CardKPIDuplo
-              titulo="Conciliado"
-              icone={CircleDollarSign}
-              cor="fetely"
-              total={kpis.qualidadeConciliado.total}
-              qtdTem={kpis.qualidadeConciliado.atendidos}
-              qtdFalta={kpis.qualidadeConciliado.total - kpis.qualidadeConciliado.atendidos}
-              ativoTem={filtroQual === "conciliado_tem"}
-              ativoFalta={filtroQual === "conciliado_falta"}
-              onClickTem={() => setFiltroQual(filtroQual === "conciliado_tem" ? "todos" : "conciliado_tem")}
-              onClickFalta={() => setFiltroQual(filtroQual === "conciliado_falta" ? "todos" : "conciliado_falta")}
-            />
-          </div>
-        </div>
-
-        {/* SEÇÃO 3 — Filtros e ações */}
-        <div className="border border-zinc-200 bg-white/60 rounded-xl p-2">
-          <div className="flex gap-2 flex-wrap items-center">
-            <div className="relative w-full sm:w-72">
-              <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                value={busca}
-                onChange={(e) => setBusca(e.target.value)}
-                placeholder="Buscar parceiro, descrição ou NF..."
-                className="pl-9"
-              />
-            </div>
-
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[160px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todos">Todos status</SelectItem>
-                <SelectItem value="aguardando_pagamento">Aguardando pagamento</SelectItem>
-                <SelectItem value="paga">Pago</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select
-              value={filtroContador}
-              onValueChange={(v) => setFiltroContador(v as "todos" | "enviados" | "nao_enviados")}
-            >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todos">Contador: todos</SelectItem>
-                <SelectItem value="enviados">Contador: enviados</SelectItem>
-                <SelectItem value="nao_enviados">Contador: pendentes</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select value={contaBancariaFilter} onValueChange={setContaBancariaFilter}>
-              <SelectTrigger className="w-[200px]">
-                <SelectValue placeholder="Conta bancária" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todas">Todas as contas</SelectItem>
-                {(contasBancarias || []).map((cb) => (
-                  <SelectItem key={cb.id} value={cb.id}>
-                    {cb.nome_exibicao}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setMostrarSoInconsistentes(!mostrarSoInconsistentes)}
-              className={cn(
-                "gap-1",
-                mostrarSoInconsistentes && "bg-amber-600 hover:bg-amber-700 text-white border-amber-600",
-              )}
-            >
-              <AlertTriangle className="h-3.5 w-3.5" />
-              Inconsistências
-            </Button>
-
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={handleAplicarIAEmMassa}
-              disabled={aplicandoIA}
-              className="gap-2 border-amber-300 text-amber-700 hover:bg-amber-50 ml-auto"
-            >
-              {aplicandoIA ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <Sparkles className="h-3.5 w-3.5" />
-              )}
-              Resolver com IA
-            </Button>
-          </div>
+          <Select value={contaBancariaFilter} onValueChange={setContaBancariaFilter}>
+            <SelectTrigger className="w-[220px]">
+              <SelectValue placeholder="Conta bancária" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todas">Todas as contas</SelectItem>
+              {(contasBancarias || []).map((cb) => (
+                <SelectItem key={cb.id} value={cb.id}>
+                  {cb.nome_exibicao}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
-      {/* CONTEÚDO COM SCROLL PRÓPRIO */}
-      <div className="flex-1 overflow-auto px-6 pb-6 pt-2 space-y-4">
-        {isLoading ? (
-          <div className="space-y-2">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <Skeleton key={i} className="h-12 w-full" />
-            ))}
-          </div>
-        ) : filtered.length === 0 ? (
-          <div className="py-12 text-center text-sm text-muted-foreground">
-            Nenhum lançamento encontrado.
-            <p className="text-xs mt-2">
-              Quando uma conta a pagar for finalizada, aparece aqui automaticamente.
-            </p>
-          </div>
-        ) : (
-          <>
-            <div className="border rounded-md overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Parceiro</TableHead>
-                    <TableHead>Descrição</TableHead>
-                    <TableHead>Dt. Vencimento</TableHead>
-                    <TableHead>Categoria</TableHead>
-                    <TableHead>Dt. Pagamento</TableHead>
-                    <TableHead>Meio PG</TableHead>
-                    <TableHead className="text-right">Valor</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Tags</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filtered.map((l) => {
-                      const sVisual = statusVisual(l);
-                      const atrasada = isAtrasada(l);
-                      const formaNome =
-                        l.forma_pagamento_id && mapFormas[l.forma_pagamento_id];
-                      const categoriaNome =
-                        l.categoria_id && mapCategorias[l.categoria_id];
-                      const conciliada = !!l.movimentacao_bancaria_id;
-                      const flags = statusFlagsMap.get(l.id);
-                      const docPendente = !!flags?.tem_doc_pendente;
-                      return (
-                        <TableRow
-                          key={l.id}
-                          className={cn(
-                            "cursor-pointer hover:bg-muted/50 transition-colors",
-                            atrasada && "bg-red-50/60 hover:bg-red-50",
-                            !atrasada && classFundoFuturo(l.data_vencimento),
-                          )}
-                          onClick={() => {
-                            if (l.origem_view === "cartao_lancamento") {
-                              navigate("/administrativo/faturas-cartao");
-                            } else {
-                              setContaIdDrawer(l.id);
-                            }
-                          }}
-                        >
-                          <TableCell className="max-w-[180px]">
-                            <div className="truncate" title={nomeParceiro(l)}>
-                              {nomeParceiro(l)}
-                            </div>
-                          </TableCell>
-                          <TableCell className="max-w-[200px]">
-                            <div className="flex items-center gap-2 min-w-0">
-                              <span className="truncate text-xs text-muted-foreground" title={l.descricao}>
-                                {l.descricao}
-                              </span>
-                              {(() => {
-                                const ci = compromissoInfoMap.get(l.id);
-                                if (ci?.tipo === "recorrente") {
-                                  return (
-                                    <span
-                                      className="shrink-0"
-                                      title={`Recorrente — ${ci.titulo}`}
-                                    >
-                                      <Repeat className="h-3.5 w-3.5 text-indigo-600" />
-                                    </span>
-                                  );
-                                }
-                                return null;
-                              })()}
-                            </div>
-                            {(l.vinculada_cartao || l.origem_view === "cartao_lancamento") && (
-                              <Badge
-                                variant="outline"
-                                className="text-[9px] py-0 px-1.5 h-4 border-violet-300 text-violet-700 bg-violet-50/50 gap-1 mt-0.5"
-                              >
-                                <CreditCard className="h-2.5 w-2.5" />
-                                Cartão
-                                {l.fatura_vencimento && (
-                                  <span className="ml-0.5 opacity-80">
-                                    · venc {new Date(l.fatura_vencimento).toLocaleDateString("pt-BR")}
-                                  </span>
-                                )}
-                              </Badge>
-                            )}
-                          </TableCell>
-                          <TableCell className="whitespace-nowrap text-xs">
-                            {formatDateBR(l.data_vencimento)}
-                          </TableCell>
-                          <TableCell className="text-xs">
-                            <div className="flex items-center gap-1.5">
-                              {categoriaNome ? (
-                                <div
-                                  className="truncate max-w-[160px]"
-                                  title={categoriaNome}
-                                >
-                                  {categoriaNome}
-                                </div>
-                              ) : (
-                                <span className="text-muted-foreground">—</span>
-                              )}
-                              {l.categoria_inconsistente && (
-                                <TooltipProvider>
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <Badge
-                                        variant="outline"
-                                        className="text-[9px] py-0 px-1.5 h-4 border-amber-400 text-amber-700 bg-amber-50 gap-1 whitespace-nowrap shrink-0"
-                                      >
-                                        <AlertTriangle className="h-2.5 w-2.5" />
-                                        Inconsistente
-                                      </Badge>
-                                    </TooltipTrigger>
-                                    <TooltipContent className="max-w-xs">
-                                      <p className="text-xs">
-                                        {l.inconsistencia_motivo || "Categoria diverge da NF vinculada."}
-                                      </p>
-                                    </TooltipContent>
-                                  </Tooltip>
-                                </TooltipProvider>
-                              )}
-                            </div>
-                          </TableCell>
-                          <TableCell className="whitespace-nowrap text-xs">
-                            {l.data_pagamento ? (
-                              formatDateBR(l.data_pagamento)
-                            ) : (
-                              <span className="text-muted-foreground">—</span>
-                            )}
-                          </TableCell>
-                          <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
-                            {(() => {
-                              if (!formaNome) return "—";
-                              const ico = getMeioPagamentoIcon(formaNome);
-                              if (ico) {
-                                return (
-                                  <span
-                                    className="flex items-center gap-1.5 whitespace-nowrap"
-                                    title={formaNome}
-                                  >
-                                    <ico.Icon className={`h-4 w-4 ${ico.cor} shrink-0`} />
-                                    <span>{formaNome}</span>
-                                  </span>
-                                );
-                              }
-                              return formaNome;
-                            })()}
-                          </TableCell>
-                          <TableCell className="text-right font-mono whitespace-nowrap">
-                            {formatBRL(l.valor)}
-                          </TableCell>
-                          <TableCell>
-                            <Badge className={STATUS_STYLES[sVisual] || "bg-muted"}>
-                              {STATUS_LABEL[sVisual] || sVisual}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="min-w-[140px]">
-                            <div className="flex flex-wrap gap-1 items-center">
-                              {(() => {
-                                const qNF = getQualidadeNF(l, nfMap);
-                                const qCat = getQualidadeCategoria(l, nfMap);
-                                const docOk = !docPendente;
-                                const qVinc = getQualidadeVinculado(l);
-                                const qConc = getQualidadeConciliado(l);
-                                const corClass = (cor: "verde" | "amarelo" | "vermelho") => {
-                                  if (cor === "verde") return "text-emerald-600";
-                                  if (cor === "amarelo") return "text-amber-500";
-                                  return "text-red-500";
-                                };
-                                return (
-                                  <TooltipProvider>
-                                    <div className="flex items-center gap-2 mr-1">
-                                      <Tooltip>
-                                        <TooltipTrigger asChild>
-                                          <Receipt className={cn("h-3.5 w-3.5 cursor-help", corClass(qNF.cor))} strokeWidth={2.2} />
-                                        </TooltipTrigger>
-                                        <TooltipContent className="max-w-xs">
-                                          <p className="text-xs">📄 {qNF.motivo}</p>
-                                        </TooltipContent>
-                                      </Tooltip>
-                                      <Tooltip>
-                                        <TooltipTrigger asChild>
-                                          <FolderTree
-                                            className={cn(
-                                              "h-3.5 w-3.5",
-                                              corClass(qCat.cor),
-                                              qCat.temSugestaoIA
-                                                ? "cursor-pointer hover:scale-125 transition-transform"
-                                                : "cursor-help",
-                                            )}
-                                            strokeWidth={2.2}
-                                            onClick={
-                                              qCat.temSugestaoIA
-                                                ? (e) => {
-                                                    e.stopPropagation();
-                                                    setSugestaoMovId(l.id);
-                                                  }
-                                                : undefined
-                                            }
-                                          />
-                                        </TooltipTrigger>
-                                        <TooltipContent className="max-w-xs">
-                                          <p className="text-xs">🏷️ {qCat.motivo}</p>
-                                        </TooltipContent>
-                                      </Tooltip>
-                                      <Tooltip>
-                                        <TooltipTrigger asChild>
-                                          <Paperclip
-                                            className={cn(
-                                              "h-3.5 w-3.5 cursor-help",
-                                              docOk ? "text-emerald-600" : "text-red-500"
-                                            )}
-                                            strokeWidth={2.2}
-                                          />
-                                        </TooltipTrigger>
-                                        <TooltipContent className="max-w-xs">
-                                          <p className="text-xs">
-                                            {docOk ? "Documento anexado/OK" : "Documento pendente"}
-                                          </p>
-                                        </TooltipContent>
-                                      </Tooltip>
-                                      <Tooltip>
-                                        <TooltipTrigger asChild>
-                                          <Link2 className={cn("h-3.5 w-3.5 cursor-help", corClass(qVinc.cor))} strokeWidth={2.2} />
-                                        </TooltipTrigger>
-                                        <TooltipContent className="max-w-xs">
-                                          <p className="text-xs">🔗 {qVinc.motivo}</p>
-                                        </TooltipContent>
-                                      </Tooltip>
-                                      <Tooltip>
-                                        <TooltipTrigger asChild>
-                                          <CircleDollarSign className={cn("h-3.5 w-3.5 cursor-help", corClass(qConc.cor))} strokeWidth={2.2} />
-                                        </TooltipTrigger>
-                                        <TooltipContent className="max-w-xs">
-                                          <p className="text-xs">💰 {qConc.motivo}</p>
-                                        </TooltipContent>
-                                      </Tooltip>
-                                      {l.origem_view === "conta_pagar" && (() => {
-                                        const remessa = contadorMap?.get(l.id);
-                                        const enviado = !!remessa;
-                                        return (
-                                          <Tooltip>
-                                            <TooltipTrigger asChild>
-                                              <MailCheck
-                                                className={cn(
-                                                  "h-3.5 w-3.5 cursor-help",
-                                                  enviado ? "text-emerald-600" : "text-zinc-300",
-                                                )}
-                                                strokeWidth={2.2}
-                                              />
-                                            </TooltipTrigger>
-                                            <TooltipContent className="max-w-xs">
-                                              <p className="text-xs">
-                                                {enviado
-                                                  ? `📨 Enviado ao contador em ${new Date(remessa!.enviada_em).toLocaleDateString("pt-BR")}${remessa!.descricao ? ` (${remessa!.descricao})` : ""}`
-                                                  : "📭 Ainda não enviado ao contador"}
-                                              </p>
-                                            </TooltipContent>
-                                          </Tooltip>
-                                        );
-                                      })()}
-                                    </div>
-                                  </TooltipProvider>
-                                );
-                              })()}
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </div>
+      {/* CONTEÚDO COM SCROLL */}
+      <div className="flex-1 overflow-auto px-6 pb-6 pt-3">
+        <Tabs value={tab} onValueChange={setTab}>
+          <TabsList>
+            <TabsTrigger value="a_pagar">
+              A pagar ({listaAPagar.length})
+            </TabsTrigger>
+            <TabsTrigger value="realizado">
+              Realizado ({listaRealizado.length})
+            </TabsTrigger>
+          </TabsList>
 
-              <p className="text-xs text-muted-foreground">
-                {filtered.length} {filtered.length === 1 ? "lançamento" : "lançamentos"}
-              </p>
-            </>
-        )}
+          <TabsContent value="a_pagar">
+            <AbaAPagar
+              lista={listaAPagar}
+              isLoading={isLoading}
+              mapParceiros={mapParceiros}
+              mapFormas={mapFormas}
+              mapCategorias={mapCategorias}
+              nfMap={nfMap}
+              statusFlagsMap={statusFlagsMap}
+              compromissoInfoMap={compromissoInfoMap}
+              onOpenConta={setContaIdDrawer}
+            />
+          </TabsContent>
+
+          <TabsContent value="realizado">
+            <AbaRealizado
+              lista={listaRealizado}
+              isLoading={isLoading}
+              mapParceiros={mapParceiros}
+              mapFormas={mapFormas}
+              mapCategorias={mapCategorias}
+              nfMap={nfMap}
+              statusFlagsMap={statusFlagsMap}
+              contadorMap={contadorMap}
+              compromissoInfoMap={compromissoInfoMap}
+              onOpenConta={setContaIdDrawer}
+            />
+          </TabsContent>
+        </Tabs>
       </div>
 
       <ContaPagarDetalheDrawer
         contaId={contaIdDrawer}
         onClose={() => setContaIdDrawer(null)}
-      />
-
-      {sugestaoMovId && (
-        <SugestaoIADialog
-          movId={sugestaoMovId}
-          onClose={() => setSugestaoMovId(null)}
-          onApply={() => {
-            qc.invalidateQueries({ queryKey: ["lancamentos-caixa-banco"] });
-            setSugestaoMovId(null);
-          }}
-        />
-      )}
-
-      <FilaRevisaoIADialog
-        open={filaIAOpen}
-        onClose={() => setFilaIAOpen(false)}
       />
     </div>
   );
