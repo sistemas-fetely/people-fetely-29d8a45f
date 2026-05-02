@@ -1662,6 +1662,9 @@ export type Database = {
           id: string
           nome: string
           observacao: string | null
+          papel: string
+          propositos: string[]
+          updated_at: string
         }
         Insert: {
           ativo?: boolean | null
@@ -1670,6 +1673,9 @@ export type Database = {
           id?: string
           nome: string
           observacao?: string | null
+          papel?: string
+          propositos?: string[]
+          updated_at?: string
         }
         Update: {
           ativo?: boolean | null
@@ -1678,6 +1684,9 @@ export type Database = {
           id?: string
           nome?: string
           observacao?: string | null
+          papel?: string
+          propositos?: string[]
+          updated_at?: string
         }
         Relationships: []
       }
@@ -7383,6 +7392,124 @@ export type Database = {
             columns: ["parceiro_id"]
             isOneToOne: false
             referencedRelation: "parceiros_comerciais"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      remessas_contador: {
+        Row: {
+          created_at: string
+          descricao: string | null
+          destinatarios: string[]
+          enviada_em: string
+          enviada_por: string | null
+          id: string
+          link_expira_em: string | null
+          link_signed: string | null
+          metodo: string
+          observacao: string | null
+          periodo_fim: string
+          periodo_inicio: string
+          qtd_contas: number
+          qtd_documentos: number
+        }
+        Insert: {
+          created_at?: string
+          descricao?: string | null
+          destinatarios?: string[]
+          enviada_em?: string
+          enviada_por?: string | null
+          id?: string
+          link_expira_em?: string | null
+          link_signed?: string | null
+          metodo: string
+          observacao?: string | null
+          periodo_fim: string
+          periodo_inicio: string
+          qtd_contas?: number
+          qtd_documentos?: number
+        }
+        Update: {
+          created_at?: string
+          descricao?: string | null
+          destinatarios?: string[]
+          enviada_em?: string
+          enviada_por?: string | null
+          id?: string
+          link_expira_em?: string | null
+          link_signed?: string | null
+          metodo?: string
+          observacao?: string | null
+          periodo_fim?: string
+          periodo_inicio?: string
+          qtd_contas?: number
+          qtd_documentos?: number
+        }
+        Relationships: []
+      }
+      remessas_contador_itens: {
+        Row: {
+          conta_id: string
+          created_at: string
+          doc_ids: string[]
+          id: string
+          remessa_id: string
+        }
+        Insert: {
+          conta_id: string
+          created_at?: string
+          doc_ids?: string[]
+          id?: string
+          remessa_id: string
+        }
+        Update: {
+          conta_id?: string
+          created_at?: string
+          doc_ids?: string[]
+          id?: string
+          remessa_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "remessas_contador_itens_conta_id_fkey"
+            columns: ["conta_id"]
+            isOneToOne: false
+            referencedRelation: "contas_pagar"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "remessas_contador_itens_conta_id_fkey"
+            columns: ["conta_id"]
+            isOneToOne: false
+            referencedRelation: "contas_pagar_receber"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "remessas_contador_itens_conta_id_fkey"
+            columns: ["conta_id"]
+            isOneToOne: false
+            referencedRelation: "contas_pagar_receber_ativas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "remessas_contador_itens_conta_id_fkey"
+            columns: ["conta_id"]
+            isOneToOne: false
+            referencedRelation: "vw_contas_pagar_consolidado"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "remessas_contador_itens_conta_id_fkey"
+            columns: ["conta_id"]
+            isOneToOne: false
+            referencedRelation: "vw_lancamentos_caixa_banco"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "remessas_contador_itens_remessa_id_fkey"
+            columns: ["remessa_id"]
+            isOneToOne: false
+            referencedRelation: "remessas_contador"
             referencedColumns: ["id"]
           },
         ]
