@@ -39,7 +39,19 @@ export default function ConfiguracaoIntegracao() {
   const [showDialogFin, setShowDialogFin] = useState(false);
   const [editingFin, setEditingFin] = useState<any>(null);
   const [removingFin, setRemovingFin] = useState<any>(null);
-  const [finForm, setFinForm] = useState({ nome: "", email: "", observacao: "" });
+  const [finForm, setFinForm] = useState<{
+    nome: string;
+    email: string;
+    observacao: string;
+    propositos: string[];
+    papel: "principal" | "copia";
+  }>({
+    nome: "",
+    email: "",
+    observacao: "",
+    propositos: ["pagamento", "fiscal"],
+    papel: "principal",
+  });
   const [savingFin, setSavingFin] = useState(false);
 
   const [form, setForm] = useState({
