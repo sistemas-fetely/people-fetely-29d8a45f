@@ -791,7 +791,7 @@ export default function CaixaBanco() {
           <CardKPI
             titulo="Este mês"
             valor={formatBRL(kpis.mesAtual.valor)}
-            sublinha={`${kpis.mesAtual.qtd} a vencer`}
+            sublinha={`${kpis.mesAtual.qtd} contas`}
             cor="amber"
             ativo={filtroOp === "mes_atual"}
             onClick={() => setFiltroOp(filtroOp === "mes_atual" ? "todos" : "mes_atual")}
@@ -800,7 +800,7 @@ export default function CaixaBanco() {
           <CardKPI
             titulo="Próximo mês"
             valor={formatBRL(kpis.proximoMes.valor)}
-            sublinha={`${kpis.proximoMes.qtd} previstas`}
+            sublinha={`${kpis.proximoMes.qtd} contas`}
             cor="blue"
             ativo={filtroOp === "proximo_mes"}
             onClick={() => setFiltroOp(filtroOp === "proximo_mes" ? "todos" : "proximo_mes")}
@@ -911,9 +911,8 @@ export default function CaixaBanco() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="todos">Todos status</SelectItem>
-              <SelectItem value="em_aberto">Em aberto</SelectItem>
-              <SelectItem value="pago">Pago</SelectItem>
-              <SelectItem value="conciliado">Conciliado</SelectItem>
+              <SelectItem value="aguardando_pagamento">Aguardando pagamento</SelectItem>
+              <SelectItem value="paga">Pago</SelectItem>
             </SelectContent>
           </Select>
 
