@@ -73,7 +73,7 @@ export function AcoesLancamentoCartao({ lancamento }: Props) {
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data: resultado, error } = await (supabase as any).rpc(
-        "criar_despesa_de_lancamento",
+        "criar_despesa_de_lancamento_v2",
         {
           p_lancamento_id: lancamento.id,
           p_total_parcelas: gerarTodas ? totalParcelas : 1,
@@ -86,7 +86,9 @@ export function AcoesLancamentoCartao({ lancamento }: Props) {
         return;
       }
       const qtd = resultado.qtd_contas_criadas || 1;
-      const msg = qtd > 1
+      const msg = resultado.vinculou_existente
+        ? resultado.mensagem || `Vinculado a parcela existente: ${resultado.descricao}`
+        : qtd > 1
         ? `Conta criada com ${qtd} parcelas: ${resultado.descricao}`
         : padrao && padrao.atual > 1
         ? `Parcela ${padrao.atual}/${padrao.total} criada: ${resultado.descricao}`
