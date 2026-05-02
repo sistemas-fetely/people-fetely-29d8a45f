@@ -53,6 +53,7 @@ import { toast } from "sonner";
 
 import ContaPagarDetalheDrawer from "@/components/financeiro/ContaPagarDetalheDrawer";
 import SugestaoIADialog from "@/components/financeiro/SugestaoIADialog";
+import FilaRevisaoIADialog from "@/components/financeiro/FilaRevisaoIADialog";
 import { getCompromissoInfoMap, type CompromissoInfo } from "@/lib/financeiro/get-compromisso-info";
 import { getMeioPagamentoIcon } from "@/lib/financeiro/meio-pagamento-icon";
 
@@ -336,25 +337,32 @@ export default function CaixaBanco() {
   const [filtroOp, setFiltroOp] = useState<FiltroOperacional>("todos");
   const [aplicandoIA, setAplicandoIA] = useState(false);
   const [sugestaoMovId, setSugestaoMovId] = useState<string | null>(null);
+  const [filaIAOpen, setFilaIAOpen] = useState(false);
 
   async function handleAplicarIAEmMassa() {
     setAplicandoIA(true);
     try {
+      // 1) Aplica óbvios silencioso
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data, error } = await (supabase as any).rpc(
         "aplicar_ia_categoria_em_massa",
       );
       if (error) throw error;
-      const aplicadas = (data as { aplicadas?: number; sugeridas?: number } | null)?.aplicadas || 0;
-      const sugeridas = (data as { aplicadas?: number; sugeridas?: number } | null)?.sugeridas || 0;
-      if (aplicadas > 0 || sugeridas > 0) {
-        toast.success(
-          `IA: ${aplicadas} aplicadas direto, ${sugeridas} sugestões pra revisar`,
-        );
-      } else {
-        toast.info("IA não encontrou novos matches — todas as movs já foram processadas");
-      }
+
+      const aplicadas =
+        (data as { aplicadas?: number } | null)?.aplicadas || 0;
+
       qc.invalidateQueries({ queryKey: ["lancamentos-caixa-banco"] });
+      qc.invalidateQueries({ queryKey: ["ia-fila-ambiguos"] });
+
+      // 2) Abre fila pra revisão dos ambíguos
+      setFilaIAOpen(true);
+
+      if (aplicadas > 0) {
+        toast.info(
+          `${aplicadas} resolvidas direto. Vamos pelos ambíguos juntos.`,
+        );
+      }
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       toast.error("Erro: " + msg);
@@ -1195,6 +1203,11 @@ export default function CaixaBanco() {
           }}
         />
       )}
+
+      <FilaRevisaoIADialog
+        open={filaIAOpen}
+        onClose={() => setFilaIAOpen(false)}
+      />
     </div>
   );
 }
