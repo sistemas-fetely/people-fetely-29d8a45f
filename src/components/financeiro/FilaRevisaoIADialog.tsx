@@ -9,6 +9,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Sparkles, Check, SkipForward, X, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
