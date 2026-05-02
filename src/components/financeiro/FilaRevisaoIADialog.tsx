@@ -330,19 +330,6 @@ export default function FilaRevisaoIADialog({ open, onClose }: Props) {
                           </div>
                         )}
                       </div>
-                        )}
-
-                        <div className="flex items-center gap-2 text-[10px] text-muted-foreground/70 pt-1">
-                          {c.arquivo_nome && (
-                            <span className="truncate">📄 {c.arquivo_nome}</span>
-                          )}
-                          {c.nf_chave_acesso && (
-                            <span className="font-mono">
-                              ...{c.nf_chave_acesso.slice(-12)}
-                            </span>
-                          )}
-                        </div>
-                      </div>
                       <Button
                         size="sm"
                         onClick={() => aplicarNF(c.nf_id)}
