@@ -277,7 +277,7 @@ export default function DocumentosPendentes() {
       const parceiroMap = new Map<string, string>();
       if (parceiroIds.length > 0) {
         const { data: parceiros } = await supabase
-          .from("parceiros")
+          .from("parceiros_comerciais")
           .select("id, razao_social")
           .in("id", parceiroIds);
         (parceiros || []).forEach((p) => parceiroMap.set(p.id, p.razao_social || ""));
