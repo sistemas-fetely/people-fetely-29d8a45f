@@ -1490,6 +1490,13 @@ export type Database = {
             foreignKeyName: "compromissos_parcelados_nf_origem_id_fkey"
             columns: ["nf_origem_id"]
             isOneToOne: false
+            referencedRelation: "vw_documentos_envio_estados"
+            referencedColumns: ["conta_id"]
+          },
+          {
+            foreignKeyName: "compromissos_parcelados_nf_origem_id_fkey"
+            columns: ["nf_origem_id"]
+            isOneToOne: false
             referencedRelation: "vw_lancamentos_caixa_banco"
             referencedColumns: ["id"]
           },
@@ -1859,6 +1866,13 @@ export type Database = {
             foreignKeyName: "contas_pagar_documentos_conta_id_fkey"
             columns: ["conta_id"]
             isOneToOne: false
+            referencedRelation: "vw_documentos_envio_estados"
+            referencedColumns: ["conta_id"]
+          },
+          {
+            foreignKeyName: "contas_pagar_documentos_conta_id_fkey"
+            columns: ["conta_id"]
+            isOneToOne: false
             referencedRelation: "vw_lancamentos_caixa_banco"
             referencedColumns: ["id"]
           },
@@ -1920,6 +1934,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "vw_contas_pagar_consolidado"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contas_pagar_historico_conta_id_fkey"
+            columns: ["conta_id"]
+            isOneToOne: false
+            referencedRelation: "vw_documentos_envio_estados"
+            referencedColumns: ["conta_id"]
           },
           {
             foreignKeyName: "contas_pagar_historico_conta_id_fkey"
@@ -2013,6 +2034,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "vw_contas_pagar_consolidado"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contas_pagar_itens_conta_id_fkey"
+            columns: ["conta_id"]
+            isOneToOne: false
+            referencedRelation: "vw_documentos_envio_estados"
+            referencedColumns: ["conta_id"]
           },
           {
             foreignKeyName: "contas_pagar_itens_conta_id_fkey"
@@ -3808,6 +3836,13 @@ export type Database = {
             foreignKeyName: "fatura_cartao_lancamentos_conta_pagar_id_fkey"
             columns: ["conta_pagar_id"]
             isOneToOne: false
+            referencedRelation: "vw_documentos_envio_estados"
+            referencedColumns: ["conta_id"]
+          },
+          {
+            foreignKeyName: "fatura_cartao_lancamentos_conta_pagar_id_fkey"
+            columns: ["conta_pagar_id"]
+            isOneToOne: false
             referencedRelation: "vw_lancamentos_caixa_banco"
             referencedColumns: ["id"]
           },
@@ -3852,6 +3887,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "vw_contas_pagar_consolidado"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fatura_cartao_lancamentos_nf_vinculada_id_fkey"
+            columns: ["nf_vinculada_id"]
+            isOneToOne: false
+            referencedRelation: "vw_documentos_envio_estados"
+            referencedColumns: ["conta_id"]
           },
           {
             foreignKeyName: "fatura_cartao_lancamentos_nf_vinculada_id_fkey"
@@ -3974,6 +4016,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "vw_contas_pagar_consolidado"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "faturas_cartao_conta_pagar_id_fkey"
+            columns: ["conta_pagar_id"]
+            isOneToOne: false
+            referencedRelation: "vw_documentos_envio_estados"
+            referencedColumns: ["conta_id"]
           },
           {
             foreignKeyName: "faturas_cartao_conta_pagar_id_fkey"
@@ -4859,6 +4908,13 @@ export type Database = {
             foreignKeyName: "movimentacao_conta_pagar_link_conta_pagar_id_fkey"
             columns: ["conta_pagar_id"]
             isOneToOne: false
+            referencedRelation: "vw_documentos_envio_estados"
+            referencedColumns: ["conta_id"]
+          },
+          {
+            foreignKeyName: "movimentacao_conta_pagar_link_conta_pagar_id_fkey"
+            columns: ["conta_pagar_id"]
+            isOneToOne: false
             referencedRelation: "vw_lancamentos_caixa_banco"
             referencedColumns: ["id"]
           },
@@ -5431,6 +5487,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "vw_contas_pagar_consolidado"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nfs_stage_conta_pagar_id_fkey"
+            columns: ["conta_pagar_id"]
+            isOneToOne: false
+            referencedRelation: "vw_documentos_envio_estados"
+            referencedColumns: ["conta_id"]
           },
           {
             foreignKeyName: "nfs_stage_conta_pagar_id_fkey"
@@ -7497,6 +7560,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "vw_contas_pagar_consolidado"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "remessas_contador_itens_conta_id_fkey"
+            columns: ["conta_id"]
+            isOneToOne: false
+            referencedRelation: "vw_documentos_envio_estados"
+            referencedColumns: ["conta_id"]
           },
           {
             foreignKeyName: "remessas_contador_itens_conta_id_fkey"
@@ -9904,6 +9974,37 @@ export type Database = {
           },
         ]
       }
+      vw_documentos_envio_estados: {
+        Row: {
+          cancelada_apos_envio: boolean | null
+          conta_created_at: string | null
+          conta_id: string | null
+          data_pagamento: string | null
+          data_vencimento: string | null
+          descricao: string | null
+          dias_aguardando: number | null
+          docs_status: string | null
+          estado_envio: string | null
+          nf_chave_acesso: string | null
+          nf_numero: string | null
+          nf_serie: string | null
+          parceiro_id: string | null
+          parceiro_razao_social: string | null
+          status_conta: string | null
+          ultima_remessa_em: string | null
+          ultima_remessa_id: string | null
+          valor: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contas_pagar_receber_parceiro_id_fkey"
+            columns: ["parceiro_id"]
+            isOneToOne: false
+            referencedRelation: "parceiros_comerciais"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vw_faturas_cartao_resumo: {
         Row: {
           conta_bancaria_id: string | null
@@ -10354,6 +10455,7 @@ export type Database = {
         Returns: Json
       }
       desfazer_conciliacao_ofx: { Args: { p_ofx_id: string }; Returns: Json }
+      desfazer_remessa: { Args: { p_remessa_id: string }; Returns: Json }
       detectar_duplicatas_nf: {
         Args: { p_chaves: string[]; p_cnpj_numero?: Json }
         Returns: {
@@ -10401,6 +10503,23 @@ export type Database = {
           score_total: number
           similaridade_texto: number
           token_extraido: string
+        }[]
+      }
+      documentos_envio_agrupados: {
+        Args: {
+          p_busca?: string
+          p_estado?: string
+          p_periodo_fim?: string
+          p_periodo_inicio?: string
+        }
+        Returns: {
+          contas_json: Json
+          mais_antigo_dias: number
+          parceiro_id: string
+          parceiro_razao_social: string
+          qtd_canceladas_apos_envio: number
+          qtd_contas: number
+          total_valor: number
         }[]
       }
       documentos_pendentes_agrupados: {
@@ -10591,6 +10710,17 @@ export type Database = {
           erro: string
           ok: boolean
         }[]
+      }
+      marcar_remessa_manual_em_lote: {
+        Args: {
+          p_conta_ids?: string[]
+          p_descricao: string
+          p_destinatarios?: string[]
+          p_observacao?: string
+          p_periodo_fim: string
+          p_periodo_inicio: string
+        }
+        Returns: Json
       }
       merge_contas_duplicadas: {
         Args: { p_id_descartar: string; p_id_manter: string }
