@@ -7,9 +7,6 @@ import { Plus, Link2, Loader2, CheckCircle2, XCircle, RotateCcw, EyeOff } from "
 import { toast } from "sonner";
 import { formatBRL } from "@/lib/format-currency";
 import { VincularLancamentoModal } from "./VincularLancamentoModal";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 
 interface Lancamento {
   id: string;
@@ -31,29 +28,56 @@ const STATUS_CONFIG: Record<string, { label: string; cls: string; icon: typeof C
   ignorado: { label: "Ignorada", cls: "bg-zinc-50 text-zinc-700 border-zinc-300", icon: XCircle },
 };
 
+/**
+ * Detecta padrão de parcelas na descrição do lançamento.
+ * Retorna { atual, total } se encontrar, null caso contrário.
+ * Cobre: "01/03", "1/3", "(01/03)", "[01/03]", "E01/03", "01-03",
+ *        "parcela 1 de 3", "1 de 3"
+ */
+function detectarParcelas(descricao: string): { atual: number; total: number } | null {
+  if (!descricao) return null;
+  const desc = descricao.toLowerCase();
+
+  const padraoDeY = desc.match(/(?:parcela\s+)?(\d{1,3})\s+de\s+(\d{1,3})/);
+  if (padraoDeY) {
+    const atual = parseInt(padraoDeY[1], 10);
+    const total = parseInt(padraoDeY[2], 10);
+    if (atual > 0 && total > 0 && atual <= total) return { atual, total };
+  }
+
+  const padraoBarra = desc.match(/[\(\[]?\s*[a-z]?(\d{1,3})\s*[/\-]\s*(\d{1,3})\s*[\)\]]?/);
+  if (padraoBarra) {
+    const atual = parseInt(padraoBarra[1], 10);
+    const total = parseInt(padraoBarra[2], 10);
+    if (atual > 0 && total > 0 && atual <= total && total <= 60) {
+      return { atual, total };
+    }
+  }
+
+  return null;
+}
+
 export function AcoesLancamentoCartao({ lancamento }: Props) {
   const [salvando, setSalvando] = useState(false);
   const [vincularOpen, setVincularOpen] = useState(false);
-  const [criarOpen, setCriarOpen] = useState(false);
-  
-  const [parcelas, setParcelas] = useState(1);
-  const [gerarTodas, setGerarTodas] = useState(false);
   const qc = useQueryClient();
 
-  // Se lançamento já tem ação tomada (conciliado, virou_despesa, ignorado),
-  // mostra status + botão "Reativar"
   const finalizado = lancamento.status !== "pendente";
 
-  async function handleCriarDespesa() {
+  async function handleCriarContaAuto() {
     setSalvando(true);
     try {
+      const padrao = detectarParcelas(lancamento.descricao || "");
+      const totalParcelas = padrao ? padrao.total : 1;
+      const gerarTodas = padrao !== null && padrao.atual === 1 && padrao.total > 1;
+
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data: resultado, error } = await (supabase as any).rpc(
         "criar_despesa_de_lancamento",
         {
           p_lancamento_id: lancamento.id,
-          p_total_parcelas: parcelas,
-          p_gerar_todas: parcelas > 1 ? gerarTodas : false,
+          p_total_parcelas: gerarTodas ? totalParcelas : 1,
+          p_gerar_todas: gerarTodas,
         }
       );
       if (error) throw error;
@@ -63,15 +87,20 @@ export function AcoesLancamentoCartao({ lancamento }: Props) {
       }
       const qtd = resultado.qtd_contas_criadas || 1;
       const msg = qtd > 1
-        ? `${qtd} parcelas criadas: ${resultado.descricao} — ${formatBRL(resultado.valor)} cada`
-        : `Despesa aprovada criada: ${resultado.descricao} — ${formatBRL(resultado.valor)}`;
+        ? `Conta criada com ${qtd} parcelas: ${resultado.descricao}`
+        : padrao && padrao.atual > 1
+        ? `Parcela ${padrao.atual}/${padrao.total} criada: ${resultado.descricao}`
+        : `Conta criada: ${resultado.descricao} — ${formatBRL(resultado.valor)}`;
       toast.success(msg, { duration: 5000 });
-      setCriarOpen(false);
       qc.invalidateQueries({ queryKey: ["fatura-lancamentos"] });
       qc.invalidateQueries({ queryKey: ["faturas-cartao"] });
       qc.invalidateQueries({ queryKey: ["contas-pagar"] });
     } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
+      const msg =
+        e instanceof Error ? e.message :
+        typeof e === "object" && e !== null
+          ? ((e as { message?: string }).message ?? JSON.stringify(e))
+          : String(e);
       toast.error("Erro: " + msg);
     } finally {
       setSalvando(false);
@@ -124,7 +153,6 @@ export function AcoesLancamentoCartao({ lancamento }: Props) {
     }
   }
 
-  // Estado FINALIZADO: mostra status + reativar
   if (finalizado) {
     const cfg = STATUS_CONFIG[lancamento.status];
     if (!cfg) return null;
@@ -149,7 +177,6 @@ export function AcoesLancamentoCartao({ lancamento }: Props) {
     );
   }
 
-  // Estado PENDENTE: 2 botões diretos
   return (
     <>
       <div className="flex items-center gap-1">
@@ -167,12 +194,9 @@ export function AcoesLancamentoCartao({ lancamento }: Props) {
           size="sm"
           variant="outline"
           className="h-6 px-2 text-[10px] gap-1 border-blue-300 text-blue-700 hover:bg-blue-50"
-          onClick={() => {
-            setParcelas(1);
-            setGerarTodas(false);
-            setCriarOpen(true);
-          }}
+          onClick={handleCriarContaAuto}
           disabled={salvando}
+          title="Criar conta a pagar (detecta parcelas automaticamente)"
         >
           {salvando ? <Loader2 className="h-2.5 w-2.5 animate-spin" /> : <Plus className="h-2.5 w-2.5" />}
           Criar Conta
@@ -195,79 +219,6 @@ export function AcoesLancamentoCartao({ lancamento }: Props) {
         onOpenChange={setVincularOpen}
         lancamento={lancamento}
       />
-
-      <Dialog open={criarOpen} onOpenChange={setCriarOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Criar conta a pagar</DialogTitle>
-          </DialogHeader>
-
-          <div className="space-y-4">
-            <div className="rounded-md border bg-muted/40 p-3">
-              <div className="text-sm font-medium">{lancamento.descricao}</div>
-              <div className="text-lg font-bold text-foreground">{formatBRL(lancamento.valor)}</div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="parcelas-input">Parcelas</Label>
-              <Input
-                id="parcelas-input"
-                type="number"
-                min={1}
-                max={48}
-                value={parcelas}
-                onChange={(e) => setParcelas(Math.max(1, parseInt(e.target.value) || 1))}
-              />
-              <p className="text-xs text-muted-foreground">
-                Forma de pagamento: Cartão de Crédito (preenchido automaticamente)
-              </p>
-            </div>
-
-            {parcelas > 1 && (
-              <div className="rounded-md border border-blue-200 bg-blue-50 p-3 space-y-2">
-                <div className="text-sm font-medium text-blue-900">
-                  Compra parcelada em {parcelas}x — gerar todas as parcelas agora?
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant={gerarTodas ? "default" : "outline"}
-                    onClick={() => setGerarTodas(true)}
-                    className="flex-1"
-                  >
-                    Sim, gerar {parcelas} parcelas
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant={!gerarTodas ? "default" : "outline"}
-                    onClick={() => setGerarTodas(false)}
-                    className="flex-1"
-                  >
-                    Não, só essa
-                  </Button>
-                </div>
-                <p className="text-xs text-blue-800">
-                  {gerarTodas
-                    ? `${parcelas} contas serão criadas com vencimento mensal`
-                    : "Só esta parcela será criada agora — as próximas você cria conforme aparecerem nas próximas faturas"}
-                </p>
-              </div>
-            )}
-          </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setCriarOpen(false)} disabled={salvando}>
-              Cancelar
-            </Button>
-            <Button onClick={handleCriarDespesa} disabled={salvando}>
-              {salvando ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-              Criar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </>
   );
 }
