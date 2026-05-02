@@ -37,7 +37,7 @@ import { useQualidadeDadoMap } from "@/hooks/useQualidadeDadoMap";
 import { getQualidadeDadoIcon } from "@/lib/financeiro/qualidade-dado-icon";
 
 import { Repeat, CheckCircle2 } from "lucide-react";
-import { classFundoFuturo } from "@/lib/financeiro/is-vencimento-futuro";
+import { classFundoFuturo, classBordaTemporal } from "@/lib/financeiro/is-vencimento-futuro";
 import { cn } from "@/lib/utils";
 
 type Conta = {
@@ -651,6 +651,7 @@ export default function ContasPagar() {
                             key={c.id}
                             className={cn(
                               "cursor-pointer hover:bg-muted/50 transition-colors",
+                              classBordaTemporal(c.data_vencimento),
                               c.atrasada && "bg-red-50/60 hover:bg-red-50",
                               !c.atrasada && classFundoFuturo(c.data_vencimento),
                               isSel && "bg-muted/40",
