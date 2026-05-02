@@ -781,7 +781,7 @@ export default function ContasPagar() {
                               </Badge>
                             </TableCell>
                             <TableCell className="min-w-[140px]" onClick={(e) => e.stopPropagation()}>
-                              <AcoesInlineConta conta={c} />
+                              <AcoesInlineConta conta={{ ...c, email_pagamento_enviado: emailMap.get(c.id) || false }} />
                             </TableCell>
                           </TableRow>
                         );
