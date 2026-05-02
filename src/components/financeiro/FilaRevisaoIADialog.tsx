@@ -36,17 +36,7 @@ type CandidatoNF = {
   nf_serie?: string;
 };
 
-type CandidatoCategoria = {
-  categoria_id: string;
-  categoria_codigo: string;
-  categoria_nome: string;
-  score: number;
-  motivo: string;
-  amostra_descricao: string;
-  amostra_count: number;
-};
-
-type SimilarCategoria = {
+type Similar = {
   conta_id: string;
   descricao: string;
   valor: number;
@@ -55,8 +45,19 @@ type SimilarCategoria = {
   cnpj: string | null;
   categoria_codigo: string;
   categoria_nome: string;
-  origem: string;
-  similaridade: number;
+  match_score: number;
+  match_motivo: string;
+};
+
+type CandidatoCategoria = {
+  categoria_id: string;
+  categoria_codigo: string;
+  categoria_nome: string;
+  score: number;
+  motivo: string;
+  amostra_descricao: string;
+  amostra_count: number;
+  similares: Similar[];
 };
 
 interface Props {
