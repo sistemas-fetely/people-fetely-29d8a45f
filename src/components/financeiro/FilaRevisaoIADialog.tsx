@@ -176,21 +176,28 @@ export default function FilaRevisaoIADialog({ open, onClose }: Props) {
       }
       if (atual.parcela_grupo_id) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await (supabase as any)
+        const { error: errUpd } = await (supabase as any)
           .from("contas_pagar_receber")
           .update({ tem_sugestao_nf: false })
           .eq("parcela_grupo_id", atual.parcela_grupo_id);
+        if (errUpd) throw errUpd;
       } else {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await (supabase as any)
+        const { error: errUpd } = await (supabase as any)
           .from("contas_pagar_receber")
           .update({ tem_sugestao_nf: false })
           .eq("id", atual.conta_id);
+        if (errUpd) throw errUpd;
       }
       toast.success("NF vinculada");
       avancar();
     } catch (e) {
-      toast.error("Erro: " + (e instanceof Error ? e.message : String(e)));
+      const msg =
+        e instanceof Error ? e.message :
+        typeof e === "object" && e !== null
+          ? ((e as { message?: string }).message ?? JSON.stringify(e))
+          : String(e);
+      toast.error("Erro: " + msg);
     } finally {
       setResolvendo(false);
     }
@@ -201,18 +208,24 @@ export default function FilaRevisaoIADialog({ open, onClose }: Props) {
     setResolvendo(true);
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await (supabase as any)
+      const { error } = await (supabase as any)
         .from("contas_pagar_receber")
         .update({
-          conta_id: catId,
+          plano_conta_id: catId,
           categoria_sugerida_ia: false,
           updated_at: new Date().toISOString(),
         })
         .eq("id", atual.conta_id);
+      if (error) throw error;
       toast.success("Categoria aplicada");
       avancar();
     } catch (e) {
-      toast.error("Erro: " + (e instanceof Error ? e.message : String(e)));
+      const msg =
+        e instanceof Error ? e.message :
+        typeof e === "object" && e !== null
+          ? ((e as { message?: string }).message ?? JSON.stringify(e))
+          : String(e);
+      toast.error("Erro: " + msg);
     } finally {
       setResolvendo(false);
     }
