@@ -908,7 +908,7 @@ export default function CaixaBanco() {
         </div>
 
         {/* SEÇÃO 2 — Qualidade */}
-        <div className="border border-emerald-100 bg-emerald-50/20 rounded-xl p-2">
+        <div className="border border-emerald-300 bg-emerald-50/20 rounded-xl p-2">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2">
             <CardKPIDuplo
               titulo="NF"
