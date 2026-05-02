@@ -38,3 +38,33 @@ export function classFundoFuturo(dataVencimento: string | null | undefined): str
     ? "bg-sky-50/60 dark:bg-sky-950/20 hover:bg-sky-100/60 dark:hover:bg-sky-900/30"
     : "";
 }
+
+/**
+ * Retorna classe Tailwind de borda esquerda colorida representando
+ * a janela temporal da data de vencimento:
+ *   - passado (antes do mês atual): cinza
+ *   - atual (mês corrente): âmbar
+ *   - futuro (próximo mês ou depois): azul
+ * Usar em <TableRow className={cn(..., classBordaTemporal(c.data_vencimento))}>
+ */
+export function classBordaTemporal(dataVencimento: string | null | undefined): string {
+  if (!dataVencimento) return "";
+  const venc = new Date(
+    dataVencimento.length === 10 ? dataVencimento + "T00:00:00" : dataVencimento
+  );
+  if (isNaN(venc.getTime())) return "";
+  venc.setHours(0, 0, 0, 0);
+
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+  const inicioMesAtual = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+  const inicioProximoMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 1);
+
+  if (venc.getTime() < inicioMesAtual.getTime()) {
+    return "border-l-4 border-l-zinc-300";
+  }
+  if (venc.getTime() >= inicioProximoMes.getTime()) {
+    return "border-l-4 border-l-sky-400";
+  }
+  return "border-l-4 border-l-amber-400";
+}
