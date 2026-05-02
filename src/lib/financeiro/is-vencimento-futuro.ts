@@ -47,7 +47,12 @@ export function classFundoFuturo(dataVencimento: string | null | undefined): str
  *   - futuro (próximo mês ou depois): azul
  * Usar em <TableRow className={cn(..., classBordaTemporal(c.data_vencimento))}>
  */
-export function classBordaTemporal(dataVencimento: string | null | undefined): string {
+export function classBordaTemporal(
+  dataVencimento: string | null | undefined,
+  atrasada?: boolean | null,
+): string {
+  // Atrasada tem prioridade máxima
+  if (atrasada) return "border-l-4 border-l-red-500";
   if (!dataVencimento) return "";
   const venc = new Date(
     dataVencimento.length === 10 ? dataVencimento + "T00:00:00" : dataVencimento
