@@ -826,8 +826,8 @@ export default function CaixaBanco() {
             valor={`${kpis.qualidadeNF.pct}%`}
             sublinha={`${kpis.qualidadeNF.atendidos}/${kpis.qualidadeNF.total} no total`}
             cor="fetely"
-            ativo={filtroOp === "qualidade_nf"}
-            onClick={() => setFiltroOp(filtroOp === "qualidade_nf" ? "todos" : "qualidade_nf")}
+            ativo={filtroQual === "qualidade_nf"}
+            onClick={() => setFiltroQual(filtroQual === "qualidade_nf" ? "todos" : "qualidade_nf")}
             icone={Receipt}
           />
           <CardKPI
@@ -835,8 +835,8 @@ export default function CaixaBanco() {
             valor={`${kpis.qualidadeCategoria.pct}%`}
             sublinha={`${kpis.qualidadeCategoria.atendidos}/${kpis.qualidadeCategoria.total} no total`}
             cor="fetely"
-            ativo={filtroOp === "qualidade_categoria"}
-            onClick={() => setFiltroOp(filtroOp === "qualidade_categoria" ? "todos" : "qualidade_categoria")}
+            ativo={filtroQual === "qualidade_categoria"}
+            onClick={() => setFiltroQual(filtroQual === "qualidade_categoria" ? "todos" : "qualidade_categoria")}
             icone={FolderTree}
           />
           <CardKPI
@@ -844,8 +844,8 @@ export default function CaixaBanco() {
             valor={`${kpis.qualidadeDoc.pct}%`}
             sublinha={`${kpis.qualidadeDoc.atendidos}/${kpis.qualidadeDoc.total} no total`}
             cor="fetely"
-            ativo={filtroOp === "qualidade_doc"}
-            onClick={() => setFiltroOp(filtroOp === "qualidade_doc" ? "todos" : "qualidade_doc")}
+            ativo={filtroQual === "qualidade_doc"}
+            onClick={() => setFiltroQual(filtroQual === "qualidade_doc" ? "todos" : "qualidade_doc")}
             icone={Paperclip}
           />
           <CardKPI
@@ -853,8 +853,8 @@ export default function CaixaBanco() {
             valor={`${kpis.qualidadeVinculado.pct}%`}
             sublinha={`${kpis.qualidadeVinculado.atendidos}/${kpis.qualidadeVinculado.total} no total`}
             cor="fetely"
-            ativo={filtroOp === "qualidade_vinculado"}
-            onClick={() => setFiltroOp(filtroOp === "qualidade_vinculado" ? "todos" : "qualidade_vinculado")}
+            ativo={filtroQual === "qualidade_vinculado"}
+            onClick={() => setFiltroQual(filtroQual === "qualidade_vinculado" ? "todos" : "qualidade_vinculado")}
             icone={Link2}
           />
           <CardKPI
@@ -862,8 +862,8 @@ export default function CaixaBanco() {
             valor={`${kpis.qualidadeConciliado.pct}%`}
             sublinha={`${kpis.qualidadeConciliado.atendidos}/${kpis.qualidadeConciliado.total} no total`}
             cor="fetely"
-            ativo={filtroOp === "qualidade_conciliado"}
-            onClick={() => setFiltroOp(filtroOp === "qualidade_conciliado" ? "todos" : "qualidade_conciliado")}
+            ativo={filtroQual === "qualidade_conciliado"}
+            onClick={() => setFiltroQual(filtroQual === "qualidade_conciliado" ? "todos" : "qualidade_conciliado")}
             icone={CircleDollarSign}
           />
         </div>
