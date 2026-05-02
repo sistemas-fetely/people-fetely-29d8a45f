@@ -651,8 +651,7 @@ export default function ContasPagar() {
                             key={c.id}
                             className={cn(
                               "cursor-pointer hover:bg-muted/50 transition-colors",
-                              classBordaTemporal(c.data_vencimento),
-                              c.atrasada && "bg-red-50/60 hover:bg-red-50",
+                              classBordaTemporal(c.data_vencimento, c.atrasada),
                               !c.atrasada && classFundoFuturo(c.data_vencimento),
                               isSel && "bg-muted/40",
                             )}
