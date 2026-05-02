@@ -28,7 +28,6 @@ import {
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
-import { cn } from "@/lib/utils";
 
 // Tipo mínimo necessário das contas selecionadas
 export interface ContaParaEnvio {
