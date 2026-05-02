@@ -23,6 +23,7 @@ import { template as propostaCandidato } from './proposta-candidato.tsx'
 import { template as cadastroDevolvido } from './cadastro-devolvido.tsx'
 import { template as recuperacaoSenha } from './recuperacao-senha.tsx'
 import { template as pagamentoSolicitacao } from './pagamento-solicitacao.tsx'
+import { template as pacoteFiscalContador } from './pacote-fiscal-contador.tsx'
 
 export const TEMPLATES: Record<string, TemplateEntry> = {
   'convite-cadastro': conviteCadastro,
@@ -39,4 +40,5 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'cadastro-devolvido': cadastroDevolvido,
   'recuperacao-senha': recuperacaoSenha,
   'pagamento-solicitacao': pagamentoSolicitacao,
+  'pacote-fiscal-contador': pacoteFiscalContador,
 }
