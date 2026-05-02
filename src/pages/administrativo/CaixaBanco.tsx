@@ -248,7 +248,10 @@ type FiltroOperacional =
   | "mes_atual"
   | "proximo_mes"
   | "mes_anterior"
-  | "sem_conciliacao"
+  | "sem_conciliacao";
+
+type FiltroQualidade =
+  | "todos"
   | "qualidade_nf"
   | "qualidade_categoria"
   | "qualidade_doc"
@@ -335,6 +338,7 @@ export default function CaixaBanco() {
   const [contaIdDrawer, setContaIdDrawer] = useState<string | null>(null);
   const [mostrarSoInconsistentes, setMostrarSoInconsistentes] = useState(false);
   const [filtroOp, setFiltroOp] = useState<FiltroOperacional>("todos");
+  const [filtroQual, setFiltroQual] = useState<FiltroQualidade>("todos");
   const [aplicandoIA, setAplicandoIA] = useState(false);
   const [sugestaoMovId, setSugestaoMovId] = useState<string | null>(null);
   const [filaIAOpen, setFilaIAOpen] = useState(false);
@@ -633,19 +637,25 @@ export default function CaixaBanco() {
             !l.conciliado_em
           );
         });
-      } else if (filtroOp === "qualidade_nf") {
+      }
+    }
+
+    if (filtroQual !== "todos") {
+      const flagsDocQ = (l: Lancamento) =>
+        statusFlagsMap.get(l.id)?.tem_doc_pendente === true;
+      if (filtroQual === "qualidade_nf") {
         list = list.filter((l) => getQualidadeNF(l, nfMap).cor === "vermelho");
-      } else if (filtroOp === "qualidade_categoria") {
+      } else if (filtroQual === "qualidade_categoria") {
         list = list.filter((l) => getQualidadeCategoria(l, nfMap).cor === "vermelho");
-      } else if (filtroOp === "qualidade_doc") {
-        list = list.filter(flagsDoc);
-      } else if (filtroOp === "qualidade_vinculado") {
+      } else if (filtroQual === "qualidade_doc") {
+        list = list.filter(flagsDocQ);
+      } else if (filtroQual === "qualidade_vinculado") {
         list = list.filter((l) =>
           !l.vinculada_cartao
           && l.origem_view !== "cartao_lancamento"
           && !l.movimentacao_bancaria_id
         );
-      } else if (filtroOp === "qualidade_conciliado") {
+      } else if (filtroQual === "qualidade_conciliado") {
         list = list.filter((l) =>
           !l.conciliado_em && l.status_caixa !== "conciliado"
         );
@@ -653,7 +663,7 @@ export default function CaixaBanco() {
     }
 
     return list;
-  }, [lancamentosEnriched, statusFilter, contaBancariaFilter, busca, mapParceiros, mostrarSoInconsistentes, filtroOp, nfMap, statusFlagsMap]);
+  }, [lancamentosEnriched, statusFilter, contaBancariaFilter, busca, mapParceiros, mostrarSoInconsistentes, filtroOp, filtroQual, nfMap, statusFlagsMap]);
 
   // KPIs operacionais (8 cards)
   const kpis = useMemo(() => {
