@@ -46,6 +46,19 @@ type CandidatoCategoria = {
   amostra_count: number;
 };
 
+type SimilarCategoria = {
+  conta_id: string;
+  descricao: string;
+  valor: number;
+  data_vencimento: string;
+  parceiro_nome: string | null;
+  cnpj: string | null;
+  categoria_codigo: string;
+  categoria_nome: string;
+  origem: string;
+  similaridade: number;
+};
+
 interface Props {
   open: boolean;
   onClose: () => void;
@@ -122,6 +135,21 @@ export default function FilaRevisaoIADialog({ open, onClose }: Props) {
       );
       if (error) throw error;
       return (data || []) as CandidatoCategoria[];
+    },
+  });
+
+  const { data: similares = [] } = useQuery({
+    queryKey: ["ia-similares-categoria", atual?.conta_id],
+    enabled: !!atual && atual.tipo === "categoria",
+    queryFn: async () => {
+      if (!atual) return [];
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase as any).rpc(
+        "ia_listar_similares_categoria",
+        { p_conta_id: atual.conta_id },
+      );
+      if (error) throw error;
+      return (data || []) as SimilarCategoria[];
     },
   });
 
@@ -259,6 +287,44 @@ export default function FilaRevisaoIADialog({ open, onClose }: Props) {
                   : formatBRL(atual.valor_referencia)}
               </div>
             </div>
+
+            {/* Bloco comparativo: lançamentos similares (banana com banana) */}
+            {atual.tipo === "categoria" && similares.length > 0 && (
+              <div className="border rounded-md p-3 bg-blue-50/40 border-blue-200">
+                <div className="flex items-center gap-1.5 text-xs font-medium text-blue-900 mb-2">
+                  <Sparkles className="h-3 w-3" />
+                  Lançamentos similares que a IA usou de base ({similares.length})
+                </div>
+                <div className="space-y-1.5">
+                  {similares.map((s) => (
+                    <div
+                      key={s.conta_id}
+                      className="text-xs bg-white border border-blue-100 rounded px-2 py-1.5"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <div className="font-medium truncate">{s.descricao}</div>
+                          <div className="text-[10px] text-muted-foreground mt-0.5">
+                            {formatBRL(Number(s.valor))}
+                            {" · "}
+                            {new Date(s.data_vencimento).toLocaleDateString("pt-BR")}
+                            {s.parceiro_nome && ` · ${s.parceiro_nome}`}
+                          </div>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <div className="font-mono text-[10px] text-muted-foreground">
+                            {s.categoria_codigo}
+                          </div>
+                          <div className="text-[10px] font-medium text-emerald-700 max-w-[140px] truncate">
+                            {s.categoria_nome}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Candidatos */}
             <div className="space-y-2">

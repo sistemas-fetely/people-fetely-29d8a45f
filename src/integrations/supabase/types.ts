@@ -10042,6 +10042,21 @@ export type Database = {
           valor_nf: number
         }[]
       }
+      ia_listar_similares_categoria: {
+        Args: { p_conta_id: string }
+        Returns: {
+          categoria_codigo: string
+          categoria_nome: string
+          cnpj: string
+          conta_id: string
+          data_vencimento: string
+          descricao: string
+          origem: string
+          parceiro_nome: string
+          similaridade: number
+          valor: number
+        }[]
+      }
       ignorar_lancamento: { Args: { p_lancamento_id: string }; Returns: Json }
       ignorar_ofx: { Args: { p_ofx_id: string }; Returns: Json }
       lancar_ofx_como_movimentacao: {
