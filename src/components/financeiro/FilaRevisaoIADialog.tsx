@@ -36,17 +36,7 @@ type CandidatoNF = {
   nf_serie?: string;
 };
 
-type CandidatoCategoria = {
-  categoria_id: string;
-  categoria_codigo: string;
-  categoria_nome: string;
-  score: number;
-  motivo: string;
-  amostra_descricao: string;
-  amostra_count: number;
-};
-
-type SimilarCategoria = {
+type Similar = {
   conta_id: string;
   descricao: string;
   valor: number;
@@ -55,8 +45,19 @@ type SimilarCategoria = {
   cnpj: string | null;
   categoria_codigo: string;
   categoria_nome: string;
-  origem: string;
-  similaridade: number;
+  match_score: number;
+  match_motivo: string;
+};
+
+type CandidatoCategoria = {
+  categoria_id: string;
+  categoria_codigo: string;
+  categoria_nome: string;
+  score: number;
+  motivo: string;
+  amostra_descricao: string;
+  amostra_count: number;
+  similares: Similar[];
 };
 
 interface Props {
@@ -138,20 +139,7 @@ export default function FilaRevisaoIADialog({ open, onClose }: Props) {
     },
   });
 
-  const { data: similares = [] } = useQuery({
-    queryKey: ["ia-similares-categoria", atual?.conta_id],
-    enabled: !!atual && atual.tipo === "categoria",
-    queryFn: async () => {
-      if (!atual) return [];
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data, error } = await (supabase as any).rpc(
-        "ia_listar_similares_categoria",
-        { p_conta_id: atual.conta_id },
-      );
-      if (error) throw error;
-      return (data || []) as SimilarCategoria[];
-    },
-  });
+
 
   function avancar() {
     if (idx + 1 >= fila.length) {
@@ -288,44 +276,6 @@ export default function FilaRevisaoIADialog({ open, onClose }: Props) {
               </div>
             </div>
 
-            {/* Bloco comparativo: lançamentos similares (banana com banana) */}
-            {atual.tipo === "categoria" && similares.length > 0 && (
-              <div className="border rounded-md p-3 bg-blue-50/40 border-blue-200">
-                <div className="flex items-center gap-1.5 text-xs font-medium text-blue-900 mb-2">
-                  <Sparkles className="h-3 w-3" />
-                  Lançamentos similares que a IA usou de base ({similares.length})
-                </div>
-                <div className="space-y-1.5">
-                  {similares.map((s) => (
-                    <div
-                      key={s.conta_id}
-                      className="text-xs bg-white border border-blue-100 rounded px-2 py-1.5"
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="min-w-0 flex-1">
-                          <div className="font-medium truncate">{s.descricao}</div>
-                          <div className="text-[10px] text-muted-foreground mt-0.5">
-                            {formatBRL(Number(s.valor))}
-                            {" · "}
-                            {new Date(s.data_vencimento).toLocaleDateString("pt-BR")}
-                            {s.parceiro_nome && ` · ${s.parceiro_nome}`}
-                          </div>
-                        </div>
-                        <div className="text-right shrink-0">
-                          <div className="font-mono text-[10px] text-muted-foreground">
-                            {s.categoria_codigo}
-                          </div>
-                          <div className="text-[10px] font-medium text-emerald-700 max-w-[140px] truncate">
-                            {s.categoria_nome}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
             {/* Candidatos */}
             <div className="space-y-2">
               {atual.tipo === "nf" &&
@@ -438,6 +388,38 @@ export default function FilaRevisaoIADialog({ open, onClose }: Props) {
                           <div className="text-[11px] text-muted-foreground italic truncate">
                             ex: "{c.amostra_descricao}"
                           </div>
+                        )}
+                        {c.similares && c.similares.length > 0 && (
+                          <details className="mt-2">
+                            <summary className="text-[11px] text-blue-700 cursor-pointer hover:underline select-none">
+                              Ver {c.similares.length} lançamento{c.similares.length > 1 ? "s" : ""} similar{c.similares.length > 1 ? "es" : ""} que a IA usou de base
+                            </summary>
+                            <div className="mt-2 space-y-1.5 pl-2 border-l-2 border-blue-200">
+                              {c.similares.map((s) => (
+                                <div
+                                  key={s.conta_id}
+                                  className="text-[11px] bg-blue-50/50 rounded px-2 py-1.5"
+                                >
+                                  <div className="flex items-start justify-between gap-2">
+                                    <div className="min-w-0 flex-1">
+                                      <div className="font-medium truncate">{s.descricao}</div>
+                                      <div className="text-[10px] text-muted-foreground mt-0.5">
+                                        {formatBRL(Number(s.valor))}
+                                        {" · "}
+                                        {new Date(s.data_vencimento).toLocaleDateString("pt-BR")}
+                                        {s.parceiro_nome && ` · ${s.parceiro_nome}`}
+                                      </div>
+                                    </div>
+                                    <div className="text-right shrink-0">
+                                      <span className="inline-flex items-center rounded-full bg-blue-100 text-blue-800 px-1.5 py-0.5 text-[9px] font-semibold">
+                                        {s.match_motivo} {s.match_score}%
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </details>
                         )}
                       </div>
                       <Button
