@@ -61,6 +61,8 @@ type Conta = {
   nf_tipo: string | null;
   nf_fornecedor: string | null;
   mov_conciliada: boolean | null;
+  movimentacao_bancaria_id: string | null;
+  nf_numero_repositorio: string | null;
   // Joins
   plano_contas?: { codigo?: string | null; nome: string } | null;
   parceiros_comerciais?: { razao_social: string | null } | null;
@@ -108,6 +110,26 @@ export default function ContasPagar() {
         .order("data_vencimento", { ascending: true });
       if (error) throw error;
       return data as unknown as Conta[];
+    },
+  });
+
+  // Email enviado vem da tabela base (não está na view consolidada)
+  const { data: emailMap = new Map<string, boolean>() } = useQuery({
+    queryKey: ["contas-pagar-email-map"],
+    enabled: !!data && data.length > 0,
+    queryFn: async () => {
+      const ids = (data || []).map((c) => c.id).filter(Boolean) as string[];
+      if (ids.length === 0) return new Map<string, boolean>();
+      const { data: rows, error } = await supabase
+        .from("contas_pagar_receber")
+        .select("id, email_pagamento_enviado")
+        .in("id", ids);
+      if (error) throw error;
+      const m = new Map<string, boolean>();
+      (rows || []).forEach((r: { id: string; email_pagamento_enviado: boolean | null }) => {
+        m.set(r.id, !!r.email_pagamento_enviado);
+      });
+      return m;
     },
   });
 
@@ -759,7 +781,7 @@ export default function ContasPagar() {
                               </Badge>
                             </TableCell>
                             <TableCell className="min-w-[140px]" onClick={(e) => e.stopPropagation()}>
-                              <AcoesInlineConta conta={c} />
+                              <AcoesInlineConta conta={{ ...c, email_pagamento_enviado: emailMap.get(c.id) || false }} />
                             </TableCell>
                           </TableRow>
                         );
