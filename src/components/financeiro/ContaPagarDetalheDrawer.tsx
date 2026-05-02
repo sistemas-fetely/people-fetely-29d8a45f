@@ -552,6 +552,18 @@ export default function ContaPagarDetalheDrawer({
               origem={conta.origem}
             />
 
+            <NfAplicavelToggle
+              contaId={conta.id}
+              nfAplicavel={conta.nf_aplicavel ?? true}
+              motivo={conta.nf_aplicavel_motivo ?? null}
+              onSaved={() => {
+                qc.invalidateQueries({
+                  queryKey: ["conta-pagar-detalhe", conta.id],
+                });
+                qc.invalidateQueries({ queryKey: ["docs-envio-agrupados"] });
+              }}
+            />
+
             <BuscarNFStageDialog
               open={buscarNFOpen}
               onOpenChange={setBuscarNFOpen}
