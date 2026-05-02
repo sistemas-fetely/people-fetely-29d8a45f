@@ -1476,6 +1476,13 @@ export type Database = {
             foreignKeyName: "compromissos_parcelados_nf_origem_id_fkey"
             columns: ["nf_origem_id"]
             isOneToOne: false
+            referencedRelation: "contas_pagar_receber_ativas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compromissos_parcelados_nf_origem_id_fkey"
+            columns: ["nf_origem_id"]
+            isOneToOne: false
             referencedRelation: "vw_contas_pagar_consolidado"
             referencedColumns: ["id"]
           },
@@ -1829,6 +1836,13 @@ export type Database = {
             foreignKeyName: "contas_pagar_documentos_conta_id_fkey"
             columns: ["conta_id"]
             isOneToOne: false
+            referencedRelation: "contas_pagar_receber_ativas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contas_pagar_documentos_conta_id_fkey"
+            columns: ["conta_id"]
+            isOneToOne: false
             referencedRelation: "vw_contas_pagar_consolidado"
             referencedColumns: ["id"]
           },
@@ -1882,6 +1896,13 @@ export type Database = {
             columns: ["conta_id"]
             isOneToOne: false
             referencedRelation: "contas_pagar_receber"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contas_pagar_historico_conta_id_fkey"
+            columns: ["conta_id"]
+            isOneToOne: false
+            referencedRelation: "contas_pagar_receber_ativas"
             referencedColumns: ["id"]
           },
           {
@@ -1974,6 +1995,13 @@ export type Database = {
             foreignKeyName: "contas_pagar_itens_conta_id_fkey"
             columns: ["conta_id"]
             isOneToOne: false
+            referencedRelation: "contas_pagar_receber_ativas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contas_pagar_itens_conta_id_fkey"
+            columns: ["conta_id"]
+            isOneToOne: false
             referencedRelation: "vw_contas_pagar_consolidado"
             referencedColumns: ["id"]
           },
@@ -2016,6 +2044,8 @@ export type Database = {
           data_compra: string | null
           data_pagamento: string | null
           data_vencimento: string
+          deleted_at: string | null
+          deleted_por: string | null
           descricao: string
           docs_status: string | null
           editado_em: string | null
@@ -2091,6 +2121,8 @@ export type Database = {
           data_compra?: string | null
           data_pagamento?: string | null
           data_vencimento: string
+          deleted_at?: string | null
+          deleted_por?: string | null
           descricao: string
           docs_status?: string | null
           editado_em?: string | null
@@ -2166,6 +2198,8 @@ export type Database = {
           data_compra?: string | null
           data_pagamento?: string | null
           data_vencimento?: string
+          deleted_at?: string | null
+          deleted_por?: string | null
           descricao?: string
           docs_status?: string | null
           editado_em?: string | null
@@ -2284,6 +2318,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      contas_pagar_receber_audit_delete: {
+        Row: {
+          apagado_em: string
+          apagado_por: string | null
+          conta_id: string
+          id: string
+          motivo: string | null
+          snapshot: Json
+        }
+        Insert: {
+          apagado_em?: string
+          apagado_por?: string | null
+          conta_id: string
+          id?: string
+          motivo?: string | null
+          snapshot: Json
+        }
+        Update: {
+          apagado_em?: string
+          apagado_por?: string | null
+          conta_id?: string
+          id?: string
+          motivo?: string | null
+          snapshot?: Json
+        }
+        Relationships: []
       }
       contas_receber: {
         Row: {
@@ -3724,6 +3785,13 @@ export type Database = {
             foreignKeyName: "fatura_cartao_lancamentos_conta_pagar_id_fkey"
             columns: ["conta_pagar_id"]
             isOneToOne: false
+            referencedRelation: "contas_pagar_receber_ativas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fatura_cartao_lancamentos_conta_pagar_id_fkey"
+            columns: ["conta_pagar_id"]
+            isOneToOne: false
             referencedRelation: "vw_contas_pagar_consolidado"
             referencedColumns: ["id"]
           },
@@ -3760,6 +3828,13 @@ export type Database = {
             columns: ["nf_vinculada_id"]
             isOneToOne: false
             referencedRelation: "contas_pagar_receber"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fatura_cartao_lancamentos_nf_vinculada_id_fkey"
+            columns: ["nf_vinculada_id"]
+            isOneToOne: false
+            referencedRelation: "contas_pagar_receber_ativas"
             referencedColumns: ["id"]
           },
           {
@@ -3875,6 +3950,13 @@ export type Database = {
             columns: ["conta_pagar_id"]
             isOneToOne: false
             referencedRelation: "contas_pagar_receber"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "faturas_cartao_conta_pagar_id_fkey"
+            columns: ["conta_pagar_id"]
+            isOneToOne: false
+            referencedRelation: "contas_pagar_receber_ativas"
             referencedColumns: ["id"]
           },
           {
@@ -4754,6 +4836,13 @@ export type Database = {
             foreignKeyName: "movimentacao_conta_pagar_link_conta_pagar_id_fkey"
             columns: ["conta_pagar_id"]
             isOneToOne: false
+            referencedRelation: "contas_pagar_receber_ativas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "movimentacao_conta_pagar_link_conta_pagar_id_fkey"
+            columns: ["conta_pagar_id"]
+            isOneToOne: false
             referencedRelation: "vw_contas_pagar_consolidado"
             referencedColumns: ["id"]
           },
@@ -5318,6 +5407,13 @@ export type Database = {
             columns: ["conta_pagar_id"]
             isOneToOne: false
             referencedRelation: "contas_pagar_receber"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nfs_stage_conta_pagar_id_fkey"
+            columns: ["conta_pagar_id"]
+            isOneToOne: false
+            referencedRelation: "contas_pagar_receber_ativas"
             referencedColumns: ["id"]
           },
           {
@@ -9066,6 +9162,304 @@ export type Database = {
           },
         ]
       }
+      contas_pagar_receber_ativas: {
+        Row: {
+          aprovado_em: string | null
+          aprovado_por: string | null
+          bling_id: string | null
+          canal: string | null
+          categoria_confirmada: boolean | null
+          categoria_sugerida_ia: boolean | null
+          centro_custo: string | null
+          compromisso_parcelado_id: string | null
+          compromisso_recorrente_id: string | null
+          comprovante_url: string | null
+          conciliado_em: string | null
+          conciliado_por: string | null
+          conta_id: string | null
+          created_at: string | null
+          criado_por: string | null
+          dados_bancarios_fornecedor: Json | null
+          dados_enriquecidos_qive: boolean | null
+          dados_pagamento_fornecedor: Json | null
+          data_compra: string | null
+          data_pagamento: string | null
+          data_vencimento: string | null
+          deleted_at: string | null
+          deleted_por: string | null
+          descricao: string | null
+          docs_status: string | null
+          editado_em: string | null
+          editado_por: string | null
+          email_pagamento_enviado: boolean | null
+          enviado_pagamento_em: string | null
+          enviado_pagamento_por: string | null
+          forma_pagamento: string | null
+          forma_pagamento_id: string | null
+          fornecedor_cliente: string | null
+          fornecedor_id: string | null
+          id: string | null
+          is_cartao: boolean | null
+          movimentacao_bancaria_id: string | null
+          nf_cfop: string | null
+          nf_chave_acesso: string | null
+          nf_cnpj_emitente: string | null
+          nf_data_emissao: string | null
+          nf_natureza_operacao: string | null
+          nf_ncm: string | null
+          nf_numero: string | null
+          nf_pdf_url: string | null
+          nf_serie: string | null
+          nf_stage_id: string | null
+          nf_valor_impostos: number | null
+          nf_valor_produtos: number | null
+          nf_xml_url: string | null
+          numero_parcela: number | null
+          observacao: string | null
+          observacao_pagamento: string | null
+          observacao_pagamento_manual: string | null
+          origem: string | null
+          pago_em: string | null
+          pago_em_conta_id: string | null
+          pago_por: string | null
+          parceiro_id: string | null
+          parcela_atual: number | null
+          parcela_grupo_id: string | null
+          parcelas: number | null
+          sla_aprovacao_dias: number | null
+          sla_pagamento_dias: number | null
+          status: string | null
+          tags: Json | null
+          tarefa_id: string | null
+          tem_sugestao_nf: boolean | null
+          tipo: string | null
+          total_parcelas: number | null
+          unidade: string | null
+          updated_at: string | null
+          valor: number | null
+          valor_original_item: number | null
+          valor_pago: number | null
+        }
+        Insert: {
+          aprovado_em?: string | null
+          aprovado_por?: string | null
+          bling_id?: string | null
+          canal?: string | null
+          categoria_confirmada?: boolean | null
+          categoria_sugerida_ia?: boolean | null
+          centro_custo?: string | null
+          compromisso_parcelado_id?: string | null
+          compromisso_recorrente_id?: string | null
+          comprovante_url?: string | null
+          conciliado_em?: string | null
+          conciliado_por?: string | null
+          conta_id?: string | null
+          created_at?: string | null
+          criado_por?: string | null
+          dados_bancarios_fornecedor?: Json | null
+          dados_enriquecidos_qive?: boolean | null
+          dados_pagamento_fornecedor?: Json | null
+          data_compra?: string | null
+          data_pagamento?: string | null
+          data_vencimento?: string | null
+          deleted_at?: string | null
+          deleted_por?: string | null
+          descricao?: string | null
+          docs_status?: string | null
+          editado_em?: string | null
+          editado_por?: string | null
+          email_pagamento_enviado?: boolean | null
+          enviado_pagamento_em?: string | null
+          enviado_pagamento_por?: string | null
+          forma_pagamento?: string | null
+          forma_pagamento_id?: string | null
+          fornecedor_cliente?: string | null
+          fornecedor_id?: string | null
+          id?: string | null
+          is_cartao?: boolean | null
+          movimentacao_bancaria_id?: string | null
+          nf_cfop?: string | null
+          nf_chave_acesso?: string | null
+          nf_cnpj_emitente?: string | null
+          nf_data_emissao?: string | null
+          nf_natureza_operacao?: string | null
+          nf_ncm?: string | null
+          nf_numero?: string | null
+          nf_pdf_url?: string | null
+          nf_serie?: string | null
+          nf_stage_id?: string | null
+          nf_valor_impostos?: number | null
+          nf_valor_produtos?: number | null
+          nf_xml_url?: string | null
+          numero_parcela?: number | null
+          observacao?: string | null
+          observacao_pagamento?: string | null
+          observacao_pagamento_manual?: string | null
+          origem?: string | null
+          pago_em?: string | null
+          pago_em_conta_id?: string | null
+          pago_por?: string | null
+          parceiro_id?: string | null
+          parcela_atual?: number | null
+          parcela_grupo_id?: string | null
+          parcelas?: number | null
+          sla_aprovacao_dias?: number | null
+          sla_pagamento_dias?: number | null
+          status?: string | null
+          tags?: Json | null
+          tarefa_id?: string | null
+          tem_sugestao_nf?: boolean | null
+          tipo?: string | null
+          total_parcelas?: number | null
+          unidade?: string | null
+          updated_at?: string | null
+          valor?: number | null
+          valor_original_item?: number | null
+          valor_pago?: number | null
+        }
+        Update: {
+          aprovado_em?: string | null
+          aprovado_por?: string | null
+          bling_id?: string | null
+          canal?: string | null
+          categoria_confirmada?: boolean | null
+          categoria_sugerida_ia?: boolean | null
+          centro_custo?: string | null
+          compromisso_parcelado_id?: string | null
+          compromisso_recorrente_id?: string | null
+          comprovante_url?: string | null
+          conciliado_em?: string | null
+          conciliado_por?: string | null
+          conta_id?: string | null
+          created_at?: string | null
+          criado_por?: string | null
+          dados_bancarios_fornecedor?: Json | null
+          dados_enriquecidos_qive?: boolean | null
+          dados_pagamento_fornecedor?: Json | null
+          data_compra?: string | null
+          data_pagamento?: string | null
+          data_vencimento?: string | null
+          deleted_at?: string | null
+          deleted_por?: string | null
+          descricao?: string | null
+          docs_status?: string | null
+          editado_em?: string | null
+          editado_por?: string | null
+          email_pagamento_enviado?: boolean | null
+          enviado_pagamento_em?: string | null
+          enviado_pagamento_por?: string | null
+          forma_pagamento?: string | null
+          forma_pagamento_id?: string | null
+          fornecedor_cliente?: string | null
+          fornecedor_id?: string | null
+          id?: string | null
+          is_cartao?: boolean | null
+          movimentacao_bancaria_id?: string | null
+          nf_cfop?: string | null
+          nf_chave_acesso?: string | null
+          nf_cnpj_emitente?: string | null
+          nf_data_emissao?: string | null
+          nf_natureza_operacao?: string | null
+          nf_ncm?: string | null
+          nf_numero?: string | null
+          nf_pdf_url?: string | null
+          nf_serie?: string | null
+          nf_stage_id?: string | null
+          nf_valor_impostos?: number | null
+          nf_valor_produtos?: number | null
+          nf_xml_url?: string | null
+          numero_parcela?: number | null
+          observacao?: string | null
+          observacao_pagamento?: string | null
+          observacao_pagamento_manual?: string | null
+          origem?: string | null
+          pago_em?: string | null
+          pago_em_conta_id?: string | null
+          pago_por?: string | null
+          parceiro_id?: string | null
+          parcela_atual?: number | null
+          parcela_grupo_id?: string | null
+          parcelas?: number | null
+          sla_aprovacao_dias?: number | null
+          sla_pagamento_dias?: number | null
+          status?: string | null
+          tags?: Json | null
+          tarefa_id?: string | null
+          tem_sugestao_nf?: boolean | null
+          tipo?: string | null
+          total_parcelas?: number | null
+          unidade?: string | null
+          updated_at?: string | null
+          valor?: number | null
+          valor_original_item?: number | null
+          valor_pago?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contas_pagar_receber_compromisso_parcelado_id_fkey"
+            columns: ["compromisso_parcelado_id"]
+            isOneToOne: false
+            referencedRelation: "compromissos_parcelados"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contas_pagar_receber_compromisso_recorrente_id_fkey"
+            columns: ["compromisso_recorrente_id"]
+            isOneToOne: false
+            referencedRelation: "compromissos_recorrentes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contas_pagar_receber_conta_id_fkey"
+            columns: ["conta_id"]
+            isOneToOne: false
+            referencedRelation: "plano_contas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contas_pagar_receber_forma_pagamento_id_fkey"
+            columns: ["forma_pagamento_id"]
+            isOneToOne: false
+            referencedRelation: "formas_pagamento"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contas_pagar_receber_movimentacao_bancaria_id_fkey"
+            columns: ["movimentacao_bancaria_id"]
+            isOneToOne: false
+            referencedRelation: "movimentacoes_bancarias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contas_pagar_receber_nf_stage_id_fkey"
+            columns: ["nf_stage_id"]
+            isOneToOne: false
+            referencedRelation: "nfs_stage"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contas_pagar_receber_nf_stage_id_fkey"
+            columns: ["nf_stage_id"]
+            isOneToOne: false
+            referencedRelation: "vw_nfs_stage_completude"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contas_pagar_receber_pago_em_conta_id_fkey"
+            columns: ["pago_em_conta_id"]
+            isOneToOne: false
+            referencedRelation: "contas_bancarias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contas_pagar_receber_parceiro_id_fkey"
+            columns: ["parceiro_id"]
+            isOneToOne: false
+            referencedRelation: "parceiros_comerciais"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       kpis_nf_pj_mensal: {
         Row: {
           despesa_variavel: number | null
@@ -9587,7 +9981,10 @@ export type Database = {
       }
     }
     Functions: {
-      apagar_conta_pagar: { Args: { p_id: string }; Returns: Json }
+      apagar_conta_pagar: {
+        Args: { p_apagar_grupo_inteiro?: boolean; p_id: string }
+        Returns: Json
+      }
       aplicar_ia_categoria_em_massa: { Args: never; Returns: Json }
       aplicar_regras_categorizacao_stage: {
         Args: { p_stage_id: string }
