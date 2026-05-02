@@ -842,7 +842,7 @@ export default function CaixaBanco() {
   return (
     <div className="flex flex-col h-[calc(100vh-64px)] overflow-hidden">
       {/* HEADER STICKY ÚNICO — título + cards + filtros */}
-      <div className="sticky top-0 z-20 bg-background px-6 pt-6 pb-3 border-b space-y-4 backdrop-blur">
+      <div className="sticky top-0 z-20 bg-background px-6 pt-6 pb-3 border-b space-y-2 backdrop-blur">
         {/* Título */}
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
@@ -857,11 +857,8 @@ export default function CaixaBanco() {
         </div>
 
         {/* SEÇÃO 1 — Período */}
-        <div className="border border-zinc-200 bg-white/60 rounded-xl p-3 space-y-2">
-          <div className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider px-1">
-            Período
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+        <div className="border border-zinc-200 bg-white/60 rounded-xl p-2">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
             <CardKPI
               titulo="Atrasados"
               valor={formatBRL(kpis.atrasados.valor)}
@@ -911,11 +908,8 @@ export default function CaixaBanco() {
         </div>
 
         {/* SEÇÃO 2 — Qualidade */}
-        <div className="border border-emerald-100 bg-emerald-50/20 rounded-xl p-3 space-y-2">
-          <div className="text-[10px] font-semibold text-emerald-700 uppercase tracking-wider px-1">
-            Qualidade
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+        <div className="border border-emerald-100 bg-emerald-50/20 rounded-xl p-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2">
             <CardKPIDuplo
               titulo="NF"
               icone={Receipt}
@@ -980,10 +974,7 @@ export default function CaixaBanco() {
         </div>
 
         {/* SEÇÃO 3 — Filtros e ações */}
-        <div className="border border-zinc-200 bg-white/60 rounded-xl p-3 space-y-2">
-          <div className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider px-1">
-            Filtros e ações
-          </div>
+        <div className="border border-zinc-200 bg-white/60 rounded-xl p-2">
           <div className="flex gap-2 flex-wrap items-center">
             <div className="relative w-full sm:w-72">
               <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
