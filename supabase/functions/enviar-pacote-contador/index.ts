@@ -121,7 +121,6 @@ Deno.serve(async (req) => {
     const remessaId = remessa.id;
 
     // 2. Criar itens (1 por conta) com snapshot de doc_ids
-    // Busca docs por conta em uma só query
     const { data: docsRows } = await supabaseAdmin
       .from("contas_pagar_documentos")
       .select("id, conta_id")
@@ -146,13 +145,11 @@ Deno.serve(async (req) => {
 
     if (errItens) {
       console.error("Erro criando itens", errItens);
-      // Rollback da remessa
       await supabaseAdmin.from("remessas_contador").delete().eq("id", remessaId);
       return jsonResp({ ok: false, erro: "Falha ao criar itens: " + errItens.message }, 500);
     }
 
     // 3. Gerar signed URL com TTL longo
-    // storage_path vem como "pacotes-contador/abc.zip" - tira o prefixo do bucket
     const pathSemBucket = body.storage_path.replace(/^pacotes-contador\//, "");
     const { data: signedData, error: errSigned } = await supabaseAdmin.storage
       .from("pacotes-contador")
@@ -186,37 +183,52 @@ Deno.serve(async (req) => {
     let qtdEnviados = 0;
     const errosEmail: string[] = [];
 
+    // IMPORTANTE: send-transactional-email faz auth.getUser(token) internamente
+    // e exige JWT de USUÁRIO real. Se chamarmos via supabaseAdmin.functions.invoke(),
+    // o token enviado é o service_role e a validação falha com 401.
+    // Solução: fetch direto, forwardando o JWT ORIGINAL do user que chamou
+    // enviar-pacote-contador. Esse token é válido pra auth.getUser().
+    const sendEmailUrl = `${supabaseUrl}/functions/v1/send-transactional-email`;
+
     for (const email of body.destinatarios) {
       try {
-        const { data: sendRes, error: errSend } = await supabaseAdmin.functions.invoke(
-          "send-transactional-email",
-          {
-            body: {
-              templateName: "pacote-fiscal-contador",
-              recipientEmail: email,
-              idempotencyKey: `pacote-${remessaId}-${email}-${Date.now()}`,
-              templateData: {
-                mensagem_personalizada: body.mensagem_personalizada || "",
-                descricao_remessa: body.descricao_remessa,
-                qtd_contas: body.conta_ids.length,
-                qtd_documentos: body.qtd_documentos,
-                valor_total: valorBR,
-                link_zip: linkSigned,
-                link_expira_em: linkExpiraStr,
-                periodo: periodoStr,
-                remetente_nome: body.remetente_nome || "Equipe Fetely",
-              },
-              metadata: {
-                remessa_id: remessaId,
-                feature: "pacote_contador",
-              },
+        const sendResp = await fetch(sendEmailUrl, {
+          method: "POST",
+          headers: {
+            "Authorization": authHeader,    // token ORIGINAL do user (não service_role)
+            "apikey": anonKey,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            templateName: "pacote-fiscal-contador",
+            recipientEmail: email,
+            idempotencyKey: `pacote-${remessaId}-${email}-${Date.now()}`,
+            templateData: {
+              mensagem_personalizada: body.mensagem_personalizada || "",
+              descricao_remessa: body.descricao_remessa,
+              qtd_contas: body.conta_ids.length,
+              qtd_documentos: body.qtd_documentos,
+              valor_total: valorBR,
+              link_zip: linkSigned,
+              link_expira_em: linkExpiraStr,
+              periodo: periodoStr,
+              remetente_nome: body.remetente_nome || "Equipe Fetely",
             },
-          }
-        );
+            metadata: {
+              remessa_id: remessaId,
+              feature: "pacote_contador",
+            },
+          }),
+        });
 
-        // supabase.functions.invoke nunca dá throw — checa .error explicitamente
-        if (errSend) {
-          errosEmail.push(`${email}: ${errSend.message || "erro desconhecido"}`);
+        const sendRes = await sendResp.json().catch(() => null);
+
+        if (!sendResp.ok) {
+          const errMsg =
+            (sendRes && typeof sendRes === "object" && "error" in sendRes
+              ? String(sendRes.error)
+              : `HTTP ${sendResp.status}`);
+          errosEmail.push(`${email}: ${errMsg}`);
           continue;
         }
         if (sendRes && typeof sendRes === "object" && "error" in sendRes && sendRes.error) {
@@ -230,8 +242,6 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Se nenhum email saiu, loga aviso mas não rola back o registro
-    // (registro fica pra histórico, usuário pode reenviar manualmente)
     if (qtdEnviados === 0 && errosEmail.length > 0) {
       console.warn("Remessa criada mas nenhum email enviado", {
         remessaId,

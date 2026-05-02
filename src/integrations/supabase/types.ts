@@ -9995,7 +9995,10 @@ export type Database = {
           nf_aplicavel_motivo: string | null
           nf_numero: string | null
           nf_stage_id: string | null
+          parceiro_cnpj: string | null
           parceiro_id: string | null
+          parceiro_nome_fantasia: string | null
+          parceiro_razao_social: string | null
           status_conta: string | null
           tem_nf_anexada: boolean | null
           ultima_remessa_em: string | null
