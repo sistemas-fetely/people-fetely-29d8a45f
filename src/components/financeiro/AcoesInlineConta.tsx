@@ -27,11 +27,13 @@ import { cn } from "@/lib/utils";
 type Conta = Record<string, any> & {
   id: string;
   status: string;
+  status_efetivo?: string | null;
   descricao: string;
   valor: number;
   tem_doc_pendente?: boolean | null;
   movimentacao_bancaria_id?: string | null;
   nf_stage_id?: string | null;
+  nf_numero_repositorio?: string | null;
   email_pagamento_enviado?: boolean | null;
 };
 
