@@ -43,6 +43,12 @@ import {
   RotateCcw,
   Send,
   History,
+  FileText,
+  Receipt,
+  Banknote,
+  Tag,
+  UserCheck,
+  type LucideIcon,
 } from "lucide-react";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
 import { toast } from "sonner";
@@ -51,7 +57,14 @@ import ContaPagarDetalheDrawer from "@/components/financeiro/ContaPagarDetalheDr
 import { UploadEmMassaDialog } from "@/components/financeiro/UploadEmMassaDialog";
 import MarcarEnviadasDialog from "@/components/financeiro/MarcarEnviadasDialog";
 import EnviarPeloSistemaDialog from "@/components/financeiro/EnviarPeloSistemaDialog";
-import JSZip from "jszip";
+import BuscarNFStageDialog from "@/components/financeiro/BuscarNFStageDialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+
 import { cn } from "@/lib/utils";
 
 type Aba = "cobrar" | "pronto" | "enviado";
@@ -70,7 +83,172 @@ type ContaItem = {
   ultima_remessa_id: string | null;
   ultima_remessa_em: string | null;
   dias_aguardando: number;
+  // Campos opcionais vindos da view nova
+  tem_nf_anexada?: boolean | null;
+  nf_aplicavel?: boolean | null;
+  nf_aplicavel_motivo?: string | null;
+  tem_boleto?: boolean | null;
+  tem_comprovante?: boolean | null;
+  tem_categoria?: boolean | null;
+  enviado_contador?: boolean | null;
+  parceiro_cnpj?: string | null;
 };
+
+// -----------------------------------------------------------------------------
+// Cluster Fetely de pills de status documental
+// -----------------------------------------------------------------------------
+type EstadoPill = "ok" | "falta" | "na";
+
+function PillStatus({
+  icone: Icone,
+  label,
+  estado,
+  tooltip,
+  onClick,
+}: {
+  icone: LucideIcon;
+  label: string;
+  estado: EstadoPill;
+  tooltip: string;
+  onClick?: () => void;
+}) {
+  const cores = {
+    ok: "bg-emerald-50 border-emerald-300 text-emerald-700",
+    falta: "bg-red-50 border-red-300 text-red-700",
+    na: "bg-zinc-50 border-zinc-200 text-zinc-500",
+  }[estado];
+  const sinal = estado === "ok" ? "✓" : estado === "falta" ? "!" : "—";
+  const isClickable = !!onClick;
+  const Comp: "button" | "div" = isClickable ? "button" : "div";
+  return (
+    <TooltipProvider delayDuration={200}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Comp
+            type={isClickable ? "button" : undefined}
+            onClick={
+              isClickable
+                ? (e: React.MouseEvent) => {
+                    e.stopPropagation();
+                    onClick?.();
+                  }
+                : undefined
+            }
+            className={cn(
+              "inline-flex items-center gap-0.5 rounded-full border px-1.5 py-0.5 text-[9px] font-medium transition-colors",
+              cores,
+              isClickable && "hover:brightness-95 cursor-pointer",
+            )}
+          >
+            <Icone className="h-2.5 w-2.5" />
+            <span className="hidden sm:inline">{label}</span>
+            <span>{sinal}</span>
+          </Comp>
+        </TooltipTrigger>
+        <TooltipContent side="top" className="text-xs max-w-[220px]">
+          {tooltip}
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
+
+function ClusterPills({
+  conta,
+  onBuscarNF,
+}: {
+  conta: ContaItem;
+  onBuscarNF?: (c: ContaItem) => void;
+}) {
+  const nfAplicavel = conta.nf_aplicavel !== false;
+  const temNF = !!conta.tem_nf_anexada;
+  const motivoNA = conta.nf_aplicavel_motivo;
+
+  const nfEstado: EstadoPill = !nfAplicavel
+    ? "na"
+    : temNF
+      ? "ok"
+      : "falta";
+  const nfTooltip = !nfAplicavel
+    ? `NF não aplicável${motivoNA ? `: ${motivoNA}` : ""}`
+    : temNF
+      ? "NF anexada"
+      : "Sem NF — clique para buscar em Stage";
+
+  // Boleto, Comprovante, Categoria, Contador — usa flags se vierem da view,
+  // senão fallback "na" (TODO: enriquecer RPC).
+  const pill = (
+    flag: boolean | null | undefined,
+    okMsg: string,
+    faltaMsg: string,
+  ): { estado: EstadoPill; tooltip: string } =>
+    flag === true
+      ? { estado: "ok", tooltip: okMsg }
+      : flag === false
+        ? { estado: "falta", tooltip: faltaMsg }
+        : { estado: "na", tooltip: "Não disponível" };
+
+  const boleto = pill(
+    conta.tem_boleto,
+    "Boleto anexado",
+    "Sem boleto",
+  );
+  const comprov = pill(
+    conta.tem_comprovante,
+    "Comprovante anexado",
+    "Sem comprovante",
+  );
+  const categoria = pill(
+    conta.tem_categoria,
+    "Categorizada",
+    "Sem categoria",
+  );
+  const contador = pill(
+    conta.enviado_contador,
+    "Enviada ao contador",
+    "Ainda não enviada",
+  );
+
+  return (
+    <div className="flex items-center gap-1 flex-wrap">
+      <PillStatus
+        icone={FileText}
+        label="NF"
+        estado={nfEstado}
+        tooltip={nfTooltip}
+        onClick={
+          nfAplicavel && !temNF && onBuscarNF
+            ? () => onBuscarNF(conta)
+            : undefined
+        }
+      />
+      <PillStatus
+        icone={Banknote}
+        label="Boleto"
+        estado={boleto.estado}
+        tooltip={boleto.tooltip}
+      />
+      <PillStatus
+        icone={Receipt}
+        label="Comp."
+        estado={comprov.estado}
+        tooltip={comprov.tooltip}
+      />
+      <PillStatus
+        icone={Tag}
+        label="Cat."
+        estado={categoria.estado}
+        tooltip={categoria.tooltip}
+      />
+      <PillStatus
+        icone={UserCheck}
+        label="Contador"
+        estado={contador.estado}
+        tooltip={contador.tooltip}
+      />
+    </div>
+  );
+}
 
 type GrupoFornecedor = {
   parceiro_id: string | null;
@@ -114,18 +292,6 @@ const STATUS_CONTA_LABEL: Record<string, string> = {
   rascunho: "Rascunho",
 };
 
-const DOCS_STATUS_STYLES: Record<string, string> = {
-  pendente: "border-red-300 text-red-700 bg-red-50",
-  parcial: "border-amber-400 text-amber-700 bg-amber-50",
-  ok: "border-emerald-400 text-emerald-700 bg-emerald-50",
-};
-
-const DOCS_STATUS_LABEL: Record<string, string> = {
-  pendente: "Sem doc",
-  parcial: "Parcial",
-  ok: "OK",
-};
-
 export default function DocumentosPendentes() {
   const qc = useQueryClient();
   const [aba, setAba] = useState<Aba>("cobrar");
@@ -142,6 +308,7 @@ export default function DocumentosPendentes() {
   const [remessasExpandidas, setRemessasExpandidas] = useState<Set<string>>(new Set());
   const [desfazendo, setDesfazendo] = useState(false);
   const [remessaParaDesfazer, setRemessaParaDesfazer] = useState<Remessa | null>(null);
+  const [contaParaBuscar, setContaParaBuscar] = useState<ContaItem | null>(null);
 
   // Reseta seleção ao trocar de aba
   function trocarAba(nova: Aba) {
@@ -353,64 +520,24 @@ export default function DocumentosPendentes() {
     }
     setExportando(true);
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: docs, error } = await (supabase as any)
-        .from("contas_pagar_documentos")
-        .select(
-          `
-          id, nome_arquivo, storage_path, tipo, conta_id,
-          contas_pagar_receber!inner(
-            descricao, valor, data_pagamento,
-            parceiros_comerciais:parceiro_id(razao_social),
-            fornecedor_cliente
-          )
-        `,
-        )
-        .in("conta_id", ids);
-      if (error) throw error;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const rows = (docs || []) as any[];
-      if (rows.length === 0) {
+      const { montarZipPacoteFiscal } = await import(
+        "@/lib/financeiro/montar-pacote-fiscal"
+      );
+      const { blob, qtdDocumentos, contasSemDoc } =
+        await montarZipPacoteFiscal(ids);
+
+      if (qtdDocumentos === 0) {
         toast.error("Nenhum documento encontrado nas contas selecionadas.");
         return;
       }
 
-      const zip = new JSZip();
-      const csvLinhas = ["Fornecedor;Descrição;Valor;Data Pagamento;Tipo;Arquivo"];
-      let baixados = 0;
-
-      for (const d of rows) {
-        const { data: signed } = await supabase.storage
-          .from("financeiro-docs")
-          .createSignedUrl(d.storage_path, 60 * 30);
-        if (!signed?.signedUrl) continue;
-        try {
-          const res = await fetch(signed.signedUrl);
-          const blob = await res.blob();
-          const fornecedor =
-            d.contas_pagar_receber?.parceiros_comerciais?.razao_social ||
-            d.contas_pagar_receber?.fornecedor_cliente ||
-            "Sem-fornecedor";
-          const pasta = fornecedor.replace(/[\/\\:*?"<>|]/g, "_");
-          zip.file(`${pasta}/${d.nome_arquivo}`, blob);
-          baixados++;
-          csvLinhas.push(
-            [
-              fornecedor,
-              (d.contas_pagar_receber?.descricao || "").replace(/;/g, ","),
-              d.contas_pagar_receber?.valor || 0,
-              d.contas_pagar_receber?.data_pagamento || "",
-              d.tipo || "",
-              d.nome_arquivo,
-            ].join(";"),
-          );
-        } catch (e) {
-          console.warn("Falha ao baixar", d.nome_arquivo, e);
-        }
+      if (contasSemDoc.length > 0) {
+        toast.warning(
+          `${contasSemDoc.length} conta(s) sem NF anexada incluídas no pacote.`,
+          { duration: 5000 },
+        );
       }
 
-      zip.file("_resumo.csv", csvLinhas.join("\n"));
-      const blob = await zip.generateAsync({ type: "blob" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -420,7 +547,7 @@ export default function DocumentosPendentes() {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
 
-      toast.success(`Pacote exportado: ${baixados} documento(s) em ZIP.`);
+      toast.success(`Pacote exportado: ${qtdDocumentos} documento(s) em ZIP.`);
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       toast.error("Erro ao exportar: " + msg);
@@ -673,17 +800,12 @@ export default function DocumentosPendentes() {
                                     )}
                                   </div>
                                 </div>
-                                {aba === "cobrar" && (
-                                  <Badge
-                                    variant="outline"
-                                    className={cn(
-                                      "text-[9px]",
-                                      DOCS_STATUS_STYLES[c.docs_status] || "",
-                                    )}
-                                  >
-                                    {DOCS_STATUS_LABEL[c.docs_status] || c.docs_status}
-                                  </Badge>
-                                )}
+                                <ClusterPills
+                                  conta={c}
+                                  onBuscarNF={(conta) =>
+                                    setContaParaBuscar(conta)
+                                  }
+                                />
                                 <div className="font-mono text-xs shrink-0">
                                   {formatBRL(Number(c.valor))}
                                 </div>
@@ -879,6 +1001,20 @@ export default function DocumentosPendentes() {
           }))}
         onSuccess={() => setSelecionadas(new Set())}
       />
+
+      {contaParaBuscar && (
+        <BuscarNFStageDialog
+          open={!!contaParaBuscar}
+          onOpenChange={(o) => !o && setContaParaBuscar(null)}
+          contaId={contaParaBuscar.conta_id}
+          contaDescricao={contaParaBuscar.descricao}
+          contaValor={Number(contaParaBuscar.valor || 0)}
+          onVinculado={() => {
+            qc.invalidateQueries({ queryKey: ["docs-envio-agrupados"] });
+            setContaParaBuscar(null);
+          }}
+        />
+      )}
 
       <AlertDialog
         open={!!remessaParaDesfazer}

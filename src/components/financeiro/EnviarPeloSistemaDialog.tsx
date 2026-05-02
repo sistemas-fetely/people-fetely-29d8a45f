@@ -27,9 +27,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import JSZip from "jszip";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
-import { cn } from "@/lib/utils";
 
 // Tipo mínimo necessário das contas selecionadas
 export interface ContaParaEnvio {
@@ -192,70 +190,23 @@ export default function EnviarPeloSistemaDialog({
     setEmails(emails.filter((e) => e !== email));
   }
 
-  // Gera ZIP em memória — retorna blob + contagem de docs
+  // Gera ZIP em memória — delega ao helper compartilhado
   async function gerarZipBlob(contaIds: string[]): Promise<{
     blob: Blob;
     qtdDocumentos: number;
   }> {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: docs, error } = await (supabase as any)
-      .from("contas_pagar_documentos")
-      .select(
-        `
-        id, nome_arquivo, storage_path, tipo, conta_id,
-        contas_pagar_receber!inner(
-          descricao, valor, data_pagamento,
-          parceiros_comerciais:parceiro_id(razao_social),
-          fornecedor_cliente
-        )
-      `,
-      )
-      .in("conta_id", contaIds);
-
-    if (error) throw error;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const rows = (docs || []) as any[];
-    if (rows.length === 0) {
-      throw new Error("Nenhum documento encontrado nas contas selecionadas");
+    const { montarZipPacoteFiscal } = await import(
+      "@/lib/financeiro/montar-pacote-fiscal"
+    );
+    const { blob, qtdDocumentos, contasSemDoc } =
+      await montarZipPacoteFiscal(contaIds);
+    if (contasSemDoc.length > 0) {
+      toast.warning(
+        `${contasSemDoc.length} conta(s) sem NF anexada foram incluídas mesmo assim: ${contasSemDoc.slice(0, 3).join(", ")}${contasSemDoc.length > 3 ? "..." : ""}. Considere marcar como 'NF não aplicável' no drawer.`,
+        { duration: 6000 },
+      );
     }
-
-    const zip = new JSZip();
-    const csvLinhas = ["Fornecedor;Descrição;Valor;Data Pagamento;Tipo;Arquivo"];
-    let baixados = 0;
-
-    for (const d of rows) {
-      const { data: signed } = await supabase.storage
-        .from("financeiro-docs")
-        .createSignedUrl(d.storage_path, 60 * 30);
-      if (!signed?.signedUrl) continue;
-      try {
-        const res = await fetch(signed.signedUrl);
-        const blob = await res.blob();
-        const fornecedor =
-          d.contas_pagar_receber?.parceiros_comerciais?.razao_social ||
-          d.contas_pagar_receber?.fornecedor_cliente ||
-          "Sem-fornecedor";
-        const pasta = fornecedor.replace(/[\/\\:*?"<>|]/g, "_");
-        zip.file(`${pasta}/${d.nome_arquivo}`, blob);
-        baixados++;
-        csvLinhas.push(
-          [
-            fornecedor,
-            (d.contas_pagar_receber?.descricao || "").replace(/;/g, ","),
-            d.contas_pagar_receber?.valor || 0,
-            d.contas_pagar_receber?.data_pagamento || "",
-            d.tipo || "",
-            d.nome_arquivo,
-          ].join(";"),
-        );
-      } catch (e) {
-        console.warn("Falha ao baixar", d.nome_arquivo, e);
-      }
-    }
-
-    zip.file("_resumo.csv", csvLinhas.join("\n"));
-    const blob = await zip.generateAsync({ type: "blob" });
-    return { blob, qtdDocumentos: baixados };
+    return { blob, qtdDocumentos };
   }
 
   async function handleEnviar() {

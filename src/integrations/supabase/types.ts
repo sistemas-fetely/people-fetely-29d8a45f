@@ -2097,6 +2097,8 @@ export type Database = {
           id: string
           is_cartao: boolean | null
           movimentacao_bancaria_id: string | null
+          nf_aplicavel: boolean
+          nf_aplicavel_motivo: string | null
           nf_cfop: string | null
           nf_chave_acesso: string | null
           nf_cnpj_emitente: string | null
@@ -2174,6 +2176,8 @@ export type Database = {
           id?: string
           is_cartao?: boolean | null
           movimentacao_bancaria_id?: string | null
+          nf_aplicavel?: boolean
+          nf_aplicavel_motivo?: string | null
           nf_cfop?: string | null
           nf_chave_acesso?: string | null
           nf_cnpj_emitente?: string | null
@@ -2251,6 +2255,8 @@ export type Database = {
           id?: string
           is_cartao?: boolean | null
           movimentacao_bancaria_id?: string | null
+          nf_aplicavel?: boolean
+          nf_aplicavel_motivo?: string | null
           nf_cfop?: string | null
           nf_chave_acesso?: string | null
           nf_cnpj_emitente?: string | null
@@ -9977,7 +9983,6 @@ export type Database = {
       vw_documentos_envio_estados: {
         Row: {
           cancelada_apos_envio: boolean | null
-          conta_created_at: string | null
           conta_id: string | null
           data_pagamento: string | null
           data_vencimento: string | null
@@ -9985,22 +9990,45 @@ export type Database = {
           dias_aguardando: number | null
           docs_status: string | null
           estado_envio: string | null
-          nf_chave_acesso: string | null
+          fornecedor_cliente: string | null
+          nf_aplicavel: boolean | null
+          nf_aplicavel_motivo: string | null
           nf_numero: string | null
-          nf_serie: string | null
+          nf_stage_id: string | null
           parceiro_id: string | null
-          parceiro_razao_social: string | null
           status_conta: string | null
+          tem_nf_anexada: boolean | null
           ultima_remessa_em: string | null
           ultima_remessa_id: string | null
           valor: number | null
         }
         Relationships: [
           {
+            foreignKeyName: "contas_pagar_receber_nf_stage_id_fkey"
+            columns: ["nf_stage_id"]
+            isOneToOne: false
+            referencedRelation: "nfs_stage"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contas_pagar_receber_nf_stage_id_fkey"
+            columns: ["nf_stage_id"]
+            isOneToOne: false
+            referencedRelation: "vw_nfs_stage_completude"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "contas_pagar_receber_parceiro_id_fkey"
             columns: ["parceiro_id"]
             isOneToOne: false
             referencedRelation: "parceiros_comerciais"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "remessas_contador_itens_remessa_id_fkey"
+            columns: ["ultima_remessa_id"]
+            isOneToOne: false
+            referencedRelation: "remessas_contador"
             referencedColumns: ["id"]
           },
         ]
@@ -10594,6 +10622,7 @@ export type Database = {
         Returns: string
       }
       fix_lancamentos_origem_constraint: { Args: never; Returns: string }
+      fn_tem_nf_anexada: { Args: { p_conta_id: string }; Returns: boolean }
       gerar_celebracoes_aniversario_mural: { Args: never; Returns: number }
       gerar_celebracoes_tempo_casa_mural: { Args: never; Returns: number }
       gerar_movimentacao_de_conta: {
