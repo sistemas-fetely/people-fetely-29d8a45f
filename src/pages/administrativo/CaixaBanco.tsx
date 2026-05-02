@@ -286,7 +286,7 @@ function CardKPIDuplo({
   const pctFalta = total > 0 ? Math.round((qtdFalta / total) * 100) : 0;
   return (
     <div className="border border-emerald-100 bg-emerald-50/30 rounded-lg overflow-hidden">
-      <div className="px-3 pt-2 pb-1 flex items-center gap-1.5">
+      <div className="px-3 pt-1.5 pb-0.5 flex items-center gap-1.5">
         <Icone className="h-3.5 w-3.5 text-emerald-700" />
         <span className="text-[11px] font-medium text-emerald-900">{titulo}</span>
       </div>
@@ -294,7 +294,7 @@ function CardKPIDuplo({
         <button
           type="button"
           onClick={onClickTem}
-          className={`px-3 py-2 text-left transition-colors ${
+          className={`px-3 py-1.5 text-left transition-colors ${
             ativoTem
               ? "bg-emerald-100 ring-2 ring-inset ring-emerald-500"
               : "hover:bg-emerald-50"
@@ -309,7 +309,7 @@ function CardKPIDuplo({
         <button
           type="button"
           onClick={onClickFalta}
-          className={`px-3 py-2 text-left transition-colors ${
+          className={`px-3 py-1.5 text-left transition-colors ${
             ativoFalta
               ? "bg-rose-100 ring-2 ring-inset ring-rose-500"
               : "hover:bg-rose-50/60"
@@ -377,7 +377,7 @@ function CardKPI({
       )}
       onClick={onClick}
     >
-      <CardHeader className="pb-1 pt-3 px-3">
+      <CardHeader className="pb-0.5 pt-2 px-3">
         <CardTitle
           className={cn(
             "text-[11px] font-normal flex items-center gap-1",
@@ -388,7 +388,7 @@ function CardKPI({
           {titulo}
         </CardTitle>
       </CardHeader>
-      <CardContent className="pb-3 px-3">
+      <CardContent className="pb-2 px-3">
         <div className={cn("text-lg font-bold", textMap[cor])}>{valor}</div>
         <div className="text-[10px] text-muted-foreground mt-0.5">{sublinha}</div>
       </CardContent>
