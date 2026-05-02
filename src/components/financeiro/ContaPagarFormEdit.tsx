@@ -114,6 +114,7 @@ export function ContaPagarFormEdit({ conta, onSaved, onCancel }: Props) {
     setNfNumero(conta.nf_numero || "");
     setNfSerie(conta.nf_serie || "");
     setNfChave(conta.nf_chave_acesso || "");
+    setPagoEmContaId(conta.pago_em_conta_id || "__none__");
   }, [conta.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Categorias (plano de contas)
