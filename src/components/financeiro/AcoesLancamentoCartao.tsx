@@ -3,11 +3,10 @@ import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Link2, Loader2, CheckCircle2, XCircle, RotateCcw, Layers, EyeOff } from "lucide-react";
+import { Plus, Link2, Loader2, CheckCircle2, XCircle, RotateCcw, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { formatBRL } from "@/lib/format-currency";
 import { VincularLancamentoModal } from "./VincularLancamentoModal";
-import { AgruparLancamentosModal } from "./AgruparLancamentosModal";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -36,7 +35,7 @@ export function AcoesLancamentoCartao({ lancamento }: Props) {
   const [salvando, setSalvando] = useState(false);
   const [vincularOpen, setVincularOpen] = useState(false);
   const [criarOpen, setCriarOpen] = useState(false);
-  const [agruparOpen, setAgruparOpen] = useState(false);
+  
   const [parcelas, setParcelas] = useState(1);
   const [gerarTodas, setGerarTodas] = useState(false);
   const qc = useQueryClient();
@@ -181,17 +180,6 @@ export function AcoesLancamentoCartao({ lancamento }: Props) {
         <Button
           size="sm"
           variant="outline"
-          className="h-6 px-2 text-[10px] gap-1 border-amber-300 text-amber-700 hover:bg-amber-50"
-          onClick={() => setAgruparOpen(true)}
-          disabled={salvando}
-          title="Agrupar com outro lançamento (estorno/complemento)"
-        >
-          <Layers className="h-2.5 w-2.5" />
-          Agrupar
-        </Button>
-        <Button
-          size="sm"
-          variant="outline"
           className="h-6 px-2 text-[10px] gap-1 border-zinc-300 text-zinc-600 hover:bg-zinc-50"
           onClick={handleIgnorar}
           disabled={salvando}
@@ -206,12 +194,6 @@ export function AcoesLancamentoCartao({ lancamento }: Props) {
         open={vincularOpen}
         onOpenChange={setVincularOpen}
         lancamento={lancamento}
-      />
-
-      <AgruparLancamentosModal
-        open={agruparOpen}
-        onOpenChange={setAgruparOpen}
-        lancamentoPrincipal={lancamento}
       />
 
       <Dialog open={criarOpen} onOpenChange={setCriarOpen}>
