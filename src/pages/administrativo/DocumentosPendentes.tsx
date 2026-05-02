@@ -43,6 +43,12 @@ import {
   RotateCcw,
   Send,
   History,
+  FileText,
+  Receipt,
+  Banknote,
+  Tag,
+  UserCheck,
+  type LucideIcon,
 } from "lucide-react";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
 import { toast } from "sonner";
@@ -51,6 +57,13 @@ import ContaPagarDetalheDrawer from "@/components/financeiro/ContaPagarDetalheDr
 import { UploadEmMassaDialog } from "@/components/financeiro/UploadEmMassaDialog";
 import MarcarEnviadasDialog from "@/components/financeiro/MarcarEnviadasDialog";
 import EnviarPeloSistemaDialog from "@/components/financeiro/EnviarPeloSistemaDialog";
+import BuscarNFStageDialog from "@/components/financeiro/BuscarNFStageDialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 import { cn } from "@/lib/utils";
 
@@ -70,7 +83,172 @@ type ContaItem = {
   ultima_remessa_id: string | null;
   ultima_remessa_em: string | null;
   dias_aguardando: number;
+  // Campos opcionais vindos da view nova
+  tem_nf_anexada?: boolean | null;
+  nf_aplicavel?: boolean | null;
+  nf_aplicavel_motivo?: string | null;
+  tem_boleto?: boolean | null;
+  tem_comprovante?: boolean | null;
+  tem_categoria?: boolean | null;
+  enviado_contador?: boolean | null;
+  parceiro_cnpj?: string | null;
 };
+
+// -----------------------------------------------------------------------------
+// Cluster Fetely de pills de status documental
+// -----------------------------------------------------------------------------
+type EstadoPill = "ok" | "falta" | "na";
+
+function PillStatus({
+  icone: Icone,
+  label,
+  estado,
+  tooltip,
+  onClick,
+}: {
+  icone: LucideIcon;
+  label: string;
+  estado: EstadoPill;
+  tooltip: string;
+  onClick?: () => void;
+}) {
+  const cores = {
+    ok: "bg-emerald-50 border-emerald-300 text-emerald-700",
+    falta: "bg-red-50 border-red-300 text-red-700",
+    na: "bg-zinc-50 border-zinc-200 text-zinc-500",
+  }[estado];
+  const sinal = estado === "ok" ? "✓" : estado === "falta" ? "!" : "—";
+  const isClickable = !!onClick;
+  const Comp: "button" | "div" = isClickable ? "button" : "div";
+  return (
+    <TooltipProvider delayDuration={200}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Comp
+            type={isClickable ? "button" : undefined}
+            onClick={
+              isClickable
+                ? (e: React.MouseEvent) => {
+                    e.stopPropagation();
+                    onClick?.();
+                  }
+                : undefined
+            }
+            className={cn(
+              "inline-flex items-center gap-0.5 rounded-full border px-1.5 py-0.5 text-[9px] font-medium transition-colors",
+              cores,
+              isClickable && "hover:brightness-95 cursor-pointer",
+            )}
+          >
+            <Icone className="h-2.5 w-2.5" />
+            <span className="hidden sm:inline">{label}</span>
+            <span>{sinal}</span>
+          </Comp>
+        </TooltipTrigger>
+        <TooltipContent side="top" className="text-xs max-w-[220px]">
+          {tooltip}
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
+
+function ClusterPills({
+  conta,
+  onBuscarNF,
+}: {
+  conta: ContaItem;
+  onBuscarNF?: (c: ContaItem) => void;
+}) {
+  const nfAplicavel = conta.nf_aplicavel !== false;
+  const temNF = !!conta.tem_nf_anexada;
+  const motivoNA = conta.nf_aplicavel_motivo;
+
+  const nfEstado: EstadoPill = !nfAplicavel
+    ? "na"
+    : temNF
+      ? "ok"
+      : "falta";
+  const nfTooltip = !nfAplicavel
+    ? `NF não aplicável${motivoNA ? `: ${motivoNA}` : ""}`
+    : temNF
+      ? "NF anexada"
+      : "Sem NF — clique para buscar em Stage";
+
+  // Boleto, Comprovante, Categoria, Contador — usa flags se vierem da view,
+  // senão fallback "na" (TODO: enriquecer RPC).
+  const pill = (
+    flag: boolean | null | undefined,
+    okMsg: string,
+    faltaMsg: string,
+  ): { estado: EstadoPill; tooltip: string } =>
+    flag === true
+      ? { estado: "ok", tooltip: okMsg }
+      : flag === false
+        ? { estado: "falta", tooltip: faltaMsg }
+        : { estado: "na", tooltip: "Não disponível" };
+
+  const boleto = pill(
+    conta.tem_boleto,
+    "Boleto anexado",
+    "Sem boleto",
+  );
+  const comprov = pill(
+    conta.tem_comprovante,
+    "Comprovante anexado",
+    "Sem comprovante",
+  );
+  const categoria = pill(
+    conta.tem_categoria,
+    "Categorizada",
+    "Sem categoria",
+  );
+  const contador = pill(
+    conta.enviado_contador,
+    "Enviada ao contador",
+    "Ainda não enviada",
+  );
+
+  return (
+    <div className="flex items-center gap-1 flex-wrap">
+      <PillStatus
+        icone={FileText}
+        label="NF"
+        estado={nfEstado}
+        tooltip={nfTooltip}
+        onClick={
+          nfAplicavel && !temNF && onBuscarNF
+            ? () => onBuscarNF(conta)
+            : undefined
+        }
+      />
+      <PillStatus
+        icone={Banknote}
+        label="Boleto"
+        estado={boleto.estado}
+        tooltip={boleto.tooltip}
+      />
+      <PillStatus
+        icone={Receipt}
+        label="Comp."
+        estado={comprov.estado}
+        tooltip={comprov.tooltip}
+      />
+      <PillStatus
+        icone={Tag}
+        label="Cat."
+        estado={categoria.estado}
+        tooltip={categoria.tooltip}
+      />
+      <PillStatus
+        icone={UserCheck}
+        label="Contador"
+        estado={contador.estado}
+        tooltip={contador.tooltip}
+      />
+    </div>
+  );
+}
 
 type GrupoFornecedor = {
   parceiro_id: string | null;
