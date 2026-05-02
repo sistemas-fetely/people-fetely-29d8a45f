@@ -227,6 +227,42 @@ export default function AcoesMassaButtons({ contas, onDone }: Props) {
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
+
+          <DropdownMenuSeparator />
+
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <DropdownMenuItem
+                className="text-destructive focus:text-destructive"
+                onSelect={(e) => e.preventDefault()}
+                disabled={executando || contas.length === 0}
+              >
+                <Trash2 className="h-3.5 w-3.5 mr-1" /> Excluir definitivamente
+              </DropdownMenuItem>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>
+                  Excluir {contas.length} conta{contas.length > 1 ? "s" : ""} definitivamente?
+                </AlertDialogTitle>
+                <AlertDialogDescription>
+                  Esta ação é <strong>permanente</strong> e não pode ser desfeita. As contas
+                  selecionadas serão removidas do banco de dados, junto com seus vínculos
+                  (movimentações, documentos, histórico). Se quiser apenas ocultar, prefira
+                  &quot;Cancelar selecionadas&quot;.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Voltar</AlertDialogCancel>
+                <AlertDialogAction
+                  className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+                  onClick={excluirSelecionadas}
+                >
+                  Sim, excluir
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </DropdownMenuContent>
       </DropdownMenu>
 
