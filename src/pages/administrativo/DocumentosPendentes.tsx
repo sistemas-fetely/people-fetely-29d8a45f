@@ -313,7 +313,7 @@ export default function DocumentosPendentes() {
       let baixados = 0;
 
       for (const d of docs) {
-        const info = contaMap.get(d.conta_pagar_id);
+        const info = contaMap.get(d.conta_id);
         const { data: signed } = await supabase.storage
           .from("financeiro-docs")
           .createSignedUrl(d.storage_path, 60 * 30);
