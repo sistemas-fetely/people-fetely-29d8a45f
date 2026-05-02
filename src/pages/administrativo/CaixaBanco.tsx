@@ -247,7 +247,7 @@ type FiltroOperacional =
   | "atrasados"
   | "mes_atual"
   | "proximo_mes"
-  | "tres_meses"
+  | "mes_anterior"
   | "sem_conciliacao"
   | "qualidade_nf"
   | "qualidade_categoria"
@@ -614,11 +614,13 @@ export default function CaixaBanco() {
           const v = new Date(l.data_vencimento + "T00:00:00");
           return v >= iniProx && v <= fimProx && statusVisual(l) === "aguardando_pagamento";
         });
-      } else if (filtroOp === "tres_meses") {
+      } else if (filtroOp === "mes_anterior") {
         list = list.filter((l) => {
           if (!l.data_vencimento) return false;
           const v = new Date(l.data_vencimento + "T00:00:00");
-          return v >= iniProx && v <= fim3 && statusVisual(l) === "aguardando_pagamento";
+          const iniAnt = new Date(h.getFullYear(), h.getMonth() - 1, 1);
+          const fimAnt = new Date(h.getFullYear(), h.getMonth(), 0, 23, 59, 59);
+          return v >= iniAnt && v <= fimAnt;
         });
       } else if (filtroOp === "sem_conciliacao") {
         list = list.filter((l) => {
@@ -663,7 +665,8 @@ export default function CaixaBanco() {
     const fimMesAtual = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0, 23, 59, 59);
     const inicioProximoMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 1);
     const fimProximoMes = new Date(hoje.getFullYear(), hoje.getMonth() + 2, 0, 23, 59, 59);
-    const fim3Meses = new Date(hoje.getFullYear(), hoje.getMonth() + 4, 0, 23, 59, 59);
+    const inicioMesAnterior = new Date(hoje.getFullYear(), hoje.getMonth() - 1, 1);
+    const fimMesAnterior = new Date(hoje.getFullYear(), hoje.getMonth(), 0, 23, 59, 59);
 
     const emAberto = todos.filter((l) => statusVisual(l) === "aguardando_pagamento");
     const noMesAtual = (l: Lancamento) => {
@@ -686,10 +689,10 @@ export default function CaixaBanco() {
       return v >= inicioProximoMes && v <= fimProximoMes;
     });
 
-    const tresMeses = emAberto.filter((l) => {
+    const mesAnterior = todos.filter((l) => {
       if (!l.data_vencimento) return false;
       const v = new Date(l.data_vencimento + "T00:00:00");
-      return v >= inicioProximoMes && v <= fim3Meses;
+      return v >= inicioMesAnterior && v <= fimMesAnterior;
     });
 
     const semConciliacao = todos.filter((l) => {
@@ -697,8 +700,8 @@ export default function CaixaBanco() {
       return statusVisual(l) === "paga" && !l.conciliado_em;
     });
 
-    // Qualidade — base = mês atual
-    const baseQualidade = todos.filter(noMesAtual);
+    // Qualidade — base = TODOS os lançamentos (sem filtro de mês)
+    const baseQualidade = todos;
     const totalBase = baseQualidade.length;
 
     const comNF = baseQualidade.filter((l) => getQualidadeNF(l, nfMap).cor === "verde").length;
@@ -720,7 +723,7 @@ export default function CaixaBanco() {
       atrasados: { qtd: atrasados.length, valor: sumValor(atrasados) },
       mesAtual: { qtd: mesAtual.length, valor: sumValor(mesAtual) },
       proximoMes: { qtd: proximoMes.length, valor: sumValor(proximoMes) },
-      tresMeses: { qtd: tresMeses.length, valor: sumValor(tresMeses) },
+      mesAnterior: { qtd: mesAnterior.length, valor: sumValor(mesAnterior) },
       semConciliacao: { qtd: semConciliacao.length, valor: sumValor(semConciliacao) },
       qualidadeNF: { pct: pct(comNF, totalBase), atendidos: comNF, total: totalBase },
       qualidadeCategoria: { pct: pct(comCategoriaOK, totalBase), atendidos: comCategoriaOK, total: totalBase },
@@ -787,12 +790,12 @@ export default function CaixaBanco() {
             icone={CalendarClock}
           />
           <CardKPI
-            titulo="Próx. 3 meses"
-            valor={formatBRL(kpis.tresMeses.valor)}
-            sublinha={`${kpis.tresMeses.qtd} contas`}
+            titulo="Mês anterior"
+            valor={formatBRL(kpis.mesAnterior.valor)}
+            sublinha={`${kpis.mesAnterior.qtd} contas`}
             cor="purple"
-            ativo={filtroOp === "tres_meses"}
-            onClick={() => setFiltroOp(filtroOp === "tres_meses" ? "todos" : "tres_meses")}
+            ativo={filtroOp === "mes_anterior"}
+            onClick={() => setFiltroOp(filtroOp === "mes_anterior" ? "todos" : "mes_anterior")}
             icone={CalendarRange}
           />
           <CardKPI
@@ -811,7 +814,7 @@ export default function CaixaBanco() {
           <CardKPI
             titulo="NF — qualidade"
             valor={`${kpis.qualidadeNF.pct}%`}
-            sublinha={`${kpis.qualidadeNF.atendidos}/${kpis.qualidadeNF.total} no mês`}
+            sublinha={`${kpis.qualidadeNF.atendidos}/${kpis.qualidadeNF.total} no total`}
             cor="fetely"
             ativo={filtroOp === "qualidade_nf"}
             onClick={() => setFiltroOp(filtroOp === "qualidade_nf" ? "todos" : "qualidade_nf")}
@@ -820,7 +823,7 @@ export default function CaixaBanco() {
           <CardKPI
             titulo="Categoria — qualidade"
             valor={`${kpis.qualidadeCategoria.pct}%`}
-            sublinha={`${kpis.qualidadeCategoria.atendidos}/${kpis.qualidadeCategoria.total} no mês`}
+            sublinha={`${kpis.qualidadeCategoria.atendidos}/${kpis.qualidadeCategoria.total} no total`}
             cor="fetely"
             ativo={filtroOp === "qualidade_categoria"}
             onClick={() => setFiltroOp(filtroOp === "qualidade_categoria" ? "todos" : "qualidade_categoria")}
@@ -829,7 +832,7 @@ export default function CaixaBanco() {
           <CardKPI
             titulo="Documento — qualidade"
             valor={`${kpis.qualidadeDoc.pct}%`}
-            sublinha={`${kpis.qualidadeDoc.atendidos}/${kpis.qualidadeDoc.total} no mês`}
+            sublinha={`${kpis.qualidadeDoc.atendidos}/${kpis.qualidadeDoc.total} no total`}
             cor="fetely"
             ativo={filtroOp === "qualidade_doc"}
             onClick={() => setFiltroOp(filtroOp === "qualidade_doc" ? "todos" : "qualidade_doc")}
@@ -838,7 +841,7 @@ export default function CaixaBanco() {
           <CardKPI
             titulo="Vinculado — qualidade"
             valor={`${kpis.qualidadeVinculado.pct}%`}
-            sublinha={`${kpis.qualidadeVinculado.atendidos}/${kpis.qualidadeVinculado.total} no mês`}
+            sublinha={`${kpis.qualidadeVinculado.atendidos}/${kpis.qualidadeVinculado.total} no total`}
             cor="fetely"
             ativo={filtroOp === "qualidade_vinculado"}
             onClick={() => setFiltroOp(filtroOp === "qualidade_vinculado" ? "todos" : "qualidade_vinculado")}
@@ -847,7 +850,7 @@ export default function CaixaBanco() {
           <CardKPI
             titulo="Conciliado — qualidade"
             valor={`${kpis.qualidadeConciliado.pct}%`}
-            sublinha={`${kpis.qualidadeConciliado.atendidos}/${kpis.qualidadeConciliado.total} no mês`}
+            sublinha={`${kpis.qualidadeConciliado.atendidos}/${kpis.qualidadeConciliado.total} no total`}
             cor="fetely"
             ativo={filtroOp === "qualidade_conciliado"}
             onClick={() => setFiltroOp(filtroOp === "qualidade_conciliado" ? "todos" : "qualidade_conciliado")}
