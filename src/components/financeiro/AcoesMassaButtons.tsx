@@ -19,11 +19,13 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { ThumbsUp, Check, ChevronDown, X, Loader2, Zap, CreditCard, Mail } from "lucide-react";
+import { ThumbsUp, Check, ChevronDown, X, Loader2, Zap, CreditCard, Mail, Trash2 } from "lucide-react";
 import { useContaWorkflow, type ContaStatus } from "@/hooks/useContaWorkflow";
 import { usePermissions } from "@/hooks/usePermissions";
 import { AcaoMassaSuperAdminDialog } from "./AcaoMassaSuperAdminDialog";
 import { PularEmailMassaDialog } from "./PularEmailMassaDialog";
+import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 export interface ContaSelecionada {
@@ -46,6 +48,37 @@ export default function AcoesMassaButtons({ contas, onDone }: Props) {
   );
   const workflow = useContaWorkflow();
   const { isSuperAdmin } = usePermissions();
+  const qc = useQueryClient();
+
+  async function excluirSelecionadas() {
+    setExecutando(true);
+    try {
+      const ids = contas.map((c) => c.id);
+      const { error } = await supabase
+        .from("contas_pagar_receber")
+        .delete()
+        .in("id", ids);
+      if (error) throw error;
+      toast.success(
+        `${ids.length} conta${ids.length > 1 ? "s excluídas" : " excluída"} definitivamente`,
+      );
+      await qc.invalidateQueries({ queryKey: ["contas-pagar"] });
+      onDone();
+    } catch (e) {
+      const msg =
+        e instanceof Error
+          ? e.message
+          : typeof e === "object" && e !== null
+            ? ((e as { message?: string }).message
+                ?? (e as { details?: string }).details
+                ?? (e as { hint?: string }).hint
+                ?? JSON.stringify(e))
+            : String(e);
+      toast.error("Erro ao excluir: " + msg);
+    } finally {
+      setExecutando(false);
+    }
+  }
 
   function countStatus(...statuses: string[]) {
     return contas.filter((c) => statuses.includes(c.status)).length;
@@ -190,6 +223,42 @@ export default function AcoesMassaButtons({ contas, onDone }: Props) {
                   }
                 >
                   Sim, cancelar
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+
+          <DropdownMenuSeparator />
+
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <DropdownMenuItem
+                className="text-destructive focus:text-destructive"
+                onSelect={(e) => e.preventDefault()}
+                disabled={executando || contas.length === 0}
+              >
+                <Trash2 className="h-3.5 w-3.5 mr-1" /> Excluir definitivamente
+              </DropdownMenuItem>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>
+                  Excluir {contas.length} conta{contas.length > 1 ? "s" : ""} definitivamente?
+                </AlertDialogTitle>
+                <AlertDialogDescription>
+                  Esta ação é <strong>permanente</strong> e não pode ser desfeita. As contas
+                  selecionadas serão removidas do banco de dados, junto com seus vínculos
+                  (movimentações, documentos, histórico). Se quiser apenas ocultar, prefira
+                  &quot;Cancelar selecionadas&quot;.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Voltar</AlertDialogCancel>
+                <AlertDialogAction
+                  className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+                  onClick={excluirSelecionadas}
+                >
+                  Sim, excluir
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
