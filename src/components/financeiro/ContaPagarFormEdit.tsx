@@ -77,6 +77,29 @@ export function ContaPagarFormEdit({
 
   const isReadOnly = STATUS_READONLY.includes(conta.status);
 
+  // Família + visibilidade dos campos por origem.
+  // Família B (cartão) e C (OFX já saiu) deixam data_vencimento, forma de
+  // pagamento e pago_em_conta como readonly (vêm da fatura/transação).
+  // Família A em pré-pagamento marca pago_em_conta como obrigatório.
+  const familia = getFamiliaContaPagar({
+    is_cartao: conta.is_cartao ?? null,
+    origem: conta.origem ?? null,
+  });
+  const campos = getCamposVisiveis(familia, conta.status);
+  const familiaLabel =
+    familia === "B_cartao"
+      ? "Cartão"
+      : familia === "C_ja_saiu"
+        ? "OFX"
+        : null;
+  const formaPagamentoNome = conta.formas_pagamento?.nome ?? null;
+  // Helper: campo está em readonly por causa da família (não confundir
+  // com isReadOnly global, que é por status terminal)
+  const readonlyPorFamilia = (campo: keyof typeof campos) =>
+    !isReadOnly && campos[campo] === "readonly";
+  const obrigatorioPorFamilia = (campo: keyof typeof campos) =>
+    campos[campo] === "obrigatorio";
+
   // Estado local do form
   const [descricao, setDescricao] = useState(conta.descricao || "");
   const [dataVencimento, setDataVencimento] = useState(conta.data_vencimento || "");
