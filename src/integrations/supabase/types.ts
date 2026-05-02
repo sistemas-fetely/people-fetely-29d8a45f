@@ -10297,7 +10297,12 @@ export type Database = {
         }[]
       }
       sugerir_categoria_para_lancamento: {
-        Args: { p_cnpj: string; p_descricao: string; p_parceiro_id: string }
+        Args: {
+          p_cnpj: string
+          p_conta_id?: string
+          p_descricao: string
+          p_parceiro_id: string
+        }
         Returns: {
           amostra_count: number
           amostra_descricao: string

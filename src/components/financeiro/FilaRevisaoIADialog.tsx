@@ -132,6 +132,7 @@ export default function FilaRevisaoIADialog({ open, onClose }: Props) {
           p_descricao: conta.descricao,
           p_cnpj: conta.nf_cnpj_emitente,
           p_parceiro_id: conta.parceiro_id,
+          p_conta_id: atual!.conta_id,
         },
       );
       if (error) throw error;
@@ -412,11 +413,11 @@ export default function FilaRevisaoIADialog({ open, onClose }: Props) {
                           </div>
                         )}
                         {c.similares && c.similares.length > 0 && (
-                          <details className="mt-2">
-                            <summary className="text-[11px] text-blue-700 cursor-pointer hover:underline select-none">
-                              Ver {c.similares.length} lançamento{c.similares.length > 1 ? "s" : ""} similar{c.similares.length > 1 ? "es" : ""} que a IA usou de base
-                            </summary>
-                            <div className="mt-2 space-y-1.5 pl-2 border-l-2 border-blue-200">
+                          <div className="mt-2">
+                            <div className="text-[11px] font-medium text-blue-900 mb-1.5">
+                              Lançamentos similares que a IA usou de base ({c.similares.length}):
+                            </div>
+                            <div className="space-y-1.5 pl-2 border-l-2 border-blue-200">
                               {c.similares.map((s) => (
                                 <div
                                   key={s.conta_id}
@@ -441,7 +442,7 @@ export default function FilaRevisaoIADialog({ open, onClose }: Props) {
                                 </div>
                               ))}
                             </div>
-                          </details>
+                          </div>
                         )}
                       </div>
                       <Button
