@@ -19,11 +19,13 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { ThumbsUp, Check, ChevronDown, X, Loader2, Zap, CreditCard, Mail } from "lucide-react";
+import { ThumbsUp, Check, ChevronDown, X, Loader2, Zap, CreditCard, Mail, Trash2 } from "lucide-react";
 import { useContaWorkflow, type ContaStatus } from "@/hooks/useContaWorkflow";
 import { usePermissions } from "@/hooks/usePermissions";
 import { AcaoMassaSuperAdminDialog } from "./AcaoMassaSuperAdminDialog";
 import { PularEmailMassaDialog } from "./PularEmailMassaDialog";
+import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 export interface ContaSelecionada {
