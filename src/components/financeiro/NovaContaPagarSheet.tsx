@@ -45,6 +45,7 @@ import {
 import { ParceiroFormSheet, Parceiro } from "@/components/financeiro/ParceiroFormSheet";
 import { CategoriaFormDialog } from "@/components/financeiro/CategoriaFormDialog";
 import { formatBRL } from "@/lib/format-currency";
+import { addMonths } from "date-fns";
 
 type FormaPgto = { id: string; nome: string; codigo: string };
 const CENTROS = ["comercial", "administrativo", "rh", "ti", "fiscal", "financeiro", "fabrica", "geral"];
@@ -187,6 +188,25 @@ export function NovaContaPagarSheet({ open, onOpenChange }: Props) {
   }, [open]);
 
   const valorNum = Number(valor.replace(/\./g, "").replace(",", ".")) || 0;
+
+  /**
+   * Divisão de centavos que sempre soma exato ao total.
+   * Ex: R$ 10,00 em 3× → 3,33 + 3,33 + 3,34 (última leva o resto).
+   * Evita drift de R$ 0,01 que apareceria com `valorNum / parcelas` direto.
+   */
+  function valorDaParcela(total: number, qtdParcelas: number, indice: number): number {
+    if (qtdParcelas <= 1) return total;
+    const totalCentavos = Math.round(total * 100);
+    const baseCentavos = Math.floor(totalCentavos / qtdParcelas);
+    const restoCentavos = totalCentavos - baseCentavos * qtdParcelas;
+    const centavosFinal =
+      indice === qtdParcelas - 1
+        ? baseCentavos + restoCentavos
+        : baseCentavos;
+    return centavosFinal / 100;
+  }
+
+  // Pra preview no UI (todas iguais menos a última quando há resto)
   const valorParcela = parcelas > 0 ? valorNum / parcelas : valorNum;
 
   const mutation = useMutation({
@@ -202,13 +222,14 @@ export function NovaContaPagarSheet({ open, onOpenChange }: Props) {
 
       const rows = [];
       for (let i = 0; i < parcelas; i++) {
-        const venc = new Date(baseDate);
-        venc.setMonth(venc.getMonth() + i);
+        // addMonths clampa data de borda (31/01 → 28/02 ao invés de 03/03)
+        const venc = addMonths(baseDate, i);
         rows.push({
           tipo: "pagar",
           descricao: parcelas > 1 ? `${descricao.trim()} (${i + 1}/${parcelas})` : descricao.trim(),
           observacao: observacao.trim() || null,
-          valor: valorParcela,
+          // Distribuição de centavos: última parcela leva o resto pra somar exato
+          valor: valorDaParcela(valorNum, parcelas, i),
           data_vencimento: venc.toISOString().slice(0, 10),
           nf_data_emissao: dataEmissao || null,
           conta_id: categoriaId,
@@ -222,7 +243,7 @@ export function NovaContaPagarSheet({ open, onOpenChange }: Props) {
           parcela_atual: i + 1,
           parcela_grupo_id: grupoId,
           status: "aberto",
-          origem: "nova_despesa",
+          origem: "manual",
           nf_stage_id: nfStageId,
         });
       }
