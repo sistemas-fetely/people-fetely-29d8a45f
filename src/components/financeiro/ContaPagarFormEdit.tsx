@@ -427,7 +427,8 @@ export function ContaPagarFormEdit({
       >
         <Label className="flex items-center gap-2">
           Pago em conta (banco)
-          {highlightCampo === "pago_em_conta_id" && (
+          {(highlightCampo === "pago_em_conta_id" ||
+            (obrigatorioPorFamilia("pago_em_conta") && pagoEmContaId === "__none__")) && (
             <span className="text-[10px] font-medium text-rose-600">
               ← preencha pra continuar
             </span>
@@ -436,7 +437,7 @@ export function ContaPagarFormEdit({
         <Select
           value={pagoEmContaId}
           onValueChange={setPagoEmContaId}
-          disabled={isReadOnly || salvando}
+          disabled={isReadOnly || salvando || readonlyPorFamilia("pago_em_conta")}
         >
           <SelectTrigger
             className={cn(
@@ -455,9 +456,17 @@ export function ContaPagarFormEdit({
             ))}
           </SelectContent>
         </Select>
-        <p className="text-[11px] text-muted-foreground">
-          Banco usado pra pagar essa conta. Necessário pra lançar em Movimentação.
-        </p>
+        {readonlyPorFamilia("pago_em_conta") && familiaLabel ? (
+          <p className="text-[11px] text-muted-foreground">
+            {familiaLabel === "Cartão"
+              ? "Pagamento via fatura do cartão — não definido por conta."
+              : "Banco definido pela transação OFX original."}
+          </p>
+        ) : (
+          <p className="text-[11px] text-muted-foreground">
+            Banco usado pra pagar essa conta. Necessário pra lançar em Movimentação.
+          </p>
+        )}
       </div>
 
       {/* Dados NF */}
