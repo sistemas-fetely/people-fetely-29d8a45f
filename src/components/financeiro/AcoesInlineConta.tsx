@@ -21,8 +21,8 @@ import { toast } from "sonner";
 import EnviarPagamentoDialog from "./EnviarPagamentoDialog";
 import BuscarNFStageDialog from "./BuscarNFStageDialog";
 import { useContaWorkflow, type ContaStatus } from "@/hooks/useContaWorkflow";
+import { cn } from "@/lib/utils";
 
-// Aceita o shape da view consolidada (campos extras são ignorados).
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Conta = Record<string, any> & {
   id: string;
@@ -32,11 +32,20 @@ type Conta = Record<string, any> & {
   tem_doc_pendente?: boolean | null;
   movimentacao_bancaria_id?: string | null;
   nf_stage_id?: string | null;
+  email_pagamento_enviado?: boolean | null;
 };
 
 interface Props {
   conta: Conta;
 }
+
+type EstadoIcone = "feito" | "pendente" | "na";
+
+const COR_ICONE: Record<EstadoIcone, string> = {
+  feito: "text-emerald-600 hover:bg-emerald-50",
+  pendente: "text-rose-600 hover:bg-rose-50",
+  na: "text-zinc-300 cursor-not-allowed hover:bg-transparent",
+};
 
 export default function AcoesInlineConta({ conta }: Props) {
   const qc = useQueryClient();
@@ -59,19 +68,37 @@ export default function AcoesInlineConta({ conta }: Props) {
         ? ((e as { message?: string }).message ?? JSON.stringify(e))
         : String(e);
 
-  const podeAprovar = conta.status === "aberto" || conta.status === "atrasado";
-  const podeEnviarEmail =
-    conta.status === "aprovado" || conta.status === "doc_pendente";
-  const podeLancarMov =
-    conta.status === "aprovado" && !conta.movimentacao_bancaria_id;
-  const semNF = !conta.nf_stage_id;
+  // ESTADOS
+  const status = conta.status;
+  const temNF = !!conta.nf_stage_id;
+  const aprovado =
+    status === "aprovado" ||
+    status === "aguardando_pagamento" ||
+    status === "doc_pendente" ||
+    status === "paga";
+  const emailEnviado = !!conta.email_pagamento_enviado;
+  const temMov = !!conta.movimentacao_bancaria_id;
+
+  const estadoNF: EstadoIcone = temNF ? "feito" : "pendente";
+  const estadoAprovar: EstadoIcone = aprovado ? "feito" : "pendente";
+  const estadoEmail: EstadoIcone = emailEnviado
+    ? "feito"
+    : status === "aprovado" || status === "doc_pendente"
+      ? "pendente"
+      : "na";
+  const estadoMov: EstadoIcone = temMov
+    ? "feito"
+    : status === "aprovado"
+      ? "pendente"
+      : "na";
 
   async function handleAprovar() {
+    if (estadoAprovar !== "pendente") return;
     setAprovando(true);
     try {
       await workflow.mudarStatus.mutateAsync({
         contaId: conta.id,
-        statusAnterior: conta.status,
+        statusAnterior: status,
         novoStatus: "aprovado" as ContaStatus,
       });
       toast.success("Conta aprovada");
@@ -83,6 +110,11 @@ export default function AcoesInlineConta({ conta }: Props) {
   }
 
   async function handleLancarMov() {
+    if (estadoMov !== "pendente") {
+      if (estadoMov === "feito") toast.info("Já tem movimentação vinculada");
+      else toast.info("Aprove antes de lançar em Movimentação");
+      return;
+    }
     setLancandoMov(true);
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -107,17 +139,44 @@ export default function AcoesInlineConta({ conta }: Props) {
     }
   }
 
+  function handleEmail() {
+    if (estadoEmail === "na") {
+      toast.info("Aprove a conta antes de enviar email");
+      return;
+    }
+    if (estadoEmail === "feito") {
+      toast.info("Email já enviado — abra o drawer pra reenviar se precisar");
+      return;
+    }
+    setShowEnviar(true);
+  }
+
+  const tooltipNF = temNF ? "NF anexada" : "Sem NF — clique pra anexar";
+  const tooltipAprovar = aprovado ? "Já aprovada" : "Aprovar pagamento";
+  const tooltipEmail =
+    estadoEmail === "feito"
+      ? "Email enviado"
+      : estadoEmail === "pendente"
+        ? "Enviar email de pagamento"
+        : "Aprove antes de enviar email";
+  const tooltipMov =
+    estadoMov === "feito"
+      ? "Já em Movimentação"
+      : estadoMov === "pendente"
+        ? "Lançar em Movimentação"
+        : "Aprove antes de lançar em Movimentação";
+
   return (
     <div className="flex items-center gap-1" onClick={stopVoid}>
-      {/* NF (Upload + Buscar no Stage) */}
-      {semNF && (
+      {/* 1) NF — sempre visível */}
+      {estadoNF === "pendente" ? (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
               size="icon"
               variant="ghost"
-              className="h-7 w-7"
-              title="Anexar NF"
+              className={cn("h-7 w-7", COR_ICONE[estadoNF])}
+              title={tooltipNF}
               onClick={stopVoid}
             >
               <Paperclip className="h-3.5 w-3.5" />
@@ -129,65 +188,69 @@ export default function AcoesInlineConta({ conta }: Props) {
               Buscar no Stage
             </DropdownMenuItem>
             <DropdownMenuItem
-              onClick={stop(() => {
-                toast.info("Use o drawer para upload de NF nova");
-              })}
+              onClick={stop(() =>
+                toast.info("Use o drawer para upload de NF nova"),
+              )}
             >
               <Upload className="h-3.5 w-3.5 mr-2" />
               Upload novo arquivo
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-      )}
-
-      {/* Aprovar */}
-      {podeAprovar && (
+      ) : (
         <Button
           size="icon"
           variant="ghost"
-          className="h-7 w-7 text-emerald-600 hover:text-emerald-700"
-          title="Aprovar conta"
-          disabled={aprovando}
-          onClick={stop(handleAprovar)}
+          className={cn("h-7 w-7", COR_ICONE[estadoNF])}
+          title={tooltipNF}
+          onClick={stopVoid}
         >
-          {aprovando ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          ) : (
-            <ThumbsUp className="h-3.5 w-3.5" />
-          )}
+          <Paperclip className="h-3.5 w-3.5" />
         </Button>
       )}
 
-      {/* Enviar email */}
-      {podeEnviarEmail && (
-        <Button
-          size="icon"
-          variant="ghost"
-          className="h-7 w-7 text-blue-600 hover:text-blue-700"
-          title="Enviar para pagamento"
-          onClick={stop(() => setShowEnviar(true))}
-        >
-          <Send className="h-3.5 w-3.5" />
-        </Button>
-      )}
+      {/* 2) Aprovar */}
+      <Button
+        size="icon"
+        variant="ghost"
+        className={cn("h-7 w-7", COR_ICONE[estadoAprovar])}
+        title={tooltipAprovar}
+        disabled={aprovando}
+        onClick={stop(handleAprovar)}
+      >
+        {aprovando ? (
+          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+        ) : (
+          <ThumbsUp className="h-3.5 w-3.5" />
+        )}
+      </Button>
 
-      {/* Lançar em Movimentação */}
-      {podeLancarMov && (
-        <Button
-          size="icon"
-          variant="ghost"
-          className="h-7 w-7 text-purple-600 hover:text-purple-700"
-          title="Lançar em movimentação"
-          disabled={lancandoMov}
-          onClick={stop(handleLancarMov)}
-        >
-          {lancandoMov ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          ) : (
-            <ArrowRightLeft className="h-3.5 w-3.5" />
-          )}
-        </Button>
-      )}
+      {/* 3) Email */}
+      <Button
+        size="icon"
+        variant="ghost"
+        className={cn("h-7 w-7", COR_ICONE[estadoEmail])}
+        title={tooltipEmail}
+        onClick={stop(handleEmail)}
+      >
+        <Send className="h-3.5 w-3.5" />
+      </Button>
+
+      {/* 4) Movimentação */}
+      <Button
+        size="icon"
+        variant="ghost"
+        className={cn("h-7 w-7", COR_ICONE[estadoMov])}
+        title={tooltipMov}
+        disabled={lancandoMov}
+        onClick={stop(handleLancarMov)}
+      >
+        {lancandoMov ? (
+          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+        ) : (
+          <ArrowRightLeft className="h-3.5 w-3.5" />
+        )}
+      </Button>
 
       {/* Modais */}
       {showEnviar && (
