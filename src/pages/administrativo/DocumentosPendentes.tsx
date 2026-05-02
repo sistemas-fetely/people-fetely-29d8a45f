@@ -264,17 +264,29 @@ export default function DocumentosPendentes() {
     setExportando(true);
     try {
       const ids = Array.from(selecionados);
-      // Busca documentos das contas selecionadas
+      // Busca contas selecionadas
       const { data: contas, error: errC } = await supabase
         .from("contas_pagar")
-        .select("id, descricao, valor, data_pagamento, parceiro:parceiros(razao_social)")
+        .select("id, descricao, valor, data_pagamento, parceiro_id")
         .in("id", ids);
       if (errC) throw errC;
 
+      const parceiroIds = Array.from(
+        new Set((contas || []).map((c) => c.parceiro_id).filter(Boolean) as string[]),
+      );
+      const parceiroMap = new Map<string, string>();
+      if (parceiroIds.length > 0) {
+        const { data: parceiros } = await supabase
+          .from("parceiros")
+          .select("id, razao_social")
+          .in("id", parceiroIds);
+        (parceiros || []).forEach((p) => parceiroMap.set(p.id, p.razao_social || ""));
+      }
+
       const { data: docs, error: errD } = await supabase
         .from("contas_pagar_documentos")
-        .select("id, conta_pagar_id, tipo, nome_arquivo, storage_path")
-        .in("conta_pagar_id", ids);
+        .select("id, conta_id, tipo, nome_arquivo, storage_path")
+        .in("conta_id", ids);
       if (errD) throw errD;
 
       if (!docs || docs.length === 0) {
@@ -282,10 +294,14 @@ export default function DocumentosPendentes() {
         return;
       }
 
-      const contaMap = new Map<string, { fornecedor: string; descricao: string; valor: number; data_pagamento: string | null }>();
-      (contas || []).forEach((c: { id: string; descricao: string; valor: number; data_pagamento: string | null; parceiro?: { razao_social?: string } | null }) => {
+      const contaMap = new Map<
+        string,
+        { fornecedor: string; descricao: string; valor: number; data_pagamento: string | null }
+      >();
+      (contas || []).forEach((c) => {
         contaMap.set(c.id, {
-          fornecedor: c.parceiro?.razao_social || "Sem-fornecedor",
+          fornecedor:
+            (c.parceiro_id && parceiroMap.get(c.parceiro_id)) || "Sem-fornecedor",
           descricao: c.descricao,
           valor: Number(c.valor || 0),
           data_pagamento: c.data_pagamento,
