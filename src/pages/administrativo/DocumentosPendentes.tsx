@@ -50,6 +50,7 @@ import { format } from "date-fns";
 import ContaPagarDetalheDrawer from "@/components/financeiro/ContaPagarDetalheDrawer";
 import { UploadEmMassaDialog } from "@/components/financeiro/UploadEmMassaDialog";
 import MarcarEnviadasDialog from "@/components/financeiro/MarcarEnviadasDialog";
+import EnviarPeloSistemaDialog from "@/components/financeiro/EnviarPeloSistemaDialog";
 import JSZip from "jszip";
 import { cn } from "@/lib/utils";
 
@@ -134,6 +135,7 @@ export default function DocumentosPendentes() {
   const [contaIdDrawer, setContaIdDrawer] = useState<string | null>(null);
   const [uploadOpen, setUploadOpen] = useState(false);
   const [marcarOpen, setMarcarOpen] = useState(false);
+  const [enviarSistemaOpen, setEnviarSistemaOpen] = useState(false);
   const [exportando, setExportando] = useState(false);
   const [expandidos, setExpandidos] = useState<Set<string>>(new Set());
   const [selecionadas, setSelecionadas] = useState<Set<string>>(new Set());
@@ -819,11 +821,19 @@ export default function DocumentosPendentes() {
                 {exportando ? "Exportando..." : "Exportar Pacote"}
               </Button>
               <Button
+                variant="outline"
                 onClick={() => setMarcarOpen(true)}
-                className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white"
+                className="gap-2"
               >
                 <CheckCircle2 className="h-4 w-4" />
                 Marcar como enviadas
+              </Button>
+              <Button
+                onClick={() => setEnviarSistemaOpen(true)}
+                className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white"
+              >
+                <Send className="h-4 w-4" />
+                Enviar pelo sistema
               </Button>
             </div>
           </div>
@@ -853,6 +863,20 @@ export default function DocumentosPendentes() {
         onClose={() => setMarcarOpen(false)}
         contasIds={Array.from(selecionadas)}
         totalValor={totalSelecionadoValor}
+        onSuccess={() => setSelecionadas(new Set())}
+      />
+
+      <EnviarPeloSistemaDialog
+        open={enviarSistemaOpen}
+        onClose={() => setEnviarSistemaOpen(false)}
+        contasSelecionadas={todasContasPronto
+          .filter((c) => selecionadas.has(c.conta_id))
+          .map((c) => ({
+            conta_id: c.conta_id,
+            valor: Number(c.valor || 0),
+            data_vencimento: c.data_vencimento,
+            data_pagamento: c.data_pagamento,
+          }))}
         onSuccess={() => setSelecionadas(new Set())}
       />
 
