@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/table";
 import { Link } from "react-router-dom";
 import { ArrowUpFromLine, FileWarning, Plus, Search, Sparkles, Upload, UserCheck, X } from "lucide-react";
+import AcoesInlineConta from "@/components/financeiro/AcoesInlineConta";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
 import ContaPagarDetalheDrawer from "@/components/financeiro/ContaPagarDetalheDrawer";
 import AcoesMassaButtons, {
@@ -639,7 +640,7 @@ export default function ContasPagar() {
                         <TableHead>Categoria</TableHead>
                         <TableHead className="text-right">Valor</TableHead>
                         <TableHead>Status</TableHead>
-                        <TableHead>Tags</TableHead>
+                        <TableHead>Ações</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -757,30 +758,8 @@ export default function ContasPagar() {
                                 {STATUS_LABELS[c.status] || c.status}
                               </Badge>
                             </TableCell>
-                            <TableCell className="min-w-[140px]">
-                              <div className="flex flex-wrap gap-1 items-center">
-                                {(() => {
-                                  const q = qualidadeMap?.get(c.id);
-                                  const visual = getQualidadeDadoIcon(q?.nivel, q?.motivos);
-                                  if (!visual) return null;
-                                  const QIcon = visual.Icon;
-                                  return (
-                                    <span title={visual.tooltip} className="inline-flex items-center mr-1">
-                                      <QIcon className={`h-2.5 w-2.5 ${visual.cor} ${visual.bg}`} />
-                                    </span>
-                                  );
-                                })()}
-                                {c.tem_doc_pendente && (
-                                  <Badge
-                                    variant="outline"
-                                    className="text-[9px] py-0 px-1.5 h-4 border-amber-400 text-amber-700 bg-amber-50 gap-1 whitespace-nowrap"
-                                    title="Pagamento foi enviado ao financeiro mas falta NF/Recibo"
-                                  >
-                                    <FileWarning className="h-2.5 w-2.5" />
-                                    Doc pendente
-                                  </Badge>
-                                )}
-                              </div>
+                            <TableCell className="min-w-[140px]" onClick={(e) => e.stopPropagation()}>
+                              <AcoesInlineConta conta={c} />
                             </TableCell>
                           </TableRow>
                         );
