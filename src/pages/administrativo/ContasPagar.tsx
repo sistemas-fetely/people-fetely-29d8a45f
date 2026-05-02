@@ -61,6 +61,8 @@ type Conta = {
   nf_tipo: string | null;
   nf_fornecedor: string | null;
   mov_conciliada: boolean | null;
+  movimentacao_bancaria_id: string | null;
+  nf_numero_repositorio: string | null;
   // Joins
   plano_contas?: { codigo?: string | null; nome: string } | null;
   parceiros_comerciais?: { razao_social: string | null } | null;
