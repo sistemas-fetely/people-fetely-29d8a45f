@@ -292,18 +292,6 @@ const STATUS_CONTA_LABEL: Record<string, string> = {
   rascunho: "Rascunho",
 };
 
-const DOCS_STATUS_STYLES: Record<string, string> = {
-  pendente: "border-red-300 text-red-700 bg-red-50",
-  parcial: "border-amber-400 text-amber-700 bg-amber-50",
-  ok: "border-emerald-400 text-emerald-700 bg-emerald-50",
-};
-
-const DOCS_STATUS_LABEL: Record<string, string> = {
-  pendente: "Sem doc",
-  parcial: "Parcial",
-  ok: "OK",
-};
-
 export default function DocumentosPendentes() {
   const qc = useQueryClient();
   const [aba, setAba] = useState<Aba>("cobrar");
