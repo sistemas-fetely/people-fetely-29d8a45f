@@ -2060,11 +2060,13 @@ export type Database = {
           status: string
           tags: Json
           tarefa_id: string | null
+          tem_sugestao_nf: boolean
           tipo: string
           total_parcelas: number | null
           unidade: string | null
           updated_at: string | null
           valor: number
+          valor_original_item: number | null
           valor_pago: number | null
         }
         Insert: {
@@ -2133,11 +2135,13 @@ export type Database = {
           status?: string
           tags?: Json
           tarefa_id?: string | null
+          tem_sugestao_nf?: boolean
           tipo?: string
           total_parcelas?: number | null
           unidade?: string | null
           updated_at?: string | null
           valor: number
+          valor_original_item?: number | null
           valor_pago?: number | null
         }
         Update: {
@@ -2206,11 +2210,13 @@ export type Database = {
           status?: string
           tags?: Json
           tarefa_id?: string | null
+          tem_sugestao_nf?: boolean
           tipo?: string
           total_parcelas?: number | null
           unidade?: string | null
           updated_at?: string | null
           valor?: number
+          valor_original_item?: number | null
           valor_pago?: number | null
         }
         Relationships: [
@@ -9582,6 +9588,7 @@ export type Database = {
     }
     Functions: {
       apagar_conta_pagar: { Args: { p_id: string }; Returns: Json }
+      aplicar_ia_categoria_em_massa: { Args: never; Returns: Json }
       aplicar_regras_categorizacao_stage: {
         Args: { p_stage_id: string }
         Returns: Json
@@ -9665,6 +9672,19 @@ export type Database = {
           nf_numero: string
           score: number
           valor_total: number
+        }[]
+      }
+      buscar_nfs_stage_v2: {
+        Args: { p_conta_id: string }
+        Returns: {
+          data_emissao: string
+          fornecedor_cnpj: string
+          fornecedor_razao_social: string
+          motivos: string
+          nf_id: string
+          nf_numero: string
+          score: number
+          valor_nf: number
         }[]
       }
       calcular_docs_status: { Args: { p_conta_id: string }; Returns: string }
@@ -9763,6 +9783,13 @@ export type Database = {
       dados_lancamento_para_despesa: {
         Args: { p_lancamento_id: string }
         Returns: Json
+      }
+      debug_kalunga: {
+        Args: never
+        Returns: {
+          step: string
+          valor: string
+        }[]
       }
       decisao_salario: {
         Args: {
@@ -9988,6 +10015,28 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      ia_listar_ambiguos: {
+        Args: never
+        Returns: {
+          conta_id: string
+          descricao: string
+          parcela_grupo_id: string
+          qtd_parcelas: number
+          tipo: string
+          valor_referencia: number
+        }[]
+      }
+      ia_listar_nfs_candidatas: {
+        Args: { p_conta_id: string }
+        Returns: {
+          data_emissao: string
+          fornecedor_cnpj: string
+          fornecedor_razao_social: string
+          nf_id: string
+          nf_numero: string
+          valor_nf: number
+        }[]
       }
       ignorar_lancamento: { Args: { p_lancamento_id: string }; Returns: Json }
       ignorar_ofx: { Args: { p_ofx_id: string }; Returns: Json }
