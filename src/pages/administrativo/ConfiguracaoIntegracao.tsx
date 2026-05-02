@@ -111,13 +111,27 @@ export default function ConfiguracaoIntegracao() {
 
   function abrirNovoFin() {
     setEditingFin(null);
-    setFinForm({ nome: "", email: "", observacao: "" });
+    setFinForm({
+      nome: "",
+      email: "",
+      observacao: "",
+      propositos: ["pagamento", "fiscal"],
+      papel: "principal",
+    });
     setShowDialogFin(true);
   }
 
   function abrirEditarFin(fin: any) {
     setEditingFin(fin);
-    setFinForm({ nome: fin.nome || "", email: fin.email || "", observacao: fin.observacao || "" });
+    setFinForm({
+      nome: fin.nome || "",
+      email: fin.email || "",
+      observacao: fin.observacao || "",
+      propositos: Array.isArray(fin.propositos) && fin.propositos.length > 0
+        ? fin.propositos
+        : ["pagamento"],
+      papel: fin.papel === "copia" ? "copia" : "principal",
+    });
     setShowDialogFin(true);
   }
 
@@ -126,11 +140,22 @@ export default function ConfiguracaoIntegracao() {
       toast.error("Nome e email são obrigatórios");
       return;
     }
+    if (finForm.propositos.length === 0) {
+      toast.error("Selecione pelo menos um propósito (pagamento ou fiscal)");
+      return;
+    }
     setSavingFin(true);
+    const payload = {
+      nome: finForm.nome.trim(),
+      email: finForm.email.trim(),
+      observacao: finForm.observacao.trim() || null,
+      propositos: finForm.propositos,
+      papel: finForm.papel,
+    };
     if (editingFin) {
       const { error } = await supabase
         .from("config_financeiro_externo")
-        .update({ nome: finForm.nome.trim(), email: finForm.email.trim(), observacao: finForm.observacao.trim() || null })
+        .update(payload as any)
         .eq("id", editingFin.id);
       setSavingFin(false);
       if (error) { toast.error("Erro: " + error.message); return; }
@@ -138,7 +163,7 @@ export default function ConfiguracaoIntegracao() {
     } else {
       const { error } = await supabase
         .from("config_financeiro_externo")
-        .insert({ nome: finForm.nome.trim(), email: finForm.email.trim(), observacao: finForm.observacao.trim() || null, ativo: true });
+        .insert({ ...payload, ativo: true } as any);
       setSavingFin(false);
       if (error) { toast.error("Erro: " + error.message); return; }
       toast.success("Destinatário adicionado");
