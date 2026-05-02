@@ -748,7 +748,7 @@ export default function CaixaBanco() {
       qualidadeVinculado: { pct: pct(comVinculadoOK, totalBase), atendidos: comVinculadoOK, total: totalBase },
       qualidadeConciliado: { pct: pct(comConciliadoOK, totalBase), atendidos: comConciliadoOK, total: totalBase },
     };
-  }, [lancamentosEnriched, nfMap, statusFlagsMap]);
+  }, [lancamentosEnriched, nfMap, statusFlagsMap, filtroOp]);
 
 
 
