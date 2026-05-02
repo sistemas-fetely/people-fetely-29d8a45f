@@ -11,6 +11,10 @@ import { toast } from "sonner";
 import { useCategoriasPlano } from "@/hooks/useCategoriasPlano";
 import { CategoriaCombobox } from "./CategoriaCombobox";
 import { cn } from "@/lib/utils";
+import {
+  getFamiliaContaPagar,
+  getCamposVisiveis,
+} from "@/lib/financeiro/familia-conta-pagar";
 
 /**
  * Form de edição de Conta a Pagar — Fase 2 (29/04/2026).
@@ -37,6 +41,10 @@ type ContaEditavel = {
   status: string;
   parceiro_id?: string | null;
   pago_em_conta_id?: string | null;
+  // Família (decide visibilidade dos campos)
+  is_cartao?: boolean | null;
+  origem?: string | null;
+  formas_pagamento?: { codigo?: string | null; nome?: string | null } | null;
 };
 
 interface Props {
