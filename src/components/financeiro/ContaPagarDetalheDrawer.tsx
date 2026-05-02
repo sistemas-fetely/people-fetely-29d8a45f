@@ -153,25 +153,61 @@ export default function ContaPagarDetalheDrawer({ contaId, onClose }: Props) {
     }
   }
 
-  async function handleApagar() {
+  async function handleApagar(apagarGrupoInteiro = false) {
     if (!conta) return;
     setApagando(true);
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: result, error } = await (supabase as any).rpc("apagar_conta_pagar", {
-        p_id: conta.id,
-      });
+      const { data: result, error } = await (supabase as any).rpc(
+        "apagar_conta_pagar",
+        {
+          p_id: conta.id,
+          p_apagar_grupo_inteiro: apagarGrupoInteiro,
+        },
+      );
       if (error) throw error;
+
+      // Caso 1: grupo de parcelas — pede confirmação cascade
+      if (result?.precisa_confirmar_grupo) {
+        const qtd = result.qtd_parcelas_grupo;
+        const ok = window.confirm(
+          `Esta conta faz parte de um grupo de ${qtd} parcelas.\n\n` +
+          `Apagar TODAS as ${qtd} parcelas?\n\n` +
+          `OK = apaga todas\n` +
+          `Cancelar = cancela operação`
+        );
+        if (ok) {
+          await handleApagar(true);
+        }
+        return;
+      }
+
+      // Caso 2: erro de regra (status, cartão vinculado, conciliado etc)
       if (!result?.ok) {
         toast.error(result?.erro || "Erro ao apagar");
         return;
       }
-      toast.success("Conta apagada");
+
+      // Caso 3: sucesso
+      const msg = result.cascade_grupo
+        ? `${result.apagadas} parcelas apagadas`
+        : "Conta apagada";
+      toast.success(msg);
+
+      if (result.nfs_desvinculadas > 0) {
+        toast.info(`${result.nfs_desvinculadas} NF(s) voltaram pra fila de não-vinculadas`);
+      }
+
       qc.invalidateQueries({ queryKey: ["contas-pagar"] });
       qc.invalidateQueries({ queryKey: ["qualidade-dado-map"] });
+      qc.invalidateQueries({ queryKey: ["nfs-stage"] });
       onClose();
     } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
+      const msg =
+        e instanceof Error ? e.message :
+        typeof e === "object" && e !== null
+          ? ((e as { message?: string }).message ?? JSON.stringify(e))
+          : String(e);
       toast.error("Erro: " + msg);
     } finally {
       setApagando(false);
@@ -354,7 +390,7 @@ export default function ContaPagarDetalheDrawer({ contaId, onClose }: Props) {
                         <AlertDialogCancel>Cancelar</AlertDialogCancel>
                         <AlertDialogAction
                           className="bg-red-600 hover:bg-red-700 text-white"
-                          onClick={handleApagar}
+                          onClick={() => handleApagar(false)}
                         >
                           Apagar
                         </AlertDialogAction>
