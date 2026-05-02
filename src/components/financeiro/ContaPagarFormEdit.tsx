@@ -11,6 +11,10 @@ import { toast } from "sonner";
 import { useCategoriasPlano } from "@/hooks/useCategoriasPlano";
 import { CategoriaCombobox } from "./CategoriaCombobox";
 import { cn } from "@/lib/utils";
+import {
+  getFamiliaContaPagar,
+  getCamposVisiveis,
+} from "@/lib/financeiro/familia-conta-pagar";
 
 /**
  * Form de edição de Conta a Pagar — Fase 2 (29/04/2026).
@@ -37,6 +41,10 @@ type ContaEditavel = {
   status: string;
   parceiro_id?: string | null;
   pago_em_conta_id?: string | null;
+  // Família (decide visibilidade dos campos)
+  is_cartao?: boolean | null;
+  origem?: string | null;
+  formas_pagamento?: { codigo?: string | null; nome?: string | null } | null;
 };
 
 interface Props {
@@ -68,6 +76,29 @@ export function ContaPagarFormEdit({
   }, [highlightCampo]);
 
   const isReadOnly = STATUS_READONLY.includes(conta.status);
+
+  // Família + visibilidade dos campos por origem.
+  // Família B (cartão) e C (OFX já saiu) deixam data_vencimento, forma de
+  // pagamento e pago_em_conta como readonly (vêm da fatura/transação).
+  // Família A em pré-pagamento marca pago_em_conta como obrigatório.
+  const familia = getFamiliaContaPagar({
+    is_cartao: conta.is_cartao ?? null,
+    origem: conta.origem ?? null,
+  });
+  const campos = getCamposVisiveis(familia, conta.status);
+  const familiaLabel =
+    familia === "B_cartao"
+      ? "Cartão"
+      : familia === "C_ja_saiu"
+        ? "OFX"
+        : null;
+  const formaPagamentoNome = conta.formas_pagamento?.nome ?? null;
+  // Helper: campo está em readonly por causa da família (não confundir
+  // com isReadOnly global, que é por status terminal)
+  const readonlyPorFamilia = (campo: keyof typeof campos) =>
+    !isReadOnly && campos[campo] === "readonly";
+  const obrigatorioPorFamilia = (campo: keyof typeof campos) =>
+    campos[campo] === "obrigatorio";
 
   // Estado local do form
   const [descricao, setDescricao] = useState(conta.descricao || "");
@@ -275,8 +306,13 @@ export function ContaPagarFormEdit({
           type="date"
           value={dataVencimento}
           onChange={(e) => setDataVencimento(e.target.value)}
-          disabled={isReadOnly || salvando}
+          disabled={isReadOnly || salvando || readonlyPorFamilia("data_vencimento")}
         />
+        {readonlyPorFamilia("data_vencimento") && familiaLabel && (
+          <p className="text-[11px] text-muted-foreground">
+            Definida pela origem ({familiaLabel}) — não editável aqui.
+          </p>
+        )}
       </div>
 
       {/* Categoria (plano de contas) */}
@@ -359,7 +395,7 @@ export function ContaPagarFormEdit({
         <Select
           value={formaPagamentoId}
           onValueChange={setFormaPagamentoId}
-          disabled={isReadOnly || salvando}
+          disabled={isReadOnly || salvando || readonlyPorFamilia("forma_pagamento")}
         >
           <SelectTrigger>
             <SelectValue placeholder="Definir..." />
@@ -371,6 +407,13 @@ export function ContaPagarFormEdit({
             ))}
           </SelectContent>
         </Select>
+        {readonlyPorFamilia("forma_pagamento") && familiaLabel && (
+          <p className="text-[11px] text-muted-foreground">
+            {familiaLabel === "Cartão"
+              ? `Forma definida pela fatura${formaPagamentoNome ? `: ${formaPagamentoNome}` : ""}.`
+              : `Forma definida pela transação OFX${formaPagamentoNome ? `: ${formaPagamentoNome}` : ""}.`}
+          </p>
+        )}
       </div>
 
       {/* Pago em conta (banco) */}
@@ -384,7 +427,8 @@ export function ContaPagarFormEdit({
       >
         <Label className="flex items-center gap-2">
           Pago em conta (banco)
-          {highlightCampo === "pago_em_conta_id" && (
+          {(highlightCampo === "pago_em_conta_id" ||
+            (obrigatorioPorFamilia("pago_em_conta") && pagoEmContaId === "__none__")) && (
             <span className="text-[10px] font-medium text-rose-600">
               ← preencha pra continuar
             </span>
@@ -393,7 +437,7 @@ export function ContaPagarFormEdit({
         <Select
           value={pagoEmContaId}
           onValueChange={setPagoEmContaId}
-          disabled={isReadOnly || salvando}
+          disabled={isReadOnly || salvando || readonlyPorFamilia("pago_em_conta")}
         >
           <SelectTrigger
             className={cn(
@@ -412,9 +456,17 @@ export function ContaPagarFormEdit({
             ))}
           </SelectContent>
         </Select>
-        <p className="text-[11px] text-muted-foreground">
-          Banco usado pra pagar essa conta. Necessário pra lançar em Movimentação.
-        </p>
+        {readonlyPorFamilia("pago_em_conta") && familiaLabel ? (
+          <p className="text-[11px] text-muted-foreground">
+            {familiaLabel === "Cartão"
+              ? "Pagamento via fatura do cartão — não definido por conta."
+              : "Banco definido pela transação OFX original."}
+          </p>
+        ) : (
+          <p className="text-[11px] text-muted-foreground">
+            Banco usado pra pagar essa conta. Necessário pra lançar em Movimentação.
+          </p>
+        )}
       </div>
 
       {/* Dados NF */}
