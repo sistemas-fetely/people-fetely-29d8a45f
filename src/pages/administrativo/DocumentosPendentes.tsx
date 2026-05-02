@@ -1014,6 +1014,20 @@ export default function DocumentosPendentes() {
         onSuccess={() => setSelecionadas(new Set())}
       />
 
+      {contaParaBuscar && (
+        <BuscarNFStageDialog
+          open={!!contaParaBuscar}
+          onOpenChange={(o) => !o && setContaParaBuscar(null)}
+          contaId={contaParaBuscar.conta_id}
+          contaDescricao={contaParaBuscar.descricao}
+          contaValor={Number(contaParaBuscar.valor || 0)}
+          onVinculado={() => {
+            qc.invalidateQueries({ queryKey: ["docs-envio-agrupados"] });
+            setContaParaBuscar(null);
+          }}
+        />
+      )}
+
       <AlertDialog
         open={!!remessaParaDesfazer}
         onOpenChange={(o) => !o && setRemessaParaDesfazer(null)}
