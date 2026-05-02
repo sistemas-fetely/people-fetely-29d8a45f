@@ -134,7 +134,21 @@ export function ContaPagarFormEdit({ conta, onSaved, onCancel }: Props) {
     },
   });
 
-  // Centros de custo (lista de strings distintos já usados — pragmatismo)
+  // Contas bancárias ativas (pra "Pago em conta")
+  const { data: contasBancarias = [] } = useQuery({
+    queryKey: ["contas-bancarias-ativas"],
+    staleTime: 60_000,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("contas_bancarias")
+        .select("id, nome_exibicao, banco")
+        .eq("ativo", true)
+        .order("nome_exibicao");
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
   // Quando virar tabela própria, troca pra hook dedicado.
   const { data: centrosCusto = [] } = useQuery({
     queryKey: ["centros-custo-distinct"],
@@ -180,6 +194,21 @@ export function ContaPagarFormEdit({ conta, onSaved, onCancel }: Props) {
       if (!result?.ok) {
         toast.error(result?.erro || "Erro ao salvar");
         return;
+      }
+
+      // Atualiza pago_em_conta_id em paralelo (não está na RPC v2)
+      const novoPagoEmContaId =
+        pagoEmContaId === "__none__" ? null : pagoEmContaId;
+      if (novoPagoEmContaId !== (conta.pago_em_conta_id ?? null)) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { error: errBanco } = await (supabase as any)
+          .from("contas_pagar_receber")
+          .update({
+            pago_em_conta_id: novoPagoEmContaId,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", conta.id);
+        if (errBanco) throw errBanco;
       }
 
       toast.success("Conta atualizada");
