@@ -113,6 +113,26 @@ export default function ContasPagar() {
     },
   });
 
+  // Email enviado vem da tabela base (não está na view consolidada)
+  const { data: emailMap = new Map<string, boolean>() } = useQuery({
+    queryKey: ["contas-pagar-email-map"],
+    enabled: !!data && data.length > 0,
+    queryFn: async () => {
+      const ids = (data || []).map((c) => c.id).filter(Boolean) as string[];
+      if (ids.length === 0) return new Map<string, boolean>();
+      const { data: rows, error } = await supabase
+        .from("contas_pagar_receber")
+        .select("id, email_pagamento_enviado")
+        .in("id", ids);
+      if (error) throw error;
+      const m = new Map<string, boolean>();
+      (rows || []).forEach((r: { id: string; email_pagamento_enviado: boolean | null }) => {
+        m.set(r.id, !!r.email_pagamento_enviado);
+      });
+      return m;
+    },
+  });
+
   // Map: conta_pagar_id -> { banco_nome, fatura_vencimento }
   // Permite mostrar sub-linha "↳ Itaú · fat dd/mm/yyyy" na coluna Meio de pagamento.
   const { data: faturaInfoMap = new Map<string, FaturaInfo>() } = useQuery({
