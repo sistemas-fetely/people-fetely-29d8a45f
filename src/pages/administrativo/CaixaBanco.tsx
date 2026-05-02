@@ -610,13 +610,13 @@ export default function CaixaBanco() {
         list = list.filter((l) => {
           if (!l.data_vencimento) return false;
           const v = new Date(l.data_vencimento + "T00:00:00");
-          return v >= iniMes && v <= fimMes && statusVisual(l) === "aguardando_pagamento";
+          return v >= iniMes && v <= fimMes;
         });
       } else if (filtroOp === "proximo_mes") {
         list = list.filter((l) => {
           if (!l.data_vencimento) return false;
           const v = new Date(l.data_vencimento + "T00:00:00");
-          return v >= iniProx && v <= fimProx && statusVisual(l) === "aguardando_pagamento";
+          return v >= iniProx && v <= fimProx;
         });
       } else if (filtroOp === "mes_anterior") {
         list = list.filter((l) => {
@@ -691,9 +691,9 @@ export default function CaixaBanco() {
       return v < hoje;
     });
 
-    const mesAtual = emAberto.filter(noMesAtual);
+    const mesAtual = todos.filter(noMesAtual);
 
-    const proximoMes = emAberto.filter((l) => {
+    const proximoMes = todos.filter((l) => {
       if (!l.data_vencimento) return false;
       const v = new Date(l.data_vencimento + "T00:00:00");
       return v >= inicioProximoMes && v <= fimProximoMes;
@@ -791,7 +791,7 @@ export default function CaixaBanco() {
           <CardKPI
             titulo="Este mês"
             valor={formatBRL(kpis.mesAtual.valor)}
-            sublinha={`${kpis.mesAtual.qtd} a vencer`}
+            sublinha={`${kpis.mesAtual.qtd} contas`}
             cor="amber"
             ativo={filtroOp === "mes_atual"}
             onClick={() => setFiltroOp(filtroOp === "mes_atual" ? "todos" : "mes_atual")}
@@ -800,7 +800,7 @@ export default function CaixaBanco() {
           <CardKPI
             titulo="Próximo mês"
             valor={formatBRL(kpis.proximoMes.valor)}
-            sublinha={`${kpis.proximoMes.qtd} previstas`}
+            sublinha={`${kpis.proximoMes.qtd} contas`}
             cor="blue"
             ativo={filtroOp === "proximo_mes"}
             onClick={() => setFiltroOp(filtroOp === "proximo_mes" ? "todos" : "proximo_mes")}
@@ -911,9 +911,8 @@ export default function CaixaBanco() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="todos">Todos status</SelectItem>
-              <SelectItem value="em_aberto">Em aberto</SelectItem>
-              <SelectItem value="pago">Pago</SelectItem>
-              <SelectItem value="conciliado">Conciliado</SelectItem>
+              <SelectItem value="aguardando_pagamento">Aguardando pagamento</SelectItem>
+              <SelectItem value="paga">Pago</SelectItem>
             </SelectContent>
           </Select>
 
