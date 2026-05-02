@@ -610,13 +610,13 @@ export default function CaixaBanco() {
         list = list.filter((l) => {
           if (!l.data_vencimento) return false;
           const v = new Date(l.data_vencimento + "T00:00:00");
-          return v >= iniMes && v <= fimMes && statusVisual(l) === "aguardando_pagamento";
+          return v >= iniMes && v <= fimMes;
         });
       } else if (filtroOp === "proximo_mes") {
         list = list.filter((l) => {
           if (!l.data_vencimento) return false;
           const v = new Date(l.data_vencimento + "T00:00:00");
-          return v >= iniProx && v <= fimProx && statusVisual(l) === "aguardando_pagamento";
+          return v >= iniProx && v <= fimProx;
         });
       } else if (filtroOp === "mes_anterior") {
         list = list.filter((l) => {
@@ -691,9 +691,9 @@ export default function CaixaBanco() {
       return v < hoje;
     });
 
-    const mesAtual = emAberto.filter(noMesAtual);
+    const mesAtual = todos.filter(noMesAtual);
 
-    const proximoMes = emAberto.filter((l) => {
+    const proximoMes = todos.filter((l) => {
       if (!l.data_vencimento) return false;
       const v = new Date(l.data_vencimento + "T00:00:00");
       return v >= inicioProximoMes && v <= fimProximoMes;
