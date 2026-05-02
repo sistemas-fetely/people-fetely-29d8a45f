@@ -45,6 +45,7 @@ import {
   RefreshCcw,
   Sparkles,
   Loader2,
+  MailCheck,
   type LucideIcon,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
@@ -407,6 +408,7 @@ export default function CaixaBanco() {
   const [mostrarSoInconsistentes, setMostrarSoInconsistentes] = useState(false);
   const [filtroOp, setFiltroOp] = useState<FiltroOperacional>("todos");
   const [filtroQual, setFiltroQual] = useState<FiltroQualidade>("todos");
+  const [filtroContador, setFiltroContador] = useState<"todos" | "enviados" | "nao_enviados">("todos");
   const [aplicandoIA, setAplicandoIA] = useState(false);
   const [sugestaoMovId, setSugestaoMovId] = useState<string | null>(null);
   const [filaIAOpen, setFilaIAOpen] = useState(false);
@@ -592,6 +594,32 @@ export default function CaixaBanco() {
     },
   });
 
+  // Map<conta_pagar_id, { enviada_em, descricao }> — última remessa de cada conta.
+  const { data: contadorMap } = useQuery({
+    queryKey: ["contador-enviados-mov", lancamentoIds.join(",")],
+    enabled: lancamentoIds.length > 0,
+    staleTime: 30_000,
+    queryFn: async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase as any)
+        .from("remessas_contador_itens")
+        .select("conta_id, remessas_contador!inner(enviada_em, descricao)")
+        .in("conta_id", lancamentoIds);
+      if (error) throw error;
+      const map = new Map<string, { enviada_em: string; descricao: string | null }>();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (data || []).forEach((it: any) => {
+        const r = it.remessas_contador;
+        if (!r || !it.conta_id) return;
+        const existing = map.get(it.conta_id);
+        if (!existing || new Date(r.enviada_em) > new Date(existing.enviada_em)) {
+          map.set(it.conta_id, { enviada_em: r.enviada_em, descricao: r.descricao });
+        }
+      });
+      return map;
+    },
+  });
+
   // Lançamentos enriquecidos com flags de inconsistência da movimentação vinculada.
   const lancamentosEnriched = useMemo(() => {
     return (lancamentos || []).map((l) => {
@@ -741,8 +769,17 @@ export default function CaixaBanco() {
       }
     }
 
+    // Filtro: enviado ao contador
+    if (filtroContador !== "todos") {
+      list = list.filter((l) => {
+        if (l.origem_view !== "conta_pagar") return false;
+        const enviado = contadorMap?.has(l.id) === true;
+        return filtroContador === "enviados" ? enviado : !enviado;
+      });
+    }
+
     return list;
-  }, [lancamentosEnriched, statusFilter, contaBancariaFilter, busca, mapParceiros, mostrarSoInconsistentes, filtroOp, filtroQual, nfMap, statusFlagsMap]);
+  }, [lancamentosEnriched, statusFilter, contaBancariaFilter, busca, mapParceiros, mostrarSoInconsistentes, filtroOp, filtroQual, filtroContador, contadorMap, nfMap, statusFlagsMap]);
 
   // KPIs operacionais (8 cards)
   const kpis = useMemo(() => {
@@ -994,6 +1031,20 @@ export default function CaixaBanco() {
                 <SelectItem value="todos">Todos status</SelectItem>
                 <SelectItem value="aguardando_pagamento">Aguardando pagamento</SelectItem>
                 <SelectItem value="paga">Pago</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select
+              value={filtroContador}
+              onValueChange={(v) => setFiltroContador(v as "todos" | "enviados" | "nao_enviados")}
+            >
+              <SelectTrigger className="w-[180px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Contador: todos</SelectItem>
+                <SelectItem value="enviados">Contador: enviados</SelectItem>
+                <SelectItem value="nao_enviados">Contador: pendentes</SelectItem>
               </SelectContent>
             </Select>
 
@@ -1293,6 +1344,30 @@ export default function CaixaBanco() {
                                           <p className="text-xs">💰 {qConc.motivo}</p>
                                         </TooltipContent>
                                       </Tooltip>
+                                      {l.origem_view === "conta_pagar" && (() => {
+                                        const remessa = contadorMap?.get(l.id);
+                                        const enviado = !!remessa;
+                                        return (
+                                          <Tooltip>
+                                            <TooltipTrigger asChild>
+                                              <MailCheck
+                                                className={cn(
+                                                  "h-3.5 w-3.5 cursor-help",
+                                                  enviado ? "text-emerald-600" : "text-zinc-300",
+                                                )}
+                                                strokeWidth={2.2}
+                                              />
+                                            </TooltipTrigger>
+                                            <TooltipContent className="max-w-xs">
+                                              <p className="text-xs">
+                                                {enviado
+                                                  ? `📨 Enviado ao contador em ${new Date(remessa!.enviada_em).toLocaleDateString("pt-BR")}${remessa!.descricao ? ` (${remessa!.descricao})` : ""}`
+                                                  : "📭 Ainda não enviado ao contador"}
+                                              </p>
+                                            </TooltipContent>
+                                          </Tooltip>
+                                        );
+                                      })()}
                                     </div>
                                   </TooltipProvider>
                                 );
