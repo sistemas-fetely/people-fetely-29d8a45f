@@ -180,17 +180,6 @@ export function AcoesLancamentoCartao({ lancamento }: Props) {
         <Button
           size="sm"
           variant="outline"
-          className="h-6 px-2 text-[10px] gap-1 border-amber-300 text-amber-700 hover:bg-amber-50"
-          onClick={() => setAgruparOpen(true)}
-          disabled={salvando}
-          title="Agrupar com outro lançamento (estorno/complemento)"
-        >
-          <Layers className="h-2.5 w-2.5" />
-          Agrupar
-        </Button>
-        <Button
-          size="sm"
-          variant="outline"
           className="h-6 px-2 text-[10px] gap-1 border-zinc-300 text-zinc-600 hover:bg-zinc-50"
           onClick={handleIgnorar}
           disabled={salvando}
@@ -205,12 +194,6 @@ export function AcoesLancamentoCartao({ lancamento }: Props) {
         open={vincularOpen}
         onOpenChange={setVincularOpen}
         lancamento={lancamento}
-      />
-
-      <AgruparLancamentosModal
-        open={agruparOpen}
-        onOpenChange={setAgruparOpen}
-        lancamentoPrincipal={lancamento}
       />
 
       <Dialog open={criarOpen} onOpenChange={setCriarOpen}>
