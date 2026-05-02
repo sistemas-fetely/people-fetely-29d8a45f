@@ -135,7 +135,16 @@ export default function FilaRevisaoIADialog({ open, onClose }: Props) {
         },
       );
       if (error) throw error;
-      return (data || []) as CandidatoCategoria[];
+      // normaliza "similares" — pode vir como string JSON, array, ou null
+      const normalized = (data || []).map((row: Record<string, unknown>) => {
+        let sims = row.similares;
+        if (typeof sims === "string") {
+          try { sims = JSON.parse(sims); } catch { sims = []; }
+        }
+        if (!Array.isArray(sims)) sims = [];
+        return { ...row, similares: sims };
+      });
+      return normalized as CandidatoCategoria[];
     },
   });
 
