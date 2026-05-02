@@ -1015,7 +1015,7 @@ function RemessaContas({
                 )}
               </div>
               <div className="text-[10px] text-muted-foreground flex gap-2 mt-0.5">
-                <span>{c.parceiro?.razao_social || "Sem fornecedor"}</span>
+                <span>{c.parceiro_razao_social || "Sem fornecedor"}</span>
                 <span>Venc: {formatDateBR(c.data_vencimento)}</span>
                 {c.data_pagamento && (
                   <span>Pago: {formatDateBR(c.data_pagamento)}</span>
