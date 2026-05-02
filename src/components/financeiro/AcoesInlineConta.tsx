@@ -22,6 +22,10 @@ import EnviarPagamentoDialog from "./EnviarPagamentoDialog";
 import BuscarNFStageDialog from "./BuscarNFStageDialog";
 import { useContaWorkflow, type ContaStatus } from "@/hooks/useContaWorkflow";
 import { cn } from "@/lib/utils";
+import {
+  getFamiliaContaPagar,
+  getRegraIconeEmail,
+} from "@/lib/financeiro/familia-conta-pagar";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Conta = Record<string, any> & {
@@ -35,6 +39,10 @@ type Conta = Record<string, any> & {
   nf_stage_id?: string | null;
   nf_numero_repositorio?: string | null;
   email_pagamento_enviado?: boolean | null;
+  // Campos pra regra do ícone email (família + forma de pagamento)
+  is_cartao?: boolean | null;
+  origem?: string | null;
+  formas_pagamento?: { codigo?: string | null; nome?: string | null } | null;
 };
 
 interface Props {
@@ -86,16 +94,30 @@ export default function AcoesInlineConta({ conta, onAbrirEditandoBanco }: Props)
     statusEfetivo === "paga" ||
     statusEfetivo === "conciliado";
 
-  const emailEnviado = !!conta.email_pagamento_enviado;
   const temMov = !!conta.movimentacao_bancaria_id;
 
   const estadoNF: EstadoIcone = temNF ? "feito" : "pendente";
   const estadoAprovar: EstadoIcone = aprovado ? "feito" : "pendente";
+
+  // Ícone email: regra unificada via helper familia-conta-pagar.
+  // Família B (cartão) e C (OFX já saiu) → sempre cinza (não cobra).
+  // Família A → vermelho só quando forma cobra (PIX, boleto, transferência)
+  // E status está em fluxo. Caso contrário, cinza.
+  const familia = getFamiliaContaPagar({
+    is_cartao: conta.is_cartao ?? null,
+    origem: conta.origem ?? null,
+  });
+  const regraEmail = getRegraIconeEmail({
+    familia,
+    forma_pagamento_codigo: conta.formas_pagamento?.codigo ?? null,
+    status,
+    email_pagamento_enviado: conta.email_pagamento_enviado ?? null,
+  });
   const estadoEmail: EstadoIcone =
-    emailEnviado ? "feito"
-    : temMov ? "feito"
-    : (status === "aprovado" || status === "doc_pendente" || status === "aguardando_pagamento") ? "pendente"
+    regraEmail === "verde" ? "feito"
+    : regraEmail === "vermelho" ? "pendente"
     : "na";
+
   const estadoMov: EstadoIcone =
     temMov ? "feito"
     : (status === "aprovado" || status === "aguardando_pagamento") ? "pendente"
@@ -159,7 +181,9 @@ export default function AcoesInlineConta({ conta, onAbrirEditandoBanco }: Props)
 
   function handleEmail() {
     if (estadoEmail === "na") {
-      toast.info("Aprove a conta antes de enviar email");
+      toast.info(
+        "Email de pagamento não se aplica aqui (cartão, OFX, ou forma sem cobrança). Pra reenviar manualmente, abra o drawer.",
+      );
       return;
     }
     if (estadoEmail === "feito") {
@@ -176,7 +200,7 @@ export default function AcoesInlineConta({ conta, onAbrirEditandoBanco }: Props)
       ? "Email enviado"
       : estadoEmail === "pendente"
         ? "Enviar email de pagamento"
-        : "Aprove antes de enviar email";
+        : "Email não se aplica (cartão, OFX, ou forma sem cobrança)";
   const tooltipMov =
     estadoMov === "feito"
       ? "Já em Movimentação"
