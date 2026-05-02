@@ -9,6 +9,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Sparkles, Check, SkipForward, X, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -269,61 +270,65 @@ export default function FilaRevisaoIADialog({ open, onClose }: Props) {
                   >
                     <div className="flex items-start gap-3">
                       <div className="flex-1 min-w-0 space-y-1">
-                        <div className="flex items-center gap-2">
-                          <div className="text-sm font-medium truncate">
-                            {c.fornecedor_razao_social}
-                          </div>
-                          <span className="text-[10px] px-1.5 py-0.5 bg-muted rounded">
-                            Série {c.nf_serie || "1"}
+                        {/* Linha 1: fornecedor + badge série */}
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-sm font-medium truncate">
+                            {c.fornecedor_razao_social ?? "Sem fornecedor"}
                           </span>
+                          {c.nf_serie && (
+                            <Badge variant="outline" className="text-[10px]">
+                              Série {c.nf_serie}
+                            </Badge>
+                          )}
                         </div>
 
-                        <div className="text-xs text-muted-foreground flex flex-wrap gap-x-3">
-                          <span>
-                            NF <strong>nº {c.nf_numero || "—"}</strong>
-                          </span>
-                          <span>{formatDate(c.data_emissao)}</span>
-                          <span className="font-medium text-emerald-700">
-                            {formatBRL(c.valor_nf)}
-                          </span>
+                        {/* Linha 2: nº + data + valor */}
+                        <div className="text-xs text-muted-foreground">
+                          NF nº {c.nf_numero ?? "—"}
+                          {c.data_emissao && ` • ${formatDate(c.data_emissao)}`}
+                          {` • ${formatBRL(c.valor_nf)}`}
                         </div>
 
+                        {/* Linha 3: CNPJ */}
                         {c.fornecedor_cnpj && (
-                          <div className="text-[10px] text-muted-foreground">
-                            CNPJ {c.fornecedor_cnpj}
+                          <div className="text-xs text-muted-foreground">
+                            CNPJ: {c.fornecedor_cnpj}
                           </div>
                         )}
 
-                        {c.itens && (
-                          <div className="text-xs bg-amber-50 border border-amber-200 rounded p-2 mt-1">
-                            <div className="font-medium text-amber-900 mb-0.5">
-                              📦 Itens:
+                        {/* Caixa amarela: itens da NF — chave de desempate */}
+                        {Array.isArray(c.itens) && c.itens.length > 0 && (
+                          <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs">
+                            <div className="font-medium text-yellow-900 mb-1">
+                              Itens da NF ({c.itens.length}):
                             </div>
-                            <div className="text-amber-800 line-clamp-2">
-                              {Array.isArray(c.itens)
-                                ? c.itens
-                                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                    .map((it: any) =>
-                                      `${it.quantidade || 1}x ${it.descricao || it.nome || "—"}`,
-                                    )
-                                    .join(" · ")
-                                : typeof c.itens === "string"
-                                  ? c.itens
-                                  : JSON.stringify(c.itens).slice(0, 200)}
-                            </div>
+                            <ul className="space-y-0.5 text-yellow-800">
+                              {c.itens.slice(0, 5).map((item: any, idx: number) => (
+                                <li key={idx} className="truncate">
+                                  • {item.descricao ?? item.nome ?? "Sem descrição"}
+                                  {item.quantidade ? ` (${item.quantidade}x)` : ""}
+                                </li>
+                              ))}
+                              {c.itens.length > 5 && (
+                                <li className="text-yellow-700 italic">
+                                  +{c.itens.length - 5} item(ns)
+                                </li>
+                              )}
+                            </ul>
                           </div>
                         )}
 
-                        <div className="flex items-center gap-2 text-[10px] text-muted-foreground/70 pt-1">
-                          {c.arquivo_nome && (
-                            <span className="truncate">📄 {c.arquivo_nome}</span>
-                          )}
-                          {c.nf_chave_acesso && (
-                            <span className="font-mono">
-                              ...{c.nf_chave_acesso.slice(-12)}
-                            </span>
-                          )}
-                        </div>
+                        {/* Rodapé técnico: arquivo + final da chave */}
+                        {(c.arquivo_nome || c.nf_chave_acesso) && (
+                          <div className="mt-2 text-[10px] text-muted-foreground space-y-0.5 border-t pt-1">
+                            {c.arquivo_nome && (
+                              <div className="truncate">📄 {c.arquivo_nome}</div>
+                            )}
+                            {c.nf_chave_acesso && (
+                              <div className="font-mono">🔑 ...{c.nf_chave_acesso.slice(-12)}</div>
+                            )}
+                          </div>
+                        )}
                       </div>
                       <Button
                         size="sm"
