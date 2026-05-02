@@ -82,6 +82,7 @@ type Conta = {
   formas_pagamento?: { nome?: string | null; codigo?: string | null } | null;
   parceiros_comerciais?: { razao_social?: string | null } | null;
   movimentacao_bancaria_id?: string | null;
+  pago_em_conta_id?: string | null;
 };
 
 const STATUS_LABEL: Record<string, string> = {
@@ -425,6 +426,7 @@ export default function ContaPagarDetalheDrawer({ contaId, onClose }: Props) {
                     nf_serie: conta.nf_serie ?? null,
                     nf_chave_acesso: conta.nf_chave_acesso ?? null,
                     status: conta.status,
+                    pago_em_conta_id: conta.pago_em_conta_id ?? null,
                   }}
                   onSaved={() => setModoEdit(false)}
                   onCancel={() => setModoEdit(false)}

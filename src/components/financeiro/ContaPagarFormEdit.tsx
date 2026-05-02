@@ -35,6 +35,7 @@ type ContaEditavel = {
   nf_chave_acesso: string | null;
   status: string;
   parceiro_id?: string | null;
+  pago_em_conta_id?: string | null;
 };
 
 interface Props {
@@ -61,6 +62,7 @@ export function ContaPagarFormEdit({ conta, onSaved, onCancel }: Props) {
   const [nfNumero, setNfNumero] = useState(conta.nf_numero || "");
   const [nfSerie, setNfSerie] = useState(conta.nf_serie || "");
   const [nfChave, setNfChave] = useState(conta.nf_chave_acesso || "");
+  const [pagoEmContaId, setPagoEmContaId] = useState(conta.pago_em_conta_id || "__none__");
 
   // Debounce da descrição (não dispara IA a cada tecla)
   const [descricaoDebounced, setDescricaoDebounced] = useState(descricao);
@@ -112,6 +114,7 @@ export function ContaPagarFormEdit({ conta, onSaved, onCancel }: Props) {
     setNfNumero(conta.nf_numero || "");
     setNfSerie(conta.nf_serie || "");
     setNfChave(conta.nf_chave_acesso || "");
+    setPagoEmContaId(conta.pago_em_conta_id || "__none__");
   }, [conta.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Categorias (plano de contas)
@@ -131,7 +134,21 @@ export function ContaPagarFormEdit({ conta, onSaved, onCancel }: Props) {
     },
   });
 
-  // Centros de custo (lista de strings distintos já usados — pragmatismo)
+  // Contas bancárias ativas (pra "Pago em conta")
+  const { data: contasBancarias = [] } = useQuery({
+    queryKey: ["contas-bancarias-ativas"],
+    staleTime: 60_000,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("contas_bancarias")
+        .select("id, nome_exibicao, banco")
+        .eq("ativo", true)
+        .order("nome_exibicao");
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
   // Quando virar tabela própria, troca pra hook dedicado.
   const { data: centrosCusto = [] } = useQuery({
     queryKey: ["centros-custo-distinct"],
@@ -177,6 +194,21 @@ export function ContaPagarFormEdit({ conta, onSaved, onCancel }: Props) {
       if (!result?.ok) {
         toast.error(result?.erro || "Erro ao salvar");
         return;
+      }
+
+      // Atualiza pago_em_conta_id em paralelo (não está na RPC v2)
+      const novoPagoEmContaId =
+        pagoEmContaId === "__none__" ? null : pagoEmContaId;
+      if (novoPagoEmContaId !== (conta.pago_em_conta_id ?? null)) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { error: errBanco } = await (supabase as any)
+          .from("contas_pagar_receber")
+          .update({
+            pago_em_conta_id: novoPagoEmContaId,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", conta.id);
+        if (errBanco) throw errBanco;
       }
 
       toast.success("Conta atualizada");
@@ -322,6 +354,31 @@ export function ContaPagarFormEdit({ conta, onSaved, onCancel }: Props) {
             ))}
           </SelectContent>
         </Select>
+      </div>
+
+      {/* Pago em conta (banco) */}
+      <div className="space-y-1">
+        <Label>Pago em conta (banco)</Label>
+        <Select
+          value={pagoEmContaId}
+          onValueChange={setPagoEmContaId}
+          disabled={isReadOnly || salvando}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Definir..." />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__none__">— sem definir —</SelectItem>
+            {contasBancarias.map((cb: { id: string; nome_exibicao?: string | null; banco?: string | null }) => (
+              <SelectItem key={cb.id} value={cb.id}>
+                {cb.nome_exibicao || cb.banco || cb.id}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <p className="text-[11px] text-muted-foreground">
+          Banco usado pra pagar essa conta. Necessário pra lançar em Movimentação.
+        </p>
       </div>
 
       {/* Dados NF */}
