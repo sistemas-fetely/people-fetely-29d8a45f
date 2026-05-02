@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { Loader2, Save, X, Sparkles, Check } from "lucide-react";
 import { toast } from "sonner";
 import { useCategoriasPlano } from "@/hooks/useCategoriasPlano";
 import { CategoriaCombobox } from "./CategoriaCombobox";
+import { cn } from "@/lib/utils";
 
 /**
  * Form de edição de Conta a Pagar — Fase 2 (29/04/2026).
@@ -42,13 +43,29 @@ interface Props {
   conta: ContaEditavel;
   onSaved: () => void;
   onCancel: () => void;
+  highlightCampo?: "pago_em_conta_id" | null;
 }
 
 const STATUS_READONLY = ["paga", "cancelado"];
 
-export function ContaPagarFormEdit({ conta, onSaved, onCancel }: Props) {
+export function ContaPagarFormEdit({
+  conta,
+  onSaved,
+  onCancel,
+  highlightCampo = null,
+}: Props) {
   const qc = useQueryClient();
   const [salvando, setSalvando] = useState(false);
+  const pagoEmContaRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (highlightCampo === "pago_em_conta_id" && pagoEmContaRef.current) {
+      const t = setTimeout(() => {
+        pagoEmContaRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 200);
+      return () => clearTimeout(t);
+    }
+  }, [highlightCampo]);
 
   const isReadOnly = STATUS_READONLY.includes(conta.status);
 
@@ -357,14 +374,33 @@ export function ContaPagarFormEdit({ conta, onSaved, onCancel }: Props) {
       </div>
 
       {/* Pago em conta (banco) */}
-      <div className="space-y-1">
-        <Label>Pago em conta (banco)</Label>
+      <div
+        ref={pagoEmContaRef}
+        className={cn(
+          "space-y-1 rounded-md transition-all",
+          highlightCampo === "pago_em_conta_id" &&
+            "ring-2 ring-rose-400 ring-offset-2 p-2 -m-2 bg-rose-50/40",
+        )}
+      >
+        <Label className="flex items-center gap-2">
+          Pago em conta (banco)
+          {highlightCampo === "pago_em_conta_id" && (
+            <span className="text-[10px] font-medium text-rose-600">
+              ← preencha pra continuar
+            </span>
+          )}
+        </Label>
         <Select
           value={pagoEmContaId}
           onValueChange={setPagoEmContaId}
           disabled={isReadOnly || salvando}
         >
-          <SelectTrigger>
+          <SelectTrigger
+            className={cn(
+              highlightCampo === "pago_em_conta_id" &&
+                "border-rose-400 focus:ring-rose-400",
+            )}
+          >
             <SelectValue placeholder="Definir..." />
           </SelectTrigger>
           <SelectContent>

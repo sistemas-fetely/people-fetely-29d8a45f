@@ -96,6 +96,7 @@ export default function ContasPagar() {
   const [dataDe, setDataDe] = useState("");
   const [dataAte, setDataAte] = useState("");
   const [contaIdSelecionada, setContaIdSelecionada] = useState<string | null>(null);
+  const [editandoBanco, setEditandoBanco] = useState(false);
   const [selecionadas, setSelecionadas] = useState<Set<string>>(new Set());
   const [novaContaOpen, setNovaContaOpen] = useState(false);
 
@@ -781,7 +782,13 @@ export default function ContasPagar() {
                               </Badge>
                             </TableCell>
                             <TableCell className="min-w-[140px]" onClick={(e) => e.stopPropagation()}>
-                              <AcoesInlineConta conta={{ ...c, email_pagamento_enviado: emailMap.get(c.id) || false }} />
+                              <AcoesInlineConta
+                                conta={{ ...c, email_pagamento_enviado: emailMap.get(c.id) || false }}
+                                onAbrirEditandoBanco={(id) => {
+                                  setEditandoBanco(true);
+                                  setContaIdSelecionada(id);
+                                }}
+                              />
                             </TableCell>
                           </TableRow>
                         );
@@ -802,7 +809,12 @@ export default function ContasPagar() {
 
       <ContaPagarDetalheDrawer
         contaId={contaIdSelecionada}
-        onClose={() => setContaIdSelecionada(null)}
+        onClose={() => {
+          setContaIdSelecionada(null);
+          setEditandoBanco(false);
+        }}
+        iniciarEditando={editandoBanco}
+        highlightCampo={editandoBanco ? "pago_em_conta_id" : null}
       />
 
       <NovaContaPagarSheet
