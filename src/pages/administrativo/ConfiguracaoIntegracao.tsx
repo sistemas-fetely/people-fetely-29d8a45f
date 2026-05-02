@@ -362,288 +362,456 @@ export default function ConfiguracaoIntegracao() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            <Settings2 className="h-6 w-6 text-admin" />
-            Configuração da Integração
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Conecte o Sistema Financeiro Fetely à API do Bling.
-          </p>
-        </div>
-        {statusBadge()}
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+          <Settings2 className="h-6 w-6 text-admin" />
+          Integrações
+        </h1>
+        <p className="text-sm text-muted-foreground mt-1">
+          Configure as integrações externas do sistema.
+        </p>
       </div>
 
-      {/* Credenciais */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Credenciais Bling</CardTitle>
-          <CardDescription>
-            Cadastre o app no portal do Bling e cole as chaves abaixo.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid md:grid-cols-2 gap-4">
-            <div>
-              <Label>Client ID</Label>
-              <Input
-                value={form.client_id}
-                onChange={(e) => setForm({ ...form, client_id: e.target.value })}
-                placeholder="ex: abcd1234..."
-              />
-            </div>
-            <div>
-              <Label>Client Secret</Label>
-              <div className="relative">
-                <Input
-                  type={showSecret ? "text" : "password"}
-                  value={form.client_secret}
-                  onChange={(e) => setForm({ ...form, client_secret: e.target.value })}
-                  placeholder="••••••••••"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowSecret((s) => !s)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground"
-                >
-                  {showSecret ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
-              </div>
-            </div>
-            <div>
-              <Label>Access Token</Label>
-              <div className="relative">
-                <Input
-                  type={showAccess ? "text" : "password"}
-                  value={form.access_token}
-                  onChange={(e) => setForm({ ...form, access_token: e.target.value })}
-                  placeholder="Gerado após autorização OAuth"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowAccess((s) => !s)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground"
-                >
-                  {showAccess ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
-              </div>
-            </div>
-            <div>
-              <Label>Refresh Token</Label>
-              <div className="relative">
-                <Input
-                  type={showRefresh ? "text" : "password"}
-                  value={form.refresh_token}
-                  onChange={(e) => setForm({ ...form, refresh_token: e.target.value })}
-                  placeholder="Gerado após autorização OAuth"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowRefresh((s) => !s)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground"
-                >
-                  {showRefresh ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
-              </div>
-            </div>
-          </div>
+      <Tabs defaultValue="bling" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="bling">Bling</TabsTrigger>
+          <TabsTrigger value="email">Email Externo</TabsTrigger>
+        </TabsList>
 
-          <div className="flex items-center gap-3 p-3 rounded-lg border bg-muted/30">
-            <Switch
-              checked={form.ativo}
-              onCheckedChange={(v) => setForm({ ...form, ativo: v })}
-            />
-            <Label className="cursor-pointer">Integração ativa</Label>
-          </div>
+        {/* ABA BLING */}
+        <TabsContent value="bling" className="space-y-6">
+          <div className="flex justify-end">{statusBadge()}</div>
 
-          <div className="flex flex-wrap gap-2">
-            <Button onClick={salvar} disabled={saving} className="bg-admin hover:bg-admin/90 text-admin-foreground">
-              {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              Salvar credenciais
-            </Button>
-            <Button variant="outline" onClick={autorizarBling} disabled={!form.client_id}>
-              <ExternalLink className="h-4 w-4 mr-2" />
-              Autorizar no Bling
-            </Button>
-            <Button
-              variant="outline"
-              onClick={testarConexao}
-              disabled={!!syncing}
-            >
-              {syncing === "ping" ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <CheckCircle2 className="h-4 w-4 mr-2" />
-              )}
-              Testar conexão
-            </Button>
-          </div>
-
-          <div className="mt-4 p-4 rounded-lg border border-dashed space-y-2">
-            <p className="text-xs text-muted-foreground">
-              Após autorizar no Bling, copie o <code>code=</code> da URL e cole aqui:
-            </p>
-            <div className="flex gap-2">
-              <Input
-                placeholder="Cole o code aqui"
-                value={manualCode}
-                onChange={(e) => setManualCode(e.target.value)}
-                className="flex-1 text-xs font-mono"
-              />
-              <Button
-                size="sm"
-                onClick={processarCodeManual}
-                disabled={!manualCode.trim() || processingCode}
-                className="bg-admin hover:bg-admin-accent text-admin-foreground"
-              >
-                {processingCode ? <Loader2 className="h-4 w-4 animate-spin" /> : "Conectar"}
-              </Button>
-            </div>
-          </div>
-
-        </CardContent>
-      </Card>
-
-      {/* Sincronização */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Sincronização</CardTitle>
-          <CardDescription>
-            {config?.ultima_sync_at
-              ? `Última sincronização ${formatDistanceToNow(new Date(config.ultima_sync_at), { addSuffix: true, locale: ptBR })}`
-              : "Nunca sincronizado"}
-            {config?.ultima_sync_detalhes && (
-              <span className="block mt-1 text-xs">{config.ultima_sync_detalhes}</span>
-            )}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex flex-wrap gap-2">
-            <Button
-              size="lg"
-              className="bg-admin hover:bg-admin/90 text-admin-foreground"
-              onClick={handleSyncFull}
-              disabled={!!syncing || !form.access_token}
-            >
-              {syncing === "full" ? (
-                <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-              ) : (
-                <RefreshCw className="h-5 w-5 mr-2" />
-              )}
-              Sincronizar tudo
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => sincronizar("contas_receber")}
-              disabled={!!syncing || !form.access_token}
-            >
-              Contas a receber
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => sincronizar("pedidos")}
-              disabled={!!syncing || !form.access_token}
-            >
-              Pedidos de venda
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => sincronizar("produtos")}
-              disabled={!!syncing || !form.access_token}
-            >
-              Produtos
-            </Button>
-          </div>
-
-          {syncResult && (
-            <div className="p-4 rounded-lg border bg-emerald-50 dark:bg-emerald-950/30 text-sm">
-              <div className="font-medium text-emerald-900 dark:text-emerald-200 mb-1">
-                ✅ Sincronização concluída
-              </div>
-              <div className="text-emerald-800 dark:text-emerald-300">
-                {syncResult.criados} novos | {syncResult.atualizados} atualizados |{" "}
-                {syncResult.erros} erros | {syncResult.duracao_ms}ms
-              </div>
-              {syncResult.detalhes && (
-                <div className="text-xs text-emerald-700 dark:text-emerald-400 mt-1">
-                  {syncResult.detalhes}
+          {/* Credenciais */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Credenciais Bling</CardTitle>
+              <CardDescription>
+                Cadastre o app no portal do Bling e cole as chaves abaixo.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <Label>Client ID</Label>
+                  <Input
+                    value={form.client_id}
+                    onChange={(e) => setForm({ ...form, client_id: e.target.value })}
+                    placeholder="ex: abcd1234..."
+                  />
                 </div>
-              )}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Financeiro externo */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Mail className="h-5 w-5 text-admin" />
-            Financeiro externo
-          </CardTitle>
-          <CardDescription>
-            Destinatários dos emails de solicitação de pagamento. O email é enviado automaticamente quando uma conta é enviada para pagamento.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {configFinanceiro.length === 0 ? (
-            <div className="text-center py-8 border border-dashed rounded-lg">
-              <p className="text-sm font-medium">Nenhum destinatário cadastrado</p>
-              <p className="text-xs text-muted-foreground mt-1">
-                Adicione o email do financeiro que recebe as solicitações de pagamento.
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {configFinanceiro.map((fin: any) => (
-                <div
-                  key={fin.id}
-                  className="flex items-center justify-between p-3 rounded-lg border bg-card"
-                >
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <p className="font-medium text-sm truncate">{fin.nome}</p>
-                      {!fin.ativo && <Badge variant="outline" className="text-xs">Inativo</Badge>}
-                    </div>
-                    <p className="text-xs text-muted-foreground truncate">{fin.email}</p>
-                    {fin.observacao && (
-                      <p className="text-xs text-muted-foreground mt-0.5 italic">{fin.observacao}</p>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-1 ml-3">
-                    <Button size="sm" variant="ghost" onClick={() => abrirEditarFin(fin)}>
-                      <Pencil className="h-3.5 w-3.5" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="text-destructive hover:text-destructive"
-                      onClick={() => setRemovingFin(fin)}
+                <div>
+                  <Label>Client Secret</Label>
+                  <div className="relative">
+                    <Input
+                      type={showSecret ? "text" : "password"}
+                      value={form.client_secret}
+                      onChange={(e) => setForm({ ...form, client_secret: e.target.value })}
+                      placeholder="••••••••••"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowSecret((s) => !s)}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground"
                     >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
+                      {showSecret ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
+                <div>
+                  <Label>Access Token</Label>
+                  <div className="relative">
+                    <Input
+                      type={showAccess ? "text" : "password"}
+                      value={form.access_token}
+                      onChange={(e) => setForm({ ...form, access_token: e.target.value })}
+                      placeholder="Gerado após autorização OAuth"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowAccess((s) => !s)}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground"
+                    >
+                      {showAccess ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                </div>
+                <div>
+                  <Label>Refresh Token</Label>
+                  <div className="relative">
+                    <Input
+                      type={showRefresh ? "text" : "password"}
+                      value={form.refresh_token}
+                      onChange={(e) => setForm({ ...form, refresh_token: e.target.value })}
+                      placeholder="Gerado após autorização OAuth"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowRefresh((s) => !s)}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground"
+                    >
+                      {showRefresh ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                </div>
+              </div>
 
-          <Button
-            variant="outline"
-            className="w-full gap-2"
-            onClick={abrirNovoFin}
-          >
-            <Plus className="h-4 w-4" /> Adicionar destinatário
-          </Button>
-        </CardContent>
-      </Card>
+              <div className="flex items-center gap-3 p-3 rounded-lg border bg-muted/30">
+                <Switch
+                  checked={form.ativo}
+                  onCheckedChange={(v) => setForm({ ...form, ativo: v })}
+                />
+                <Label className="cursor-pointer">Integração ativa</Label>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                <Button onClick={salvar} disabled={saving} className="bg-admin hover:bg-admin/90 text-admin-foreground">
+                  {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                  Salvar credenciais
+                </Button>
+                <Button variant="outline" onClick={autorizarBling} disabled={!form.client_id}>
+                  <ExternalLink className="h-4 w-4 mr-2" />
+                  Autorizar no Bling
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={testarConexao}
+                  disabled={!!syncing}
+                >
+                  {syncing === "ping" ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <CheckCircle2 className="h-4 w-4 mr-2" />
+                  )}
+                  Testar conexão
+                </Button>
+              </div>
+
+              <div className="mt-4 p-4 rounded-lg border border-dashed space-y-2">
+                <p className="text-xs text-muted-foreground">
+                  Após autorizar no Bling, copie o <code>code=</code> da URL e cole aqui:
+                </p>
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Cole o code aqui"
+                    value={manualCode}
+                    onChange={(e) => setManualCode(e.target.value)}
+                    className="flex-1 text-xs font-mono"
+                  />
+                  <Button
+                    size="sm"
+                    onClick={processarCodeManual}
+                    disabled={!manualCode.trim() || processingCode}
+                    className="bg-admin hover:bg-admin-accent text-admin-foreground"
+                  >
+                    {processingCode ? <Loader2 className="h-4 w-4 animate-spin" /> : "Conectar"}
+                  </Button>
+                </div>
+              </div>
+
+            </CardContent>
+          </Card>
+
+          {/* Sincronização */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Sincronização</CardTitle>
+              <CardDescription>
+                {config?.ultima_sync_at
+                  ? `Última sincronização ${formatDistanceToNow(new Date(config.ultima_sync_at), { addSuffix: true, locale: ptBR })}`
+                  : "Nunca sincronizado"}
+                {config?.ultima_sync_detalhes && (
+                  <span className="block mt-1 text-xs">{config.ultima_sync_detalhes}</span>
+                )}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  size="lg"
+                  className="bg-admin hover:bg-admin/90 text-admin-foreground"
+                  onClick={handleSyncFull}
+                  disabled={!!syncing || !form.access_token}
+                >
+                  {syncing === "full" ? (
+                    <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                  ) : (
+                    <RefreshCw className="h-5 w-5 mr-2" />
+                  )}
+                  Sincronizar tudo
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => sincronizar("contas_receber")}
+                  disabled={!!syncing || !form.access_token}
+                >
+                  Contas a receber
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => sincronizar("pedidos")}
+                  disabled={!!syncing || !form.access_token}
+                >
+                  Pedidos de venda
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => sincronizar("produtos")}
+                  disabled={!!syncing || !form.access_token}
+                >
+                  Produtos
+                </Button>
+              </div>
+
+              {syncResult && (
+                <div className="p-4 rounded-lg border bg-emerald-50 dark:bg-emerald-950/30 text-sm">
+                  <div className="font-medium text-emerald-900 dark:text-emerald-200 mb-1">
+                    ✅ Sincronização concluída
+                  </div>
+                  <div className="text-emerald-800 dark:text-emerald-300">
+                    {syncResult.criados} novos | {syncResult.atualizados} atualizados |{" "}
+                    {syncResult.erros} erros | {syncResult.duracao_ms}ms
+                  </div>
+                  {syncResult.detalhes && (
+                    <div className="text-xs text-emerald-700 dark:text-emerald-400 mt-1">
+                      {syncResult.detalhes}
+                    </div>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Histórico */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between gap-2">
+                <div>
+                  <CardTitle>Histórico de sincronizações</CardTitle>
+                  <CardDescription>Últimas {logsLimit} execuções</CardDescription>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Select value={String(logsLimit)} onValueChange={(v) => setLogsLimit(Number(v))}>
+                    <SelectTrigger className="w-[110px] h-9">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="5">Últimos 5</SelectItem>
+                      <SelectItem value="10">Últimos 10</SelectItem>
+                      <SelectItem value="20">Últimos 20</SelectItem>
+                      <SelectItem value="50">Últimos 50</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {logs.some((l: any) => l.status === "executando") && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={async () => {
+                        const { data, error } = await supabase.functions.invoke(
+                          "sync-bling-financeiro",
+                          { body: { tipo: "limpar_travados" } }
+                        );
+                        if (error) {
+                          toast.error("Falha: " + error.message);
+                        } else {
+                          toast.success(`${data?.cancelados ?? 0} sync(s) marcadas como canceladas`);
+                          qc.invalidateQueries({ queryKey: ["integracao-bling-logs"] });
+                        }
+                      }}
+                    >
+                      Limpar travados
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {logs.length === 0 ? (
+                <div className="text-center py-8 text-sm text-muted-foreground">
+                  Nenhuma sincronização registrada ainda.
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Data</TableHead>
+                      <TableHead>Tipo</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Criados</TableHead>
+                      <TableHead className="text-right">Atualizados</TableHead>
+                      <TableHead className="text-right">Erros</TableHead>
+                      <TableHead className="text-right">Duração</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {logs.map((l: any) => (
+                      <TableRow key={l.id}>
+                        <TableCell className="text-xs">
+                          {format(new Date(l.created_at), "dd/MM HH:mm", { locale: ptBR })}
+                        </TableCell>
+                        <TableCell className="text-xs">{l.tipo}</TableCell>
+                        <TableCell>
+                          {l.status === "sucesso" && (
+                            <Badge className="bg-emerald-600 hover:bg-emerald-600">
+                              <CheckCircle2 className="h-3 w-3 mr-1" /> Sucesso
+                            </Badge>
+                          )}
+                          {l.status === "erro" && (
+                            <Badge variant="destructive">
+                              <XCircle className="h-3 w-3 mr-1" /> Erro
+                            </Badge>
+                          )}
+                          {l.status === "parcial" && (
+                            <Badge className="bg-amber-500 hover:bg-amber-500">
+                              <AlertCircle className="h-3 w-3 mr-1" /> Parcial
+                            </Badge>
+                          )}
+                          {l.status === "executando" && (
+                            <Badge variant="outline">
+                              <Loader2 className="h-3 w-3 mr-1 animate-spin" /> Executando
+                            </Badge>
+                          )}
+                          {l.status === "cancelado" && (
+                            <Badge variant="outline" className="text-muted-foreground">
+                              <XCircle className="h-3 w-3 mr-1" /> Cancelado
+                            </Badge>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right text-xs">{l.registros_criados ?? 0}</TableCell>
+                        <TableCell className="text-right text-xs">{l.registros_atualizados ?? 0}</TableCell>
+                        <TableCell className="text-right text-xs">{l.registros_erro ?? 0}</TableCell>
+                        <TableCell className="text-right text-xs">
+                          {l.duracao_ms ? `${l.duracao_ms}ms` : "-"}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Como configurar */}
+          <Accordion type="single" collapsible>
+            <AccordionItem value="how">
+              <AccordionTrigger className="text-sm font-medium">
+                Como configurar a integração
+              </AccordionTrigger>
+              <AccordionContent className="text-sm text-muted-foreground space-y-2">
+                <ol className="list-decimal list-inside space-y-1.5">
+                  <li>Acesse o portal do Bling → Configurações → API → Aplicativos</li>
+                  <li>Crie um novo aplicativo com nome "Fetely Uauuu"</li>
+                  <li>
+                    URL de callback:{" "}
+                    <code className="bg-muted px-1.5 py-0.5 rounded text-xs">
+                      {CALLBACK_URL}
+                    </code>
+                  </li>
+                  <li>Copie Client ID e Client Secret nos campos acima e salve</li>
+                  <li>Clique em "Autorizar no Bling" para gerar os tokens</li>
+                  <li>Teste a conexão e sincronize os dados</li>
+                </ol>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        </TabsContent>
+
+        {/* ABA EMAIL EXTERNO */}
+        <TabsContent value="email" className="space-y-6">
+          {/* Destinatários (pagamento + fiscal) */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Mail className="h-5 w-5 text-admin" />
+                Destinatários
+              </CardTitle>
+              <CardDescription>
+                Quem recebe emails do sistema. Um destinatário pode receber solicitações de pagamento individual e/ou pacotes fiscais consolidados pro contador.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {configFinanceiro.length === 0 ? (
+                <div className="text-center py-8 border border-dashed rounded-lg">
+                  <p className="text-sm font-medium">Nenhum destinatário cadastrado</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Adicione quem deve receber os emails do sistema.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {configFinanceiro.map((fin: any) => {
+                    const propositos: string[] = Array.isArray(fin.propositos) ? fin.propositos : ["pagamento"];
+                    const recebePagamento = propositos.includes("pagamento");
+                    const recebeFiscal = propositos.includes("fiscal");
+                    const ehCopia = fin.papel === "copia";
+                    return (
+                      <div
+                        key={fin.id}
+                        className="flex items-center justify-between p-3 rounded-lg border bg-card"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="font-medium text-sm truncate">{fin.nome}</p>
+                            {!fin.ativo && <Badge variant="outline" className="text-xs">Inativo</Badge>}
+                            {ehCopia && (
+                              <Badge variant="outline" className="text-xs text-muted-foreground">
+                                Cópia (CC)
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="text-xs text-muted-foreground truncate">{fin.email}</p>
+                          <div className="flex items-center gap-1 mt-1">
+                            {recebePagamento && (
+                              <Badge className="bg-blue-600 hover:bg-blue-600 text-xs">
+                                Pagamento
+                              </Badge>
+                            )}
+                            {recebeFiscal && (
+                              <Badge className="bg-emerald-600 hover:bg-emerald-600 text-xs">
+                                Fiscal
+                              </Badge>
+                            )}
+                          </div>
+                          {fin.observacao && (
+                            <p className="text-xs text-muted-foreground mt-1 italic">{fin.observacao}</p>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-1 ml-3">
+                          <Button size="sm" variant="ghost" onClick={() => abrirEditarFin(fin)}>
+                            <Pencil className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-destructive hover:text-destructive"
+                            onClick={() => setRemovingFin(fin)}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              <Button
+                variant="outline"
+                className="w-full gap-2"
+                onClick={abrirNovoFin}
+              >
+                <Plus className="h-4 w-4" /> Adicionar destinatário
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
 
       {/* Dialog adicionar/editar financeiro */}
       <Dialog open={showDialogFin} onOpenChange={setShowDialogFin}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editingFin ? "Editar destinatário" : "Novo destinatário financeiro"}</DialogTitle>
+            <DialogTitle>{editingFin ? "Editar destinatário" : "Novo destinatário"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3 py-2">
             <div>
@@ -671,6 +839,81 @@ export default function ConfiguracaoIntegracao() {
                 onChange={(e) => setFinForm({ ...finForm, observacao: e.target.value })}
               />
             </div>
+
+            <div>
+              <Label>Recebe</Label>
+              <div className="space-y-2 mt-2">
+                <div className="flex items-start gap-2">
+                  <Checkbox
+                    id="prop-pagamento"
+                    checked={finForm.propositos.includes("pagamento")}
+                    onCheckedChange={(checked) => {
+                      setFinForm((f) => ({
+                        ...f,
+                        propositos: checked
+                          ? Array.from(new Set([...f.propositos, "pagamento"]))
+                          : f.propositos.filter((p) => p !== "pagamento"),
+                      }));
+                    }}
+                  />
+                  <div className="grid gap-0.5 leading-none">
+                    <Label htmlFor="prop-pagamento" className="cursor-pointer">
+                      Solicitação de pagamento
+                    </Label>
+                    <p className="text-xs text-muted-foreground">
+                      Email enviado quando uma conta vai pra pagamento.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-2">
+                  <Checkbox
+                    id="prop-fiscal"
+                    checked={finForm.propositos.includes("fiscal")}
+                    onCheckedChange={(checked) => {
+                      setFinForm((f) => ({
+                        ...f,
+                        propositos: checked
+                          ? Array.from(new Set([...f.propositos, "fiscal"]))
+                          : f.propositos.filter((p) => p !== "fiscal"),
+                      }));
+                    }}
+                  />
+                  <div className="grid gap-0.5 leading-none">
+                    <Label htmlFor="prop-fiscal" className="cursor-pointer">
+                      Pacote fiscal (contador)
+                    </Label>
+                    <p className="text-xs text-muted-foreground">
+                      Email com link pro pacote de NFs/recibos consolidado.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <Label>Papel no email</Label>
+              <RadioGroup
+                value={finForm.papel}
+                onValueChange={(v) =>
+                  setFinForm({ ...finForm, papel: v as "principal" | "copia" })
+                }
+                className="flex gap-4 mt-2"
+              >
+                <div className="flex items-center gap-2">
+                  <RadioGroupItem value="principal" id="papel-principal" />
+                  <Label htmlFor="papel-principal" className="cursor-pointer font-normal">
+                    Principal (To:)
+                  </Label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <RadioGroupItem value="copia" id="papel-copia" />
+                  <Label htmlFor="papel-copia" className="cursor-pointer font-normal">
+                    Cópia (CC:)
+                  </Label>
+                </div>
+              </RadioGroup>
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowDialogFin(false)}>Cancelar</Button>
@@ -692,7 +935,7 @@ export default function ConfiguracaoIntegracao() {
           <AlertDialogHeader>
             <AlertDialogTitle>Remover destinatário?</AlertDialogTitle>
             <AlertDialogDescription>
-              {removingFin && `${removingFin.nome} (${removingFin.email}) deixará de receber emails de solicitação de pagamento.`}
+              {removingFin && `${removingFin.nome} (${removingFin.email}) deixará de receber emails do sistema.`}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -706,138 +949,6 @@ export default function ConfiguracaoIntegracao() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      {/* Histórico */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between gap-2">
-            <div>
-              <CardTitle>Histórico de sincronizações</CardTitle>
-              <CardDescription>Últimas {logsLimit} execuções</CardDescription>
-            </div>
-            <div className="flex items-center gap-2">
-              <Select value={String(logsLimit)} onValueChange={(v) => setLogsLimit(Number(v))}>
-                <SelectTrigger className="w-[110px] h-9">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="5">Últimos 5</SelectItem>
-                  <SelectItem value="10">Últimos 10</SelectItem>
-                  <SelectItem value="20">Últimos 20</SelectItem>
-                  <SelectItem value="50">Últimos 50</SelectItem>
-                </SelectContent>
-              </Select>
-              {logs.some((l: any) => l.status === "executando") && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={async () => {
-                    const { data, error } = await supabase.functions.invoke(
-                      "sync-bling-financeiro",
-                      { body: { tipo: "limpar_travados" } }
-                    );
-                    if (error) {
-                      toast.error("Falha: " + error.message);
-                    } else {
-                      toast.success(`${data?.cancelados ?? 0} sync(s) marcadas como canceladas`);
-                      qc.invalidateQueries({ queryKey: ["integracao-bling-logs"] });
-                    }
-                  }}
-                >
-                  Limpar travados
-                </Button>
-              )}
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {logs.length === 0 ? (
-            <div className="text-center py-8 text-sm text-muted-foreground">
-              Nenhuma sincronização registrada ainda.
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Data</TableHead>
-                  <TableHead>Tipo</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Criados</TableHead>
-                  <TableHead className="text-right">Atualizados</TableHead>
-                  <TableHead className="text-right">Erros</TableHead>
-                  <TableHead className="text-right">Duração</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {logs.map((l: any) => (
-                  <TableRow key={l.id}>
-                    <TableCell className="text-xs">
-                      {format(new Date(l.created_at), "dd/MM HH:mm", { locale: ptBR })}
-                    </TableCell>
-                    <TableCell className="text-xs">{l.tipo}</TableCell>
-                    <TableCell>
-                      {l.status === "sucesso" && (
-                        <Badge className="bg-emerald-600 hover:bg-emerald-600">
-                          <CheckCircle2 className="h-3 w-3 mr-1" /> Sucesso
-                        </Badge>
-                      )}
-                      {l.status === "erro" && (
-                        <Badge variant="destructive">
-                          <XCircle className="h-3 w-3 mr-1" /> Erro
-                        </Badge>
-                      )}
-                      {l.status === "parcial" && (
-                        <Badge className="bg-amber-500 hover:bg-amber-500">
-                          <AlertCircle className="h-3 w-3 mr-1" /> Parcial
-                        </Badge>
-                      )}
-                      {l.status === "executando" && (
-                        <Badge variant="outline">
-                          <Loader2 className="h-3 w-3 mr-1 animate-spin" /> Executando
-                        </Badge>
-                      )}
-                      {l.status === "cancelado" && (
-                        <Badge variant="outline" className="text-muted-foreground">
-                          <XCircle className="h-3 w-3 mr-1" /> Cancelado
-                        </Badge>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right text-xs">{l.registros_criados ?? 0}</TableCell>
-                    <TableCell className="text-right text-xs">{l.registros_atualizados ?? 0}</TableCell>
-                    <TableCell className="text-right text-xs">{l.registros_erro ?? 0}</TableCell>
-                    <TableCell className="text-right text-xs">
-                      {l.duracao_ms ? `${l.duracao_ms}ms` : "-"}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
-      {/* Como configurar */}
-      <Accordion type="single" collapsible>
-        <AccordionItem value="how">
-          <AccordionTrigger className="text-sm font-medium">
-            Como configurar a integração
-          </AccordionTrigger>
-          <AccordionContent className="text-sm text-muted-foreground space-y-2">
-            <ol className="list-decimal list-inside space-y-1.5">
-              <li>Acesse o portal do Bling → Configurações → API → Aplicativos</li>
-              <li>Crie um novo aplicativo com nome "Fetely Uauuu"</li>
-              <li>
-                URL de callback:{" "}
-                <code className="bg-muted px-1.5 py-0.5 rounded text-xs">
-                  {CALLBACK_URL}
-                </code>
-              </li>
-              <li>Copie Client ID e Client Secret nos campos acima e salve</li>
-              <li>Clique em "Autorizar no Bling" para gerar os tokens</li>
-              <li>Teste a conexão e sincronize os dados</li>
-            </ol>
-          </AccordionContent>
-        </AccordionItem>
-      </Accordion>
     </div>
   );
 }
