@@ -276,44 +276,6 @@ export default function FilaRevisaoIADialog({ open, onClose }: Props) {
               </div>
             </div>
 
-            {/* Bloco comparativo: lançamentos similares (banana com banana) */}
-            {atual.tipo === "categoria" && similares.length > 0 && (
-              <div className="border rounded-md p-3 bg-blue-50/40 border-blue-200">
-                <div className="flex items-center gap-1.5 text-xs font-medium text-blue-900 mb-2">
-                  <Sparkles className="h-3 w-3" />
-                  Lançamentos similares que a IA usou de base ({similares.length})
-                </div>
-                <div className="space-y-1.5">
-                  {similares.map((s) => (
-                    <div
-                      key={s.conta_id}
-                      className="text-xs bg-white border border-blue-100 rounded px-2 py-1.5"
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="min-w-0 flex-1">
-                          <div className="font-medium truncate">{s.descricao}</div>
-                          <div className="text-[10px] text-muted-foreground mt-0.5">
-                            {formatBRL(Number(s.valor))}
-                            {" · "}
-                            {new Date(s.data_vencimento).toLocaleDateString("pt-BR")}
-                            {s.parceiro_nome && ` · ${s.parceiro_nome}`}
-                          </div>
-                        </div>
-                        <div className="text-right shrink-0">
-                          <div className="font-mono text-[10px] text-muted-foreground">
-                            {s.categoria_codigo}
-                          </div>
-                          <div className="text-[10px] font-medium text-emerald-700 max-w-[140px] truncate">
-                            {s.categoria_nome}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
             {/* Candidatos */}
             <div className="space-y-2">
               {atual.tipo === "nf" &&
