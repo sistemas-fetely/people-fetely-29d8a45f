@@ -139,20 +139,7 @@ export default function FilaRevisaoIADialog({ open, onClose }: Props) {
     },
   });
 
-  const { data: similares = [] } = useQuery({
-    queryKey: ["ia-similares-categoria", atual?.conta_id],
-    enabled: !!atual && atual.tipo === "categoria",
-    queryFn: async () => {
-      if (!atual) return [];
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data, error } = await (supabase as any).rpc(
-        "ia_listar_similares_categoria",
-        { p_conta_id: atual.conta_id },
-      );
-      if (error) throw error;
-      return (data || []) as SimilarCategoria[];
-    },
-  });
+
 
   function avancar() {
     if (idx + 1 >= fila.length) {
