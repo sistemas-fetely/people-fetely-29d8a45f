@@ -70,6 +70,8 @@ type Conta = {
   nf_serie?: string | null;
   nf_pdf_url?: string | null;
   nf_xml_url?: string | null;
+  nf_aplicavel?: boolean | null;
+  nf_aplicavel_motivo?: string | null;
   parcela_atual?: number | null;
   parcelas?: number | null;
   email_pagamento_enviado?: boolean | null;
