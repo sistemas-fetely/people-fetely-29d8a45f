@@ -35,6 +35,7 @@ type ContaEditavel = {
   nf_chave_acesso: string | null;
   status: string;
   parceiro_id?: string | null;
+  pago_em_conta_id?: string | null;
 };
 
 interface Props {
@@ -61,6 +62,7 @@ export function ContaPagarFormEdit({ conta, onSaved, onCancel }: Props) {
   const [nfNumero, setNfNumero] = useState(conta.nf_numero || "");
   const [nfSerie, setNfSerie] = useState(conta.nf_serie || "");
   const [nfChave, setNfChave] = useState(conta.nf_chave_acesso || "");
+  const [pagoEmContaId, setPagoEmContaId] = useState(conta.pago_em_conta_id || "__none__");
 
   // Debounce da descrição (não dispara IA a cada tecla)
   const [descricaoDebounced, setDescricaoDebounced] = useState(descricao);
