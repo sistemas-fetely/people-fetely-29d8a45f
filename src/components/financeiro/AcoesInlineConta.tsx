@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   Loader2,
@@ -61,6 +62,7 @@ const COR_ICONE: Record<EstadoIcone, string> = {
 export default function AcoesInlineConta({ conta, onAbrirEditandoBanco }: Props) {
   const qc = useQueryClient();
   const workflow = useContaWorkflow();
+  const navigate = useNavigate();
   const [aprovando, setAprovando] = useState(false);
   const [lancandoMov, setLancandoMov] = useState(false);
   const [showEnviar, setShowEnviar] = useState(false);
@@ -229,13 +231,9 @@ export default function AcoesInlineConta({ conta, onAbrirEditandoBanco }: Props)
               <FileSearch className="h-3.5 w-3.5 mr-2" />
               Buscar no Stage
             </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={stop(() =>
-                toast.info("Use o drawer para upload de NF nova"),
-              )}
-            >
+            <DropdownMenuItem onClick={stop(() => navigate("/administrativo/importar"))}>
               <Upload className="h-3.5 w-3.5 mr-2" />
-              Upload novo arquivo
+              Subir nova NF no Importador
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
