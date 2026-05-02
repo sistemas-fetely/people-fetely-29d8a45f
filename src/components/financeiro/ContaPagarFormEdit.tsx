@@ -112,6 +112,11 @@ export function ContaPagarFormEdit({
   const [nfChave, setNfChave] = useState(conta.nf_chave_acesso || "");
   const [pagoEmContaId, setPagoEmContaId] = useState(conta.pago_em_conta_id || "__none__");
 
+  // Chave de acesso oculta por padrão. Edição manual é caso raro
+  // (correção/migração) — fluxo normal é a chave vir preenchida pela
+  // vinculação com NF Stage.
+  const [mostrarChave, setMostrarChave] = useState(false);
+
   // Debounce da descrição (não dispara IA a cada tecla)
   const [descricaoDebounced, setDescricaoDebounced] = useState(descricao);
   useEffect(() => {
@@ -493,16 +498,53 @@ export function ContaPagarFormEdit({
         </div>
       </div>
 
-      <div className="space-y-1">
-        <Label htmlFor="cp-edit-nf-chave">Chave de acesso (44 dígitos)</Label>
-        <Input
-          id="cp-edit-nf-chave"
-          value={nfChave}
-          onChange={(e) => setNfChave(e.target.value)}
-          disabled={isReadOnly || salvando}
-          placeholder="Opcional"
-        />
-      </div>
+      {/* Chave de acesso — oculta por padrão */}
+      {mostrarChave ? (
+        <div className="space-y-1">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="cp-edit-nf-chave">Chave de acesso (44 dígitos)</Label>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-6 text-[11px] text-muted-foreground"
+              onClick={() => setMostrarChave(false)}
+            >
+              Ocultar
+            </Button>
+          </div>
+          <Input
+            id="cp-edit-nf-chave"
+            value={nfChave}
+            onChange={(e) => setNfChave(e.target.value)}
+            disabled={isReadOnly || salvando}
+            placeholder="Cole a chave manualmente, ou anexe a NF pelo Stage"
+          />
+          <p className="text-[11px] text-muted-foreground">
+            Edição manual é raro — chave normalmente vem preenchida pelo vínculo com a NF do Stage.
+          </p>
+        </div>
+      ) : (
+        <div className="flex items-center justify-between rounded-md border border-dashed border-zinc-200 px-3 py-2">
+          <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+            <span>Chave de acesso da NF</span>
+            {nfChave ? (
+              <span className="text-emerald-600 font-medium">✓ preenchida</span>
+            ) : (
+              <span className="text-zinc-400">— vazia</span>
+            )}
+          </div>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="h-6 text-[11px]"
+            onClick={() => setMostrarChave(true)}
+          >
+            {nfChave ? "Ver/Editar" : "Adicionar manualmente"}
+          </Button>
+        </div>
+      )}
 
       {/* Observação */}
       <div className="space-y-1">
