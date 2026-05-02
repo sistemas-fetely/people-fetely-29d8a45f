@@ -364,7 +364,16 @@ export default function CaixaBanco() {
         );
       }
     } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
+      console.error("[handleAplicarIAEmMassa] erro completo:", e);
+      const msg =
+        e instanceof Error ? e.message :
+        typeof e === "object" && e !== null
+          ? ((e as { message?: string }).message
+              ?? (e as { error_description?: string }).error_description
+              ?? (e as { details?: string }).details
+              ?? (e as { hint?: string }).hint
+              ?? JSON.stringify(e))
+          : String(e);
       toast.error("Erro: " + msg);
     } finally {
       setAplicandoIA(false);
