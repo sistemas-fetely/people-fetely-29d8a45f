@@ -320,6 +320,7 @@ export default function DocumentosPendentes() {
   const [remessasExpandidas, setRemessasExpandidas] = useState<Set<string>>(new Set());
   const [desfazendo, setDesfazendo] = useState(false);
   const [remessaParaDesfazer, setRemessaParaDesfazer] = useState<Remessa | null>(null);
+  const [contaParaBuscar, setContaParaBuscar] = useState<ContaItem | null>(null);
 
   // Reseta seleção ao trocar de aba
   function trocarAba(nova: Aba) {
@@ -811,17 +812,12 @@ export default function DocumentosPendentes() {
                                     )}
                                   </div>
                                 </div>
-                                {aba === "cobrar" && (
-                                  <Badge
-                                    variant="outline"
-                                    className={cn(
-                                      "text-[9px]",
-                                      DOCS_STATUS_STYLES[c.docs_status] || "",
-                                    )}
-                                  >
-                                    {DOCS_STATUS_LABEL[c.docs_status] || c.docs_status}
-                                  </Badge>
-                                )}
+                                <ClusterPills
+                                  conta={c}
+                                  onBuscarNF={(conta) =>
+                                    setContaParaBuscar(conta)
+                                  }
+                                />
                                 <div className="font-mono text-xs shrink-0">
                                   {formatBRL(Number(c.valor))}
                                 </div>
