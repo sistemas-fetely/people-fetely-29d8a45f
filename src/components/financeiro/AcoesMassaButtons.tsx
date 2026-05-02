@@ -48,6 +48,37 @@ export default function AcoesMassaButtons({ contas, onDone }: Props) {
   );
   const workflow = useContaWorkflow();
   const { isSuperAdmin } = usePermissions();
+  const qc = useQueryClient();
+
+  async function excluirSelecionadas() {
+    setExecutando(true);
+    try {
+      const ids = contas.map((c) => c.id);
+      const { error } = await supabase
+        .from("contas_pagar_receber")
+        .delete()
+        .in("id", ids);
+      if (error) throw error;
+      toast.success(
+        `${ids.length} conta${ids.length > 1 ? "s excluídas" : " excluída"} definitivamente`,
+      );
+      await qc.invalidateQueries({ queryKey: ["contas-pagar"] });
+      onDone();
+    } catch (e) {
+      const msg =
+        e instanceof Error
+          ? e.message
+          : typeof e === "object" && e !== null
+            ? ((e as { message?: string }).message
+                ?? (e as { details?: string }).details
+                ?? (e as { hint?: string }).hint
+                ?? JSON.stringify(e))
+            : String(e);
+      toast.error("Erro ao excluir: " + msg);
+    } finally {
+      setExecutando(false);
+    }
+  }
 
   function countStatus(...statuses: string[]) {
     return contas.filter((c) => statuses.includes(c.status)).length;
