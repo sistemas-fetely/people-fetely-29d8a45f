@@ -390,7 +390,7 @@ export default function ContaPagarDetalheDrawer({ contaId, onClose }: Props) {
                         <AlertDialogCancel>Cancelar</AlertDialogCancel>
                         <AlertDialogAction
                           className="bg-red-600 hover:bg-red-700 text-white"
-                          onClick={handleApagar}
+                          onClick={() => handleApagar(false)}
                         >
                           Apagar
                         </AlertDialogAction>
