@@ -248,7 +248,10 @@ type FiltroOperacional =
   | "mes_atual"
   | "proximo_mes"
   | "mes_anterior"
-  | "sem_conciliacao"
+  | "sem_conciliacao";
+
+type FiltroQualidade =
+  | "todos"
   | "qualidade_nf"
   | "qualidade_categoria"
   | "qualidade_doc"
@@ -335,6 +338,7 @@ export default function CaixaBanco() {
   const [contaIdDrawer, setContaIdDrawer] = useState<string | null>(null);
   const [mostrarSoInconsistentes, setMostrarSoInconsistentes] = useState(false);
   const [filtroOp, setFiltroOp] = useState<FiltroOperacional>("todos");
+  const [filtroQual, setFiltroQual] = useState<FiltroQualidade>("todos");
   const [aplicandoIA, setAplicandoIA] = useState(false);
   const [sugestaoMovId, setSugestaoMovId] = useState<string | null>(null);
   const [filaIAOpen, setFilaIAOpen] = useState(false);
@@ -633,19 +637,25 @@ export default function CaixaBanco() {
             !l.conciliado_em
           );
         });
-      } else if (filtroOp === "qualidade_nf") {
+      }
+    }
+
+    if (filtroQual !== "todos") {
+      const flagsDocQ = (l: Lancamento) =>
+        statusFlagsMap.get(l.id)?.tem_doc_pendente === true;
+      if (filtroQual === "qualidade_nf") {
         list = list.filter((l) => getQualidadeNF(l, nfMap).cor === "vermelho");
-      } else if (filtroOp === "qualidade_categoria") {
+      } else if (filtroQual === "qualidade_categoria") {
         list = list.filter((l) => getQualidadeCategoria(l, nfMap).cor === "vermelho");
-      } else if (filtroOp === "qualidade_doc") {
-        list = list.filter(flagsDoc);
-      } else if (filtroOp === "qualidade_vinculado") {
+      } else if (filtroQual === "qualidade_doc") {
+        list = list.filter(flagsDocQ);
+      } else if (filtroQual === "qualidade_vinculado") {
         list = list.filter((l) =>
           !l.vinculada_cartao
           && l.origem_view !== "cartao_lancamento"
           && !l.movimentacao_bancaria_id
         );
-      } else if (filtroOp === "qualidade_conciliado") {
+      } else if (filtroQual === "qualidade_conciliado") {
         list = list.filter((l) =>
           !l.conciliado_em && l.status_caixa !== "conciliado"
         );
@@ -653,7 +663,7 @@ export default function CaixaBanco() {
     }
 
     return list;
-  }, [lancamentosEnriched, statusFilter, contaBancariaFilter, busca, mapParceiros, mostrarSoInconsistentes, filtroOp, nfMap, statusFlagsMap]);
+  }, [lancamentosEnriched, statusFilter, contaBancariaFilter, busca, mapParceiros, mostrarSoInconsistentes, filtroOp, filtroQual, nfMap, statusFlagsMap]);
 
   // KPIs operacionais (8 cards)
   const kpis = useMemo(() => {
@@ -816,8 +826,8 @@ export default function CaixaBanco() {
             valor={`${kpis.qualidadeNF.pct}%`}
             sublinha={`${kpis.qualidadeNF.atendidos}/${kpis.qualidadeNF.total} no total`}
             cor="fetely"
-            ativo={filtroOp === "qualidade_nf"}
-            onClick={() => setFiltroOp(filtroOp === "qualidade_nf" ? "todos" : "qualidade_nf")}
+            ativo={filtroQual === "qualidade_nf"}
+            onClick={() => setFiltroQual(filtroQual === "qualidade_nf" ? "todos" : "qualidade_nf")}
             icone={Receipt}
           />
           <CardKPI
@@ -825,8 +835,8 @@ export default function CaixaBanco() {
             valor={`${kpis.qualidadeCategoria.pct}%`}
             sublinha={`${kpis.qualidadeCategoria.atendidos}/${kpis.qualidadeCategoria.total} no total`}
             cor="fetely"
-            ativo={filtroOp === "qualidade_categoria"}
-            onClick={() => setFiltroOp(filtroOp === "qualidade_categoria" ? "todos" : "qualidade_categoria")}
+            ativo={filtroQual === "qualidade_categoria"}
+            onClick={() => setFiltroQual(filtroQual === "qualidade_categoria" ? "todos" : "qualidade_categoria")}
             icone={FolderTree}
           />
           <CardKPI
@@ -834,8 +844,8 @@ export default function CaixaBanco() {
             valor={`${kpis.qualidadeDoc.pct}%`}
             sublinha={`${kpis.qualidadeDoc.atendidos}/${kpis.qualidadeDoc.total} no total`}
             cor="fetely"
-            ativo={filtroOp === "qualidade_doc"}
-            onClick={() => setFiltroOp(filtroOp === "qualidade_doc" ? "todos" : "qualidade_doc")}
+            ativo={filtroQual === "qualidade_doc"}
+            onClick={() => setFiltroQual(filtroQual === "qualidade_doc" ? "todos" : "qualidade_doc")}
             icone={Paperclip}
           />
           <CardKPI
@@ -843,8 +853,8 @@ export default function CaixaBanco() {
             valor={`${kpis.qualidadeVinculado.pct}%`}
             sublinha={`${kpis.qualidadeVinculado.atendidos}/${kpis.qualidadeVinculado.total} no total`}
             cor="fetely"
-            ativo={filtroOp === "qualidade_vinculado"}
-            onClick={() => setFiltroOp(filtroOp === "qualidade_vinculado" ? "todos" : "qualidade_vinculado")}
+            ativo={filtroQual === "qualidade_vinculado"}
+            onClick={() => setFiltroQual(filtroQual === "qualidade_vinculado" ? "todos" : "qualidade_vinculado")}
             icone={Link2}
           />
           <CardKPI
@@ -852,8 +862,8 @@ export default function CaixaBanco() {
             valor={`${kpis.qualidadeConciliado.pct}%`}
             sublinha={`${kpis.qualidadeConciliado.atendidos}/${kpis.qualidadeConciliado.total} no total`}
             cor="fetely"
-            ativo={filtroOp === "qualidade_conciliado"}
-            onClick={() => setFiltroOp(filtroOp === "qualidade_conciliado" ? "todos" : "qualidade_conciliado")}
+            ativo={filtroQual === "qualidade_conciliado"}
+            onClick={() => setFiltroQual(filtroQual === "qualidade_conciliado" ? "todos" : "qualidade_conciliado")}
             icone={CircleDollarSign}
           />
         </div>
