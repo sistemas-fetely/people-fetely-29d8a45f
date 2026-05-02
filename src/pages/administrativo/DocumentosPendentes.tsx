@@ -938,20 +938,36 @@ function RemessaContas({
 
       const { data: contas, error: errC } = await supabase
         .from("contas_pagar")
-        .select(
-          "id, descricao, valor, data_vencimento, data_pagamento, status_conta, parceiro:parceiros(razao_social)",
-        )
+        .select("id, descricao, valor, data_vencimento, data_pagamento, status, parceiro_id")
         .in("id", ids);
       if (errC) throw errC;
-      return (contas || []) as Array<{
-        id: string;
-        descricao: string;
-        valor: number;
-        data_vencimento: string;
-        data_pagamento: string | null;
-        status_conta: string;
-        parceiro?: { razao_social?: string } | null;
-      }>;
+
+      const parceiroIds = Array.from(
+        new Set(
+          (contas || []).map((c) => c.parceiro_id).filter(Boolean) as string[],
+        ),
+      );
+      const parceiroMap = new Map<string, string>();
+      if (parceiroIds.length > 0) {
+        const { data: parceiros } = await supabase
+          .from("parceiros_comerciais")
+          .select("id, razao_social")
+          .in("id", parceiroIds);
+        (parceiros || []).forEach((p) =>
+          parceiroMap.set(p.id, p.razao_social || ""),
+        );
+      }
+
+      return (contas || []).map((c) => ({
+        id: c.id,
+        descricao: c.descricao,
+        valor: Number(c.valor || 0),
+        data_vencimento: c.data_vencimento,
+        data_pagamento: c.data_pagamento,
+        status_conta: c.status,
+        parceiro_razao_social:
+          (c.parceiro_id && parceiroMap.get(c.parceiro_id)) || "",
+      }));
     },
   });
 
