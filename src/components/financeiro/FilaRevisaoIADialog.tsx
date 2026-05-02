@@ -28,6 +28,11 @@ type CandidatoNF = {
   nf_numero: string;
   valor_nf: number;
   data_emissao: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  itens?: any;
+  nf_chave_acesso?: string;
+  arquivo_nome?: string;
+  nf_serie?: string;
 };
 
 type CandidatoCategoria = {
