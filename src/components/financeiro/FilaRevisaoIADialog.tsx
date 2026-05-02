@@ -46,6 +46,19 @@ type CandidatoCategoria = {
   amostra_count: number;
 };
 
+type SimilarCategoria = {
+  conta_id: string;
+  descricao: string;
+  valor: number;
+  data_vencimento: string;
+  parceiro_nome: string | null;
+  cnpj: string | null;
+  categoria_codigo: string;
+  categoria_nome: string;
+  origem: string;
+  similaridade: number;
+};
+
 interface Props {
   open: boolean;
   onClose: () => void;
