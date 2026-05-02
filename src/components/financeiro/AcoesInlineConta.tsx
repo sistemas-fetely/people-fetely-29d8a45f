@@ -39,6 +39,7 @@ type Conta = Record<string, any> & {
 
 interface Props {
   conta: Conta;
+  onAbrirEditandoBanco?: (contaId: string) => void;
 }
 
 type EstadoIcone = "feito" | "pendente" | "na";
@@ -49,7 +50,7 @@ const COR_ICONE: Record<EstadoIcone, string> = {
   na: "text-zinc-300 cursor-not-allowed hover:bg-transparent",
 };
 
-export default function AcoesInlineConta({ conta }: Props) {
+export default function AcoesInlineConta({ conta, onAbrirEditandoBanco }: Props) {
   const qc = useQueryClient();
   const workflow = useContaWorkflow();
   const [aprovando, setAprovando] = useState(false);
@@ -132,7 +133,16 @@ export default function AcoesInlineConta({ conta }: Props) {
       );
       if (error) throw error;
       if (!result?.ok) {
-        toast.error(result?.erro || "Erro ao lançar em movimentação");
+        const erroMsg = (result?.erro as string) || "";
+        if (erroMsg.includes("pago_em_conta_id") && onAbrirEditandoBanco) {
+          toast.warning(
+            "Antes de lançar em Movimentação, escolha o banco onde a conta foi/será paga.",
+            { duration: 4000 },
+          );
+          onAbrirEditandoBanco(conta.id);
+          return;
+        }
+        toast.error(erroMsg || "Erro ao lançar em movimentação");
         return;
       }
       toast.success(

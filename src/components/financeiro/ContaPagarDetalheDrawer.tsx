@@ -110,9 +110,16 @@ const STATUS_STYLE: Record<string, string> = {
 interface Props {
   contaId: string | null;
   onClose: () => void;
+  iniciarEditando?: boolean;
+  highlightCampo?: "pago_em_conta_id" | null;
 }
 
-export default function ContaPagarDetalheDrawer({ contaId, onClose }: Props) {
+export default function ContaPagarDetalheDrawer({
+  contaId,
+  onClose,
+  iniciarEditando = false,
+  highlightCampo = null,
+}: Props) {
   const [showPag, setShowPag] = useState(false);
   const [showEnviar, setShowEnviar] = useState(false);
   const [modoEdit, setModoEdit] = useState(false);
@@ -430,6 +437,7 @@ export default function ContaPagarDetalheDrawer({ contaId, onClose }: Props) {
                   }}
                   onSaved={() => setModoEdit(false)}
                   onCancel={() => setModoEdit(false)}
+                  highlightCampo={highlightCampo}
                 />
               </div>
             ) : (
