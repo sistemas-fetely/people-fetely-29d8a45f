@@ -10030,11 +10030,15 @@ export type Database = {
       ia_listar_nfs_candidatas: {
         Args: { p_conta_id: string }
         Returns: {
+          arquivo_nome: string
           data_emissao: string
           fornecedor_cnpj: string
           fornecedor_razao_social: string
+          itens: Json
+          nf_chave_acesso: string
           nf_id: string
           nf_numero: string
+          nf_serie: string
           valor_nf: number
         }[]
       }

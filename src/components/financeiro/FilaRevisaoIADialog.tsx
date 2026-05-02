@@ -28,6 +28,11 @@ type CandidatoNF = {
   nf_numero: string;
   valor_nf: number;
   data_emissao: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  itens?: any;
+  nf_chave_acesso?: string;
+  arquivo_nome?: string;
+  nf_serie?: string;
 };
 
 type CandidatoCategoria = {
@@ -264,18 +269,61 @@ export default function FilaRevisaoIADialog({ open, onClose }: Props) {
                   >
                     <div className="flex items-start gap-3">
                       <div className="flex-1 min-w-0 space-y-1">
-                        <div className="text-sm font-medium truncate">
-                          {c.fornecedor_razao_social}
+                        <div className="flex items-center gap-2">
+                          <div className="text-sm font-medium truncate">
+                            {c.fornecedor_razao_social}
+                          </div>
+                          <span className="text-[10px] px-1.5 py-0.5 bg-muted rounded">
+                            Série {c.nf_serie || "1"}
+                          </span>
                         </div>
-                        <div className="text-xs text-muted-foreground">
-                          NF nº {c.nf_numero || "—"} · {formatDate(c.data_emissao)} ·{" "}
-                          {formatBRL(c.valor_nf)}
+
+                        <div className="text-xs text-muted-foreground flex flex-wrap gap-x-3">
+                          <span>
+                            NF <strong>nº {c.nf_numero || "—"}</strong>
+                          </span>
+                          <span>{formatDate(c.data_emissao)}</span>
+                          <span className="font-medium text-emerald-700">
+                            {formatBRL(c.valor_nf)}
+                          </span>
                         </div>
+
                         {c.fornecedor_cnpj && (
-                          <div className="text-xs text-muted-foreground">
+                          <div className="text-[10px] text-muted-foreground">
                             CNPJ {c.fornecedor_cnpj}
                           </div>
                         )}
+
+                        {c.itens && (
+                          <div className="text-xs bg-amber-50 border border-amber-200 rounded p-2 mt-1">
+                            <div className="font-medium text-amber-900 mb-0.5">
+                              📦 Itens:
+                            </div>
+                            <div className="text-amber-800 line-clamp-2">
+                              {Array.isArray(c.itens)
+                                ? c.itens
+                                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                    .map((it: any) =>
+                                      `${it.quantidade || 1}x ${it.descricao || it.nome || "—"}`,
+                                    )
+                                    .join(" · ")
+                                : typeof c.itens === "string"
+                                  ? c.itens
+                                  : JSON.stringify(c.itens).slice(0, 200)}
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="flex items-center gap-2 text-[10px] text-muted-foreground/70 pt-1">
+                          {c.arquivo_nome && (
+                            <span className="truncate">📄 {c.arquivo_nome}</span>
+                          )}
+                          {c.nf_chave_acesso && (
+                            <span className="font-mono">
+                              ...{c.nf_chave_acesso.slice(-12)}
+                            </span>
+                          )}
+                        </div>
                       </div>
                       <Button
                         size="sm"
