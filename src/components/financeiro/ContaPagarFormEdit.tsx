@@ -306,8 +306,13 @@ export function ContaPagarFormEdit({
           type="date"
           value={dataVencimento}
           onChange={(e) => setDataVencimento(e.target.value)}
-          disabled={isReadOnly || salvando}
+          disabled={isReadOnly || salvando || readonlyPorFamilia("data_vencimento")}
         />
+        {readonlyPorFamilia("data_vencimento") && familiaLabel && (
+          <p className="text-[11px] text-muted-foreground">
+            Definida pela origem ({familiaLabel}) — não editável aqui.
+          </p>
+        )}
       </div>
 
       {/* Categoria (plano de contas) */}
@@ -390,7 +395,7 @@ export function ContaPagarFormEdit({
         <Select
           value={formaPagamentoId}
           onValueChange={setFormaPagamentoId}
-          disabled={isReadOnly || salvando}
+          disabled={isReadOnly || salvando || readonlyPorFamilia("forma_pagamento")}
         >
           <SelectTrigger>
             <SelectValue placeholder="Definir..." />
@@ -402,6 +407,13 @@ export function ContaPagarFormEdit({
             ))}
           </SelectContent>
         </Select>
+        {readonlyPorFamilia("forma_pagamento") && familiaLabel && (
+          <p className="text-[11px] text-muted-foreground">
+            {familiaLabel === "Cartão"
+              ? `Forma definida pela fatura${formaPagamentoNome ? `: ${formaPagamentoNome}` : ""}.`
+              : `Forma definida pela transação OFX${formaPagamentoNome ? `: ${formaPagamentoNome}` : ""}.`}
+          </p>
+        )}
       </div>
 
       {/* Pago em conta (banco) */}
