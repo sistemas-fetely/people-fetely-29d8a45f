@@ -150,7 +150,11 @@ export function ParceiroFormSheet({ open, onOpenChange, editing, categorias, onS
     if (!open) return;
     if (editing) {
       setTiposSelecionados(editing.tipos?.length ? editing.tipos : ["fornecedor"]);
+      setTipoPessoa((editing.tipo_pessoa as "PF" | "PJ") || "PJ");
       setCnpj(editing.cnpj ? maskCnpj(editing.cnpj) : "");
+      setCpf(editing.cpf ? maskCpf(editing.cpf) : "");
+      setRg(editing.rg || "");
+      setDataNascimento(editing.data_nascimento || "");
       setRazaoSocial(editing.razao_social || "");
       setNomeFantasia(editing.nome_fantasia || "");
       setCep(editing.cep ? maskCep(editing.cep) : "");
