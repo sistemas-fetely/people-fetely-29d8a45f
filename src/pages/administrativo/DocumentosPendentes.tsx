@@ -69,8 +69,28 @@ import { cn } from "@/lib/utils";
 
 type Aba = "cobrar" | "pronto" | "enviado";
 
-type ContaItem = {
+type ParcelaDetalhe = {
   conta_id: string;
+  descricao: string;
+  valor: number;
+  data_vencimento: string;
+  data_pagamento: string | null;
+  status_conta: string;
+  docs_status: string | null;
+  tem_nf_anexada: boolean | null;
+  estado_envio: "cobrar" | "pronto" | "enviado";
+};
+
+type ContaItem = {
+  // Identificador da entrada — pra compromisso é a parcela "principal" (drawer abre nela)
+  conta_id: string;
+  // Discriminador do tipo de evento. Ausente = legado (trata como avulsa).
+  tipo?: "conta_avulsa" | "compromisso";
+  compromisso_id?: string | null;
+  qtd_parcelas?: number | null;
+  parcelas_pagas?: number | null;
+  parcelas?: ParcelaDetalhe[] | null;
+
   descricao: string;
   valor: number;
   data_vencimento: string;
@@ -93,6 +113,14 @@ type ContaItem = {
   enviado_contador?: boolean | null;
   parceiro_cnpj?: string | null;
 };
+
+// IDs reais de contas_pagar_receber dentro de uma entrada (1 pra avulsa, N pra compromisso)
+function contaIdsDoItem(c: ContaItem): string[] {
+  if (c.tipo === "compromisso" && c.parcelas && c.parcelas.length > 0) {
+    return c.parcelas.map((p) => p.conta_id);
+  }
+  return [c.conta_id];
+}
 
 // -----------------------------------------------------------------------------
 // Cluster Fetely de pills de status documental
@@ -304,6 +332,7 @@ export default function DocumentosPendentes() {
   const [enviarSistemaOpen, setEnviarSistemaOpen] = useState(false);
   const [exportando, setExportando] = useState(false);
   const [expandidos, setExpandidos] = useState<Set<string>>(new Set());
+  const [parcelasExpandidas, setParcelasExpandidas] = useState<Set<string>>(new Set());
   const [selecionadas, setSelecionadas] = useState<Set<string>>(new Set());
   const [remessasExpandidas, setRemessasExpandidas] = useState<Set<string>>(new Set());
   const [desfazendo, setDesfazendo] = useState(false);
@@ -452,6 +481,16 @@ export default function DocumentosPendentes() {
       .reduce((s, c) => s + Number(c.valor || 0), 0);
   }, [todasContasPronto, selecionadas]);
 
+  // Expande seleção de "entradas" (UI) pra IDs reais de contas (pra envio/export)
+  const idsContasParaEnvio = useMemo(() => {
+    const ids: string[] = [];
+    for (const c of todasContasPronto) {
+      if (!selecionadas.has(c.conta_id)) continue;
+      ids.push(...contaIdsDoItem(c));
+    }
+    return ids;
+  }, [todasContasPronto, selecionadas]);
+
   function toggleSelecao(contaId: string) {
     setSelecionadas((prev) => {
       const next = new Set(prev);
@@ -500,6 +539,15 @@ export default function DocumentosPendentes() {
     setExpandidos(new Set());
   }
 
+  function toggleParcelas(key: string) {
+    setParcelasExpandidas((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }
+
   function toggleRemessa(id: string) {
     setRemessasExpandidas((prev) => {
       const next = new Set(prev);
@@ -513,7 +561,7 @@ export default function DocumentosPendentes() {
   // EXPORTAR PACOTE (das contas selecionadas)
   // ============================================================
   async function handleExportarPacote() {
-    const ids = Array.from(selecionadas);
+    const ids = idsContasParaEnvio;
     if (ids.length === 0) {
       toast.error("Selecione pelo menos uma conta antes de exportar.");
       return;
@@ -759,59 +807,21 @@ export default function DocumentosPendentes() {
                       </div>
                       <CollapsibleContent>
                         <div className="border-t divide-y">
-                          {grupo.contas_json.map((c) => {
-                            const bgClass = aba === "pronto" ? STATUS_CONTA_BG[c.status_conta] || "" : "";
-                            const isSelected = selecionadas.has(c.conta_id);
-                            return (
-                              <div
-                                key={c.conta_id}
-                                className={cn(
-                                  "px-4 py-2 flex items-center gap-3 hover:bg-muted/30",
-                                  bgClass,
-                                  isSelected && "bg-emerald-50/60",
-                                )}
-                              >
-                                {aba === "pronto" && (
-                                  <Checkbox
-                                    checked={isSelected}
-                                    onCheckedChange={() => toggleSelecao(c.conta_id)}
-                                  />
-                                )}
-                                <div
-                                  className="flex-1 min-w-0 cursor-pointer"
-                                  onClick={() => setContaIdDrawer(c.conta_id)}
-                                >
-                                  <div className="text-xs truncate" title={c.descricao}>
-                                    {c.descricao}
-                                  </div>
-                                  <div className="text-[10px] text-muted-foreground flex gap-2 mt-0.5 flex-wrap">
-                                    <span>Venc: {formatDateBR(c.data_vencimento)}</span>
-                                    {c.data_pagamento && (
-                                      <span>Pago: {formatDateBR(c.data_pagamento)}</span>
-                                    )}
-                                    {c.nf_numero && <span>NF: {c.nf_numero}</span>}
-                                    {aba === "pronto" && (
-                                      <Badge
-                                        variant="outline"
-                                        className="text-[9px] px-1.5 py-0"
-                                      >
-                                        {STATUS_CONTA_LABEL[c.status_conta] || c.status_conta}
-                                      </Badge>
-                                    )}
-                                  </div>
-                                </div>
-                                <ClusterPills
-                                  conta={c}
-                                  onBuscarNF={(conta) =>
-                                    setContaParaBuscar(conta)
-                                  }
-                                />
-                                <div className="font-mono text-xs shrink-0">
-                                  {formatBRL(Number(c.valor))}
-                                </div>
-                              </div>
-                            );
-                          })}
+                          {grupo.contas_json.map((c) => (
+                            <ItemLinha
+                              key={c.conta_id}
+                              conta={c}
+                              aba={aba}
+                              isSelected={selecionadas.has(c.conta_id)}
+                              onToggleSelecao={() => toggleSelecao(c.conta_id)}
+                              onAbrirDrawer={(id) => setContaIdDrawer(id)}
+                              onBuscarNF={(conta) => setContaParaBuscar(conta)}
+                              expandidoCompromisso={parcelasExpandidas.has(c.conta_id)}
+                              onToggleExpandirCompromisso={() =>
+                                toggleParcelas(c.conta_id)
+                              }
+                            />
+                          ))}
                         </div>
                       </CollapsibleContent>
                     </Collapsible>
@@ -983,7 +993,7 @@ export default function DocumentosPendentes() {
       <MarcarEnviadasDialog
         open={marcarOpen}
         onClose={() => setMarcarOpen(false)}
-        contasIds={Array.from(selecionadas)}
+        contasIds={idsContasParaEnvio}
         totalValor={totalSelecionadoValor}
         onSuccess={() => setSelecionadas(new Set())}
       />
@@ -993,12 +1003,24 @@ export default function DocumentosPendentes() {
         onClose={() => setEnviarSistemaOpen(false)}
         contasSelecionadas={todasContasPronto
           .filter((c) => selecionadas.has(c.conta_id))
-          .map((c) => ({
-            conta_id: c.conta_id,
-            valor: Number(c.valor || 0),
-            data_vencimento: c.data_vencimento,
-            data_pagamento: c.data_pagamento,
-          }))}
+          .flatMap((c) => {
+            // Pra compromisso: expande em todas as parcelas (com seus próprios valores/datas).
+            // Pra avulsa: 1 entrada igual à conta.
+            if (c.tipo === "compromisso" && c.parcelas && c.parcelas.length > 0) {
+              return c.parcelas.map((p) => ({
+                conta_id: p.conta_id,
+                valor: Number(p.valor || 0),
+                data_vencimento: p.data_vencimento,
+                data_pagamento: p.data_pagamento,
+              }));
+            }
+            return [{
+              conta_id: c.conta_id,
+              valor: Number(c.valor || 0),
+              data_vencimento: c.data_vencimento,
+              data_pagamento: c.data_pagamento,
+            }];
+          })}
         onSuccess={() => setSelecionadas(new Set())}
       />
 
@@ -1123,6 +1145,137 @@ function RemessaContas({
           </div>
         );
       })}
+    </div>
+  );
+}
+
+// ============================================================
+// SUBCOMPONENTE: linha de uma entrada (conta avulsa OU compromisso parcelado)
+// ============================================================
+function ItemLinha({
+  conta,
+  aba,
+  isSelected,
+  onToggleSelecao,
+  onAbrirDrawer,
+  onBuscarNF,
+  expandidoCompromisso,
+  onToggleExpandirCompromisso,
+}: {
+  conta: ContaItem;
+  aba: Aba;
+  isSelected: boolean;
+  onToggleSelecao: () => void;
+  onAbrirDrawer: (id: string) => void;
+  onBuscarNF: (c: ContaItem) => void;
+  expandidoCompromisso: boolean;
+  onToggleExpandirCompromisso: () => void;
+}) {
+  const ehCompromisso =
+    conta.tipo === "compromisso" &&
+    !!conta.parcelas &&
+    conta.parcelas.length > 0;
+  const bgClass = aba === "pronto" ? STATUS_CONTA_BG[conta.status_conta] || "" : "";
+
+  return (
+    <div>
+      <div
+        className={cn(
+          "px-4 py-2 flex items-center gap-3 hover:bg-muted/30",
+          bgClass,
+          isSelected && "bg-emerald-50/60",
+        )}
+      >
+        {aba === "pronto" && (
+          <Checkbox checked={isSelected} onCheckedChange={onToggleSelecao} />
+        )}
+        {ehCompromisso ? (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleExpandirCompromisso();
+            }}
+            className="shrink-0 p-0.5 hover:bg-muted rounded"
+            title={expandidoCompromisso ? "Ocultar parcelas" : "Ver parcelas"}
+          >
+            {expandidoCompromisso ? (
+              <ChevronDown className="h-3.5 w-3.5" />
+            ) : (
+              <ChevronRight className="h-3.5 w-3.5" />
+            )}
+          </button>
+        ) : (
+          <span className="w-[18px] shrink-0" />
+        )}
+        <div
+          className="flex-1 min-w-0 cursor-pointer"
+          onClick={() => onAbrirDrawer(conta.conta_id)}
+        >
+          <div className="text-xs truncate flex items-center gap-1.5" title={conta.descricao}>
+            <span className="truncate">{conta.descricao}</span>
+            {ehCompromisso && (
+              <Badge variant="outline" className="text-[9px] px-1.5 py-0 shrink-0">
+                {conta.parcelas_pagas ?? 0}/{conta.qtd_parcelas ?? conta.parcelas?.length ?? 0} parcelas pagas
+              </Badge>
+            )}
+          </div>
+          <div className="text-[10px] text-muted-foreground flex gap-2 mt-0.5 flex-wrap">
+            {ehCompromisso ? (
+              <>
+                <span>{conta.qtd_parcelas ?? conta.parcelas?.length ?? 0} parcelas</span>
+                <span>· 1ª venc: {formatDateBR(conta.data_vencimento)}</span>
+              </>
+            ) : (
+              <>
+                <span>Venc: {formatDateBR(conta.data_vencimento)}</span>
+                {conta.data_pagamento && (
+                  <span>Pago: {formatDateBR(conta.data_pagamento)}</span>
+                )}
+              </>
+            )}
+            {conta.nf_numero && <span>NF: {conta.nf_numero}</span>}
+            {aba === "pronto" && (
+              <Badge variant="outline" className="text-[9px] px-1.5 py-0">
+                {STATUS_CONTA_LABEL[conta.status_conta] || conta.status_conta}
+              </Badge>
+            )}
+          </div>
+        </div>
+        <ClusterPills conta={conta} onBuscarNF={onBuscarNF} />
+        <div className="font-mono text-xs shrink-0">
+          {formatBRL(Number(conta.valor))}
+        </div>
+      </div>
+
+      {/* Drill-down de parcelas (só quando compromisso e expandido) */}
+      {ehCompromisso && expandidoCompromisso && (
+        <div className="border-t bg-muted/20 divide-y">
+          {conta.parcelas!.map((p, idx) => (
+            <div
+              key={p.conta_id}
+              className="pl-12 pr-4 py-1.5 flex items-center gap-3 text-[11px] cursor-pointer hover:bg-muted/40"
+              onClick={() => onAbrirDrawer(p.conta_id)}
+            >
+              <span className="text-muted-foreground shrink-0">
+                Parcela {idx + 1}/{conta.qtd_parcelas ?? conta.parcelas!.length}
+              </span>
+              <div className="flex-1 min-w-0 flex gap-2 text-muted-foreground flex-wrap">
+                <span>Venc: {formatDateBR(p.data_vencimento)}</span>
+                {p.data_pagamento && (
+                  <span>Pago: {formatDateBR(p.data_pagamento)}</span>
+                )}
+                <Badge variant="outline" className="text-[9px] px-1.5 py-0">
+                  {STATUS_CONTA_LABEL[p.status_conta] || p.status_conta}
+                </Badge>
+              </div>
+              <div className="font-mono shrink-0">
+                {formatBRL(Number(p.valor))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

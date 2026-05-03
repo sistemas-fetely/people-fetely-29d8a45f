@@ -63,6 +63,33 @@ export default function BuscarNFStageDialog({
   const qc = useQueryClient();
   const [vinculando, setVinculando] = useState<string | null>(null);
 
+  // Busca info do compromisso parcelado (se houver) pra mostrar valor agregado.
+  // RPC `buscar_nfs_stage_para_conta` já detecta parcelamento via ratio valor_NF/valor_conta,
+  // então não precisa ser passado pra ela — é só pra contexto visual do usuário.
+  const { data: compromissoInfo } = useQuery({
+    queryKey: ["compromisso-info-busca-nf", contaId],
+    enabled: open && !!contaId,
+    queryFn: async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: conta } = await (supabase as any)
+        .from("contas_pagar_receber")
+        .select("compromisso_parcelado_id")
+        .eq("id", contaId)
+        .maybeSingle();
+      const compId = conta?.compromisso_parcelado_id;
+      if (!compId) return null;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: comp } = await (supabase as any)
+        .from("compromissos_parcelados")
+        .select("id, descricao, valor_total, qtd_parcelas")
+        .eq("id", compId)
+        .maybeSingle();
+      return comp || null;
+    },
+  });
+
+  const valorParaMatch = Number(compromissoInfo?.valor_total ?? contaValor ?? 0);
+
   const { data: candidatos = [], isLoading } = useQuery({
     queryKey: ["buscar-nfs-stage", contaId],
     enabled: open && !!contaId,
@@ -117,6 +144,13 @@ export default function BuscarNFStageDialog({
               Conta: <span className="font-medium">{contaDescricao}</span> —{" "}
               {formatBRL(contaValor)}
             </div>
+            {compromissoInfo && (
+              <div className="text-xs text-blue-700 bg-blue-50 border border-blue-200 rounded px-2 py-1">
+                ✨ Buscando NF do compromisso completo (
+                {compromissoInfo.qtd_parcelas} parcelas) —{" "}
+                <span className="font-medium">{formatBRL(Number(compromissoInfo.valor_total))}</span>
+              </div>
+            )}
             <div className="text-xs">
               IA busca match por CNPJ, valor, razão social, nome fantasia e data de emissão.
             </div>
@@ -164,6 +198,15 @@ export default function BuscarNFStageDialog({
                     NF nº {c.nf_numero || "—"} · {formatDate(c.nf_data_emissao)} ·{" "}
                     {formatBRL(c.valor_total)}
                     {(() => {
+                      // Match exato com valor do compromisso (ou da conta avulsa)
+                      if (valorParaMatch > 0 && Math.abs(c.valor_total - valorParaMatch) < 0.01) {
+                        return (
+                          <span className="text-emerald-700 font-medium">
+                            {" "}(= {formatBRL(valorParaMatch)})
+                          </span>
+                        );
+                      }
+                      // Detecção de parcelamento — usa valor da conta individual
                       if (!contaValor || contaValor <= 0) return null;
                       const ratio = c.valor_total / contaValor;
                       const ratioRounded = Math.round(ratio);
