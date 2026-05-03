@@ -49,6 +49,9 @@ import {
   ChevronDown,
   ChevronRight,
   AlertCircle,
+  FilePlus2,
+  RefreshCw,
+  Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
