@@ -4590,6 +4590,105 @@ export type Database = {
         }
         Relationships: []
       }
+      grupos_empresariais: {
+        Row: {
+          ativo: boolean
+          cnpj_raiz: string | null
+          created_at: string
+          descricao: string | null
+          id: string
+          nome: string
+          observacao: string | null
+          tipo_controle: string | null
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          cnpj_raiz?: string | null
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome: string
+          observacao?: string | null
+          tipo_controle?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          cnpj_raiz?: string | null
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome?: string
+          observacao?: string | null
+          tipo_controle?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      grupos_parceiros_log: {
+        Row: {
+          grupo_anterior_id: string | null
+          grupo_novo_id: string | null
+          id: string
+          mudou_em: string
+          mudou_por: string | null
+          parceiro_id: string
+        }
+        Insert: {
+          grupo_anterior_id?: string | null
+          grupo_novo_id?: string | null
+          id?: string
+          mudou_em?: string
+          mudou_por?: string | null
+          parceiro_id: string
+        }
+        Update: {
+          grupo_anterior_id?: string | null
+          grupo_novo_id?: string | null
+          id?: string
+          mudou_em?: string
+          mudou_por?: string | null
+          parceiro_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "grupos_parceiros_log_grupo_anterior_id_fkey"
+            columns: ["grupo_anterior_id"]
+            isOneToOne: false
+            referencedRelation: "grupos_empresariais"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "grupos_parceiros_log_grupo_anterior_id_fkey"
+            columns: ["grupo_anterior_id"]
+            isOneToOne: false
+            referencedRelation: "vw_exposicao_por_grupo"
+            referencedColumns: ["grupo_id"]
+          },
+          {
+            foreignKeyName: "grupos_parceiros_log_grupo_novo_id_fkey"
+            columns: ["grupo_novo_id"]
+            isOneToOne: false
+            referencedRelation: "grupos_empresariais"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "grupos_parceiros_log_grupo_novo_id_fkey"
+            columns: ["grupo_novo_id"]
+            isOneToOne: false
+            referencedRelation: "vw_exposicao_por_grupo"
+            referencedColumns: ["grupo_id"]
+          },
+          {
+            foreignKeyName: "grupos_parceiros_log_parceiro_id_fkey"
+            columns: ["parceiro_id"]
+            isOneToOne: false
+            referencedRelation: "parceiros_comerciais"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       holerites: {
         Row: {
           adicional_noturno: number | null
@@ -6157,6 +6256,7 @@ export type Database = {
           created_at: string | null
           dados_bancarios: Json | null
           email: string | null
+          grupo_id: string | null
           id: string
           logradouro: string | null
           nome_fantasia: string | null
@@ -6186,6 +6286,7 @@ export type Database = {
           created_at?: string | null
           dados_bancarios?: Json | null
           email?: string | null
+          grupo_id?: string | null
           id?: string
           logradouro?: string | null
           nome_fantasia?: string | null
@@ -6215,6 +6316,7 @@ export type Database = {
           created_at?: string | null
           dados_bancarios?: Json | null
           email?: string | null
+          grupo_id?: string | null
           id?: string
           logradouro?: string | null
           nome_fantasia?: string | null
@@ -6237,6 +6339,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "plano_contas"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "parceiros_comerciais_grupo_id_fkey"
+            columns: ["grupo_id"]
+            isOneToOne: false
+            referencedRelation: "grupos_empresariais"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "parceiros_comerciais_grupo_id_fkey"
+            columns: ["grupo_id"]
+            isOneToOne: false
+            referencedRelation: "vw_exposicao_por_grupo"
+            referencedColumns: ["grupo_id"]
           },
         ]
       }
@@ -10136,6 +10252,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      vw_exposicao_por_grupo: {
+        Row: {
+          grupo_ativo: boolean | null
+          grupo_id: string | null
+          grupo_nome: string | null
+          qtd_contas_12m: number | null
+          qtd_parceiros_ativos: number | null
+          qtd_parceiros_total: number | null
+          tipo_controle: string | null
+          total_pagar_12m: number | null
+          total_receber_12m: number | null
+        }
+        Relationships: []
       }
       vw_faturas_cartao_resumo: {
         Row: {
