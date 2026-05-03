@@ -79,7 +79,7 @@ import { getMeioPagamentoIcon } from "@/lib/financeiro/meio-pagamento-icon";
 import { classBordaTemporal } from "@/lib/financeiro/is-vencimento-futuro";
 import { cn } from "@/lib/utils";
 import { CardKPI, CardKPIDuplo } from "./CaixaBanco/CardKPI";
-import KpiPill from "./CaixaBanco/KpiPill";
+
 import {
   type Lancamento,
   type ContaBancariaLite,
