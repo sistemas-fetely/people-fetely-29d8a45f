@@ -386,6 +386,13 @@ export function ParceiroFormSheet({ open, onOpenChange, editing, categorias, onS
           {/* Classificação */}
           <div className="border-t pt-4">
             <p className="text-sm font-medium mb-3">Classificação</p>
+            <div className="mb-3">
+              <Label>Grupo empresarial</Label>
+              <GrupoEmpresarialCombobox value={grupoId} onChange={setGrupoId} />
+              <p className="text-xs text-muted-foreground mt-1">
+                Agrupa parceiros que pertencem ao mesmo controle (holding, mesmo dono, etc).
+              </p>
+            </div>
             {tiposSelecionados.includes("cliente") && (
               <div className="mb-3">
                 <Label>Canal (cliente)</Label>
