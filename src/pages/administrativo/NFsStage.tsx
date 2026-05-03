@@ -142,6 +142,33 @@ export default function NFsStage() {
   const [paraDescartar, setParaDescartar] = useState<NFStage[]>([]);
   const [salvandoCategoria, setSalvandoCategoria] = useState<Set<string>>(new Set());
   const [expandidas, setExpandidas] = useState<Set<string>>(new Set());
+  const [gerandoResumo, setGerandoResumo] = useState<Set<string>>(new Set());
+
+  const handleGerarResumo = async (nf: NFStage, regerar: boolean) => {
+    if (regerar) {
+      const ok = window.confirm(
+        "Substituir resumo NF-e existente? O PDF anterior será removido.",
+      );
+      if (!ok) return;
+    }
+    setGerandoResumo((s) => new Set(s).add(nf.id));
+    try {
+      const res = regerar ? await regerarResumoNFe(nf.id) : await gerarResumoNFe(nf.id);
+      if (res.ok) {
+        toast.success("Resumo NFe gerado e anexado");
+        qc.invalidateQueries({ queryKey: ["nfs_stage"] });
+        qc.invalidateQueries({ queryKey: ["documentos_envio_agrupados"] });
+      } else {
+        toast.error(`Falha na geração — registrado para revisão${res.erro ? `: ${res.erro}` : ""}`);
+      }
+    } finally {
+      setGerandoResumo((s) => {
+        const n = new Set(s);
+        n.delete(nf.id);
+        return n;
+      });
+    }
+  };
 
   function toggleExpandir(id: string) {
     setExpandidas((prev) => {
