@@ -122,6 +122,14 @@ export function ParceiroFormSheet({ open, onOpenChange, editing, categorias, onS
   const [grupoId, setGrupoId] = useState<string | null>(null);
   const [tagInput, setTagInput] = useState("");
   const [observacao, setObservacao] = useState("");
+  const [meioPagamentoPadrao, setMeioPagamentoPadrao] = useState<string>("");
+  const [pixTipo, setPixTipo] = useState<string>("");
+  const [pixChave, setPixChave] = useState("");
+  const [bcoBanco, setBcoBanco] = useState("");
+  const [bcoAgencia, setBcoAgencia] = useState("");
+  const [bcoConta, setBcoConta] = useState("");
+  const [bcoTipoConta, setBcoTipoConta] = useState<string>("");
+  const [bcoTitular, setBcoTitular] = useState("");
   const [duplicateWarn, setDuplicateWarn] = useState<string | null>(null);
 
   useEffect(() => {
