@@ -69,8 +69,28 @@ import { cn } from "@/lib/utils";
 
 type Aba = "cobrar" | "pronto" | "enviado";
 
-type ContaItem = {
+type ParcelaDetalhe = {
   conta_id: string;
+  descricao: string;
+  valor: number;
+  data_vencimento: string;
+  data_pagamento: string | null;
+  status_conta: string;
+  docs_status: string | null;
+  tem_nf_anexada: boolean | null;
+  estado_envio: "cobrar" | "pronto" | "enviado";
+};
+
+type ContaItem = {
+  // Identificador da entrada — pra compromisso é a parcela "principal" (drawer abre nela)
+  conta_id: string;
+  // Discriminador do tipo de evento. Ausente = legado (trata como avulsa).
+  tipo?: "conta_avulsa" | "compromisso";
+  compromisso_id?: string | null;
+  qtd_parcelas?: number | null;
+  parcelas_pagas?: number | null;
+  parcelas?: ParcelaDetalhe[] | null;
+
   descricao: string;
   valor: number;
   data_vencimento: string;
@@ -93,6 +113,14 @@ type ContaItem = {
   enviado_contador?: boolean | null;
   parceiro_cnpj?: string | null;
 };
+
+// IDs reais de contas_pagar_receber dentro de uma entrada (1 pra avulsa, N pra compromisso)
+function contaIdsDoItem(c: ContaItem): string[] {
+  if (c.tipo === "compromisso" && c.parcelas && c.parcelas.length > 0) {
+    return c.parcelas.map((p) => p.conta_id);
+  }
+  return [c.conta_id];
+}
 
 // -----------------------------------------------------------------------------
 // Cluster Fetely de pills de status documental
