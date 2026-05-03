@@ -352,20 +352,21 @@ Deno.serve(async (req) => {
       }
 
       try {
-        await adminClient.functions.invoke("send-transactional-email", {
-          body: {
-            templateName: "boas-vindas-portal",
-            recipientEmail: email,
-            idempotencyKey: `boas-vindas-${userId}-${Date.now()}`,
-            templateData: {
-              nome: full_name,
-              email,
-              link: Deno.env.get("SITE_URL") || "https://people-fetely.lovable.app",
-            },
+        const r = await invokeSendTransactionalEmail(supabaseUrl, anonKey, authHeader, {
+          templateName: "boas-vindas-portal",
+          recipientEmail: email,
+          idempotencyKey: `boas-vindas-${userId}-${Date.now()}`,
+          templateData: {
+            nome: full_name,
+            email,
+            link: Deno.env.get("SITE_URL") || "https://people-fetely.lovable.app",
           },
         });
+        if (!r.ok) {
+          console.error("[create_user_v2] Falha em send-transactional-email:", r.status, r.body);
+        }
       } catch (emailErr) {
-        console.error("Erro ao enviar e-mail de boas-vindas:", emailErr);
+        console.error("[create_user_v2] Erro ao enviar e-mail de boas-vindas:", emailErr);
       }
 
       return new Response(JSON.stringify({
