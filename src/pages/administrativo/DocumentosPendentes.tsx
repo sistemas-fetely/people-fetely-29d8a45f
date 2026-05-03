@@ -797,59 +797,21 @@ export default function DocumentosPendentes() {
                       </div>
                       <CollapsibleContent>
                         <div className="border-t divide-y">
-                          {grupo.contas_json.map((c) => {
-                            const bgClass = aba === "pronto" ? STATUS_CONTA_BG[c.status_conta] || "" : "";
-                            const isSelected = selecionadas.has(c.conta_id);
-                            return (
-                              <div
-                                key={c.conta_id}
-                                className={cn(
-                                  "px-4 py-2 flex items-center gap-3 hover:bg-muted/30",
-                                  bgClass,
-                                  isSelected && "bg-emerald-50/60",
-                                )}
-                              >
-                                {aba === "pronto" && (
-                                  <Checkbox
-                                    checked={isSelected}
-                                    onCheckedChange={() => toggleSelecao(c.conta_id)}
-                                  />
-                                )}
-                                <div
-                                  className="flex-1 min-w-0 cursor-pointer"
-                                  onClick={() => setContaIdDrawer(c.conta_id)}
-                                >
-                                  <div className="text-xs truncate" title={c.descricao}>
-                                    {c.descricao}
-                                  </div>
-                                  <div className="text-[10px] text-muted-foreground flex gap-2 mt-0.5 flex-wrap">
-                                    <span>Venc: {formatDateBR(c.data_vencimento)}</span>
-                                    {c.data_pagamento && (
-                                      <span>Pago: {formatDateBR(c.data_pagamento)}</span>
-                                    )}
-                                    {c.nf_numero && <span>NF: {c.nf_numero}</span>}
-                                    {aba === "pronto" && (
-                                      <Badge
-                                        variant="outline"
-                                        className="text-[9px] px-1.5 py-0"
-                                      >
-                                        {STATUS_CONTA_LABEL[c.status_conta] || c.status_conta}
-                                      </Badge>
-                                    )}
-                                  </div>
-                                </div>
-                                <ClusterPills
-                                  conta={c}
-                                  onBuscarNF={(conta) =>
-                                    setContaParaBuscar(conta)
-                                  }
-                                />
-                                <div className="font-mono text-xs shrink-0">
-                                  {formatBRL(Number(c.valor))}
-                                </div>
-                              </div>
-                            );
-                          })}
+                          {grupo.contas_json.map((c) => (
+                            <ItemLinha
+                              key={c.conta_id}
+                              conta={c}
+                              aba={aba}
+                              isSelected={selecionadas.has(c.conta_id)}
+                              onToggleSelecao={() => toggleSelecao(c.conta_id)}
+                              onAbrirDrawer={(id) => setContaIdDrawer(id)}
+                              onBuscarNF={(conta) => setContaParaBuscar(conta)}
+                              expandidoCompromisso={parcelasExpandidas.has(c.conta_id)}
+                              onToggleExpandirCompromisso={() =>
+                                toggleParcelas(c.conta_id)
+                              }
+                            />
+                          ))}
                         </div>
                       </CollapsibleContent>
                     </Collapsible>
