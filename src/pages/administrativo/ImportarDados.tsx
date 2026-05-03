@@ -15,10 +15,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { useCategoriasPlano } from "@/hooks/useCategoriasPlano";
-import { ImportadorCsvQive } from "@/components/financeiro/ImportadorCsvQive";
-import { ImportadorXmlNFe } from "@/components/financeiro/ImportadorXmlNFe";
-import { ImportadorPdfDanfe } from "@/components/financeiro/ImportadorPdfDanfe";
+import { ImportadorNFs } from "@/components/financeiro/ImportadorNFs";
 import { ImportadorOFX } from "@/components/financeiro/ImportadorOFX";
 import { ImportarFaturaCartaoDialog } from "@/components/financeiro/ImportarFaturaCartaoDialog";
 
