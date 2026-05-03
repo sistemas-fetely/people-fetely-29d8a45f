@@ -5,6 +5,36 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+/**
+ * Doutrina #15 — JWT forward Edge→Edge.
+ * Não usar adminClient.functions.invoke() pra chamar send-transactional-email:
+ * isso envia o token de service_role e a função destino faz auth.getUser(token),
+ * que falha com 401 (service_role não é user). Forward do JWT ORIGINAL do user.
+ */
+async function invokeSendTransactionalEmail(
+  supabaseUrl: string,
+  anonKey: string,
+  authHeader: string,
+  payload: Record<string, unknown>,
+): Promise<{ ok: boolean; status: number; body: unknown }> {
+  const resp = await fetch(`${supabaseUrl}/functions/v1/send-transactional-email`, {
+    method: "POST",
+    headers: {
+      "Authorization": authHeader,
+      "apikey": anonKey,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+  let parsed: unknown = null;
+  try {
+    parsed = await resp.json();
+  } catch {
+    parsed = null;
+  }
+  return { ok: resp.ok, status: resp.status, body: parsed };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
