@@ -647,34 +647,6 @@ export default function CaixaBanco() {
           </div>
         </div>
 
-        {/* Pills Tudo / A pagar / Realizado */}
-        <div className="flex flex-wrap gap-2">
-          <KpiPill
-            label="Tudo"
-            count={listaAPagar.length + listaRealizado.length}
-            color="admin"
-            active={tipoParam === "tudo"}
-            onClick={() => setTipo("tudo")}
-            icon={<ListChecks className="h-3 w-3" />}
-          />
-          <KpiPill
-            label="A pagar"
-            count={listaAPagar.length}
-            color="amber"
-            active={tipoParam === "apagar"}
-            onClick={() => setTipo("apagar")}
-            icon={<CalendarClock className="h-3 w-3" />}
-          />
-          <KpiPill
-            label="Realizado"
-            count={listaRealizado.length}
-            color="emerald"
-            active={tipoParam === "realizado"}
-            onClick={() => setTipo("realizado")}
-            icon={<WalletIcon className="h-3 w-3" />}
-          />
-        </div>
-
         {/* Filtros adicionais (Contador + Inconsistências + IA) */}
         <div className="border border-zinc-200 bg-white/60 rounded-xl p-2">
           <div className="flex gap-2 flex-wrap items-center">
