@@ -839,6 +839,8 @@ export default function Parametros() {
                     );
                   })}
                 </Tabs>
+
+                {key === "geral" && <ParametrosUnidadesSection />}
               </div>
             )}
           </TabsContent>
