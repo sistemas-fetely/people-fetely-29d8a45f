@@ -198,6 +198,15 @@ export default function BuscarNFStageDialog({
                     NF nº {c.nf_numero || "—"} · {formatDate(c.nf_data_emissao)} ·{" "}
                     {formatBRL(c.valor_total)}
                     {(() => {
+                      // Match exato com valor do compromisso (ou da conta avulsa)
+                      if (valorParaMatch > 0 && Math.abs(c.valor_total - valorParaMatch) < 0.01) {
+                        return (
+                          <span className="text-emerald-700 font-medium">
+                            {" "}(= {formatBRL(valorParaMatch)})
+                          </span>
+                        );
+                      }
+                      // Detecção de parcelamento — usa valor da conta individual
                       if (!contaValor || contaValor <= 0) return null;
                       const ratio = c.valor_total / contaValor;
                       const ratioRounded = Math.round(ratio);
