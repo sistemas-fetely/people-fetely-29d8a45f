@@ -59,8 +59,6 @@ import {
   RefreshCcw,
   Sparkles,
   Loader2,
-  ListChecks,
-  Wallet as WalletIcon,
   CheckCircle2,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -81,7 +79,7 @@ import { getMeioPagamentoIcon } from "@/lib/financeiro/meio-pagamento-icon";
 import { classBordaTemporal } from "@/lib/financeiro/is-vencimento-futuro";
 import { cn } from "@/lib/utils";
 import { CardKPI, CardKPIDuplo } from "./CaixaBanco/CardKPI";
-import KpiPill from "./CaixaBanco/KpiPill";
+
 import {
   type Lancamento,
   type ContaBancariaLite,
@@ -645,34 +643,6 @@ export default function CaixaBanco() {
               onClickFalta={() => setFiltroQual(filtroQual === "conciliado_falta" ? "todos" : "conciliado_falta")}
             />
           </div>
-        </div>
-
-        {/* Pills Tudo / A pagar / Realizado */}
-        <div className="flex flex-wrap gap-2">
-          <KpiPill
-            label="Tudo"
-            count={listaAPagar.length + listaRealizado.length}
-            color="admin"
-            active={tipoParam === "tudo"}
-            onClick={() => setTipo("tudo")}
-            icon={<ListChecks className="h-3 w-3" />}
-          />
-          <KpiPill
-            label="A pagar"
-            count={listaAPagar.length}
-            color="amber"
-            active={tipoParam === "apagar"}
-            onClick={() => setTipo("apagar")}
-            icon={<CalendarClock className="h-3 w-3" />}
-          />
-          <KpiPill
-            label="Realizado"
-            count={listaRealizado.length}
-            color="emerald"
-            active={tipoParam === "realizado"}
-            onClick={() => setTipo("realizado")}
-            icon={<WalletIcon className="h-3 w-3" />}
-          />
         </div>
 
         {/* Filtros adicionais (Contador + Inconsistências + IA) */}
