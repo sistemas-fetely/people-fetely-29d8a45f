@@ -58,6 +58,7 @@ import { formatBRL, formatDateBR } from "@/lib/format-currency";
 import { descartarStage } from "@/lib/financeiro/stage-handler";
 import { useCategoriasPlano } from "@/hooks/useCategoriasPlano";
 import { CategoriaCombobox } from "@/components/financeiro/CategoriaCombobox";
+import { gerarResumoNFe, regerarResumoNFe } from "@/lib/financeiro/gerar-resumo-nfe";
 import {
   classificarComAprendizado,
   useRegrasAtivas,
