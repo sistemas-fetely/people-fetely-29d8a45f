@@ -1021,7 +1021,7 @@ export default function DocumentosPendentes() {
       <MarcarEnviadasDialog
         open={marcarOpen}
         onClose={() => setMarcarOpen(false)}
-        contasIds={Array.from(selecionadas)}
+        contasIds={idsContasParaEnvio}
         totalValor={totalSelecionadoValor}
         onSuccess={() => setSelecionadas(new Set())}
       />
@@ -1031,12 +1031,24 @@ export default function DocumentosPendentes() {
         onClose={() => setEnviarSistemaOpen(false)}
         contasSelecionadas={todasContasPronto
           .filter((c) => selecionadas.has(c.conta_id))
-          .map((c) => ({
-            conta_id: c.conta_id,
-            valor: Number(c.valor || 0),
-            data_vencimento: c.data_vencimento,
-            data_pagamento: c.data_pagamento,
-          }))}
+          .flatMap((c) => {
+            // Pra compromisso: expande em todas as parcelas (com seus próprios valores/datas).
+            // Pra avulsa: 1 entrada igual à conta.
+            if (c.tipo === "compromisso" && c.parcelas && c.parcelas.length > 0) {
+              return c.parcelas.map((p) => ({
+                conta_id: p.conta_id,
+                valor: Number(p.valor || 0),
+                data_vencimento: p.data_vencimento,
+                data_pagamento: p.data_pagamento,
+              }));
+            }
+            return [{
+              conta_id: c.conta_id,
+              valor: Number(c.valor || 0),
+              data_vencimento: c.data_vencimento,
+              data_pagamento: c.data_pagamento,
+            }];
+          })}
         onSuccess={() => setSelecionadas(new Set())}
       />
 
