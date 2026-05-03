@@ -154,6 +154,14 @@ export function ParceiroFormSheet({ open, onOpenChange, editing, categorias, onS
       setTags(editing.tags || []);
       setGrupoId(editing.grupo_id ?? null);
       setObservacao(editing.observacao || "");
+      setMeioPagamentoPadrao(editing.meio_pagamento_padrao || "");
+      setPixTipo(editing.pix_tipo || "");
+      setPixChave(editing.pix_chave || "");
+      setBcoBanco(editing.dados_bancarios?.banco || "");
+      setBcoAgencia(editing.dados_bancarios?.agencia || "");
+      setBcoConta(editing.dados_bancarios?.conta || "");
+      setBcoTipoConta(editing.dados_bancarios?.tipo_conta || "");
+      setBcoTitular(editing.dados_bancarios?.titular || "");
     } else {
       setTiposSelecionados(["fornecedor"]);
       setCnpj(prefill?.cnpj ? maskCnpj(prefill.cnpj) : "");
