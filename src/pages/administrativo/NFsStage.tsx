@@ -49,12 +49,16 @@ import {
   ChevronDown,
   ChevronRight,
   AlertCircle,
+  FilePlus2,
+  RefreshCw,
+  Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
 import { descartarStage } from "@/lib/financeiro/stage-handler";
 import { useCategoriasPlano } from "@/hooks/useCategoriasPlano";
 import { CategoriaCombobox } from "@/components/financeiro/CategoriaCombobox";
+import { gerarResumoNFe, regerarResumoNFe } from "@/lib/financeiro/gerar-resumo-nfe";
 import {
   classificarComAprendizado,
   useRegrasAtivas,
@@ -88,6 +92,9 @@ type NFStage = {
   match_score: number | null;
   importacao_lote_id: string | null;
   created_at: string;
+  resumo_pdf_pendente?: boolean | null;
+  resumo_pdf_gerado_em?: string | null;
+  resumo_pdf_storage_path?: string | null;
   itens: Array<{
     codigo_produto?: string;
     descricao?: string;
@@ -135,6 +142,33 @@ export default function NFsStage() {
   const [paraDescartar, setParaDescartar] = useState<NFStage[]>([]);
   const [salvandoCategoria, setSalvandoCategoria] = useState<Set<string>>(new Set());
   const [expandidas, setExpandidas] = useState<Set<string>>(new Set());
+  const [gerandoResumo, setGerandoResumo] = useState<Set<string>>(new Set());
+
+  const handleGerarResumo = async (nf: NFStage, regerar: boolean) => {
+    if (regerar) {
+      const ok = window.confirm(
+        "Substituir resumo NF-e existente? O PDF anterior será removido.",
+      );
+      if (!ok) return;
+    }
+    setGerandoResumo((s) => new Set(s).add(nf.id));
+    try {
+      const res = regerar ? await regerarResumoNFe(nf.id) : await gerarResumoNFe(nf.id);
+      if (res.ok) {
+        toast.success("Resumo NFe gerado e anexado");
+        qc.invalidateQueries({ queryKey: ["nfs_stage"] });
+        qc.invalidateQueries({ queryKey: ["documentos_envio_agrupados"] });
+      } else {
+        toast.error(`Falha na geração — registrado para revisão${res.erro ? `: ${res.erro}` : ""}`);
+      }
+    } finally {
+      setGerandoResumo((s) => {
+        const n = new Set(s);
+        n.delete(nf.id);
+        return n;
+      });
+    }
+  };
 
   function toggleExpandir(id: string) {
     setExpandidas((prev) => {
@@ -768,6 +802,48 @@ export default function NFsStage() {
                               <Eye className="h-3.5 w-3.5" />
                             </Button>
                           )}
+                          {(() => {
+                            const ehXml =
+                              !!nf.xml_storage_path ||
+                              (!!nf.arquivo_nome && /\.xml$/i.test(nf.arquivo_nome));
+                            if (!ehXml) return null;
+                            const jaTem = !!nf.resumo_pdf_gerado_em;
+                            const loading = gerandoResumo.has(nf.id);
+                            if (jaTem) {
+                              return (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                                  onClick={() => handleGerarResumo(nf, true)}
+                                  disabled={loading}
+                                  title="Regerar Resumo NFe"
+                                >
+                                  {loading ? (
+                                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                  ) : (
+                                    <RefreshCw className="h-3.5 w-3.5" />
+                                  )}
+                                </Button>
+                              );
+                            }
+                            return (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 text-primary hover:text-primary hover:bg-primary/10"
+                                onClick={() => handleGerarResumo(nf, false)}
+                                disabled={loading}
+                                title="Gerar Resumo NFe"
+                              >
+                                {loading ? (
+                                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                ) : (
+                                  <FilePlus2 className="h-3.5 w-3.5" />
+                                )}
+                              </Button>
+                            );
+                          })()}
                           <Button
                             variant="ghost"
                             size="icon"
