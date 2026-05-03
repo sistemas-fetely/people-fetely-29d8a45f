@@ -41,15 +41,18 @@ export function classFundoFuturo(dataVencimento: string | null | undefined): str
 
 /**
  * Retorna classe Tailwind de borda esquerda colorida representando
- * a janela temporal da data de vencimento:
- *   - passado (antes do mês atual): cinza
- *   - atual (mês corrente): âmbar
- *   - futuro (próximo mês ou depois): azul
- * Usar em <TableRow className={cn(..., classBordaTemporal(c.data_vencimento))}>
+ * a janela temporal da data de vencimento + status:
+ *   - 🔴 vermelho — atrasada=true (prioridade máxima)
+ *   - 🟢 verde — pago no passado (status='paga' E venc < mês atual)
+ *   - ⚪ cinza — passado não-pago (cancelado, etc)
+ *   - 🟡 âmbar — vencimento no mês corrente
+ *   - 🔵 azul — vencimento ≥ próximo mês
+ * Usar em <TableRow className={cn(..., classBordaTemporal(c.data_vencimento, c.atrasada, c.status))}>
  */
 export function classBordaTemporal(
   dataVencimento: string | null | undefined,
   atrasada?: boolean | null,
+  status?: string | null,
 ): string {
   // Atrasada tem prioridade máxima
   if (atrasada) return "border-l-4 border-l-red-500";
@@ -66,6 +69,8 @@ export function classBordaTemporal(
   const inicioProximoMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 1);
 
   if (venc.getTime() < inicioMesAtual.getTime()) {
+    // Pago no passado → verde; cancelado/outros → cinza
+    if (status === "paga") return "border-l-4 border-l-emerald-500";
     return "border-l-4 border-l-zinc-300";
   }
   if (venc.getTime() >= inicioProximoMes.getTime()) {
