@@ -50,12 +50,19 @@ Deno.serve(async (req) => {
   }
 
   // Selecionar fila
-  let alvos: { id: string; arquivo_storage_path: string; nf_numero: string | null }[] = [];
+  type Alvo = {
+    id: string;
+    arquivo_storage_path: string | null;
+    xml_storage_path: string | null;
+    nf_numero: string | null;
+  };
+  let alvos: Alvo[] = [];
+  const SELECT_COLS = "id, arquivo_storage_path, xml_storage_path, nf_numero";
 
   if (body.nfs_stage_id) {
     const { data, error } = await admin
       .from("nfs_stage")
-      .select("id, arquivo_storage_path, nf_numero")
+      .select(SELECT_COLS)
       .eq("id", body.nfs_stage_id)
       .single();
     if (error || !data) {
@@ -64,21 +71,21 @@ Deno.serve(async (req) => {
         { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
-    alvos = [data as any];
+    alvos = [data as Alvo];
   } else if (body.nfs_stage_ids?.length) {
     const { data } = await admin
       .from("nfs_stage")
-      .select("id, arquivo_storage_path, nf_numero")
+      .select(SELECT_COLS)
       .in("id", body.nfs_stage_ids);
-    alvos = (data || []) as any[];
+    alvos = (data || []) as Alvo[];
   } else {
     const { data } = await admin
       .from("nfs_stage")
-      .select("id, arquivo_storage_path, nf_numero")
+      .select(SELECT_COLS)
       .eq("resumo_pdf_pendente", true)
       .is("resumo_pdf_gerado_em", null)
       .limit(LOTE_MAX);
-    alvos = (data || []) as any[];
+    alvos = (data || []) as Alvo[];
   }
 
   const resultados: ResultadoItem[] = [];
