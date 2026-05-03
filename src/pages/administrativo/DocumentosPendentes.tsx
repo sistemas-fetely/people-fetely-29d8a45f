@@ -332,6 +332,7 @@ export default function DocumentosPendentes() {
   const [enviarSistemaOpen, setEnviarSistemaOpen] = useState(false);
   const [exportando, setExportando] = useState(false);
   const [expandidos, setExpandidos] = useState<Set<string>>(new Set());
+  const [parcelasExpandidas, setParcelasExpandidas] = useState<Set<string>>(new Set());
   const [selecionadas, setSelecionadas] = useState<Set<string>>(new Set());
   const [remessasExpandidas, setRemessasExpandidas] = useState<Set<string>>(new Set());
   const [desfazendo, setDesfazendo] = useState(false);
