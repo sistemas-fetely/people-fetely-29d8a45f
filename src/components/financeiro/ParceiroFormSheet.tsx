@@ -26,6 +26,7 @@ import { X } from "lucide-react";
 import { toast } from "sonner";
 import { fetchCep } from "@/lib/viacep";
 import { CategoriaCombobox, CategoriaOption } from "@/components/financeiro/CategoriaCombobox";
+import { GrupoEmpresarialCombobox } from "@/components/financeiro/GrupoEmpresarialCombobox";
 
 export type Parceiro = {
   id: string;
@@ -48,6 +49,7 @@ export type Parceiro = {
   categoria_padrao_id: string | null;
   centro_custo_padrao: string | null;
   tags: string[] | null;
+  grupo_id: string | null;
   ativo: boolean | null;
   observacao: string | null;
   origem: string | null;
@@ -107,6 +109,7 @@ export function ParceiroFormSheet({ open, onOpenChange, editing, categorias, onS
   const [categoriaPadrao, setCategoriaPadrao] = useState<string | null>(null);
   const [centroCusto, setCentroCusto] = useState("");
   const [tags, setTags] = useState<string[]>([]);
+  const [grupoId, setGrupoId] = useState<string | null>(null);
   const [tagInput, setTagInput] = useState("");
   const [observacao, setObservacao] = useState("");
   const [duplicateWarn, setDuplicateWarn] = useState<string | null>(null);
@@ -131,6 +134,7 @@ export function ParceiroFormSheet({ open, onOpenChange, editing, categorias, onS
       setCategoriaPadrao(editing.categoria_padrao_id);
       setCentroCusto(editing.centro_custo_padrao || "");
       setTags(editing.tags || []);
+      setGrupoId(editing.grupo_id ?? null);
       setObservacao(editing.observacao || "");
     } else {
       setTiposSelecionados(["fornecedor"]);
@@ -152,6 +156,7 @@ export function ParceiroFormSheet({ open, onOpenChange, editing, categorias, onS
       setCategoriaPadrao(null);
       setCentroCusto("");
       setTags([]);
+      setGrupoId(null);
       setObservacao("");
     }
     setDuplicateWarn(null);
@@ -228,6 +233,7 @@ export function ParceiroFormSheet({ open, onOpenChange, editing, categorias, onS
         canal: canal || null,
         segmento: segmento.trim() || null,
         categoria_padrao_id: categoriaPadrao,
+        grupo_id: grupoId,
         centro_custo_padrao: centroCusto || null,
         tags: tags.length ? tags : null,
         observacao: observacao.trim() || null,
@@ -380,6 +386,13 @@ export function ParceiroFormSheet({ open, onOpenChange, editing, categorias, onS
           {/* Classificação */}
           <div className="border-t pt-4">
             <p className="text-sm font-medium mb-3">Classificação</p>
+            <div className="mb-3">
+              <Label>Grupo empresarial</Label>
+              <GrupoEmpresarialCombobox value={grupoId} onChange={setGrupoId} />
+              <p className="text-xs text-muted-foreground mt-1">
+                Agrupa parceiros que pertencem ao mesmo controle (holding, mesmo dono, etc).
+              </p>
+            </div>
             {tiposSelecionados.includes("cliente") && (
               <div className="mb-3">
                 <Label>Canal (cliente)</Label>
