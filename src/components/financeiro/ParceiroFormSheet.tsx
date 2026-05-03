@@ -520,6 +520,103 @@ export function ParceiroFormSheet({ open, onOpenChange, editing, categorias, onS
             </div>
           </div>
 
+          {/* Pagamento */}
+          <div className="border-t pt-4">
+            <p className="text-sm font-medium mb-3">Pagamento</p>
+
+            <div className="mb-3">
+              <Label>Meio de pagamento padrão</Label>
+              <Select
+                value={meioPagamentoPadrao || "_none"}
+                onValueChange={(v) => setMeioPagamentoPadrao(v === "_none" ? "" : v)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Nenhum" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="_none">Nenhum</SelectItem>
+                  <SelectItem value="pix">PIX</SelectItem>
+                  <SelectItem value="boleto">Boleto</SelectItem>
+                  <SelectItem value="ted">TED / Transferência</SelectItem>
+                  <SelectItem value="cartao_credito">Cartão de Crédito</SelectItem>
+                  <SelectItem value="cartao_debito">Cartão de Débito</SelectItem>
+                  <SelectItem value="debito_automatico">Débito Automático</SelectItem>
+                  <SelectItem value="dinheiro">Dinheiro</SelectItem>
+                  <SelectItem value="cheque">Cheque</SelectItem>
+                  <SelectItem value="outro">Outro</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground mt-1">
+                Sugerido automaticamente em novas contas a pagar deste parceiro.
+              </p>
+            </div>
+
+            {/* PIX */}
+            <div className="grid grid-cols-3 gap-3 mb-3">
+              <div>
+                <Label>Tipo de chave PIX</Label>
+                <Select value={pixTipo || "_none"} onValueChange={(v) => setPixTipo(v === "_none" ? "" : v)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="—" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="_none">—</SelectItem>
+                    <SelectItem value="cnpj">CNPJ</SelectItem>
+                    <SelectItem value="cpf">CPF</SelectItem>
+                    <SelectItem value="email">E-mail</SelectItem>
+                    <SelectItem value="telefone">Telefone</SelectItem>
+                    <SelectItem value="aleatoria">Aleatória</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="col-span-2">
+                <Label>Chave PIX</Label>
+                <Input
+                  value={pixChave}
+                  onChange={(e) => setPixChave(e.target.value)}
+                  placeholder="ex: 00.000.000/0000-00"
+                />
+              </div>
+            </div>
+
+            {/* Dados bancários */}
+            <p className="text-xs font-medium text-muted-foreground mt-4 mb-2">Dados bancários</p>
+            <div className="grid grid-cols-2 gap-3 mb-3">
+              <div>
+                <Label>Banco</Label>
+                <Input value={bcoBanco} onChange={(e) => setBcoBanco(e.target.value)} placeholder="ex: 341 - Itaú" />
+              </div>
+              <div>
+                <Label>Titular</Label>
+                <Input value={bcoTitular} onChange={(e) => setBcoTitular(e.target.value)} />
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <Label>Agência</Label>
+                <Input value={bcoAgencia} onChange={(e) => setBcoAgencia(e.target.value)} />
+              </div>
+              <div>
+                <Label>Conta</Label>
+                <Input value={bcoConta} onChange={(e) => setBcoConta(e.target.value)} />
+              </div>
+              <div>
+                <Label>Tipo</Label>
+                <Select value={bcoTipoConta || "_none"} onValueChange={(v) => setBcoTipoConta(v === "_none" ? "" : v)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="—" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="_none">—</SelectItem>
+                    <SelectItem value="corrente">Corrente</SelectItem>
+                    <SelectItem value="poupanca">Poupança</SelectItem>
+                    <SelectItem value="pagamento">Pagamento</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+
           <div>
             <Label>Observação</Label>
             <Textarea value={observacao} onChange={(e) => setObservacao(e.target.value)} rows={3} />
