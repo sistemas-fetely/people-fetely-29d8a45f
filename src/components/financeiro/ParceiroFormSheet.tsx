@@ -182,7 +182,11 @@ export function ParceiroFormSheet({ open, onOpenChange, editing, categorias, onS
       setBcoTitular(editing.dados_bancarios?.titular || "");
     } else {
       setTiposSelecionados(["fornecedor"]);
+      setTipoPessoa("PJ");
       setCnpj(prefill?.cnpj ? maskCnpj(prefill.cnpj) : "");
+      setCpf("");
+      setRg("");
+      setDataNascimento("");
       setRazaoSocial(prefill?.razao_social || "");
       // Nome Fantasia: usa o valor explícito do prefill OU adota a razão social como default
       // (evita travar o fluxo de importação - usuário pode editar depois no cadastro)
