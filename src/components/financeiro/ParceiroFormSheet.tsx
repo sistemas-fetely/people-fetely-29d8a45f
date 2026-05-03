@@ -271,6 +271,19 @@ export function ParceiroFormSheet({ open, onOpenChange, editing, categorias, onS
         centro_custo_padrao: centroCusto || null,
         tags: tags.length ? tags : null,
         observacao: observacao.trim() || null,
+        meio_pagamento_padrao: meioPagamentoPadrao || null,
+        pix_tipo: pixTipo || null,
+        pix_chave: pixChave.trim() || null,
+        dados_bancarios:
+          bcoBanco.trim() || bcoAgencia.trim() || bcoConta.trim() || bcoTitular.trim() || bcoTipoConta
+            ? {
+                banco: bcoBanco.trim() || null,
+                agencia: bcoAgencia.trim() || null,
+                conta: bcoConta.trim() || null,
+                tipo_conta: bcoTipoConta || null,
+                titular: bcoTitular.trim() || null,
+              }
+            : null,
         ativo: true,
         origem: editing?.origem || "manual",
       };
