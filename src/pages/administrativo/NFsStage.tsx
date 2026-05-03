@@ -276,7 +276,9 @@ export default function NFsStage() {
       naoVinculadas: all.filter((n) => n.status === "nao_vinculada").length,
       vinculadas: all.filter((n) => n.status === "vinculada").length,
       semCategoria: all.filter((n) => !n.categoria_id && n.status !== "descartada").length,
-      boletosAvulsos: all.filter((n) => n.tem_boleto && !n.tem_pdf && !n.tem_xml).length,
+      comXml: all.filter((n) => n.tem_xml).length,
+      comPdf: all.filter((n) => n.tem_pdf).length,
+      comBoleto: all.filter((n) => n.tem_boleto).length,
       total: all.length,
     };
   }, [nfs]);
