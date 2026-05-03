@@ -184,6 +184,14 @@ export function ParceiroFormSheet({ open, onOpenChange, editing, categorias, onS
       setTags([]);
       setGrupoId(null);
       setObservacao("");
+      setMeioPagamentoPadrao("");
+      setPixTipo("");
+      setPixChave("");
+      setBcoBanco("");
+      setBcoAgencia("");
+      setBcoConta("");
+      setBcoTipoConta("");
+      setBcoTitular("");
     }
     setDuplicateWarn(null);
     setTagInput("");
