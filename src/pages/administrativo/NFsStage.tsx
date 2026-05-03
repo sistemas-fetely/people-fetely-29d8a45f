@@ -161,7 +161,9 @@ type FiltroPill =
   | "nao_vinculadas"
   | "vinculadas"
   | "sem_categoria"
-  | "boletos_avulsos";
+  | "com_xml"
+  | "com_pdf"
+  | "com_boleto";
 
 export default function NFsStage() {
   const qc = useQueryClient();
@@ -235,11 +237,12 @@ export default function NFsStage() {
       list = list.filter((n) => n.status === "vinculada");
     } else if (filtroPill === "sem_categoria") {
       list = list.filter((n) => !n.categoria_id && n.status !== "descartada");
-    } else if (filtroPill === "boletos_avulsos") {
-      // Boletos sem NF associada (PDF DANFE ausente E XML ausente)
-      list = list.filter(
-        (n) => n.tem_boleto && !n.tem_pdf && !n.tem_xml,
-      );
+    } else if (filtroPill === "com_xml") {
+      list = list.filter((n) => n.tem_xml);
+    } else if (filtroPill === "com_pdf") {
+      list = list.filter((n) => n.tem_pdf);
+    } else if (filtroPill === "com_boleto") {
+      list = list.filter((n) => n.tem_boleto);
     }
     // "todas" não filtra
     if (busca.trim()) {
@@ -273,7 +276,9 @@ export default function NFsStage() {
       naoVinculadas: all.filter((n) => n.status === "nao_vinculada").length,
       vinculadas: all.filter((n) => n.status === "vinculada").length,
       semCategoria: all.filter((n) => !n.categoria_id && n.status !== "descartada").length,
-      boletosAvulsos: all.filter((n) => n.tem_boleto && !n.tem_pdf && !n.tem_xml).length,
+      comXml: all.filter((n) => n.tem_xml).length,
+      comPdf: all.filter((n) => n.tem_pdf).length,
+      comBoleto: all.filter((n) => n.tem_boleto).length,
       total: all.length,
     };
   }, [nfs]);
@@ -584,13 +589,28 @@ export default function NFsStage() {
             icon={<AlertCircle className="h-3 w-3" />}
           />
           <KpiPill
-            label="Boletos avulsos"
-            count={totals.boletosAvulsos}
+            label="Com XML"
+            count={totals.comXml}
+            color="emerald"
+            active={filtroPill === "com_xml"}
+            onClick={() => setFiltroPill("com_xml")}
+            icon={<FileCode className="h-3 w-3" />}
+          />
+          <KpiPill
+            label="Com PDF"
+            count={totals.comPdf}
             color="blue"
-            active={filtroPill === "boletos_avulsos"}
-            onClick={() => setFiltroPill("boletos_avulsos")}
+            active={filtroPill === "com_pdf"}
+            onClick={() => setFiltroPill("com_pdf")}
+            icon={<FileCheck className="h-3 w-3" />}
+          />
+          <KpiPill
+            label="Com Boleto"
+            count={totals.comBoleto}
+            color="gray"
+            active={filtroPill === "com_boleto"}
+            onClick={() => setFiltroPill("com_boleto")}
             icon={<FileText className="h-3 w-3" />}
-            description="Sem NF associada"
           />
         </div>
 
