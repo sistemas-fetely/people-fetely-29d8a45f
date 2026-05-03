@@ -88,6 +88,9 @@ type NFStage = {
   match_score: number | null;
   importacao_lote_id: string | null;
   created_at: string;
+  resumo_pdf_pendente?: boolean | null;
+  resumo_pdf_gerado_em?: string | null;
+  resumo_pdf_storage_path?: string | null;
   itens: Array<{
     codigo_produto?: string;
     descricao?: string;
