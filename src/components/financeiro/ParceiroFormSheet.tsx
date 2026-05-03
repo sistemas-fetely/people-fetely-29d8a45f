@@ -30,8 +30,11 @@ import { GrupoEmpresarialCombobox } from "@/components/financeiro/GrupoEmpresari
 
 export type Parceiro = {
   id: string;
+  tipo_pessoa: "PF" | "PJ" | null;
   cnpj: string | null;
   cpf: string | null;
+  rg: string | null;
+  data_nascimento: string | null;
   razao_social: string;
   nome_fantasia: string | null;
   cep: string | null;
