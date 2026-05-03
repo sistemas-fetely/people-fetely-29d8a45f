@@ -3,6 +3,8 @@
  *
  * Padrão Doutrina #14 (dimensão sempre via tabela): nunca hardcode lista de
  * grupos em código. Quem precisa ler grupos importa daqui.
+ *
+ * VERSÃO FASE 3: adicionadas mutations CRUD completas + hook parceirosDoGrupo
  */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -35,6 +37,18 @@ export const TIPO_CONTROLE_LABELS: Record<TipoControle, string> = {
   outro: "Outro",
 };
 
+export const TIPO_CONTROLE_BADGE: Record<TipoControle, string> = {
+  holding_formal: "bg-blue-100 text-blue-800 hover:bg-blue-100",
+  mesmo_dono: "bg-purple-100 text-purple-800 hover:bg-purple-100",
+  controle_indireto: "bg-cyan-100 text-cyan-800 hover:bg-cyan-100",
+  agrupamento_operacional: "bg-amber-100 text-amber-800 hover:bg-amber-100",
+  outro: "bg-gray-100 text-gray-800 hover:bg-gray-100",
+};
+
+// ==========================================================================
+// LEITURA
+// ==========================================================================
+
 /**
  * Lista todos os grupos empresariais.
  * @param somenteAtivos se true, filtra ativo=true (default: true)
@@ -60,8 +74,33 @@ export function useGruposEmpresariais(somenteAtivos: boolean = true) {
 }
 
 /**
- * Mutation para criar grupo (criação inline rápida — só nome).
- * Detalhes ricos (descricao, tipo_controle, observacao) ficam pra tela CRUD.
+ * Lista parceiros vinculados a um grupo específico.
+ * Usado pela seção "Parceiros vinculados" do GrupoFormSheet.
+ */
+export function useParceirosDoGrupo(grupoId: string | null) {
+  return useQuery({
+    queryKey: ["parceiros-do-grupo", grupoId],
+    queryFn: async () => {
+      if (!grupoId) return [];
+      const { data, error } = await supabase
+        .from("parceiros_comerciais")
+        .select("id, razao_social, nome_fantasia, cnpj, ativo, tipos")
+        .eq("grupo_id", grupoId)
+        .order("razao_social");
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!grupoId,
+  });
+}
+
+// ==========================================================================
+// MUTATIONS
+// ==========================================================================
+
+/**
+ * Mutation para criação INLINE rápida (só nome).
+ * Usado pelo GrupoEmpresarialCombobox (Fase 2).
  */
 export function useCriarGrupoRapido() {
   const queryClient = useQueryClient();
@@ -78,7 +117,6 @@ export function useCriarGrupoRapido() {
         .single();
 
       if (error) {
-        // Doutrina #7: nome é UNIQUE — duplicidade vira erro do Postgres
         if (error.code === "23505") {
           throw new Error(`Já existe um grupo com o nome "${nomeTrim}"`);
         }
@@ -88,6 +126,7 @@ export function useCriarGrupoRapido() {
     },
     onSuccess: (grupo) => {
       queryClient.invalidateQueries({ queryKey: ["grupos-empresariais"] });
+      queryClient.invalidateQueries({ queryKey: ["exposicao-grupos"] });
       toast.success(`Grupo "${grupo.nome}" criado`, {
         description:
           "Edite descrição, tipo de controle e observações em Parceiros → Grupos.",
@@ -95,6 +134,164 @@ export function useCriarGrupoRapido() {
     },
     onError: (error: Error) => {
       toast.error("Erro ao criar grupo", { description: error.message });
+    },
+  });
+}
+
+export type GrupoInput = {
+  nome: string;
+  descricao?: string | null;
+  cnpj_raiz?: string | null;
+  tipo_controle?: TipoControle | null;
+  observacao?: string | null;
+  ativo?: boolean;
+};
+
+/**
+ * Mutation para criar grupo COMPLETO (todos os campos).
+ * Usado pelo GrupoFormSheet (Fase 3).
+ */
+export function useCriarGrupo() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (input: GrupoInput): Promise<GrupoEmpresarial> => {
+      const nomeTrim = input.nome.trim();
+      if (!nomeTrim) throw new Error("Nome do grupo é obrigatório");
+
+      const payload = {
+        nome: nomeTrim,
+        descricao: input.descricao?.trim() || null,
+        cnpj_raiz: input.cnpj_raiz?.trim() || null,
+        tipo_controle: input.tipo_controle || null,
+        observacao: input.observacao?.trim() || null,
+        ativo: input.ativo ?? true,
+      };
+
+      const { data, error } = await supabase
+        .from("grupos_empresariais")
+        .insert(payload)
+        .select()
+        .single();
+
+      if (error) {
+        if (error.code === "23505") {
+          throw new Error(`Já existe um grupo com o nome "${nomeTrim}"`);
+        }
+        throw error;
+      }
+      return data as GrupoEmpresarial;
+    },
+    onSuccess: (grupo) => {
+      queryClient.invalidateQueries({ queryKey: ["grupos-empresariais"] });
+      queryClient.invalidateQueries({ queryKey: ["exposicao-grupos"] });
+      toast.success(`Grupo "${grupo.nome}" criado`);
+    },
+    onError: (error: Error) => {
+      toast.error("Erro ao criar grupo", { description: error.message });
+    },
+  });
+}
+
+/**
+ * Mutation para editar grupo existente.
+ */
+export function useEditarGrupo() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      id,
+      ...input
+    }: GrupoInput & { id: string }): Promise<GrupoEmpresarial> => {
+      const nomeTrim = input.nome.trim();
+      if (!nomeTrim) throw new Error("Nome do grupo é obrigatório");
+
+      const payload = {
+        nome: nomeTrim,
+        descricao: input.descricao?.trim() || null,
+        cnpj_raiz: input.cnpj_raiz?.trim() || null,
+        tipo_controle: input.tipo_controle || null,
+        observacao: input.observacao?.trim() || null,
+        ativo: input.ativo ?? true,
+      };
+
+      const { data, error } = await supabase
+        .from("grupos_empresariais")
+        .update(payload)
+        .eq("id", id)
+        .select()
+        .single();
+
+      if (error) {
+        if (error.code === "23505") {
+          throw new Error(`Já existe outro grupo com o nome "${nomeTrim}"`);
+        }
+        throw error;
+      }
+      return data as GrupoEmpresarial;
+    },
+    onSuccess: (grupo) => {
+      queryClient.invalidateQueries({ queryKey: ["grupos-empresariais"] });
+      queryClient.invalidateQueries({ queryKey: ["exposicao-grupos"] });
+      queryClient.invalidateQueries({ queryKey: ["parceiros"] });
+      toast.success(`Grupo "${grupo.nome}" atualizado`);
+    },
+    onError: (error: Error) => {
+      toast.error("Erro ao atualizar grupo", { description: error.message });
+    },
+  });
+}
+
+/**
+ * Mutation espelhando padrão Parceiros.tsx:
+ * - Grupo COM parceiros vinculados → INATIVA (preserva histórico)
+ * - Grupo SEM parceiros → EXCLUI de fato
+ */
+export function useExcluirOuInativarGrupo() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (
+      grupoId: string,
+    ): Promise<{ acao: "inativado" | "excluido"; qtdParceiros: number }> => {
+      const { count } = await supabase
+        .from("parceiros_comerciais")
+        .select("id", { count: "exact", head: true })
+        .eq("grupo_id", grupoId);
+
+      const qtdParceiros = count || 0;
+
+      if (qtdParceiros > 0) {
+        const { error } = await supabase
+          .from("grupos_empresariais")
+          .update({ ativo: false })
+          .eq("id", grupoId);
+        if (error) throw error;
+        return { acao: "inativado", qtdParceiros };
+      } else {
+        const { error } = await supabase
+          .from("grupos_empresariais")
+          .delete()
+          .eq("id", grupoId);
+        if (error) throw error;
+        return { acao: "excluido", qtdParceiros: 0 };
+      }
+    },
+    onSuccess: ({ acao, qtdParceiros }) => {
+      queryClient.invalidateQueries({ queryKey: ["grupos-empresariais"] });
+      queryClient.invalidateQueries({ queryKey: ["exposicao-grupos"] });
+      queryClient.invalidateQueries({ queryKey: ["parceiros"] });
+      if (acao === "inativado") {
+        toast.success(
+          `Grupo inativado (tem ${qtdParceiros} parceiro${qtdParceiros === 1 ? "" : "s"} vinculado${qtdParceiros === 1 ? "" : "s"} — não pode ser excluído)`,
+        );
+      } else {
+        toast.success("Grupo excluído");
+      }
+    },
+    onError: (error: Error) => {
+      toast.error("Erro ao excluir grupo", { description: error.message });
     },
   });
 }
