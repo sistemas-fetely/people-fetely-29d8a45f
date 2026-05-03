@@ -81,10 +81,14 @@ export async function moverParaStage(
       // RPC vai decidir CRIAR ou ENRIQUECER por chave_acesso
       const status = "nao_vinculada"; // Stage virou repositório — vínculo é decisão futura
 
+      const tipoDoc = inferirTipoDoc(nf);
+
       const payload: Record<string, unknown> = {
         fonte: nf._source || "pdf_nfe",
+        tipo_doc: tipoDoc, // xml | pdf_danfe | pdf_boleto — RPC roteia pra nfs_stage_documentos
         arquivo_nome: arquivo?.name || null,
         arquivo_storage_path: storagePath,
+        linha_digitavel: nf.linha_digitavel || null,
         importacao_lote_id: loteId,
         fornecedor_cnpj: nf.fornecedor_cnpj || null,
         fornecedor_razao_social: nf.fornecedor_nome || null,
@@ -106,6 +110,8 @@ export async function moverParaStage(
         moeda: nf.moeda || "BRL",
         valor_origem: nf.valor_origem ?? null,
         taxa_conversao: nf.taxa_conversao ?? null,
+        numero_parcela: nf.numero_parcela ?? null,
+        total_parcelas: nf.total_parcelas ?? null,
       };
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
