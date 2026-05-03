@@ -92,22 +92,6 @@ export function ImportarExtratoDialog({ open, onOpenChange, contaPreSelecionada 
       const novas = movsComHash.filter((m) => !setExist.has(m.hash_unico));
       const duplicadas = movsComHash.length - novas.length;
 
-      const datasOrdenadas = novas.map((m) => m.data_transacao).filter(Boolean).sort();
-      const { data: importacao } = await supabase
-        .from("importacoes_extrato")
-        .insert({
-          conta_bancaria_id: impConta,
-          arquivo_nome: impArquivo.name,
-          formato: impFormato,
-          periodo_inicio: datasOrdenadas[0] || null,
-          periodo_fim: datasOrdenadas[datasOrdenadas.length - 1] || null,
-          registros_importados: novas.length,
-          registros_duplicados: duplicadas,
-          importado_por: user.id,
-        })
-        .select("id")
-        .maybeSingle();
-
       if (novas.length > 0) {
         const inserts = novas
           .filter((m) => m.data_transacao)
@@ -121,7 +105,6 @@ export function ImportarExtratoDialog({ open, onOpenChange, contaPreSelecionada 
             hash_unico: m.hash_unico,
             saldo_pos_transacao: m.saldo_pos_transacao ?? null,
             origem: impFormato,
-            importacao_id: importacao?.id || null,
           }));
         for (let i = 0; i < inserts.length; i += 50) {
           const lote = inserts.slice(i, i + 50);

@@ -1683,76 +1683,6 @@ export type Database = {
           },
         ]
       }
-      conciliacoes_agrupadas: {
-        Row: {
-          created_at: string
-          criado_por: string | null
-          diferenca_percentual: number
-          id: string
-          movimentacao_id: string
-          observacao: string | null
-          soma_esperada: number
-          soma_real: number
-        }
-        Insert: {
-          created_at?: string
-          criado_por?: string | null
-          diferenca_percentual?: number
-          id?: string
-          movimentacao_id: string
-          observacao?: string | null
-          soma_esperada: number
-          soma_real: number
-        }
-        Update: {
-          created_at?: string
-          criado_por?: string | null
-          diferenca_percentual?: number
-          id?: string
-          movimentacao_id?: string
-          observacao?: string | null
-          soma_esperada?: number
-          soma_real?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "conciliacoes_agrupadas_movimentacao_id_fkey"
-            columns: ["movimentacao_id"]
-            isOneToOne: false
-            referencedRelation: "movimentacoes_bancarias"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      conciliacoes_agrupadas_itens: {
-        Row: {
-          agrupamento_id: string
-          conta_pagar_id: string
-          created_at: string
-          id: string
-        }
-        Insert: {
-          agrupamento_id: string
-          conta_pagar_id: string
-          created_at?: string
-          id?: string
-        }
-        Update: {
-          agrupamento_id?: string
-          conta_pagar_id?: string
-          created_at?: string
-          id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "conciliacoes_agrupadas_itens_agrupamento_id_fkey"
-            columns: ["agrupamento_id"]
-            isOneToOne: false
-            referencedRelation: "conciliacoes_agrupadas"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       config_financeiro_externo: {
         Row: {
           ativo: boolean | null
@@ -2478,228 +2408,6 @@ export type Database = {
           id?: string
           motivo?: string | null
           snapshot?: Json
-        }
-        Relationships: []
-      }
-      contas_receber: {
-        Row: {
-          aprovado_em: string | null
-          aprovado_por: string | null
-          bling_id: string | null
-          canal: string | null
-          categoria_confirmada: boolean | null
-          categoria_sugerida_ia: boolean | null
-          centro_custo: string | null
-          compromisso_parcelado_id: string | null
-          compromisso_recorrente_id: string | null
-          comprovante_url: string | null
-          conciliado_em: string | null
-          conciliado_por: string | null
-          conta_id: string | null
-          created_at: string | null
-          criado_por: string | null
-          dados_bancarios_fornecedor: Json | null
-          dados_enriquecidos_qive: boolean | null
-          dados_pagamento_fornecedor: Json | null
-          data_compra: string | null
-          data_pagamento: string | null
-          data_vencimento: string
-          descricao: string
-          docs_status: string | null
-          editado_em: string | null
-          editado_por: string | null
-          email_pagamento_enviado: boolean | null
-          enviado_pagamento_em: string | null
-          enviado_pagamento_por: string | null
-          forma_pagamento: string | null
-          forma_pagamento_id: string | null
-          fornecedor_cliente: string | null
-          fornecedor_id: string | null
-          id: string
-          is_cartao: boolean | null
-          movimentacao_bancaria_id: string | null
-          nf_cfop: string | null
-          nf_chave_acesso: string | null
-          nf_cnpj_emitente: string | null
-          nf_data_emissao: string | null
-          nf_natureza_operacao: string | null
-          nf_ncm: string | null
-          nf_numero: string | null
-          nf_pdf_url: string | null
-          nf_serie: string | null
-          nf_stage_id: string | null
-          nf_valor_impostos: number | null
-          nf_valor_produtos: number | null
-          nf_xml_url: string | null
-          numero_parcela: number | null
-          observacao: string | null
-          observacao_pagamento: string | null
-          observacao_pagamento_manual: string | null
-          origem: string | null
-          pago_em: string | null
-          pago_em_conta_id: string | null
-          pago_por: string | null
-          parceiro_id: string | null
-          parcela_atual: number | null
-          parcela_grupo_id: string | null
-          parcelas: number | null
-          sla_aprovacao_dias: number | null
-          sla_pagamento_dias: number | null
-          status: string
-          tags: Json
-          tarefa_id: string | null
-          tipo: string
-          total_parcelas: number | null
-          unidade: string | null
-          updated_at: string | null
-          valor: number
-          valor_pago: number | null
-        }
-        Insert: {
-          aprovado_em?: string | null
-          aprovado_por?: string | null
-          bling_id?: string | null
-          canal?: string | null
-          categoria_confirmada?: boolean | null
-          categoria_sugerida_ia?: boolean | null
-          centro_custo?: string | null
-          compromisso_parcelado_id?: string | null
-          compromisso_recorrente_id?: string | null
-          comprovante_url?: string | null
-          conciliado_em?: string | null
-          conciliado_por?: string | null
-          conta_id?: string | null
-          created_at?: string | null
-          criado_por?: string | null
-          dados_bancarios_fornecedor?: Json | null
-          dados_enriquecidos_qive?: boolean | null
-          dados_pagamento_fornecedor?: Json | null
-          data_compra?: string | null
-          data_pagamento?: string | null
-          data_vencimento: string
-          descricao: string
-          docs_status?: string | null
-          editado_em?: string | null
-          editado_por?: string | null
-          email_pagamento_enviado?: boolean | null
-          enviado_pagamento_em?: string | null
-          enviado_pagamento_por?: string | null
-          forma_pagamento?: string | null
-          forma_pagamento_id?: string | null
-          fornecedor_cliente?: string | null
-          fornecedor_id?: string | null
-          id?: string
-          is_cartao?: boolean | null
-          movimentacao_bancaria_id?: string | null
-          nf_cfop?: string | null
-          nf_chave_acesso?: string | null
-          nf_cnpj_emitente?: string | null
-          nf_data_emissao?: string | null
-          nf_natureza_operacao?: string | null
-          nf_ncm?: string | null
-          nf_numero?: string | null
-          nf_pdf_url?: string | null
-          nf_serie?: string | null
-          nf_stage_id?: string | null
-          nf_valor_impostos?: number | null
-          nf_valor_produtos?: number | null
-          nf_xml_url?: string | null
-          numero_parcela?: number | null
-          observacao?: string | null
-          observacao_pagamento?: string | null
-          observacao_pagamento_manual?: string | null
-          origem?: string | null
-          pago_em?: string | null
-          pago_em_conta_id?: string | null
-          pago_por?: string | null
-          parceiro_id?: string | null
-          parcela_atual?: number | null
-          parcela_grupo_id?: string | null
-          parcelas?: number | null
-          sla_aprovacao_dias?: number | null
-          sla_pagamento_dias?: number | null
-          status?: string
-          tags?: Json
-          tarefa_id?: string | null
-          tipo?: string
-          total_parcelas?: number | null
-          unidade?: string | null
-          updated_at?: string | null
-          valor: number
-          valor_pago?: number | null
-        }
-        Update: {
-          aprovado_em?: string | null
-          aprovado_por?: string | null
-          bling_id?: string | null
-          canal?: string | null
-          categoria_confirmada?: boolean | null
-          categoria_sugerida_ia?: boolean | null
-          centro_custo?: string | null
-          compromisso_parcelado_id?: string | null
-          compromisso_recorrente_id?: string | null
-          comprovante_url?: string | null
-          conciliado_em?: string | null
-          conciliado_por?: string | null
-          conta_id?: string | null
-          created_at?: string | null
-          criado_por?: string | null
-          dados_bancarios_fornecedor?: Json | null
-          dados_enriquecidos_qive?: boolean | null
-          dados_pagamento_fornecedor?: Json | null
-          data_compra?: string | null
-          data_pagamento?: string | null
-          data_vencimento?: string
-          descricao?: string
-          docs_status?: string | null
-          editado_em?: string | null
-          editado_por?: string | null
-          email_pagamento_enviado?: boolean | null
-          enviado_pagamento_em?: string | null
-          enviado_pagamento_por?: string | null
-          forma_pagamento?: string | null
-          forma_pagamento_id?: string | null
-          fornecedor_cliente?: string | null
-          fornecedor_id?: string | null
-          id?: string
-          is_cartao?: boolean | null
-          movimentacao_bancaria_id?: string | null
-          nf_cfop?: string | null
-          nf_chave_acesso?: string | null
-          nf_cnpj_emitente?: string | null
-          nf_data_emissao?: string | null
-          nf_natureza_operacao?: string | null
-          nf_ncm?: string | null
-          nf_numero?: string | null
-          nf_pdf_url?: string | null
-          nf_serie?: string | null
-          nf_stage_id?: string | null
-          nf_valor_impostos?: number | null
-          nf_valor_produtos?: number | null
-          nf_xml_url?: string | null
-          numero_parcela?: number | null
-          observacao?: string | null
-          observacao_pagamento?: string | null
-          observacao_pagamento_manual?: string | null
-          origem?: string | null
-          pago_em?: string | null
-          pago_em_conta_id?: string | null
-          pago_por?: string | null
-          parceiro_id?: string | null
-          parcela_atual?: number | null
-          parcela_grupo_id?: string | null
-          parcelas?: number | null
-          sla_aprovacao_dias?: number | null
-          sla_pagamento_dias?: number | null
-          status?: string
-          tags?: Json
-          tarefa_id?: string | null
-          tipo?: string
-          total_parcelas?: number | null
-          unidade?: string | null
-          updated_at?: string | null
-          valor?: number
-          valor_pago?: number | null
         }
         Relationships: []
       }
@@ -4791,98 +4499,6 @@ export type Database = {
           },
         ]
       }
-      importacoes_extrato: {
-        Row: {
-          arquivo_nome: string
-          conta_bancaria_id: string
-          created_at: string | null
-          formato: string | null
-          id: string
-          importado_por: string
-          observacao: string | null
-          periodo_fim: string | null
-          periodo_inicio: string | null
-          registros_duplicados: number | null
-          registros_erro: number | null
-          registros_importados: number | null
-          saldo_final_extrato: number | null
-        }
-        Insert: {
-          arquivo_nome: string
-          conta_bancaria_id: string
-          created_at?: string | null
-          formato?: string | null
-          id?: string
-          importado_por: string
-          observacao?: string | null
-          periodo_fim?: string | null
-          periodo_inicio?: string | null
-          registros_duplicados?: number | null
-          registros_erro?: number | null
-          registros_importados?: number | null
-          saldo_final_extrato?: number | null
-        }
-        Update: {
-          arquivo_nome?: string
-          conta_bancaria_id?: string
-          created_at?: string | null
-          formato?: string | null
-          id?: string
-          importado_por?: string
-          observacao?: string | null
-          periodo_fim?: string | null
-          periodo_inicio?: string | null
-          registros_duplicados?: number | null
-          registros_erro?: number | null
-          registros_importados?: number | null
-          saldo_final_extrato?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "importacoes_extrato_conta_bancaria_id_fkey"
-            columns: ["conta_bancaria_id"]
-            isOneToOne: false
-            referencedRelation: "contas_bancarias"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      importacoes_financeiras: {
-        Row: {
-          arquivo_nome: string
-          created_at: string | null
-          detalhes_erro: string | null
-          id: string
-          importado_por: string
-          registros_erro: number | null
-          registros_importados: number | null
-          status: string | null
-          tipo: string
-        }
-        Insert: {
-          arquivo_nome: string
-          created_at?: string | null
-          detalhes_erro?: string | null
-          id?: string
-          importado_por: string
-          registros_erro?: number | null
-          registros_importados?: number | null
-          status?: string | null
-          tipo: string
-        }
-        Update: {
-          arquivo_nome?: string
-          created_at?: string | null
-          detalhes_erro?: string | null
-          id?: string
-          importado_por?: string
-          registros_erro?: number | null
-          registros_importados?: number | null
-          status?: string | null
-          tipo?: string
-        }
-        Relationships: []
-      }
       integracoes_config: {
         Row: {
           access_token: string | null
@@ -4976,154 +4592,6 @@ export type Database = {
         }
         Relationships: []
       }
-      lancamentos_financeiros: {
-        Row: {
-          arquivo_importacao: string | null
-          bling_id: string | null
-          canal: string | null
-          centro_custo: string | null
-          conta_id: string | null
-          created_at: string | null
-          data_competencia: string
-          data_pagamento: string | null
-          descricao: string
-          fornecedor: string | null
-          id: string
-          nf_chave_acesso: string | null
-          observacao: string | null
-          origem: string | null
-          tipo_lancamento: string
-          unidade: string | null
-          updated_at: string | null
-          valor: number
-        }
-        Insert: {
-          arquivo_importacao?: string | null
-          bling_id?: string | null
-          canal?: string | null
-          centro_custo?: string | null
-          conta_id?: string | null
-          created_at?: string | null
-          data_competencia: string
-          data_pagamento?: string | null
-          descricao: string
-          fornecedor?: string | null
-          id?: string
-          nf_chave_acesso?: string | null
-          observacao?: string | null
-          origem?: string | null
-          tipo_lancamento: string
-          unidade?: string | null
-          updated_at?: string | null
-          valor: number
-        }
-        Update: {
-          arquivo_importacao?: string | null
-          bling_id?: string | null
-          canal?: string | null
-          centro_custo?: string | null
-          conta_id?: string | null
-          created_at?: string | null
-          data_competencia?: string
-          data_pagamento?: string | null
-          descricao?: string
-          fornecedor?: string | null
-          id?: string
-          nf_chave_acesso?: string | null
-          observacao?: string | null
-          origem?: string | null
-          tipo_lancamento?: string
-          unidade?: string | null
-          updated_at?: string | null
-          valor?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "lancamentos_financeiros_conta_id_fkey"
-            columns: ["conta_id"]
-            isOneToOne: false
-            referencedRelation: "plano_contas"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      movimentacao_conta_pagar_link: {
-        Row: {
-          conta_pagar_id: string
-          created_at: string | null
-          created_by: string | null
-          id: string
-          movimentacao_bancaria_id: string
-          valor_alocado: number
-        }
-        Insert: {
-          conta_pagar_id: string
-          created_at?: string | null
-          created_by?: string | null
-          id?: string
-          movimentacao_bancaria_id: string
-          valor_alocado: number
-        }
-        Update: {
-          conta_pagar_id?: string
-          created_at?: string | null
-          created_by?: string | null
-          id?: string
-          movimentacao_bancaria_id?: string
-          valor_alocado?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "movimentacao_conta_pagar_link_conta_pagar_id_fkey"
-            columns: ["conta_pagar_id"]
-            isOneToOne: false
-            referencedRelation: "contas_pagar"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "movimentacao_conta_pagar_link_conta_pagar_id_fkey"
-            columns: ["conta_pagar_id"]
-            isOneToOne: false
-            referencedRelation: "contas_pagar_receber"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "movimentacao_conta_pagar_link_conta_pagar_id_fkey"
-            columns: ["conta_pagar_id"]
-            isOneToOne: false
-            referencedRelation: "contas_pagar_receber_ativas"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "movimentacao_conta_pagar_link_conta_pagar_id_fkey"
-            columns: ["conta_pagar_id"]
-            isOneToOne: false
-            referencedRelation: "vw_contas_pagar_consolidado"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "movimentacao_conta_pagar_link_conta_pagar_id_fkey"
-            columns: ["conta_pagar_id"]
-            isOneToOne: false
-            referencedRelation: "vw_documentos_envio_estados"
-            referencedColumns: ["conta_id"]
-          },
-          {
-            foreignKeyName: "movimentacao_conta_pagar_link_conta_pagar_id_fkey"
-            columns: ["conta_pagar_id"]
-            isOneToOne: false
-            referencedRelation: "vw_lancamentos_caixa_banco"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "movimentacao_conta_pagar_link_movimentacao_bancaria_id_fkey"
-            columns: ["movimentacao_bancaria_id"]
-            isOneToOne: false
-            referencedRelation: "movimentacoes_bancarias"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       movimentacoes: {
         Row: {
           cargo_anterior: string | null
@@ -5209,7 +4677,6 @@ export type Database = {
           conta_bancaria_id: string
           conta_pagar_id: string | null
           conta_plano_id: string | null
-          conta_receber_id: string | null
           created_at: string | null
           data_balancete: string | null
           data_transacao: string
@@ -5217,7 +4684,6 @@ export type Database = {
           hash_unico: string | null
           id: string
           id_transacao_banco: string | null
-          importacao_id: string | null
           inconsistencia_motivo: string | null
           origem: string | null
           saldo_pos_transacao: number | null
@@ -5234,7 +4700,6 @@ export type Database = {
           conta_bancaria_id: string
           conta_pagar_id?: string | null
           conta_plano_id?: string | null
-          conta_receber_id?: string | null
           created_at?: string | null
           data_balancete?: string | null
           data_transacao: string
@@ -5242,7 +4707,6 @@ export type Database = {
           hash_unico?: string | null
           id?: string
           id_transacao_banco?: string | null
-          importacao_id?: string | null
           inconsistencia_motivo?: string | null
           origem?: string | null
           saldo_pos_transacao?: number | null
@@ -5259,7 +4723,6 @@ export type Database = {
           conta_bancaria_id?: string
           conta_pagar_id?: string | null
           conta_plano_id?: string | null
-          conta_receber_id?: string | null
           created_at?: string | null
           data_balancete?: string | null
           data_transacao?: string
@@ -5267,7 +4730,6 @@ export type Database = {
           hash_unico?: string | null
           id?: string
           id_transacao_banco?: string | null
-          importacao_id?: string | null
           inconsistencia_motivo?: string | null
           origem?: string | null
           saldo_pos_transacao?: number | null
@@ -5288,13 +4750,6 @@ export type Database = {
             columns: ["conta_plano_id"]
             isOneToOne: false
             referencedRelation: "plano_contas"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "movimentacoes_bancarias_conta_receber_id_fkey"
-            columns: ["conta_receber_id"]
-            isOneToOne: false
-            referencedRelation: "contas_receber"
             referencedColumns: ["id"]
           },
         ]
@@ -5512,36 +4967,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      nf_stage_pares_verificados: {
-        Row: {
-          created_at: string
-          decisao: string
-          id: string
-          id_a: string
-          id_b: string
-          motivo: string | null
-          user_id: string | null
-        }
-        Insert: {
-          created_at?: string
-          decisao: string
-          id?: string
-          id_a: string
-          id_b: string
-          motivo?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          created_at?: string
-          decisao?: string
-          id?: string
-          id_a?: string
-          id_b?: string
-          motivo?: string | null
-          user_id?: string | null
-        }
-        Relationships: []
       }
       nfs_stage: {
         Row: {
