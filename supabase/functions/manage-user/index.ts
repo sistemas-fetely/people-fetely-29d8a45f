@@ -217,22 +217,23 @@ Deno.serve(async (req) => {
         console.error("Erro ao gerar link de recuperação:", linkErr);
       }
 
-      // Send welcome email
+      // Send welcome email — Doutrina #15: forward JWT do user
       try {
-        await adminClient.functions.invoke("send-transactional-email", {
-          body: {
-            templateName: "boas-vindas-portal",
-            recipientEmail: email,
-            idempotencyKey: `boas-vindas-${newUser.user.id}`,
-            templateData: {
-              nome: full_name,
-              email,
-              link: Deno.env.get("SITE_URL") || "https://people-fetely.lovable.app",
-            },
+        const r = await invokeSendTransactionalEmail(supabaseUrl, anonKey, authHeader, {
+          templateName: "boas-vindas-portal",
+          recipientEmail: email,
+          idempotencyKey: `boas-vindas-${newUser.user.id}`,
+          templateData: {
+            nome: full_name,
+            email,
+            link: Deno.env.get("SITE_URL") || "https://people-fetely.lovable.app",
           },
         });
+        if (!r.ok) {
+          console.error("[create_user_standalone] Falha em send-transactional-email:", r.status, r.body);
+        }
       } catch (emailErr) {
-        console.error("Erro ao enviar e-mail de boas-vindas:", emailErr);
+        console.error("[create_user_standalone] Erro ao enviar e-mail de boas-vindas:", emailErr);
       }
 
       return new Response(JSON.stringify({ success: true, user_id: newUser.user.id }), {
