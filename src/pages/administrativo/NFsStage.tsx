@@ -71,12 +71,18 @@ import {
   type SortState,
 } from "@/components/shared/SortableTableHead";
 
+type StageDocumento = {
+  id: string;
+  tipo: "xml" | "pdf_danfe" | "pdf_boleto";
+  storage_path: string;
+  arquivo_nome: string | null;
+  linha_digitavel: string | null;
+  criado_em: string;
+};
+
 type NFStage = {
   id: string;
   fonte: string;
-  arquivo_nome: string | null;
-  arquivo_storage_path: string | null;
-  xml_storage_path: string | null;
   fornecedor_cnpj: string | null;
   fornecedor_razao_social: string | null;
   fornecedor_cliente: string | null;
@@ -95,6 +101,14 @@ type NFStage = {
   resumo_pdf_pendente?: boolean | null;
   resumo_pdf_gerado_em?: string | null;
   resumo_pdf_storage_path?: string | null;
+  tipo_documento?: string | null;
+  numero_parcela?: number | null;
+  total_parcelas?: number | null;
+  // Flags vindos da view vw_nfs_stage_completude
+  tem_xml: boolean;
+  tem_pdf: boolean;
+  tem_boleto: boolean;
+  documentos: StageDocumento[] | null;
   itens: Array<{
     codigo_produto?: string;
     descricao?: string;
@@ -123,13 +137,21 @@ const FONTE_LABELS: Record<string, string> = {
   csv_qive: "CSV Qive",
 };
 
-function calcularCompletude(nf: NFStage): "completo" | "sem_xml" | "sem_pdf" | "sem_documentos" {
-  const temPdf = !!nf.arquivo_storage_path;
-  const temXml = !!nf.xml_storage_path || (Array.isArray(nf.itens) && nf.itens.length > 0);
-  if (temPdf && temXml) return "completo";
-  if (temPdf) return "sem_xml";
-  if (temXml) return "sem_pdf";
-  return "sem_documentos";
+// DocIndicator: bolinha verde (tem) / rosa (não tem). Verde=ok, vermelho=não ok.
+function DocIndicator({ label, tem }: { label: string; tem: boolean }) {
+  return (
+    <div className="flex items-center gap-1 text-xs">
+      <div
+        className={cn(
+          "w-2 h-2 rounded-full",
+          tem ? "bg-emerald-500" : "bg-rose-500",
+        )}
+      />
+      <span className={tem ? "text-foreground" : "text-muted-foreground"}>
+        {label}
+      </span>
+    </div>
+  );
 }
 
 type FiltroPill = "todas" | "nao_vinculadas" | "vinculadas" | "sem_categoria";
