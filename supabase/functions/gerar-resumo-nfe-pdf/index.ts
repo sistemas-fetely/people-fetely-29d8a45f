@@ -485,6 +485,7 @@ export async function buildPdf(nfe: NFeParsed): Promise<Uint8Array> {
     thickness: 0.5,
     color: colorBorder,
   });
+  y -= 4; // gap após a linha pra não cortar primeiro item
 
   // Linhas
   const minY = 140; // reserva pra totais + footer
