@@ -273,19 +273,28 @@ export function ParceiroFormSheet({ open, onOpenChange, editing, categorias, onS
 
   const mutation = useMutation({
     mutationFn: async () => {
-      if (!razaoSocial.trim()) throw new Error("Razão social é obrigatória");
+      if (!razaoSocial.trim()) throw new Error(tipoPessoa === "PF" ? "Nome completo é obrigatório" : "Razão social é obrigatória");
       if (tiposSelecionados.length === 0) throw new Error("Selecione ao menos um tipo");
       // Validações reforçadas em modo auto-cadastro
       if (obrigatorio) {
-        if (!cnpj.replace(/\D/g, "")) throw new Error("CNPJ é obrigatório");
-        if (cnpj.replace(/\D/g, "").length !== 14) throw new Error("CNPJ inválido (14 dígitos)");
-        if (!nomeFantasia.trim()) throw new Error("Nome fantasia é obrigatório");
+        if (tipoPessoa === "PJ") {
+          if (!cnpj.replace(/\D/g, "")) throw new Error("CNPJ é obrigatório");
+          if (cnpj.replace(/\D/g, "").length !== 14) throw new Error("CNPJ inválido (14 dígitos)");
+          if (!nomeFantasia.trim()) throw new Error("Nome fantasia é obrigatório");
+        } else {
+          if (!cpf.replace(/\D/g, "")) throw new Error("CPF é obrigatório");
+          if (cpf.replace(/\D/g, "").length !== 11) throw new Error("CPF inválido (11 dígitos)");
+        }
       }
       const payload = {
+        tipo_pessoa: tipoPessoa,
         tipos: tiposSelecionados,
-        cnpj: cnpj.replace(/\D/g, "") || null,
+        cnpj: tipoPessoa === "PJ" ? (cnpj.replace(/\D/g, "") || null) : null,
+        cpf: tipoPessoa === "PF" ? (cpf.replace(/\D/g, "") || null) : null,
+        rg: tipoPessoa === "PF" ? (rg.trim() || null) : null,
+        data_nascimento: tipoPessoa === "PF" ? (dataNascimento || null) : null,
         razao_social: razaoSocial.trim(),
-        nome_fantasia: nomeFantasia.trim() || null,
+        nome_fantasia: tipoPessoa === "PJ" ? (nomeFantasia.trim() || null) : null,
         cep: cep.replace(/\D/g, "") || null,
         logradouro: logradouro.trim() || null,
         numero: numero.trim() || null,
