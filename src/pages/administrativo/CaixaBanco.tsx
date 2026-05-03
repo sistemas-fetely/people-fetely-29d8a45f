@@ -59,8 +59,6 @@ import {
   RefreshCcw,
   Sparkles,
   Loader2,
-  ListChecks,
-  Wallet as WalletIcon,
   CheckCircle2,
 } from "lucide-react";
 import { toast } from "sonner";
