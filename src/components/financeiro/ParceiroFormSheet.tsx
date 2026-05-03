@@ -30,8 +30,11 @@ import { GrupoEmpresarialCombobox } from "@/components/financeiro/GrupoEmpresari
 
 export type Parceiro = {
   id: string;
+  tipo_pessoa: "PF" | "PJ" | null;
   cnpj: string | null;
   cpf: string | null;
+  rg: string | null;
+  data_nascimento: string | null;
   razao_social: string;
   nome_fantasia: string | null;
   cep: string | null;
@@ -94,6 +97,13 @@ function maskCnpj(v: string) {
     .replace(/\.(\d{3})(\d)/, ".$1/$2")
     .replace(/(\d{4})(\d)/, "$1-$2");
 }
+function maskCpf(v: string) {
+  const d = v.replace(/\D/g, "").slice(0, 11);
+  return d
+    .replace(/^(\d{3})(\d)/, "$1.$2")
+    .replace(/^(\d{3})\.(\d{3})(\d)/, "$1.$2.$3")
+    .replace(/\.(\d{3})(\d)/, ".$1-$2");
+}
 function maskCep(v: string) {
   return v.replace(/\D/g, "").slice(0, 8).replace(/^(\d{5})(\d)/, "$1-$2");
 }
@@ -103,7 +113,11 @@ export function ParceiroFormSheet({ open, onOpenChange, editing, categorias, onS
   const isEdit = !!editing;
 
   const [tiposSelecionados, setTiposSelecionados] = useState<string[]>(["fornecedor"]);
+  const [tipoPessoa, setTipoPessoa] = useState<"PF" | "PJ">("PJ");
   const [cnpj, setCnpj] = useState("");
+  const [cpf, setCpf] = useState("");
+  const [rg, setRg] = useState("");
+  const [dataNascimento, setDataNascimento] = useState("");
   const [razaoSocial, setRazaoSocial] = useState("");
   const [nomeFantasia, setNomeFantasia] = useState("");
   const [cep, setCep] = useState("");
@@ -136,7 +150,11 @@ export function ParceiroFormSheet({ open, onOpenChange, editing, categorias, onS
     if (!open) return;
     if (editing) {
       setTiposSelecionados(editing.tipos?.length ? editing.tipos : ["fornecedor"]);
+      setTipoPessoa((editing.tipo_pessoa as "PF" | "PJ") || "PJ");
       setCnpj(editing.cnpj ? maskCnpj(editing.cnpj) : "");
+      setCpf(editing.cpf ? maskCpf(editing.cpf) : "");
+      setRg(editing.rg || "");
+      setDataNascimento(editing.data_nascimento || "");
       setRazaoSocial(editing.razao_social || "");
       setNomeFantasia(editing.nome_fantasia || "");
       setCep(editing.cep ? maskCep(editing.cep) : "");
@@ -164,7 +182,11 @@ export function ParceiroFormSheet({ open, onOpenChange, editing, categorias, onS
       setBcoTitular(editing.dados_bancarios?.titular || "");
     } else {
       setTiposSelecionados(["fornecedor"]);
+      setTipoPessoa("PJ");
       setCnpj(prefill?.cnpj ? maskCnpj(prefill.cnpj) : "");
+      setCpf("");
+      setRg("");
+      setDataNascimento("");
       setRazaoSocial(prefill?.razao_social || "");
       // Nome Fantasia: usa o valor explícito do prefill OU adota a razão social como default
       // (evita travar o fluxo de importação - usuário pode editar depois no cadastro)
@@ -197,20 +219,28 @@ export function ParceiroFormSheet({ open, onOpenChange, editing, categorias, onS
     setTagInput("");
   }, [open, editing]);
 
-  // Check duplicate CNPJ on blur
+  // Check duplicate CNPJ/CPF on blur
   const checkDuplicate = async () => {
-    const clean = cnpj.replace(/\D/g, "");
-    if (clean.length !== 14) return;
-    if (editing && editing.cnpj === clean) return;
-    const { data } = await supabase
-      .from("parceiros_comerciais")
-      .select("id, razao_social")
-      .eq("cnpj", clean)
-      .maybeSingle();
-    if (data) {
-      setDuplicateWarn(`Já cadastrado: ${data.razao_social}`);
+    if (tipoPessoa === "PJ") {
+      const clean = cnpj.replace(/\D/g, "");
+      if (clean.length !== 14) return;
+      if (editing && editing.cnpj === clean) return;
+      const { data } = await supabase
+        .from("parceiros_comerciais")
+        .select("id, razao_social")
+        .eq("cnpj", clean)
+        .maybeSingle();
+      setDuplicateWarn(data ? `Já cadastrado: ${data.razao_social}` : null);
     } else {
-      setDuplicateWarn(null);
+      const clean = cpf.replace(/\D/g, "");
+      if (clean.length !== 11) return;
+      if (editing && editing.cpf === clean) return;
+      const { data } = await supabase
+        .from("parceiros_comerciais")
+        .select("id, razao_social")
+        .eq("cpf", clean)
+        .maybeSingle();
+      setDuplicateWarn(data ? `Já cadastrado: ${data.razao_social}` : null);
     }
   };
 
@@ -243,19 +273,28 @@ export function ParceiroFormSheet({ open, onOpenChange, editing, categorias, onS
 
   const mutation = useMutation({
     mutationFn: async () => {
-      if (!razaoSocial.trim()) throw new Error("Razão social é obrigatória");
+      if (!razaoSocial.trim()) throw new Error(tipoPessoa === "PF" ? "Nome completo é obrigatório" : "Razão social é obrigatória");
       if (tiposSelecionados.length === 0) throw new Error("Selecione ao menos um tipo");
       // Validações reforçadas em modo auto-cadastro
       if (obrigatorio) {
-        if (!cnpj.replace(/\D/g, "")) throw new Error("CNPJ é obrigatório");
-        if (cnpj.replace(/\D/g, "").length !== 14) throw new Error("CNPJ inválido (14 dígitos)");
-        if (!nomeFantasia.trim()) throw new Error("Nome fantasia é obrigatório");
+        if (tipoPessoa === "PJ") {
+          if (!cnpj.replace(/\D/g, "")) throw new Error("CNPJ é obrigatório");
+          if (cnpj.replace(/\D/g, "").length !== 14) throw new Error("CNPJ inválido (14 dígitos)");
+          if (!nomeFantasia.trim()) throw new Error("Nome fantasia é obrigatório");
+        } else {
+          if (!cpf.replace(/\D/g, "")) throw new Error("CPF é obrigatório");
+          if (cpf.replace(/\D/g, "").length !== 11) throw new Error("CPF inválido (11 dígitos)");
+        }
       }
       const payload = {
+        tipo_pessoa: tipoPessoa,
         tipos: tiposSelecionados,
-        cnpj: cnpj.replace(/\D/g, "") || null,
+        cnpj: tipoPessoa === "PJ" ? (cnpj.replace(/\D/g, "") || null) : null,
+        cpf: tipoPessoa === "PF" ? (cpf.replace(/\D/g, "") || null) : null,
+        rg: tipoPessoa === "PF" ? (rg.trim() || null) : null,
+        data_nascimento: tipoPessoa === "PF" ? (dataNascimento || null) : null,
         razao_social: razaoSocial.trim(),
-        nome_fantasia: nomeFantasia.trim() || null,
+        nome_fantasia: tipoPessoa === "PJ" ? (nomeFantasia.trim() || null) : null,
         cep: cep.replace(/\D/g, "") || null,
         logradouro: logradouro.trim() || null,
         numero: numero.trim() || null,
@@ -352,29 +391,92 @@ export function ParceiroFormSheet({ open, onOpenChange, editing, categorias, onS
             </div>
           </div>
 
-          {/* CNPJ */}
+          {/* Tipo de pessoa (PF/PJ) */}
           <div>
-            <Label>CNPJ {obrigatorio && "*"}</Label>
-            <Input
-              value={cnpj}
-              onChange={(e) => setCnpj(maskCnpj(e.target.value))}
-              onBlur={checkDuplicate}
-              placeholder="00.000.000/0000-00"
-            />
-            {duplicateWarn && (
-              <p className="text-xs text-amber-600 mt-1">⚠️ {duplicateWarn}</p>
-            )}
+            <Label className="mb-2 block">Tipo de pessoa</Label>
+            <div className="inline-flex rounded-md border bg-muted/30 p-1">
+              <button
+                type="button"
+                onClick={() => setTipoPessoa("PJ")}
+                className={`px-4 py-1.5 text-sm rounded transition ${
+                  tipoPessoa === "PJ"
+                    ? "bg-background shadow-sm font-medium"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Pessoa Jurídica
+              </button>
+              <button
+                type="button"
+                onClick={() => setTipoPessoa("PF")}
+                className={`px-4 py-1.5 text-sm rounded transition ${
+                  tipoPessoa === "PF"
+                    ? "bg-background shadow-sm font-medium"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Pessoa Física
+              </button>
+            </div>
           </div>
 
-          <div>
-            <Label>Razão social *</Label>
-            <Input value={razaoSocial} onChange={(e) => setRazaoSocial(e.target.value)} />
-          </div>
-          <div>
-            <Label>Nome fantasia {obrigatorio && "*"}</Label>
-            <Input value={nomeFantasia} onChange={(e) => setNomeFantasia(e.target.value)} />
-          </div>
-
+          {tipoPessoa === "PJ" ? (
+            <>
+              <div>
+                <Label>CNPJ {obrigatorio && "*"}</Label>
+                <Input
+                  value={cnpj}
+                  onChange={(e) => setCnpj(maskCnpj(e.target.value))}
+                  onBlur={checkDuplicate}
+                  placeholder="00.000.000/0000-00"
+                />
+                {duplicateWarn && (
+                  <p className="text-xs text-amber-600 mt-1">⚠️ {duplicateWarn}</p>
+                )}
+              </div>
+              <div>
+                <Label>Razão social *</Label>
+                <Input value={razaoSocial} onChange={(e) => setRazaoSocial(e.target.value)} />
+              </div>
+              <div>
+                <Label>Nome fantasia {obrigatorio && "*"}</Label>
+                <Input value={nomeFantasia} onChange={(e) => setNomeFantasia(e.target.value)} />
+              </div>
+            </>
+          ) : (
+            <>
+              <div>
+                <Label>CPF {obrigatorio && "*"}</Label>
+                <Input
+                  value={cpf}
+                  onChange={(e) => setCpf(maskCpf(e.target.value))}
+                  onBlur={checkDuplicate}
+                  placeholder="000.000.000-00"
+                />
+                {duplicateWarn && (
+                  <p className="text-xs text-amber-600 mt-1">⚠️ {duplicateWarn}</p>
+                )}
+              </div>
+              <div>
+                <Label>Nome completo *</Label>
+                <Input value={razaoSocial} onChange={(e) => setRazaoSocial(e.target.value)} />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label>RG</Label>
+                  <Input value={rg} onChange={(e) => setRg(e.target.value)} />
+                </div>
+                <div>
+                  <Label>Data de nascimento</Label>
+                  <Input
+                    type="date"
+                    value={dataNascimento}
+                    onChange={(e) => setDataNascimento(e.target.value)}
+                  />
+                </div>
+              </div>
+            </>
+          )}
           {/* Endereço */}
           <div className="border-t pt-4">
             <p className="text-sm font-medium mb-3">Endereço</p>

@@ -5680,6 +5680,7 @@ export type Database = {
           cpf: string | null
           created_at: string | null
           dados_bancarios: Json | null
+          data_nascimento: string | null
           email: string | null
           grupo_id: string | null
           id: string
@@ -5692,10 +5693,12 @@ export type Database = {
           pix_chave: string | null
           pix_tipo: string | null
           razao_social: string
+          rg: string | null
           segmento: string | null
           tags: string[] | null
           telefone: string | null
           tipo: string | null
+          tipo_pessoa: string
           tipos: string[] | null
           uf: string | null
           updated_at: string | null
@@ -5713,6 +5716,7 @@ export type Database = {
           cpf?: string | null
           created_at?: string | null
           dados_bancarios?: Json | null
+          data_nascimento?: string | null
           email?: string | null
           grupo_id?: string | null
           id?: string
@@ -5725,10 +5729,12 @@ export type Database = {
           pix_chave?: string | null
           pix_tipo?: string | null
           razao_social: string
+          rg?: string | null
           segmento?: string | null
           tags?: string[] | null
           telefone?: string | null
           tipo?: string | null
+          tipo_pessoa?: string
           tipos?: string[] | null
           uf?: string | null
           updated_at?: string | null
@@ -5746,6 +5752,7 @@ export type Database = {
           cpf?: string | null
           created_at?: string | null
           dados_bancarios?: Json | null
+          data_nascimento?: string | null
           email?: string | null
           grupo_id?: string | null
           id?: string
@@ -5758,10 +5765,12 @@ export type Database = {
           pix_chave?: string | null
           pix_tipo?: string | null
           razao_social?: string
+          rg?: string | null
           segmento?: string | null
           tags?: string[] | null
           telefone?: string | null
           tipo?: string | null
+          tipo_pessoa?: string
           tipos?: string[] | null
           uf?: string | null
           updated_at?: string | null
