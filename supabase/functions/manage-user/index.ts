@@ -691,15 +691,16 @@ Deno.serve(async (req) => {
             }
           }
 
-          // Send approval email
-          await adminClient.functions.invoke("send-transactional-email", {
-            body: {
-              templateName: "cadastro-aprovado",
-              recipientEmail: targetUser.email,
-              idempotencyKey: `cadastro-aprovado-${user_id}`,
-              templateData: { nome: profile?.full_name || "" },
-            },
+          // Send approval email — Doutrina #15
+          const r = await invokeSendTransactionalEmail(supabaseUrl, anonKey, authHeader, {
+            templateName: "cadastro-aprovado",
+            recipientEmail: targetUser.email,
+            idempotencyKey: `cadastro-aprovado-${user_id}`,
+            templateData: { nome: profile?.full_name || "" },
           });
+          if (!r.ok) {
+            console.error("[approve] Falha em send-transactional-email:", r.status, r.body);
+          }
         }
       } catch (linkErr) {
         console.error("Erro ao vincular/enviar email:", linkErr);
