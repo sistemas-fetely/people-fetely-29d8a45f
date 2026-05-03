@@ -63,6 +63,33 @@ export default function BuscarNFStageDialog({
   const qc = useQueryClient();
   const [vinculando, setVinculando] = useState<string | null>(null);
 
+  // Busca info do compromisso parcelado (se houver) pra mostrar valor agregado.
+  // RPC `buscar_nfs_stage_para_conta` já detecta parcelamento via ratio valor_NF/valor_conta,
+  // então não precisa ser passado pra ela — é só pra contexto visual do usuário.
+  const { data: compromissoInfo } = useQuery({
+    queryKey: ["compromisso-info-busca-nf", contaId],
+    enabled: open && !!contaId,
+    queryFn: async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: conta } = await (supabase as any)
+        .from("contas_pagar_receber")
+        .select("compromisso_parcelado_id")
+        .eq("id", contaId)
+        .maybeSingle();
+      const compId = conta?.compromisso_parcelado_id;
+      if (!compId) return null;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: comp } = await (supabase as any)
+        .from("compromissos_parcelados")
+        .select("id, descricao, valor_total, qtd_parcelas")
+        .eq("id", compId)
+        .maybeSingle();
+      return comp || null;
+    },
+  });
+
+  const valorParaMatch = Number(compromissoInfo?.valor_total ?? contaValor ?? 0);
+
   const { data: candidatos = [], isLoading } = useQuery({
     queryKey: ["buscar-nfs-stage", contaId],
     enabled: open && !!contaId,
