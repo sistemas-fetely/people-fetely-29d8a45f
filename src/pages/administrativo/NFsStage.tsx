@@ -802,6 +802,48 @@ export default function NFsStage() {
                               <Eye className="h-3.5 w-3.5" />
                             </Button>
                           )}
+                          {(() => {
+                            const ehXml =
+                              !!nf.xml_storage_path ||
+                              (!!nf.arquivo_nome && /\.xml$/i.test(nf.arquivo_nome));
+                            if (!ehXml) return null;
+                            const jaTem = !!nf.resumo_pdf_gerado_em;
+                            const loading = gerandoResumo.has(nf.id);
+                            if (jaTem) {
+                              return (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                                  onClick={() => handleGerarResumo(nf, true)}
+                                  disabled={loading}
+                                  title="Regerar Resumo NFe"
+                                >
+                                  {loading ? (
+                                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                  ) : (
+                                    <RefreshCw className="h-3.5 w-3.5" />
+                                  )}
+                                </Button>
+                              );
+                            }
+                            return (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 text-primary hover:text-primary hover:bg-primary/10"
+                                onClick={() => handleGerarResumo(nf, false)}
+                                disabled={loading}
+                                title="Gerar Resumo NFe"
+                              >
+                                {loading ? (
+                                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                ) : (
+                                  <FilePlus2 className="h-3.5 w-3.5" />
+                                )}
+                              </Button>
+                            );
+                          })()}
                           <Button
                             variant="ghost"
                             size="icon"
