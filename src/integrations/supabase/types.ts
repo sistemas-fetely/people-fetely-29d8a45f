@@ -149,6 +149,56 @@ export type Database = {
         }
         Relationships: []
       }
+      auditoria_duplicidade_suspeita: {
+        Row: {
+          compromisso_existente_id: string | null
+          created_at: string
+          data_primeira_parcela: string
+          id: string
+          janela_segundos: number
+          observacao: string | null
+          parceiro_id: string | null
+          parcela_grupo_novo: string
+          revisado_em: string | null
+          revisado_por: string | null
+          valor_total: number
+        }
+        Insert: {
+          compromisso_existente_id?: string | null
+          created_at?: string
+          data_primeira_parcela: string
+          id?: string
+          janela_segundos: number
+          observacao?: string | null
+          parceiro_id?: string | null
+          parcela_grupo_novo: string
+          revisado_em?: string | null
+          revisado_por?: string | null
+          valor_total: number
+        }
+        Update: {
+          compromisso_existente_id?: string | null
+          created_at?: string
+          data_primeira_parcela?: string
+          id?: string
+          janela_segundos?: number
+          observacao?: string | null
+          parceiro_id?: string | null
+          parcela_grupo_novo?: string
+          revisado_em?: string | null
+          revisado_por?: string | null
+          valor_total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "auditoria_duplicidade_suspeita_compromisso_existente_id_fkey"
+            columns: ["compromisso_existente_id"]
+            isOneToOne: false
+            referencedRelation: "compromissos_parcelados"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       backup_movimentacoes_bancarias_20260426: {
         Row: {
           centro_custo: string | null
