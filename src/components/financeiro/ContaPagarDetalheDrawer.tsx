@@ -67,7 +67,8 @@ type Conta = {
   fornecedor_cliente: string | null;
   parceiro_id: string | null;
   conta_id: string | null;
-  centro_custo: string | null;
+  centro_custo_id: string | null;
+  centros_custo?: { codigo: string; nome: string } | null;
   forma_pagamento_id: string | null;
   origem: string | null;
   observacao?: string | null;
@@ -243,7 +244,7 @@ export default function ContaPagarDetalheDrawer({
       const { data, error } = await supabase
         .from("contas_pagar_receber")
         .select(
-          "*, plano_contas:conta_id(codigo,nome), formas_pagamento:forma_pagamento_id(nome,codigo), parceiros_comerciais:parceiro_id(razao_social)"
+          "*, plano_contas:conta_id(codigo,nome), formas_pagamento:forma_pagamento_id(nome,codigo), parceiros_comerciais:parceiro_id(razao_social), centros_custo:centro_custo_id(codigo,nome)"
         )
         .eq("id", contaId!)
         .single();
@@ -436,7 +437,7 @@ export default function ContaPagarDetalheDrawer({
                     descricao: conta.descricao,
                     data_vencimento: conta.data_vencimento,
                     conta_id: conta.conta_id,
-                    centro_custo: conta.centro_custo,
+                    centro_custo_id: conta.centro_custo_id,
                     forma_pagamento_id: conta.forma_pagamento_id,
                     observacao: conta.observacao ?? null,
                     nf_numero: conta.nf_numero ?? null,
@@ -480,7 +481,7 @@ export default function ContaPagarDetalheDrawer({
                     : "—"
                 }
               />
-              <Linha label="Centro de custo" value={conta.centro_custo || "—"} />
+              <Linha label="Centro de custo" value={conta.centros_custo?.nome || "—"} />
               <Linha label="Forma de pagamento" value={conta.formas_pagamento?.nome || "—"} />
               <Linha label="Vencimento" value={formatDateBR(conta.data_vencimento)} />
               {conta.data_pagamento && (
