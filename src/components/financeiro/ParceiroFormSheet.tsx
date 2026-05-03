@@ -26,6 +26,7 @@ import { X } from "lucide-react";
 import { toast } from "sonner";
 import { fetchCep } from "@/lib/viacep";
 import { CategoriaCombobox, CategoriaOption } from "@/components/financeiro/CategoriaCombobox";
+import { GrupoEmpresarialCombobox } from "@/components/financeiro/GrupoEmpresarialCombobox";
 
 export type Parceiro = {
   id: string;
@@ -48,6 +49,7 @@ export type Parceiro = {
   categoria_padrao_id: string | null;
   centro_custo_padrao: string | null;
   tags: string[] | null;
+  grupo_id: string | null;
   ativo: boolean | null;
   observacao: string | null;
   origem: string | null;
@@ -107,6 +109,7 @@ export function ParceiroFormSheet({ open, onOpenChange, editing, categorias, onS
   const [categoriaPadrao, setCategoriaPadrao] = useState<string | null>(null);
   const [centroCusto, setCentroCusto] = useState("");
   const [tags, setTags] = useState<string[]>([]);
+  const [grupoId, setGrupoId] = useState<string | null>(null);
   const [tagInput, setTagInput] = useState("");
   const [observacao, setObservacao] = useState("");
   const [duplicateWarn, setDuplicateWarn] = useState<string | null>(null);
