@@ -113,6 +113,10 @@ export function ParceiroFormSheet({ open, onOpenChange, editing, categorias, onS
   const qc = useQueryClient();
   const isEdit = !!editing;
 
+  const { data: centrosCusto = [] } = useCentrosCusto();
+  const { data: canaisVenda = [] } = useCanaisVenda();
+  const { data: formasPagamento = [] } = useFormasPagamento();
+
   const [tiposSelecionados, setTiposSelecionados] = useState<string[]>(["fornecedor"]);
   const [tipoPessoa, setTipoPessoa] = useState<"PF" | "PJ">("PJ");
   const [cnpj, setCnpj] = useState("");
@@ -546,16 +550,18 @@ export function ParceiroFormSheet({ open, onOpenChange, editing, categorias, onS
             {tiposSelecionados.includes("cliente") && (
               <div className="mb-3">
                 <Label>Canal (cliente)</Label>
-                <Select value={canal || "_none"} onValueChange={(v) => setCanal(v === "_none" ? "" : v)}>
+                <Select
+                  value={canalVendaId ?? "__none__"}
+                  onValueChange={(v) => setCanalVendaId(v === "__none__" ? null : v)}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="_none">—</SelectItem>
-                    <SelectItem value="b2b">B2B</SelectItem>
-                    <SelectItem value="b2c">B2C</SelectItem>
-                    <SelectItem value="marketplace">Marketplace</SelectItem>
-                    <SelectItem value="parceiro">Parceiro</SelectItem>
+                    <SelectItem value="__none__">— Sem canal —</SelectItem>
+                    {canaisVenda.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -576,16 +582,17 @@ export function ParceiroFormSheet({ open, onOpenChange, editing, categorias, onS
             </div>
             <div className="mb-3">
               <Label>Centro de custo padrão</Label>
-              <Select value={centroCusto || "_none"} onValueChange={(v) => setCentroCusto(v === "_none" ? "" : v)}>
+              <Select
+                value={centroCustoId ?? "__none__"}
+                onValueChange={(v) => setCentroCustoId(v === "__none__" ? null : v)}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Nenhum" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="_none">Nenhum</SelectItem>
-                  {CENTROS.map((c) => (
-                    <SelectItem key={c} value={c} className="capitalize">
-                      {c}
-                    </SelectItem>
+                  <SelectItem value="__none__">— Sem centro de custo —</SelectItem>
+                  {centrosCusto.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -630,23 +637,17 @@ export function ParceiroFormSheet({ open, onOpenChange, editing, categorias, onS
             <div className="mb-3">
               <Label>Meio de pagamento padrão</Label>
               <Select
-                value={meioPagamentoPadrao || "_none"}
-                onValueChange={(v) => setMeioPagamentoPadrao(v === "_none" ? "" : v)}
+                value={formaPagamentoPadraoId ?? "__none__"}
+                onValueChange={(v) => setFormaPagamentoPadraoId(v === "__none__" ? null : v)}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Nenhum" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="_none">Nenhum</SelectItem>
-                  <SelectItem value="pix">PIX</SelectItem>
-                  <SelectItem value="boleto">Boleto</SelectItem>
-                  <SelectItem value="ted">TED / Transferência</SelectItem>
-                  <SelectItem value="cartao_credito">Cartão de Crédito</SelectItem>
-                  <SelectItem value="cartao_debito">Cartão de Débito</SelectItem>
-                  <SelectItem value="debito_automatico">Débito Automático</SelectItem>
-                  <SelectItem value="dinheiro">Dinheiro</SelectItem>
-                  <SelectItem value="cheque">Cheque</SelectItem>
-                  <SelectItem value="outro">Outro</SelectItem>
+                  <SelectItem value="__none__">— Nenhum —</SelectItem>
+                  {formasPagamento.map((f) => (
+                    <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground mt-1">
