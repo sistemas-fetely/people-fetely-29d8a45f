@@ -155,7 +155,12 @@ function DocIndicator({ label, tem }: { label: string; tem: boolean }) {
   );
 }
 
-type FiltroPill = "todas" | "nao_vinculadas" | "vinculadas" | "sem_categoria";
+type FiltroPill =
+  | "todas"
+  | "nao_vinculadas"
+  | "vinculadas"
+  | "sem_categoria"
+  | "boletos_avulsos";
 
 export default function NFsStage() {
   const qc = useQueryClient();
@@ -212,7 +217,7 @@ export default function NFsStage() {
     queryFn: async () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data, error } = await (supabase as any)
-        .from("nfs_stage")
+        .from("vw_nfs_stage_completude")
         .select("*")
         .order("created_at", { ascending: false });
       if (error) throw error;
