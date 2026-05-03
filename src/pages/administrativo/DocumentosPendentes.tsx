@@ -539,6 +539,15 @@ export default function DocumentosPendentes() {
     setExpandidos(new Set());
   }
 
+  function toggleParcelas(key: string) {
+    setParcelasExpandidas((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }
+
   function toggleRemessa(id: string) {
     setRemessasExpandidas((prev) => {
       const next = new Set(prev);
