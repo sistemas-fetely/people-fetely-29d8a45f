@@ -551,7 +551,7 @@ export default function DocumentosPendentes() {
   // EXPORTAR PACOTE (das contas selecionadas)
   // ============================================================
   async function handleExportarPacote() {
-    const ids = Array.from(selecionadas);
+    const ids = idsContasParaEnvio;
     if (ids.length === 0) {
       toast.error("Selecione pelo menos uma conta antes de exportar.");
       return;
