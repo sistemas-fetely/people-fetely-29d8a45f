@@ -219,20 +219,28 @@ export function ParceiroFormSheet({ open, onOpenChange, editing, categorias, onS
     setTagInput("");
   }, [open, editing]);
 
-  // Check duplicate CNPJ on blur
+  // Check duplicate CNPJ/CPF on blur
   const checkDuplicate = async () => {
-    const clean = cnpj.replace(/\D/g, "");
-    if (clean.length !== 14) return;
-    if (editing && editing.cnpj === clean) return;
-    const { data } = await supabase
-      .from("parceiros_comerciais")
-      .select("id, razao_social")
-      .eq("cnpj", clean)
-      .maybeSingle();
-    if (data) {
-      setDuplicateWarn(`Já cadastrado: ${data.razao_social}`);
+    if (tipoPessoa === "PJ") {
+      const clean = cnpj.replace(/\D/g, "");
+      if (clean.length !== 14) return;
+      if (editing && editing.cnpj === clean) return;
+      const { data } = await supabase
+        .from("parceiros_comerciais")
+        .select("id, razao_social")
+        .eq("cnpj", clean)
+        .maybeSingle();
+      setDuplicateWarn(data ? `Já cadastrado: ${data.razao_social}` : null);
     } else {
-      setDuplicateWarn(null);
+      const clean = cpf.replace(/\D/g, "");
+      if (clean.length !== 11) return;
+      if (editing && editing.cpf === clean) return;
+      const { data } = await supabase
+        .from("parceiros_comerciais")
+        .select("id, razao_social")
+        .eq("cpf", clean)
+        .maybeSingle();
+      setDuplicateWarn(data ? `Já cadastrado: ${data.razao_social}` : null);
     }
   };
 
