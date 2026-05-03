@@ -92,8 +92,9 @@ Deno.serve(async (req) => {
 
   for (const alvo of alvos) {
     try {
-      if (!alvo.arquivo_storage_path) {
-        await registrarFalha(admin, alvo.id, "arquivo_storage_path vazio");
+      const xmlPath = alvo.xml_storage_path || alvo.arquivo_storage_path;
+      if (!xmlPath) {
+        await registrarFalha(admin, alvo.id, "sem xml_storage_path nem arquivo_storage_path");
         resultados.push({ nfs_stage_id: alvo.id, ok: false, erro: "sem storage_path" });
         continue;
       }
@@ -108,7 +109,7 @@ Deno.serve(async (req) => {
             Authorization: `Bearer ${SERVICE_ROLE_KEY}`,
           },
           body: JSON.stringify({
-            storage_path: alvo.arquivo_storage_path,
+            storage_path: xmlPath,
             bucket: "nfs-stage",
           }),
         },
