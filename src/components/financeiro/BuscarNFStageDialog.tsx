@@ -144,6 +144,13 @@ export default function BuscarNFStageDialog({
               Conta: <span className="font-medium">{contaDescricao}</span> —{" "}
               {formatBRL(contaValor)}
             </div>
+            {compromissoInfo && (
+              <div className="text-xs text-blue-700 bg-blue-50 border border-blue-200 rounded px-2 py-1">
+                ✨ Buscando NF do compromisso completo (
+                {compromissoInfo.qtd_parcelas} parcelas) —{" "}
+                <span className="font-medium">{formatBRL(Number(compromissoInfo.valor_total))}</span>
+              </div>
+            )}
             <div className="text-xs">
               IA busca match por CNPJ, valor, razão social, nome fantasia e data de emissão.
             </div>
