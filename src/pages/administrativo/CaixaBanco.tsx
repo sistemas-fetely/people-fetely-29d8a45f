@@ -80,7 +80,7 @@ import { formatBRL, formatDateBR } from "@/lib/format-currency";
 import { getMeioPagamentoIcon } from "@/lib/financeiro/meio-pagamento-icon";
 import { classBordaTemporal } from "@/lib/financeiro/is-vencimento-futuro";
 import { cn } from "@/lib/utils";
-import { CardKPI } from "./CaixaBanco/CardKPI";
+import { CardKPI, CardKPIDuplo } from "./CaixaBanco/CardKPI";
 import KpiPill from "./CaixaBanco/KpiPill";
 import {
   type Lancamento,
@@ -99,6 +99,13 @@ type FormaPgtoLite = { id: string; nome: string };
 type Parceiro = { id: string; razao_social: string | null };
 type CategoriaLite = { id: string; nome: string };
 type FiltroTipo = "tudo" | "apagar" | "realizado";
+type FiltroQualidade =
+  | "todos"
+  | "nf_tem" | "nf_falta"
+  | "categoria_tem" | "categoria_falta"
+  | "doc_tem" | "doc_falta"
+  | "vinculado_tem" | "vinculado_falta"
+  | "conciliado_tem" | "conciliado_falta";
 
 export default function CaixaBanco() {
   const navigate = useNavigate();
@@ -123,6 +130,7 @@ export default function CaixaBanco() {
   const [aplicandoIA, setAplicandoIA] = useState(false);
   const [sugestaoMovId, setSugestaoMovId] = useState<string | null>(null);
   const [filaIAOpen, setFilaIAOpen] = useState(false);
+  const [filtroQual, setFiltroQual] = useState<FiltroQualidade>("todos");
 
   // Query principal — view unificada
   const { data: lancamentos, isLoading } = useQuery({
