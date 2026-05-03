@@ -186,7 +186,7 @@ function bytesToBase64(bytes: Uint8Array): string {
 }
 
 // ----- XML parsing -----
-function parseNFe(xml: string): NFeParsed {
+export function parseNFe(xml: string): NFeParsed {
   const parser = new XMLParser({
     ignoreAttributes: false,
     attributeNamePrefix: "@_",
@@ -345,7 +345,7 @@ function formatarNum(v: string, casas = 4): string {
 }
 
 // ----- PDF generation -----
-async function buildPdf(nfe: NFeParsed): Promise<Uint8Array> {
+export async function buildPdf(nfe: NFeParsed): Promise<Uint8Array> {
   const pdf = await PDFDocument.create();
   // A4 em points: 595 x 842
   const page = pdf.addPage([595, 842]);
