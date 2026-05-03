@@ -1,5 +1,5 @@
 import {
-  LayoutDashboard, Wallet, ListTree, Receipt, FileBarChart2,
+  LayoutDashboard, Wallet, ListTree, Receipt,
   TrendingUp, ArrowDownToLine, ArrowUpFromLine, Upload,
   FileSignature, Building2, ShieldCheck, FolderArchive,
   Users, Monitor, Network, Landmark, LogOut, ClipboardList,
