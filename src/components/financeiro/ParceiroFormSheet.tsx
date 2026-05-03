@@ -391,29 +391,92 @@ export function ParceiroFormSheet({ open, onOpenChange, editing, categorias, onS
             </div>
           </div>
 
-          {/* CNPJ */}
+          {/* Tipo de pessoa (PF/PJ) */}
           <div>
-            <Label>CNPJ {obrigatorio && "*"}</Label>
-            <Input
-              value={cnpj}
-              onChange={(e) => setCnpj(maskCnpj(e.target.value))}
-              onBlur={checkDuplicate}
-              placeholder="00.000.000/0000-00"
-            />
-            {duplicateWarn && (
-              <p className="text-xs text-amber-600 mt-1">⚠️ {duplicateWarn}</p>
-            )}
+            <Label className="mb-2 block">Tipo de pessoa</Label>
+            <div className="inline-flex rounded-md border bg-muted/30 p-1">
+              <button
+                type="button"
+                onClick={() => setTipoPessoa("PJ")}
+                className={`px-4 py-1.5 text-sm rounded transition ${
+                  tipoPessoa === "PJ"
+                    ? "bg-background shadow-sm font-medium"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Pessoa Jurídica
+              </button>
+              <button
+                type="button"
+                onClick={() => setTipoPessoa("PF")}
+                className={`px-4 py-1.5 text-sm rounded transition ${
+                  tipoPessoa === "PF"
+                    ? "bg-background shadow-sm font-medium"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Pessoa Física
+              </button>
+            </div>
           </div>
 
-          <div>
-            <Label>Razão social *</Label>
-            <Input value={razaoSocial} onChange={(e) => setRazaoSocial(e.target.value)} />
-          </div>
-          <div>
-            <Label>Nome fantasia {obrigatorio && "*"}</Label>
-            <Input value={nomeFantasia} onChange={(e) => setNomeFantasia(e.target.value)} />
-          </div>
-
+          {tipoPessoa === "PJ" ? (
+            <>
+              <div>
+                <Label>CNPJ {obrigatorio && "*"}</Label>
+                <Input
+                  value={cnpj}
+                  onChange={(e) => setCnpj(maskCnpj(e.target.value))}
+                  onBlur={checkDuplicate}
+                  placeholder="00.000.000/0000-00"
+                />
+                {duplicateWarn && (
+                  <p className="text-xs text-amber-600 mt-1">⚠️ {duplicateWarn}</p>
+                )}
+              </div>
+              <div>
+                <Label>Razão social *</Label>
+                <Input value={razaoSocial} onChange={(e) => setRazaoSocial(e.target.value)} />
+              </div>
+              <div>
+                <Label>Nome fantasia {obrigatorio && "*"}</Label>
+                <Input value={nomeFantasia} onChange={(e) => setNomeFantasia(e.target.value)} />
+              </div>
+            </>
+          ) : (
+            <>
+              <div>
+                <Label>CPF {obrigatorio && "*"}</Label>
+                <Input
+                  value={cpf}
+                  onChange={(e) => setCpf(maskCpf(e.target.value))}
+                  onBlur={checkDuplicate}
+                  placeholder="000.000.000-00"
+                />
+                {duplicateWarn && (
+                  <p className="text-xs text-amber-600 mt-1">⚠️ {duplicateWarn}</p>
+                )}
+              </div>
+              <div>
+                <Label>Nome completo *</Label>
+                <Input value={razaoSocial} onChange={(e) => setRazaoSocial(e.target.value)} />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label>RG</Label>
+                  <Input value={rg} onChange={(e) => setRg(e.target.value)} />
+                </div>
+                <div>
+                  <Label>Data de nascimento</Label>
+                  <Input
+                    type="date"
+                    value={dataNascimento}
+                    onChange={(e) => setDataNascimento(e.target.value)}
+                  />
+                </div>
+              </div>
+            </>
+          )}
           {/* Endereço */}
           <div className="border-t pt-4">
             <p className="text-sm font-medium mb-3">Endereço</p>
