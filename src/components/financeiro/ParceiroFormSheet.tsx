@@ -27,6 +27,9 @@ import { toast } from "sonner";
 import { fetchCep } from "@/lib/viacep";
 import { CategoriaCombobox, CategoriaOption } from "@/components/financeiro/CategoriaCombobox";
 import { GrupoEmpresarialCombobox } from "@/components/financeiro/GrupoEmpresarialCombobox";
+import { useCentrosCusto } from "@/hooks/financeiro/useCentrosCusto";
+import { useCanaisVenda } from "@/hooks/financeiro/useCanaisVenda";
+import { useFormasPagamento } from "@/hooks/financeiro/useFormasPagamento";
 
 export type Parceiro = {
   id: string;
@@ -47,13 +50,13 @@ export type Parceiro = {
   email: string | null;
   tipo: string | null;
   tipos: string[] | null;
-  canal: string | null;
+  canal_venda_id: string | null;
   segmento: string | null;
   categoria_padrao_id: string | null;
-  centro_custo_padrao: string | null;
+  centro_custo_id: string | null;
   tags: string[] | null;
   grupo_id: string | null;
-  meio_pagamento_padrao: string | null;
+  forma_pagamento_padrao_id: string | null;
   pix_chave: string | null;
   pix_tipo: string | null;
   dados_bancarios: {
@@ -87,8 +90,6 @@ interface Props {
   obrigatorio?: boolean;
 }
 
-const CENTROS = ["comercial", "administrativo", "rh", "ti", "fiscal", "financeiro", "fabrica", "geral"];
-
 function maskCnpj(v: string) {
   const d = v.replace(/\D/g, "").slice(0, 14);
   return d
@@ -112,6 +113,10 @@ export function ParceiroFormSheet({ open, onOpenChange, editing, categorias, onS
   const qc = useQueryClient();
   const isEdit = !!editing;
 
+  const { data: centrosCusto = [] } = useCentrosCusto();
+  const { data: canaisVenda = [] } = useCanaisVenda();
+  const { data: formasPagamento = [] } = useFormasPagamento();
+
   const [tiposSelecionados, setTiposSelecionados] = useState<string[]>(["fornecedor"]);
   const [tipoPessoa, setTipoPessoa] = useState<"PF" | "PJ">("PJ");
   const [cnpj, setCnpj] = useState("");
@@ -128,15 +133,15 @@ export function ParceiroFormSheet({ open, onOpenChange, editing, categorias, onS
   const [uf, setUf] = useState("");
   const [telefone, setTelefone] = useState("");
   const [email, setEmail] = useState("");
-  const [canal, setCanal] = useState("");
+  const [canalVendaId, setCanalVendaId] = useState<string | null>(null);
   const [segmento, setSegmento] = useState("");
   const [categoriaPadrao, setCategoriaPadrao] = useState<string | null>(null);
-  const [centroCusto, setCentroCusto] = useState("");
+  const [centroCustoId, setCentroCustoId] = useState<string | null>(null);
   const [tags, setTags] = useState<string[]>([]);
   const [grupoId, setGrupoId] = useState<string | null>(null);
   const [tagInput, setTagInput] = useState("");
   const [observacao, setObservacao] = useState("");
-  const [meioPagamentoPadrao, setMeioPagamentoPadrao] = useState<string>("");
+  const [formaPagamentoPadraoId, setFormaPagamentoPadraoId] = useState<string | null>(null);
   const [pixTipo, setPixTipo] = useState<string>("");
   const [pixChave, setPixChave] = useState("");
   const [bcoBanco, setBcoBanco] = useState("");
@@ -165,14 +170,14 @@ export function ParceiroFormSheet({ open, onOpenChange, editing, categorias, onS
       setUf(editing.uf || "");
       setTelefone(editing.telefone || "");
       setEmail(editing.email || "");
-      setCanal(editing.canal || "");
+      setCanalVendaId(editing.canal_venda_id ?? null);
       setSegmento(editing.segmento || "");
       setCategoriaPadrao(editing.categoria_padrao_id);
-      setCentroCusto(editing.centro_custo_padrao || "");
+      setCentroCustoId(editing.centro_custo_id ?? null);
       setTags(editing.tags || []);
       setGrupoId(editing.grupo_id ?? null);
       setObservacao(editing.observacao || "");
-      setMeioPagamentoPadrao(editing.meio_pagamento_padrao || "");
+      setFormaPagamentoPadraoId(editing.forma_pagamento_padrao_id ?? null);
       setPixTipo(editing.pix_tipo || "");
       setPixChave(editing.pix_chave || "");
       setBcoBanco(editing.dados_bancarios?.banco || "");
@@ -199,14 +204,14 @@ export function ParceiroFormSheet({ open, onOpenChange, editing, categorias, onS
       setUf("");
       setTelefone("");
       setEmail("");
-      setCanal("");
+      setCanalVendaId(null);
       setSegmento("");
       setCategoriaPadrao(null);
-      setCentroCusto("");
+      setCentroCustoId(null);
       setTags([]);
       setGrupoId(null);
       setObservacao("");
-      setMeioPagamentoPadrao("");
+      setFormaPagamentoPadraoId(null);
       setPixTipo("");
       setPixChave("");
       setBcoBanco("");
@@ -303,14 +308,14 @@ export function ParceiroFormSheet({ open, onOpenChange, editing, categorias, onS
         uf: uf.trim() || null,
         telefone: telefone.trim() || null,
         email: email.trim() || null,
-        canal: canal || null,
+        canal_venda_id: canalVendaId,
         segmento: segmento.trim() || null,
         categoria_padrao_id: categoriaPadrao,
         grupo_id: grupoId,
-        centro_custo_padrao: centroCusto || null,
+        centro_custo_id: centroCustoId,
         tags: tags.length ? tags : null,
         observacao: observacao.trim() || null,
-        meio_pagamento_padrao: meioPagamentoPadrao || null,
+        forma_pagamento_padrao_id: formaPagamentoPadraoId,
         pix_tipo: pixTipo || null,
         pix_chave: pixChave.trim() || null,
         dados_bancarios:
@@ -545,16 +550,18 @@ export function ParceiroFormSheet({ open, onOpenChange, editing, categorias, onS
             {tiposSelecionados.includes("cliente") && (
               <div className="mb-3">
                 <Label>Canal (cliente)</Label>
-                <Select value={canal || "_none"} onValueChange={(v) => setCanal(v === "_none" ? "" : v)}>
+                <Select
+                  value={canalVendaId ?? "__none__"}
+                  onValueChange={(v) => setCanalVendaId(v === "__none__" ? null : v)}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="_none">—</SelectItem>
-                    <SelectItem value="b2b">B2B</SelectItem>
-                    <SelectItem value="b2c">B2C</SelectItem>
-                    <SelectItem value="marketplace">Marketplace</SelectItem>
-                    <SelectItem value="parceiro">Parceiro</SelectItem>
+                    <SelectItem value="__none__">— Sem canal —</SelectItem>
+                    {canaisVenda.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -575,16 +582,17 @@ export function ParceiroFormSheet({ open, onOpenChange, editing, categorias, onS
             </div>
             <div className="mb-3">
               <Label>Centro de custo padrão</Label>
-              <Select value={centroCusto || "_none"} onValueChange={(v) => setCentroCusto(v === "_none" ? "" : v)}>
+              <Select
+                value={centroCustoId ?? "__none__"}
+                onValueChange={(v) => setCentroCustoId(v === "__none__" ? null : v)}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Nenhum" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="_none">Nenhum</SelectItem>
-                  {CENTROS.map((c) => (
-                    <SelectItem key={c} value={c} className="capitalize">
-                      {c}
-                    </SelectItem>
+                  <SelectItem value="__none__">— Sem centro de custo —</SelectItem>
+                  {centrosCusto.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -629,23 +637,17 @@ export function ParceiroFormSheet({ open, onOpenChange, editing, categorias, onS
             <div className="mb-3">
               <Label>Meio de pagamento padrão</Label>
               <Select
-                value={meioPagamentoPadrao || "_none"}
-                onValueChange={(v) => setMeioPagamentoPadrao(v === "_none" ? "" : v)}
+                value={formaPagamentoPadraoId ?? "__none__"}
+                onValueChange={(v) => setFormaPagamentoPadraoId(v === "__none__" ? null : v)}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Nenhum" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="_none">Nenhum</SelectItem>
-                  <SelectItem value="pix">PIX</SelectItem>
-                  <SelectItem value="boleto">Boleto</SelectItem>
-                  <SelectItem value="ted">TED / Transferência</SelectItem>
-                  <SelectItem value="cartao_credito">Cartão de Crédito</SelectItem>
-                  <SelectItem value="cartao_debito">Cartão de Débito</SelectItem>
-                  <SelectItem value="debito_automatico">Débito Automático</SelectItem>
-                  <SelectItem value="dinheiro">Dinheiro</SelectItem>
-                  <SelectItem value="cheque">Cheque</SelectItem>
-                  <SelectItem value="outro">Outro</SelectItem>
+                  <SelectItem value="__none__">— Nenhum —</SelectItem>
+                  {formasPagamento.map((f) => (
+                    <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground mt-1">
