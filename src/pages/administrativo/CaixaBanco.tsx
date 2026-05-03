@@ -675,7 +675,7 @@ export default function CaixaBanco() {
                         className={cn(
                           "cursor-pointer hover:bg-muted/50 transition-colors",
                           // Borda lateral colorida (Doutrina #11 — reusa Contas a Pagar)
-                          classBordaTemporal(l.data_vencimento, atrasada),
+                          classBordaTemporal(l.data_vencimento, atrasada, sv),
                         )}
                         onClick={() => {
                           if (l.origem_view === "cartao_lancamento") {
