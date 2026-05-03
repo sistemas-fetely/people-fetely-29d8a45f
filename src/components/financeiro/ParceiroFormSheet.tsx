@@ -113,7 +113,11 @@ export function ParceiroFormSheet({ open, onOpenChange, editing, categorias, onS
   const isEdit = !!editing;
 
   const [tiposSelecionados, setTiposSelecionados] = useState<string[]>(["fornecedor"]);
+  const [tipoPessoa, setTipoPessoa] = useState<"PF" | "PJ">("PJ");
   const [cnpj, setCnpj] = useState("");
+  const [cpf, setCpf] = useState("");
+  const [rg, setRg] = useState("");
+  const [dataNascimento, setDataNascimento] = useState("");
   const [razaoSocial, setRazaoSocial] = useState("");
   const [nomeFantasia, setNomeFantasia] = useState("");
   const [cep, setCep] = useState("");
