@@ -1,15 +1,25 @@
 /**
- * Movimentações (Caixa & Banco) — orchestrator.
+ * Movimentações (Caixa & Banco) — tela única (Refator B, 03/05/2026).
  *
- * Refatorado em 2 abas (A pagar / Realizado). Esta página fica responsável
- * por: fetch da view consolidada + maps auxiliares, filtros globais (busca +
- * conta bancária), split via statusVisual e roteamento de prop pra cada aba.
+ * Refator A (02/05/2026) dividiu em 2 abas — desenho não funcionou.
+ * Refator B reverte pra tela única com:
+ *   1. Pills Fetely (Tudo / A pagar / Realizado) substituem abas
+ *   2. Coluna única de ícones de qualidade no fim da linha
+ *   3. 5 KPIs globais (não respeitam pill, só período/conta/busca)
+ *   4. Tag "(Cartão · venc...)" migra pra coluna Forma de Pagamento
+ *   5. Borda lateral colorida via classBordaTemporal (igual Contas a Pagar)
+ *   6. IA (Sparkles) habilitada apenas em linhas realizadas
+ *
+ * Doutrinas: #5 (ícone email cor universal), #11 (não duplicar helper de borda).
  */
 import { useMemo, useState } from "react";
-import { useSearchParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
   SelectContent,
@@ -18,14 +28,46 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
-import { Wallet, Search } from "lucide-react";
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+  TooltipProvider,
+} from "@/components/ui/tooltip";
+import {
+  Wallet,
+  Search,
+  Receipt,
+  FolderTree,
+  Paperclip,
+  Link2,
+  CircleDollarSign,
+  AlertTriangle,
+  MailCheck,
+  Repeat,
+  CreditCard,
+  CalendarRange,
+  AlertOctagon,
+  CalendarClock,
+  RefreshCcw,
+  Sparkles,
+  Loader2,
+  ListChecks,
+  Wallet as WalletIcon,
+  CheckCircle2,
+} from "lucide-react";
+import { toast } from "sonner";
 import { useFiltrosPersistentes } from "@/hooks/useFiltrosPersistentes";
 import ContaPagarDetalheDrawer from "@/components/financeiro/ContaPagarDetalheDrawer";
+import SugestaoIADialog from "@/components/financeiro/SugestaoIADialog";
+import FilaRevisaoIADialog from "@/components/financeiro/FilaRevisaoIADialog";
 import {
   getCompromissoInfoMap,
   type CompromissoInfo,
@@ -34,24 +76,39 @@ import {
   getStatusFlagsMap,
   type FlagsContaPagar,
 } from "@/lib/financeiro/get-status-flags";
-import AbaAPagar from "./CaixaBanco/AbaAPagar";
-import AbaRealizado from "./CaixaBanco/AbaRealizado";
+import { formatBRL, formatDateBR } from "@/lib/format-currency";
+import { getMeioPagamentoIcon } from "@/lib/financeiro/meio-pagamento-icon";
+import { classBordaTemporal } from "@/lib/financeiro/is-vencimento-futuro";
+import { cn } from "@/lib/utils";
+import { CardKPI } from "./CaixaBanco/CardKPI";
+import KpiPill from "./CaixaBanco/KpiPill";
 import {
   type Lancamento,
   type ContaBancariaLite,
   statusVisual,
+  isAtrasada,
+  diasAtraso,
+  getQualidadeNF,
+  getQualidadeCategoria,
+  getQualidadeVinculado,
+  getQualidadeConciliado,
+  corClass,
 } from "./CaixaBanco/utils";
 
 type FormaPgtoLite = { id: string; nome: string };
 type Parceiro = { id: string; razao_social: string | null };
 type CategoriaLite = { id: string; nome: string };
+type FiltroTipo = "tudo" | "apagar" | "realizado";
 
 export default function CaixaBanco() {
+  const navigate = useNavigate();
+  const qc = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
-  const tab = (searchParams.get("tab") as "a_pagar" | "realizado") || "a_pagar";
-  const setTab = (v: string) => {
+  const tipoParam = (searchParams.get("tipo") as FiltroTipo) || "tudo";
+  const setTipo = (v: FiltroTipo) => {
     const next = new URLSearchParams(searchParams);
-    next.set("tab", v);
+    if (v === "tudo") next.delete("tipo");
+    else next.set("tipo", v);
     setSearchParams(next, { replace: true });
   };
 
@@ -61,6 +118,11 @@ export default function CaixaBanco() {
   );
   const [busca, setBusca] = useFiltrosPersistentes<string>("caixabanco_busca", "");
   const [contaIdDrawer, setContaIdDrawer] = useState<string | null>(null);
+  const [filtroContador, setFiltroContador] = useState<"todos" | "enviados" | "nao_enviados">("todos");
+  const [mostrarSoInconsistentes, setMostrarSoInconsistentes] = useState(false);
+  const [aplicandoIA, setAplicandoIA] = useState(false);
+  const [sugestaoMovId, setSugestaoMovId] = useState<string | null>(null);
+  const [filaIAOpen, setFilaIAOpen] = useState(false);
 
   // Query principal — view unificada
   const { data: lancamentos, isLoading } = useQuery({
@@ -114,8 +176,7 @@ export default function CaixaBanco() {
     },
   });
 
-  // Compromisso info (recorrente/parcelado)
-  const idsParaCompromisso = useMemo(
+  const idsCP = useMemo(
     () =>
       (lancamentos || [])
         .filter((l) => l.origem_view === "conta_pagar")
@@ -124,18 +185,17 @@ export default function CaixaBanco() {
   );
 
   const { data: compromissoInfoMap = new Map<string, CompromissoInfo>() } = useQuery({
-    queryKey: ["compromisso-info-map-caixa-banco", idsParaCompromisso.join(",")],
-    enabled: idsParaCompromisso.length > 0,
-    queryFn: () => getCompromissoInfoMap(idsParaCompromisso),
+    queryKey: ["compromisso-info-map-caixa-banco", idsCP.join(",")],
+    enabled: idsCP.length > 0,
+    queryFn: () => getCompromissoInfoMap(idsCP),
   });
 
   const { data: statusFlagsMap = new Map<string, FlagsContaPagar>() } = useQuery({
-    queryKey: ["status-flags-map-caixa-banco", idsParaCompromisso.join(",")],
-    enabled: idsParaCompromisso.length > 0,
-    queryFn: () => getStatusFlagsMap(idsParaCompromisso),
+    queryKey: ["status-flags-map-caixa-banco", idsCP.join(",")],
+    enabled: idsCP.length > 0,
+    queryFn: () => getStatusFlagsMap(idsCP),
   });
 
-  // Inconsistência via movimentações vinculadas
   const movIds = useMemo(
     () =>
       Array.from(
@@ -256,7 +316,10 @@ export default function CaixaBanco() {
     return m;
   }, [categorias]);
 
-  // Filtros globais (busca + conta bancária)
+  const nomeParceiro = (l: Lancamento): string =>
+    (l.parceiro_id && mapParceiros[l.parceiro_id]) || l.fornecedor_cliente || "—";
+
+  // Filtros globais (busca + conta bancária) — afetam KPIs e tabela
   const filteredGlobal = useMemo(() => {
     let list = lancamentosEnriched;
     if (contaBancariaFilter !== "todas") {
@@ -277,7 +340,7 @@ export default function CaixaBanco() {
     return list;
   }, [lancamentosEnriched, contaBancariaFilter, busca, mapParceiros]);
 
-  // Split por status visual
+  // Splits por status visual (preserva critério das antigas abas)
   const { listaAPagar, listaRealizado } = useMemo(() => {
     const aPagar: Lancamento[] = [];
     const realizado: Lancamento[] = [];
@@ -289,9 +352,106 @@ export default function CaixaBanco() {
     return { listaAPagar: aPagar, listaRealizado: realizado };
   }, [filteredGlobal]);
 
+  // KPIs globais — usam filteredGlobal (período/conta/busca), NÃO respeitam pill
+  const kpis = useMemo(() => {
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    const iniMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+    const fimMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0, 23, 59, 59);
+    const iniAnt = new Date(hoje.getFullYear(), hoje.getMonth() - 1, 1);
+    const fimAnt = new Date(hoje.getFullYear(), hoje.getMonth(), 0, 23, 59, 59);
+    const iniProx = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 1);
+    const fimProx = new Date(hoje.getFullYear(), hoje.getMonth() + 2, 0, 23, 59, 59);
+
+    const dataPgto = (l: Lancamento) => l.data_pagamento || l.pago_em;
+
+    // Pagas (pelo status visual)
+    const pagas = listaRealizado;
+    const pagosMesAtual = pagas.filter((l) => {
+      const d = dataPgto(l);
+      if (!d) return false;
+      const v = new Date(d.length === 10 ? d + "T00:00:00" : d);
+      return v >= iniMes && v <= fimMes;
+    });
+    const pagosMesAnterior = pagas.filter((l) => {
+      const d = dataPgto(l);
+      if (!d) return false;
+      const v = new Date(d.length === 10 ? d + "T00:00:00" : d);
+      return v >= iniAnt && v <= fimAnt;
+    });
+
+    // A pagar próximo mês — usa listaAPagar (status aguardando_pagamento) + venc no próximo mês
+    const aPagarProxMes = listaAPagar.filter((l) => {
+      if (!l.data_vencimento) return false;
+      const v = new Date(l.data_vencimento + "T00:00:00");
+      return v >= iniProx && v <= fimProx;
+    });
+
+    // Conciliado / Sem conciliação — sobre pagas do mês atual
+    const semConc = pagosMesAtual.filter((l) => !l.conciliado_em && l.status_caixa !== "conciliado");
+    const conciliadas = pagosMesAtual.filter((l) => l.conciliado_em || l.status_caixa === "conciliado");
+
+    const sumValor = (arr: Lancamento[]) =>
+      arr.reduce((s, l) => s + Number(l.valor || 0), 0);
+
+    return {
+      pagosMesAnterior: { qtd: pagosMesAnterior.length, valor: sumValor(pagosMesAnterior) },
+      pagosMesAtual: { qtd: pagosMesAtual.length, valor: sumValor(pagosMesAtual) },
+      aPagarProxMes: { qtd: aPagarProxMes.length, valor: sumValor(aPagarProxMes) },
+      semConciliacao: { qtd: semConc.length, valor: sumValor(semConc) },
+      conciliado: { qtd: conciliadas.length, valor: sumValor(conciliadas) },
+    };
+  }, [listaAPagar, listaRealizado]);
+
+  // Lista exibida na tabela = pill + filtros adicionais (contador / inconsistências)
+  const listaExibida = useMemo(() => {
+    let list: Lancamento[];
+    if (tipoParam === "apagar") list = listaAPagar;
+    else if (tipoParam === "realizado") list = listaRealizado;
+    else list = [...listaAPagar, ...listaRealizado];
+
+    if (filtroContador !== "todos") {
+      list = list.filter((l) => {
+        if (l.origem_view !== "conta_pagar") return false;
+        const enviado = contadorMap?.has(l.id) === true;
+        return filtroContador === "enviados" ? enviado : !enviado;
+      });
+    }
+    if (mostrarSoInconsistentes) {
+      list = list.filter((l) => l.categoria_inconsistente === true);
+    }
+    return list;
+  }, [tipoParam, listaAPagar, listaRealizado, filtroContador, mostrarSoInconsistentes, contadorMap]);
+
+  async function handleAplicarIAEmMassa() {
+    setAplicandoIA(true);
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase as any).rpc("aplicar_ia_categoria_em_massa");
+      if (error) throw error;
+      const aplicadas = (data as { aplicadas?: number } | null)?.aplicadas || 0;
+      qc.invalidateQueries({ queryKey: ["lancamentos-caixa-banco"] });
+      qc.invalidateQueries({ queryKey: ["ia-fila-ambiguos"] });
+      setFilaIAOpen(true);
+      if (aplicadas > 0) {
+        toast.info(`${aplicadas} resolvidas direto. Vamos pelos ambíguos juntos.`);
+      }
+    } catch (e) {
+      const msg =
+        e instanceof Error
+          ? e.message
+          : typeof e === "object" && e !== null
+            ? (e as { message?: string }).message ?? JSON.stringify(e)
+            : String(e);
+      toast.error("Erro: " + msg);
+    } finally {
+      setAplicandoIA(false);
+    }
+  }
+
   return (
     <div className="flex flex-col h-[calc(100vh-64px)] overflow-hidden">
-      {/* HEADER STICKY GLOBAL */}
+      {/* HEADER STICKY */}
       <div className="sticky top-0 z-20 bg-background px-6 pt-6 pb-3 border-b space-y-3 backdrop-blur">
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
@@ -333,52 +493,481 @@ export default function CaixaBanco() {
       </div>
 
       {/* CONTEÚDO COM SCROLL */}
-      <div className="flex-1 overflow-auto px-6 pb-6 pt-3">
-        <Tabs value={tab} onValueChange={setTab}>
-          <TabsList>
-            <TabsTrigger value="a_pagar">
-              A pagar ({listaAPagar.length})
-            </TabsTrigger>
-            <TabsTrigger value="realizado">
-              Realizado ({listaRealizado.length})
-            </TabsTrigger>
-          </TabsList>
+      <div className="flex-1 overflow-auto px-6 pb-6 pt-3 space-y-3">
+        {/* 5 KPIs globais */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2">
+          <CardKPI
+            titulo="Pago mês anterior"
+            valor={formatBRL(kpis.pagosMesAnterior.valor)}
+            sublinha={`${kpis.pagosMesAnterior.qtd} contas`}
+            cor="purple"
+            ativo={false}
+            onClick={() => {}}
+            icone={CalendarRange}
+          />
+          <CardKPI
+            titulo="Pago este mês"
+            valor={formatBRL(kpis.pagosMesAtual.valor)}
+            sublinha={`${kpis.pagosMesAtual.qtd} contas`}
+            cor="amber"
+            ativo={false}
+            onClick={() => {}}
+            icone={AlertOctagon}
+          />
+          <CardKPI
+            titulo="A pagar próximo mês"
+            valor={formatBRL(kpis.aPagarProxMes.valor)}
+            sublinha={`${kpis.aPagarProxMes.qtd} contas`}
+            cor="blue"
+            ativo={false}
+            onClick={() => {}}
+            icone={CalendarClock}
+          />
+          <CardKPI
+            titulo="Sem conciliação"
+            valor={formatBRL(kpis.semConciliacao.valor)}
+            sublinha={`${kpis.semConciliacao.qtd} pagas s/ OFX`}
+            cor="red"
+            ativo={false}
+            onClick={() => {}}
+            icone={RefreshCcw}
+          />
+          <CardKPI
+            titulo="Conciliado"
+            valor={formatBRL(kpis.conciliado.valor)}
+            sublinha={`${kpis.conciliado.qtd} batidas no extrato`}
+            cor="teal"
+            ativo={false}
+            onClick={() => {}}
+            icone={CheckCircle2}
+          />
+        </div>
 
-          <TabsContent value="a_pagar">
-            <AbaAPagar
-              lista={listaAPagar}
-              isLoading={isLoading}
-              mapParceiros={mapParceiros}
-              mapFormas={mapFormas}
-              mapCategorias={mapCategorias}
-              nfMap={nfMap}
-              statusFlagsMap={statusFlagsMap}
-              compromissoInfoMap={compromissoInfoMap}
-              onOpenConta={setContaIdDrawer}
-            />
-          </TabsContent>
+        {/* Pills Tudo / A pagar / Realizado */}
+        <div className="flex flex-wrap gap-2">
+          <KpiPill
+            label="Tudo"
+            count={listaAPagar.length + listaRealizado.length}
+            color="admin"
+            active={tipoParam === "tudo"}
+            onClick={() => setTipo("tudo")}
+            icon={<ListChecks className="h-3 w-3" />}
+          />
+          <KpiPill
+            label="A pagar"
+            count={listaAPagar.length}
+            color="amber"
+            active={tipoParam === "apagar"}
+            onClick={() => setTipo("apagar")}
+            icon={<CalendarClock className="h-3 w-3" />}
+          />
+          <KpiPill
+            label="Realizado"
+            count={listaRealizado.length}
+            color="emerald"
+            active={tipoParam === "realizado"}
+            onClick={() => setTipo("realizado")}
+            icon={<WalletIcon className="h-3 w-3" />}
+          />
+        </div>
 
-          <TabsContent value="realizado">
-            <AbaRealizado
-              lista={listaRealizado}
-              isLoading={isLoading}
-              mapParceiros={mapParceiros}
-              mapFormas={mapFormas}
-              mapCategorias={mapCategorias}
-              nfMap={nfMap}
-              statusFlagsMap={statusFlagsMap}
-              contadorMap={contadorMap}
-              compromissoInfoMap={compromissoInfoMap}
-              onOpenConta={setContaIdDrawer}
-            />
-          </TabsContent>
-        </Tabs>
+        {/* Filtros adicionais (Contador + Inconsistências + IA) */}
+        <div className="border border-zinc-200 bg-white/60 rounded-xl p-2">
+          <div className="flex gap-2 flex-wrap items-center">
+            <Select
+              value={filtroContador}
+              onValueChange={(v) =>
+                setFiltroContador(v as "todos" | "enviados" | "nao_enviados")
+              }
+            >
+              <SelectTrigger className="w-[180px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Contador: todos</SelectItem>
+                <SelectItem value="enviados">Contador: enviados</SelectItem>
+                <SelectItem value="nao_enviados">Contador: pendentes</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setMostrarSoInconsistentes(!mostrarSoInconsistentes)}
+              className={cn(
+                "gap-1",
+                mostrarSoInconsistentes &&
+                  "bg-amber-600 hover:bg-amber-700 text-white border-amber-600",
+              )}
+            >
+              <AlertTriangle className="h-3.5 w-3.5" />
+              Inconsistências
+            </Button>
+
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleAplicarIAEmMassa}
+              disabled={aplicandoIA}
+              className="gap-2 border-amber-300 text-amber-700 hover:bg-amber-50 ml-auto"
+            >
+              {aplicandoIA ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Sparkles className="h-3.5 w-3.5" />
+              )}
+              Resolver com IA
+            </Button>
+          </div>
+        </div>
+
+        {/* Tabela única */}
+        {isLoading ? (
+          <div className="space-y-2">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Skeleton key={i} className="h-12 w-full" />
+            ))}
+          </div>
+        ) : listaExibida.length === 0 ? (
+          <div className="py-12 text-center text-sm text-muted-foreground">
+            Nenhum lançamento com os filtros atuais.
+          </div>
+        ) : (
+          <>
+            <div className="border rounded-md overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Parceiro</TableHead>
+                    <TableHead>Descrição</TableHead>
+                    <TableHead>Vencimento</TableHead>
+                    <TableHead>Pago em</TableHead>
+                    <TableHead>Categoria</TableHead>
+                    <TableHead>Forma PG</TableHead>
+                    <TableHead className="text-right">Valor</TableHead>
+                    <TableHead>Tags</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {listaExibida.map((l) => {
+                    const sv = statusVisual(l);
+                    const isRealizado = sv === "paga";
+                    const atrasada = isAtrasada(l);
+                    const dias = diasAtraso(l);
+                    const formaNome = l.forma_pagamento_id && mapFormas[l.forma_pagamento_id];
+                    const categoriaNome = l.categoria_id && mapCategorias[l.categoria_id];
+                    const flags = statusFlagsMap.get(l.id);
+                    const docPendente = !!flags?.tem_doc_pendente;
+                    const remessa = contadorMap?.get(l.id);
+                    const enviadoContador = !!remessa;
+                    const qNF = getQualidadeNF(l, nfMap);
+                    const qCat = getQualidadeCategoria(l, nfMap);
+                    const qVinc = getQualidadeVinculado(l);
+                    const qConc = getQualidadeConciliado(l);
+                    const ci = compromissoInfoMap.get(l.id);
+                    const ehCartao =
+                      l.vinculada_cartao || l.origem_view === "cartao_lancamento";
+
+                    return (
+                      <TableRow
+                        key={l.id}
+                        className={cn(
+                          "cursor-pointer hover:bg-muted/50 transition-colors",
+                          // Borda lateral colorida (Doutrina #11 — reusa Contas a Pagar)
+                          classBordaTemporal(l.data_vencimento, atrasada),
+                        )}
+                        onClick={() => {
+                          if (l.origem_view === "cartao_lancamento") {
+                            navigate("/administrativo/faturas-cartao");
+                          } else {
+                            onOpenContaDrawer(l.id);
+                          }
+                        }}
+                      >
+                        <TableCell className="max-w-[180px]">
+                          <div className="truncate" title={nomeParceiro(l)}>
+                            {nomeParceiro(l)}
+                          </div>
+                        </TableCell>
+
+                        {/* Descrição (sem tag — tag migrou pra Forma PG) */}
+                        <TableCell className="max-w-[220px]">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span
+                              className="truncate text-xs text-muted-foreground"
+                              title={l.descricao}
+                            >
+                              {l.descricao}
+                            </span>
+                            {ci?.tipo === "recorrente" && (
+                              <span
+                                className="shrink-0"
+                                title={`Recorrente — ${ci.titulo}`}
+                              >
+                                <Repeat className="h-3.5 w-3.5 text-indigo-600" />
+                              </span>
+                            )}
+                          </div>
+                        </TableCell>
+
+                        <TableCell className="whitespace-nowrap text-xs">
+                          <div className="flex items-center gap-1.5">
+                            <span>{formatDateBR(l.data_vencimento)}</span>
+                            {atrasada && (
+                              <Badge
+                                variant="destructive"
+                                className="text-[10px] py-0 px-1.5"
+                              >
+                                {dias}d
+                              </Badge>
+                            )}
+                          </div>
+                        </TableCell>
+
+                        <TableCell className="whitespace-nowrap text-xs">
+                          {l.data_pagamento ? (
+                            formatDateBR(l.data_pagamento)
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                        </TableCell>
+
+                        <TableCell className="text-xs">
+                          <div className="flex items-center gap-1.5">
+                            {categoriaNome ? (
+                              <div className="truncate max-w-[160px]" title={categoriaNome}>
+                                {categoriaNome}
+                              </div>
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
+                            )}
+                            {l.categoria_inconsistente && (
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Badge
+                                      variant="outline"
+                                      className="text-[9px] py-0 px-1.5 h-4 border-amber-400 text-amber-700 bg-amber-50 gap-1 whitespace-nowrap shrink-0"
+                                    >
+                                      <AlertTriangle className="h-2.5 w-2.5" />
+                                      Inconsistente
+                                    </Badge>
+                                  </TooltipTrigger>
+                                  <TooltipContent className="max-w-xs">
+                                    <p className="text-xs">
+                                      {l.inconsistencia_motivo ||
+                                        "Categoria diverge da NF vinculada."}
+                                    </p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            )}
+                          </div>
+                        </TableCell>
+
+                        {/* Forma PG (com tag Cartão embaixo) */}
+                        <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
+                          <div className="flex flex-col gap-0.5">
+                            {(() => {
+                              if (!formaNome) return <span>—</span>;
+                              const ico = getMeioPagamentoIcon(formaNome);
+                              if (ico) {
+                                return (
+                                  <span
+                                    className="flex items-center gap-1.5 whitespace-nowrap"
+                                    title={formaNome}
+                                  >
+                                    <ico.Icon
+                                      className={`h-4 w-4 ${ico.cor} shrink-0`}
+                                    />
+                                    <span>{formaNome}</span>
+                                  </span>
+                                );
+                              }
+                              return <span>{formaNome}</span>;
+                            })()}
+                            {ehCartao && (
+                              <Badge
+                                variant="outline"
+                                className="text-[9px] py-0 px-1.5 h-4 border-violet-300 text-violet-700 bg-violet-50/50 gap-1 self-start"
+                              >
+                                <CreditCard className="h-2.5 w-2.5" />
+                                Cartão
+                                {l.fatura_vencimento && (
+                                  <span className="ml-0.5 opacity-80">
+                                    · venc{" "}
+                                    {new Date(l.fatura_vencimento).toLocaleDateString(
+                                      "pt-BR",
+                                    )}
+                                  </span>
+                                )}
+                              </Badge>
+                            )}
+                          </div>
+                        </TableCell>
+
+                        <TableCell className="text-right font-mono whitespace-nowrap">
+                          {formatBRL(l.valor)}
+                        </TableCell>
+
+                        {/* Coluna única de ícones de qualidade no fim */}
+                        <TableCell className="min-w-[140px]">
+                          <TooltipProvider>
+                            <div className="flex items-center gap-2">
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Receipt
+                                    className={cn(
+                                      "h-3.5 w-3.5 cursor-help",
+                                      corClass(qNF.cor),
+                                    )}
+                                    strokeWidth={2.2}
+                                  />
+                                </TooltipTrigger>
+                                <TooltipContent className="max-w-xs">
+                                  <p className="text-xs">📄 {qNF.motivo}</p>
+                                </TooltipContent>
+                              </Tooltip>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  {/* Categoria — IA habilitada apenas em realizadas */}
+                                  <FolderTree
+                                    className={cn(
+                                      "h-3.5 w-3.5",
+                                      corClass(qCat.cor),
+                                      isRealizado && qCat.temSugestaoIA
+                                        ? "cursor-pointer hover:scale-125 transition-transform"
+                                        : "cursor-help",
+                                    )}
+                                    strokeWidth={2.2}
+                                    onClick={
+                                      isRealizado && qCat.temSugestaoIA
+                                        ? (e) => {
+                                            e.stopPropagation();
+                                            setSugestaoMovId(l.id);
+                                          }
+                                        : undefined
+                                    }
+                                  />
+                                </TooltipTrigger>
+                                <TooltipContent className="max-w-xs">
+                                  <p className="text-xs">🏷️ {qCat.motivo}</p>
+                                </TooltipContent>
+                              </Tooltip>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Paperclip
+                                    className={cn(
+                                      "h-3.5 w-3.5 cursor-help",
+                                      docPendente ? "text-red-500" : "text-emerald-600",
+                                    )}
+                                    strokeWidth={2.2}
+                                  />
+                                </TooltipTrigger>
+                                <TooltipContent className="max-w-xs">
+                                  <p className="text-xs">
+                                    {docPendente
+                                      ? "Documento pendente"
+                                      : "Documento anexado/OK"}
+                                  </p>
+                                </TooltipContent>
+                              </Tooltip>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Link2
+                                    className={cn(
+                                      "h-3.5 w-3.5 cursor-help",
+                                      corClass(qVinc.cor),
+                                    )}
+                                    strokeWidth={2.2}
+                                  />
+                                </TooltipTrigger>
+                                <TooltipContent className="max-w-xs">
+                                  <p className="text-xs">🔗 {qVinc.motivo}</p>
+                                </TooltipContent>
+                              </Tooltip>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <CircleDollarSign
+                                    className={cn(
+                                      "h-3.5 w-3.5 cursor-help",
+                                      corClass(qConc.cor),
+                                    )}
+                                    strokeWidth={2.2}
+                                  />
+                                </TooltipTrigger>
+                                <TooltipContent className="max-w-xs">
+                                  <p className="text-xs">💰 {qConc.motivo}</p>
+                                </TooltipContent>
+                              </Tooltip>
+                              {/* Contador (só pra contas_pagar) */}
+                              {l.origem_view === "conta_pagar" && (
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <MailCheck
+                                      className={cn(
+                                        "h-3.5 w-3.5 cursor-help",
+                                        enviadoContador
+                                          ? "text-emerald-600"
+                                          : "text-zinc-300",
+                                      )}
+                                      strokeWidth={2.2}
+                                    />
+                                  </TooltipTrigger>
+                                  <TooltipContent className="max-w-xs">
+                                    <p className="text-xs">
+                                      {enviadoContador
+                                        ? `📨 Enviado em ${new Date(
+                                            remessa!.enviada_em,
+                                          ).toLocaleDateString("pt-BR")}${
+                                            remessa!.descricao
+                                              ? ` (${remessa!.descricao})`
+                                              : ""
+                                          }`
+                                        : "📭 Ainda não enviado ao contador"}
+                                    </p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              )}
+                            </div>
+                          </TooltipProvider>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {listaExibida.length}{" "}
+              {listaExibida.length === 1 ? "lançamento" : "lançamentos"}
+            </p>
+          </>
+        )}
       </div>
 
       <ContaPagarDetalheDrawer
         contaId={contaIdDrawer}
         onClose={() => setContaIdDrawer(null)}
       />
+
+      {sugestaoMovId && (
+        <SugestaoIADialog
+          movId={sugestaoMovId}
+          onClose={() => setSugestaoMovId(null)}
+          onApply={() => {
+            qc.invalidateQueries({ queryKey: ["lancamentos-caixa-banco"] });
+            setSugestaoMovId(null);
+          }}
+        />
+      )}
+
+      <FilaRevisaoIADialog open={filaIAOpen} onClose={() => setFilaIAOpen(false)} />
     </div>
   );
+
+  function onOpenContaDrawer(id: string) {
+    setContaIdDrawer(id);
+  }
 }
