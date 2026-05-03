@@ -6259,10 +6259,13 @@ export type Database = {
           grupo_id: string | null
           id: string
           logradouro: string | null
+          meio_pagamento_padrao: string | null
           nome_fantasia: string | null
           numero: string | null
           observacao: string | null
           origem: string | null
+          pix_chave: string | null
+          pix_tipo: string | null
           razao_social: string
           segmento: string | null
           tags: string[] | null
@@ -6289,10 +6292,13 @@ export type Database = {
           grupo_id?: string | null
           id?: string
           logradouro?: string | null
+          meio_pagamento_padrao?: string | null
           nome_fantasia?: string | null
           numero?: string | null
           observacao?: string | null
           origem?: string | null
+          pix_chave?: string | null
+          pix_tipo?: string | null
           razao_social: string
           segmento?: string | null
           tags?: string[] | null
@@ -6319,10 +6325,13 @@ export type Database = {
           grupo_id?: string | null
           id?: string
           logradouro?: string | null
+          meio_pagamento_padrao?: string | null
           nome_fantasia?: string | null
           numero?: string | null
           observacao?: string | null
           origem?: string | null
+          pix_chave?: string | null
+          pix_tipo?: string | null
           razao_social?: string
           segmento?: string | null
           tags?: string[] | null

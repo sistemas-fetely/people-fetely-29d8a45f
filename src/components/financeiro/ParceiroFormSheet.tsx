@@ -50,6 +50,16 @@ export type Parceiro = {
   centro_custo_padrao: string | null;
   tags: string[] | null;
   grupo_id: string | null;
+  meio_pagamento_padrao: string | null;
+  pix_chave: string | null;
+  pix_tipo: string | null;
+  dados_bancarios: {
+    banco?: string | null;
+    agencia?: string | null;
+    conta?: string | null;
+    tipo_conta?: string | null;
+    titular?: string | null;
+  } | null;
   ativo: boolean | null;
   observacao: string | null;
   origem: string | null;
@@ -112,6 +122,14 @@ export function ParceiroFormSheet({ open, onOpenChange, editing, categorias, onS
   const [grupoId, setGrupoId] = useState<string | null>(null);
   const [tagInput, setTagInput] = useState("");
   const [observacao, setObservacao] = useState("");
+  const [meioPagamentoPadrao, setMeioPagamentoPadrao] = useState<string>("");
+  const [pixTipo, setPixTipo] = useState<string>("");
+  const [pixChave, setPixChave] = useState("");
+  const [bcoBanco, setBcoBanco] = useState("");
+  const [bcoAgencia, setBcoAgencia] = useState("");
+  const [bcoConta, setBcoConta] = useState("");
+  const [bcoTipoConta, setBcoTipoConta] = useState<string>("");
+  const [bcoTitular, setBcoTitular] = useState("");
   const [duplicateWarn, setDuplicateWarn] = useState<string | null>(null);
 
   useEffect(() => {
@@ -136,6 +154,14 @@ export function ParceiroFormSheet({ open, onOpenChange, editing, categorias, onS
       setTags(editing.tags || []);
       setGrupoId(editing.grupo_id ?? null);
       setObservacao(editing.observacao || "");
+      setMeioPagamentoPadrao(editing.meio_pagamento_padrao || "");
+      setPixTipo(editing.pix_tipo || "");
+      setPixChave(editing.pix_chave || "");
+      setBcoBanco(editing.dados_bancarios?.banco || "");
+      setBcoAgencia(editing.dados_bancarios?.agencia || "");
+      setBcoConta(editing.dados_bancarios?.conta || "");
+      setBcoTipoConta(editing.dados_bancarios?.tipo_conta || "");
+      setBcoTitular(editing.dados_bancarios?.titular || "");
     } else {
       setTiposSelecionados(["fornecedor"]);
       setCnpj(prefill?.cnpj ? maskCnpj(prefill.cnpj) : "");
@@ -158,6 +184,14 @@ export function ParceiroFormSheet({ open, onOpenChange, editing, categorias, onS
       setTags([]);
       setGrupoId(null);
       setObservacao("");
+      setMeioPagamentoPadrao("");
+      setPixTipo("");
+      setPixChave("");
+      setBcoBanco("");
+      setBcoAgencia("");
+      setBcoConta("");
+      setBcoTipoConta("");
+      setBcoTitular("");
     }
     setDuplicateWarn(null);
     setTagInput("");
@@ -237,6 +271,19 @@ export function ParceiroFormSheet({ open, onOpenChange, editing, categorias, onS
         centro_custo_padrao: centroCusto || null,
         tags: tags.length ? tags : null,
         observacao: observacao.trim() || null,
+        meio_pagamento_padrao: meioPagamentoPadrao || null,
+        pix_tipo: pixTipo || null,
+        pix_chave: pixChave.trim() || null,
+        dados_bancarios:
+          bcoBanco.trim() || bcoAgencia.trim() || bcoConta.trim() || bcoTitular.trim() || bcoTipoConta
+            ? {
+                banco: bcoBanco.trim() || null,
+                agencia: bcoAgencia.trim() || null,
+                conta: bcoConta.trim() || null,
+                tipo_conta: bcoTipoConta || null,
+                titular: bcoTitular.trim() || null,
+              }
+            : null,
         ativo: true,
         origem: editing?.origem || "manual",
       };
@@ -470,6 +517,103 @@ export function ParceiroFormSheet({ open, onOpenChange, editing, categorias, onS
                   ))}
                 </div>
               )}
+            </div>
+          </div>
+
+          {/* Pagamento */}
+          <div className="border-t pt-4">
+            <p className="text-sm font-medium mb-3">Pagamento</p>
+
+            <div className="mb-3">
+              <Label>Meio de pagamento padrão</Label>
+              <Select
+                value={meioPagamentoPadrao || "_none"}
+                onValueChange={(v) => setMeioPagamentoPadrao(v === "_none" ? "" : v)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Nenhum" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="_none">Nenhum</SelectItem>
+                  <SelectItem value="pix">PIX</SelectItem>
+                  <SelectItem value="boleto">Boleto</SelectItem>
+                  <SelectItem value="ted">TED / Transferência</SelectItem>
+                  <SelectItem value="cartao_credito">Cartão de Crédito</SelectItem>
+                  <SelectItem value="cartao_debito">Cartão de Débito</SelectItem>
+                  <SelectItem value="debito_automatico">Débito Automático</SelectItem>
+                  <SelectItem value="dinheiro">Dinheiro</SelectItem>
+                  <SelectItem value="cheque">Cheque</SelectItem>
+                  <SelectItem value="outro">Outro</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground mt-1">
+                Sugerido automaticamente em novas contas a pagar deste parceiro.
+              </p>
+            </div>
+
+            {/* PIX */}
+            <div className="grid grid-cols-3 gap-3 mb-3">
+              <div>
+                <Label>Tipo de chave PIX</Label>
+                <Select value={pixTipo || "_none"} onValueChange={(v) => setPixTipo(v === "_none" ? "" : v)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="—" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="_none">—</SelectItem>
+                    <SelectItem value="cnpj">CNPJ</SelectItem>
+                    <SelectItem value="cpf">CPF</SelectItem>
+                    <SelectItem value="email">E-mail</SelectItem>
+                    <SelectItem value="telefone">Telefone</SelectItem>
+                    <SelectItem value="aleatoria">Aleatória</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="col-span-2">
+                <Label>Chave PIX</Label>
+                <Input
+                  value={pixChave}
+                  onChange={(e) => setPixChave(e.target.value)}
+                  placeholder="ex: 00.000.000/0000-00"
+                />
+              </div>
+            </div>
+
+            {/* Dados bancários */}
+            <p className="text-xs font-medium text-muted-foreground mt-4 mb-2">Dados bancários</p>
+            <div className="grid grid-cols-2 gap-3 mb-3">
+              <div>
+                <Label>Banco</Label>
+                <Input value={bcoBanco} onChange={(e) => setBcoBanco(e.target.value)} placeholder="ex: 341 - Itaú" />
+              </div>
+              <div>
+                <Label>Titular</Label>
+                <Input value={bcoTitular} onChange={(e) => setBcoTitular(e.target.value)} />
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <Label>Agência</Label>
+                <Input value={bcoAgencia} onChange={(e) => setBcoAgencia(e.target.value)} />
+              </div>
+              <div>
+                <Label>Conta</Label>
+                <Input value={bcoConta} onChange={(e) => setBcoConta(e.target.value)} />
+              </div>
+              <div>
+                <Label>Tipo</Label>
+                <Select value={bcoTipoConta || "_none"} onValueChange={(v) => setBcoTipoConta(v === "_none" ? "" : v)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="—" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="_none">—</SelectItem>
+                    <SelectItem value="corrente">Corrente</SelectItem>
+                    <SelectItem value="poupanca">Poupança</SelectItem>
+                    <SelectItem value="pagamento">Pagamento</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
 
