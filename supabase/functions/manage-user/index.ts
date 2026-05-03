@@ -841,18 +841,23 @@ Deno.serve(async (req) => {
       const link = Deno.env.get("SITE_URL") || "https://people-fetely.lovable.app";
 
       try {
-        await adminClient.functions.invoke("send-transactional-email", {
-          body: {
-            templateName,
-            recipientEmail: targetEmail,
-            idempotencyKey: `reenvio-${target_user_id}-${Date.now()}`,
-            templateData: {
-              nome,
-              email_corporativo: targetEmail,
-              link,
-            },
+        const r = await invokeSendTransactionalEmail(supabaseUrl, anonKey, authHeader, {
+          templateName,
+          recipientEmail: targetEmail,
+          idempotencyKey: `reenvio-${target_user_id}-${Date.now()}`,
+          templateData: {
+            nome,
+            email_corporativo: targetEmail,
+            link,
           },
         });
+        if (!r.ok) {
+          console.error("[reenviar_link_acesso] Falha em send-transactional-email:", r.status, r.body);
+          return new Response(
+            JSON.stringify({ error: `Link gerado mas falha ao enviar email (${r.status}).` }),
+            { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          );
+        }
       } catch (e) {
         console.error("[reenviar_link_acesso] Falha ao enviar email:", e);
         return new Response(JSON.stringify({ error: "Link gerado mas falha ao enviar email." }), {
