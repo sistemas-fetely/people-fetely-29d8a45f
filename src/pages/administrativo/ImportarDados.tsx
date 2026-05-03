@@ -174,15 +174,10 @@ export default function ImportarDados() {
       <div>
         <h2 className="text-lg font-semibold mb-1">Importar NFs</h2>
         <p className="text-sm text-muted-foreground mb-3">
-          Importação no repositório fiscal. XML cobre NF-e (produto) e NFS-e ABRASF (serviço).
-          Recibos virão como próximo formato suportado.
+          Selecione XMLs ou PDFs. NFs vão para o stage onde poderão ser processadas,
+          classificadas e vinculadas a Contas a Pagar.
         </p>
-        <div className="grid gap-4 md:grid-cols-2">
-          {/* CSV Qive ocultado — código preservado pra reativar quando necessário */}
-          {/* <ImportadorCsvQive categorias={categorias} /> */}
-          <ImportadorXmlNFe categorias={categorias} />
-          <ImportadorPdfDanfe categorias={categorias} />
-        </div>
+        <ImportadorNFs />
       </div>
 
       {/* Extratos & Faturas */}
