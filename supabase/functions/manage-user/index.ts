@@ -536,21 +536,22 @@ Deno.serve(async (req) => {
         console.error("[create_user_from_colaborador] Erro ao gerar link de recuperação:", e);
       }
 
-      // 8. E-mail de boas-vindas (corporativo)
+      // 8. E-mail de boas-vindas (corporativo) — Doutrina #15
       try {
-        await adminClient.functions.invoke("send-transactional-email", {
-          body: {
-            templateName: "boas-vindas-portal",
-            recipientEmail: emailCorporativo,
-            idempotencyKey: `boas-vindas-${novoUserId}-${Date.now()}`,
-            templateData: {
-              nome: full_name,
-              email_corporativo: emailCorporativo,
-              email_pessoal: emailPessoal,
-              link: Deno.env.get("SITE_URL") || "https://people-fetely.lovable.app",
-            },
+        const r = await invokeSendTransactionalEmail(supabaseUrl, anonKey, authHeader, {
+          templateName: "boas-vindas-portal",
+          recipientEmail: emailCorporativo,
+          idempotencyKey: `boas-vindas-${novoUserId}-${Date.now()}`,
+          templateData: {
+            nome: full_name,
+            email_corporativo: emailCorporativo,
+            email_pessoal: emailPessoal,
+            link: Deno.env.get("SITE_URL") || "https://people-fetely.lovable.app",
           },
         });
+        if (!r.ok) {
+          console.error("[create_user_from_colaborador] Falha em send-transactional-email (corporativo):", r.status, r.body);
+        }
       } catch (e) {
         console.error("[create_user_from_colaborador] Erro ao enviar e-mail de boas-vindas:", e);
       }
@@ -558,17 +559,18 @@ Deno.serve(async (req) => {
       // 8b. Aviso ao email pessoal (se houver e for diferente do corporativo)
       if (emailPessoal && emailPessoal.toLowerCase() !== emailCorporativo.toLowerCase()) {
         try {
-          await adminClient.functions.invoke("send-transactional-email", {
-            body: {
-              templateName: "aviso-email-pessoal",
-              recipientEmail: emailPessoal,
-              idempotencyKey: `aviso-pessoal-${novoUserId}-${Date.now()}`,
-              templateData: {
-                nome: full_name,
-                email_corporativo: emailCorporativo,
-              },
+          const r = await invokeSendTransactionalEmail(supabaseUrl, anonKey, authHeader, {
+            templateName: "aviso-email-pessoal",
+            recipientEmail: emailPessoal,
+            idempotencyKey: `aviso-pessoal-${novoUserId}-${Date.now()}`,
+            templateData: {
+              nome: full_name,
+              email_corporativo: emailCorporativo,
             },
           });
+          if (!r.ok) {
+            console.error("[create_user_from_colaborador] Falha em send-transactional-email (pessoal):", r.status, r.body);
+          }
         } catch (e) {
           console.error("[create_user_from_colaborador] Aviso email pessoal falhou:", e);
         }
