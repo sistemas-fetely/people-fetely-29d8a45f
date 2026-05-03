@@ -5,6 +5,22 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Limite de PDF: AI Gateway tem limite de payload + base64 cresce ~33%.
+// 8MB de PDF vira ~11MB de base64 + JSON wrapper. Acima disso é arriscado.
+const MAX_PDF_BYTES = 8 * 1024 * 1024;
+
+// Conversão base64 chunked — evita estourar argumentos do String.fromCharCode
+// em PDFs maiores. O loop char-by-char anterior consumia memória O(n) extra.
+function uint8ArrayToBase64(bytes: Uint8Array): string {
+  const chunkSize = 0x8000;
+  const parts: string[] = [];
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    const chunk = bytes.subarray(i, i + chunkSize);
+    parts.push(String.fromCharCode(...chunk));
+  }
+  return btoa(parts.join(""));
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -43,16 +59,25 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Validação de tamanho ANTES de carregar em memória
+    if (file.size > MAX_PDF_BYTES) {
+      console.error(`PDF acima do limite: ${file.size} bytes (max ${MAX_PDF_BYTES})`);
+      return new Response(JSON.stringify({
+        error: `PDF muito grande (${(file.size / 1024 / 1024).toFixed(1)}MB). Limite: ${MAX_PDF_BYTES / 1024 / 1024}MB.`,
+      }), {
+        status: 413,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    console.log(`Processando PDF: ${file.name} (${(file.size / 1024).toFixed(1)}KB)`);
+
     const arrayBuffer = await file.arrayBuffer();
     const bytes = new Uint8Array(arrayBuffer);
-    let binary = "";
-    for (let i = 0; i < bytes.length; i++) {
-      binary += String.fromCharCode(bytes[i]);
-    }
-    const base64 = btoa(binary);
+    const base64 = uint8ArrayToBase64(bytes);
 
     // ============================================
-    // PROMPT MULTI-TIPO: NF-e, NFS-e, Recibo
+    // PROMPT MULTI-TIPO: NF-e, NFS-e, Recibo, Boleto
     // ============================================
     const systemPrompt = `Você é um extrator de dados de documentos fiscais e financeiros.
 
@@ -76,24 +101,25 @@ Responda APENAS com JSON neste formato (sem markdown, sem explicações):
   "data_emissao": string formato YYYY-MM-DD,
   "data_vencimento": string formato YYYY-MM-DD ou null,
   "descricao": string (descrição dos itens/serviços),
-  "numero_documento": string (número da NF para nfe/nfse, número do recibo/invoice, OU para boleto: "Nosso Número" ou "Número do Documento"),
+  "numero_documento": string (número da NF para nfe/nfse, número do recibo/invoice, OU para boleto: "Nosso Número" ou "Número do Documento" do banco),
   "serie": string ou null (série, só pra NF-e/NFS-e brasileiras),
-  "chave_acesso": string ou null (chave de acesso de 44 dígitos pra NF-e, ID do InfNfse pra NFS-e, null pra recibo e boleto),
+  "chave_acesso": string ou null (EXATAMENTE 44 dígitos pra NF-e, ID do InfNfse pra NFS-e. **OBRIGATORIAMENTE null pra recibo E boleto** — NUNCA preencher chave_acesso quando tipo_documento for boleto, mesmo que haja números longos no documento — esses são linha digitável, não chave.),
   "fornecedor_cnpj": string ou null (CNPJ do prestador/emissor — para boleto, é o CNPJ do BENEFICIÁRIO, apenas números, null se estrangeiro),
   "fornecedor_razao_social": string (razão social do prestador/emissor — para boleto, é a razão social do BENEFICIÁRIO),
   "linha_digitavel": string ou null (47 dígitos da linha digitável FEBRABAN, formato livre — só preencher se tipo_documento='boleto'),
   "numero_parcela": number ou null (número da parcela atual, ex: 3 em "3/8" — só pra boleto parcelado),
   "total_parcelas": number ou null (total de parcelas, ex: 8 em "3/8" — só pra boleto parcelado),
-  "numero_documento_referencia": string ou null (texto livre com referência à NF que o boleto cobra, se mencionado no histórico/demonstrativo do boleto, ex: "ref NF 11151" → preencher "11151" — só pra boleto)
+  "numero_documento_referencia": string ou null (número da NF que o boleto cobra, se mencionado no histórico/demonstrativo, ex: "ref NF 11151" → "11151". Se boleto NÃO cita NF, deixar null. Só pra boleto.)
 }
 
 REGRAS DE BOLETO:
-- Sinal mais forte de boleto: presença de LINHA DIGITÁVEL (47 dígitos com pontos e espaços padrão FEBRABAN)
+- Sinal mais forte: LINHA DIGITÁVEL (47 dígitos com pontos e espaços padrão FEBRABAN)
 - Outro sinal forte: código de barras horizontal de 44 posições no rodapé
 - Se houver NF-e DANFE NA MESMA PÁGINA do boleto, classifique como "nfe" (DANFE manda) e NÃO preencha campos de boleto
-- Boleto avulso (sem DANFE junto): tipo_documento="boleto", chave_acesso=null
-- numero_parcela e total_parcelas: extrair de textos como "3/8", "Parcela 3 de 8", "3 de 8"
-- numero_documento_referencia: procurar "ref NF X", "Refere-se à NF X", "Histórico: NF X" no demonstrativo do boleto. Se não houver, deixar null.
+- Boleto avulso (sem DANFE junto): tipo_documento="boleto", chave_acesso=null SEMPRE
+- numero_parcela e total_parcelas: extrair de "3/8", "Parcela 3 de 8", "3 de 8"
+- numero_documento_referencia: procurar "ref NF X", "Refere-se à NF X", "Histórico: NF X" no demonstrativo. Se não achar, deixar null. NUNCA inventar.
+- linha_digitavel é o ÚNICO lugar onde a sequência de 47 dígitos do FEBRABAN aparece. NÃO copiar pra chave_acesso.
 
 REGRAS DE MOEDA — LEIA COM ATENÇÃO:
 
@@ -144,9 +170,13 @@ REGRAS GERAIS:
 
     if (!aiResponse.ok) {
       const errText = await aiResponse.text();
-      console.error("AI Gateway error:", errText);
-      return new Response(JSON.stringify({ error: "Erro ao processar PDF com IA" }), {
-        status: 500,
+      console.error("AI Gateway error:", aiResponse.status, errText);
+      return new Response(JSON.stringify({
+        error: "Erro ao processar PDF com IA",
+        ai_status: aiResponse.status,
+        ai_detail: errText.slice(0, 500),
+      }), {
+        status: 502,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -193,7 +223,7 @@ REGRAS GERAIS:
       chave_acesso: parsed.chave_acesso || null,
       fornecedor_cnpj: parsed.fornecedor_cnpj || null,
       fornecedor_razao_social: parsed.fornecedor_razao_social || null,
-      // 🆕 Campos específicos de boleto (null pra outros tipos)
+      // Campos específicos de boleto (null pra outros tipos)
       linha_digitavel: parsed.tipo_documento === "boleto" ? (parsed.linha_digitavel || null) : null,
       numero_parcela: parsed.tipo_documento === "boleto" && typeof parsed.numero_parcela === "number" ? parsed.numero_parcela : null,
       total_parcelas: parsed.tipo_documento === "boleto" && typeof parsed.total_parcelas === "number" ? parsed.total_parcelas : null,
@@ -201,36 +231,48 @@ REGRAS GERAIS:
     };
 
     // ============================================
-    // DEFESA EM PROFUNDIDADE: corrige inconsistências de moeda
+    // DEFESA EM PROFUNDIDADE: corrige inconsistências
     // ============================================
     // Caso 1: moeda='BRL' mas tem valor_origem/taxa preenchidos
-    //         → IA confundiu moeda. Se há conversão, moeda original NÃO é BRL.
-    //         → Limpa valor_origem e taxa_conversao (mantém moeda BRL coerente)
     if (data.moeda === "BRL" && (data.valor_origem !== null || data.taxa_conversao !== null)) {
-      console.warn("Inconsistência detectada: moeda=BRL com conversão preenchida. Limpando campos de conversão.");
+      console.warn("Inconsistência: moeda=BRL com conversão preenchida. Limpando.");
       data.valor_origem = null;
       data.taxa_conversao = null;
     }
 
-    // Caso 2: valor_origem preenchido mas taxa_conversao NULL (ou vice-versa)
-    //         → constraint "ambos ou nenhum". Limpa ambos.
+    // Caso 2: valor_origem ou taxa_conversao isolado (precisa ambos ou nenhum)
     if ((data.valor_origem === null) !== (data.taxa_conversao === null)) {
-      console.warn("Inconsistência: apenas um de valor_origem/taxa_conversao preenchido. Limpando ambos.");
+      console.warn("Inconsistência: apenas um de valor_origem/taxa_conversao. Limpando ambos.");
       data.valor_origem = null;
       data.taxa_conversao = null;
     }
 
-    // Caso 3: moeda != BRL mas SEM valor_origem/taxa
-    //         → cobrança nativa em moeda estrangeira. valor já está na moeda dela.
-    //         → Sistema espera valor SEMPRE em BRL. Se não tem como converter, falha graciosa.
-    //         → Por enquanto: deixa passar (campo valor pode ficar incoerente, mas não bloqueia)
+    // Caso 3: chave_acesso em recibo ou boleto — IA confundiu, limpa
+    if (data.chave_acesso && (data.tipo_documento === "boleto" || data.tipo_documento === "recibo")) {
+      console.warn(`Inconsistência: ${data.tipo_documento} com chave_acesso preenchida. Limpando.`);
+      data.chave_acesso = null;
+    }
+
+    // Caso 4: chave_acesso de NF-e tem que ter exatamente 44 dígitos (validação de formato)
+    if (data.chave_acesso && data.tipo_documento === "nfe") {
+      const digitsOnly = String(data.chave_acesso).replace(/\D/g, "");
+      if (digitsOnly.length === 44) {
+        data.chave_acesso = digitsOnly;
+      } else {
+        console.warn(`chave_acesso de NF-e com tamanho inválido (${digitsOnly.length} dígitos). Limpando.`);
+        data.chave_acesso = null;
+      }
+    }
 
     return new Response(JSON.stringify({ success: true, data }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {
     console.error("Error:", err);
-    return new Response(JSON.stringify({ error: "Erro interno" }), {
+    return new Response(JSON.stringify({
+      error: "Erro interno",
+      detail: err instanceof Error ? err.message : String(err),
+    }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
