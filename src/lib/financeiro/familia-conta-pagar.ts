@@ -39,7 +39,7 @@ export type CampoConta =
   | "data_vencimento"
   | "categoria"
   | "centro_custo"
-  | "forma_pagamento"
+  | "forma_pagamento_id"
   | "pago_em_conta"
   | "nf_numero_serie"
   | "nf_chave"
@@ -91,9 +91,9 @@ const STATUS_PRE_PAGAMENTO = ["aprovado", "aguardando_pagamento"];
  *
  * Regras-mestras:
  * - Status terminal (paga/cancelado)  → tudo readonly (regra global existente)
- * - Família B (cartão)                → forma_pagamento e pago_em_conta READONLY
+ * - Família B (cartão)                → forma_pagamento_id e pago_em_conta READONLY
  *                                        (vem da fatura, não se decide aqui)
- * - Família C (OFX já saiu)           → forma_pagamento e pago_em_conta READONLY
+ * - Família C (OFX já saiu)           → forma_pagamento_id e pago_em_conta READONLY
  *                                        (vem da transação OFX)
  * - Família A em pré-pagamento        → pago_em_conta vira OBRIGATÓRIO
  *                                        (precisa pra lançar em movimentação)
@@ -116,7 +116,7 @@ export function getCamposVisiveis(
       data_vencimento: "readonly",
       categoria: "readonly",
       centro_custo: "readonly",
-      forma_pagamento: "readonly",
+      forma_pagamento_id: "readonly",
       pago_em_conta: "readonly",
       nf_numero_serie: "readonly",
       nf_chave: "readonly",
@@ -131,7 +131,7 @@ export function getCamposVisiveis(
       data_vencimento: "readonly",     // herdado da fatura
       categoria: "editar",
       centro_custo: "editar",
-      forma_pagamento: "readonly",     // = "Cartão de Crédito"
+      forma_pagamento_id: "readonly",     // = "Cartão de Crédito"
       pago_em_conta: "readonly",       // = cartão (paga via fatura)
       nf_numero_serie: "editar",
       nf_chave: "oculto",
@@ -145,7 +145,7 @@ export function getCamposVisiveis(
       data_vencimento: "readonly",     // = data da transação OFX
       categoria: "editar",
       centro_custo: "editar",
-      forma_pagamento: "readonly",     // = transferência (vem do OFX)
+      forma_pagamento_id: "readonly",     // = transferência (vem do OFX)
       pago_em_conta: "readonly",       // = conta bancária do OFX
       nf_numero_serie: "editar",
       nf_chave: "oculto",
@@ -159,7 +159,7 @@ export function getCamposVisiveis(
     data_vencimento: "editar",
     categoria: "editar",
     centro_custo: "editar",
-    forma_pagamento: "editar",
+    forma_pagamento_id: "editar",
     pago_em_conta: prePagamento ? "obrigatorio" : "editar",
     nf_numero_serie: "editar",
     nf_chave: "oculto",
@@ -172,7 +172,7 @@ export function getCamposVisiveis(
 // ============================================================
 
 /**
- * Códigos de forma_pagamento que disparam vermelho (cobrança útil).
+ * Códigos de forma_pagamento_id que disparam vermelho (cobrança útil).
  * Lista cravada com Flavio:
  * - PIX, boleto, transferência → fornecedor precisa receber dados
  * - Cartão (qualquer), débito automático, dinheiro, cheque → não cobra

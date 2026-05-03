@@ -1,5 +1,5 @@
 import {
-  LayoutDashboard, Wallet, ListTree, Receipt, FileBarChart2,
+  LayoutDashboard, Wallet, ListTree, Receipt,
   TrendingUp, ArrowDownToLine, ArrowUpFromLine, Upload,
   FileSignature, Building2, ShieldCheck, FolderArchive,
   Users, Monitor, Network, Landmark, LogOut, ClipboardList,
@@ -43,7 +43,6 @@ const financeiroItems: MenuItem[] = [
 const caixaBancoItems: MenuItem[] = [
   { title: "Movimentações", url: "/administrativo/caixa-banco", icon: Wallet },
   { title: "Compromissos", url: "/administrativo/compromissos", icon: Repeat },
-  { title: "DRE", url: "/administrativo/dre", icon: FileBarChart2 },
   { title: "Fluxo de Caixa", url: "/administrativo/fluxo-caixa", icon: TrendingUp },
   { title: "Fluxo Futuro", url: "/administrativo/fluxo-futuro", icon: Calendar },
   { title: "Contas Bancárias", url: "/administrativo/caixa-banco/contas", icon: Landmark },
