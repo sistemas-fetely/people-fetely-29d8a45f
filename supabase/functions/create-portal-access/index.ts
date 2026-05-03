@@ -125,11 +125,20 @@ Deno.serve(async (req) => {
         await adminClient.from("contratos_pj").update({ user_id: userId }).eq("id", contrato_pj_id);
       }
 
-      // Send welcome email with temporary password
+      // Send welcome email with temporary password — Doutrina #15: forward JWT do user
+      // (não usar adminClient.functions.invoke que envia service_role e quebra
+      // o auth.getUser dentro de send-transactional-email)
       if (!existingUser) {
         try {
-          await adminClient.functions.invoke("send-transactional-email", {
-            body: {
+          const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+          const sendResp = await fetch(`${supabaseUrl}/functions/v1/send-transactional-email`, {
+            method: "POST",
+            headers: {
+              "Authorization": authHeader,
+              "apikey": anonKey,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
               templateName: "boas-vindas-portal",
               recipientEmail: email,
               idempotencyKey: `boas-vindas-${userId}-${Date.now()}`,
@@ -139,10 +148,14 @@ Deno.serve(async (req) => {
                 senha: tempPassword,
                 link: "https://people-fetely.lovable.app",
               },
-            },
+            }),
           });
+          if (!sendResp.ok) {
+            const errText = await sendResp.text();
+            console.error("[create-portal-access] Falha em send-transactional-email:", sendResp.status, errText);
+          }
         } catch (emailErr) {
-          console.error("Erro ao enviar email de boas-vindas:", emailErr);
+          console.error("[create-portal-access] Erro ao enviar email de boas-vindas:", emailErr);
         }
       }
 

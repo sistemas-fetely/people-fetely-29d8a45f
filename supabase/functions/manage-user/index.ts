@@ -5,6 +5,36 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+/**
+ * Doutrina #15 — JWT forward Edge→Edge.
+ * Não usar adminClient.functions.invoke() pra chamar send-transactional-email:
+ * isso envia o token de service_role e a função destino faz auth.getUser(token),
+ * que falha com 401 (service_role não é user). Forward do JWT ORIGINAL do user.
+ */
+async function invokeSendTransactionalEmail(
+  supabaseUrl: string,
+  anonKey: string,
+  authHeader: string,
+  payload: Record<string, unknown>,
+): Promise<{ ok: boolean; status: number; body: unknown }> {
+  const resp = await fetch(`${supabaseUrl}/functions/v1/send-transactional-email`, {
+    method: "POST",
+    headers: {
+      "Authorization": authHeader,
+      "apikey": anonKey,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+  let parsed: unknown = null;
+  try {
+    parsed = await resp.json();
+  } catch {
+    parsed = null;
+  }
+  return { ok: resp.ok, status: resp.status, body: parsed };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -187,22 +217,23 @@ Deno.serve(async (req) => {
         console.error("Erro ao gerar link de recuperação:", linkErr);
       }
 
-      // Send welcome email
+      // Send welcome email — Doutrina #15: forward JWT do user
       try {
-        await adminClient.functions.invoke("send-transactional-email", {
-          body: {
-            templateName: "boas-vindas-portal",
-            recipientEmail: email,
-            idempotencyKey: `boas-vindas-${newUser.user.id}`,
-            templateData: {
-              nome: full_name,
-              email,
-              link: Deno.env.get("SITE_URL") || "https://people-fetely.lovable.app",
-            },
+        const r = await invokeSendTransactionalEmail(supabaseUrl, anonKey, authHeader, {
+          templateName: "boas-vindas-portal",
+          recipientEmail: email,
+          idempotencyKey: `boas-vindas-${newUser.user.id}`,
+          templateData: {
+            nome: full_name,
+            email,
+            link: Deno.env.get("SITE_URL") || "https://people-fetely.lovable.app",
           },
         });
+        if (!r.ok) {
+          console.error("[create_user_standalone] Falha em send-transactional-email:", r.status, r.body);
+        }
       } catch (emailErr) {
-        console.error("Erro ao enviar e-mail de boas-vindas:", emailErr);
+        console.error("[create_user_standalone] Erro ao enviar e-mail de boas-vindas:", emailErr);
       }
 
       return new Response(JSON.stringify({ success: true, user_id: newUser.user.id }), {
@@ -321,20 +352,21 @@ Deno.serve(async (req) => {
       }
 
       try {
-        await adminClient.functions.invoke("send-transactional-email", {
-          body: {
-            templateName: "boas-vindas-portal",
-            recipientEmail: email,
-            idempotencyKey: `boas-vindas-${userId}-${Date.now()}`,
-            templateData: {
-              nome: full_name,
-              email,
-              link: Deno.env.get("SITE_URL") || "https://people-fetely.lovable.app",
-            },
+        const r = await invokeSendTransactionalEmail(supabaseUrl, anonKey, authHeader, {
+          templateName: "boas-vindas-portal",
+          recipientEmail: email,
+          idempotencyKey: `boas-vindas-${userId}-${Date.now()}`,
+          templateData: {
+            nome: full_name,
+            email,
+            link: Deno.env.get("SITE_URL") || "https://people-fetely.lovable.app",
           },
         });
+        if (!r.ok) {
+          console.error("[create_user_v2] Falha em send-transactional-email:", r.status, r.body);
+        }
       } catch (emailErr) {
-        console.error("Erro ao enviar e-mail de boas-vindas:", emailErr);
+        console.error("[create_user_v2] Erro ao enviar e-mail de boas-vindas:", emailErr);
       }
 
       return new Response(JSON.stringify({
@@ -504,21 +536,22 @@ Deno.serve(async (req) => {
         console.error("[create_user_from_colaborador] Erro ao gerar link de recuperação:", e);
       }
 
-      // 8. E-mail de boas-vindas (corporativo)
+      // 8. E-mail de boas-vindas (corporativo) — Doutrina #15
       try {
-        await adminClient.functions.invoke("send-transactional-email", {
-          body: {
-            templateName: "boas-vindas-portal",
-            recipientEmail: emailCorporativo,
-            idempotencyKey: `boas-vindas-${novoUserId}-${Date.now()}`,
-            templateData: {
-              nome: full_name,
-              email_corporativo: emailCorporativo,
-              email_pessoal: emailPessoal,
-              link: Deno.env.get("SITE_URL") || "https://people-fetely.lovable.app",
-            },
+        const r = await invokeSendTransactionalEmail(supabaseUrl, anonKey, authHeader, {
+          templateName: "boas-vindas-portal",
+          recipientEmail: emailCorporativo,
+          idempotencyKey: `boas-vindas-${novoUserId}-${Date.now()}`,
+          templateData: {
+            nome: full_name,
+            email_corporativo: emailCorporativo,
+            email_pessoal: emailPessoal,
+            link: Deno.env.get("SITE_URL") || "https://people-fetely.lovable.app",
           },
         });
+        if (!r.ok) {
+          console.error("[create_user_from_colaborador] Falha em send-transactional-email (corporativo):", r.status, r.body);
+        }
       } catch (e) {
         console.error("[create_user_from_colaborador] Erro ao enviar e-mail de boas-vindas:", e);
       }
@@ -526,17 +559,18 @@ Deno.serve(async (req) => {
       // 8b. Aviso ao email pessoal (se houver e for diferente do corporativo)
       if (emailPessoal && emailPessoal.toLowerCase() !== emailCorporativo.toLowerCase()) {
         try {
-          await adminClient.functions.invoke("send-transactional-email", {
-            body: {
-              templateName: "aviso-email-pessoal",
-              recipientEmail: emailPessoal,
-              idempotencyKey: `aviso-pessoal-${novoUserId}-${Date.now()}`,
-              templateData: {
-                nome: full_name,
-                email_corporativo: emailCorporativo,
-              },
+          const r = await invokeSendTransactionalEmail(supabaseUrl, anonKey, authHeader, {
+            templateName: "aviso-email-pessoal",
+            recipientEmail: emailPessoal,
+            idempotencyKey: `aviso-pessoal-${novoUserId}-${Date.now()}`,
+            templateData: {
+              nome: full_name,
+              email_corporativo: emailCorporativo,
             },
           });
+          if (!r.ok) {
+            console.error("[create_user_from_colaborador] Falha em send-transactional-email (pessoal):", r.status, r.body);
+          }
         } catch (e) {
           console.error("[create_user_from_colaborador] Aviso email pessoal falhou:", e);
         }
@@ -657,15 +691,16 @@ Deno.serve(async (req) => {
             }
           }
 
-          // Send approval email
-          await adminClient.functions.invoke("send-transactional-email", {
-            body: {
-              templateName: "cadastro-aprovado",
-              recipientEmail: targetUser.email,
-              idempotencyKey: `cadastro-aprovado-${user_id}`,
-              templateData: { nome: profile?.full_name || "" },
-            },
+          // Send approval email — Doutrina #15
+          const r = await invokeSendTransactionalEmail(supabaseUrl, anonKey, authHeader, {
+            templateName: "cadastro-aprovado",
+            recipientEmail: targetUser.email,
+            idempotencyKey: `cadastro-aprovado-${user_id}`,
+            templateData: { nome: profile?.full_name || "" },
           });
+          if (!r.ok) {
+            console.error("[approve] Falha em send-transactional-email:", r.status, r.body);
+          }
         }
       } catch (linkErr) {
         console.error("Erro ao vincular/enviar email:", linkErr);
@@ -806,18 +841,23 @@ Deno.serve(async (req) => {
       const link = Deno.env.get("SITE_URL") || "https://people-fetely.lovable.app";
 
       try {
-        await adminClient.functions.invoke("send-transactional-email", {
-          body: {
-            templateName,
-            recipientEmail: targetEmail,
-            idempotencyKey: `reenvio-${target_user_id}-${Date.now()}`,
-            templateData: {
-              nome,
-              email_corporativo: targetEmail,
-              link,
-            },
+        const r = await invokeSendTransactionalEmail(supabaseUrl, anonKey, authHeader, {
+          templateName,
+          recipientEmail: targetEmail,
+          idempotencyKey: `reenvio-${target_user_id}-${Date.now()}`,
+          templateData: {
+            nome,
+            email_corporativo: targetEmail,
+            link,
           },
         });
+        if (!r.ok) {
+          console.error("[reenviar_link_acesso] Falha em send-transactional-email:", r.status, r.body);
+          return new Response(
+            JSON.stringify({ error: `Link gerado mas falha ao enviar email (${r.status}).` }),
+            { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          );
+        }
       } catch (e) {
         console.error("[reenviar_link_acesso] Falha ao enviar email:", e);
         return new Response(JSON.stringify({ error: "Link gerado mas falha ao enviar email." }), {
