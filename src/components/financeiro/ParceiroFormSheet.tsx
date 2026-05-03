@@ -50,6 +50,16 @@ export type Parceiro = {
   centro_custo_padrao: string | null;
   tags: string[] | null;
   grupo_id: string | null;
+  meio_pagamento_padrao: string | null;
+  pix_chave: string | null;
+  pix_tipo: string | null;
+  dados_bancarios: {
+    banco?: string | null;
+    agencia?: string | null;
+    conta?: string | null;
+    tipo_conta?: string | null;
+    titular?: string | null;
+  } | null;
   ativo: boolean | null;
   observacao: string | null;
   origem: string | null;
