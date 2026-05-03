@@ -233,6 +233,7 @@ export function ParceiroFormSheet({ open, onOpenChange, editing, categorias, onS
         canal: canal || null,
         segmento: segmento.trim() || null,
         categoria_padrao_id: categoriaPadrao,
+        grupo_id: grupoId,
         centro_custo_padrao: centroCusto || null,
         tags: tags.length ? tags : null,
         observacao: observacao.trim() || null,
