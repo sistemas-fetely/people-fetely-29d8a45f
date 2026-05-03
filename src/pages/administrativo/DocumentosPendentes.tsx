@@ -1148,3 +1148,134 @@ function RemessaContas({
     </div>
   );
 }
+
+// ============================================================
+// SUBCOMPONENTE: linha de uma entrada (conta avulsa OU compromisso parcelado)
+// ============================================================
+function ItemLinha({
+  conta,
+  aba,
+  isSelected,
+  onToggleSelecao,
+  onAbrirDrawer,
+  onBuscarNF,
+  expandidoCompromisso,
+  onToggleExpandirCompromisso,
+}: {
+  conta: ContaItem;
+  aba: Aba;
+  isSelected: boolean;
+  onToggleSelecao: () => void;
+  onAbrirDrawer: (id: string) => void;
+  onBuscarNF: (c: ContaItem) => void;
+  expandidoCompromisso: boolean;
+  onToggleExpandirCompromisso: () => void;
+}) {
+  const ehCompromisso =
+    conta.tipo === "compromisso" &&
+    !!conta.parcelas &&
+    conta.parcelas.length > 0;
+  const bgClass = aba === "pronto" ? STATUS_CONTA_BG[conta.status_conta] || "" : "";
+
+  return (
+    <div>
+      <div
+        className={cn(
+          "px-4 py-2 flex items-center gap-3 hover:bg-muted/30",
+          bgClass,
+          isSelected && "bg-emerald-50/60",
+        )}
+      >
+        {aba === "pronto" && (
+          <Checkbox checked={isSelected} onCheckedChange={onToggleSelecao} />
+        )}
+        {ehCompromisso ? (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleExpandirCompromisso();
+            }}
+            className="shrink-0 p-0.5 hover:bg-muted rounded"
+            title={expandidoCompromisso ? "Ocultar parcelas" : "Ver parcelas"}
+          >
+            {expandidoCompromisso ? (
+              <ChevronDown className="h-3.5 w-3.5" />
+            ) : (
+              <ChevronRight className="h-3.5 w-3.5" />
+            )}
+          </button>
+        ) : (
+          <span className="w-[18px] shrink-0" />
+        )}
+        <div
+          className="flex-1 min-w-0 cursor-pointer"
+          onClick={() => onAbrirDrawer(conta.conta_id)}
+        >
+          <div className="text-xs truncate flex items-center gap-1.5" title={conta.descricao}>
+            <span className="truncate">{conta.descricao}</span>
+            {ehCompromisso && (
+              <Badge variant="outline" className="text-[9px] px-1.5 py-0 shrink-0">
+                {conta.parcelas_pagas ?? 0}/{conta.qtd_parcelas ?? conta.parcelas?.length ?? 0} parcelas pagas
+              </Badge>
+            )}
+          </div>
+          <div className="text-[10px] text-muted-foreground flex gap-2 mt-0.5 flex-wrap">
+            {ehCompromisso ? (
+              <>
+                <span>{conta.qtd_parcelas ?? conta.parcelas?.length ?? 0} parcelas</span>
+                <span>· 1ª venc: {formatDateBR(conta.data_vencimento)}</span>
+              </>
+            ) : (
+              <>
+                <span>Venc: {formatDateBR(conta.data_vencimento)}</span>
+                {conta.data_pagamento && (
+                  <span>Pago: {formatDateBR(conta.data_pagamento)}</span>
+                )}
+              </>
+            )}
+            {conta.nf_numero && <span>NF: {conta.nf_numero}</span>}
+            {aba === "pronto" && (
+              <Badge variant="outline" className="text-[9px] px-1.5 py-0">
+                {STATUS_CONTA_LABEL[conta.status_conta] || conta.status_conta}
+              </Badge>
+            )}
+          </div>
+        </div>
+        <ClusterPills conta={conta} onBuscarNF={onBuscarNF} />
+        <div className="font-mono text-xs shrink-0">
+          {formatBRL(Number(conta.valor))}
+        </div>
+      </div>
+
+      {/* Drill-down de parcelas (só quando compromisso e expandido) */}
+      {ehCompromisso && expandidoCompromisso && (
+        <div className="border-t bg-muted/20 divide-y">
+          {conta.parcelas!.map((p, idx) => (
+            <div
+              key={p.conta_id}
+              className="pl-12 pr-4 py-1.5 flex items-center gap-3 text-[11px] cursor-pointer hover:bg-muted/40"
+              onClick={() => onAbrirDrawer(p.conta_id)}
+            >
+              <span className="text-muted-foreground shrink-0">
+                Parcela {idx + 1}/{conta.qtd_parcelas ?? conta.parcelas!.length}
+              </span>
+              <div className="flex-1 min-w-0 flex gap-2 text-muted-foreground flex-wrap">
+                <span>Venc: {formatDateBR(p.data_vencimento)}</span>
+                {p.data_pagamento && (
+                  <span>Pago: {formatDateBR(p.data_pagamento)}</span>
+                )}
+                <Badge variant="outline" className="text-[9px] px-1.5 py-0">
+                  {STATUS_CONTA_LABEL[p.status_conta] || p.status_conta}
+                </Badge>
+              </div>
+              <div className="font-mono shrink-0">
+                {formatBRL(Number(p.valor))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
