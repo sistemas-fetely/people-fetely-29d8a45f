@@ -134,6 +134,7 @@ export function ParceiroFormSheet({ open, onOpenChange, editing, categorias, onS
       setCategoriaPadrao(editing.categoria_padrao_id);
       setCentroCusto(editing.centro_custo_padrao || "");
       setTags(editing.tags || []);
+      setGrupoId(editing.grupo_id ?? null);
       setObservacao(editing.observacao || "");
     } else {
       setTiposSelecionados(["fornecedor"]);
@@ -155,6 +156,7 @@ export function ParceiroFormSheet({ open, onOpenChange, editing, categorias, onS
       setCategoriaPadrao(null);
       setCentroCusto("");
       setTags([]);
+      setGrupoId(null);
       setObservacao("");
     }
     setDuplicateWarn(null);
