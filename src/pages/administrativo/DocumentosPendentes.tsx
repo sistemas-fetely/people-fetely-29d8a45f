@@ -480,6 +480,16 @@ export default function DocumentosPendentes() {
       .reduce((s, c) => s + Number(c.valor || 0), 0);
   }, [todasContasPronto, selecionadas]);
 
+  // Expande seleção de "entradas" (UI) pra IDs reais de contas (pra envio/export)
+  const idsContasParaEnvio = useMemo(() => {
+    const ids: string[] = [];
+    for (const c of todasContasPronto) {
+      if (!selecionadas.has(c.conta_id)) continue;
+      ids.push(...contaIdsDoItem(c));
+    }
+    return ids;
+  }, [todasContasPronto, selecionadas]);
+
   function toggleSelecao(contaId: string) {
     setSelecionadas((prev) => {
       const next = new Set(prev);
