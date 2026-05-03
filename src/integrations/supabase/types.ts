@@ -199,6 +199,48 @@ export type Database = {
           },
         ]
       }
+      auditoria_resumo_nfe_falhas: {
+        Row: {
+          contexto: Json | null
+          created_at: string
+          erro: string
+          id: string
+          nfs_stage_id: string
+          tentativa: number
+        }
+        Insert: {
+          contexto?: Json | null
+          created_at?: string
+          erro: string
+          id?: string
+          nfs_stage_id: string
+          tentativa?: number
+        }
+        Update: {
+          contexto?: Json | null
+          created_at?: string
+          erro?: string
+          id?: string
+          nfs_stage_id?: string
+          tentativa?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "auditoria_resumo_nfe_falhas_nfs_stage_id_fkey"
+            columns: ["nfs_stage_id"]
+            isOneToOne: false
+            referencedRelation: "nfs_stage"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "auditoria_resumo_nfe_falhas_nfs_stage_id_fkey"
+            columns: ["nfs_stage_id"]
+            isOneToOne: false
+            referencedRelation: "vw_nfs_stage_completude"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       backup_movimentacoes_bancarias_20260426: {
         Row: {
           centro_custo: string | null
@@ -5429,6 +5471,9 @@ export type Database = {
           nf_serie: string | null
           pais_emissor: string
           parceiro_id: string | null
+          resumo_pdf_gerado_em: string | null
+          resumo_pdf_pendente: boolean
+          resumo_pdf_storage_path: string | null
           status: string
           taxa_conversao: number | null
           tem_xml_obrigatorio: boolean
@@ -5464,6 +5509,9 @@ export type Database = {
           nf_serie?: string | null
           pais_emissor?: string
           parceiro_id?: string | null
+          resumo_pdf_gerado_em?: string | null
+          resumo_pdf_pendente?: boolean
+          resumo_pdf_storage_path?: string | null
           status?: string
           taxa_conversao?: number | null
           tem_xml_obrigatorio?: boolean
@@ -5499,6 +5547,9 @@ export type Database = {
           nf_serie?: string | null
           pais_emissor?: string
           parceiro_id?: string | null
+          resumo_pdf_gerado_em?: string | null
+          resumo_pdf_pendente?: boolean
+          resumo_pdf_storage_path?: string | null
           status?: string
           taxa_conversao?: number | null
           tem_xml_obrigatorio?: boolean
@@ -10803,6 +10854,10 @@ export type Database = {
           p_periodo_inicio: string
         }
         Returns: Json
+      }
+      marcar_resumo_nfe_para_regerar: {
+        Args: { _nfs_stage_id: string }
+        Returns: undefined
       }
       merge_contas_duplicadas: {
         Args: { p_id_descartar: string; p_id_manter: string }
