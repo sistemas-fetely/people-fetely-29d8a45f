@@ -80,7 +80,7 @@ import { formatBRL, formatDateBR } from "@/lib/format-currency";
 import { getMeioPagamentoIcon } from "@/lib/financeiro/meio-pagamento-icon";
 import { classBordaTemporal } from "@/lib/financeiro/is-vencimento-futuro";
 import { cn } from "@/lib/utils";
-import { CardKPI } from "./CaixaBanco/CardKPI";
+import { CardKPI, CardKPIDuplo } from "./CaixaBanco/CardKPI";
 import KpiPill from "./CaixaBanco/KpiPill";
 import {
   type Lancamento,
@@ -99,6 +99,13 @@ type FormaPgtoLite = { id: string; nome: string };
 type Parceiro = { id: string; razao_social: string | null };
 type CategoriaLite = { id: string; nome: string };
 type FiltroTipo = "tudo" | "apagar" | "realizado";
+type FiltroQualidade =
+  | "todos"
+  | "nf_tem" | "nf_falta"
+  | "categoria_tem" | "categoria_falta"
+  | "doc_tem" | "doc_falta"
+  | "vinculado_tem" | "vinculado_falta"
+  | "conciliado_tem" | "conciliado_falta";
 
 export default function CaixaBanco() {
   const navigate = useNavigate();
@@ -123,6 +130,7 @@ export default function CaixaBanco() {
   const [aplicandoIA, setAplicandoIA] = useState(false);
   const [sugestaoMovId, setSugestaoMovId] = useState<string | null>(null);
   const [filaIAOpen, setFilaIAOpen] = useState(false);
+  const [filtroQual, setFiltroQual] = useState<FiltroQualidade>("todos");
 
   // Query principal — view unificada
   const { data: lancamentos, isLoading } = useQuery({
@@ -403,12 +411,38 @@ export default function CaixaBanco() {
     };
   }, [listaAPagar, listaRealizado]);
 
-  // Lista exibida na tabela = pill + filtros adicionais (contador / inconsistências)
+  // Lista pós-pill (base pros KPIs Qualidade)
+  const listaFiltradaPorPill = useMemo(() => {
+    if (tipoParam === "apagar") return listaAPagar;
+    if (tipoParam === "realizado") return listaRealizado;
+    return [...listaAPagar, ...listaRealizado];
+  }, [tipoParam, listaAPagar, listaRealizado]);
+
+  // KPIs Qualidade — respeitam pill + filtros globais, NÃO respeitam filtroQual
+  const kpisQualidade = useMemo(() => {
+    const base = listaFiltradaPorPill;
+    const total = base.length;
+    const comNF = base.filter((l) => getQualidadeNF(l, nfMap).cor === "verde").length;
+    const comCat = base.filter((l) => getQualidadeCategoria(l, nfMap).cor === "verde").length;
+    const comDoc = base.filter((l) => statusFlagsMap.get(l.id)?.tem_doc_pendente !== true).length;
+    const comVinc = base.filter((l) =>
+      l.vinculada_cartao || l.origem_view === "cartao_lancamento" || l.movimentacao_bancaria_id,
+    ).length;
+    const comConc = base.filter((l) =>
+      l.conciliado_em || l.status_caixa === "conciliado",
+    ).length;
+    return {
+      NF: { tem: comNF, falta: total - comNF, total },
+      Categoria: { tem: comCat, falta: total - comCat, total },
+      Documento: { tem: comDoc, falta: total - comDoc, total },
+      Vinculado: { tem: comVinc, falta: total - comVinc, total },
+      Conciliado: { tem: comConc, falta: total - comConc, total },
+    };
+  }, [listaFiltradaPorPill, nfMap, statusFlagsMap]);
+
+  // Lista exibida na tabela = pill + filtros adicionais (contador / inconsistências / qualidade)
   const listaExibida = useMemo(() => {
-    let list: Lancamento[];
-    if (tipoParam === "apagar") list = listaAPagar;
-    else if (tipoParam === "realizado") list = listaRealizado;
-    else list = [...listaAPagar, ...listaRealizado];
+    let list: Lancamento[] = listaFiltradaPorPill;
 
     if (filtroContador !== "todos") {
       list = list.filter((l) => {
@@ -420,8 +454,29 @@ export default function CaixaBanco() {
     if (mostrarSoInconsistentes) {
       list = list.filter((l) => l.categoria_inconsistente === true);
     }
+    if (filtroQual !== "todos") {
+      list = list.filter((l) => {
+        switch (filtroQual) {
+          case "nf_tem": return getQualidadeNF(l, nfMap).cor === "verde";
+          case "nf_falta": return getQualidadeNF(l, nfMap).cor !== "verde";
+          case "categoria_tem": return getQualidadeCategoria(l, nfMap).cor === "verde";
+          case "categoria_falta": return getQualidadeCategoria(l, nfMap).cor !== "verde";
+          case "doc_tem": return statusFlagsMap.get(l.id)?.tem_doc_pendente !== true;
+          case "doc_falta": return statusFlagsMap.get(l.id)?.tem_doc_pendente === true;
+          case "vinculado_tem":
+            return !!(l.vinculada_cartao || l.origem_view === "cartao_lancamento" || l.movimentacao_bancaria_id);
+          case "vinculado_falta":
+            return !(l.vinculada_cartao || l.origem_view === "cartao_lancamento" || l.movimentacao_bancaria_id);
+          case "conciliado_tem":
+            return !!(l.conciliado_em || l.status_caixa === "conciliado");
+          case "conciliado_falta":
+            return !(l.conciliado_em || l.status_caixa === "conciliado");
+          default: return true;
+        }
+      });
+    }
     return list;
-  }, [tipoParam, listaAPagar, listaRealizado, filtroContador, mostrarSoInconsistentes, contadorMap]);
+  }, [listaFiltradaPorPill, filtroContador, mostrarSoInconsistentes, contadorMap, filtroQual, nfMap, statusFlagsMap]);
 
   async function handleAplicarIAEmMassa() {
     setAplicandoIA(true);
@@ -541,6 +596,55 @@ export default function CaixaBanco() {
             onClick={() => {}}
             icone={CheckCircle2}
           />
+        </div>
+
+        {/* KPIs Qualidade */}
+        <div className="border border-emerald-300 bg-emerald-50/20 rounded-xl p-2">
+          <div className="text-[10px] uppercase tracking-wider text-emerald-700 font-medium mb-1.5 px-1">
+            Qualidade
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2">
+            <CardKPIDuplo
+              titulo="NF" icone={Receipt} cor="fetely"
+              total={kpisQualidade.NF.total}
+              qtdTem={kpisQualidade.NF.tem} qtdFalta={kpisQualidade.NF.falta}
+              ativoTem={filtroQual === "nf_tem"} ativoFalta={filtroQual === "nf_falta"}
+              onClickTem={() => setFiltroQual(filtroQual === "nf_tem" ? "todos" : "nf_tem")}
+              onClickFalta={() => setFiltroQual(filtroQual === "nf_falta" ? "todos" : "nf_falta")}
+            />
+            <CardKPIDuplo
+              titulo="Categoria" icone={FolderTree} cor="fetely"
+              total={kpisQualidade.Categoria.total}
+              qtdTem={kpisQualidade.Categoria.tem} qtdFalta={kpisQualidade.Categoria.falta}
+              ativoTem={filtroQual === "categoria_tem"} ativoFalta={filtroQual === "categoria_falta"}
+              onClickTem={() => setFiltroQual(filtroQual === "categoria_tem" ? "todos" : "categoria_tem")}
+              onClickFalta={() => setFiltroQual(filtroQual === "categoria_falta" ? "todos" : "categoria_falta")}
+            />
+            <CardKPIDuplo
+              titulo="Documento" icone={Paperclip} cor="fetely"
+              total={kpisQualidade.Documento.total}
+              qtdTem={kpisQualidade.Documento.tem} qtdFalta={kpisQualidade.Documento.falta}
+              ativoTem={filtroQual === "doc_tem"} ativoFalta={filtroQual === "doc_falta"}
+              onClickTem={() => setFiltroQual(filtroQual === "doc_tem" ? "todos" : "doc_tem")}
+              onClickFalta={() => setFiltroQual(filtroQual === "doc_falta" ? "todos" : "doc_falta")}
+            />
+            <CardKPIDuplo
+              titulo="Vinculado" icone={Link2} cor="fetely"
+              total={kpisQualidade.Vinculado.total}
+              qtdTem={kpisQualidade.Vinculado.tem} qtdFalta={kpisQualidade.Vinculado.falta}
+              ativoTem={filtroQual === "vinculado_tem"} ativoFalta={filtroQual === "vinculado_falta"}
+              onClickTem={() => setFiltroQual(filtroQual === "vinculado_tem" ? "todos" : "vinculado_tem")}
+              onClickFalta={() => setFiltroQual(filtroQual === "vinculado_falta" ? "todos" : "vinculado_falta")}
+            />
+            <CardKPIDuplo
+              titulo="Conciliado" icone={CircleDollarSign} cor="fetely"
+              total={kpisQualidade.Conciliado.total}
+              qtdTem={kpisQualidade.Conciliado.tem} qtdFalta={kpisQualidade.Conciliado.falta}
+              ativoTem={filtroQual === "conciliado_tem"} ativoFalta={filtroQual === "conciliado_falta"}
+              onClickTem={() => setFiltroQual(filtroQual === "conciliado_tem" ? "todos" : "conciliado_tem")}
+              onClickFalta={() => setFiltroQual(filtroQual === "conciliado_falta" ? "todos" : "conciliado_falta")}
+            />
+          </div>
         </div>
 
         {/* Pills Tudo / A pagar / Realizado */}
