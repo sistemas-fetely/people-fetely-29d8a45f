@@ -54,9 +54,19 @@ type FormaPgto = { id: string; nome: string; codigo: string };
 interface Props {
   open: boolean;
   onOpenChange: (v: boolean) => void;
+  initialData?: {
+    nfStageId: string;
+    parceiroId?: string | null;
+    fornecedorNome?: string;
+    valor?: number;
+    dataEmissao?: string;
+    dataVencimento?: string;
+    categoriaId?: string | null;
+    descricao?: string | null;
+  };
 }
 
-export function NovaContaPagarSheet({ open, onOpenChange }: Props) {
+export function NovaContaPagarSheet({ open, onOpenChange, initialData }: Props) {
   const qc = useQueryClient();
 
   const [parceiroId, setParceiroId] = useState<string | null>(null);
