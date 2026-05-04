@@ -283,6 +283,12 @@ REGRAS GERAIS:
       }
     }
 
+    // Boleto sem linha digitável = confiança baixa (provavelmente recibo mal-classificado)
+    if (data.tipo_documento === "boleto" && !data.linha_digitavel) {
+      console.warn("Boleto sem linha digitável — rebaixando confiança pra baixa.");
+      data.confianca = "baixa";
+    }
+
     return new Response(JSON.stringify({ success: true, data }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
