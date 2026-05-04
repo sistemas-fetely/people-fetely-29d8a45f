@@ -266,6 +266,7 @@ export function ImportarNFDespesaDialog({
           boletos={stageInfo.boletos}
           onConfirmar={lancarBoletosSelecionados}
           processando={criandoDespesas}
+          mostrarFornecedor={stageInfo?.isMultiStage}
         />
       )}
     </>
