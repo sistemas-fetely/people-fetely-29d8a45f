@@ -206,7 +206,7 @@ export function NovaContaPagarSheet({ open, onOpenChange, initialData }: Props) 
     },
   });
 
-  // Auto preenche categoria/centro se parceiro tem padrão
+  // Auto preenche categoria/centro/dados bancários se parceiro tem
   useEffect(() => {
     if (!parceiroId || !parceiros) return;
     const p = parceiros.find((x) => x.id === parceiroId);
@@ -214,6 +214,24 @@ export function NovaContaPagarSheet({ open, onOpenChange, initialData }: Props) 
     if (p.categoria_padrao_id && !categoriaId) setCategoriaId(p.categoria_padrao_id);
     if (p.centro_custo_id && !centroCustoId) setCentroCustoId(p.centro_custo_id);
     if (p.forma_pagamento_padrao_id && !formaPgtoId) setFormaPgtoId(p.forma_pagamento_padrao_id);
+
+    // Dados bancários
+    const db = (p as { dados_bancarios?: { banco?: string; agencia?: string; conta?: string } | null }).dados_bancarios;
+    const banco = db?.banco || "";
+    const agencia = db?.agencia || "";
+    const conta = db?.conta || "";
+    const pixCh = (p as { pix_chave?: string | null }).pix_chave || "";
+    const pixTp = (p as { pix_tipo?: string | null }).pix_tipo || "";
+
+    setDadosBancariosBanco(banco);
+    setDadosBancariosAgencia(agencia);
+    setDadosBancariosConta(conta);
+    setPixChave(pixCh);
+    setPixTipo(pixTp);
+
+    const temAlgum = !!(banco || agencia || conta || pixCh);
+    setParceiroJaTemDados(temAlgum);
+    setEditandoDadosBancarios(false);
   }, [parceiroId, parceiros]); // eslint-disable-line
 
   useEffect(() => {
@@ -232,6 +250,13 @@ export function NovaContaPagarSheet({ open, onOpenChange, initialData }: Props) 
       setNfStageId(null);
       setDescricaoDebounced("");
       setSugestaoAplicada(false);
+      setDadosBancariosBanco("");
+      setDadosBancariosAgencia("");
+      setDadosBancariosConta("");
+      setPixChave("");
+      setPixTipo("");
+      setParceiroJaTemDados(false);
+      setEditandoDadosBancarios(false);
     }
   }, [open]);
 
