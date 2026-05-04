@@ -31,6 +31,7 @@ import AcoesMassaButtons, {
   type ContaSelecionada,
 } from "@/components/financeiro/AcoesMassaButtons";
 import { NovaContaPagarSheet } from "@/components/financeiro/NovaContaPagarSheet";
+import { ImportarNFDespesaDialog } from "@/components/financeiro/ImportarNFDespesaDialog";
 import { getFaturaInfoMap, type FaturaInfo } from "@/lib/financeiro/get-fatura-info";
 import { getCompromissoInfoMap, type CompromissoInfo } from "@/lib/financeiro/get-compromisso-info";
 import { getMeioPagamentoIcon } from "@/lib/financeiro/meio-pagamento-icon";
@@ -98,6 +99,10 @@ export default function ContasPagar() {
   const [editandoBanco, setEditandoBanco] = useState(false);
   const [selecionadas, setSelecionadas] = useState<Set<string>>(new Set());
   const [novaContaOpen, setNovaContaOpen] = useState(false);
+  const [importarNFOpen, setImportarNFOpen] = useState(false);
+  const [initialDataNovaConta, setInitialDataNovaConta] = useState<
+    React.ComponentProps<typeof NovaContaPagarSheet>["initialData"] | undefined
+  >(undefined);
 
   const { data, isLoading } = useQuery({
     queryKey: ["contas-pagar"],
@@ -324,13 +329,23 @@ export default function ContasPagar() {
               Vencimentos a parceiros — abertos, pagos e atrasados.
             </p>
           </div>
-          <Button
-            onClick={() => setNovaContaOpen(true)}
-            className="gap-2 bg-admin hover:bg-admin-accent text-admin-foreground"
-          >
-            <Plus className="h-4 w-4" />
-            Nova Despesa
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setImportarNFOpen(true)}
+              className="gap-2"
+            >
+              <Upload className="h-4 w-4" />
+              Importar NF
+            </Button>
+            <Button
+              onClick={() => setNovaContaOpen(true)}
+              className="gap-2 bg-admin hover:bg-admin-accent text-admin-foreground"
+            >
+              <Plus className="h-4 w-4" />
+              Nova Despesa
+            </Button>
+          </div>
         </div>
       {totals.modoFocado === "selecao" && (
         <div className="flex items-center justify-between text-xs px-1 -mb-1">
@@ -816,9 +831,23 @@ export default function ContasPagar() {
         highlightCampo={editandoBanco ? "pago_em_conta_id" : null}
       />
 
+      <ImportarNFDespesaDialog
+        open={importarNFOpen}
+        onOpenChange={setImportarNFOpen}
+        onDespesaPronta={(data) => {
+          setInitialDataNovaConta(data);
+          setImportarNFOpen(false);
+          setNovaContaOpen(true);
+        }}
+      />
+
       <NovaContaPagarSheet
         open={novaContaOpen}
-        onOpenChange={setNovaContaOpen}
+        onOpenChange={(v) => {
+          setNovaContaOpen(v);
+          if (!v) setInitialDataNovaConta(undefined);
+        }}
+        initialData={initialDataNovaConta}
       />
       </div>
     </div>
