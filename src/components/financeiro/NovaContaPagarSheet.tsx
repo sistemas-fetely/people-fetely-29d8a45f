@@ -373,13 +373,8 @@ export function NovaContaPagarSheet({ open, onOpenChange, initialData }: Props) 
         }
       }
 
-      // Marca NF do Repositório como vinculada (se houver)
-      if (nfStageId) {
-        await supabase
-          .from("nfs_stage")
-          .update({ status: "vinculada" })
-          .eq("id", nfStageId);
-      }
+      // Status do stage é recalculado automaticamente por trigger no banco
+      // (ver função recalcular_status_nf_stage / Fase E)
     },
     onSuccess: () => {
       toast.success(parcelas > 1 ? `${parcelas} parcelas registradas!` : "Despesa registrada!");

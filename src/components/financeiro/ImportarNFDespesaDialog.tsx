@@ -164,10 +164,8 @@ export function ImportarNFDespesaDialog({
         .insert(rows);
       if (error) throw error;
 
-      await supabase
-        .from("nfs_stage")
-        .update({ status: "vinculada" })
-        .eq("id", stageInfo.id);
+      // Status do stage é recalculado automaticamente por trigger no banco
+      // (ver função recalcular_status_nf_stage / Fase E)
 
       toast.success(
         `${boletosSelecionados.length} despesa${boletosSelecionados.length === 1 ? "" : "s"} criada${boletosSelecionados.length === 1 ? "" : "s"}!`,

@@ -110,6 +110,7 @@ type NFStage = {
   tem_xml: boolean;
   tem_pdf: boolean;
   tem_boleto: boolean;
+  qtd_boletos: number | null;
   documentos: StageDocumento[] | null;
   itens: Array<{
     codigo_produto?: string;
@@ -125,11 +126,13 @@ type NFStage = {
 
 const STATUS_LABELS: Record<string, string> = {
   nao_vinculada: "Não vinculada",
+  parcial: "Parcial",
   vinculada: "Vinculada",
 };
 
 const STATUS_STYLES: Record<string, string> = {
   nao_vinculada: "bg-amber-100 text-amber-800 hover:bg-amber-100 border-amber-200",
+  parcial: "bg-blue-100 text-blue-800 hover:bg-blue-100 border-blue-200",
   vinculada: "bg-emerald-100 text-emerald-800 hover:bg-emerald-100 border-emerald-200",
 };
 
@@ -225,6 +228,30 @@ export default function NFsStage() {
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data || []) as NFStage[];
+    },
+  });
+
+  // Contagem de despesas por stage (para badge "Parcial M/N")
+  const { data: despesasPorStage = {} } = useQuery({
+    queryKey: ["despesas-por-stage", nfs?.length || 0],
+    enabled: (nfs?.length || 0) > 0,
+    queryFn: async () => {
+      const ids = (nfs || [])
+        .filter((n) => n.status === "parcial")
+        .map((n) => n.id);
+      if (ids.length === 0) return {} as Record<string, number>;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase as any)
+        .from("contas_pagar_receber")
+        .select("nf_stage_id")
+        .in("nf_stage_id", ids);
+      if (error) throw error;
+      const counts: Record<string, number> = {};
+      for (const row of data || []) {
+        const k = (row as { nf_stage_id: string }).nf_stage_id;
+        counts[k] = (counts[k] || 0) + 1;
+      }
+      return counts;
     },
   });
 
@@ -837,7 +864,9 @@ export default function NFsStage() {
                       </TableCell>
                       <TableCell>
                         <Badge className={STATUS_STYLES[nf.status]}>
-                          {STATUS_LABELS[nf.status] || nf.status}
+                          {nf.status === "parcial" && nf.qtd_boletos
+                            ? `Parcial (${despesasPorStage[nf.id] || 0}/${nf.qtd_boletos})`
+                            : STATUS_LABELS[nf.status] || nf.status}
                         </Badge>
                       </TableCell>
                       <TableCell>
