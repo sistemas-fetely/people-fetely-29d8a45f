@@ -54,9 +54,19 @@ type FormaPgto = { id: string; nome: string; codigo: string };
 interface Props {
   open: boolean;
   onOpenChange: (v: boolean) => void;
+  initialData?: {
+    nfStageId: string;
+    parceiroId?: string | null;
+    fornecedorNome?: string;
+    valor?: number;
+    dataEmissao?: string;
+    dataVencimento?: string;
+    categoriaId?: string | null;
+    descricao?: string | null;
+  };
 }
 
-export function NovaContaPagarSheet({ open, onOpenChange }: Props) {
+export function NovaContaPagarSheet({ open, onOpenChange, initialData }: Props) {
   const qc = useQueryClient();
 
   const [parceiroId, setParceiroId] = useState<string | null>(null);
@@ -76,6 +86,19 @@ export function NovaContaPagarSheet({ open, onOpenChange }: Props) {
   const [parcelas, setParcelas] = useState(1);
   const [nfStageId, setNfStageId] = useState<string | null>(null);
   const [nfStageBuscaOpen, setNfStageBuscaOpen] = useState(false);
+
+  // Pré-preenchimento via initialData (vindo do fluxo "Importar NF")
+  useEffect(() => {
+    if (open && initialData) {
+      setNfStageId(initialData.nfStageId);
+      if (initialData.parceiroId) setParceiroId(initialData.parceiroId);
+      if (initialData.valor != null) setValor(String(initialData.valor));
+      if (initialData.dataEmissao) setDataEmissao(initialData.dataEmissao);
+      if (initialData.dataVencimento) setDataVenc(initialData.dataVencimento);
+      if (initialData.categoriaId) setCategoriaId(initialData.categoriaId);
+      if (initialData.descricao) setDescricao(initialData.descricao);
+    }
+  }, [open, initialData]);
 
   // Debounce da descrição (não dispara IA a cada tecla)
   const [descricaoDebounced, setDescricaoDebounced] = useState("");

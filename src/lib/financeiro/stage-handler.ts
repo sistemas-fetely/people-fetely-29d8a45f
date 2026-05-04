@@ -23,6 +23,7 @@ export interface StageResult {
   enriquecidas: number;
   erros: string[];
   loteId: string;
+  stageIds: string[];
 }
 
 /**
@@ -42,6 +43,7 @@ export async function moverParaStage(
     enriquecidas: 0,
     erros: [],
     loteId,
+    stageIds: [],
   };
 
   // Mapa NF -> arquivo (busca por chave única)
@@ -135,6 +137,10 @@ export async function moverParaStage(
         result.duplicatas++;
       } else {
         result.sucesso++;
+      }
+
+      if (r?.stage_id && r.acao !== "duplicada_descartada" && r.acao !== "duplicada") {
+        result.stageIds.push(r.stage_id);
       }
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);

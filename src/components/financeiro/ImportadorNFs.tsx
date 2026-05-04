@@ -11,13 +11,13 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { parseXmlAny } from "@/lib/financeiro/xml-parser";
 import { verificarDuplicatas } from "@/lib/financeiro/import-handler";
-import { moverParaStage } from "@/lib/financeiro/stage-handler";
+import { moverParaStage, type StageResult } from "@/lib/financeiro/stage-handler";
 import { limparCnpj, parseDataBR, parseValorBR } from "@/lib/financeiro/parsers";
 import type { NFParsed } from "@/lib/financeiro/types";
 import { PreviewNFsImportSimples } from "./PreviewNFsImportSimples";
 
 interface Props {
-  onImported?: () => void;
+  onImported?: (result: StageResult) => void;
 }
 
 function readFileAsText(file: File): Promise<string> {
@@ -219,7 +219,7 @@ export function ImportadorNFs({ onImported }: Props) {
         setPreview([]);
       }
 
-      onImported?.();
+      onImported?.(result);
     } catch (e) {
       toast.error(
         "Falha na importação: " + (e instanceof Error ? e.message : String(e)),
