@@ -52,6 +52,7 @@ import TimelineHistorico from "./TimelineHistorico";
 import EnviarPagamentoDialog from "./EnviarPagamentoDialog";
 import DocumentosCP from "./DocumentosCP";
 import BuscarNFStageDialog from "./BuscarNFStageDialog";
+import { NfStageVinculadaCard } from "@/components/financeiro/NfStageVinculadaCard";
 import ContaPagarFormEdit from "./ContaPagarFormEdit";
 import { useContaWorkflow, type ContaStatus } from "@/hooks/useContaWorkflow";
 
@@ -542,17 +543,30 @@ export default function ContaPagarDetalheDrawer({
 
             {/* Documentos */}
             <Separator className="my-4" />
-            <div className="flex items-center justify-end mb-2">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => setBuscarNFOpen(true)}
-                className="gap-1 border-blue-300 text-blue-700 hover:bg-blue-50"
-              >
-                <Sparkles className="h-3.5 w-3.5" />
-                Buscar em NF Stage
-              </Button>
-            </div>
+
+            {conta.nf_stage_id ? (
+              <div className="mb-3">
+                <div className="text-xs font-medium text-muted-foreground mb-1.5">
+                  NF vinculada do Repositório
+                </div>
+                <NfStageVinculadaCard
+                  nfStageId={conta.nf_stage_id}
+                  onRemover={() => {}}
+                />
+              </div>
+            ) : (
+              <div className="flex items-center justify-end mb-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setBuscarNFOpen(true)}
+                  className="gap-1 border-blue-300 text-blue-700 hover:bg-blue-50"
+                >
+                  <Sparkles className="h-3.5 w-3.5" />
+                  Buscar em NF Stage
+                </Button>
+              </div>
+            )}
             <DocumentosCP
               contaId={conta.id}
               docsStatus={conta.docs_status || "pendente"}
