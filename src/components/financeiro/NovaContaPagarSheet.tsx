@@ -56,6 +56,7 @@ interface Props {
   onOpenChange: (v: boolean) => void;
   initialData?: {
     nfStageId: string;
+    nfStageDocumentoId?: string;
     parceiroId?: string | null;
     fornecedorNome?: string;
     valor?: number;
