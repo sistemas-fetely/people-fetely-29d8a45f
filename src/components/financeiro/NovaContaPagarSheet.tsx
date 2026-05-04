@@ -596,17 +596,21 @@ export function NovaContaPagarSheet({ open, onOpenChange, initialData }: Props) 
               </div>
             </div>
 
-            <div className="border-t pt-4">
-              <p className="text-sm font-medium mb-3">Pagamento</p>
+            <div className="space-y-3 pt-2 border-t">
+              <h3 className="text-sm font-medium">Pagamento</h3>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <Label>Forma de pagamento</Label>
                   <Select value={formaPgtoId || "_none"} onValueChange={(v) => setFormaPgtoId(v === "_none" ? "" : v)}>
-                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectTrigger>
+                      <SelectValue placeholder="—" />
+                    </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="_none">—</SelectItem>
-                      {(formasPgto || []).map((f) => (
-                        <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>
+                      {formasPgto?.map((f) => (
+                        <SelectItem key={f.id} value={f.id}>
+                          {f.nome}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -616,16 +620,129 @@ export function NovaContaPagarSheet({ open, onOpenChange, initialData }: Props) 
                   <Input
                     type="number"
                     min={1}
-                    max={36}
+                    max={veioDeBoleto ? 1 : 36}
                     value={parcelas}
-                    onChange={(e) => setParcelas(Math.max(1, parseInt(e.target.value) || 1))}
+                    onChange={(e) => setParcelas(Math.max(1, Number(e.target.value) || 1))}
+                    disabled={veioDeBoleto}
                   />
+                  {veioDeBoleto && (
+                    <p className="text-[10px] text-muted-foreground mt-1">
+                      Boleto importado — parcela única (cada boleto vira 1 despesa).
+                    </p>
+                  )}
                 </div>
               </div>
+
               {parcelas > 1 && valorNum > 0 && (
-                <p className="text-xs text-muted-foreground mt-2">
+                <p className="text-xs text-muted-foreground">
                   {parcelas}× de <strong>{formatBRL(valorParcela)}</strong> mensais
                 </p>
+              )}
+
+              {/* Dados bancários — exibidos conforme forma de pagamento */}
+              {parceiroId && (exigePix || exigeBanco) && parceiroJaTemDados && !editandoDadosBancarios && (
+                <div className="rounded-md bg-muted/40 border px-3 py-2 text-xs">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="space-y-0.5">
+                      {exigeBanco && (
+                        <div>
+                          <span className="text-muted-foreground">Banco:</span>{" "}
+                          {dadosBancariosBanco || "—"} · Ag {dadosBancariosAgencia || "—"} · CC{" "}
+                          {dadosBancariosConta || "—"}
+                        </div>
+                      )}
+                      {exigePix && (
+                        <div>
+                          <span className="text-muted-foreground">PIX:</span>{" "}
+                          {pixChave || "—"}
+                          {pixTipo && (
+                            <span className="text-muted-foreground"> ({pixTipo})</span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setEditandoDadosBancarios(true)}
+                      className="text-admin hover:underline text-xs"
+                    >
+                      Editar
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {mostrarCamposBancarios && (
+                <div className="space-y-3 rounded-md border-l-2 border-admin/50 pl-3 py-1">
+                  {!parceiroJaTemDados && (
+                    <p className="text-xs text-muted-foreground">
+                      Preencha os dados bancários do fornecedor — serão salvos automaticamente para próximos pagamentos.
+                    </p>
+                  )}
+                  {exigeBanco && (
+                    <div className="grid grid-cols-3 gap-2">
+                      <div>
+                        <Label className="text-xs">Banco *</Label>
+                        <Input
+                          value={dadosBancariosBanco}
+                          onChange={(e) => setDadosBancariosBanco(e.target.value)}
+                          placeholder="Ex: Itaú"
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs">Agência *</Label>
+                        <Input
+                          value={dadosBancariosAgencia}
+                          onChange={(e) => setDadosBancariosAgencia(e.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs">Conta *</Label>
+                        <Input
+                          value={dadosBancariosConta}
+                          onChange={(e) => setDadosBancariosConta(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                  )}
+                  {exigePix && (
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="col-span-2">
+                        <Label className="text-xs">Chave PIX *</Label>
+                        <Input
+                          value={pixChave}
+                          onChange={(e) => setPixChave(e.target.value)}
+                          placeholder="CNPJ, e-mail, celular, etc."
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs">Tipo</Label>
+                        <Select value={pixTipo || "_none"} onValueChange={(v) => setPixTipo(v === "_none" ? "" : v)}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="—" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="_none">—</SelectItem>
+                            <SelectItem value="cnpj">CNPJ</SelectItem>
+                            <SelectItem value="cpf">CPF</SelectItem>
+                            <SelectItem value="email">E-mail</SelectItem>
+                            <SelectItem value="celular">Celular</SelectItem>
+                            <SelectItem value="aleatoria">Aleatória</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  )}
+                  {parceiroJaTemDados && (
+                    <button
+                      type="button"
+                      onClick={() => setEditandoDadosBancarios(false)}
+                      className="text-xs text-muted-foreground hover:underline"
+                    >
+                      Cancelar edição
+                    </button>
+                  )}
+                </div>
               )}
             </div>
           </div>
