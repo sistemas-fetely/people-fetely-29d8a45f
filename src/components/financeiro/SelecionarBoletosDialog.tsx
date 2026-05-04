@@ -109,6 +109,7 @@ export function SelecionarBoletosDialog({
                   />
                 </TableHead>
                 <TableHead>Arquivo</TableHead>
+                {mostrarFornecedor && <TableHead>Fornecedor</TableHead>}
                 <TableHead>Vencimento</TableHead>
                 <TableHead className="text-right">Valor</TableHead>
               </TableRow>
@@ -125,6 +126,11 @@ export function SelecionarBoletosDialog({
                   <TableCell className="max-w-[280px] truncate">
                     {b.arquivo_nome || "—"}
                   </TableCell>
+                  {mostrarFornecedor && (
+                    <TableCell className="max-w-[160px] truncate text-sm text-muted-foreground">
+                      {b.fornecedor || "—"}
+                    </TableCell>
+                  )}
                   <TableCell>{formatDateBR(b.data_vencimento)}</TableCell>
                   <TableCell className="text-right">
                     {b.valor != null ? formatBRL(b.valor) : "—"}
