@@ -283,6 +283,15 @@ REGRAS GERAIS:
       }
     }
 
+    // Caso 5: valor suspeitosamente alto (provável erro de formato BR)
+    // Se valor > 1 milhão E valor_origem é null E moeda é BRL, e o número é
+    // exato múltiplo de 100, provável que a IA leu "1.234,56" como 123456
+    if (data.valor > 1000000 && data.moeda === "BRL" && Number.isInteger(data.valor) && data.valor % 100 === 0) {
+      const valorCorrigido = data.valor / 100;
+      console.warn(`Valor suspeito de erro de formato BR: ${data.valor} → ${valorCorrigido}`);
+      data.valor = valorCorrigido;
+    }
+
     // Boleto sem linha digitável = confiança baixa (provavelmente recibo mal-classificado)
     if (data.tipo_documento === "boleto" && !data.linha_digitavel) {
       console.warn("Boleto sem linha digitável — rebaixando confiança pra baixa.");
