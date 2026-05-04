@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Loader2, Upload, X } from "lucide-react";
+import { Loader2, Upload, X, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
