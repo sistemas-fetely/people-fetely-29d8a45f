@@ -194,19 +194,19 @@ export function ImportarNFDespesaDialog({
 
       const rows = boletosSelecionados.map((b, idx) => ({
         tipo: "pagar" as const,
-        descricao: `${stageInfo.descricao || stageInfo.fornecedor} (${idx + 1}/${boletosSelecionados.length})`,
+        descricao: `${b.descricao || stageInfo.descricao || b.fornecedor || stageInfo.fornecedor} (${idx + 1}/${boletosSelecionados.length})`,
         valor: b.valor || 0,
         data_vencimento: b.data_vencimento,
-        nf_data_emissao: stageInfo.dataEmissao,
-        conta_id: stageInfo.categoriaId,
-        parceiro_id: stageInfo.parceiroId,
-        fornecedor_cliente: stageInfo.fornecedor,
+        nf_data_emissao: b.data_emissao ?? stageInfo.dataEmissao,
+        conta_id: b.categoria_id ?? stageInfo.categoriaId,
+        parceiro_id: b.parceiro_id ?? stageInfo.parceiroId,
+        fornecedor_cliente: b.fornecedor ?? stageInfo.fornecedor,
         parcelas: 1,
         parcela_atual: 1,
         status: "aberto",
         origem: "manual",
-        nf_stage_id: stageInfo.id,
-        nfs_stage_documento_id: b.id,
+        nf_stage_id: b.nf_stage_id ?? stageInfo.id,
+        nfs_stage_documento_id: b.id.startsWith("stage_") ? undefined : b.id,
         criada_por: userId,
       }));
 
