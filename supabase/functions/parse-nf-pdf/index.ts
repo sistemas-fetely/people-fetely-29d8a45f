@@ -244,6 +244,9 @@ REGRAS GERAIS:
       numero_parcela: parsed.tipo_documento === "boleto" && typeof parsed.numero_parcela === "number" ? parsed.numero_parcela : null,
       total_parcelas: parsed.tipo_documento === "boleto" && typeof parsed.total_parcelas === "number" ? parsed.total_parcelas : null,
       numero_documento_referencia: parsed.tipo_documento === "boleto" ? (parsed.numero_documento_referencia || null) : null,
+      confianca: (parsed.confianca === "alta" || parsed.confianca === "baixa")
+        ? parsed.confianca
+        : "baixa", // default conservador: se IA não retornou, assume baixa
     };
 
     // ============================================
