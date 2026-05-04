@@ -367,7 +367,7 @@ export function NovaContaPagarSheet({ open, onOpenChange, initialData }: Props) 
         if (Object.keys(update).length > 0) {
           await supabase
             .from("parceiros_comerciais")
-            .update(update)
+            .update(update as never)
             .eq("id", parceiroId);
         }
       }
