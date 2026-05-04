@@ -88,6 +88,16 @@ export function NovaContaPagarSheet({ open, onOpenChange, initialData }: Props) 
   const [nfStageId, setNfStageId] = useState<string | null>(null);
   const [nfStageBuscaOpen, setNfStageBuscaOpen] = useState(false);
 
+  // Dados bancários do fornecedor pra esta despesa
+  const [dadosBancariosBanco, setDadosBancariosBanco] = useState("");
+  const [dadosBancariosAgencia, setDadosBancariosAgencia] = useState("");
+  const [dadosBancariosConta, setDadosBancariosConta] = useState("");
+  const [pixChave, setPixChave] = useState("");
+  const [pixTipo, setPixTipo] = useState("");
+  // Controle: parceiro JÁ tinha dados (não precisa pedir) vs precisa preencher
+  const [parceiroJaTemDados, setParceiroJaTemDados] = useState(false);
+  const [editandoDadosBancarios, setEditandoDadosBancarios] = useState(false);
+
   // Pré-preenchimento via initialData (vindo do fluxo "Importar NF")
   useEffect(() => {
     if (open && initialData) {
