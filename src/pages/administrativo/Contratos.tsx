@@ -261,9 +261,11 @@ export default function Contratos() {
       <NovoContratoSheet
         open={novoOpen}
         onOpenChange={setNovoOpen}
+        iniciarComUpload={iniciarComUpload}
         onSalvo={() => {
           qc.invalidateQueries({ queryKey: ["contratos"] });
           setNovoOpen(false);
+          setIniciarComUpload(false);
         }}
       />
     </div>
