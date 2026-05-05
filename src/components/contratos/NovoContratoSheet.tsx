@@ -365,6 +365,9 @@ export function NovoContratoSheet({ open, onOpenChange, onSalvo, iniciarComUploa
           data_fim: values.data_fim || null,
           renova_automaticamente: values.renova_automaticamente,
           status: "ativo",
+          doc_storage_path: storagePath,
+          clausulas_extraidas: dadosIA ? { clausulas: dadosIA.clausulas_principais ?? [] } : null,
+          resumo_ia: dadosIA?.resumo ?? null,
         })
         .select("id")
         .single();
