@@ -216,11 +216,26 @@ function PainelIA({ dados, parceiroCadastrado }: { dados: DadosIA; parceiroCadas
 }
 
 // ─── Componente principal ─────────────────────────────────────
-export function NovoContratoSheet({ open, onOpenChange, onSalvo }: Props) {
+export function NovoContratoSheet({ open, onOpenChange, onSalvo, iniciarComUpload }: Props) {
   const [salvando, setSalvando] = useState(false);
   const [extraindo, setExtraindo] = useState(false);
   const [dadosIA, setDadosIA] = useState<DadosIA | null>(null);
   const [parceiroCadastrado, setParceiroCadastrado] = useState(true);
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [storagePath, setStoragePath] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (open && iniciarComUpload) {
+      setTimeout(() => {
+        document.getElementById("contrato-pdf-input")?.click();
+      }, 200);
+    }
+    if (!open) {
+      setDadosIA(null);
+      setPdfUrl(null);
+      setStoragePath(null);
+    }
+  }, [open, iniciarComUpload]);
 
   const { register, control, handleSubmit, watch, setValue, formState: { errors }, reset } =
     useForm<FormData>({
