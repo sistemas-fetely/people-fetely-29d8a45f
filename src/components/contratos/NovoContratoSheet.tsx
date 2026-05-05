@@ -618,6 +618,45 @@ export function NovoContratoSheet({ open, onOpenChange, onSalvo, iniciarComUploa
               </Button>
             </div>
           </form>
+
+          {/* Coluna 2: Painel IA */}
+          {dadosIA && (
+            <div className="border-l border-r px-4 overflow-y-auto" style={{ maxHeight: "calc(100vh - 150px)" }}>
+              <PainelIA dados={dadosIA} parceiroCadastrado={parceiroCadastrado} />
+            </div>
+          )}
+
+          {/* Coluna 3: Contrato original (imagens) */}
+          {dadosIA && (
+            <div className="border rounded-lg overflow-hidden bg-muted flex flex-col">
+              <div className="bg-background border-b px-3 py-2 text-xs font-medium text-muted-foreground flex items-center justify-between">
+                <span>Contrato original</span>
+                {pdfUrl && (
+                  <a href={pdfUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline">
+                    Abrir completo
+                  </a>
+                )}
+              </div>
+              <div className="overflow-y-auto p-2 space-y-2" style={{ maxHeight: "calc(100vh - 200px)" }}>
+                {pdfImages.length > 0 ? (
+                  pdfImages.map((img, i) => (
+                    <img key={i} src={img} alt={`Página ${i + 1}`} className="w-full border rounded shadow-sm" />
+                  ))
+                ) : (
+                  <div className="flex items-center justify-center h-32 text-xs text-muted-foreground">
+                    Carregando preview...
+                  </div>
+                )}
+                {pdfImages.length === 5 && pdfUrl && (
+                  <div className="text-center py-2">
+                    <a href={pdfUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline">
+                      Mostrando 5 primeiras páginas — abrir completo
+                    </a>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </SheetContent>
     </Sheet>
