@@ -274,6 +274,21 @@ export function NovoContratoSheet({ open, onOpenChange, onSalvo, iniciarComUploa
     setExtraindo(true);
     setDadosIA(null);
     try {
+      // 1. Upload para storage
+      const path = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
+      const { error: uploadErr } = await supabase.storage
+        .from("contratos")
+        .upload(path, file, { contentType: "application/pdf" });
+      if (uploadErr) throw new Error("Upload: " + uploadErr.message);
+      setStoragePath(path);
+
+      // 2. Signed URL para visualização
+      const { data: signedData } = await supabase.storage
+        .from("contratos")
+        .createSignedUrl(path, 3600);
+      if (signedData?.signedUrl) setPdfUrl(signedData.signedUrl);
+
+      // 3. Chama IA
       const formData = new FormData();
       formData.append("file", file);
 
