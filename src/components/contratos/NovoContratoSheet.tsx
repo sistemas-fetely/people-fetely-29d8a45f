@@ -301,7 +301,7 @@ export function NovoContratoSheet({ open, onOpenChange, onSalvo, iniciarComUploa
       setDadosIA(dados);
 
       if (dados.objeto) setValue("objeto", dados.objeto);
-      if (dados.area) setValue("area", dados.area as FormData["area"]);
+      if (dados.area) setValue("area", dados.area);
       if (dados.data_inicio) setValue("data_inicio", dados.data_inicio);
       if (dados.data_fim) setValue("data_fim", dados.data_fim);
 
