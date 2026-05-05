@@ -37,9 +37,9 @@ import { useQuery } from "@tanstack/react-query";
 import { useParametros } from "@/hooks/useParametros";
 import * as pdfjsLib from "pdfjs-dist";
 
-// Worker do pdfjs — usa unpkg que serve qualquer versão de pacote npm
+// Worker do pdfjs — versão 4.0.379 fixa (estável, testada)
 if (typeof window !== "undefined") {
-  pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
+  pdfjsLib.GlobalWorkerOptions.workerSrc = "https://unpkg.com/pdfjs-dist@4.0.379/build/pdf.worker.min.js";
 }
 
 // ─── Tipos IA ────────────────────────────────────────────────
