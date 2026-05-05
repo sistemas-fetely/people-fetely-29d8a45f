@@ -131,6 +131,27 @@ export default function GED() {
     },
   });
 
+  async function handleExcluirPasta(p: Pasta) {
+    const msg = p.total_documentos > 0
+      ? `A pasta "${p.nome}" tem ${p.total_documentos} documento(s). Os documentos NÃO serão apagados — vão para "Sem pasta". Continuar?`
+      : `Excluir pasta "${p.nome}"?`;
+    if (!confirm(msg)) return;
+    try {
+      const { error } = await (supabase as any)
+        .from("ged_pastas")
+        .delete()
+        .eq("id", p.id);
+      if (error) throw error;
+      toast.success("Pasta excluída");
+      if (pastaSelecionada === p.id) setPastaSelecionada(PASTA_SOLTOS);
+      qc.invalidateQueries({ queryKey: ["ged-pastas"] });
+      qc.invalidateQueries({ queryKey: ["ged-documentos"] });
+      qc.invalidateQueries({ queryKey: ["ged-soltos-count"] });
+    } catch (e) {
+      toast.error("Erro: " + (e instanceof Error ? e.message : String(e)));
+    }
+  }
+
   async function handleExcluirDoc(doc: Documento) {
     if (!confirm(`Excluir "${doc.nome}"?`)) return;
     try {
@@ -193,9 +214,9 @@ export default function GED() {
           )}
 
           {pastas.map((p) => (
-            <button
+            <div
               key={p.id}
-              className={`w-full text-left px-3 py-2 rounded-md text-sm flex items-center gap-2 transition-colors ${
+              className={`group relative w-full px-3 py-2 rounded-md text-sm flex items-center gap-2 transition-colors cursor-pointer ${
                 pastaSelecionada === p.id
                   ? "bg-primary/10 text-primary font-medium"
                   : "hover:bg-muted"
@@ -211,10 +232,20 @@ export default function GED() {
                   </div>
                 )}
               </div>
-              <Badge variant="secondary" className="text-xs shrink-0">
+              <Badge variant="secondary" className="text-xs shrink-0 group-hover:hidden">
                 {p.total_documentos}
               </Badge>
-            </button>
+              <button
+                className="hidden group-hover:flex h-6 w-6 items-center justify-center rounded hover:bg-destructive/10 hover:text-destructive shrink-0"
+                title={`Excluir pasta "${p.nome}"`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleExcluirPasta(p);
+                }}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            </div>
           ))}
         </div>
       </aside>
