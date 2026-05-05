@@ -80,6 +80,7 @@ export default function Contratos() {
   const qc = useQueryClient();
   const [busca, setBusca] = useState("");
   const [novoOpen, setNovoOpen] = useState(false);
+  const [iniciarComUpload, setIniciarComUpload] = useState(false);
 
   const { data: contratos = [], isLoading } = useQuery({
     queryKey: ["contratos"],
