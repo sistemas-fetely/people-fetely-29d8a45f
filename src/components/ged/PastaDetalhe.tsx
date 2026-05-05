@@ -986,6 +986,9 @@ function AbaDocumentos({ pastaId }: { pastaId: string }) {
       <DocumentoVisualizadorSheet
         documento={docVisualizando}
         onClose={() => setDocVisualizando(null)}
+        onAtualizado={() => {
+          qc.invalidateQueries({ queryKey: ["pasta-documentos", pastaId] });
+        }}
       />
     </div>
   );
@@ -995,16 +998,24 @@ function AbaDocumentos({ pastaId }: { pastaId: string }) {
 function DocumentoVisualizadorSheet({
   documento,
   onClose,
+  onAtualizado,
 }: {
   documento: any | null;
   onClose: () => void;
+  onAtualizado?: () => void;
 }) {
   const [signedUrl, setSignedUrl] = useState<string | null>(null);
+  const [editando, setEditando] = useState(false);
+  const [novoTipo, setNovoTipo] = useState<string>("");
+  const [salvando, setSalvando] = useState(false);
+  const { data: tipos = [] } = useParametros("tipo_documento_ged");
 
   // Carrega URL assinada quando abre
   useEffect(() => {
     if (documento) {
-      setSignedUrl(null); // Reset enquanto carrega
+      setSignedUrl(null);
+      setEditando(false);
+      setNovoTipo(documento.tipo_documento ?? "outro");
       supabase.storage
         .from("ged")
         .createSignedUrl(documento.storage_path, 3600)
@@ -1015,6 +1026,25 @@ function DocumentoVisualizadorSheet({
       setSignedUrl(null);
     }
   }, [documento]);
+
+  async function salvarTipo() {
+    if (!documento) return;
+    setSalvando(true);
+    try {
+      const { error } = await (supabase as any)
+        .from("ged_documentos")
+        .update({ tipo_documento: novoTipo })
+        .eq("id", documento.id);
+      if (error) throw error;
+      toast.success("Tipo atualizado");
+      setEditando(false);
+      onAtualizado?.();
+    } catch (e) {
+      toast.error("Erro: " + (e instanceof Error ? e.message : String(e)));
+    } finally {
+      setSalvando(false);
+    }
+  }
 
   const aberto = !!documento;
 
@@ -1039,10 +1069,54 @@ function DocumentoVisualizadorSheet({
                 <FileText className="h-5 w-5 text-primary" />
                 {documento.nome}
               </DialogTitle>
-              <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
-                <Badge variant="outline" className="capitalize">
-                  {documento.tipo_documento}
-                </Badge>
+              <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground flex-wrap">
+                {!editando ? (
+                  <>
+                    <Badge variant="outline" className="capitalize">
+                      {documento.tipo_documento}
+                    </Badge>
+                    <button
+                      onClick={() => setEditando(true)}
+                      className="text-primary hover:underline text-xs"
+                    >
+                      editar tipo
+                    </button>
+                  </>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <Select value={novoTipo} onValueChange={setNovoTipo}>
+                      <SelectTrigger className="h-7 w-48 text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {(tipos as any[]).map((t) => (
+                          <SelectItem key={t.id} value={t.valor}>
+                            {t.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      size="sm"
+                      onClick={salvarTipo}
+                      disabled={salvando}
+                      className="h-7 text-xs"
+                    >
+                      {salvando ? "..." : "Salvar"}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
+                        setEditando(false);
+                        setNovoTipo(documento.tipo_documento ?? "outro");
+                      }}
+                      className="h-7 text-xs"
+                    >
+                      Cancelar
+                    </Button>
+                  </div>
+                )}
                 <span>·</span>
                 <span>{formatDateBR(documento.created_at)}</span>
                 {signedUrl && (

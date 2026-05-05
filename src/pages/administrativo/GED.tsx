@@ -779,7 +779,7 @@ function UploadDocumentoDialog({
               Clique para selecionar 1 ou mais arquivos
             </p>
             <p className="text-xs text-muted-foreground mt-1">
-              PDF, imagem ou Office · Máx 8MB cada · IA classifica em paralelo
+              PDF, imagem ou Office · Máx 25MB cada · IA classifica em paralelo
             </p>
           </div>
 
