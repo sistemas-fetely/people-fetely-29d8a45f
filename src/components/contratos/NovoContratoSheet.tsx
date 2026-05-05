@@ -35,6 +35,11 @@ import {
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useParametros } from "@/hooks/useParametros";
+import * as pdfjsLib from "pdfjs-dist";
+
+if (typeof window !== "undefined") {
+  pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
+}
 
 // ─── Tipos IA ────────────────────────────────────────────────
 interface DadosIA {
