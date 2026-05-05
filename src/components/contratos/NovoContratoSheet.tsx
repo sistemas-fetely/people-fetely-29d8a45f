@@ -416,7 +416,7 @@ export function NovoContratoSheet({ open, onOpenChange, onSalvo, iniciarComUploa
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className={`overflow-y-auto ${dadosIA ? "sm:max-w-5xl" : "sm:max-w-2xl"}`}>
+      <SheetContent className={`overflow-y-auto ${dadosIA ? "!max-w-[95vw] sm:!max-w-[95vw]" : "sm:max-w-2xl"}`}>
         <SheetHeader>
           <SheetTitle>Novo Contrato</SheetTitle>
         </SheetHeader>
