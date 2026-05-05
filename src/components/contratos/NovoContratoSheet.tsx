@@ -256,6 +256,7 @@ export function NovoContratoSheet({ open, onOpenChange, onSalvo, iniciarComUploa
 
   const { fields, append, remove } = useFieldArray({ control, name: "fases" });
 
+  const { data: areas = [] } = useParametros("area_contrato");
   const { data: parceiros = [] } = useQuery({
     queryKey: ["parceiros-select"],
     queryFn: async () => {
