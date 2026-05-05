@@ -268,8 +268,6 @@ export default function NFsStage() {
       list = list.filter((n) => n.tem_xml);
     } else if (filtroPill === "com_pdf") {
       list = list.filter((n) => n.tem_pdf);
-    } else if (filtroPill === "com_boleto") {
-      list = list.filter((n) => n.tem_boleto);
     }
     // "todas" não filtra
     if (busca.trim()) {
