@@ -189,9 +189,6 @@ export function ImportarNFDespesaDialog({
     if (!stageInfo) return;
     setCriandoDespesas(true);
     try {
-      const { data: userData } = await supabase.auth.getUser();
-      const userId = userData?.user?.id || null;
-
       const rows = boletosSelecionados.map((b, idx) => ({
         tipo: "pagar" as const,
         descricao: `${b.descricao || stageInfo.descricao || b.fornecedor || stageInfo.fornecedor} (${idx + 1}/${boletosSelecionados.length})`,
@@ -207,7 +204,6 @@ export function ImportarNFDespesaDialog({
         origem: "manual",
         nf_stage_id: b.nf_stage_id ?? stageInfo.id,
         nfs_stage_documento_id: b.id.startsWith("stage_") ? undefined : b.id,
-        criada_por: userId,
       }));
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
