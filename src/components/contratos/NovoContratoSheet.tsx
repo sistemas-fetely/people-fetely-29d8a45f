@@ -297,6 +297,28 @@ export function NovoContratoSheet({ open, onOpenChange, onSalvo, iniciarComUploa
         .createSignedUrl(path, 3600);
       if (signedData?.signedUrl) setPdfUrl(signedData.signedUrl);
 
+      // 2.1 Renderiza páginas como imagens (até 5 páginas)
+      try {
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        const numPaginas = Math.min(pdf.numPages, 5);
+        const imgs: string[] = [];
+        for (let i = 1; i <= numPaginas; i++) {
+          const page = await pdf.getPage(i);
+          const viewport = page.getViewport({ scale: 1.5 });
+          const canvas = document.createElement("canvas");
+          canvas.width = viewport.width;
+          canvas.height = viewport.height;
+          const ctx = canvas.getContext("2d")!;
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          await page.render({ canvasContext: ctx, viewport, canvas } as any).promise;
+          imgs.push(canvas.toDataURL("image/jpeg", 0.85));
+        }
+        setPdfImages(imgs);
+      } catch (renderErr) {
+        console.warn("Erro ao renderizar PDF:", renderErr);
+      }
+
       // 3. Chama IA
       const formData = new FormData();
       formData.append("file", file);
