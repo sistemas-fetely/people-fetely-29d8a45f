@@ -96,6 +96,72 @@ export function NovoContratoSheet({ open, onOpenChange, onSalvo }: Props) {
     },
   });
 
+  async function handleUploadPDF(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setExtraindo(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await supabase.functions.invoke("parse-contrato-pdf", {
+        body: formData,
+      });
+
+      if (res.error) throw new Error(res.error.message);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const dados = res.data as any;
+
+      if (dados.objeto) setValue("objeto", dados.objeto);
+      if (dados.area) setValue("area", dados.area);
+      if (dados.data_inicio) setValue("data_inicio", dados.data_inicio);
+      if (dados.data_fim) setValue("data_fim", dados.data_fim ?? "");
+      if (dados.fornecedor_cnpj) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data: parceiro } = await (supabase as any)
+          .from("parceiros_comerciais")
+          .select("id")
+          .eq("cnpj", String(dados.fornecedor_cnpj).replace(/\D/g, ""))
+          .maybeSingle();
+        if (parceiro?.id) setValue("parceiro_id", parceiro.id);
+      }
+
+      if (dados.fases && Array.isArray(dados.fases) && dados.fases.length > 0) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const fasesFormatadas = dados.fases.map((f: any) => ({
+          nome: f.nome ?? "Fase",
+          tipo: f.tipo ?? "recorrente_sem_fim",
+          valor: f.valor ?? 0,
+          data_inicio: f.data_inicio ?? dados.data_inicio ?? new Date().toISOString().split("T")[0],
+          data_fim: f.data_fim ?? "",
+          dia_vencimento: f.dia_vencimento ?? dados.dia_vencimento ?? 1,
+        }));
+        setValue("fases", fasesFormatadas);
+      } else if (dados.valor_parcela) {
+        setValue("fases", [{
+          nome: "Mensalidade",
+          tipo: dados.tipo_contrato ?? "recorrente_sem_fim",
+          valor: dados.valor_parcela,
+          data_inicio: dados.data_inicio ?? new Date().toISOString().split("T")[0],
+          data_fim: dados.data_fim ?? "",
+          dia_vencimento: dados.dia_vencimento ?? 1,
+        }]);
+      }
+
+      if (dados.resumo) {
+        toast.info(`IA: ${dados.resumo}`);
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      toast.error("Erro ao ler PDF: " + msg);
+    } finally {
+      setExtraindo(false);
+      const input = document.getElementById("contrato-pdf-input") as HTMLInputElement | null;
+      if (input) input.value = "";
+    }
+  }
+
   async function onSubmit(values: FormData) {
     setSalvando(true);
     try {
