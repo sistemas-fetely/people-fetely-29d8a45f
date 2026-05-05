@@ -4411,6 +4411,170 @@ export type Database = {
         }
         Relationships: []
       }
+      ged_documento_vinculos: {
+        Row: {
+          created_at: string
+          criado_por: string | null
+          documento_id: string
+          entidade_id: string
+          entidade_tipo: string
+          id: string
+          observacao: string | null
+        }
+        Insert: {
+          created_at?: string
+          criado_por?: string | null
+          documento_id: string
+          entidade_id: string
+          entidade_tipo: string
+          id?: string
+          observacao?: string | null
+        }
+        Update: {
+          created_at?: string
+          criado_por?: string | null
+          documento_id?: string
+          entidade_id?: string
+          entidade_tipo?: string
+          id?: string
+          observacao?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ged_documento_vinculos_documento_id_fkey"
+            columns: ["documento_id"]
+            isOneToOne: false
+            referencedRelation: "ged_documentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ged_documentos: {
+        Row: {
+          arquivo_original: string
+          classificacao_ia: Json | null
+          confianca_ia: string | null
+          created_at: string
+          criado_por: string | null
+          descricao: string | null
+          id: string
+          mime_type: string | null
+          nome: string
+          parceiro_id: string | null
+          pasta_id: string | null
+          resumo_ia: string | null
+          storage_path: string
+          tags: string[] | null
+          tamanho_bytes: number | null
+          tipo_documento: string
+          updated_at: string
+        }
+        Insert: {
+          arquivo_original: string
+          classificacao_ia?: Json | null
+          confianca_ia?: string | null
+          created_at?: string
+          criado_por?: string | null
+          descricao?: string | null
+          id?: string
+          mime_type?: string | null
+          nome: string
+          parceiro_id?: string | null
+          pasta_id?: string | null
+          resumo_ia?: string | null
+          storage_path: string
+          tags?: string[] | null
+          tamanho_bytes?: number | null
+          tipo_documento: string
+          updated_at?: string
+        }
+        Update: {
+          arquivo_original?: string
+          classificacao_ia?: Json | null
+          confianca_ia?: string | null
+          created_at?: string
+          criado_por?: string | null
+          descricao?: string | null
+          id?: string
+          mime_type?: string | null
+          nome?: string
+          parceiro_id?: string | null
+          pasta_id?: string | null
+          resumo_ia?: string | null
+          storage_path?: string
+          tags?: string[] | null
+          tamanho_bytes?: number | null
+          tipo_documento?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ged_documentos_parceiro_id_fkey"
+            columns: ["parceiro_id"]
+            isOneToOne: false
+            referencedRelation: "parceiros_comerciais"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ged_documentos_pasta_id_fkey"
+            columns: ["pasta_id"]
+            isOneToOne: false
+            referencedRelation: "ged_pastas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ged_documentos_pasta_id_fkey"
+            columns: ["pasta_id"]
+            isOneToOne: false
+            referencedRelation: "vw_ged_pastas_kpis"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ged_pastas: {
+        Row: {
+          ativa: boolean
+          cor: string | null
+          created_at: string
+          criado_por: string | null
+          descricao: string | null
+          id: string
+          nome: string
+          parceiro_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          ativa?: boolean
+          cor?: string | null
+          created_at?: string
+          criado_por?: string | null
+          descricao?: string | null
+          id?: string
+          nome: string
+          parceiro_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ativa?: boolean
+          cor?: string | null
+          created_at?: string
+          criado_por?: string | null
+          descricao?: string | null
+          id?: string
+          nome?: string
+          parceiro_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ged_pastas_parceiro_id_fkey"
+            columns: ["parceiro_id"]
+            isOneToOne: false
+            referencedRelation: "parceiros_comerciais"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       grupo_acesso_permissoes: {
         Row: {
           condicao_extra: Json | null
@@ -10154,6 +10318,38 @@ export type Database = {
           valor_total: number | null
         }
         Relationships: []
+      }
+      vw_ged_documentos_soltos: {
+        Row: {
+          tamanho_total_bytes: number | null
+          total: number | null
+        }
+        Relationships: []
+      }
+      vw_ged_pastas_kpis: {
+        Row: {
+          ativa: boolean | null
+          cor: string | null
+          created_at: string | null
+          descricao: string | null
+          id: string | null
+          nome: string | null
+          parceiro_id: string | null
+          parceiro_nome: string | null
+          tamanho_total_bytes: number | null
+          total_documentos: number | null
+          ultimo_upload: string | null
+          updated_at: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ged_pastas_parceiro_id_fkey"
+            columns: ["parceiro_id"]
+            isOneToOne: false
+            referencedRelation: "parceiros_comerciais"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       vw_lancamentos_caixa_banco: {
         Row: {
