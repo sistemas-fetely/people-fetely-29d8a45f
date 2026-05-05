@@ -481,13 +481,12 @@ export function NovoContratoSheet({ open, onOpenChange, onSalvo, iniciarComUploa
               </div>
               <div className="space-y-1">
                 <Label>Área *</Label>
-                <Select defaultValue="financeiro" onValueChange={(v) => setValue("area", v as FormData["area"])}>
+                <Select defaultValue="financeiro" onValueChange={(v) => setValue("area", v)}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="financeiro">Financeiro</SelectItem>
-                    <SelectItem value="ti">TI</SelectItem>
-                    <SelectItem value="juridico">Jurídico</SelectItem>
-                    <SelectItem value="outro">Outro</SelectItem>
+                    {areas.map((a) => (
+                      <SelectItem key={a.id} value={a.valor}>{a.label}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
