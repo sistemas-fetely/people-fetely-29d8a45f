@@ -77,22 +77,30 @@ TIPOS POSSÍVEIS:
 - "orcamento": orçamento, cotação ou proposta comercial com valores e prazos
 - "proposta": proposta técnica (sem valores fixos ainda, ou cotação preliminar)
 - "nf": Nota Fiscal (NF-e, NFS-e)
-- "recibo": recibo de pagamento, invoice de empresa estrangeira
+- "boleto": BOLETO BANCÁRIO de cobrança (tem código de barras de 47 dígitos, linha digitável, "Pagador", "Beneficiário", data de vencimento futura, "Recibo do Pagador" como canhoto)
+- "recibo": recibo de QUITAÇÃO de pagamento já feito (declaração "Recebi de X o valor Y", data passada, sem código de barras de boleto)
+- "comprovante": comprovante de pagamento bancário, PIX, transferência, TED, DOC (saída do internet banking)
 - "certidao": certidão (negativa, positiva, regularidade)
-- "comprovante": comprovante de pagamento, transferência, depósito
 - "aditivo": aditivo contratual, termo de aditamento
+- "invoice": invoice de empresa estrangeira (Lovable, Anthropic, AWS, etc)
 - "outro": qualquer outro tipo
+
+ATENÇÃO ÀS DIFERENÇAS:
+- BOLETO ≠ RECIBO. "Recibo do Pagador" no rodapé do boleto é o NOME DO CANHOTO do boleto, NÃO é um recibo de quitação. Se o documento tem código de barras, linha digitável e vencimento futuro = BOLETO.
+- RECIBO é uma DECLARAÇÃO formal de que alguém RECEBEU o valor. Geralmente menor e sem código de barras.
+- COMPROVANTE de pagamento sai do banco DEPOIS do pagamento, mostrando que a transferência/PIX foi feita.
 
 Responda APENAS com JSON neste formato (sem markdown):
 
 {
-  "tipo_documento": "contrato" | "orcamento" | "proposta" | "nf" | "recibo" | "certidao" | "comprovante" | "aditivo" | "outro",
+  "tipo_documento": "contrato" | "orcamento" | "proposta" | "nf" | "boleto" | "recibo" | "comprovante" | "certidao" | "aditivo" | "invoice" | "outro",
   "nome_sugerido": string (nome curto e descritivo, ex: "Orçamento Construtora ABC - Reforma Sede"),
   "parceiro_cnpj": string ou null (CNPJ do emissor/fornecedor, apenas números),
   "parceiro_razao_social": string ou null (razão social do emissor),
   "valor": number ou null (valor principal em BRL — formato brasileiro: R$ 4.542,79 = 4542.79),
   "data_emissao": string YYYY-MM-DD ou null,
   "data_validade": string YYYY-MM-DD ou null (para orçamento/proposta),
+  "data_vencimento": string YYYY-MM-DD ou null (para boleto),
   "numero_documento": string ou null,
   "tags_sugeridas": array de até 5 strings (tags úteis em minúsculas, kebab-case ex: "reforma-escritorio", "saas", "ti"),
   "pontos_principais": array de até 5 strings (principais informações ou cláusulas/itens),
@@ -102,11 +110,12 @@ Responda APENAS com JSON neste formato (sem markdown):
 
 REGRAS:
 - nome_sugerido deve ser curto e útil para identificar visualmente
-- Se documento é de empresa estrangeira (Lovable, Anthropic, AWS, etc), parceiro_cnpj = null
+- Se documento é de empresa estrangeira (Lovable, Anthropic, AWS, etc), use tipo "invoice", parceiro_cnpj = null
 - Se não conseguir extrair algum campo, use null
 - tags_sugeridas em kebab-case (palavras separadas por hífen, sem acentos, minúsculas)
 - pontos_principais: extrair os pontos mais relevantes (valores, prazos, multas, condições)
-- Para orçamento/proposta: incluir validade e itens principais nos pontos`;
+- Para orçamento/proposta: incluir validade e itens principais nos pontos
+- Para boleto: incluir vencimento, valor, beneficiário nos pontos`;
 
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
