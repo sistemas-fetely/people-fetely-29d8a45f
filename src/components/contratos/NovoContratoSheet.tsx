@@ -229,6 +229,7 @@ export function NovoContratoSheet({ open, onOpenChange, onSalvo, iniciarComUploa
   const [parceiroCadastrado, setParceiroCadastrado] = useState(true);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [storagePath, setStoragePath] = useState<string | null>(null);
+  const [pdfImages, setPdfImages] = useState<string[]>([]);
 
   useEffect(() => {
     if (open && iniciarComUpload) {
@@ -240,6 +241,7 @@ export function NovoContratoSheet({ open, onOpenChange, onSalvo, iniciarComUploa
       setDadosIA(null);
       setPdfUrl(null);
       setStoragePath(null);
+      setPdfImages([]);
     }
   }, [open, iniciarComUpload]);
 
