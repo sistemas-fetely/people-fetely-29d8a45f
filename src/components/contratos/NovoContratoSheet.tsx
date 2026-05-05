@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, FileUp, Loader2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 
 const faseSchema = z.object({
@@ -55,6 +55,7 @@ interface Props {
 
 export function NovoContratoSheet({ open, onOpenChange, onSalvo }: Props) {
   const [salvando, setSalvando] = useState(false);
+  const [extraindo, setExtraindo] = useState(false);
 
   const {
     register,
@@ -94,6 +95,72 @@ export function NovoContratoSheet({ open, onOpenChange, onSalvo }: Props) {
       return data ?? [];
     },
   });
+
+  async function handleUploadPDF(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setExtraindo(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await supabase.functions.invoke("parse-contrato-pdf", {
+        body: formData,
+      });
+
+      if (res.error) throw new Error(res.error.message);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const dados = res.data as any;
+
+      if (dados.objeto) setValue("objeto", dados.objeto);
+      if (dados.area) setValue("area", dados.area);
+      if (dados.data_inicio) setValue("data_inicio", dados.data_inicio);
+      if (dados.data_fim) setValue("data_fim", dados.data_fim ?? "");
+      if (dados.fornecedor_cnpj) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data: parceiro } = await (supabase as any)
+          .from("parceiros_comerciais")
+          .select("id")
+          .eq("cnpj", String(dados.fornecedor_cnpj).replace(/\D/g, ""))
+          .maybeSingle();
+        if (parceiro?.id) setValue("parceiro_id", parceiro.id);
+      }
+
+      if (dados.fases && Array.isArray(dados.fases) && dados.fases.length > 0) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const fasesFormatadas = dados.fases.map((f: any) => ({
+          nome: f.nome ?? "Fase",
+          tipo: f.tipo ?? "recorrente_sem_fim",
+          valor: f.valor ?? 0,
+          data_inicio: f.data_inicio ?? dados.data_inicio ?? new Date().toISOString().split("T")[0],
+          data_fim: f.data_fim ?? "",
+          dia_vencimento: f.dia_vencimento ?? dados.dia_vencimento ?? 1,
+        }));
+        setValue("fases", fasesFormatadas);
+      } else if (dados.valor_parcela) {
+        setValue("fases", [{
+          nome: "Mensalidade",
+          tipo: dados.tipo_contrato ?? "recorrente_sem_fim",
+          valor: dados.valor_parcela,
+          data_inicio: dados.data_inicio ?? new Date().toISOString().split("T")[0],
+          data_fim: dados.data_fim ?? "",
+          dia_vencimento: dados.dia_vencimento ?? 1,
+        }]);
+      }
+
+      if (dados.resumo) {
+        toast.info(`IA: ${dados.resumo}`);
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      toast.error("Erro ao ler PDF: " + msg);
+    } finally {
+      setExtraindo(false);
+      const input = document.getElementById("contrato-pdf-input") as HTMLInputElement | null;
+      if (input) input.value = "";
+    }
+  }
 
   async function onSubmit(values: FormData) {
     setSalvando(true);
@@ -168,6 +235,32 @@ export function NovoContratoSheet({ open, onOpenChange, onSalvo }: Props) {
         </SheetHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mt-6">
+          {/* Upload PDF */}
+          <div
+            className="rounded-lg border-2 border-dashed p-4 text-center cursor-pointer hover:bg-muted/50 transition-colors"
+            onClick={() => !extraindo && document.getElementById("contrato-pdf-input")?.click()}
+          >
+            <input
+              id="contrato-pdf-input"
+              type="file"
+              accept="application/pdf"
+              className="hidden"
+              onChange={handleUploadPDF}
+              disabled={extraindo}
+            />
+            {extraindo ? (
+              <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Lendo contrato com IA...
+              </div>
+            ) : (
+              <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                <FileUp className="h-4 w-4" />
+                Subir PDF do contrato para preencher automaticamente
+              </div>
+            )}
+          </div>
+
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
               <Label>Número *</Label>
