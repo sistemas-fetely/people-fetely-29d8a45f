@@ -138,10 +138,16 @@ export default function Contratos() {
             Sem contrato cadastrado, pagamento recorrente não existe.
           </p>
         </div>
-        <Button onClick={() => setNovoOpen(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Novo Contrato
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => { setIniciarComUpload(true); setNovoOpen(true); }}>
+            <FileUp className="h-4 w-4 mr-2" />
+            Importar PDF
+          </Button>
+          <Button onClick={() => { setIniciarComUpload(false); setNovoOpen(true); }}>
+            <Plus className="h-4 w-4 mr-2" />
+            Novo Contrato
+          </Button>
+        </div>
       </div>
 
       {/* KPI Cards */}
