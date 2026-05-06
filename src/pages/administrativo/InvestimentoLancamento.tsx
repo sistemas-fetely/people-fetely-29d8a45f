@@ -438,11 +438,11 @@ export default function InvestimentoLancamento() {
             );
           })}
         </div>
-        {frentes && frentes.length > 1 && (
-          <p className="text-[11px] text-muted-foreground/70 italic mt-1 ml-1">
-            Dica: Ctrl+Click (⌘+Click no Mac) para combinar múltiplas frentes
-          </p>
-        )}
+      )}
+      {frentes && frentes.length > 1 && (
+        <p className="text-[11px] text-muted-foreground/70 italic mt-1 ml-1">
+          Dica: Ctrl+Click (⌘+Click no Mac) para combinar múltiplas frentes
+        </p>
       )}
 
       {/* Filtros + Nova Frente */}
