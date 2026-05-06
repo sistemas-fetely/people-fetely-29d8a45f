@@ -16,6 +16,7 @@ import { Receipt, Loader2 } from "lucide-react";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
 import { toast } from "sonner";
 import { CategoriaCombobox, type CategoriaOption } from "./CategoriaCombobox";
+import { LinhaInvestimentoCombobox } from "./LinhaInvestimentoCombobox";
 
 type Movimentacao = {
   id: string;
@@ -37,6 +38,7 @@ export function DespesaDiretaDialog({ open, onClose, movimentacao, onConciliado 
   const [descricao, setDescricao] = useState<string>("");
   const [parceiroId, setParceiroId] = useState<string>("");
   const [enviando, setEnviando] = useState(false);
+  const [linhaInvestimentoId, setLinhaInvestimentoId] = useState<string | null>(null);
 
   // Carrega parceiros pra o select opcional
   const { data: parceiros } = useQuery({
@@ -94,6 +96,22 @@ export function DespesaDiretaDialog({ open, onClose, movimentacao, onConciliado 
       if (error) throw error;
       const r = Array.isArray(data) ? data[0] : data;
       if (!r?.ok) throw new Error(r?.erro || "Falha desconhecida");
+
+      // Vincular linha de investimento (UPDATE pós-RPC)
+      const cprId = r?.conta_pagar_id;
+      if (linhaInvestimentoId && cprId) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { error: updErr } = await (supabase as any)
+          .from("contas_pagar_receber")
+          .update({ linha_investimento_id: linhaInvestimentoId })
+          .eq("id", cprId);
+        if (updErr) {
+          toast.warning(
+            "Despesa criada, mas vínculo com linha de investimento falhou: " + updErr.message,
+          );
+        }
+      }
+
       toast.success("Despesa direta criada e conciliada");
       onConciliado();
       handleClose();
@@ -109,6 +127,7 @@ export function DespesaDiretaDialog({ open, onClose, movimentacao, onConciliado 
     setCategoriaId("");
     setDescricao("");
     setParceiroId("");
+    setLinhaInvestimentoId(null);
     onClose();
   }
 
@@ -162,7 +181,16 @@ export function DespesaDiretaDialog({ open, onClose, movimentacao, onConciliado 
           />
         </div>
 
-        {/* Descrição */}
+        {/* Linha de Investimento (opcional) */}
+        <div className="space-y-1">
+          <Label className="text-xs">Linha de Investimento (opcional)</Label>
+          <LinhaInvestimentoCombobox
+            value={linhaInvestimentoId}
+            onChange={setLinhaInvestimentoId}
+          />
+        </div>
+
+
         <div className="space-y-1">
           <Label className="text-xs">Descrição</Label>
           <Input

@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { useCategoriasPlano } from "@/hooks/useCategoriasPlano";
 import { useCentrosCusto } from "@/hooks/financeiro/useCentrosCusto";
 import { CategoriaCombobox } from "./CategoriaCombobox";
+import { LinhaInvestimentoCombobox } from "./LinhaInvestimentoCombobox";
 import { cn } from "@/lib/utils";
 import {
   getFamiliaContaPagar,
@@ -42,6 +43,7 @@ type ContaEditavel = {
   status: string;
   parceiro_id?: string | null;
   pago_em_conta_id?: string | null;
+  linha_investimento_id?: string | null;
   // Família (decide visibilidade dos campos)
   is_cartao?: boolean | null;
   origem?: string | null;
@@ -112,6 +114,9 @@ export function ContaPagarFormEdit({
   const [nfSerie, setNfSerie] = useState(conta.nf_serie || "");
   const [nfChave, setNfChave] = useState(conta.nf_chave_acesso || "");
   const [pagoEmContaId, setPagoEmContaId] = useState(conta.pago_em_conta_id || "__none__");
+  const [linhaInvestimentoId, setLinhaInvestimentoId] = useState<string | null>(
+    conta.linha_investimento_id ?? null,
+  );
 
   // Chave de acesso oculta por padrão. Edição manual é caso raro
   // (correção/migração) — fluxo normal é a chave vir preenchida pela
@@ -169,6 +174,7 @@ export function ContaPagarFormEdit({
     setNfSerie(conta.nf_serie || "");
     setNfChave(conta.nf_chave_acesso || "");
     setPagoEmContaId(conta.pago_em_conta_id || "__none__");
+    setLinhaInvestimentoId(conta.linha_investimento_id ?? null);
   }, [conta.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Categorias (plano de contas)
@@ -243,6 +249,9 @@ export function ContaPagarFormEdit({
       }
       if (novoPagoEmContaId !== (conta.pago_em_conta_id ?? null)) {
         updatePayload.pago_em_conta_id = novoPagoEmContaId;
+      }
+      if (linhaInvestimentoId !== (conta.linha_investimento_id ?? null)) {
+        updatePayload.linha_investimento_id = linhaInvestimentoId;
       }
       if (Object.keys(updatePayload).length > 0) {
         updatePayload.updated_at = new Date().toISOString();
@@ -382,6 +391,16 @@ export function ContaPagarFormEdit({
             ))}
           </SelectContent>
         </Select>
+      </div>
+
+      {/* Linha de Investimento (opcional) */}
+      <div className="space-y-1">
+        <Label>Linha de Investimento (opcional)</Label>
+        <LinhaInvestimentoCombobox
+          value={linhaInvestimentoId}
+          onChange={setLinhaInvestimentoId}
+          disabled={isReadOnly || salvando}
+        />
       </div>
 
       {/* Forma de pagamento */}

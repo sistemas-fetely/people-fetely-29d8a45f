@@ -5,6 +5,7 @@ import {
   Users, Monitor, Network, Landmark, LogOut, ClipboardList,
   UsersRound, Settings2, ShoppingCart, Package,
   Layers, CreditCard, Calendar, FileWarning, ArrowLeftRight,
+  Target,
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { NavLink } from "@/components/NavLink";
@@ -49,6 +50,7 @@ const caixaBancoItems: MenuItem[] = [
 ];
 
 const configFinanceiroItems: MenuItem[] = [
+  { title: "Investimento de Lançamento", url: "/administrativo/investimento-lancamento", icon: Target },
   { title: "Plano de Contas", url: "/administrativo/plano-contas", icon: ListTree },
   { title: "Importar Dados", url: "/administrativo/importar", icon: Upload },
 ];
