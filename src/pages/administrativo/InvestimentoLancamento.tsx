@@ -355,16 +355,10 @@ export default function InvestimentoLancamento() {
             const isAnySelected = filtroFrenteIds.length > 0;
             const dimmed = isAnySelected && !isSelected;
 
-            const corMap: Record<string, string> = {
-              MARKETING_LANCAMENTO: "#1A4A3A",
-              PRODUTO: "#E91E63",
-              FABRICA: "#E8833A",
-              TI_TELECOM: "#4FC3D8",
-              SHOWROOM: "#8B1A2F",
-            };
-            const codigo = (f as any).codigo as string | undefined;
-            const bg = (codigo && corMap[codigo]) || "#737373";
-            const textColor = codigo === "TI_TELECOM" ? "#1A4A3A" : "#FFFFFF";
+            // Cor uniforme verde Fetely para todos os cards de frente.
+            // Identificação visual fica pelo nome — KPIs gerais é que carregam o tema.
+            const bg = "#1A4A3A";
+            const textColor = "#FFFFFF";
             const pct = percRealizado === null ? 0 : Math.min(100, Math.max(0, percRealizado));
 
             return (
