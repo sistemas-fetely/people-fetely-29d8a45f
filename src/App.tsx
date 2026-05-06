@@ -109,7 +109,28 @@ const DashboardFinanceiro = lazy(() => import("@/pages/administrativo/DashboardF
 const InvestimentoLancamento = lazy(() => import("@/pages/administrativo/InvestimentoLancamento"));
 const FluxoFuturoInvestimento = lazy(() => import("@/pages/administrativo/FluxoFuturoInvestimento"));
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      // Dados ficam "frescos" por 1 minuto: durante esse tempo,
+      // navegar entre telas usa o cache em memória sem refetch.
+      staleTime: 60 * 1000,
+
+      // Cache fica em memória por 10 minutos mesmo após sair da tela.
+      // Se voltar pra tela, dados aparecem instantâneos.
+      gcTime: 10 * 60 * 1000,
+
+      // Não refaz queries quando troca de aba e volta.
+      refetchOnWindowFocus: false,
+
+      // Se já tem dado válido em cache (não-stale), não refetcha no mount.
+      refetchOnMount: false,
+
+      // Limita retries em caso de erro (default era 3).
+      retry: 1,
+    },
+  },
+});
 
 // Redirect dinâmico: /ti/documentacao/:slug → /documentacao/:slug
 function TiDocSlugRedirect() {
