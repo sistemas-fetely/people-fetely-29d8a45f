@@ -253,7 +253,7 @@ export default function ContaPagarDetalheDrawer({
       const { data, error } = await supabase
         .from("contas_pagar_receber")
         .select(
-          "*, plano_contas:conta_id(codigo,nome), formas_pagamento:forma_pagamento_id(nome,codigo), parceiros_comerciais:parceiro_id(razao_social), centros_custo:centro_custo_id(codigo,nome)"
+          `*, plano_contas:conta_id(codigo,nome), formas_pagamento:forma_pagamento_id(nome,codigo), parceiros_comerciais:parceiro_id(razao_social), centros_custo:centro_custo_id(codigo,nome), linhas_investimento:linha_investimento_id(descricao, temas_investimento:tema_id(nome, frentes_investimento:frente_id(nome)))`
         )
         .eq("id", contaId!)
         .single();
