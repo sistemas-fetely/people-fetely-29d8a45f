@@ -181,7 +181,16 @@ export function DespesaDiretaDialog({ open, onClose, movimentacao, onConciliado 
           />
         </div>
 
-        {/* Descrição */}
+        {/* Linha de Investimento (opcional) */}
+        <div className="space-y-1">
+          <Label className="text-xs">Linha de Investimento (opcional)</Label>
+          <LinhaInvestimentoCombobox
+            value={linhaInvestimentoId}
+            onChange={setLinhaInvestimentoId}
+          />
+        </div>
+
+
         <div className="space-y-1">
           <Label className="text-xs">Descrição</Label>
           <Input
