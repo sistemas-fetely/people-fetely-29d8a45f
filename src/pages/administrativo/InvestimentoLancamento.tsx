@@ -145,8 +145,8 @@ function PctBadge({ value, base }: { value: number; base: number }) {
   const pct = Math.round((value / base) * 100);
   return (
     <span
-      className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-semibold tabular-nums bg-muted text-muted-foreground border border-border ml-2 align-middle"
-      title={`${pct}% do total do pai`}
+      className="inline-flex items-center text-[10px] font-medium tabular-nums text-muted-foreground/80 ml-2 align-middle"
+      title={`${pct}% do total do ${base === value ? "item" : "pai"}`}
     >
       {pct}%
     </span>
