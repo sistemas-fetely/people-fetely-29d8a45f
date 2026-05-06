@@ -392,7 +392,7 @@ const App = () => (
                 Acesso restrito a super_admin (Fase 1)
                 ═══════════════════════════════════════════════ */}
             <Route path="/administrativo" element={<AdminFinanceiroLayout />}>
-              <Route index element={<ContasPagar />} />
+              <Route index element={<DashboardFinanceiro />} />
               <Route path="plano-contas" element={<PlanoDeContas />} />
 
               <Route path="fluxo-caixa" element={<FluxoCaixa />} />
