@@ -307,6 +307,74 @@ export default function InvestimentoLancamento() {
         </div>
       )}
 
+      {/* Cards por Frente — atalho visual de filtro */}
+      {frentes && frentes.length > 0 && (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+          {frentes.map((f) => {
+            const total = f.total_inicial;
+            const base = Math.max(f.total_fechado, f.total_inicial);
+            const percRealizado = base > 0 ? Math.round((f.total_pago / base) * 100) : null;
+
+            const isSelected = filtroFrenteId === f.frente_id;
+            const isAnySelected = filtroFrenteId !== "__all__";
+            const dimmed = isAnySelected && !isSelected;
+
+            const corMap: Record<string, string> = {
+              MARKETING_LANCAMENTO: "#1A4A3A",
+              PRODUTO: "#E91E63",
+              FABRICA: "#E8833A",
+              TI_TELECOM: "#4FC3D8",
+              SHOWROOM: "#8B1A2F",
+            };
+            const codigo = (f as any).codigo as string | undefined;
+            const bg = (codigo && corMap[codigo]) || "#737373";
+            const textColor = codigo === "TI_TELECOM" ? "#1A4A3A" : "#FFFFFF";
+            const pct = percRealizado === null ? 0 : Math.min(100, Math.max(0, percRealizado));
+
+            return (
+              <button
+                key={f.frente_id}
+                onClick={() =>
+                  setFiltroFrenteId(isSelected ? "__all__" : f.frente_id)
+                }
+                className={cn(
+                  "rounded-lg p-4 text-left transition-all duration-200",
+                  "hover:brightness-110 cursor-pointer",
+                  isSelected && "ring-2 ring-white/60 scale-[1.02]",
+                  dimmed && "opacity-50",
+                )}
+                style={{ backgroundColor: bg, color: textColor }}
+              >
+                <div className="text-xs font-semibold uppercase tracking-wide opacity-90 truncate">
+                  {f.nome}
+                </div>
+                <div className="text-lg font-bold tabular-nums mt-1">
+                  {formatBRL(total)}
+                </div>
+                <div className="flex items-center justify-between mt-2 text-[11px] opacity-90">
+                  <span>Realizado</span>
+                  <span className="tabular-nums font-semibold">
+                    {percRealizado === null ? "—" : `${percRealizado}%`}
+                  </span>
+                </div>
+                <div
+                  className="mt-1.5 h-1 rounded-full overflow-hidden"
+                  style={{ backgroundColor: "rgba(255,255,255,0.25)" }}
+                >
+                  <div
+                    className="h-full rounded-full transition-all"
+                    style={{
+                      width: `${pct}%`,
+                      backgroundColor: codigo === "TI_TELECOM" ? "#1A4A3A" : "#FFFFFF",
+                    }}
+                  />
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       {/* Filtros + Nova Frente */}
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
