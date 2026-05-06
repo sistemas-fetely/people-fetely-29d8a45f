@@ -140,6 +140,19 @@ function MiniKpis({
   );
 }
 
+function PctBadge({ value, base }: { value: number; base: number }) {
+  if (!base || base <= 0) return null;
+  const pct = Math.round((value / base) * 100);
+  return (
+    <span
+      className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-semibold tabular-nums bg-muted text-muted-foreground border border-border ml-2 align-middle"
+      title={`${pct}% do total do pai`}
+    >
+      {pct}%
+    </span>
+  );
+}
+
 export default function InvestimentoLancamento() {
   const [filtroFrenteId, setFiltroFrenteId] = useState<string>("__all__");
   const [expandedFrentes, setExpandedFrentes] = useState<Set<string>>(new Set());
@@ -229,6 +242,10 @@ export default function InvestimentoLancamento() {
       { inicial: 0, fechado: 0, pago: 0, saldo: 0, saving: 0 },
     );
   }, [frentesFiltradas]);
+
+  const totalGeralInicial = useMemo(() => {
+    return frentes.reduce((sum, f) => sum + (Number(f.total_inicial) || 0), 0);
+  }, [frentes]);
 
   function toggleFrente(id: string) {
     setExpandedFrentes((s) => {
@@ -465,7 +482,10 @@ export default function InvestimentoLancamento() {
                   </button>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <h3 className="font-semibold text-base">{f.nome}</h3>
+                      <h3 className="font-semibold text-base inline-flex items-center">
+                        {f.nome}
+                        <PctBadge value={f.total_inicial} base={totalGeralInicial} />
+                      </h3>
                       {!f.ativa && (
                         <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
                           inativa
@@ -525,7 +545,10 @@ export default function InvestimentoLancamento() {
                               </button>
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2">
-                                  <h4 className="font-medium text-sm">{t.nome}</h4>
+                                  <h4 className="font-medium text-sm inline-flex items-center">
+                                    {t.nome}
+                                    <PctBadge value={t.total_inicial} base={f.total_inicial} />
+                                  </h4>
                                   {!t.ativa && (
                                     <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
                                       inativo
@@ -595,7 +618,10 @@ export default function InvestimentoLancamento() {
                                             onClick={() => openDrawer("linha", l, t.tema_id)}
                                           >
                                             <td className="px-2 py-2">
-                                              {l.descricao}
+                                              <span className="inline-flex items-center">
+                                                {l.descricao}
+                                                <PctBadge value={l.valor_inicial} base={t.total_inicial} />
+                                              </span>
                                               {!l.ativa && (
                                                 <span className="ml-2 text-[10px] px-1 py-0.5 rounded bg-muted">
                                                   inativa
