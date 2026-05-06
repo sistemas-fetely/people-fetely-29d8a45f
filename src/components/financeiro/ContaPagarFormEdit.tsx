@@ -393,6 +393,16 @@ export function ContaPagarFormEdit({
         </Select>
       </div>
 
+      {/* Linha de Investimento (opcional) */}
+      <div className="space-y-1">
+        <Label>Linha de Investimento (opcional)</Label>
+        <LinhaInvestimentoCombobox
+          value={linhaInvestimentoId}
+          onChange={setLinhaInvestimentoId}
+          disabled={isReadOnly || salvando}
+        />
+      </div>
+
       {/* Forma de pagamento */}
       <div className="space-y-1">
         <Label>Forma de pagamento</Label>
