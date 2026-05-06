@@ -545,7 +545,10 @@ export default function InvestimentoLancamento() {
                               </button>
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2">
-                                  <h4 className="font-medium text-sm">{t.nome}</h4>
+                                  <h4 className="font-medium text-sm inline-flex items-center">
+                                    {t.nome}
+                                    <PctBadge value={t.total_inicial} base={f.total_inicial} />
+                                  </h4>
                                   {!t.ativa && (
                                     <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
                                       inativo
