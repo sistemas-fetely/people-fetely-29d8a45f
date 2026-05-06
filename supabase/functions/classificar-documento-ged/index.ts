@@ -50,7 +50,7 @@ Deno.serve(async (req) => {
 
     if (file.size > MAX_PDF_BYTES) {
       return new Response(JSON.stringify({
-        error: `Arquivo muito grande (${(file.size / 1024 / 1024).toFixed(1)}MB). Limite: 25MB.`,
+        error: `Arquivo muito grande (${(file.size / 1024 / 1024).toFixed(1)}MB). Limite: 10MB. PDFs maiores estouram o limite de processamento — comprima ou divida o arquivo.`,
       }), {
         status: 413,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
