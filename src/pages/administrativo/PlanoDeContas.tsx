@@ -232,7 +232,7 @@ export default function PlanoDeContas() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("plano_contas")
-        .select("id,codigo,nome,parent_id,nivel,tipo,natureza,centro_custo,ativo")
+        .select("id,codigo,nome,parent_id,nivel,tipo,natureza,centro_custo_id,ativo")
         .order("codigo");
       if (error) throw error;
       return data as Conta[];
