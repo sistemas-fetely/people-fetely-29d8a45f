@@ -246,7 +246,15 @@ export default function InvestimentoLancamento() {
 
   function openDrawer(mode: EditMode, ent: any | null, parent: string | null) {
     setDrawerMode(mode);
-    setDrawerEnt(ent);
+    // Normalizar entidade: a view nomeia ID como frente_id/tema_id/linha_id,
+    // mas o drawer usa entidade.id internamente. Sem isso, edição quebra (PATCH 400).
+    const normalized = ent
+      ? {
+          ...ent,
+          id: ent.id ?? ent.linha_id ?? ent.tema_id ?? ent.frente_id,
+        }
+      : null;
+    setDrawerEnt(normalized);
     setDrawerParent(parent);
   }
 
