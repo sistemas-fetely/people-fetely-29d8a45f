@@ -411,6 +411,7 @@ const App = () => (
               <Route path="faturas-cartao" element={<FaturasCartao />} />
               <Route path="reconciliacao-cartao" element={<ReconciliacaoCartao />} />
               <Route path="fluxo-futuro" element={<FluxoCaixaFuturo />} />
+              <Route path="fluxo-futuro-investimento" element={<FluxoFuturoInvestimento />} />
               <Route path="compromissos" element={<Compromissos />} />
               <Route path="configuracao-integracao" element={<ConfiguracaoIntegracao />} />
               {/* MIGRADOS na Sprint 2 (29/04/2026) → Administrativo Fetely:
