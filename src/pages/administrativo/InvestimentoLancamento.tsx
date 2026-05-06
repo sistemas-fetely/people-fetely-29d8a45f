@@ -154,7 +154,7 @@ function PctBadge({ value, base }: { value: number; base: number }) {
 }
 
 export default function InvestimentoLancamento() {
-  const [filtroFrenteId, setFiltroFrenteId] = useState<string>("__all__");
+  const [filtroFrenteIds, setFiltroFrenteIds] = useState<string[]>([]);
   const [expandedFrentes, setExpandedFrentes] = useState<Set<string>>(new Set());
   const [expandedTemas, setExpandedTemas] = useState<Set<string>>(new Set());
 
@@ -226,9 +226,9 @@ export default function InvestimentoLancamento() {
   });
 
   const frentesFiltradas = useMemo(() => {
-    if (filtroFrenteId === "__all__") return frentes;
-    return frentes.filter((f) => f.frente_id === filtroFrenteId);
-  }, [frentes, filtroFrenteId]);
+    if (filtroFrenteIds.length === 0) return frentes;
+    return frentes.filter((f) => filtroFrenteIds.includes(f.frente_id));
+  }, [frentes, filtroFrenteIds]);
 
   const totais = useMemo(() => {
     return frentesFiltradas.reduce(
@@ -332,8 +332,8 @@ export default function InvestimentoLancamento() {
             const base = Math.max(f.total_fechado, f.total_inicial);
             const percRealizado = base > 0 ? Math.round((f.total_pago / base) * 100) : null;
 
-            const isSelected = filtroFrenteId === f.frente_id;
-            const isAnySelected = filtroFrenteId !== "__all__";
+            const isSelected = filtroFrenteIds.includes(f.frente_id);
+            const isAnySelected = filtroFrenteIds.length > 0;
             const dimmed = isAnySelected && !isSelected;
 
             const corMap: Record<string, string> = {
@@ -351,9 +351,20 @@ export default function InvestimentoLancamento() {
             return (
               <button
                 key={f.frente_id}
-                onClick={() =>
-                  setFiltroFrenteId(isSelected ? "__all__" : f.frente_id)
-                }
+                onClick={(e) => {
+                  const isMulti = e.ctrlKey || e.metaKey;
+                  if (isMulti) {
+                    setFiltroFrenteIds((prev) =>
+                      prev.includes(f.frente_id)
+                        ? prev.filter((id) => id !== f.frente_id)
+                        : [...prev, f.frente_id]
+                    );
+                  } else {
+                    setFiltroFrenteIds((prev) =>
+                      prev.length === 1 && prev[0] === f.frente_id ? [] : [f.frente_id]
+                    );
+                  }
+                }}
                 className={cn(
                   "rounded-lg p-4 text-left transition-all duration-200",
                   "hover:brightness-110 cursor-pointer",
@@ -428,14 +439,37 @@ export default function InvestimentoLancamento() {
           })}
         </div>
       )}
+      {frentes && frentes.length > 1 && (
+        <p className="text-[11px] text-muted-foreground/70 italic mt-1 ml-1">
+          Dica: Ctrl+Click (⌘+Click no Mac) para combinar múltiplas frentes
+        </p>
+      )}
 
       {/* Filtros + Nova Frente */}
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <span className="text-xs text-muted-foreground">Frente:</span>
-          <Select value={filtroFrenteId} onValueChange={setFiltroFrenteId}>
+          <Select
+            value={
+              filtroFrenteIds.length === 1
+                ? filtroFrenteIds[0]
+                : filtroFrenteIds.length === 0
+                  ? "__all__"
+                  : "__multi__"
+            }
+            onValueChange={(v) => {
+              if (v === "__all__") setFiltroFrenteIds([]);
+              else if (v !== "__multi__") setFiltroFrenteIds([v]);
+            }}
+          >
             <SelectTrigger className="w-[260px] h-9">
-              <SelectValue />
+              <SelectValue
+                placeholder={
+                  filtroFrenteIds.length > 1
+                    ? `Múltiplas (${filtroFrenteIds.length})`
+                    : "Selecionar..."
+                }
+              />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="__all__">Todas</SelectItem>
