@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { useCategoriasPlano } from "@/hooks/useCategoriasPlano";
 import { useCentrosCusto } from "@/hooks/financeiro/useCentrosCusto";
 import { CategoriaCombobox } from "./CategoriaCombobox";
+import { LinhaInvestimentoCombobox } from "./LinhaInvestimentoCombobox";
 import { cn } from "@/lib/utils";
 import {
   getFamiliaContaPagar,
