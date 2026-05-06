@@ -1,21 +1,14 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
+import { encodeBase64 } from "https://deno.land/std@0.224.0/encoding/base64.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const MAX_PDF_BYTES = 25 * 1024 * 1024;
-
-function uint8ArrayToBase64(bytes: Uint8Array): string {
-  const chunkSize = 0x8000;
-  const parts: string[] = [];
-  for (let i = 0; i < bytes.length; i += chunkSize) {
-    const chunk = bytes.subarray(i, i + chunkSize);
-    parts.push(String.fromCharCode(...chunk));
-  }
-  return btoa(parts.join(""));
-}
+// Reduzido para 10MB — PDFs maiores estouram o limite de CPU do edge runtime
+// na codificação base64 + envio para a IA.
+const MAX_PDF_BYTES = 10 * 1024 * 1024;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
