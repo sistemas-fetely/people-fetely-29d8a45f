@@ -4,7 +4,7 @@ import {
   FileSignature, Building2, ShieldCheck, FolderArchive,
   Users, Monitor, Network, Landmark, LogOut, ClipboardList,
   UsersRound, Settings2, ShoppingCart, Package,
-  Layers, CreditCard, Calendar, Repeat, FileWarning, ArrowLeftRight,
+  Layers, CreditCard, Calendar, FileWarning, ArrowLeftRight,
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { NavLink } from "@/components/NavLink";
@@ -42,7 +42,7 @@ const financeiroItems: MenuItem[] = [
 
 const caixaBancoItems: MenuItem[] = [
   { title: "Movimentações", url: "/administrativo/caixa-banco", icon: Wallet },
-  { title: "Compromissos", url: "/administrativo/compromissos", icon: Repeat },
+  
   { title: "Fluxo de Caixa", url: "/administrativo/fluxo-caixa", icon: TrendingUp },
   { title: "Fluxo Futuro", url: "/administrativo/fluxo-futuro", icon: Calendar },
   { title: "Contas Bancárias", url: "/administrativo/caixa-banco/contas", icon: Landmark },
