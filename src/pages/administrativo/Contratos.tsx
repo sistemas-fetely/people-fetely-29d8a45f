@@ -365,17 +365,31 @@ export default function Contratos() {
                   </TableCell>
                   <TableCell>{statusBadge(c.status)}</TableCell>
                   <TableCell className="text-right">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(`/administrativo-fetely/ged?pasta=${c.pasta_id}`);
-                      }}
-                      title="Abrir no GED"
-                    >
-                      <FolderOpen className="h-4 w-4" />
-                    </Button>
+                    <div className="flex items-center justify-end gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/administrativo-fetely/ged?pasta=${c.pasta_id}`);
+                        }}
+                        title="Abrir no GED"
+                      >
+                        <FolderOpen className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setContratoParaExcluir(c);
+                        }}
+                        title="Excluir contrato"
+                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
@@ -383,6 +397,41 @@ export default function Contratos() {
           </Table>
         )}
       </div>
+
+      <AlertDialog
+        open={!!contratoParaExcluir}
+        onOpenChange={(open) => { if (!open) setContratoParaExcluir(null); }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir contrato?</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2 text-sm">
+                <p>
+                  Você está prestes a excluir o contrato{" "}
+                  <span className="font-mono font-medium">{contratoParaExcluir?.numero}</span> do projeto{" "}
+                  <span className="font-medium">{contratoParaExcluir?.pasta_nome}</span>.
+                </p>
+                <p className="text-amber-700">
+                  ⚠️ As parcelas do contrato serão removidas. Despesas já lançadas em Contas a Pagar
+                  serão mantidas, mas perderão o vínculo com este contrato.
+                </p>
+                <p className="font-medium">Esta ação não pode ser desfeita.</p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => contratoParaExcluir && excluirMutation.mutate(contratoParaExcluir)}
+              disabled={excluirMutation.isPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {excluirMutation.isPending ? "Excluindo..." : "Excluir contrato"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
