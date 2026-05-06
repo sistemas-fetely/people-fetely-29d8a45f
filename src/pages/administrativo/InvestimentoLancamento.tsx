@@ -154,7 +154,7 @@ function PctBadge({ value, base }: { value: number; base: number }) {
 }
 
 export default function InvestimentoLancamento() {
-  const [filtroFrenteId, setFiltroFrenteId] = useState<string>("__all__");
+  const [filtroFrenteIds, setFiltroFrenteIds] = useState<string[]>([]);
   const [expandedFrentes, setExpandedFrentes] = useState<Set<string>>(new Set());
   const [expandedTemas, setExpandedTemas] = useState<Set<string>>(new Set());
 
