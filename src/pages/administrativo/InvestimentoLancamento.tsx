@@ -335,10 +335,10 @@ export default function InvestimentoLancamento() {
         </div>
       ) : (
         <div className="flex flex-wrap gap-3">
-          <KpiCard label="Orçamento Inicial" valor={totais.inicial} icon={Target} />
-          <KpiCard label="Previsto / Fechado" valor={totais.fechado} icon={TrendingUp} />
-          <KpiCard label="Realizado / Pago" valor={totais.pago} icon={Wallet} />
-          <KpiCard label="Saldo a Realizar" valor={totais.saldo} icon={Coins} />
+          <KpiCard label="Orçamento Inicial" valor={totais.inicial} icon={Target} tone="planejamento" />
+          <KpiCard label="Previsto / Fechado" valor={totais.fechado} icon={TrendingUp} tone="comprometido" />
+          <KpiCard label="Realizado / Pago" valor={totais.pago} icon={Wallet} tone="executado" />
+          <KpiCard label="Saldo a Realizar" valor={totais.saldo} icon={Coins} tone="saldo" />
           <KpiCard label="Saving Total" valor={totais.saving} icon={PiggyBank} tone="saving" />
         </div>
       )}
