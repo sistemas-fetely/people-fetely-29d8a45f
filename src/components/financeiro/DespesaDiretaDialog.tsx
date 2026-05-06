@@ -38,6 +38,7 @@ export function DespesaDiretaDialog({ open, onClose, movimentacao, onConciliado 
   const [descricao, setDescricao] = useState<string>("");
   const [parceiroId, setParceiroId] = useState<string>("");
   const [enviando, setEnviando] = useState(false);
+  const [linhaInvestimentoId, setLinhaInvestimentoId] = useState<string | null>(null);
 
   // Carrega parceiros pra o select opcional
   const { data: parceiros } = useQuery({
