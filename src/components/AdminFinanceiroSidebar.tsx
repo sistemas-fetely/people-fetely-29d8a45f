@@ -5,6 +5,7 @@ import {
   Users, Monitor, Network, Landmark, LogOut, ClipboardList,
   UsersRound, Settings2, ShoppingCart, Package,
   Layers, CreditCard, Calendar, FileWarning, ArrowLeftRight,
+  Target,
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { NavLink } from "@/components/NavLink";
