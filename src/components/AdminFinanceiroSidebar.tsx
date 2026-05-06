@@ -4,7 +4,7 @@ import {
   FileSignature, Building2, ShieldCheck, FolderArchive,
   Users, Monitor, Network, Landmark, LogOut, ClipboardList,
   UsersRound, Settings2, ShoppingCart, Package,
-  Layers, CreditCard, Calendar, Repeat, FileWarning, ArrowLeftRight,
+  Layers, CreditCard, Calendar, FileWarning, ArrowLeftRight,
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { NavLink } from "@/components/NavLink";
