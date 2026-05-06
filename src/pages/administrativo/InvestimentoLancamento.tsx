@@ -255,11 +255,19 @@ export default function InvestimentoLancamento() {
     setDrawerParent(null);
   }
 
-  function bgLinha(l: LinhaKpi): string {
-    if (l.valor_fechado == null) return "bg-muted/30";
-    if (l.saldo < 0) return "bg-rose-50";
-    if (l.saldo > 0) return "bg-emerald-50/50";
-    return "";
+  function getSaudeRowClass(l: LinhaKpi): string {
+    const base = l.valor_fechado ?? l.valor_inicial;
+    if (l.saldo < 0) return "bg-red-50 hover:bg-red-100 border-l-4 border-red-500";
+    if (base > 0 && l.valor_pago / base >= 0.85)
+      return "bg-amber-50 hover:bg-amber-100 border-l-4 border-amber-500";
+    if (l.valor_fechado !== null) return "bg-emerald-50/40 hover:bg-emerald-100/60";
+    return "hover:bg-muted/50";
+  }
+
+  function calcPercGasto(l: LinhaKpi): number | null {
+    const base = l.valor_fechado ?? l.valor_inicial;
+    if (!base || base <= 0) return null;
+    return Math.round((l.valor_pago / base) * 100);
   }
 
   return (
