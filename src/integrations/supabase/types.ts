@@ -5014,7 +5014,7 @@ export type Database = {
       movimentacoes_bancarias: {
         Row: {
           categoria_inconsistente: boolean
-          centro_custo: string | null
+          centro_custo_id: string | null
           conciliado: boolean | null
           conciliado_em: string | null
           conciliado_por: string | null
@@ -5037,7 +5037,7 @@ export type Database = {
         }
         Insert: {
           categoria_inconsistente?: boolean
-          centro_custo?: string | null
+          centro_custo_id?: string | null
           conciliado?: boolean | null
           conciliado_em?: string | null
           conciliado_por?: string | null
@@ -5060,7 +5060,7 @@ export type Database = {
         }
         Update: {
           categoria_inconsistente?: boolean
-          centro_custo?: string | null
+          centro_custo_id?: string | null
           conciliado?: boolean | null
           conciliado_em?: string | null
           conciliado_por?: string | null
@@ -5082,6 +5082,13 @@ export type Database = {
           valor?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "movimentacoes_bancarias_centro_custo_id_fkey"
+            columns: ["centro_custo_id"]
+            isOneToOne: false
+            referencedRelation: "centros_custo"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "movimentacoes_bancarias_conta_bancaria_id_fkey"
             columns: ["conta_bancaria_id"]
@@ -6835,7 +6842,7 @@ export type Database = {
         Row: {
           ativo: boolean | null
           bling_id: string | null
-          centro_custo: string | null
+          centro_custo_id: string | null
           codigo: string
           created_at: string | null
           id: string
@@ -6850,7 +6857,7 @@ export type Database = {
         Insert: {
           ativo?: boolean | null
           bling_id?: string | null
-          centro_custo?: string | null
+          centro_custo_id?: string | null
           codigo: string
           created_at?: string | null
           id?: string
@@ -6865,7 +6872,7 @@ export type Database = {
         Update: {
           ativo?: boolean | null
           bling_id?: string | null
-          centro_custo?: string | null
+          centro_custo_id?: string | null
           codigo?: string
           created_at?: string | null
           id?: string
@@ -6878,6 +6885,13 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "plano_contas_centro_custo_id_fkey"
+            columns: ["centro_custo_id"]
+            isOneToOne: false
+            referencedRelation: "centros_custo"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "plano_contas_parent_id_fkey"
             columns: ["parent_id"]
@@ -7715,7 +7729,7 @@ export type Database = {
         Row: {
           aprendida_automaticamente: boolean
           ativo: boolean | null
-          centro_custo: string | null
+          centro_custo_id: string | null
           cnpj_emitente: string | null
           confianca: number
           conta_plano_id: string
@@ -7738,7 +7752,7 @@ export type Database = {
         Insert: {
           aprendida_automaticamente?: boolean
           ativo?: boolean | null
-          centro_custo?: string | null
+          centro_custo_id?: string | null
           cnpj_emitente?: string | null
           confianca?: number
           conta_plano_id: string
@@ -7761,7 +7775,7 @@ export type Database = {
         Update: {
           aprendida_automaticamente?: boolean
           ativo?: boolean | null
-          centro_custo?: string | null
+          centro_custo_id?: string | null
           cnpj_emitente?: string | null
           confianca?: number
           conta_plano_id?: string
@@ -7782,6 +7796,13 @@ export type Database = {
           vezes_corrigida?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "regras_categorizacao_centro_custo_id_fkey"
+            columns: ["centro_custo_id"]
+            isOneToOne: false
+            referencedRelation: "centros_custo"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "regras_categorizacao_conta_plano_id_fkey"
             columns: ["conta_plano_id"]
