@@ -64,7 +64,6 @@ import {
 import { toast } from "sonner";
 import { useFiltrosPersistentes } from "@/hooks/useFiltrosPersistentes";
 import ContaPagarDetalheDrawer from "@/components/financeiro/ContaPagarDetalheDrawer";
-import AcoesInlineConta from "@/components/financeiro/AcoesInlineConta";
 import SugestaoIADialog from "@/components/financeiro/SugestaoIADialog";
 import FilaRevisaoIADialog from "@/components/financeiro/FilaRevisaoIADialog";
 import {
@@ -124,7 +123,6 @@ export default function CaixaBanco() {
   );
   const [busca, setBusca] = useFiltrosPersistentes<string>("caixabanco_busca", "");
   const [contaIdDrawer, setContaIdDrawer] = useState<string | null>(null);
-  const [editandoBanco, setEditandoBanco] = useState(false);
   const [filtroContador, setFiltroContador] = useState<"todos" | "enviados" | "nao_enviados">("todos");
   const [mostrarSoInconsistentes, setMostrarSoInconsistentes] = useState(false);
   const [aplicandoIA, setAplicandoIA] = useState(false);
