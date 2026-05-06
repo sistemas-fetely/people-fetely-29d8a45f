@@ -114,6 +114,9 @@ export function ContaPagarFormEdit({
   const [nfSerie, setNfSerie] = useState(conta.nf_serie || "");
   const [nfChave, setNfChave] = useState(conta.nf_chave_acesso || "");
   const [pagoEmContaId, setPagoEmContaId] = useState(conta.pago_em_conta_id || "__none__");
+  const [linhaInvestimentoId, setLinhaInvestimentoId] = useState<string | null>(
+    conta.linha_investimento_id ?? null,
+  );
 
   // Chave de acesso oculta por padrão. Edição manual é caso raro
   // (correção/migração) — fluxo normal é a chave vir preenchida pela
