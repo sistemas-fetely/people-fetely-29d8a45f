@@ -332,8 +332,8 @@ export default function InvestimentoLancamento() {
             const base = Math.max(f.total_fechado, f.total_inicial);
             const percRealizado = base > 0 ? Math.round((f.total_pago / base) * 100) : null;
 
-            const isSelected = filtroFrenteId === f.frente_id;
-            const isAnySelected = filtroFrenteId !== "__all__";
+            const isSelected = filtroFrenteIds.includes(f.frente_id);
+            const isAnySelected = filtroFrenteIds.length > 0;
             const dimmed = isAnySelected && !isSelected;
 
             const corMap: Record<string, string> = {
@@ -351,9 +351,20 @@ export default function InvestimentoLancamento() {
             return (
               <button
                 key={f.frente_id}
-                onClick={() =>
-                  setFiltroFrenteId(isSelected ? "__all__" : f.frente_id)
-                }
+                onClick={(e) => {
+                  const isMulti = e.ctrlKey || e.metaKey;
+                  if (isMulti) {
+                    setFiltroFrenteIds((prev) =>
+                      prev.includes(f.frente_id)
+                        ? prev.filter((id) => id !== f.frente_id)
+                        : [...prev, f.frente_id]
+                    );
+                  } else {
+                    setFiltroFrenteIds((prev) =>
+                      prev.length === 1 && prev[0] === f.frente_id ? [] : [f.frente_id]
+                    );
+                  }
+                }}
                 className={cn(
                   "rounded-lg p-4 text-left transition-all duration-200",
                   "hover:brightness-110 cursor-pointer",
