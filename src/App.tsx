@@ -106,6 +106,7 @@ import ContasBancarias from "@/pages/administrativo/ContasBancarias";
 import OFXStage from "@/pages/administrativo/OFXStage";
 import DashboardFinanceiro from "@/pages/administrativo/DashboardFinanceiro";
 import InvestimentoLancamento from "@/pages/administrativo/InvestimentoLancamento";
+import FluxoFuturoInvestimento from "@/pages/administrativo/FluxoFuturoInvestimento";
 
 const queryClient = new QueryClient();
 
