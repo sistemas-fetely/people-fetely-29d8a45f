@@ -65,6 +65,7 @@ import { toast } from "sonner";
 import { useFiltrosPersistentes } from "@/hooks/useFiltrosPersistentes";
 import ContaPagarDetalheDrawer from "@/components/financeiro/ContaPagarDetalheDrawer";
 import SugestaoIADialog from "@/components/financeiro/SugestaoIADialog";
+import BuscarNFStageDialog from "@/components/financeiro/BuscarNFStageDialog";
 import FilaRevisaoIADialog from "@/components/financeiro/FilaRevisaoIADialog";
 import {
   getCompromissoInfoMap,
@@ -127,6 +128,9 @@ export default function CaixaBanco() {
   const [mostrarSoInconsistentes, setMostrarSoInconsistentes] = useState(false);
   const [aplicandoIA, setAplicandoIA] = useState(false);
   const [sugestaoMovId, setSugestaoMovId] = useState<string | null>(null);
+  const [buscarNFContaId, setBuscarNFContaId] = useState<string | null>(null);
+  const [buscarNFDescricao, setBuscarNFDescricao] = useState("");
+  const [buscarNFValor, setBuscarNFValor] = useState(0);
   const [filaIAOpen, setFilaIAOpen] = useState(false);
   const [filtroQual, setFiltroQual] = useState<FiltroQualidade>("todos");
 
