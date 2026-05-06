@@ -39,7 +39,7 @@ type Conta = {
   nivel: number;
   tipo: string;
   natureza: string | null;
-  centro_custo: string | null;
+  centro_custo_id: string | null;
   ativo: boolean;
 };
 
