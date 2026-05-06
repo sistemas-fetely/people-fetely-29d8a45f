@@ -618,7 +618,10 @@ export default function InvestimentoLancamento() {
                                             onClick={() => openDrawer("linha", l, t.tema_id)}
                                           >
                                             <td className="px-2 py-2">
-                                              {l.descricao}
+                                              <span className="inline-flex items-center">
+                                                {l.descricao}
+                                                <PctBadge value={l.valor_inicial} base={t.total_inicial} />
+                                              </span>
                                               {!l.ativa && (
                                                 <span className="ml-2 text-[10px] px-1 py-0.5 rounded bg-muted">
                                                   inativa
