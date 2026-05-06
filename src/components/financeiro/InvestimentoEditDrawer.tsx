@@ -255,8 +255,14 @@ export function InvestimentoEditDrawer({
       qc.invalidateQueries({ queryKey: ["linhas-investimento-kpis"] });
       qc.invalidateQueries({ queryKey: ["linhas-investimento-combobox"] });
       onSaved();
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
+    } catch (e: any) {
+      const msg =
+        e?.message ||
+        e?.error_description ||
+        e?.details ||
+        e?.hint ||
+        (typeof e === "string" ? e : JSON.stringify(e));
+      console.error("[InvestimentoEditDrawer] erro ao salvar:", e);
       toast.error("Erro: " + msg);
     } finally {
       setSalvando(false);
