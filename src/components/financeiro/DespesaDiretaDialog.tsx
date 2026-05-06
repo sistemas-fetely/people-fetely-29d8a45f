@@ -16,6 +16,7 @@ import { Receipt, Loader2 } from "lucide-react";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
 import { toast } from "sonner";
 import { CategoriaCombobox, type CategoriaOption } from "./CategoriaCombobox";
+import { LinhaInvestimentoCombobox } from "./LinhaInvestimentoCombobox";
 
 type Movimentacao = {
   id: string;
