@@ -1086,6 +1086,17 @@ export default function CaixaBanco() {
         onClose={() => setContaIdDrawer(null)}
       />
 
+      {buscarNFContaId && (
+        <BuscarNFStageDialog
+          open={!!buscarNFContaId}
+          onOpenChange={(open) => { if (!open) setBuscarNFContaId(null); }}
+          contaId={buscarNFContaId}
+          contaDescricao={buscarNFDescricao}
+          contaValor={buscarNFValor}
+          onVinculado={() => setBuscarNFContaId(null)}
+        />
+      )}
+
       {sugestaoMovId && (
         <SugestaoIADialog
           movId={sugestaoMovId}
