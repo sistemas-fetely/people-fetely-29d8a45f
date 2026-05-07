@@ -185,6 +185,64 @@ export default function Conciliacao() {
   const invalidarPagamentos = () =>
     qc.invalidateQueries({ queryKey: ["itau-pagamentos-conta", contaBancariaId] });
 
+  const invalidarOFX = () =>
+    qc.invalidateQueries({ queryKey: ["ofx-residual", contaBancariaId] });
+
+  async function vincularOFX(pag: Pagamento) {
+    try {
+      if (pag.numero_lote && pag.numero_lote !== "-") {
+        const { data: loteItens } = await sb
+          .from("itau_pagamentos_stage")
+          .select("id, valor_pago")
+          .eq("importacao_id", pag.importacao_id)
+          .eq("numero_lote", pag.numero_lote);
+
+        if (!loteItens?.length) return;
+
+        const somaLote = loteItens.reduce(
+          (acc: number, i: any) => acc + (Number(i.valor_pago) || 0), 0
+        );
+
+        const { data: candidatos } = await sb
+          .from("ofx_transacoes_stage")
+          .select("id")
+          .eq("conta_bancaria_id", contaBancariaId)
+          .eq("status", "pendente")
+          .lt("valor", 0)
+          .gte("valor", -(somaLote + 0.05))
+          .lte("valor", -(somaLote - 0.05));
+
+        if (candidatos?.length === 1) {
+          const ofxId = candidatos[0].id;
+          await sb.from("ofx_transacoes_stage")
+            .update({ status: "conciliado" }).eq("id", ofxId);
+          await sb.from("itau_pagamentos_stage")
+            .update({ ofx_transacao_id: ofxId })
+            .in("id", loteItens.map((i: any) => i.id));
+        }
+      } else {
+        const { data: candidatos } = await sb
+          .from("ofx_transacoes_stage")
+          .select("id")
+          .eq("conta_bancaria_id", contaBancariaId)
+          .eq("status", "pendente")
+          .lt("valor", 0)
+          .gte("valor", -(pag.valor_pago + 0.05))
+          .lte("valor", -(pag.valor_pago - 0.05));
+
+        if (candidatos?.length === 1) {
+          const ofxId = candidatos[0].id;
+          await sb.from("ofx_transacoes_stage")
+            .update({ status: "conciliado" }).eq("id", ofxId);
+          await sb.from("itau_pagamentos_stage")
+            .update({ ofx_transacao_id: ofxId }).eq("id", pag.id);
+        }
+      }
+    } catch {
+      // melhor esforço
+    }
+  }
+
   // ─── Mutations ────────────────────────────────────────────────────────
 
   const confirmarLoteMutation = useMutation({
