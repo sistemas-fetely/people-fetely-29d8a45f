@@ -148,6 +148,7 @@ function ItemOperador({
 
 function PainelImportacao({ importacao }: { importacao: Importacao }) {
   const qc = useQueryClient();
+  const navigate = useNavigate();
 
   const { data: pagamentos = [], isLoading } = useQuery({
     queryKey: ["itau-pagamentos", importacao.id],
