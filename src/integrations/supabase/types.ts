@@ -5984,6 +5984,7 @@ export type Database = {
       }
       ofx_regras_automaticas: {
         Row: {
+          acao: string
           ativo: boolean
           centro_custo_id: string | null
           conta_bancaria_id: string | null
@@ -5995,6 +5996,7 @@ export type Database = {
           pattern: string
         }
         Insert: {
+          acao?: string
           ativo?: boolean
           centro_custo_id?: string | null
           conta_bancaria_id?: string | null
@@ -6006,6 +6008,7 @@ export type Database = {
           pattern: string
         }
         Update: {
+          acao?: string
           ativo?: boolean
           centro_custo_id?: string | null
           conta_bancaria_id?: string | null
