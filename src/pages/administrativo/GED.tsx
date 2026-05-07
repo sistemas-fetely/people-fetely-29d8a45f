@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -79,6 +80,7 @@ function formatBytes(bytes: number | null): string {
 
 export default function GED() {
   const qc = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [pastaSelecionada, setPastaSelecionada] = useState<string>(PASTA_SOLTOS);
   const [busca, setBusca] = useState("");
   const [novaPastaOpen, setNovaPastaOpen] = useState(false);
@@ -96,6 +98,18 @@ export default function GED() {
       return (data ?? []) as Pasta[];
     },
   });
+
+  // Doutrina #34: useEffect (não useState) pra reagir a dados que chegam depois.
+  // Quando vem de Contratos.tsx com ?pasta=<id>, aplica a seleção após as pastas carregarem.
+  useEffect(() => {
+    const pastaParam = searchParams.get("pasta");
+    if (!pastaParam || loadingPastas || pastas.length === 0) return;
+    const existe = pastas.find((p) => p.id === pastaParam);
+    if (existe) {
+      setPastaSelecionada(pastaParam);
+      setSearchParams({}, { replace: true });
+    }
+  }, [pastas, loadingPastas]);
 
   const { data: documentos = [], isLoading: loadingDocs } = useQuery({
     queryKey: ["ged-documentos", pastaSelecionada, busca],
