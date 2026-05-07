@@ -578,7 +578,7 @@ export default function CaixaBanco() {
 
       {/* CONTEÚDO COM SCROLL */}
       <div className="flex-1 overflow-auto px-6 pb-6 pt-3 space-y-3">
-        {/* 5 KPIs globais */}
+        {/* KPIs — 1 linha, 5 cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2">
           <CardKPI
             titulo="Pago mês anterior"
@@ -607,47 +607,35 @@ export default function CaixaBanco() {
             onClick={() => {}}
             icone={CalendarClock}
           />
-          <CardKPI
-            titulo="Sem conciliação"
-            valor={formatBRL(kpis.semConciliacao.valor)}
-            sublinha={`${kpis.semConciliacao.qtd} pagas s/ OFX`}
-            cor="red"
-            ativo={false}
-            onClick={() => {}}
-            icone={RefreshCcw}
+          <CardKPIDuplo
+            titulo="Conciliado" icone={CheckCircle2} cor="fetely"
+            total={kpis.conciliado.qtd + kpis.semConciliacao.qtd}
+            qtdTem={kpis.conciliado.qtd}
+            qtdFalta={kpis.semConciliacao.qtd}
+            ativoTem={false}
+            ativoFalta={false}
+            onClickTem={() => {}}
+            onClickFalta={() => {}}
           />
-          <CardKPI
-            titulo="Conciliado"
-            valor={formatBRL(kpis.conciliado.valor)}
-            sublinha={`${kpis.conciliado.qtd} batidas no extrato`}
-            cor="teal"
-            ativo={false}
-            onClick={() => {}}
-            icone={CheckCircle2}
+          <CardKPIDuplo
+            titulo="NF / Recibo" icone={Receipt} cor="fetely"
+            total={kpisQualidade.Documento.total}
+            qtdTem={kpisQualidade.Documento.tem} qtdFalta={kpisQualidade.Documento.falta}
+            ativoTem={filtroQual === "doc_tem"} ativoFalta={filtroQual === "doc_falta"}
+            onClickTem={() => setFiltroQual(filtroQual === "doc_tem" ? "todos" : "doc_tem")}
+            onClickFalta={() => setFiltroQual(filtroQual === "doc_falta" ? "todos" : "doc_falta")}
           />
         </div>
 
-        {/* KPIs Qualidade */}
-        <div className="border border-emerald-300 bg-emerald-50/20 rounded-xl p-2">
-          <div className="text-[10px] uppercase tracking-wider text-emerald-700 font-medium mb-1.5 px-1">
-            Qualidade
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <CardKPIDuplo
-              titulo="NF / Recibo" icone={Receipt} cor="fetely"
-              total={kpisQualidade.Documento.total}
-              qtdTem={kpisQualidade.Documento.tem} qtdFalta={kpisQualidade.Documento.falta}
-              ativoTem={filtroQual === "doc_tem"} ativoFalta={filtroQual === "doc_falta"}
-              onClickTem={() => setFiltroQual(filtroQual === "doc_tem" ? "todos" : "doc_tem")}
-              onClickFalta={() => setFiltroQual(filtroQual === "doc_falta" ? "todos" : "doc_falta")}
-            />
-            <CardKPIDuplo
-              titulo="Categoria" icone={FolderTree} cor="fetely"
-              total={kpisQualidade.Categoria.total}
-              qtdTem={kpisQualidade.Categoria.tem} qtdFalta={kpisQualidade.Categoria.falta}
-              ativoTem={filtroQual === "categoria_tem"} ativoFalta={filtroQual === "categoria_falta"}
-              onClickTem={() => setFiltroQual(filtroQual === "categoria_tem" ? "todos" : "categoria_tem")}
-              onClickFalta={() => setFiltroQual(filtroQual === "categoria_falta" ? "todos" : "categoria_falta")}
+        {/* Filtro Categoria (dropdown rápido) */}
+        <div className="hidden">
+          <CardKPIDuplo
+            titulo="Categoria" icone={FolderTree} cor="fetely"
+            total={kpisQualidade.Categoria.total}
+            qtdTem={kpisQualidade.Categoria.tem} qtdFalta={kpisQualidade.Categoria.falta}
+            ativoTem={filtroQual === "categoria_tem"} ativoFalta={filtroQual === "categoria_falta"}
+            onClickTem={() => setFiltroQual(filtroQual === "categoria_tem" ? "todos" : "categoria_tem")}
+            onClickFalta={() => setFiltroQual(filtroQual === "categoria_falta" ? "todos" : "categoria_falta")}
             />
           </div>
         </div>
