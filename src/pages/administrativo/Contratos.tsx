@@ -451,14 +451,14 @@ export default function Contratos() {
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <Input
-            placeholder="Buscar por número, projeto ou parceiro..."
+            placeholder="Buscar por número, projeto, parceiro ou tipo..."
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
             className="pl-9 border-slate-200"
           />
         </div>
         <Select value={filtroStatus} onValueChange={setFiltroStatus}>
-          <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="todos">Todos os status</SelectItem>
             <SelectItem value="vigente">Vigentes</SelectItem>
@@ -466,6 +466,16 @@ export default function Contratos() {
             <SelectItem value="suspenso">Suspensos</SelectItem>
             <SelectItem value="encerrado">Encerrados</SelectItem>
             <SelectItem value="rascunho">Rascunhos</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={filtroTipo} onValueChange={setFiltroTipo}>
+          <SelectTrigger className="w-44"><SelectValue placeholder="Todos os tipos" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="todos">Todos os tipos</SelectItem>
+            <SelectItem value="__none__">Sem tipo</SelectItem>
+            {tiposContrato.map((t) => (
+              <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>
