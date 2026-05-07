@@ -46,8 +46,6 @@ import {
   Search,
   Receipt,
   FolderTree,
-  Paperclip,
-  Link2,
   CircleDollarSign,
   AlertTriangle,
   MailCheck,
