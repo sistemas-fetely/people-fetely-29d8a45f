@@ -21,7 +21,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import {
-  CreditCard, Target, Store, TreePine, Users, Plus, Pencil, Trash2, Loader2,
+  CreditCard, FileText, Target, Store, TreePine, Users, Plus, Pencil, Trash2, Loader2,
 } from "lucide-react";
 
 type TabelaFin = "formas_pagamento" | "centros_custo" | "canais_venda";
