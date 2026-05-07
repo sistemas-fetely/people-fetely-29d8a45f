@@ -12,27 +12,44 @@ import { CommandPaletteProvider } from "@/components/navegacao/CommandPalettePro
 // Acontece uma vez quando o AppLayout monta (após login).
 function usePrefetchTelasPrincipais() {
   useEffect(() => {
-    const prefetchAll = () => {
+    // ===== ONDA 1 (50ms): telas mais frequentes =====
+    const onda1 = setTimeout(() => {
       void import("@/pages/administrativo/InvestimentoLancamento");
       void import("@/pages/administrativo/FluxoFuturoInvestimento");
-      void import("@/pages/administrativo/DashboardFinanceiro");
-      void import("@/pages/administrativo/Contratos");
       void import("@/pages/administrativo/ContasPagar");
       void import("@/pages/administrativo/ContasReceber");
       void import("@/pages/administrativo/CaixaBanco");
       void import("@/pages/administrativo/PlanoDeContas");
       void import("@/pages/administrativo/Parceiros");
-      void import("@/pages/Pessoas");
+      void import("@/pages/administrativo/DashboardFinanceiro");
+      void import("@/pages/administrativo/Contratos");
+      void import("@/pages/administrativo/GED");
       void import("@/components/ged/PastaDetalhe");
-    };
+      void import("@/pages/TarefasDoTime");
+    }, 50);
 
-    if ("requestIdleCallback" in window) {
-      const id = (window as unknown as { requestIdleCallback: (cb: () => void, opts?: { timeout: number }) => number }).requestIdleCallback(prefetchAll, { timeout: 3000 });
-      return () => (window as unknown as { cancelIdleCallback?: (id: number) => void }).cancelIdleCallback?.(id);
-    } else {
-      const id = setTimeout(prefetchAll, 800);
-      return () => clearTimeout(id);
-    }
+    // ===== ONDA 2 (1500ms): telas secundárias =====
+    const onda2 = setTimeout(() => {
+      void import("@/pages/administrativo/FluxoCaixa");
+      void import("@/pages/administrativo/FluxoCaixaFuturo");
+      void import("@/pages/administrativo/Compromissos");
+      void import("@/pages/administrativo/NFsStage");
+      void import("@/pages/administrativo/ImportarDados");
+      void import("@/pages/Colaboradores");
+      void import("@/pages/Movimentacoes");
+      void import("@/pages/Recrutamento");
+      void import("@/pages/Ferias");
+      void import("@/pages/Processos");
+      void import("@/pages/FalaFetely");
+      void import("@/pages/DocumentacaoGeral");
+      void import("@/pages/Parametros");
+      void import("@/pages/Dashboard");
+    }, 1500);
+
+    return () => {
+      clearTimeout(onda1);
+      clearTimeout(onda2);
+    };
   }, []);
 }
 
