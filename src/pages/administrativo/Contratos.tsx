@@ -49,6 +49,8 @@ interface ContratoListagem {
   pasta_nome: string;
   pasta_tipo: string;
   parceiro_nome: string | null;
+  tipo_contrato_id: string | null;
+  tipo_nome: string | null;
 }
 
 interface ParcelaInfo {
