@@ -332,6 +332,12 @@ export default function ParametrosFinanceiroTab() {
           </TabsContent>
         ))}
       </Tabs>
+
+      <Card>
+        <CardContent className="pt-6">
+          <OFXRegrasPanel />
+        </CardContent>
+      </Card>
     </div>
   );
 }
