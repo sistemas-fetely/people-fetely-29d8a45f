@@ -12,11 +12,12 @@ import {
 import { Input } from "@/components/ui/input";
 import {
   CheckCircle2, AlertCircle, XCircle, Loader2, Link2, Plus, X,
-  ArrowLeftRight, FileSpreadsheet, RefreshCw, RotateCcw, Users,
+  ArrowLeftRight, FileSpreadsheet, RefreshCw, RotateCcw, Users, Zap,
 } from "lucide-react";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
 import { ParceiroFormSheet } from "@/components/financeiro/ParceiroFormSheet";
 import { useCategoriasPlano } from "@/hooks/useCategoriasPlano";
+import { useAplicarRegrasOFX } from "@/hooks/financeiro/useAplicarRegrasOFX";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const sb = supabase as any;
@@ -134,6 +135,26 @@ export default function Conciliacao() {
   const [pagParaCadastrar, setPagParaCadastrar] = useState<Pagamento | null>(null);
 
   const { data: categorias = [] } = useCategoriasPlano();
+  const { aplicarRegras } = useAplicarRegrasOFX();
+  const [aplicandoRegras, setAplicandoRegras] = useState(false);
+
+  async function handleAplicarRegras() {
+    if (!contaBancariaId) return;
+    setAplicandoRegras(true);
+    try {
+      const { aplicados } = await aplicarRegras(contaBancariaId);
+      if (aplicados > 0) {
+        toast.success(`${aplicados} transação${aplicados !== 1 ? "ões" : ""} lançada${aplicados !== 1 ? "s" : ""} automaticamente`);
+      } else {
+        toast.info("Nenhuma transação bateu com as regras cadastradas");
+      }
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
+      toast.error("Erro: " + msg);
+    } finally {
+      setAplicandoRegras(false);
+    }
+  }
 
   const { data: contas } = useQuery({
     queryKey: ["contas-bancarias-conciliacao"],
@@ -678,12 +699,27 @@ export default function Conciliacao() {
                 <p className="text-xs text-muted-foreground">
                   Tarifas bancárias, rendimentos de aplicação, TEDs recebidas e outras transações não iniciadas pela Fetely.
                 </p>
-                <Input
-                  placeholder="Filtrar por descrição..."
-                  value={filtroOFX}
-                  onChange={(e) => setFiltroOFX(e.target.value)}
-                  className="h-8 text-xs mt-2"
-                />
+                <div className="flex items-center gap-2 mt-2">
+                  <Input
+                    placeholder="Filtrar por descrição..."
+                    value={filtroOFX}
+                    onChange={(e) => setFiltroOFX(e.target.value)}
+                    className="h-8 text-xs flex-1"
+                  />
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-8 gap-1.5 shrink-0"
+                    disabled={aplicandoRegras}
+                    onClick={handleAplicarRegras}
+                    title="Aplica regras automáticas cadastradas em Parâmetros"
+                  >
+                    {aplicandoRegras
+                      ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      : <Zap className="h-3.5 w-3.5" />}
+                    Aplicar regras
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent className="space-y-2">
                 {loadingOFX ? (
