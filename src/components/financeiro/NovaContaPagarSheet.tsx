@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { LinhaInvestimentoCombobox } from "./LinhaInvestimentoCombobox";
 import {
   Sheet,
   SheetContent,
@@ -82,6 +83,7 @@ export function NovaContaPagarSheet({ open, onOpenChange, initialData }: Props) 
   const [dataEmissao, setDataEmissao] = useState("");
   const [categoriaId, setCategoriaId] = useState<string | null>(null);
   const [centroCustoId, setCentroCustoId] = useState<string | null>(null);
+  const [linhaInvestimentoId, setLinhaInvestimentoId] = useState<string | null>(null);
   const [unidadeId, setUnidadeId] = useState<string | null>(null);
   const [formaPgtoId, setFormaPgtoId] = useState<string>("");
   const [parcelas, setParcelas] = useState(1);
@@ -244,6 +246,7 @@ export function NovaContaPagarSheet({ open, onOpenChange, initialData }: Props) 
       setDataEmissao("");
       setCategoriaId(null);
       setCentroCustoId(null);
+      setLinhaInvestimentoId(null);
       setUnidadeId(null);
       setFormaPgtoId("");
       setParcelas(1);
@@ -336,6 +339,7 @@ export function NovaContaPagarSheet({ open, onOpenChange, initialData }: Props) 
           
           fornecedor_cliente: fornecedorNome,
           centro_custo_id: centroCustoId,
+          linha_investimento_id: linhaInvestimentoId,
           unidade_id: unidadeId,
           forma_pagamento_id: formaPgtoId || null,
           parcelas,
@@ -558,7 +562,7 @@ export function NovaContaPagarSheet({ open, onOpenChange, initialData }: Props) 
                   </div>
                 )}
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                 <div>
                   <Label>Centro de custo</Label>
                   <Select
@@ -573,6 +577,13 @@ export function NovaContaPagarSheet({ open, onOpenChange, initialData }: Props) 
                       ))}
                     </SelectContent>
                   </Select>
+                </div>
+                <div>
+                  <Label>Linha de Investimento</Label>
+                  <LinhaInvestimentoCombobox
+                    value={linhaInvestimentoId}
+                    onChange={setLinhaInvestimentoId}
+                  />
                 </div>
                 <div>
                   <Label>Unidade</Label>
