@@ -1038,6 +1038,15 @@ export default function CaixaBanco() {
       )}
 
       <FilaRevisaoIADialog open={filaIAOpen} onClose={() => setFilaIAOpen(false)} />
+
+      <VisualizarDocumentoModal
+        nfStageId={modalDocNfId}
+        open={modalDocOpen}
+        onOpenChange={(o) => {
+          setModalDocOpen(o);
+          if (!o) setModalDocNfId(null);
+        }}
+      />
     </div>
   );
 
