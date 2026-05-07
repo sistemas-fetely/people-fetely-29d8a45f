@@ -66,6 +66,7 @@ import { useFiltrosPersistentes } from "@/hooks/useFiltrosPersistentes";
 import ContaPagarDetalheDrawer from "@/components/financeiro/ContaPagarDetalheDrawer";
 import SugestaoIADialog from "@/components/financeiro/SugestaoIADialog";
 import BuscarNFStageDialog from "@/components/financeiro/BuscarNFStageDialog";
+import VisualizarDocumentoModal from "@/components/financeiro/VisualizarDocumentoModal";
 import FilaRevisaoIADialog from "@/components/financeiro/FilaRevisaoIADialog";
 import {
   getCompromissoInfoMap,
