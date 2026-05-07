@@ -46,7 +46,6 @@ import {
   Search,
   Receipt,
   FolderTree,
-  CircleDollarSign,
   AlertTriangle,
   MailCheck,
   Repeat,
@@ -54,7 +53,6 @@ import {
   CalendarRange,
   AlertOctagon,
   CalendarClock,
-  RefreshCcw,
   Sparkles,
   Loader2,
   CheckCircle2,
@@ -624,18 +622,6 @@ export default function CaixaBanco() {
             ativoTem={filtroQual === "doc_tem"} ativoFalta={filtroQual === "doc_falta"}
             onClickTem={() => setFiltroQual(filtroQual === "doc_tem" ? "todos" : "doc_tem")}
             onClickFalta={() => setFiltroQual(filtroQual === "doc_falta" ? "todos" : "doc_falta")}
-          />
-        </div>
-
-        {/* Filtro Categoria (dropdown rápido) */}
-        <div className="hidden">
-          <CardKPIDuplo
-            titulo="Categoria" icone={FolderTree} cor="fetely"
-            total={kpisQualidade.Categoria.total}
-            qtdTem={kpisQualidade.Categoria.tem} qtdFalta={kpisQualidade.Categoria.falta}
-            ativoTem={filtroQual === "categoria_tem"} ativoFalta={filtroQual === "categoria_falta"}
-            onClickTem={() => setFiltroQual(filtroQual === "categoria_tem" ? "todos" : "categoria_tem")}
-            onClickFalta={() => setFiltroQual(filtroQual === "categoria_falta" ? "todos" : "categoria_falta")}
           />
         </div>
 
