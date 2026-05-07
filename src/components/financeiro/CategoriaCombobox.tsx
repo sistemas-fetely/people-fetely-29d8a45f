@@ -122,6 +122,17 @@ export function CategoriaCombobox({
     [options],
   );
 
+  // Doutrina #07.6 (07/05/2026): lançamento SOMENTE em nó folha.
+  // Nós intermediários (que aparecem como parent_id de algum outro) são
+  // cabeçalhos visuais — visíveis na árvore, mas não selecionáveis.
+  const idsComFilhos = useMemo(() => {
+    const set = new Set<string>();
+    options.forEach((o) => {
+      if (o.parent_id) set.add(o.parent_id);
+    });
+    return set;
+  }, [options]);
+
   const { visiveis, matchDireto } = useMemo(
     () => filtrarHierarquico(sorted, search),
     [sorted, search],
@@ -217,16 +228,22 @@ export function CategoriaCombobox({
               {visiveis.map((opt) => {
                 const isSelected = opt.id === value;
                 const isMatch = matchDireto.has(opt.id);
+                const isCabecalho = idsComFilhos.has(opt.id);
                 return (
                   <CommandItem
                     key={opt.id}
                     value={opt.id}
+                    disabled={isCabecalho}
                     onSelect={() => {
+                      // Guarda defensiva: mesmo com disabled, garantir que cabeçalho não seleciona.
+                      if (isCabecalho) return;
                       onChange(opt.id);
                       setOpen(false);
                     }}
                     className={cn(
                       isSelected && "bg-admin/10 font-medium",
+                      isCabecalho &&
+                        "!opacity-100 font-semibold text-foreground/70 cursor-default",
                     )}
                   >
                     <div
@@ -244,7 +261,12 @@ export function CategoriaCombobox({
                         className="flex-1 truncate"
                         style={{ paddingLeft: `${(opt.nivel - 1) * 12}px` }}
                       >
-                        <span className="font-mono text-xs text-muted-foreground mr-2">
+                        <span
+                          className={cn(
+                            "font-mono text-xs mr-2",
+                            isCabecalho ? "text-foreground/60" : "text-muted-foreground",
+                          )}
+                        >
                           {isMatch ? highlightText(opt.codigo, search) : opt.codigo}
                         </span>
                         {isMatch ? highlightText(opt.nome, search) : opt.nome}
