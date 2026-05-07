@@ -265,12 +265,15 @@ export default function Contratos() {
 
   const contratosFiltrados = contratos.filter((c) => {
     if (filtroStatus !== "todos" && c.status !== filtroStatus) return false;
+    if (filtroTipo === "__none__" && c.tipo_contrato_id !== null) return false;
+    if (filtroTipo !== "todos" && filtroTipo !== "__none__" && c.tipo_contrato_id !== filtroTipo) return false;
     if (busca.trim()) {
       const q = busca.toLowerCase();
       return (
         c.numero?.toLowerCase().includes(q) ||
         c.pasta_nome?.toLowerCase().includes(q) ||
-        c.parceiro_nome?.toLowerCase().includes(q)
+        c.parceiro_nome?.toLowerCase().includes(q) ||
+        c.tipo_nome?.toLowerCase().includes(q)
       );
     }
     return true;
