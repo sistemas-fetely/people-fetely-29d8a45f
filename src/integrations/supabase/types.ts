@@ -11228,6 +11228,7 @@ export type Database = {
       }
       desfazer_conciliacao_ofx: { Args: { p_ofx_id: string }; Returns: Json }
       desfazer_remessa: { Args: { p_remessa_id: string }; Returns: Json }
+      desvincular_nf_de_conta: { Args: { p_conta_id: string }; Returns: Json }
       detectar_duplicatas_nf: {
         Args: { p_chaves: string[]; p_cnpj_numero?: Json }
         Returns: {
