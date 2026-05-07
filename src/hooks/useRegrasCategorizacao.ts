@@ -35,7 +35,7 @@ export function aplicarRegras(nf: NFParsed, regras: RegraCategorizacao[] | undef
         ...nf,
         _categoria_id: r.conta_plano_id,
         _categoria_nome: `${r.conta.codigo} — ${r.conta.nome}`,
-        _centro_custo: r.centro_custo,
+        _centro_custo: r.centro_custo_id,
         _regra_origem: "parceiro",
       };
     }
@@ -49,7 +49,7 @@ export function aplicarRegras(nf: NFParsed, regras: RegraCategorizacao[] | undef
         ...nf,
         _categoria_id: r.conta_plano_id,
         _categoria_nome: `${r.conta.codigo} — ${r.conta.nome}`,
-        _centro_custo: r.centro_custo,
+        _centro_custo: r.centro_custo_id,
         _regra_origem: "ncm",
       };
     }
@@ -65,7 +65,7 @@ export function aplicarRegras(nf: NFParsed, regras: RegraCategorizacao[] | undef
       ...nf,
       _categoria_id: r.conta_plano_id,
       _categoria_nome: `${r.conta.codigo} — ${r.conta.nome}`,
-      _centro_custo: r.centro_custo,
+      _centro_custo: r.centro_custo_id,
       _regra_origem: "texto",
     };
   }
@@ -91,7 +91,7 @@ export function aplicarRegrasItem(
         ...item,
         _categoria_id: r.conta_plano_id,
         _categoria_nome: `${r.conta.codigo} — ${r.conta.nome}`,
-        _centro_custo: r.centro_custo,
+        _centro_custo: r.centro_custo_id,
         _regra_origem: "ncm",
       };
     }
@@ -108,7 +108,7 @@ export function aplicarRegrasItem(
         ...item,
         _categoria_id: r.conta_plano_id,
         _categoria_nome: `${r.conta.codigo} — ${r.conta.nome}`,
-        _centro_custo: r.centro_custo,
+        _centro_custo: r.centro_custo_id,
         _regra_origem: "texto",
       };
     }
