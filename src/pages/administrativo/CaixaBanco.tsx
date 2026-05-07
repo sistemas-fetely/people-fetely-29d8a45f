@@ -241,6 +241,7 @@ export default function CaixaBanco() {
     [lancamentos],
   );
 
+  // Map lancamento.id → nf_stage_id (ou null se sem doc).
   const { data: nfMap } = useQuery({
     queryKey: ["nfs-vinculadas-mov", lancamentoIds.join(",")],
     enabled: lancamentoIds.length > 0,
@@ -248,32 +249,45 @@ export default function CaixaBanco() {
     queryFn: async () => {
       const map = new Map<string, string | null>();
 
-      // Lookup 1: NFs que apontam PRA CPR (conta_pagar_id → CPR)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: nfsPorConta } = await (supabase as any)
-        .from("nfs_stage")
-        .select("conta_pagar_id, categoria_id")
-        .in("conta_pagar_id", lancamentoIds);
-      (nfsPorConta || []).forEach(
-        (nf: { conta_pagar_id: string | null; categoria_id: string | null }) => {
-          if (nf.conta_pagar_id) map.set(nf.conta_pagar_id, nf.categoria_id);
-        },
-      );
-
-      // Lookup 2: CPRs que apontam PRA NF (nf_stage_id → NF)
-      // Cobre vinculação assimétrica (mesma NF Stage ligada a várias parcelas,
-      // mas conta_pagar_id aponta só pra uma delas)
+      // Lookup 1: CPRs com nf_stage_id preenchido
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data: cprsComNF } = await (supabase as any)
         .from("contas_pagar_receber")
-        .select("id, conta_id")
+        .select("id, nf_stage_id")
         .in("id", lancamentoIds)
         .not("nf_stage_id", "is", null);
-      (cprsComNF || []).forEach(
-        (cpr: { id: string; conta_id: string | null }) => {
-          if (!map.has(cpr.id)) map.set(cpr.id, cpr.conta_id);
-        },
-      );
+      (cprsComNF || []).forEach((cpr: { id: string; nf_stage_id: string | null }) => {
+        if (cpr.nf_stage_id) map.set(cpr.id, cpr.nf_stage_id);
+      });
+
+      // Lookup 2: NFs que apontam pra CPR (conta_pagar_id)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: nfsPorConta } = await (supabase as any)
+        .from("nfs_stage")
+        .select("id, conta_pagar_id")
+        .in("conta_pagar_id", lancamentoIds)
+        .not("conta_pagar_id", "is", null);
+      (nfsPorConta || []).forEach((nf: { id: string; conta_pagar_id: string | null }) => {
+        if (nf.conta_pagar_id && !map.has(nf.conta_pagar_id)) {
+          map.set(nf.conta_pagar_id, nf.id);
+        }
+      });
+
+      // Lookup 3: Lançamentos de cartão com NF vinculada
+      const idsCartao = (lancamentos || [])
+        .filter((l) => l.origem_view === "cartao_lancamento")
+        .map((l) => l.id);
+      if (idsCartao.length > 0) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data: cartaoComNF } = await (supabase as any)
+          .from("fatura_cartao_lancamentos")
+          .select("id, nf_stage_id")
+          .in("id", idsCartao)
+          .not("nf_stage_id", "is", null);
+        (cartaoComNF || []).forEach((lanc: { id: string; nf_stage_id: string | null }) => {
+          if (lanc.nf_stage_id) map.set(lanc.id, lanc.nf_stage_id);
+        });
+      }
 
       return map;
     },
