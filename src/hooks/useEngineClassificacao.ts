@@ -26,7 +26,7 @@ export interface SugerirInput {
 export interface SugestaoResult {
   regra_id: string;
   categoria_id: string;
-  centro_custo: string | null;
+  centro_custo_id: string | null;
   confianca: number;
   tipo_match: "parceiro" | "cnpj" | "ncm" | "token" | "descricao";
   motivo: string;
@@ -117,7 +117,7 @@ export function useRegrasAtivas() {
         .from("regras_categorizacao")
         .select(`
           id, parceiro_id, cnpj_emitente, ncm_prefixo, descricao_contem,
-          token_principal, conta_plano_id, centro_custo, prioridade,
+          token_principal, conta_plano_id, centro_custo_id, prioridade,
           confianca, vezes_aplicada, vezes_corrigida, escopo_origem,
           aprendida_automaticamente,
           conta:plano_contas(id, codigo, nome)
@@ -139,7 +139,7 @@ export interface RegraEngine {
   descricao_contem: string | null;
   token_principal: string | null;
   conta_plano_id: string;
-  centro_custo: string | null;
+  centro_custo_id: string | null;
   prioridade: number;
   confianca: number;
   vezes_aplicada: number;
@@ -262,7 +262,7 @@ export function sugerirNoClient(
   return {
     regra_id: escolhida.r.id,
     categoria_id: escolhida.r.conta_plano_id,
-    centro_custo: escolhida.r.centro_custo,
+    centro_custo_id: escolhida.r.centro_custo_id,
     confianca: escolhida.r.confianca,
     tipo_match: escolhida.tipo,
     motivo: escolhida.motivo,
