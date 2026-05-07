@@ -135,6 +135,26 @@ export default function Conciliacao() {
   const [pagParaCadastrar, setPagParaCadastrar] = useState<Pagamento | null>(null);
 
   const { data: categorias = [] } = useCategoriasPlano();
+  const { aplicarRegras } = useAplicarRegrasOFX();
+  const [aplicandoRegras, setAplicandoRegras] = useState(false);
+
+  async function handleAplicarRegras() {
+    if (!contaBancariaId) return;
+    setAplicandoRegras(true);
+    try {
+      const { aplicados } = await aplicarRegras(contaBancariaId);
+      if (aplicados > 0) {
+        toast.success(`${aplicados} transação${aplicados !== 1 ? "ões" : ""} lançada${aplicados !== 1 ? "s" : ""} automaticamente`);
+      } else {
+        toast.info("Nenhuma transação bateu com as regras cadastradas");
+      }
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
+      toast.error("Erro: " + msg);
+    } finally {
+      setAplicandoRegras(false);
+    }
+  }
 
   const { data: contas } = useQuery({
     queryKey: ["contas-bancarias-conciliacao"],
