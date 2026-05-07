@@ -5988,7 +5988,7 @@ export type Database = {
           ativo: boolean
           centro_custo_id: string | null
           conta_bancaria_id: string | null
-          conta_plano_id: string
+          conta_plano_id: string | null
           created_at: string | null
           descricao_override: string | null
           id: string
@@ -6000,7 +6000,7 @@ export type Database = {
           ativo?: boolean
           centro_custo_id?: string | null
           conta_bancaria_id?: string | null
-          conta_plano_id: string
+          conta_plano_id?: string | null
           created_at?: string | null
           descricao_override?: string | null
           id?: string
@@ -6012,7 +6012,7 @@ export type Database = {
           ativo?: boolean
           centro_custo_id?: string | null
           conta_bancaria_id?: string | null
-          conta_plano_id?: string
+          conta_plano_id?: string | null
           created_at?: string | null
           descricao_override?: string | null
           id?: string

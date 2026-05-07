@@ -35,7 +35,7 @@ export function useAplicarRegrasOFX() {
 
       if (regra.acao === "ignorar") {
         await sb.from("ofx_transacoes_stage")
-          .update({ status: "ignorado" })
+          .update({ status: "descartada" })
           .eq("id", ofx.id);
         aplicados++;
         continue;
