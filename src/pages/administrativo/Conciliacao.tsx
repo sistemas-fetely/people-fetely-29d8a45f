@@ -12,11 +12,12 @@ import {
 import { Input } from "@/components/ui/input";
 import {
   CheckCircle2, AlertCircle, XCircle, Loader2, Link2, Plus, X,
-  ArrowLeftRight, FileSpreadsheet, RefreshCw, RotateCcw, Users,
+  ArrowLeftRight, FileSpreadsheet, RefreshCw, RotateCcw, Users, Zap,
 } from "lucide-react";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
 import { ParceiroFormSheet } from "@/components/financeiro/ParceiroFormSheet";
 import { useCategoriasPlano } from "@/hooks/useCategoriasPlano";
+import { useAplicarRegrasOFX } from "@/hooks/financeiro/useAplicarRegrasOFX";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const sb = supabase as any;
