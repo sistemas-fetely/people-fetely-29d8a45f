@@ -490,8 +490,8 @@ function PainelImportacao({ importacao }: { importacao: Importacao }) {
                   <Button
                     size="sm"
                     variant="outline"
-                    className="gap-1"
-                    onClick={() => navigate("/administrativo/parceiros")}
+                    className="gap-1 border-admin text-admin hover:bg-admin/10"
+                    onClick={() => { setPagParaCadastrar(p); setParceiroSheetOpen(true); }}
                     title={`Cadastrar ${p.cnpj_favorecido}`}
                   >
                     <Plus className="h-3.5 w-3.5" /> Cadastrar
