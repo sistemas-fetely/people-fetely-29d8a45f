@@ -38,6 +38,7 @@ const financeiroItems: MenuItem[] = [
   { title: "Parceiros Comerciais", url: "/administrativo/parceiros", icon: Users },
   { title: "NFs em Stage", url: "/administrativo/nfs-stage", icon: Layers },
   { title: "OFX em Stage", url: "/administrativo/ofx-stage", icon: ArrowLeftRight },
+  { title: "Conciliação", url: "/administrativo/conciliacao", icon: CheckSquare },
   { title: "Documentos Pendentes", url: "/administrativo/documentos-pendentes", icon: FileWarning },
 ];
 
