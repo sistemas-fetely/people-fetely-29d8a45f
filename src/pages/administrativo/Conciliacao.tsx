@@ -151,6 +151,9 @@ function ItemOperador({
 function PainelImportacao({ importacao }: { importacao: Importacao }) {
   const qc = useQueryClient();
   const navigate = useNavigate();
+  const [parceiroSheetOpen, setParceiroSheetOpen] = useState(false);
+  const [pagParaCadastrar, setPagParaCadastrar] = useState<Pagamento | null>(null);
+  const { data: categorias = [] } = useCategoriasPlano();
 
   const { data: pagamentos = [], isLoading } = useQuery({
     queryKey: ["itau-pagamentos", importacao.id],
