@@ -250,18 +250,35 @@ export default function CaixaBanco() {
     enabled: lancamentoIds.length > 0,
     staleTime: 30_000,
     queryFn: async () => {
+      const map = new Map<string, string | null>();
+
+      // Lookup 1: NFs que apontam PRA CPR (conta_pagar_id → CPR)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data, error } = await (supabase as any)
+      const { data: nfsPorConta } = await (supabase as any)
         .from("nfs_stage")
         .select("conta_pagar_id, categoria_id")
         .in("conta_pagar_id", lancamentoIds);
-      if (error) throw error;
-      const map = new Map<string, string | null>();
-      (data || []).forEach(
+      (nfsPorConta || []).forEach(
         (nf: { conta_pagar_id: string | null; categoria_id: string | null }) => {
           if (nf.conta_pagar_id) map.set(nf.conta_pagar_id, nf.categoria_id);
         },
       );
+
+      // Lookup 2: CPRs que apontam PRA NF (nf_stage_id → NF)
+      // Cobre vinculação assimétrica (mesma NF Stage ligada a várias parcelas,
+      // mas conta_pagar_id aponta só pra uma delas)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: cprsComNF } = await (supabase as any)
+        .from("contas_pagar_receber")
+        .select("id, conta_id")
+        .in("id", lancamentoIds)
+        .not("nf_stage_id", "is", null);
+      (cprsComNF || []).forEach(
+        (cpr: { id: string; conta_id: string | null }) => {
+          if (!map.has(cpr.id)) map.set(cpr.id, cpr.conta_id);
+        },
+      );
+
       return map;
     },
   });
