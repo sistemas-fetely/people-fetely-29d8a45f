@@ -28,6 +28,7 @@ type ContaBancaria = { id: string; nome_exibicao: string };
 type Pagamento = {
   id: string;
   importacao_id: string;
+  numero_lote: string | null;
   nome_favorecido: string;
   cnpj_favorecido: string;
   tipo_pagamento: string;
