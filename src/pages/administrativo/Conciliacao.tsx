@@ -578,12 +578,12 @@ export default function Conciliacao() {
                     <div key={p.id} className="p-3 border rounded text-xs flex items-center justify-between gap-2">
                       <div className="flex-1 min-w-0">
                         <p className="font-medium truncate">{p.nome_favorecido}</p>
-                        <p className="text-muted-foreground text-[10px]">
-                          {p.tipo_pagamento} · {p.data_pagamento ? formatDateBR(p.data_pagamento) : "—"}
-                        </p>
+                        <p className="text-muted-foreground text-[10px]">{p.tipo_pagamento}</p>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="font-mono font-semibold">{formatBRL(p.valor_pago)}</span>
+                        <span className="text-sm text-muted-foreground">{p.data_pagamento ? formatDateBR(p.data_pagamento) : "—"}</span>
+                        <span className="text-muted-foreground text-sm">·</span>
+                        <span className="font-mono font-semibold text-sm">{formatBRL(p.valor_pago)}</span>
                         <Button size="sm" variant="outline" className="gap-1" onClick={() => criarDespesaMutation.mutate(p)}>
                           <Plus className="h-3.5 w-3.5" /> Criar Despesa
                         </Button>
