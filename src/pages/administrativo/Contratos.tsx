@@ -536,6 +536,29 @@ export default function Contratos() {
                         )}
                       </div>
                     </TableCell>
+                    <TableCell onClick={(e) => e.stopPropagation()}>
+                      <Select
+                        value={c.tipo_contrato_id ?? "__none__"}
+                        onValueChange={(v) =>
+                          atualizarTipoMutation.mutate({
+                            id: c.id,
+                            tipo_contrato_id: v === "__none__" ? null : v,
+                          })
+                        }
+                      >
+                        <SelectTrigger className="h-7 text-xs w-36 border-dashed">
+                          <SelectValue placeholder="Sem tipo" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="__none__">
+                            <span className="text-muted-foreground">Sem tipo</span>
+                          </SelectItem>
+                          {tiposContrato.map((t) => (
+                            <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1.5 text-sm">
                         {cicloLabel(c)}
