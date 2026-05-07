@@ -699,12 +699,27 @@ export default function Conciliacao() {
                 <p className="text-xs text-muted-foreground">
                   Tarifas bancárias, rendimentos de aplicação, TEDs recebidas e outras transações não iniciadas pela Fetely.
                 </p>
-                <Input
-                  placeholder="Filtrar por descrição..."
-                  value={filtroOFX}
-                  onChange={(e) => setFiltroOFX(e.target.value)}
-                  className="h-8 text-xs mt-2"
-                />
+                <div className="flex items-center gap-2 mt-2">
+                  <Input
+                    placeholder="Filtrar por descrição..."
+                    value={filtroOFX}
+                    onChange={(e) => setFiltroOFX(e.target.value)}
+                    className="h-8 text-xs flex-1"
+                  />
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-8 gap-1.5 shrink-0"
+                    disabled={aplicandoRegras}
+                    onClick={handleAplicarRegras}
+                    title="Aplica regras automáticas cadastradas em Parâmetros"
+                  >
+                    {aplicandoRegras
+                      ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      : <Zap className="h-3.5 w-3.5" />}
+                    Aplicar regras
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent className="space-y-2">
                 {loadingOFX ? (
