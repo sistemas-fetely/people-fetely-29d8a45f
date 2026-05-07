@@ -56,6 +56,7 @@ type Pagamento = {
   status_conciliacao: string;
   parceiro_id: string | null;
   conta_pagar_id: string | null;
+  movimentacao_id: string | null;
   conta_pagar?: { descricao: string; data_vencimento: string } | null;
 };
 
