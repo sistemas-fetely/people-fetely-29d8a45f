@@ -88,10 +88,8 @@ import {
   statusVisual,
   isAtrasada,
   diasAtraso,
-  getQualidadeNF,
+  getQualidadeDocumento,
   getQualidadeCategoria,
-  getQualidadeVinculado,
-  getQualidadeConciliado,
   corClass,
 } from "./CaixaBanco/utils";
 
