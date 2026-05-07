@@ -273,9 +273,18 @@ export default function Conciliacao() {
   const confirmarLoteMutation = useMutation({
     mutationFn: async () => {
       const pendentes = auto.filter((p) => !p.movimentacao_id && p.conta_pagar_id);
-      let confirmados = 0, erros = 0;
+      let confirmados = 0, erros = 0, jaPagas = 0;
       for (const pag of pendentes) {
         try {
+          // Doutrina #54 — pula CPRs que já têm mov vinculada
+          const { data: cprCheck } = await sb.from("contas_pagar_receber")
+            .select("movimentacao_bancaria_id")
+            .eq("id", pag.conta_pagar_id).maybeSingle();
+          if (cprCheck?.movimentacao_bancaria_id) {
+            jaPagas++;
+            continue;
+          }
+
           await sb.from("contas_pagar_receber").update({
             pago_em_conta_id: contaBancariaId,
             data_pagamento: pag.data_pagamento ?? null,
@@ -292,10 +301,15 @@ export default function Conciliacao() {
           confirmados++;
         } catch { erros++; }
       }
-      return { confirmados, erros };
+      return { confirmados, erros, jaPagas };
     },
     onSuccess: (d) => {
-      toast.success(`${d.confirmados} confirmado${d.confirmados !== 1 ? "s" : ""}${d.erros > 0 ? ` · ${d.erros} erro(s)` : ""}`);
+      const partes = [
+        `${d.confirmados} confirmado${d.confirmados !== 1 ? "s" : ""}`,
+      ];
+      if (d.jaPagas > 0) partes.push(`${d.jaPagas} pulado${d.jaPagas !== 1 ? "s" : ""} (já conciliado${d.jaPagas !== 1 ? "s" : ""})`);
+      if (d.erros > 0) partes.push(`${d.erros} erro(s)`);
+      toast.success(partes.join(" · "));
       invalidarPagamentos();
       invalidarOFX();
     },
@@ -304,6 +318,18 @@ export default function Conciliacao() {
 
   const confirmarUnitarioMutation = useMutation({
     mutationFn: async ({ pagId, cprId }: { pagId: string; cprId: string }) => {
+      // Doutrina #54 — guarda UX antes do trigger DB rejeitar
+      const { data: cprCheck } = await sb.from("contas_pagar_receber")
+        .select("movimentacao_bancaria_id, descricao, data_pagamento")
+        .eq("id", cprId).maybeSingle();
+      if (cprCheck?.movimentacao_bancaria_id) {
+        throw new Error(
+          `Esta CPR já possui movimentação vinculada` +
+          (cprCheck.data_pagamento ? ` (paga em ${formatDateBR(cprCheck.data_pagamento)})` : "") +
+          `. Desvincule a movimentação anterior antes de re-vincular.`
+        );
+      }
+
       const { data: pagCompleto } = await sb.from("itau_pagamentos_stage")
         .select("id, importacao_id, numero_lote, valor_pago, data_pagamento")
         .eq("id", pagId).maybeSingle();
