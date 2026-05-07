@@ -21,10 +21,10 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import {
-  CreditCard, Target, Store, TreePine, Users, Plus, Pencil, Trash2, Loader2,
+  CreditCard, FileText, Target, Store, TreePine, Users, Plus, Pencil, Trash2, Loader2,
 } from "lucide-react";
 
-type TabelaFin = "formas_pagamento" | "centros_custo" | "canais_venda";
+type TabelaFin = "formas_pagamento" | "centros_custo" | "canais_venda" | "tipos_contrato";
 
 interface CategoriaConfig {
   value: TabelaFin;
@@ -55,6 +55,12 @@ const CATEGORIAS: CategoriaConfig[] = [
     label: "Canais de Venda",
     icon: Store,
     description: "Canais de receita: B2B, B2C, marketplace, parceiros",
+  },
+  {
+    value: "tipos_contrato",
+    label: "Tipos de Contrato",
+    icon: FileText,
+    description: "Categorias de contrato: Aluguel, SaaS, Serviço, Licença, Associação, etc.",
   },
 ];
 

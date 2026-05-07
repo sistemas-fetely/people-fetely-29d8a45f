@@ -21,7 +21,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import {
   FileSignature, Search, AlertTriangle, CheckCircle2, TrendingUp,
-  FolderOpen, ArrowRight, Info, Trash2, Clock, CircleDot,
+  FolderOpen, ArrowRight, Info, Trash2, Clock,
   Banknote, CalendarClock, Activity, ChevronDown, ChevronUp,
 } from "lucide-react";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
@@ -49,6 +49,8 @@ interface ContratoListagem {
   pasta_nome: string;
   pasta_tipo: string;
   parceiro_nome: string | null;
+  tipo_contrato_id: string | null;
+  tipo_nome: string | null;
 }
 
 interface ParcelaInfo {
@@ -144,6 +146,7 @@ export default function Contratos() {
   const { toast } = useToast();
   const [busca, setBusca] = useState("");
   const [filtroStatus, setFiltroStatus] = useState("todos");
+  const [filtroTipo, setFiltroTipo] = useState("todos");
   const [contratoParaExcluir, setContratoParaExcluir] = useState<ContratoListagem | null>(null);
   const [mostrarBanner, setMostrarBanner] = useState(false);
 
@@ -152,7 +155,7 @@ export default function Contratos() {
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("pasta_contratos")
-        .select(`*, ged_pastas!inner(nome, tipo, parceiro_id, parceiros_comerciais(razao_social))`)
+        .select(`*, ged_pastas!inner(nome, tipo, parceiro_id, parceiros_comerciais(razao_social)), tipos_contrato(nome)`)
         .order("vigencia_inicio", { ascending: false });
       if (error) throw error;
       return (data ?? []).map((c: any) => ({
@@ -160,7 +163,37 @@ export default function Contratos() {
         pasta_nome: c.ged_pastas?.nome,
         pasta_tipo: c.ged_pastas?.tipo,
         parceiro_nome: c.ged_pastas?.parceiros_comerciais?.razao_social ?? null,
+        tipo_nome: c.tipos_contrato?.nome ?? null,
       })) as ContratoListagem[];
+    },
+  });
+
+  const { data: tiposContrato = [] } = useQuery({
+    queryKey: ["tipos-contrato"],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("tipos_contrato")
+        .select("id, nome")
+        .eq("ativo", true)
+        .order("nome");
+      if (error) throw error;
+      return (data ?? []) as { id: string; nome: string }[];
+    },
+  });
+
+  const atualizarTipoMutation = useMutation({
+    mutationFn: async ({ id, tipo_contrato_id }: { id: string; tipo_contrato_id: string | null }) => {
+      const { error } = await (supabase as any)
+        .from("pasta_contratos")
+        .update({ tipo_contrato_id })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["contratos-todos"] });
+    },
+    onError: () => {
+      toast({ title: "Erro ao atualizar tipo", variant: "destructive" });
     },
   });
 
@@ -232,12 +265,15 @@ export default function Contratos() {
 
   const contratosFiltrados = contratos.filter((c) => {
     if (filtroStatus !== "todos" && c.status !== filtroStatus) return false;
+    if (filtroTipo === "__none__" && c.tipo_contrato_id !== null) return false;
+    if (filtroTipo !== "todos" && filtroTipo !== "__none__" && c.tipo_contrato_id !== filtroTipo) return false;
     if (busca.trim()) {
       const q = busca.toLowerCase();
       return (
         c.numero?.toLowerCase().includes(q) ||
         c.pasta_nome?.toLowerCase().includes(q) ||
-        c.parceiro_nome?.toLowerCase().includes(q)
+        c.parceiro_nome?.toLowerCase().includes(q) ||
+        c.tipo_nome?.toLowerCase().includes(q)
       );
     }
     return true;
@@ -415,14 +451,14 @@ export default function Contratos() {
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <Input
-            placeholder="Buscar por número, projeto ou parceiro..."
+            placeholder="Buscar por número, projeto, parceiro ou tipo..."
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
             className="pl-9 border-slate-200"
           />
         </div>
         <Select value={filtroStatus} onValueChange={setFiltroStatus}>
-          <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="todos">Todos os status</SelectItem>
             <SelectItem value="vigente">Vigentes</SelectItem>
@@ -430,6 +466,16 @@ export default function Contratos() {
             <SelectItem value="suspenso">Suspensos</SelectItem>
             <SelectItem value="encerrado">Encerrados</SelectItem>
             <SelectItem value="rascunho">Rascunhos</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={filtroTipo} onValueChange={setFiltroTipo}>
+          <SelectTrigger className="w-44"><SelectValue placeholder="Todos os tipos" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="todos">Todos os tipos</SelectItem>
+            <SelectItem value="__none__">Sem tipo</SelectItem>
+            {tiposContrato.map((t) => (
+              <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>
@@ -454,6 +500,7 @@ export default function Contratos() {
                 <TableHead className="w-8"></TableHead>
                 <TableHead>Número</TableHead>
                 <TableHead>Projeto / Parceiro</TableHead>
+                <TableHead>Tipo</TableHead>
                 <TableHead>Ciclo</TableHead>
                 <TableHead className="text-right">Parcela</TableHead>
                 <TableHead>Próx. vencimento</TableHead>
@@ -488,6 +535,29 @@ export default function Contratos() {
                           <p className="text-xs text-slate-500">{c.parceiro_nome}</p>
                         )}
                       </div>
+                    </TableCell>
+                    <TableCell onClick={(e) => e.stopPropagation()}>
+                      <Select
+                        value={c.tipo_contrato_id ?? "__none__"}
+                        onValueChange={(v) =>
+                          atualizarTipoMutation.mutate({
+                            id: c.id,
+                            tipo_contrato_id: v === "__none__" ? null : v,
+                          })
+                        }
+                      >
+                        <SelectTrigger className="h-7 text-xs w-36 border-dashed">
+                          <SelectValue placeholder="Sem tipo" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="__none__">
+                            <span className="text-muted-foreground">Sem tipo</span>
+                          </SelectItem>
+                          {tiposContrato.map((t) => (
+                            <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1.5 text-sm">
@@ -556,20 +626,6 @@ export default function Contratos() {
             </TableBody>
           </Table>
         )}
-      </div>
-
-      {/* Alerta: campo faltando */}
-      <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 flex items-start gap-3">
-        <CircleDot className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
-        <div className="text-xs text-amber-800">
-          <p className="font-medium mb-1">KPI em falta: Tipo de contrato</p>
-          <p className="text-amber-700">
-            Sem categorizar os contratos (aluguel, SaaS, serviço, licença, associação) não é possível
-            fazer análise por segmento — ex: "quanto pago de SaaS por mês?". Campo{" "}
-            <code className="bg-amber-100 px-1 rounded">tipo_contrato</code> não existe ainda na tabela.
-            Vale implementar na próxima sessão.
-          </p>
-        </div>
       </div>
 
       {/* Dialog exclusão */}
