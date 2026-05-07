@@ -490,7 +490,7 @@ export default function Conciliacao() {
     queryFn: async () => {
       const { data } = await sb
         .from("itau_importacoes_stage")
-        .select("id, arquivo_nome, periodo_inicio, periodo_fim, total_linhas, status, created_at")
+        .select("id, arquivo_nome, periodo_inicio, periodo_fim, total_linhas, status, created_at, conta_bancaria_id")
         .eq("conta_bancaria_id", contaBancariaId)
         .order("created_at", { ascending: false });
       return (data || []) as Importacao[];
