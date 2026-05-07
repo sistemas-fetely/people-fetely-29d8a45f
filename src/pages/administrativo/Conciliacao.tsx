@@ -482,7 +482,13 @@ function PainelImportacao({ importacao }: { importacao: Importacao }) {
                   <span className="text-sm font-semibold whitespace-nowrap">
                     {formatBRL(p.valor_pago)}
                   </span>
-                  <Button size="sm" variant="outline" className="gap-1" disabled>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="gap-1"
+                    onClick={() => navigate("/administrativo/parceiros")}
+                    title={`Cadastrar ${p.cnpj_favorecido}`}
+                  >
                     <Plus className="h-3.5 w-3.5" /> Cadastrar
                   </Button>
                 </div>
