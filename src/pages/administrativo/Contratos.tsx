@@ -155,7 +155,7 @@ export default function Contratos() {
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("pasta_contratos")
-        .select(`*, ged_pastas!inner(nome, tipo, parceiro_id, parceiros_comerciais(razao_social))`)
+        .select(`*, ged_pastas!inner(nome, tipo, parceiro_id, parceiros_comerciais(razao_social)), tipos_contrato(nome)`)
         .order("vigencia_inicio", { ascending: false });
       if (error) throw error;
       return (data ?? []).map((c: any) => ({
@@ -163,7 +163,37 @@ export default function Contratos() {
         pasta_nome: c.ged_pastas?.nome,
         pasta_tipo: c.ged_pastas?.tipo,
         parceiro_nome: c.ged_pastas?.parceiros_comerciais?.razao_social ?? null,
+        tipo_nome: c.tipos_contrato?.nome ?? null,
       })) as ContratoListagem[];
+    },
+  });
+
+  const { data: tiposContrato = [] } = useQuery({
+    queryKey: ["tipos-contrato"],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("tipos_contrato")
+        .select("id, nome")
+        .eq("ativo", true)
+        .order("nome");
+      if (error) throw error;
+      return (data ?? []) as { id: string; nome: string }[];
+    },
+  });
+
+  const atualizarTipoMutation = useMutation({
+    mutationFn: async ({ id, tipo_contrato_id }: { id: string; tipo_contrato_id: string | null }) => {
+      const { error } = await (supabase as any)
+        .from("pasta_contratos")
+        .update({ tipo_contrato_id })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["contratos-todos"] });
+    },
+    onError: () => {
+      toast({ title: "Erro ao atualizar tipo", variant: "destructive" });
     },
   });
 
