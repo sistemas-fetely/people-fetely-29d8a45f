@@ -21,7 +21,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import {
   FileSignature, Search, AlertTriangle, CheckCircle2, TrendingUp,
-  FolderOpen, ArrowRight, Info, Trash2, Clock, CircleDot,
+  FolderOpen, ArrowRight, Info, Trash2, Clock,
   Banknote, CalendarClock, Activity, ChevronDown, ChevronUp,
 } from "lucide-react";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
