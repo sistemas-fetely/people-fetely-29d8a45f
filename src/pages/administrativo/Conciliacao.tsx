@@ -279,12 +279,13 @@ export default function Conciliacao() {
 
   const confirmarUnitarioMutation = useMutation({
     mutationFn: async ({ pagId, cprId }: { pagId: string; cprId: string }) => {
-      const { data: pag } = await sb.from("itau_pagamentos_stage")
-        .select("data_pagamento").eq("id", pagId).maybeSingle();
+      const { data: pagCompleto } = await sb.from("itau_pagamentos_stage")
+        .select("id, importacao_id, numero_lote, valor_pago, data_pagamento")
+        .eq("id", pagId).maybeSingle();
       await sb.from("itau_pagamentos_stage").update({ conta_pagar_id: cprId }).eq("id", pagId);
       await sb.from("contas_pagar_receber").update({
         pago_em_conta_id: contaBancariaId,
-        data_pagamento: pag?.data_pagamento ?? null,
+        data_pagamento: pagCompleto?.data_pagamento ?? null,
       }).eq("id", cprId);
       const { data: res } = await sb.rpc("gerar_movimentacao_de_conta", { p_conta_id: cprId });
       if (!res?.ok) throw new Error(res?.erro || "Erro ao gerar movimentação");
@@ -294,8 +295,9 @@ export default function Conciliacao() {
       await sb.from("itau_pagamentos_stage").update({
         movimentacao_id: mov?.id ?? null, status_conciliacao: "conciliado_manual",
       }).eq("id", pagId);
+      if (pagCompleto) await vincularOFX(pagCompleto as Pagamento);
     },
-    onSuccess: () => { toast.success("Confirmado"); invalidarPagamentos(); },
+    onSuccess: () => { toast.success("Confirmado"); invalidarPagamentos(); invalidarOFX(); },
     onError: (e: any) => toast.error("Erro: " + e.message),
   });
 
