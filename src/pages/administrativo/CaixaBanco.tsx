@@ -882,142 +882,69 @@ export default function CaixaBanco() {
                         >
                           <TooltipProvider>
                             <div className="flex items-center gap-2">
-                              {/* NF — abre BuscarNFStageDialog direto */}
+                              {/* ÍCONE 1: NF / Recibo */}
                               <Tooltip>
                                 <TooltipTrigger asChild>
-                                  <Receipt
-                                    className={cn(
-                                      "h-3.5 w-3.5",
-                                      corClass(qNF.cor),
-                                      qNF.cor !== "verde" && l.origem_view === "conta_pagar"
-                                        ? "cursor-pointer hover:scale-125 transition-transform"
-                                        : "cursor-help",
-                                    )}
-                                    strokeWidth={2.2}
-                                    onClick={
-                                      qNF.cor !== "verde" && l.origem_view === "conta_pagar"
-                                        ? () => {
-                                            setBuscarNFContaId(l.id);
-                                            setBuscarNFDescricao(l.descricao ?? "");
-                                            setBuscarNFValor(Number(l.valor ?? 0));
-                                          }
-                                        : undefined
-                                    }
-                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => handleClickIconeDocumento(l, qDoc)}
+                                    className="focus:outline-none"
+                                  >
+                                    <Receipt
+                                      className={cn(
+                                        "h-3.5 w-3.5 cursor-pointer hover:scale-125 transition-transform",
+                                        corClass(qDoc.cor),
+                                      )}
+                                      strokeWidth={2.2}
+                                    />
+                                  </button>
                                 </TooltipTrigger>
                                 <TooltipContent className="max-w-xs">
-                                  <p className="text-xs">
-                                    📄 {qNF.motivo}
-                                    {qNF.cor !== "verde" && l.origem_view === "conta_pagar" && " — clique para vincular NF"}
-                                  </p>
+                                  <p className="text-xs">📄 {qDoc.motivo}</p>
+                                  {qDoc.cor !== "verde" && (
+                                    <p className="text-[10px] text-muted-foreground">
+                                      Clique para vincular NF
+                                    </p>
+                                  )}
+                                  {qDoc.cor === "verde" && (
+                                    <p className="text-[10px] text-muted-foreground">
+                                      Clique para visualizar
+                                    </p>
+                                  )}
                                 </TooltipContent>
                               </Tooltip>
 
-                              {/* Categoria */}
+                              {/* ÍCONE 2: Categoria */}
                               <Tooltip>
                                 <TooltipTrigger asChild>
-                                  <FolderTree
-                                    className={cn(
-                                      "h-3.5 w-3.5",
-                                      corClass(qCat.cor),
-                                      (isRealizado && qCat.temSugestaoIA) || qCat.cor !== "verde"
-                                        ? "cursor-pointer hover:scale-125 transition-transform"
-                                        : "cursor-help",
-                                    )}
-                                    strokeWidth={2.2}
-                                    onClick={
-                                      isRealizado && qCat.temSugestaoIA
-                                        ? () => setSugestaoMovId(l.id)
-                                        : qCat.cor !== "verde"
-                                          ? () => onOpenContaDrawer(l.id)
-                                          : undefined
-                                    }
-                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      if (qCat.cor !== "verde" && l.origem_view === "conta_pagar") {
+                                        onOpenContaDrawer(l.id);
+                                      }
+                                    }}
+                                    className="focus:outline-none"
+                                  >
+                                    <FolderTree
+                                      className={cn(
+                                        "h-3.5 w-3.5",
+                                        corClass(qCat.cor),
+                                        qCat.cor !== "verde" && l.origem_view === "conta_pagar"
+                                          ? "cursor-pointer hover:scale-125 transition-transform"
+                                          : "cursor-help",
+                                      )}
+                                      strokeWidth={2.2}
+                                    />
+                                  </button>
                                 </TooltipTrigger>
                                 <TooltipContent className="max-w-xs">
-                                  <p className="text-xs">
-                                    🏷️ {qCat.motivo}
-                                    {qCat.temSugestaoIA && " — clique para aplicar sugestão IA"}
-                                  </p>
-                                </TooltipContent>
-                              </Tooltip>
-
-                              {/* Documento — abre drawer para anexar */}
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Paperclip
-                                    className={cn(
-                                      "h-3.5 w-3.5",
-                                      docPendente ? "text-red-500" : "text-emerald-600",
-                                      docPendente
-                                        ? "cursor-pointer hover:scale-125 transition-transform"
-                                        : "cursor-help",
-                                    )}
-                                    strokeWidth={2.2}
-                                    onClick={
-                                      docPendente
-                                        ? () => onOpenContaDrawer(l.id)
-                                        : undefined
-                                    }
-                                  />
-                                </TooltipTrigger>
-                                <TooltipContent className="max-w-xs">
-                                  <p className="text-xs">
-                                    {docPendente
-                                      ? "📎 Documento pendente — clique para anexar"
-                                      : "📎 Documento OK"}
-                                  </p>
-                                </TooltipContent>
-                              </Tooltip>
-
-                              {/* Vinculado OFX */}
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Link2
-                                    className={cn(
-                                      "h-3.5 w-3.5",
-                                      corClass(qVinc.cor),
-                                      qVinc.cor !== "verde"
-                                        ? "cursor-pointer hover:scale-125 transition-transform"
-                                        : "cursor-help",
-                                    )}
-                                    strokeWidth={2.2}
-                                    onClick={
-                                      qVinc.cor !== "verde"
-                                        ? () => onOpenContaDrawer(l.id)
-                                        : undefined
-                                    }
-                                  />
-                                </TooltipTrigger>
-                                <TooltipContent className="max-w-xs">
-                                  <p className="text-xs">
-                                    🔗 {qVinc.motivo}
-                                    {qVinc.cor !== "verde" && " — clique para conciliar"}
-                                  </p>
-                                </TooltipContent>
-                              </Tooltip>
-
-                              {/* Conciliado */}
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <CircleDollarSign
-                                    className={cn(
-                                      "h-3.5 w-3.5",
-                                      corClass(qConc.cor),
-                                      qConc.cor !== "verde"
-                                        ? "cursor-pointer hover:scale-125 transition-transform"
-                                        : "cursor-help",
-                                    )}
-                                    strokeWidth={2.2}
-                                    onClick={
-                                      qConc.cor !== "verde"
-                                        ? () => onOpenContaDrawer(l.id)
-                                        : undefined
-                                    }
-                                  />
-                                </TooltipTrigger>
-                                <TooltipContent className="max-w-xs">
-                                  <p className="text-xs">💰 {qConc.motivo}</p>
+                                  <p className="text-xs">🏷️ {qCat.motivo}</p>
+                                  {qCat.cor !== "verde" && l.origem_view === "conta_pagar" && (
+                                    <p className="text-[10px] text-muted-foreground">
+                                      Clique para classificar
+                                    </p>
+                                  )}
                                 </TooltipContent>
                               </Tooltip>
 
