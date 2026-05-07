@@ -129,6 +129,22 @@ export default function CaixaBanco() {
   const [buscarNFValor, setBuscarNFValor] = useState(0);
   const [filaIAOpen, setFilaIAOpen] = useState(false);
   const [filtroQual, setFiltroQual] = useState<FiltroQualidade>("todos");
+  const [modalDocNfId, setModalDocNfId] = useState<string | null>(null);
+  const [modalDocOpen, setModalDocOpen] = useState(false);
+
+  function handleClickIconeDocumento(
+    l: Lancamento,
+    qDoc: { cor: "verde" | "vermelho"; nfStageId: string | null },
+  ) {
+    if (qDoc.cor === "verde" && qDoc.nfStageId) {
+      setModalDocNfId(qDoc.nfStageId);
+      setModalDocOpen(true);
+    } else if (l.origem_view === "conta_pagar") {
+      setBuscarNFContaId(l.id);
+      setBuscarNFDescricao(l.descricao ?? "");
+      setBuscarNFValor(Number(l.valor ?? 0));
+    }
+  }
 
   // Query principal — view unificada
   const { data: lancamentos, isLoading } = useQuery({
