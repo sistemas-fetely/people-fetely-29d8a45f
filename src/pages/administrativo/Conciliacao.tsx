@@ -219,7 +219,7 @@ export default function Conciliacao() {
         if (candidatos?.length === 1) {
           const ofxId = candidatos[0].id;
           await sb.from("ofx_transacoes_stage")
-            .update({ status: "conciliado" }).eq("id", ofxId);
+            .update({ status: "persistida" }).eq("id", ofxId);
           await sb.from("itau_pagamentos_stage")
             .update({ ofx_transacao_id: ofxId })
             .in("id", loteItens.map((i: any) => i.id));
@@ -237,7 +237,7 @@ export default function Conciliacao() {
         if (candidatos?.length === 1) {
           const ofxId = candidatos[0].id;
           await sb.from("ofx_transacoes_stage")
-            .update({ status: "conciliado" }).eq("id", ofxId);
+            .update({ status: "persistida" }).eq("id", ofxId);
           await sb.from("itau_pagamentos_stage")
             .update({ ofx_transacao_id: ofxId }).eq("id", pag.id);
         }
