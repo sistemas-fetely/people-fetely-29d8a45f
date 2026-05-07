@@ -28,6 +28,8 @@ import {
   FileSpreadsheet,
   CheckSquare,
 } from "lucide-react";
+import { ParceiroFormSheet } from "@/components/financeiro/ParceiroFormSheet";
+import { useCategoriasPlano } from "@/hooks/useCategoriasPlano";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
 import { useNavigate } from "react-router-dom";
 
