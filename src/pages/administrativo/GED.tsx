@@ -81,7 +81,11 @@ function formatBytes(bytes: number | null): string {
 export default function GED() {
   const qc = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [pastaSelecionada, setPastaSelecionada] = useState<string>(PASTA_SOLTOS);
+  // Inicialização preguiçosa: já lê o query param ?pasta=<id> no mount
+  // pra evitar piscar na pasta padrão antes do useEffect aplicar.
+  const [pastaSelecionada, setPastaSelecionada] = useState<string>(() => {
+    return searchParams.get("pasta") || PASTA_SOLTOS;
+  });
   const [busca, setBusca] = useState("");
   const [novaPastaOpen, setNovaPastaOpen] = useState(false);
   const [uploadOpen, setUploadOpen] = useState(false);
@@ -100,7 +104,10 @@ export default function GED() {
   });
 
   // Doutrina #34: useEffect (não useState) pra reagir a dados que chegam depois.
-  // Quando vem de Contratos.tsx com ?pasta=<id>, aplica a seleção após as pastas carregarem.
+  // Cobre 3 cenários:
+  // 1. Vinda de Contratos.tsx com ?pasta=<id> — aplica seleção quando pastas chegam.
+  // 2. Cache do React Query (staleTime 60s): pastas já vem cheio, dispara mesmo assim.
+  // 3. Trocar de contrato sem sair do GED: searchParams muda → reaplica seleção.
   useEffect(() => {
     const pastaParam = searchParams.get("pasta");
     if (!pastaParam || loadingPastas || pastas.length === 0) return;
@@ -108,8 +115,11 @@ export default function GED() {
     if (existe) {
       setPastaSelecionada(pastaParam);
       setSearchParams({}, { replace: true });
+    } else {
+      // Pasta não existe (deletada / sem visibilidade) — limpa pra evitar loop
+      setSearchParams({}, { replace: true });
     }
-  }, [pastas, loadingPastas]);
+  }, [pastas, loadingPastas, searchParams, setSearchParams]);
 
   const { data: documentos = [], isLoading: loadingDocs } = useQuery({
     queryKey: ["ged-documentos", pastaSelecionada, busca],
