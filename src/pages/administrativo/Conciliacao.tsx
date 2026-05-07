@@ -193,11 +193,15 @@ export default function Conciliacao() {
       if (pag.numero_lote && pag.numero_lote !== "-") {
         const { data: loteItens } = await sb
           .from("itau_pagamentos_stage")
-          .select("id, valor_pago")
+          .select("id, valor_pago, movimentacao_id")
           .eq("importacao_id", pag.importacao_id)
           .eq("numero_lote", pag.numero_lote);
 
         if (!loteItens?.length) return;
+
+        // Só concilia o OFX SISPAG quando TODOS os itens do lote já foram confirmados
+        const todosConfirmados = loteItens.every((i: any) => i.movimentacao_id !== null);
+        if (!todosConfirmados) return;
 
         const somaLote = loteItens.reduce(
           (acc: number, i: any) => acc + (Number(i.valor_pago) || 0), 0
