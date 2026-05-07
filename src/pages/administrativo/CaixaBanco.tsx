@@ -453,27 +453,17 @@ export default function CaixaBanco() {
     return [...listaAPagar, ...listaRealizado];
   }, [tipoParam, listaAPagar, listaRealizado]);
 
-  // KPIs Qualidade — respeitam pill + filtros globais, NÃO respeitam filtroQual
+  // KPIs Qualidade — 2 ícones (Doc, Categoria)
   const kpisQualidade = useMemo(() => {
     const base = listaFiltradaPorPill;
     const total = base.length;
-    const comNF = base.filter((l) => getQualidadeNF(l, nfMap).cor === "verde").length;
-    const comCat = base.filter((l) => getQualidadeCategoria(l, nfMap).cor === "verde").length;
-    const comDoc = base.filter((l) => statusFlagsMap.get(l.id)?.tem_doc_pendente !== true).length;
-    const comVinc = base.filter((l) =>
-      l.vinculada_cartao || l.origem_view === "cartao_lancamento" || l.movimentacao_bancaria_id,
-    ).length;
-    const comConc = base.filter((l) =>
-      l.conciliado_em || l.status_caixa === "conciliado",
-    ).length;
+    const comDoc = base.filter((l) => getQualidadeDocumento(l, nfMap).cor === "verde").length;
+    const comCat = base.filter((l) => getQualidadeCategoria(l).cor === "verde").length;
     return {
-      NF: { tem: comNF, falta: total - comNF, total },
-      Categoria: { tem: comCat, falta: total - comCat, total },
       Documento: { tem: comDoc, falta: total - comDoc, total },
-      Vinculado: { tem: comVinc, falta: total - comVinc, total },
-      Conciliado: { tem: comConc, falta: total - comConc, total },
+      Categoria: { tem: comCat, falta: total - comCat, total },
     };
-  }, [listaFiltradaPorPill, nfMap, statusFlagsMap]);
+  }, [listaFiltradaPorPill, nfMap]);
 
   // Lista exibida na tabela = pill + filtros adicionais (contador / inconsistências / qualidade)
   const listaExibida = useMemo(() => {
@@ -492,26 +482,16 @@ export default function CaixaBanco() {
     if (filtroQual !== "todos") {
       list = list.filter((l) => {
         switch (filtroQual) {
-          case "nf_tem": return getQualidadeNF(l, nfMap).cor === "verde";
-          case "nf_falta": return getQualidadeNF(l, nfMap).cor !== "verde";
-          case "categoria_tem": return getQualidadeCategoria(l, nfMap).cor === "verde";
-          case "categoria_falta": return getQualidadeCategoria(l, nfMap).cor !== "verde";
-          case "doc_tem": return statusFlagsMap.get(l.id)?.tem_doc_pendente !== true;
-          case "doc_falta": return statusFlagsMap.get(l.id)?.tem_doc_pendente === true;
-          case "vinculado_tem":
-            return !!(l.vinculada_cartao || l.origem_view === "cartao_lancamento" || l.movimentacao_bancaria_id);
-          case "vinculado_falta":
-            return !(l.vinculada_cartao || l.origem_view === "cartao_lancamento" || l.movimentacao_bancaria_id);
-          case "conciliado_tem":
-            return !!(l.conciliado_em || l.status_caixa === "conciliado");
-          case "conciliado_falta":
-            return !(l.conciliado_em || l.status_caixa === "conciliado");
+          case "doc_tem": return getQualidadeDocumento(l, nfMap).cor === "verde";
+          case "doc_falta": return getQualidadeDocumento(l, nfMap).cor !== "verde";
+          case "categoria_tem": return getQualidadeCategoria(l).cor === "verde";
+          case "categoria_falta": return getQualidadeCategoria(l).cor !== "verde";
           default: return true;
         }
       });
     }
     return list;
-  }, [listaFiltradaPorPill, filtroContador, mostrarSoInconsistentes, contadorMap, filtroQual, nfMap, statusFlagsMap]);
+  }, [listaFiltradaPorPill, filtroContador, mostrarSoInconsistentes, contadorMap, filtroQual, nfMap]);
 
   async function handleAplicarIAEmMassa() {
     setAplicandoIA(true);
