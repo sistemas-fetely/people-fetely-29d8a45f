@@ -55,6 +55,7 @@ import BuscarNFStageDialog from "./BuscarNFStageDialog";
 import { NfStageVinculadaCard } from "@/components/financeiro/NfStageVinculadaCard";
 import ContaPagarFormEdit from "./ContaPagarFormEdit";
 import { useContaWorkflow, type ContaStatus } from "@/hooks/useContaWorkflow";
+import { formatError } from "@/lib/format-error";
 
 type Conta = {
   id: string;
