@@ -803,13 +803,24 @@ export function NovaContaPagarSheet({ open, onOpenChange, initialData }: Props) 
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const { data: nf } = await (supabase as any)
             .from("nfs_stage")
-            .select("valor, nf_data_emissao, data_vencimento, descricao, categoria_id, parceiro_id, fornecedor_razao_social, fornecedor_cliente")
+            .select("valor, nf_data_emissao, data_vencimento, descricao, categoria_id, parceiro_id, fornecedor_razao_social, fornecedor_cliente, fornecedor_cnpj")
             .eq("id", id)
             .maybeSingle();
 
           if (!nf) return;
 
-          if (!parceiroId && nf.parceiro_id) setParceiroId(nf.parceiro_id);
+          if (!parceiroId && nf.parceiro_id) {
+            setParceiroId(nf.parceiro_id);
+          } else if (!parceiroId && !nf.parceiro_id && nf.fornecedor_cnpj) {
+            // Gap 2.1: NF tem CNPJ mas parceiro não está cadastrado
+            // Abre cadastro de parceiro pré-preenchido em modo obrigatório
+            setParceiroPrefill({
+              razao_social: nf.fornecedor_razao_social || nf.fornecedor_cliente || undefined,
+              cnpj: nf.fornecedor_cnpj,
+            });
+            setParceiroObrigatorio(true);
+            setParceiroFormOpen(true);
+          }
           if (!descricao) {
             const fornecedor = nf.fornecedor_razao_social || nf.fornecedor_cliente;
             const desc = nf.descricao || (fornecedor ? `Pagamento ${fornecedor}` : "");
