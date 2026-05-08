@@ -26,6 +26,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { SortableTableHead, SortState } from "@/components/shared/SortableTableHead";
+import { useCentrosCusto } from "@/hooks/financeiro/useCentrosCusto";
 import {
   Select,
   SelectContent,
@@ -34,7 +36,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Search, Users, Trash2, Building2 } from "lucide-react";
+import { Plus, Search, Users, Trash2 } from "lucide-react";
 import { ParceiroFormSheet, Parceiro } from "@/components/financeiro/ParceiroFormSheet";
 import { CategoriaOption } from "@/components/financeiro/CategoriaCombobox";
 import { GruposLista } from "@/components/financeiro/GruposLista";
@@ -53,24 +55,41 @@ function formatCnpj(cnpj: string | null): string {
   return `${c.slice(0, 2)}.${c.slice(2, 5)}.${c.slice(5, 8)}/${c.slice(8, 12)}-${c.slice(12)}`;
 }
 
+type SortField =
+  | "razao_social"
+  | "cnpj"
+  | "tipo"
+  | "categoria"
+  | "centro_custo"
+  | "meio_pgto";
+
 export default function Parceiros() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const tabAtiva = searchParams.get("tab") === "grupos" ? "grupos" : "parceiros";
+  const tabParam = searchParams.get("tab");
+  const tabAtiva =
+    tabParam === "grupos"
+      ? "grupos"
+      : tabParam === "clientes"
+        ? "clientes"
+        : "fornecedores";
   const setTabAtiva = (v: string) => {
     const next = new URLSearchParams(searchParams);
-    if (v === "parceiros") next.delete("tab");
+    if (v === "fornecedores") next.delete("tab");
     else next.set("tab", v);
     setSearchParams(next, { replace: true });
   };
 
   const [busca, setBusca] = useState("");
-  const [filtroTipo, setFiltroTipo] = useState<string>("todos");
   const [filtroStatus, setFiltroStatus] = useState<string>("ativos");
   const [filtroGrupo, setFiltroGrupo] = useState<string>("todos");
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Parceiro | null>(null);
   const [parceiroParaExcluir, setParceiroParaExcluir] = useState<Parceiro | null>(null);
   const [excluindo, setExcluindo] = useState(false);
+  const [sort, setSort] = useState<SortState<SortField> | null>({
+    column: "razao_social",
+    direction: "asc",
+  });
   const queryClient = useQueryClient();
 
   async function handleConfirmarExcluir() {
@@ -134,27 +153,56 @@ export default function Parceiros() {
     },
   });
 
-  // Todos os grupos (incluindo inativos), pra não sumir nome de grupo de
-  // parceiro vinculado a grupo inativo.
   const { data: gruposAll = [] } = useGruposEmpresariais(false);
-  const grupoNomeMap = useMemo(() => {
+  const { data: centrosCustoAll = [] } = useCentrosCusto(false);
+  const centroCustoNomeMap = useMemo(() => {
     const m = new Map<string, string>();
-    for (const g of gruposAll) m.set(g.id, g.nome);
+    for (const c of centrosCustoAll) m.set(c.id, c.nome);
     return m;
-  }, [gruposAll]);
+  }, [centrosCustoAll]);
+  const categoriaNomeMap = useMemo(() => {
+    const m = new Map<string, { codigo: string; nome: string }>();
+    for (const c of categorias || []) m.set(c.id, { codigo: c.codigo, nome: c.nome });
+    return m;
+  }, [categorias]);
   const gruposParaFiltro = useMemo(
     () => gruposAll.filter((g) => g.ativo),
     [gruposAll],
   );
 
+  function temMeioPagamento(p: Parceiro): boolean {
+    if (p.pix_chave && p.pix_chave.trim() !== "") return true;
+    if (p.forma_pagamento_padrao_id) return true;
+    const db = p.dados_bancarios;
+    if (db && (db.banco || db.agencia || db.conta)) return true;
+    return false;
+  }
+
+  const kpis = useMemo(() => {
+    const all = (data || []).filter((p) => p.ativo !== false);
+    return {
+      total: all.length,
+      fornecedores: all.filter((p) => (p.tipos || []).includes("fornecedor")).length,
+      clientes: all.filter((p) => (p.tipos || []).includes("cliente")).length,
+      semCategoria: all.filter((p) => !p.categoria_padrao_id).length,
+      semCentroCusto: all.filter((p) => !p.centro_custo_id).length,
+      semMeioPgto: all.filter((p) => !temMeioPagamento(p)).length,
+    };
+  }, [data]);
+
   const filtered = useMemo(() => {
     let list = data || [];
+
+    // Filtra automaticamente pela aba ativa
+    if (tabAtiva === "fornecedores") {
+      list = list.filter((p) => (p.tipos || []).includes("fornecedor"));
+    } else if (tabAtiva === "clientes") {
+      list = list.filter((p) => (p.tipos || []).includes("cliente"));
+    }
+
     if (filtroStatus === "ativos") list = list.filter((p) => p.ativo !== false);
     else if (filtroStatus === "inativos") list = list.filter((p) => p.ativo === false);
 
-    if (filtroTipo !== "todos") {
-      list = list.filter((p) => (p.tipos || []).includes(filtroTipo));
-    }
     if (filtroGrupo === "sem_grupo") {
       list = list.filter((p) => !p.grupo_id);
     } else if (filtroGrupo !== "todos") {
@@ -169,18 +217,41 @@ export default function Parceiros() {
           (p.cnpj || "").includes(t.replace(/\D/g, "")),
       );
     }
-    return list;
-  }, [data, filtroTipo, filtroStatus, filtroGrupo, busca]);
 
-  const kpis = useMemo(() => {
-    const all = data || [];
-    return {
-      total: all.length,
-      fornecedores: all.filter((p) => (p.tipos || []).includes("fornecedor")).length,
-      clientes: all.filter((p) => (p.tipos || []).includes("cliente")).length,
-      emGrupos: all.filter((p) => !!p.grupo_id).length,
+    if (!sort) return list;
+    const mult = sort.direction === "asc" ? 1 : -1;
+    const sortFn = (a: Parceiro, b: Parceiro) => {
+      let v: number;
+      switch (sort.column) {
+        case "cnpj":
+          v = (a.cnpj || "").localeCompare(b.cnpj || "");
+          break;
+        case "tipo":
+          v = (a.tipos?.[0] || "").localeCompare(b.tipos?.[0] || "");
+          break;
+        case "categoria": {
+          const aN = a.categoria_padrao_id ? categoriaNomeMap.get(a.categoria_padrao_id)?.nome || "" : "";
+          const bN = b.categoria_padrao_id ? categoriaNomeMap.get(b.categoria_padrao_id)?.nome || "" : "";
+          v = aN.localeCompare(bN, "pt-BR");
+          break;
+        }
+        case "centro_custo": {
+          const aN = a.centro_custo_id ? centroCustoNomeMap.get(a.centro_custo_id) || "" : "";
+          const bN = b.centro_custo_id ? centroCustoNomeMap.get(b.centro_custo_id) || "" : "";
+          v = aN.localeCompare(bN, "pt-BR");
+          break;
+        }
+        case "meio_pgto":
+          v = Number(temMeioPagamento(a)) - Number(temMeioPagamento(b));
+          break;
+        case "razao_social":
+        default:
+          v = a.razao_social.localeCompare(b.razao_social, "pt-BR");
+      }
+      return v * mult;
     };
-  }, [data]);
+    return [...list].sort(sortFn);
+  }, [data, filtroStatus, filtroGrupo, busca, tabAtiva, sort, categoriaNomeMap, centroCustoNomeMap]);
 
   const handleOpenNew = () => {
     setEditing(null);
@@ -204,7 +275,7 @@ export default function Parceiros() {
             Fornecedores, clientes e parceiros da Fetely — cadastro unificado.
           </p>
         </div>
-        {tabAtiva === "parceiros" && (
+        {tabAtiva !== "grupos" && (
           <Button onClick={handleOpenNew} className="gap-2 bg-admin hover:bg-admin/90 text-admin-foreground">
             <Plus className="h-4 w-4" />
             Novo parceiro
@@ -214,202 +285,237 @@ export default function Parceiros() {
 
       <Tabs value={tabAtiva} onValueChange={setTabAtiva}>
         <TabsList>
-          <TabsTrigger value="parceiros">Parceiros</TabsTrigger>
+          <TabsTrigger value="fornecedores">Fornecedores</TabsTrigger>
+          <TabsTrigger value="clientes">Clientes</TabsTrigger>
           <TabsTrigger value="grupos">Grupos</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="parceiros" className="space-y-6 mt-4">
-          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-normal text-muted-foreground">Total de parceiros</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{kpis.total}</div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-normal text-muted-foreground">Fornecedores</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-[#8B1A2F]">{kpis.fornecedores}</div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-normal text-muted-foreground">Clientes</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-[#1A4A3A]">{kpis.clientes}</div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-normal text-muted-foreground">Em grupos</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-admin">{kpis.emGrupos}</div>
-              </CardContent>
-            </Card>
-          </div>
-
-          <Card>
-            <CardHeader className="pb-3">
-              <div className="flex flex-col lg:flex-row gap-3">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Buscar por nome ou CNPJ..."
-                    value={busca}
-                    onChange={(e) => setBusca(e.target.value)}
-                    className="pl-9"
-                  />
-                </div>
-                <Select value={filtroTipo} onValueChange={setFiltroTipo}>
-                  <SelectTrigger className="w-full lg:w-44">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="todos">Todos os tipos</SelectItem>
-                    <SelectItem value="fornecedor">Fornecedores</SelectItem>
-                    <SelectItem value="cliente">Clientes</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Select value={filtroStatus} onValueChange={setFiltroStatus}>
-                  <SelectTrigger className="w-full lg:w-36">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ativos">Ativos</SelectItem>
-                    <SelectItem value="inativos">Inativos</SelectItem>
-                    <SelectItem value="todos">Todos</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Select value={filtroGrupo} onValueChange={setFiltroGrupo}>
-                  <SelectTrigger className="w-full lg:w-44">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="todos">Todos os grupos</SelectItem>
-                    <SelectItem value="sem_grupo">Sem grupo</SelectItem>
-                    {gruposParaFiltro.map((g) => (
-                      <SelectItem key={g.id} value={g.id}>
-                        {g.nome}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+        {(tabAtiva === "fornecedores" || tabAtiva === "clientes") && (
+          <TabsContent value={tabAtiva} className="space-y-6 mt-4" forceMount>
+            <div className="sticky top-0 z-10 bg-background pb-2 -mx-6 px-6 pt-2">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-xs font-normal text-muted-foreground">Total ativos</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{kpis.total}</div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-xs font-normal text-muted-foreground">Fornecedores</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-[#8B1A2F]">{kpis.fornecedores}</div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-xs font-normal text-muted-foreground">Clientes</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-[#1A4A3A]">{kpis.clientes}</div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-xs font-normal text-muted-foreground">Sem categoria</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-warning">{kpis.semCategoria}</div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-xs font-normal text-muted-foreground">Sem centro de custo</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-warning">{kpis.semCentroCusto}</div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-xs font-normal text-muted-foreground">Sem meio de pagamento</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-warning">{kpis.semMeioPgto}</div>
+                  </CardContent>
+                </Card>
               </div>
-            </CardHeader>
-            <CardContent>
-              {isLoading ? (
-                <div className="space-y-2">
-                  {Array.from({ length: 6 }).map((_, i) => (
-                    <Skeleton key={i} className="h-10 w-full" />
-                  ))}
+            </div>
+
+            <Card>
+              <CardHeader className="pb-3">
+                <div className="flex flex-col lg:flex-row gap-3">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Buscar por nome ou CNPJ..."
+                      value={busca}
+                      onChange={(e) => setBusca(e.target.value)}
+                      className="pl-9"
+                    />
+                  </div>
+                  <Select value={filtroStatus} onValueChange={setFiltroStatus}>
+                    <SelectTrigger className="w-full lg:w-36">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ativos">Ativos</SelectItem>
+                      <SelectItem value="inativos">Inativos</SelectItem>
+                      <SelectItem value="todos">Todos</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Select value={filtroGrupo} onValueChange={setFiltroGrupo}>
+                    <SelectTrigger className="w-full lg:w-44">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="todos">Todos os grupos</SelectItem>
+                      <SelectItem value="sem_grupo">Sem grupo</SelectItem>
+                      {gruposParaFiltro.map((g) => (
+                        <SelectItem key={g.id} value={g.id}>
+                          {g.nome}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-              ) : filtered.length === 0 ? (
-                <div className="py-12 text-center text-sm text-muted-foreground">
-                  Nenhum parceiro encontrado.
-                </div>
-              ) : (
-                <div className="border rounded-md overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Razão Social</TableHead>
-                        <TableHead>CNPJ</TableHead>
-                        <TableHead>Tipo</TableHead>
-                        <TableHead>Grupo</TableHead>
-                        <TableHead>Cidade/UF</TableHead>
-                        <TableHead>Tags</TableHead>
-                        <TableHead className="w-[60px]"></TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filtered.map((p) => {
-                        const tipos = p.tipos || [];
-                        const tipoLabel =
-                          tipos.length === 2 ? "ambos" : tipos[0] || "fornecedor";
-                        const grupoNome = p.grupo_id ? grupoNomeMap.get(p.grupo_id) : null;
-                        return (
-                          <TableRow
-                            key={p.id}
-                            className="cursor-pointer"
-                            onClick={() => handleEdit(p)}
-                          >
-                            <TableCell>
-                              <div>
-                                <div className="font-medium flex items-center gap-2">
-                                  {p.razao_social}
-                                  {(p as any).origem === "auto_cartao" && !p.cnpj && (
-                                    <Badge variant="outline" className="text-[10px] border-amber-500 text-amber-700 dark:text-amber-400">
-                                      CNPJ pendente
-                                    </Badge>
+              </CardHeader>
+              <CardContent>
+                {isLoading ? (
+                  <div className="space-y-2">
+                    {Array.from({ length: 6 }).map((_, i) => (
+                      <Skeleton key={i} className="h-10 w-full" />
+                    ))}
+                  </div>
+                ) : filtered.length === 0 ? (
+                  <div className="py-12 text-center text-sm text-muted-foreground">
+                    Nenhum parceiro encontrado.
+                  </div>
+                ) : (
+                  <div className="border rounded-md overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <SortableTableHead column="razao_social" sort={sort} onSort={setSort}>
+                            Razão Social
+                          </SortableTableHead>
+                          <SortableTableHead column="cnpj" sort={sort} onSort={setSort}>
+                            CNPJ
+                          </SortableTableHead>
+                          <SortableTableHead column="tipo" sort={sort} onSort={setSort}>
+                            Tipo
+                          </SortableTableHead>
+                          <SortableTableHead column="categoria" sort={sort} onSort={setSort}>
+                            Categoria
+                          </SortableTableHead>
+                          <SortableTableHead column="centro_custo" sort={sort} onSort={setSort}>
+                            Centro de Custo
+                          </SortableTableHead>
+                          <SortableTableHead column="meio_pgto" sort={sort} onSort={setSort}>
+                            Meio de Pgto
+                          </SortableTableHead>
+                          <TableHead className="w-[60px]"></TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {filtered.map((p) => {
+                          const tipos = p.tipos || [];
+                          const tipoLabel =
+                            tipos.length === 2 ? "ambos" : tipos[0] || "fornecedor";
+                          const cat = p.categoria_padrao_id
+                            ? categoriaNomeMap.get(p.categoria_padrao_id)
+                            : null;
+                          const ccNome = p.centro_custo_id
+                            ? centroCustoNomeMap.get(p.centro_custo_id)
+                            : null;
+                          return (
+                            <TableRow
+                              key={p.id}
+                              className="cursor-pointer"
+                              onClick={() => handleEdit(p)}
+                            >
+                              <TableCell>
+                                <div>
+                                  <div className="font-medium flex items-center gap-2">
+                                    {p.razao_social}
+                                    {(p as any).origem === "auto_cartao" && !p.cnpj && (
+                                      <Badge variant="outline" className="text-[10px] border-amber-500 text-amber-700 dark:text-amber-400">
+                                        CNPJ pendente
+                                      </Badge>
+                                    )}
+                                  </div>
+                                  {p.nome_fantasia && (
+                                    <div className="text-xs text-muted-foreground">{p.nome_fantasia}</div>
                                   )}
                                 </div>
-                                {p.nome_fantasia && (
-                                  <div className="text-xs text-muted-foreground">{p.nome_fantasia}</div>
+                              </TableCell>
+                              <TableCell className="font-mono text-xs">{formatCnpj(p.cnpj)}</TableCell>
+                              <TableCell>
+                                <Badge className={TIPO_BADGE[tipoLabel] || "bg-muted"}>
+                                  {tipoLabel === "ambos" ? "Forn. + Cliente" : tipoLabel}
+                                </Badge>
+                              </TableCell>
+                              <TableCell>
+                                {cat ? (
+                                  <div className="text-sm">
+                                    <span className="font-mono text-xs text-muted-foreground mr-1.5">
+                                      {cat.codigo}
+                                    </span>
+                                    <span>{cat.nome}</span>
+                                  </div>
+                                ) : (
+                                  <span className="text-xs text-muted-foreground">— sem categoria</span>
                                 )}
-                              </div>
-                            </TableCell>
-                            <TableCell className="font-mono text-xs">{formatCnpj(p.cnpj)}</TableCell>
-                            <TableCell>
-                              <Badge className={TIPO_BADGE[tipoLabel] || "bg-muted"}>
-                                {tipoLabel === "ambos" ? "Forn. + Cliente" : tipoLabel}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>
-                              {grupoNome ? (
-                                <span className="inline-flex items-center gap-1.5 text-sm">
-                                  <Building2 className="h-3 w-3 text-muted-foreground" />
-                                  {grupoNome}
-                                </span>
-                              ) : (
-                                <span className="text-xs text-muted-foreground">—</span>
-                              )}
-                            </TableCell>
-                            <TableCell className="text-sm text-muted-foreground">
-                              {p.cidade ? `${p.cidade}/${p.uf || "—"}` : "—"}
-                            </TableCell>
-                            <TableCell>
-                              {p.tags && p.tags.length > 0 ? (
-                                <div className="flex flex-wrap gap-1">
-                                  {p.tags.slice(0, 3).map((t) => (
-                                    <Badge key={t} variant="secondary" className="text-xs">
-                                      {t}
-                                    </Badge>
-                                  ))}
-                                  {p.tags.length > 3 && (
-                                    <span className="text-xs text-muted-foreground">+{p.tags.length - 3}</span>
-                                  )}
-                                </div>
-                              ) : (
-                                <span className="text-xs text-muted-foreground">—</span>
-                              )}
-                            </TableCell>
-                            <TableCell onClick={(e) => e.stopPropagation()}>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                                onClick={() => setParceiroParaExcluir(p)}
-                                title="Excluir parceiro"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
+                              </TableCell>
+                              <TableCell>
+                                {ccNome ? (
+                                  <span className="text-sm">{ccNome}</span>
+                                ) : (
+                                  <span className="text-xs text-muted-foreground">— sem CC</span>
+                                )}
+                              </TableCell>
+                              <TableCell>
+                                {temMeioPagamento(p) ? (
+                                  <div className="flex flex-wrap gap-1">
+                                    {p.pix_chave && (
+                                      <Badge variant="secondary" className="text-xs">PIX</Badge>
+                                    )}
+                                    {p.dados_bancarios?.banco && (
+                                      <Badge variant="secondary" className="text-xs">Banco</Badge>
+                                    )}
+                                    {p.forma_pagamento_padrao_id && (
+                                      <Badge variant="secondary" className="text-xs">Padrão</Badge>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <span className="text-xs text-muted-foreground">— faltando</span>
+                                )}
+                              </TableCell>
+                              <TableCell onClick={(e) => e.stopPropagation()}>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                  onClick={() => setParceiroParaExcluir(p)}
+                                  title="Excluir parceiro"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        )}
 
         <TabsContent value="grupos" className="mt-4">
           <GruposLista />
