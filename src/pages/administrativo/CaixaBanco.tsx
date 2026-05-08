@@ -35,6 +35,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { SortableTableHead, ordenarPor, type SortState } from "@/components/shared/SortableTableHead";
 import {
   Tooltip,
   TooltipContent,
@@ -125,6 +126,9 @@ export default function CaixaBanco() {
   const [filtroQual, setFiltroQual] = useState<FiltroQualidade>("todos");
   const [modalDocNfId, setModalDocNfId] = useState<string | null>(null);
   const [modalDocOpen, setModalDocOpen] = useState(false);
+  const [sort, setSort] = useState<SortState<
+    "parceiro" | "descricao" | "vencimento" | "pago_em" | "valor"
+  > | null>(null);
 
   function handleClickIconeDocumento(
     l: Lancamento,
@@ -490,8 +494,14 @@ export default function CaixaBanco() {
         }
       });
     }
-    return list;
-  }, [listaFiltradaPorPill, filtroQual, nfMap]);
+    return ordenarPor(list, sort, {
+      parceiro: (l) => (l.parceiro_id && mapParceiros[l.parceiro_id]) || "",
+      descricao: (l) => l.descricao || "",
+      vencimento: (l) => l.data_vencimento || "",
+      pago_em: (l) => l.data_pagamento || "",
+      valor: (l) => l.valor || 0,
+    });
+  }, [listaFiltradaPorPill, filtroQual, nfMap, sort, mapParceiros]);
 
   async function handleAplicarIAEmMassa() {
     setAplicandoIA(true);
@@ -648,13 +658,13 @@ export default function CaixaBanco() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Parceiro</TableHead>
-                    <TableHead>Descrição</TableHead>
-                    <TableHead>Vencimento</TableHead>
-                    <TableHead>Pago em</TableHead>
+                    <SortableTableHead column="parceiro" sort={sort} onSort={setSort}>Parceiro</SortableTableHead>
+                    <SortableTableHead column="descricao" sort={sort} onSort={setSort}>Descrição</SortableTableHead>
+                    <SortableTableHead column="vencimento" sort={sort} onSort={setSort}>Vencimento</SortableTableHead>
+                    <SortableTableHead column="pago_em" sort={sort} onSort={setSort}>Pago em</SortableTableHead>
                     <TableHead>Categoria</TableHead>
                     <TableHead>Forma PG</TableHead>
-                    <TableHead className="text-right">Valor</TableHead>
+                    <SortableTableHead column="valor" sort={sort} onSort={setSort} align="right" className="text-right">Valor</SortableTableHead>
                     <TableHead>Tags</TableHead>
                   </TableRow>
                 </TableHeader>
