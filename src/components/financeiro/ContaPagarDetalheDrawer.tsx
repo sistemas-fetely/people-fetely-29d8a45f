@@ -732,7 +732,6 @@ export default function ContaPagarDetalheDrawer({
                       >
                         <ThumbsUp className="h-4 w-4" /> Aprovar pagamento
                       </Button>
-                      <CancelarButton conta={conta} workflow={workflow} onClose={onClose} />
                     </div>
                   )}
 
@@ -820,6 +819,16 @@ export default function ContaPagarDetalheDrawer({
                       </Button>
                     </div>
                   )}
+
+                  {/* Botão Cancelar — disponível em qualquer status antes de pagar */}
+                  {conta.status !== "paga" &&
+                    conta.status !== "cancelado" &&
+                    conta.status !== "finalizado" &&
+                    conta.status !== "conciliado" && (
+                      <div className="pt-4 border-t">
+                        <CancelarButton conta={conta} workflow={workflow} onClose={onClose} />
+                      </div>
+                    )}
                 </div>
               </>
             )}
@@ -881,7 +890,7 @@ function CancelarButton({
         <AlertDialogHeader>
           <AlertDialogTitle>Cancelar esta conta?</AlertDialogTitle>
           <AlertDialogDescription>
-            Você poderá reverter depois se necessário.
+            O status mudará para "cancelado" e qualquer NF/Recibo vinculado será desvinculado automaticamente (voltará pro Stage). Você poderá reverter depois se necessário.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
