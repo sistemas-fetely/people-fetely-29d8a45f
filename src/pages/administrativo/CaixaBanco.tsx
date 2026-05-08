@@ -658,13 +658,13 @@ export default function CaixaBanco() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Parceiro</TableHead>
-                    <TableHead>Descrição</TableHead>
-                    <TableHead>Vencimento</TableHead>
-                    <TableHead>Pago em</TableHead>
+                    <SortableTableHead column="parceiro" sort={sort} onSort={setSort}>Parceiro</SortableTableHead>
+                    <SortableTableHead column="descricao" sort={sort} onSort={setSort}>Descrição</SortableTableHead>
+                    <SortableTableHead column="vencimento" sort={sort} onSort={setSort}>Vencimento</SortableTableHead>
+                    <SortableTableHead column="pago_em" sort={sort} onSort={setSort}>Pago em</SortableTableHead>
                     <TableHead>Categoria</TableHead>
                     <TableHead>Forma PG</TableHead>
-                    <TableHead className="text-right">Valor</TableHead>
+                    <SortableTableHead column="valor" sort={sort} onSort={setSort} align="right" className="text-right">Valor</SortableTableHead>
                     <TableHead>Tags</TableHead>
                   </TableRow>
                 </TableHeader>
