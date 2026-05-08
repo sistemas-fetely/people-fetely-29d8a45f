@@ -819,6 +819,16 @@ export default function ContaPagarDetalheDrawer({
                       </Button>
                     </div>
                   )}
+
+                  {/* Botão Cancelar — disponível em qualquer status antes de pagar */}
+                  {conta.status !== "paga" &&
+                    conta.status !== "cancelado" &&
+                    conta.status !== "finalizado" &&
+                    conta.status !== "conciliado" && (
+                      <div className="pt-4 border-t">
+                        <CancelarButton conta={conta} workflow={workflow} onClose={onClose} />
+                      </div>
+                    )}
                 </div>
               </>
             )}
