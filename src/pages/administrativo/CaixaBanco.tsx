@@ -116,8 +116,6 @@ export default function CaixaBanco() {
   );
   const [busca, setBusca] = useFiltrosPersistentes<string>("caixabanco_busca", "");
   const [contaIdDrawer, setContaIdDrawer] = useState<string | null>(null);
-  const [filtroContador, setFiltroContador] = useState<"todos" | "enviados" | "nao_enviados">("todos");
-  const [mostrarSoInconsistentes, setMostrarSoInconsistentes] = useState(false);
   const [aplicandoIA, setAplicandoIA] = useState(false);
   const [sugestaoMovId, setSugestaoMovId] = useState<string | null>(null);
   const [buscarNFContaId, setBuscarNFContaId] = useState<string | null>(null);
