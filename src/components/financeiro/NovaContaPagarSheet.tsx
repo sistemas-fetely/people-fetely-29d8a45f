@@ -74,6 +74,8 @@ export function NovaContaPagarSheet({ open, onOpenChange, initialData }: Props) 
   const [parceiroId, setParceiroId] = useState<string | null>(null);
   const [parceiroOpen, setParceiroOpen] = useState(false);
   const [parceiroFormOpen, setParceiroFormOpen] = useState(false);
+  const [parceiroPrefill, setParceiroPrefill] = useState<{ razao_social?: string; cnpj?: string } | null>(null);
+  const [parceiroObrigatorio, setParceiroObrigatorio] = useState(false);
   const [categoriaFormOpen, setCategoriaFormOpen] = useState(false);
 
   const [descricao, setDescricao] = useState("");
