@@ -767,9 +767,21 @@ export function NovaContaPagarSheet({ open, onOpenChange, initialData }: Props) 
 
       <ParceiroFormSheet
         open={parceiroFormOpen}
-        onOpenChange={setParceiroFormOpen}
+        onOpenChange={(v) => {
+          setParceiroFormOpen(v);
+          if (!v) {
+            setParceiroPrefill(null);
+            setParceiroObrigatorio(false);
+          }
+        }}
         categorias={categorias || []}
-        onSaved={(id) => setParceiroId(id)}
+        onSaved={(id) => {
+          setParceiroId(id);
+          setParceiroPrefill(null);
+          setParceiroObrigatorio(false);
+        }}
+        prefill={parceiroPrefill || undefined}
+        obrigatorio={parceiroObrigatorio}
       />
       <CategoriaFormDialog
         open={categoriaFormOpen}
