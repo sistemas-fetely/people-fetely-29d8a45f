@@ -364,6 +364,10 @@ export function ContaPagarFormEdit({
       if (linhaInvestimentoId !== (conta.linha_investimento_id ?? null)) {
         updatePayload.linha_investimento_id = linhaInvestimentoId;
       }
+      // Atribuição de parceiro — apenas se a conta era órfã e o operador escolheu um
+      if (!conta.parceiro_id && parceiroIdAtribuir) {
+        updatePayload.parceiro_id = parceiroIdAtribuir;
+      }
       if (Object.keys(updatePayload).length > 0) {
         updatePayload.updated_at = new Date().toISOString();
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
