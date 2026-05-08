@@ -265,6 +265,7 @@ export default function BuscarNFStageDialog({
       qc.invalidateQueries({ queryKey: ["conta-pagar-detalhe", cprId] });
       qc.invalidateQueries({ queryKey: ["nfs-stage"] });
       qc.invalidateQueries({ queryKey: ["nfs-vinculadas-mov"] });
+      qc.invalidateQueries({ queryKey: ["lancamentos-caixa-banco"] });
       if (onVinculado) onVinculado();
       onOpenChange(false);
     } catch (e) {
