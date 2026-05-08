@@ -732,7 +732,6 @@ export default function ContaPagarDetalheDrawer({
                       >
                         <ThumbsUp className="h-4 w-4" /> Aprovar pagamento
                       </Button>
-                      <CancelarButton conta={conta} workflow={workflow} onClose={onClose} />
                     </div>
                   )}
 
