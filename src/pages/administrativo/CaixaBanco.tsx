@@ -494,8 +494,14 @@ export default function CaixaBanco() {
         }
       });
     }
-    return list;
-  }, [listaFiltradaPorPill, filtroQual, nfMap]);
+    return ordenarPor(list, sort, {
+      parceiro: (l) => (l.parceiro_id && mapParceiros[l.parceiro_id]) || "",
+      descricao: (l) => l.descricao || "",
+      vencimento: (l) => l.data_vencimento || "",
+      pago_em: (l) => l.data_pagamento || "",
+      valor: (l) => l.valor || 0,
+    });
+  }, [listaFiltradaPorPill, filtroQual, nfMap, sort, mapParceiros]);
 
   async function handleAplicarIAEmMassa() {
     setAplicandoIA(true);
