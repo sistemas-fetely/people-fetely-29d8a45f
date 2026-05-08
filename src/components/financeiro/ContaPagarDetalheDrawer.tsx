@@ -890,7 +890,7 @@ function CancelarButton({
         <AlertDialogHeader>
           <AlertDialogTitle>Cancelar esta conta?</AlertDialogTitle>
           <AlertDialogDescription>
-            Você poderá reverter depois se necessário.
+            O status mudará para "cancelado" e qualquer NF/Recibo vinculado será desvinculado automaticamente (voltará pro Stage). Você poderá reverter depois se necessário.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
