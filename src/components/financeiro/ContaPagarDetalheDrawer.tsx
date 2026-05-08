@@ -917,7 +917,7 @@ function CancelarButton({
                 onClose();
               } catch (e) {
                 console.error("Erro ao cancelar:", e);
-                toast.error("Erro ao cancelar conta");
+                toast.error("Erro ao cancelar: " + formatError(e));
               }
             }}
           >
