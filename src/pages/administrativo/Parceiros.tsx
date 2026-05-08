@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/table";
 import { SortableTableHead, SortState } from "@/components/shared/SortableTableHead";
 import { useCentrosCusto } from "@/hooks/financeiro/useCentrosCusto";
+import { useFormasPagamento } from "@/hooks/financeiro/useFormasPagamento";
 import {
   Select,
   SelectContent,
