@@ -126,6 +126,9 @@ export default function CaixaBanco() {
   const [filtroQual, setFiltroQual] = useState<FiltroQualidade>("todos");
   const [modalDocNfId, setModalDocNfId] = useState<string | null>(null);
   const [modalDocOpen, setModalDocOpen] = useState(false);
+  const [sort, setSort] = useState<SortState<
+    "parceiro" | "descricao" | "vencimento" | "pago_em" | "valor"
+  > | null>(null);
 
   function handleClickIconeDocumento(
     l: Lancamento,
