@@ -210,6 +210,31 @@ export function ContaPagarFormEdit({
     },
   });
 
+  // Lista de parceiros — só carrega quando a conta é órfã (sem parceiro_id)
+  const { data: parceirosLista } = useQuery({
+    queryKey: ["parceiros-para-atribuir"],
+    enabled: !conta.parceiro_id,
+    queryFn: async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase as any)
+        .from("parceiros_comerciais")
+        .select(
+          "id, razao_social, cnpj, categoria_padrao_id, centro_custo_id, forma_pagamento_padrao_id",
+        )
+        .eq("ativo", true)
+        .order("razao_social");
+      if (error) throw error;
+      return data as Array<{
+        id: string;
+        razao_social: string;
+        cnpj: string | null;
+        categoria_padrao_id: string | null;
+        centro_custo_id: string | null;
+        forma_pagamento_padrao_id: string | null;
+      }>;
+    },
+  });
+
   // Centros de custo (tabela dimensão)
   const { data: centrosCusto = [] } = useCentrosCusto();
 
