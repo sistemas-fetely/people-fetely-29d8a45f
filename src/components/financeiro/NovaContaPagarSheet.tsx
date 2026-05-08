@@ -74,6 +74,8 @@ export function NovaContaPagarSheet({ open, onOpenChange, initialData }: Props) 
   const [parceiroId, setParceiroId] = useState<string | null>(null);
   const [parceiroOpen, setParceiroOpen] = useState(false);
   const [parceiroFormOpen, setParceiroFormOpen] = useState(false);
+  const [parceiroPrefill, setParceiroPrefill] = useState<{ razao_social?: string; cnpj?: string } | null>(null);
+  const [parceiroObrigatorio, setParceiroObrigatorio] = useState(false);
   const [categoriaFormOpen, setCategoriaFormOpen] = useState(false);
 
   const [descricao, setDescricao] = useState("");
@@ -765,9 +767,21 @@ export function NovaContaPagarSheet({ open, onOpenChange, initialData }: Props) 
 
       <ParceiroFormSheet
         open={parceiroFormOpen}
-        onOpenChange={setParceiroFormOpen}
+        onOpenChange={(v) => {
+          setParceiroFormOpen(v);
+          if (!v) {
+            setParceiroPrefill(null);
+            setParceiroObrigatorio(false);
+          }
+        }}
         categorias={categorias || []}
-        onSaved={(id) => setParceiroId(id)}
+        onSaved={(id) => {
+          setParceiroId(id);
+          setParceiroPrefill(null);
+          setParceiroObrigatorio(false);
+        }}
+        prefill={parceiroPrefill || undefined}
+        obrigatorio={parceiroObrigatorio}
       />
       <CategoriaFormDialog
         open={categoriaFormOpen}
@@ -789,13 +803,24 @@ export function NovaContaPagarSheet({ open, onOpenChange, initialData }: Props) 
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const { data: nf } = await (supabase as any)
             .from("nfs_stage")
-            .select("valor, nf_data_emissao, data_vencimento, descricao, categoria_id, parceiro_id, fornecedor_razao_social, fornecedor_cliente")
+            .select("valor, nf_data_emissao, data_vencimento, descricao, categoria_id, parceiro_id, fornecedor_razao_social, fornecedor_cliente, fornecedor_cnpj")
             .eq("id", id)
             .maybeSingle();
 
           if (!nf) return;
 
-          if (!parceiroId && nf.parceiro_id) setParceiroId(nf.parceiro_id);
+          if (!parceiroId && nf.parceiro_id) {
+            setParceiroId(nf.parceiro_id);
+          } else if (!parceiroId && !nf.parceiro_id && nf.fornecedor_cnpj) {
+            // Gap 2.1: NF tem CNPJ mas parceiro não está cadastrado
+            // Abre cadastro de parceiro pré-preenchido em modo obrigatório
+            setParceiroPrefill({
+              razao_social: nf.fornecedor_razao_social || nf.fornecedor_cliente || undefined,
+              cnpj: nf.fornecedor_cnpj,
+            });
+            setParceiroObrigatorio(true);
+            setParceiroFormOpen(true);
+          }
           if (!descricao) {
             const fornecedor = nf.fornecedor_razao_social || nf.fornecedor_cliente;
             const desc = nf.descricao || (fornecedor ? `Pagamento ${fornecedor}` : "");
