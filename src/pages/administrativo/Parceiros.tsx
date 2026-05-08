@@ -178,11 +178,7 @@ export default function Parceiros() {
   );
 
   function temMeioPagamento(p: Parceiro): boolean {
-    if (p.pix_chave && p.pix_chave.trim() !== "") return true;
-    if (p.forma_pagamento_padrao_id) return true;
-    const db = p.dados_bancarios;
-    if (db && (db.banco || db.agencia || db.conta)) return true;
-    return false;
+    return !!p.forma_pagamento_padrao_id;
   }
 
   const kpis = useMemo(() => {
