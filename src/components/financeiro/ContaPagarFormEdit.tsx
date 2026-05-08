@@ -114,6 +114,7 @@ export function ContaPagarFormEdit({
   const [nfSerie, setNfSerie] = useState(conta.nf_serie || "");
   const [nfChave, setNfChave] = useState(conta.nf_chave_acesso || "");
   const [pagoEmContaId, setPagoEmContaId] = useState(conta.pago_em_conta_id || "__none__");
+  const [parceiroIdAtribuir, setParceiroIdAtribuir] = useState<string | null>(null);
   const [linhaInvestimentoId, setLinhaInvestimentoId] = useState<string | null>(
     conta.linha_investimento_id ?? null,
   );
@@ -209,6 +210,31 @@ export function ContaPagarFormEdit({
     },
   });
 
+  // Lista de parceiros — só carrega quando a conta é órfã (sem parceiro_id)
+  const { data: parceirosLista } = useQuery({
+    queryKey: ["parceiros-para-atribuir"],
+    enabled: !conta.parceiro_id,
+    queryFn: async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase as any)
+        .from("parceiros_comerciais")
+        .select(
+          "id, razao_social, cnpj, categoria_padrao_id, centro_custo_id, forma_pagamento_padrao_id",
+        )
+        .eq("ativo", true)
+        .order("razao_social");
+      if (error) throw error;
+      return data as Array<{
+        id: string;
+        razao_social: string;
+        cnpj: string | null;
+        categoria_padrao_id: string | null;
+        centro_custo_id: string | null;
+        forma_pagamento_padrao_id: string | null;
+      }>;
+    },
+  });
+
   // Centros de custo (tabela dimensão)
   const { data: centrosCusto = [] } = useCentrosCusto();
 
@@ -262,6 +288,41 @@ export function ContaPagarFormEdit({
     );
   }
 
+  function atribuirParceiroEAplicarPadroes(id: string) {
+    setParceiroIdAtribuir(id);
+    const parceiro = (parceirosLista || []).find((p) => p.id === id);
+    if (!parceiro) return;
+
+    let aplicados = 0;
+    const detalhes: string[] = [];
+
+    if (parceiro.categoria_padrao_id) {
+      setContaId(parceiro.categoria_padrao_id);
+      aplicados++;
+      detalhes.push("Categoria");
+    }
+    if (parceiro.centro_custo_id) {
+      setCentroCustoId(parceiro.centro_custo_id);
+      aplicados++;
+      detalhes.push("Centro de custo");
+    }
+    if (parceiro.forma_pagamento_padrao_id) {
+      setFormaPagamentoId(parceiro.forma_pagamento_padrao_id);
+      aplicados++;
+      detalhes.push("Forma de pagamento");
+    }
+
+    if (aplicados > 0) {
+      toast.success(
+        `${parceiro.razao_social} vinculado. ${aplicados} ${aplicados === 1 ? "campo aplicado" : "campos aplicados"}: ${detalhes.join(", ")}. Clique Salvar pra confirmar.`,
+      );
+    } else {
+      toast.info(
+        `${parceiro.razao_social} será vinculado. Sem padrões cadastrados no parceiro — preencha categoria/centro de custo manualmente.`,
+      );
+    }
+  }
+
   async function handleSalvar() {
     if (isReadOnly) {
       toast.error("Conta com status read-only — edição bloqueada");
@@ -303,6 +364,10 @@ export function ContaPagarFormEdit({
       if (linhaInvestimentoId !== (conta.linha_investimento_id ?? null)) {
         updatePayload.linha_investimento_id = linhaInvestimentoId;
       }
+      // Atribuição de parceiro — apenas se a conta era órfã e o operador escolheu um
+      if (!conta.parceiro_id && parceiroIdAtribuir) {
+        updatePayload.parceiro_id = parceiroIdAtribuir;
+      }
       if (Object.keys(updatePayload).length > 0) {
         updatePayload.updated_at = new Date().toISOString();
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -317,6 +382,8 @@ export function ContaPagarFormEdit({
       qc.invalidateQueries({ queryKey: ["contas-pagar"] });
       qc.invalidateQueries({ queryKey: ["conta-pagar-detalhe", conta.id] });
       qc.invalidateQueries({ queryKey: ["qualidade-dado-map"] });
+      qc.invalidateQueries({ queryKey: ["parceiros"] });
+      qc.invalidateQueries({ queryKey: ["parceiros-para-atribuir"] });
       onSaved();
     } catch (e) {
       let msg = "Erro desconhecido";
@@ -368,6 +435,43 @@ export function ContaPagarFormEdit({
           </p>
         )}
       </div>
+
+      {/* Seletor de parceiro — só aparece se conta é órfã (sem parceiro vinculado) */}
+      {!conta.parceiro_id && !isReadOnly && (
+        <div className="rounded-md border border-dashed border-amber-300 bg-amber-50/40 p-3 space-y-2">
+          <p className="text-[11px] text-amber-900 leading-snug">
+            <strong>Sem parceiro vinculado.</strong> Selecione abaixo para
+            classificar a despesa. Os padrões do parceiro (categoria, centro de
+            custo, forma de pagamento) serão aplicados automaticamente.
+          </p>
+          <Select
+            value={parceiroIdAtribuir ?? ""}
+            onValueChange={(v) => atribuirParceiroEAplicarPadroes(v)}
+            disabled={salvando}
+          >
+            <SelectTrigger className="h-9 bg-background">
+              <SelectValue placeholder="Selecionar parceiro..." />
+            </SelectTrigger>
+            <SelectContent>
+              {(parceirosLista || []).map((p) => (
+                <SelectItem key={p.id} value={p.id}>
+                  <span className="font-medium">{p.razao_social}</span>
+                  {p.cnpj && (
+                    <span className="ml-2 text-[11px] text-muted-foreground">
+                      {p.cnpj}
+                    </span>
+                  )}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {parceiroIdAtribuir && (
+            <p className="text-[11px] text-emerald-700 leading-snug">
+              ✓ Parceiro pronto pra ser vinculado. Confirme em Salvar.
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Botão Buscar do Parceiro — doutrina "Parceiro é Verdade" */}
       {conta.parceiro_id && !isReadOnly && (
