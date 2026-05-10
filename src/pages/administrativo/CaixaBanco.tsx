@@ -200,6 +200,8 @@ export default function CaixaBanco() {
     () => receitasFiltradas.reduce((acc, r) => acc + Number(r.valor || 0), 0),
     [receitasFiltradas],
   );
+
+  const { data: contasBancarias } = useQuery({
     queryKey: ["contas-bancarias-lite"],
     queryFn: async () => {
       const { data } = await supabase
