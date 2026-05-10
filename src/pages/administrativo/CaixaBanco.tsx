@@ -685,8 +685,10 @@ export default function CaixaBanco() {
             onClickFalta={() => setFiltroQual(filtroQual === "doc_falta" ? "todos" : "doc_falta")}
           />
         </div>
+        )}
 
-        {/* Botão IA */}
+        {/* Botão IA — escondido no modo Receitas */}
+        {tipoParam !== "receitas" && (
         <div className="flex items-center justify-end">
           <Button
             size="sm"
@@ -703,8 +705,68 @@ export default function CaixaBanco() {
             Classificar pendentes
           </Button>
         </div>
+        )}
 
-        {/* Tabela única */}
+        {/* Tabela de Receitas */}
+        {tipoParam === "receitas" && (
+          <div className="space-y-3">
+            <div className="flex items-baseline justify-between">
+              <h2 className="text-sm font-medium">
+                Receitas do período
+                <span className="ml-2 text-xs text-muted-foreground">
+                  ({receitasFiltradas.length} {receitasFiltradas.length === 1 ? "lançamento" : "lançamentos"})
+                </span>
+              </h2>
+              <div className="text-sm font-mono text-emerald-700">
+                Total: {formatBRL(totalReceitas)}
+              </div>
+            </div>
+
+            {receitasFiltradas.length === 0 ? (
+              <div className="py-12 text-center text-sm text-muted-foreground">
+                Nenhuma receita no período/filtros atuais.
+              </div>
+            ) : (
+              <div className="border rounded-md overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Data</TableHead>
+                      <TableHead>Descrição</TableHead>
+                      <TableHead>Categoria</TableHead>
+                      <TableHead>Conta Bancária</TableHead>
+                      <TableHead className="text-right">Valor</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {receitasFiltradas.map((r) => {
+                      const cat = (categorias || []).find((c) => c.id === r.conta_plano_id);
+                      const cb = (contasBancarias || []).find((b) => b.id === r.conta_bancaria_id);
+                      return (
+                        <TableRow key={r.id}>
+                          <TableCell className="whitespace-nowrap text-xs">
+                            {new Date(r.data_transacao + "T00:00:00").toLocaleDateString("pt-BR")}
+                          </TableCell>
+                          <TableCell className="text-xs">{r.descricao || "—"}</TableCell>
+                          <TableCell className="text-xs">
+                            {cat ? cat.nome : <span className="text-muted-foreground">— sem categoria</span>}
+                          </TableCell>
+                          <TableCell className="text-xs">{cb?.nome_exibicao || "—"}</TableCell>
+                          <TableCell className="text-right font-mono whitespace-nowrap text-emerald-700">
+                            +{formatBRL(Number(r.valor))}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Tabela única (despesas) */}
+        {tipoParam !== "receitas" && (
         {isLoading ? (
           <div className="space-y-2">
             {Array.from({ length: 5 }).map((_, i) => (
