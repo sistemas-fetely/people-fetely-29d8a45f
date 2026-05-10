@@ -611,6 +611,26 @@ export default function CaixaBanco() {
               ))}
             </SelectContent>
           </Select>
+
+          {/* Pills de tipo */}
+          <div className="flex gap-1 ml-auto">
+            {([
+              { key: "tudo", label: "Tudo" },
+              { key: "apagar", label: "A pagar" },
+              { key: "realizado", label: "Realizado" },
+              { key: "receitas", label: "Receitas" },
+            ] as { key: FiltroTipo; label: string }[]).map((p) => (
+              <Button
+                key={p.key}
+                size="sm"
+                variant={tipoParam === p.key ? "default" : "outline"}
+                onClick={() => setTipo(p.key)}
+                className={tipoParam === p.key ? "bg-admin hover:bg-admin/90" : ""}
+              >
+                {p.label}
+              </Button>
+            ))}
+          </div>
         </div>
       </div>
 
