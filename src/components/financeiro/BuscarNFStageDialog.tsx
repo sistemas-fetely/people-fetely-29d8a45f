@@ -264,6 +264,7 @@ export default function BuscarNFStageDialog({
       toast.success("NF vinculada — dados enriquecidos");
       qc.invalidateQueries({ queryKey: ["contas-pagar"] });
       qc.invalidateQueries({ queryKey: ["conta-pagar-detalhe", cprId] });
+      qc.invalidateQueries({ queryKey: ["nfs-anexadas-cpr", cprId] });
       qc.invalidateQueries({ queryKey: ["nfs-stage"] });
       qc.invalidateQueries({ queryKey: ["nfs-vinculadas-mov"] });
       qc.invalidateQueries({ queryKey: ["lancamentos-caixa-banco"] });
