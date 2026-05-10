@@ -767,6 +767,7 @@ export default function CaixaBanco() {
 
         {/* Tabela única (despesas) */}
         {tipoParam !== "receitas" && (
+        <>
         {isLoading ? (
           <div className="space-y-2">
             {Array.from({ length: 5 }).map((_, i) => (
