@@ -144,6 +144,7 @@ export function AppHeader() {
         </Button>
 
         <RecentesEFavoritos />
+        <ReportarErroBotao />
 
         <Popover>
           <PopoverTrigger asChild>
