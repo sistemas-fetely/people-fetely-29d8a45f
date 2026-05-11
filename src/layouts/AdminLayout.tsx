@@ -6,7 +6,6 @@ import { Loader2, Shield } from "lucide-react";
 import { useTrackPageVisit } from "@/hooks/useTrackPageVisit";
 import { usePrefetchTelas } from "@/hooks/usePrefetchTelas";
 import { CommandPaletteProvider } from "@/components/navegacao/CommandPaletteProvider";
-import { ReportarErroBotao } from "@/components/shared/ReportarErroBotao";
 import { LayoutHeader } from "@/components/shared/LayoutHeader";
 
 export default function AdminLayout() {
@@ -39,7 +38,6 @@ export default function AdminLayout() {
           <LayoutHeader icon={Shield} nome="ADM SNCF" />
           <main className="flex-1 overflow-auto relative">
             <Outlet />
-            <ReportarErroBotao />
           </main>
         </div>
       </div>

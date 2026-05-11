@@ -19,6 +19,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { RecentesEFavoritos } from "@/components/navegacao/RecentesEFavoritos";
+import { ReportarErroBotao } from "@/components/shared/ReportarErroBotao";
 
 export interface LayoutHeaderProps {
   /** Ícone do sistema (ex: Shield para ADM SNCF, Wallet para Financeiro) */
@@ -54,8 +55,9 @@ export function LayoutHeader({ icon: Icon, nome, iconColor }: LayoutHeaderProps)
       />
       <h1 className="text-sm font-semibold">{nome}</h1>
 
-      <div className="ml-auto">
+      <div className="ml-auto flex items-center gap-1">
         <RecentesEFavoritos />
+        <ReportarErroBotao />
       </div>
     </header>
   );
