@@ -55,8 +55,9 @@ export function LayoutHeader({ icon: Icon, nome, iconColor }: LayoutHeaderProps)
       />
       <h1 className="text-sm font-semibold">{nome}</h1>
 
-      <div className="ml-auto">
+      <div className="ml-auto flex items-center gap-1">
         <RecentesEFavoritos />
+        <ReportarErroBotao />
       </div>
     </header>
   );
