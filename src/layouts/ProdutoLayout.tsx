@@ -2,7 +2,6 @@ import { Outlet } from "react-router-dom";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { Gift } from "lucide-react";
 import { ProdutoSidebar } from "@/components/ProdutoSidebar";
-import { ReportarErroBotao } from "@/components/shared/ReportarErroBotao";
 import { useTrackPageVisit } from "@/hooks/useTrackPageVisit";
 import { usePrefetchTelas } from "@/hooks/usePrefetchTelas";
 import { CommandPaletteProvider } from "@/components/navegacao/CommandPaletteProvider";
@@ -19,7 +18,6 @@ export default function ProdutoLayout() {
           <LayoutHeader icon={Gift} nome="Produto Fetély" iconColor="#C77CA0" />
           <main className="flex-1 overflow-auto relative">
             <Outlet />
-            <ReportarErroBotao />
           </main>
         </div>
       </div>

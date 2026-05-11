@@ -6,7 +6,6 @@ import { Loader2, Wallet } from "lucide-react";
 import { useTrackPageVisit } from "@/hooks/useTrackPageVisit";
 import { usePrefetchTelas } from "@/hooks/usePrefetchTelas";
 import { CommandPaletteProvider } from "@/components/navegacao/CommandPaletteProvider";
-import { ReportarErroBotao } from "@/components/shared/ReportarErroBotao";
 import { LayoutHeader } from "@/components/shared/LayoutHeader";
 
 export default function AdminFinanceiroLayout() {
@@ -38,7 +37,6 @@ export default function AdminFinanceiroLayout() {
           <LayoutHeader icon={Wallet} nome="Financeiro Fetély" />
           <main className="flex-1 overflow-auto relative">
             <Outlet />
-            <ReportarErroBotao />
           </main>
         </div>
       </div>

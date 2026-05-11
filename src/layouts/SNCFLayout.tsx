@@ -24,7 +24,6 @@ export default function SNCFLayout() {
           </header>
           <main className="flex-1 p-6 overflow-auto bg-background relative">
             <Outlet />
-            <ReportarErroBotao />
           </main>
         </div>
       </div>

@@ -8,7 +8,6 @@ import { Loader2, Monitor } from "lucide-react";
 import { useTrackPageVisit } from "@/hooks/useTrackPageVisit";
 import { usePrefetchTelas } from "@/hooks/usePrefetchTelas";
 import { CommandPaletteProvider } from "@/components/navegacao/CommandPaletteProvider";
-import { ReportarErroBotao } from "@/components/shared/ReportarErroBotao";
 import { LayoutHeader } from "@/components/shared/LayoutHeader";
 
 export default function TILayout() {
@@ -70,7 +69,6 @@ export default function TILayout() {
           <LayoutHeader icon={Monitor} nome="TI Fetély" />
           <main className="flex-1 p-6 overflow-auto bg-background relative">
             <Outlet />
-            <ReportarErroBotao />
           </main>
         </div>
       </div>

@@ -2,7 +2,6 @@ import { Outlet } from "react-router-dom";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { Landmark } from "lucide-react";
 import { AdministrativoSidebar } from "@/components/AdministrativoSidebar";
-import { ReportarErroBotao } from "@/components/shared/ReportarErroBotao";
 import { useTrackPageVisit } from "@/hooks/useTrackPageVisit";
 import { usePrefetchTelas } from "@/hooks/usePrefetchTelas";
 import { CommandPaletteProvider } from "@/components/navegacao/CommandPaletteProvider";
@@ -19,7 +18,6 @@ export default function AdministrativoLayout() {
           <LayoutHeader icon={Landmark} nome="Administrativo Fetély" iconColor="#6B5B45" />
           <main className="flex-1 overflow-auto relative">
             <Outlet />
-            <ReportarErroBotao />
           </main>
         </div>
       </div>
