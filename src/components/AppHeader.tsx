@@ -14,6 +14,7 @@ import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useTrackPageVisit } from "@/hooks/useTrackPageVisit";
 import { RecentesEFavoritos } from "@/components/navegacao/RecentesEFavoritos";
+import { ReportarErroBotao } from "@/components/shared/ReportarErroBotao";
 
 const routeNames: Record<string, string> = {
   "/": "Dashboard",
