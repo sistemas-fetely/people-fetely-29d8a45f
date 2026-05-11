@@ -130,12 +130,12 @@ export function ReportarErroBotao() {
       <Button
         onClick={() => setOpen(true)}
         size="sm"
-        variant="outline"
-        className="fixed bottom-4 left-4 z-40 shadow-lg gap-1.5 bg-background/95 backdrop-blur hover:bg-accent"
+        variant="ghost"
+        className="h-9 gap-1.5 rounded-xl px-2 md:px-3 hover:bg-accent"
         title="Reportar erro ou sugestão"
       >
         <MessageSquareWarning className="h-4 w-4" />
-        Reportar
+        <span className="hidden md:inline text-sm font-medium">Reportar</span>
       </Button>
 
       <Dialog
