@@ -19,6 +19,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { RecentesEFavoritos } from "@/components/navegacao/RecentesEFavoritos";
+import { ReportarErroBotao } from "@/components/shared/ReportarErroBotao";
 
 export interface LayoutHeaderProps {
   /** Ícone do sistema (ex: Shield para ADM SNCF, Wallet para Financeiro) */
