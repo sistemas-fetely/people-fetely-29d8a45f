@@ -274,7 +274,7 @@ export default function Parceiros() {
   const buildLookupMaps = (): LookupMaps => {
     const categorias = new Map<string, { codigo: string; nome: string }>();
     const categoriasByNome = new Map<string, string>();
-    for (const c of categorias_arr) {
+    for (const c of (categorias || [])) {
       categorias.set(c.id, { codigo: c.codigo, nome: c.nome });
       categoriasByNome.set(c.nome.toLowerCase(), c.id);
     }
