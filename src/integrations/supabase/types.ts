@@ -1835,6 +1835,13 @@ export type Database = {
             foreignKeyName: "compromissos_parcelados_nf_origem_id_fkey"
             columns: ["nf_origem_id"]
             isOneToOne: false
+            referencedRelation: "v_cpr_bola_redonda"
+            referencedColumns: ["cpr_id"]
+          },
+          {
+            foreignKeyName: "compromissos_parcelados_nf_origem_id_fkey"
+            columns: ["nf_origem_id"]
+            isOneToOne: false
             referencedRelation: "vw_contas_pagar_consolidado"
             referencedColumns: ["id"]
           },
@@ -2141,6 +2148,13 @@ export type Database = {
             foreignKeyName: "contas_pagar_documentos_conta_id_fkey"
             columns: ["conta_id"]
             isOneToOne: false
+            referencedRelation: "v_cpr_bola_redonda"
+            referencedColumns: ["cpr_id"]
+          },
+          {
+            foreignKeyName: "contas_pagar_documentos_conta_id_fkey"
+            columns: ["conta_id"]
+            isOneToOne: false
             referencedRelation: "vw_contas_pagar_consolidado"
             referencedColumns: ["id"]
           },
@@ -2209,6 +2223,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contas_pagar_receber_ativas"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contas_pagar_historico_conta_id_fkey"
+            columns: ["conta_id"]
+            isOneToOne: false
+            referencedRelation: "v_cpr_bola_redonda"
+            referencedColumns: ["cpr_id"]
           },
           {
             foreignKeyName: "contas_pagar_historico_conta_id_fkey"
@@ -2314,6 +2335,13 @@ export type Database = {
             foreignKeyName: "contas_pagar_itens_conta_id_fkey"
             columns: ["conta_id"]
             isOneToOne: false
+            referencedRelation: "v_cpr_bola_redonda"
+            referencedColumns: ["cpr_id"]
+          },
+          {
+            foreignKeyName: "contas_pagar_itens_conta_id_fkey"
+            columns: ["conta_id"]
+            isOneToOne: false
             referencedRelation: "vw_contas_pagar_consolidado"
             referencedColumns: ["id"]
           },
@@ -2402,6 +2430,7 @@ export type Database = {
           observacao_pagamento: string | null
           observacao_pagamento_manual: string | null
           origem: string | null
+          pagamento_com_pendencia: boolean
           pago_em: string | null
           pago_em_conta_id: string | null
           pago_por: string | null
@@ -2412,6 +2441,8 @@ export type Database = {
           pasta_contrato_id: string | null
           pasta_contrato_parcela_id: string | null
           pedido_compra_id: string | null
+          pendencias_no_envio: string[] | null
+          reembolsa_user_id: string | null
           sla_aprovacao_dias: number | null
           sla_pagamento_dias: number | null
           status: string
@@ -2487,6 +2518,7 @@ export type Database = {
           observacao_pagamento?: string | null
           observacao_pagamento_manual?: string | null
           origem?: string | null
+          pagamento_com_pendencia?: boolean
           pago_em?: string | null
           pago_em_conta_id?: string | null
           pago_por?: string | null
@@ -2497,6 +2529,8 @@ export type Database = {
           pasta_contrato_id?: string | null
           pasta_contrato_parcela_id?: string | null
           pedido_compra_id?: string | null
+          pendencias_no_envio?: string[] | null
+          reembolsa_user_id?: string | null
           sla_aprovacao_dias?: number | null
           sla_pagamento_dias?: number | null
           status?: string
@@ -2572,6 +2606,7 @@ export type Database = {
           observacao_pagamento?: string | null
           observacao_pagamento_manual?: string | null
           origem?: string | null
+          pagamento_com_pendencia?: boolean
           pago_em?: string | null
           pago_em_conta_id?: string | null
           pago_por?: string | null
@@ -2582,6 +2617,8 @@ export type Database = {
           pasta_contrato_id?: string | null
           pasta_contrato_parcela_id?: string | null
           pedido_compra_id?: string | null
+          pendencias_no_envio?: string[] | null
+          reembolsa_user_id?: string | null
           sla_aprovacao_dias?: number | null
           sla_pagamento_dias?: number | null
           status?: string
@@ -2912,6 +2949,7 @@ export type Database = {
           objeto: string | null
           observacoes: string | null
           orgao_emissor: string | null
+          parceiro_comercial_id: string | null
           razao_social: string
           renovacao_automatica: boolean
           rg: string | null
@@ -2975,6 +3013,7 @@ export type Database = {
           objeto?: string | null
           observacoes?: string | null
           orgao_emissor?: string | null
+          parceiro_comercial_id?: string | null
           razao_social: string
           renovacao_automatica?: boolean
           rg?: string | null
@@ -3038,6 +3077,7 @@ export type Database = {
           objeto?: string | null
           observacoes?: string | null
           orgao_emissor?: string | null
+          parceiro_comercial_id?: string | null
           razao_social?: string
           renovacao_automatica?: boolean
           rg?: string | null
@@ -3072,6 +3112,13 @@ export type Database = {
             columns: ["gestor_direto_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contratos_pj_parceiro_comercial_id_fkey"
+            columns: ["parceiro_comercial_id"]
+            isOneToOne: false
+            referencedRelation: "parceiros_comerciais"
             referencedColumns: ["id"]
           },
           {
@@ -3990,6 +4037,13 @@ export type Database = {
             foreignKeyName: "fatura_cartao_lancamentos_conta_pagar_id_fkey"
             columns: ["conta_pagar_id"]
             isOneToOne: false
+            referencedRelation: "v_cpr_bola_redonda"
+            referencedColumns: ["cpr_id"]
+          },
+          {
+            foreignKeyName: "fatura_cartao_lancamentos_conta_pagar_id_fkey"
+            columns: ["conta_pagar_id"]
+            isOneToOne: false
             referencedRelation: "vw_contas_pagar_consolidado"
             referencedColumns: ["id"]
           },
@@ -4041,6 +4095,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contas_pagar_receber_ativas"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fatura_cartao_lancamentos_nf_vinculada_id_fkey"
+            columns: ["nf_vinculada_id"]
+            isOneToOne: false
+            referencedRelation: "v_cpr_bola_redonda"
+            referencedColumns: ["cpr_id"]
           },
           {
             foreignKeyName: "fatura_cartao_lancamentos_nf_vinculada_id_fkey"
@@ -4170,6 +4231,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contas_pagar_receber_ativas"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "faturas_cartao_conta_pagar_id_fkey"
+            columns: ["conta_pagar_id"]
+            isOneToOne: false
+            referencedRelation: "v_cpr_bola_redonda"
+            referencedColumns: ["cpr_id"]
           },
           {
             foreignKeyName: "faturas_cartao_conta_pagar_id_fkey"
@@ -5317,6 +5385,13 @@ export type Database = {
             foreignKeyName: "itau_pagamentos_stage_conta_pagar_id_fkey"
             columns: ["conta_pagar_id"]
             isOneToOne: false
+            referencedRelation: "v_cpr_bola_redonda"
+            referencedColumns: ["cpr_id"]
+          },
+          {
+            foreignKeyName: "itau_pagamentos_stage_conta_pagar_id_fkey"
+            columns: ["conta_pagar_id"]
+            isOneToOne: false
             referencedRelation: "vw_contas_pagar_consolidado"
             referencedColumns: ["id"]
           },
@@ -5960,6 +6035,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contas_pagar_receber_ativas"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nfs_stage_conta_pagar_id_fkey"
+            columns: ["conta_pagar_id"]
+            isOneToOne: false
+            referencedRelation: "v_cpr_bola_redonda"
+            referencedColumns: ["cpr_id"]
           },
           {
             foreignKeyName: "nfs_stage_conta_pagar_id_fkey"
@@ -6857,6 +6939,13 @@ export type Database = {
             foreignKeyName: "pasta_contrato_parcelas_conta_pagar_id_fkey"
             columns: ["conta_pagar_id"]
             isOneToOne: false
+            referencedRelation: "v_cpr_bola_redonda"
+            referencedColumns: ["cpr_id"]
+          },
+          {
+            foreignKeyName: "pasta_contrato_parcelas_conta_pagar_id_fkey"
+            columns: ["conta_pagar_id"]
+            isOneToOne: false
             referencedRelation: "vw_contas_pagar_consolidado"
             referencedColumns: ["id"]
           },
@@ -7111,6 +7200,7 @@ export type Database = {
           sub_estado:
             | Database["public"]["Enums"]["pedido_compra_sub_estado_enum"]
             | null
+          tipo: string
           unidade_id: string | null
           updated_at: string
         }
@@ -7135,6 +7225,7 @@ export type Database = {
           sub_estado?:
             | Database["public"]["Enums"]["pedido_compra_sub_estado_enum"]
             | null
+          tipo?: string
           unidade_id?: string | null
           updated_at?: string
         }
@@ -7159,6 +7250,7 @@ export type Database = {
           sub_estado?:
             | Database["public"]["Enums"]["pedido_compra_sub_estado_enum"]
             | null
+          tipo?: string
           unidade_id?: string | null
           updated_at?: string
         }
@@ -8743,6 +8835,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contas_pagar_receber_ativas"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "remessas_contador_itens_conta_id_fkey"
+            columns: ["conta_id"]
+            isOneToOne: false
+            referencedRelation: "v_cpr_bola_redonda"
+            referencedColumns: ["cpr_id"]
           },
           {
             foreignKeyName: "remessas_contador_itens_conta_id_fkey"
@@ -11190,6 +11289,15 @@ export type Database = {
         }
         Relationships: []
       }
+      v_cpr_bola_redonda: {
+        Row: {
+          bola_redonda: boolean | null
+          cpr_id: string | null
+          forma_codigo: string | null
+          o_que_falta: string[] | null
+        }
+        Relationships: []
+      }
       vw_contas_pagar_consolidado: {
         Row: {
           aprovado_em: string | null
@@ -11730,6 +11838,13 @@ export type Database = {
             foreignKeyName: "nfs_stage_conta_pagar_id_fkey"
             columns: ["conta_pagar_id"]
             isOneToOne: false
+            referencedRelation: "v_cpr_bola_redonda"
+            referencedColumns: ["cpr_id"]
+          },
+          {
+            foreignKeyName: "nfs_stage_conta_pagar_id_fkey"
+            columns: ["conta_pagar_id"]
+            isOneToOne: false
             referencedRelation: "vw_contas_pagar_consolidado"
             referencedColumns: ["id"]
           },
@@ -12249,6 +12364,17 @@ export type Database = {
         Args: { p_compra_id: string; p_motivo: string }
         Returns: Json
       }
+      executar_pagamento: {
+        Args: {
+          p_cpr_id: string
+          p_dados_pagamento: Json
+          p_email_destinatario?: string
+          p_forma_pagamento_id: string
+          p_numero_parcela?: number
+          p_observacao?: string
+        }
+        Returns: Json
+      }
       exportar_pacote_documentos: {
         Args: { p_periodo_fim: string; p_periodo_inicio: string }
         Returns: {
@@ -12492,6 +12618,10 @@ export type Database = {
       normalizar_tipo_movimentacao: {
         Args: { p_tipo_ofx: string; p_valor: number }
         Returns: string
+      }
+      obter_destinatario_pagamento: {
+        Args: { p_cpr_id: string }
+        Returns: Json
       }
       org_sync_in_progress: { Args: never; Returns: boolean }
       perfil_area_do_departamento: {
