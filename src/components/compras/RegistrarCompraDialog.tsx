@@ -420,18 +420,19 @@ export function RegistrarCompraDialog({ open, onOpenChange, pedido }: Props) {
                             <Label className="text-xs">Qtde real</Label>
                             <Input
                               type="number"
-                              step="0.01"
-                              min="0"
+                              step="1"
+                              min="1"
                               value={st.quantidade_real}
-                              onChange={(e) =>
+                              onChange={(e) => {
+                                const v = parseInt(e.target.value, 10);
                                 setItensState((prev) => ({
                                   ...prev,
                                   [i.id]: {
                                     ...prev[i.id],
-                                    quantidade_real: Number(e.target.value),
+                                    quantidade_real: Math.max(1, isNaN(v) ? 1 : v),
                                   },
-                                }))
-                              }
+                                }));
+                              }}
                               className="h-8"
                             />
                           </div>
