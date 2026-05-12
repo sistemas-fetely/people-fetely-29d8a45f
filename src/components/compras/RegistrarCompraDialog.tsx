@@ -580,12 +580,7 @@ export function RegistrarCompraDialog({ open, onOpenChange, pedido }: Props) {
                 <SelectContent>
                   {formas.map((f) => (
                     <SelectItem key={f.id} value={f.id}>
-                      <div className="flex items-center gap-2">
-                        <span>{f.nome}</span>
-                        <Badge variant="secondary" className="text-xs">
-                          {f.tipo}
-                        </Badge>
-                      </div>
+                      {f.nome}
                     </SelectItem>
                   ))}
                 </SelectContent>
