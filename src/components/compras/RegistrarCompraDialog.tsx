@@ -627,6 +627,23 @@ export function RegistrarCompraDialog({ open, onOpenChange, pedido }: Props) {
             />
           </section>
 
+          {/* SEÇÃO 5.5: Já paguei (Fluxo B) */}
+          <section className="space-y-2">
+            <label className="flex items-start gap-2 cursor-pointer p-3 rounded-md border bg-muted/30 hover:bg-muted/50 transition-colors">
+              <Checkbox
+                checked={jaPago}
+                onCheckedChange={(checked) => setJaPago(checked === true)}
+                className="mt-0.5"
+              />
+              <div className="flex-1 space-y-0.5">
+                <div className="text-sm font-medium">Já paguei (pagamento fora do sistema)</div>
+                <div className="text-xs text-muted-foreground">
+                  Marca as parcelas como <span className="font-semibold">Realizada</span> direto — pula o fluxo de envio de email pro fornecedor. Use quando o pagamento já aconteceu (Pix manual, dinheiro, etc).
+                </div>
+              </div>
+            </label>
+          </section>
+
           {/* SEÇÃO 6: Anexos */}
           <AnexosCompraList mode="pendente" pendentes={pendentes} onChange={setPendentes} />
         </div>
