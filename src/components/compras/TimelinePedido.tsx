@@ -10,6 +10,7 @@ import {
   Trash2,
   CheckCircle2,
   Ban,
+  Mail,
   Loader2,
   type LucideIcon,
 } from "lucide-react";
@@ -60,6 +61,26 @@ const eventoConfig: Record<EventoPedidoTipo, EventoCfg | null> = {
   comentario_adicionado: null,
   comentario_editado: null,
   comentario_excluido: null,
+  cpr_para_aguardando_pagamento: {
+    icon: Send,
+    label: "enviou CPR pra pagamento",
+    color: "text-primary",
+  },
+  cpr_paga: {
+    icon: CheckCircle2,
+    label: "CPR paga",
+    color: "text-success",
+  },
+  cpr_cancelada: {
+    icon: Ban,
+    label: "CPR cancelada",
+    color: "text-destructive",
+  },
+  cpr_email_enviado: {
+    icon: Mail,
+    label: "email enviado ao financeiro",
+    color: "text-muted-foreground",
+  },
 };
 
 function renderEventoDetalhes(item: TimelineEventoItem): string | null {
@@ -96,6 +117,18 @@ function renderEventoDetalhes(item: TimelineEventoItem): string | null {
         : null;
     case "pedido_cancelado_total":
       return str("motivo") ? `Motivo: "${str("motivo")}"` : null;
+    case "cpr_para_aguardando_pagamento": {
+      const valor = num("valor");
+      return valor ? `Valor: ${fmtBRL(valor)}` : null;
+    }
+    case "cpr_paga": {
+      const valor = num("valor");
+      return valor ? `Valor: ${fmtBRL(valor)}` : null;
+    }
+    case "cpr_cancelada":
+      return null;
+    case "cpr_email_enviado":
+      return null;
     default:
       return null;
   }
