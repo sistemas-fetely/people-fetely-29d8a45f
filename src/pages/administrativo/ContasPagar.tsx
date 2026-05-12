@@ -135,7 +135,32 @@ export default function ContasPagar() {
       const m = new Map<string, boolean>();
       (rows || []).forEach((r: { id: string; email_pagamento_enviado: boolean | null }) => {
         m.set(r.id, !!r.email_pagamento_enviado);
+  });
+
+  // Pendências de pagamento vêm da tabela base (não estão na view consolidada)
+  const { data: pendenciaMap = new Map<string, { com_pendencia: boolean; pendencias: string[] }>() } = useQuery({
+    queryKey: ["contas-pagar-pendencia-map", (data || []).map((c) => c.id).join(",")],
+    enabled: !!data && data.length > 0,
+    queryFn: async () => {
+      const ids = (data || []).map((c) => c.id);
+      if (ids.length === 0) return new Map<string, { com_pendencia: boolean; pendencias: string[] }>();
+      const { data: rows, error } = await supabase
+        .from("contas_pagar_receber")
+        .select("id, pagamento_com_pendencia, pendencias_no_envio")
+        .in("id", ids);
+      if (error) throw error;
+      const m = new Map<string, { com_pendencia: boolean; pendencias: string[] }>();
+      (rows || []).forEach((r: { id: string; pagamento_com_pendencia: boolean | null; pendencias_no_envio: string[] | null }) => {
+        if (r.pagamento_com_pendencia) {
+          m.set(r.id, {
+            com_pendencia: true,
+            pendencias: r.pendencias_no_envio || [],
+          });
+        }
       });
+      return m;
+    },
+  });
       return m;
     },
   });
