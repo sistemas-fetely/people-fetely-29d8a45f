@@ -268,6 +268,108 @@ export function PedidoCompraDialog({ open, onOpenChange, mode, pedido }: Props) 
 
   const podeEditar = mode !== "ver";
 
+  const detalhesContent = (
+    <>
+      {/* SEÇÃO 1: CABEÇALHO */}
+      <div className="space-y-3">
+        <div>
+          <Label>Descrição geral *</Label>
+          <Textarea
+            value={descricaoGeral}
+            onChange={(e) => setDescricaoGeral(e.target.value)}
+            placeholder="O que você precisa? Resumo em 1-2 linhas"
+            disabled={!podeEditar}
+            rows={2}
+          />
+        </div>
+        <div>
+          <Label>Justificativa *</Label>
+          <Textarea
+            value={justificativa}
+            onChange={(e) => setJustificativa(e.target.value)}
+            placeholder="Por que essa compra? Contexto pro Comprador"
+            disabled={!podeEditar}
+            rows={3}
+          />
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <Label>Centro de custo *</Label>
+            <Select value={centroCustoId} onValueChange={setCentroCustoId} disabled={!podeEditar}>
+              <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+              <SelectContent>
+                {centros.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label>Linha de investimento (opcional)</Label>
+            <Select
+              value={linhaInvId || "none"}
+              onValueChange={(v) => setLinhaInvId(v === "none" ? "" : v)}
+              disabled={!podeEditar}
+            >
+              <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+              <SelectContent className="max-h-[400px]">
+                <SelectItem value="none">—</SelectItem>
+                {linhasAgrupadas.map((grupo) => (
+                  <SelectGroup key={grupo.tema_id}>
+                    <SelectLabel className="text-xs uppercase tracking-wider text-muted-foreground">
+                      {grupo.tema_nome}
+                    </SelectLabel>
+                    {grupo.linhas.map((l) => (
+                      <SelectItem key={l.id} value={l.id} className="pl-6">{l.descricao}</SelectItem>
+                    ))}
+                  </SelectGroup>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        <div>
+          <Label>Fornecedor preferencial (opcional)</Label>
+          <Select
+            value={parceiroId || "none"}
+            onValueChange={(v) => setParceiroId(v === "none" ? "" : v)}
+            disabled={!podeEditar}
+          >
+            <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">—</SelectItem>
+              {parceiros.map((p) => (
+                <SelectItem key={p.id} value={p.id}>{p.nome_fantasia || p.razao_social}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <Card className="p-3 bg-muted/30 flex items-start gap-2">
+          <Info className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+          <div className="text-xs text-muted-foreground">
+            <span className="font-medium">Departamento:</span>{" "}
+            {depUni?.departamento?.nome || "—"}
+            <span className="mx-2">·</span>
+            <span className="font-medium">Unidade:</span> {depUni?.unidade?.nome || "—"}
+            <div className="mt-0.5 italic">Herdado automaticamente do seu cadastro.</div>
+          </div>
+        </Card>
+      </div>
+      <ItensList items={itens} onChange={setItens} readOnly={readOnly} showItemStatus={mode === "ver"} />
+      <AnexosList
+        pedidoId={pedidoIdLocal}
+        anexos={anexos}
+        onChange={setAnexos}
+        readOnly={readOnly}
+        onRemoverPendente={
+          mode === "editar"
+            ? (a) => setAnexosARemover((prev) => [...prev, { id: a.id, storage_path: a.storage_path }])
+            : undefined
+        }
+      />
+    </>
+  );
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
