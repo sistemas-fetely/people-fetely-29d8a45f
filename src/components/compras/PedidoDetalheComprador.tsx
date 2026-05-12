@@ -375,9 +375,17 @@ export function PedidoDetalheComprador({
                 Registrar compra
               </Button>
             )}
+            </div>
           </SheetFooter>
         </SheetContent>
       </Sheet>
+
+      <CancelarPedidoDialog
+        open={cancelarPedidoOpen}
+        onOpenChange={setCancelarPedidoOpen}
+        pedidoId={pedido.id}
+        onCancelado={() => onOpenChange(false)}
+      />
 
       <CancelarItemDialog
         open={!!cancelarItem}
