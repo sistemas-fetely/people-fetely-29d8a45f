@@ -76,6 +76,7 @@ const STATUS_LABELS: Record<string, string> = {
   aprovado: "Aprovado",
   aguardando_pagamento: "Aguardando pagamento",
   paga: "Paga",
+  realizada: "Realizada (já paga)",
   cancelado: "Cancelado",
 };
 
@@ -84,6 +85,7 @@ const STATUS_STYLES: Record<string, string> = {
   aprovado: "bg-purple-100 text-purple-800 hover:bg-purple-100",
   aguardando_pagamento: "bg-teal-100 text-teal-800 hover:bg-teal-100",
   paga: "bg-emerald-100 text-emerald-800 hover:bg-emerald-100",
+  realizada: "bg-emerald-100 text-emerald-800 hover:bg-emerald-100",
   cancelado: "bg-red-100 text-red-800 hover:bg-red-100",
 };
 
