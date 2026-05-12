@@ -439,6 +439,14 @@ export function PedidoCompraDialog({ open, onOpenChange, mode, pedido }: Props) 
           )}
         </DialogFooter>
       </DialogContent>
+      {pedido && (
+        <CancelarPedidoDialog
+          open={cancelarDialogOpen}
+          onOpenChange={setCancelarDialogOpen}
+          pedidoId={pedido.id}
+          onCancelado={() => onOpenChange(false)}
+        />
+      )}
     </Dialog>
   );
 }
