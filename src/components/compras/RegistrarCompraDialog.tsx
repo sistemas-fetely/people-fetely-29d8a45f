@@ -231,6 +231,16 @@ export function RegistrarCompraDialog({ open, onOpenChange, pedido }: Props) {
 
   const parceiroSelecionado = parceiros.find((p) => p.id === parceiroId);
 
+  const handleSelectParceiro = (id: string) => {
+    setParceiroId(id);
+    const p = parceiros.find((x) => x.id === id);
+    if (p?.categoria_padrao_id && !contaId) {
+      setContaId(p.categoria_padrao_id);
+      toast.info("Categoria preenchida automaticamente do fornecedor");
+    }
+    setParceiroOpen(false);
+  };
+
   if (!pedido) return null;
 
   const marcarTodos = (v: boolean) => {
