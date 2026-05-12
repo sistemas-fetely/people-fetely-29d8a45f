@@ -307,7 +307,7 @@ export function PedidoCompraDialog({ open, onOpenChange, mode, pedido }: Props) 
                   <SelectContent>
                     {centros.map((c) => (
                       <SelectItem key={c.id} value={c.id}>
-                        {c.codigo} — {c.nome}
+                        {c.nome}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -324,12 +324,19 @@ export function PedidoCompraDialog({ open, onOpenChange, mode, pedido }: Props) 
                   <SelectTrigger>
                     <SelectValue placeholder="—" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="max-h-[400px]">
                     <SelectItem value="none">—</SelectItem>
-                    {linhas.map((l) => (
-                      <SelectItem key={l.id} value={l.id}>
-                        {l.descricao}
-                      </SelectItem>
+                    {linhasAgrupadas.map((grupo) => (
+                      <SelectGroup key={grupo.tema_id}>
+                        <SelectLabel className="text-xs uppercase tracking-wider text-muted-foreground">
+                          {grupo.tema_nome}
+                        </SelectLabel>
+                        {grupo.linhas.map((l) => (
+                          <SelectItem key={l.id} value={l.id} className="pl-6">
+                            {l.descricao}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
                     ))}
                   </SelectContent>
                 </Select>
