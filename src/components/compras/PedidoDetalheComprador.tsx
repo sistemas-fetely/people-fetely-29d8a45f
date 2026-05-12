@@ -79,9 +79,13 @@ export function PedidoDetalheComprador({
   const excluirCompra = useExcluirCompraRegistrada();
   const { getSignedUrl } = useAnexosPedidoCompra(pedido?.id);
 
+  const { hasRole } = useAuth();
+  const isSuperAdmin = hasRole("super_admin");
+
   const [cancelarItem, setCancelarItem] = useState<PedidoCompraItemRow | null>(null);
   const [excluirCompraDialog, setExcluirCompraDialog] = useState<CompraRegistradaFull | null>(null);
   const [motivoExclusao, setMotivoExclusao] = useState("");
+  const [cancelarPedidoOpen, setCancelarPedidoOpen] = useState(false);
 
   const { data: comprasRegistradas = [] } = useQuery({
     queryKey: ["compras", "registradas-do-pedido", pedido?.id],
