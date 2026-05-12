@@ -547,16 +547,15 @@ export function RegistrarCompraDialog({ open, onOpenChange, pedido }: Props) {
           <section className="space-y-3">
             <h3 className="text-sm font-semibold">Meio de pagamento</h3>
             <div>
-              <Label>Forma de pagamento (opcional)</Label>
+              <Label>Forma de pagamento *</Label>
               <Select
-                value={meioPagamentoId || "none"}
-                onValueChange={(v) => setMeioPagamentoId(v === "none" ? "" : v)}
+                value={meioPagamentoId}
+                onValueChange={(v) => setMeioPagamentoId(v)}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="—" />
+                  <SelectValue placeholder="Selecione…" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">—</SelectItem>
                   {formas.map((f) => (
                     <SelectItem key={f.id} value={f.id}>
                       <div className="flex items-center gap-2">
