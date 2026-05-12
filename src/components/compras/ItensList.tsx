@@ -26,12 +26,16 @@ interface Props {
   showItemStatus?: boolean;
 }
 
-export function ItensList({ items, onChange, readOnly }: Props) {
+export function ItensList({ items, onChange, readOnly, showItemStatus }: Props) {
   const visiveis = items.filter((i) => i._action !== "delete");
-  const total = visiveis.reduce(
+  const temCancelados = visiveis.some((i) => i.status === "cancelado");
+  const totalOriginal = visiveis.reduce(
     (s, i) => s + Number(i.quantidade || 0) * Number(i.valor_estimado_unitario || 0),
     0,
   );
+  const totalEfetivo = visiveis
+    .filter((i) => i.status !== "cancelado")
+    .reduce((s, i) => s + Number(i.quantidade || 0) * Number(i.valor_estimado_unitario || 0), 0);
 
   const updateAt = (idx: number, patch: Partial<ItemEdit>) => {
     const visIdx = items.indexOf(visiveis[idx]);
