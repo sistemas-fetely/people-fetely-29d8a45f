@@ -61,6 +61,25 @@ export default function ComprasAComprar() {
   const [pedidoParaRegistrar, setPedidoParaRegistrar] = useState<PedidoCompraFull | null>(null);
 
   const { data: pedidos = [], isLoading } = usePedidosAComprar(tab);
+
+  // Sincroniza estados locais com a lista refetchada (resolve bug do item cancelado
+  // continuar aparecendo no modal após cancelamento)
+  useEffect(() => {
+    if (!pedidos.length) return;
+    if (pedidoSelecionado) {
+      const atualizado = pedidos.find((p) => p.id === pedidoSelecionado.id);
+      if (atualizado && atualizado !== pedidoSelecionado) {
+        setPedidoSelecionado(atualizado);
+      }
+    }
+    if (pedidoParaRegistrar) {
+      const atualizado = pedidos.find((p) => p.id === pedidoParaRegistrar.id);
+      if (atualizado && atualizado !== pedidoParaRegistrar) {
+        setPedidoParaRegistrar(atualizado);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pedidos]);
   const iniciar = useIniciarCompraPedido();
 
   // Stats independentes do tab
