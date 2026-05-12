@@ -467,7 +467,7 @@ export function RegistrarCompraDialog({ open, onOpenChange, pedido }: Props) {
           {/* SEÇÃO 3: Parcelamento */}
           <section className="space-y-3">
             <h3 className="text-sm font-semibold">Parcelamento</h3>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-4 gap-3">
               <div>
                 <Label>Nº parcelas</Label>
                 <Input
@@ -499,13 +499,28 @@ export function RegistrarCompraDialog({ open, onOpenChange, pedido }: Props) {
                 </Popover>
               </div>
               <div>
-                <Label>Intervalo (dias)</Label>
+                <Label>Intervalo</Label>
                 <Input
                   type="number"
                   min="1"
                   value={intervaloDias}
-                  onChange={(e) => setIntervaloDias(Number(e.target.value) || 30)}
+                  onChange={(e) => setIntervaloDias(Number(e.target.value) || 1)}
                 />
+              </div>
+              <div>
+                <Label>Periodicidade</Label>
+                <Select
+                  value={periodicidade}
+                  onValueChange={(v) => setPeriodicidade(v as "dias" | "meses")}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="meses">Meses</SelectItem>
+                    <SelectItem value="dias">Dias</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
             <Card className="p-3 bg-muted/30">
