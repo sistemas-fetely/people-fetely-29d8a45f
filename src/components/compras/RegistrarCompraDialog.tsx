@@ -99,7 +99,8 @@ export function RegistrarCompraDialog({ open, onOpenChange, pedido }: Props) {
     setDataCompra(new Date());
     setPrimeiraParcelaData(new Date());
     setParcelasCount(1);
-    setIntervaloDias(30);
+    setIntervaloDias(1);
+    setPeriodicidade("meses");
     setMeioPagamentoId("");
     setObservacao("");
     setValorTotal(somaEstimada.toFixed(2));
