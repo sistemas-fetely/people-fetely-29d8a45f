@@ -76,6 +76,7 @@ const STATUS_LABELS: Record<string, string> = {
   aprovado: "Aprovado",
   aguardando_pagamento: "Aguardando pagamento",
   paga: "Paga",
+  realizada: "Realizada (já paga)",
   cancelado: "Cancelado",
 };
 
@@ -84,6 +85,7 @@ const STATUS_STYLES: Record<string, string> = {
   aprovado: "bg-purple-100 text-purple-800 hover:bg-purple-100",
   aguardando_pagamento: "bg-teal-100 text-teal-800 hover:bg-teal-100",
   paga: "bg-emerald-100 text-emerald-800 hover:bg-emerald-100",
+  realizada: "bg-emerald-100 text-emerald-800 hover:bg-emerald-100",
   cancelado: "bg-red-100 text-red-800 hover:bg-red-100",
 };
 
@@ -133,6 +135,31 @@ export default function ContasPagar() {
       const m = new Map<string, boolean>();
       (rows || []).forEach((r: { id: string; email_pagamento_enviado: boolean | null }) => {
         m.set(r.id, !!r.email_pagamento_enviado);
+      });
+      return m;
+    },
+  });
+
+  // Pendências de pagamento vêm da tabela base (não estão na view consolidada)
+  const { data: pendenciaMap = new Map<string, { com_pendencia: boolean; pendencias: string[] }>() } = useQuery({
+    queryKey: ["contas-pagar-pendencia-map", (data || []).map((c) => c.id).join(",")],
+    enabled: !!data && data.length > 0,
+    queryFn: async () => {
+      const ids = (data || []).map((c) => c.id);
+      if (ids.length === 0) return new Map<string, { com_pendencia: boolean; pendencias: string[] }>();
+      const { data: rows, error } = await supabase
+        .from("contas_pagar_receber")
+        .select("id, pagamento_com_pendencia, pendencias_no_envio")
+        .in("id", ids);
+      if (error) throw error;
+      const m = new Map<string, { com_pendencia: boolean; pendencias: string[] }>();
+      (rows || []).forEach((r: { id: string; pagamento_com_pendencia: boolean | null; pendencias_no_envio: string[] | null }) => {
+        if (r.pagamento_com_pendencia) {
+          m.set(r.id, {
+            com_pendencia: true,
+            pendencias: r.pendencias_no_envio || [],
+          });
+        }
       });
       return m;
     },
@@ -316,9 +343,9 @@ export default function ContasPagar() {
   }, [data, selecionadas]);
 
   return (
-    <div className="flex flex-col h-[calc(100vh-64px)] overflow-hidden">
+    <div className="space-y-6">
       {/* HEADER STICKY ÚNICO — título + cards + filtros */}
-      <div className="sticky top-0 z-20 bg-background px-6 pt-6 pb-3 border-b space-y-4 backdrop-blur">
+      <div className="sticky top-0 z-20 bg-background -mx-6 -mt-6 px-6 pt-6 pb-3 border-b space-y-4 backdrop-blur">
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
             <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
@@ -791,9 +818,25 @@ export default function ContasPagar() {
                               {formatBRL(c.valor)}
                             </TableCell>
                             <TableCell>
-                              <Badge className={STATUS_STYLES[c.status] || "bg-muted"}>
-                                {STATUS_LABELS[c.status] || c.status}
-                              </Badge>
+                              <div className="flex flex-col gap-1 items-start">
+                                <Badge className={STATUS_STYLES[c.status] || "bg-muted"}>
+                                  {STATUS_LABELS[c.status] || c.status}
+                                </Badge>
+                                {pendenciaMap.get(c.id)?.com_pendencia && (
+                                  <Badge
+                                    variant="outline"
+                                    className="bg-amber-50 text-amber-800 border-amber-300 gap-1"
+                                    title={
+                                      pendenciaMap.get(c.id)?.pendencias?.length
+                                        ? `Pendências: ${pendenciaMap.get(c.id)?.pendencias.join(", ")}`
+                                        : "Pagamento marcado com pendência de informações"
+                                    }
+                                  >
+                                    <FileWarning className="h-3 w-3" />
+                                    Pendência
+                                  </Badge>
+                                )}
+                              </div>
                             </TableCell>
                             <TableCell className="min-w-[140px]" onClick={(e) => e.stopPropagation()}>
                               <AcoesInlineConta

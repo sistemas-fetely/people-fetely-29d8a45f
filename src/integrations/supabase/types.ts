@@ -12527,6 +12527,10 @@ export type Database = {
         Returns: Json
       }
       limpar_rascunhos_antigos: { Args: never; Returns: number }
+      marcar_compra_como_realizada: {
+        Args: { p_compra_id: string; p_observacao?: string }
+        Returns: Json
+      }
       marcar_nf_enviada_pagamento: {
         Args: { _email_destinatario: string; _nota_id: string }
         Returns: Json
