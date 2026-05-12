@@ -10,7 +10,11 @@ export type EventoPedidoTipo =
   | "pedido_cancelado_total"
   | "comentario_adicionado"
   | "comentario_editado"
-  | "comentario_excluido";
+  | "comentario_excluido"
+  | "cpr_para_aguardando_pagamento"
+  | "cpr_paga"
+  | "cpr_cancelada"
+  | "cpr_email_enviado";
 
 export interface EventoPedidoRow {
   id: string;
