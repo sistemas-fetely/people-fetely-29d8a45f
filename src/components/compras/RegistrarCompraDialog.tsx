@@ -196,7 +196,7 @@ export function RegistrarCompraDialog({ open, onOpenChange, pedido }: Props) {
     try {
       const res = await registrar.mutateAsync({
         pedido_id: pedido.id,
-        conta_id: contaId,
+        conta_id: contaId || null,
         parceiro_id: parceiroId,
         valor_total: valorTotalNum,
         data_compra: format(dataCompra, "yyyy-MM-dd"),
