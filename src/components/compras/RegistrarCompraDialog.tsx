@@ -202,7 +202,8 @@ export function RegistrarCompraDialog({ open, onOpenChange, pedido }: Props) {
         parcelas_count: Math.floor(parcelasCount),
         primeira_parcela_data: format(primeiraParcelaData, "yyyy-MM-dd"),
         intervalo_dias: Math.floor(intervaloDias),
-        meio_pagamento_id: meioPagamentoId || null,
+        periodicidade,
+        meio_pagamento_id: meioPagamentoId,
         observacao: observacao || null,
         itens: itensSelecionados.map((i) => ({
           pedido_item_id: i.id,
