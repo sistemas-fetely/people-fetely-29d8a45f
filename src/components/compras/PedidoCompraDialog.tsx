@@ -15,7 +15,9 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -124,16 +126,47 @@ export function PedidoCompraDialog({ open, onOpenChange, mode, pedido }: Props) 
   });
 
   const { data: linhas = [] } = useQuery({
-    queryKey: ["compras", "linhas-investimento"],
+    queryKey: ["compras", "linhas-investimento-com-tema"],
     queryFn: async () => {
       const { data } = await supabase
         .from("linhas_investimento")
-        .select("id, descricao")
-        .eq("ativa", true)
-        .order("descricao");
-      return data || [];
+        .select(`
+          id,
+          descricao,
+          tema_id,
+          ativa,
+          temas_investimento:tema_id (id, nome, ordem)
+        `)
+        .eq("ativa", true);
+      return (data || []) as Array<{
+        id: string;
+        descricao: string;
+        tema_id: string;
+        ativa: boolean;
+        temas_investimento: { id: string; nome: string; ordem: number } | null;
+      }>;
     },
   });
+
+  const linhasAgrupadas = useMemo(() => {
+    const grupos = new Map<string, { tema_nome: string; tema_ordem: number; linhas: typeof linhas }>();
+    for (const l of linhas) {
+      const temaId = l.temas_investimento?.id || "_sem_tema";
+      const temaNome = l.temas_investimento?.nome || "Sem tema";
+      const temaOrdem = l.temas_investimento?.ordem ?? 9999;
+      if (!grupos.has(temaId)) {
+        grupos.set(temaId, { tema_nome: temaNome, tema_ordem: temaOrdem, linhas: [] });
+      }
+      grupos.get(temaId)!.linhas.push(l);
+    }
+    return Array.from(grupos.entries())
+      .sort((a, b) => a[1].tema_ordem - b[1].tema_ordem)
+      .map(([temaId, g]) => ({
+        tema_id: temaId,
+        tema_nome: g.tema_nome,
+        linhas: [...g.linhas].sort((a, b) => a.descricao.localeCompare(b.descricao)),
+      }));
+  }, [linhas]);
 
   const { data: parceiros = [] } = useQuery({
     queryKey: ["compras", "parceiros"],
@@ -274,7 +307,7 @@ export function PedidoCompraDialog({ open, onOpenChange, mode, pedido }: Props) 
                   <SelectContent>
                     {centros.map((c) => (
                       <SelectItem key={c.id} value={c.id}>
-                        {c.codigo} — {c.nome}
+                        {c.nome}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -291,12 +324,19 @@ export function PedidoCompraDialog({ open, onOpenChange, mode, pedido }: Props) 
                   <SelectTrigger>
                     <SelectValue placeholder="—" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="max-h-[400px]">
                     <SelectItem value="none">—</SelectItem>
-                    {linhas.map((l) => (
-                      <SelectItem key={l.id} value={l.id}>
-                        {l.descricao}
-                      </SelectItem>
+                    {linhasAgrupadas.map((grupo) => (
+                      <SelectGroup key={grupo.tema_id}>
+                        <SelectLabel className="text-xs uppercase tracking-wider text-muted-foreground">
+                          {grupo.tema_nome}
+                        </SelectLabel>
+                        {grupo.linhas.map((l) => (
+                          <SelectItem key={l.id} value={l.id} className="pl-6">
+                            {l.descricao}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
                     ))}
                   </SelectContent>
                 </Select>
