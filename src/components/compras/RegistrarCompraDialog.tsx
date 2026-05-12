@@ -290,16 +290,26 @@ export function RegistrarCompraDialog({ open, onOpenChange, pedido }: Props) {
                     <Command>
                       <CommandInput placeholder="Buscar por razão social, fantasia ou CNPJ..." />
                       <CommandList className="max-h-[320px]">
+                        <CommandGroup>
+                          <CommandItem
+                            value="__novo__"
+                            onSelect={() => {
+                              setParceiroOpen(false);
+                              setNovoFornecedorOpen(true);
+                            }}
+                            className="border-b text-primary"
+                          >
+                            <Plus className="mr-2 h-4 w-4" />
+                            <span className="font-medium">Cadastrar novo fornecedor…</span>
+                          </CommandItem>
+                        </CommandGroup>
                         <CommandEmpty>Nenhum fornecedor encontrado.</CommandEmpty>
                         <CommandGroup>
                           {parceiros.map((p) => (
                             <CommandItem
                               key={p.id}
                               value={`${p.razao_social} ${p.nome_fantasia || ""} ${p.cnpj || ""}`}
-                              onSelect={() => {
-                                setParceiroId(p.id);
-                                setParceiroOpen(false);
-                              }}
+                              onSelect={() => handleSelectParceiro(p.id)}
                             >
                               <Check
                                 className={cn(
@@ -323,7 +333,7 @@ export function RegistrarCompraDialog({ open, onOpenChange, pedido }: Props) {
               </div>
 
               <div>
-                <Label>Categoria contábil *</Label>
+                <Label>Categoria contábil</Label>
                 <CategoriaFolhaSelect value={contaId || null} onChange={setContaId} tipo="despesa" />
               </div>
 
