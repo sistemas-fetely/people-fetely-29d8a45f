@@ -5,16 +5,25 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { X, Plus, ChevronDown, ChevronUp } from "lucide-react";
+import { cn } from "@/lib/utils";
 import type { ItemEdit } from "@/lib/compras/types";
 
 const fmtBRL = (v: number) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v || 0);
 
+const itemStatusConfig: Record<string, { label: string; className: string }> = {
+  pendente: { label: "Pendente", className: "bg-muted text-muted-foreground" },
+  comprado: { label: "Comprado", className: "bg-success/15 text-success" },
+  cancelado: { label: "Cancelado", className: "bg-destructive/15 text-destructive" },
+};
+
 interface Props {
   items: ItemEdit[];
   onChange: (items: ItemEdit[]) => void;
   readOnly?: boolean;
+  showItemStatus?: boolean;
 }
 
 export function ItensList({ items, onChange, readOnly }: Props) {
