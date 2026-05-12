@@ -282,7 +282,27 @@ export function PedidoCompraDialog({ open, onOpenChange, mode, pedido }: Props) 
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6">
+        {mode === "ver" && pedido ? (
+          <Tabs defaultValue="detalhes" className="w-full">
+            <TabsList>
+              <TabsTrigger value="detalhes">Detalhes</TabsTrigger>
+              <TabsTrigger value="timeline">Timeline e Comentários</TabsTrigger>
+            </TabsList>
+            <TabsContent value="detalhes" className="space-y-6 mt-4">
+              <PedidoDetalhesContent />
+            </TabsContent>
+            <TabsContent value="timeline" className="mt-4">
+              <TimelinePedido pedidoId={pedido.id} />
+            </TabsContent>
+          </Tabs>
+        ) : (
+          <div className="space-y-6">
+            <PedidoDetalhesContent />
+          </div>
+        )}
+
+        {/* helper rendered above as a function via closure */}
+        {false && <div className="space-y-6">
           {/* SEÇÃO 1: CABEÇALHO */}
           <div className="space-y-3">
             <div>
