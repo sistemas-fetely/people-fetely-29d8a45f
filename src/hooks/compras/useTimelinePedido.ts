@@ -15,13 +15,15 @@ export function useTimelinePedido(pedidoId: string | undefined) {
     queryKey: ["compras", "timeline-pedido", pedidoId],
     enabled: !!pedidoId && !!user,
     queryFn: async (): Promise<TimelineItem[]> => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const sb = supabase as any;
       const [eventosResp, comentariosResp] = await Promise.all([
-        supabase
+        sb
           .from("pedidos_compra_eventos")
           .select("*")
           .eq("pedido_id", pedidoId!)
           .order("created_at", { ascending: true }),
-        supabase
+        sb
           .from("comentarios_pedido")
           .select("*")
           .eq("pedido_id", pedidoId!)
