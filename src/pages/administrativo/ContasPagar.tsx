@@ -818,9 +818,25 @@ export default function ContasPagar() {
                               {formatBRL(c.valor)}
                             </TableCell>
                             <TableCell>
-                              <Badge className={STATUS_STYLES[c.status] || "bg-muted"}>
-                                {STATUS_LABELS[c.status] || c.status}
-                              </Badge>
+                              <div className="flex flex-col gap-1 items-start">
+                                <Badge className={STATUS_STYLES[c.status] || "bg-muted"}>
+                                  {STATUS_LABELS[c.status] || c.status}
+                                </Badge>
+                                {pendenciaMap.get(c.id)?.com_pendencia && (
+                                  <Badge
+                                    variant="outline"
+                                    className="bg-amber-50 text-amber-800 border-amber-300 gap-1"
+                                    title={
+                                      pendenciaMap.get(c.id)?.pendencias?.length
+                                        ? `Pendências: ${pendenciaMap.get(c.id)?.pendencias.join(", ")}`
+                                        : "Pagamento marcado com pendência de informações"
+                                    }
+                                  >
+                                    <FileWarning className="h-3 w-3" />
+                                    Pendência
+                                  </Badge>
+                                )}
+                              </div>
                             </TableCell>
                             <TableCell className="min-w-[140px]" onClick={(e) => e.stopPropagation()}>
                               <AcoesInlineConta
