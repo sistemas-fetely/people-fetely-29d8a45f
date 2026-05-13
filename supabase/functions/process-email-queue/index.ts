@@ -166,7 +166,6 @@ async function sendResendEmail(
 
 Deno.serve(async (req) => {
   const apiKey = Deno.env.get('LOVABLE_API_KEY')
-  const resendApiKey = Deno.env.get('RESEND_API_KEY')
   const emailProvider = (Deno.env.get('EMAIL_PROVIDER') || 'resend').toLowerCase()
   const supabaseUrl = Deno.env.get('SUPABASE_URL')
   const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
@@ -179,13 +178,7 @@ Deno.serve(async (req) => {
     )
   }
 
-  if (emailProvider === 'resend' && !resendApiKey) {
-    console.error('EMAIL_PROVIDER=resend but RESEND_API_KEY missing')
-    return new Response(
-      JSON.stringify({ error: 'RESEND_API_KEY not configured' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    )
-  }
+  // Lovable check stays as env var (legacy fallback only)
   if (emailProvider === 'lovable' && !apiKey) {
     console.error('EMAIL_PROVIDER=lovable but LOVABLE_API_KEY missing')
     return new Response(
@@ -215,6 +208,37 @@ Deno.serve(async (req) => {
   }
 
   const supabase = createClient(supabaseUrl, supabaseServiceKey)
+
+  // Read RESEND_API_KEY from vault (Fetely standard for external credentials)
+  let resendApiKey: string | null = null
+  if (emailProvider === 'resend') {
+    const { data: vaultRow, error: vaultErr } = await supabase
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .schema('vault' as any)
+      .from('decrypted_secrets')
+      .select('decrypted_secret')
+      .eq('name', 'resend_api_key')
+      .maybeSingle()
+
+    if (vaultErr) {
+      console.error('Failed to read resend_api_key from vault', { error: vaultErr })
+      return new Response(
+        JSON.stringify({ error: 'Failed to read resend_api_key from vault', details: vaultErr.message }),
+        { status: 500, headers: { 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    resendApiKey = (vaultRow as any)?.decrypted_secret ?? null
+
+    if (!resendApiKey) {
+      console.error('EMAIL_PROVIDER=resend but resend_api_key vault secret missing or empty')
+      return new Response(
+        JSON.stringify({ error: 'resend_api_key vault secret not configured' }),
+        { status: 500, headers: { 'Content-Type': 'application/json' } }
+      )
+    }
+  }
 
   // 1. Check rate-limit cooldown and read queue config
   const { data: state } = await supabase
