@@ -166,7 +166,6 @@ async function sendResendEmail(
 
 Deno.serve(async (req) => {
   const apiKey = Deno.env.get('LOVABLE_API_KEY')
-  const resendApiKey = Deno.env.get('RESEND_API_KEY')
   const emailProvider = (Deno.env.get('EMAIL_PROVIDER') || 'resend').toLowerCase()
   const supabaseUrl = Deno.env.get('SUPABASE_URL')
   const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
@@ -179,13 +178,7 @@ Deno.serve(async (req) => {
     )
   }
 
-  if (emailProvider === 'resend' && !resendApiKey) {
-    console.error('EMAIL_PROVIDER=resend but RESEND_API_KEY missing')
-    return new Response(
-      JSON.stringify({ error: 'RESEND_API_KEY not configured' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    )
-  }
+  // Lovable check stays as env var (legacy fallback only)
   if (emailProvider === 'lovable' && !apiKey) {
     console.error('EMAIL_PROVIDER=lovable but LOVABLE_API_KEY missing')
     return new Response(
