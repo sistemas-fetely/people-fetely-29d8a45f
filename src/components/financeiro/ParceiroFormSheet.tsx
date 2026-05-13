@@ -70,6 +70,7 @@ export type Parceiro = {
   ativo: boolean | null;
   observacao: string | null;
   origem: string | null;
+  cadastro_incompleto?: boolean | null;
 };
 
 interface Props {
