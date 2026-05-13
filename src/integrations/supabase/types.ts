@@ -4695,6 +4695,7 @@ export type Database = {
           descricao: string | null
           id: string
           mime_type: string | null
+          nfs_stage_id: string | null
           nome: string
           parceiro_id: string | null
           pasta_contrato_id: string | null
@@ -4715,6 +4716,7 @@ export type Database = {
           descricao?: string | null
           id?: string
           mime_type?: string | null
+          nfs_stage_id?: string | null
           nome: string
           parceiro_id?: string | null
           pasta_contrato_id?: string | null
@@ -4735,6 +4737,7 @@ export type Database = {
           descricao?: string | null
           id?: string
           mime_type?: string | null
+          nfs_stage_id?: string | null
           nome?: string
           parceiro_id?: string | null
           pasta_contrato_id?: string | null
@@ -4747,6 +4750,20 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "ged_documentos_nfs_stage_id_fkey"
+            columns: ["nfs_stage_id"]
+            isOneToOne: false
+            referencedRelation: "nfs_stage"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ged_documentos_nfs_stage_id_fkey"
+            columns: ["nfs_stage_id"]
+            isOneToOne: false
+            referencedRelation: "vw_nfs_stage_completude"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "ged_documentos_parceiro_id_fkey"
             columns: ["parceiro_id"]
@@ -6760,6 +6777,7 @@ export type Database = {
           ativo: boolean | null
           bairro: string | null
           bling_id: string | null
+          cadastro_incompleto: boolean
           canal_venda_id: string | null
           categoria_padrao_id: string | null
           centro_custo_id: string | null
@@ -6796,6 +6814,7 @@ export type Database = {
           ativo?: boolean | null
           bairro?: string | null
           bling_id?: string | null
+          cadastro_incompleto?: boolean
           canal_venda_id?: string | null
           categoria_padrao_id?: string | null
           centro_custo_id?: string | null
@@ -6832,6 +6851,7 @@ export type Database = {
           ativo?: boolean | null
           bairro?: string | null
           bling_id?: string | null
+          cadastro_incompleto?: boolean
           canal_venda_id?: string | null
           categoria_padrao_id?: string | null
           centro_custo_id?: string | null
