@@ -736,6 +736,10 @@ export function ParceiroFormSheet({ open, onOpenChange, editing, categorias, onS
           </div>
         </div>
 
+        {isEdit && editing && (
+          <PastaGedSection parceiroId={editing.id} parceiroNome={editing.razao_social} />
+        )}
+
         <SheetFooter>
           {!obrigatorio && (
             <Button variant="outline" onClick={() => onOpenChange(false)}>
@@ -750,3 +754,82 @@ export function ParceiroFormSheet({ open, onOpenChange, editing, categorias, onS
     </Sheet>
   );
 }
+
+// ─── Seção Pasta GED ─────────────────────────────────────
+function PastaGedSection({ parceiroId, parceiroNome: _parceiroNome }: { parceiroId: string; parceiroNome: string }) {
+  const navigate = useNavigate();
+
+  const { data: stats } = useQuery({
+    queryKey: ["parceiro-pasta-stats", parceiroId],
+    queryFn: async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const sb = supabase as any;
+      const { data: pasta } = await sb
+        .from("ged_pastas")
+        .select("id, nome")
+        .eq("parceiro_id", parceiroId)
+        .eq("ativa", true)
+        .maybeSingle();
+
+      if (!pasta) return null;
+
+      const [docsResp, nfsSemCprResp, cprsResp] = await Promise.all([
+        sb.from("ged_documentos").select("id", { count: "exact", head: true }).eq("pasta_id", pasta.id),
+        sb.from("nfs_stage").select("id", { count: "exact", head: true })
+          .eq("parceiro_id", parceiroId).is("conta_pagar_id", null).eq("status", "nao_vinculada"),
+        sb.from("contas_pagar_receber").select("id", { count: "exact", head: true }).eq("parceiro_id", parceiroId),
+      ]);
+
+      return {
+        pastaId: pasta.id as string,
+        docs: (docsResp.count ?? 0) as number,
+        nfsSemCpr: (nfsSemCprResp.count ?? 0) as number,
+        cprs: (cprsResp.count ?? 0) as number,
+      };
+    },
+    enabled: !!parceiroId,
+  });
+
+  if (!stats) {
+    return (
+      <div className="mt-2 rounded-md border bg-muted/30 p-3 text-xs text-muted-foreground">
+        Pasta no GED será criada automaticamente ao salvar.
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-2 rounded-md border bg-muted/30 p-3 space-y-2">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2 text-sm font-medium">
+          <FolderOpen className="h-4 w-4 text-primary" />
+          Pasta no GED
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => navigate(`/administrativo/ged?pasta=${stats.pastaId}`)}
+        >
+          Abrir no GED
+        </Button>
+      </div>
+      <div className="grid grid-cols-3 gap-2 text-center">
+        <div>
+          <div className="text-lg font-bold">{stats.docs}</div>
+          <div className="text-[10px] text-muted-foreground">documentos</div>
+        </div>
+        <div>
+          <div className="text-lg font-bold">{stats.cprs}</div>
+          <div className="text-[10px] text-muted-foreground">contas a pagar</div>
+        </div>
+        <div>
+          <div className={`text-lg font-bold ${stats.nfsSemCpr > 0 ? "text-amber-600" : ""}`}>
+            {stats.nfsSemCpr}
+          </div>
+          <div className="text-[10px] text-muted-foreground">NFs sem CPR</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
