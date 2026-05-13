@@ -78,6 +78,92 @@ async function moveToDlq(
   }
 }
 
+// ─── Resend transport ─────────────────────────────────────────────
+class ResendEmailError extends Error {
+  status: number
+  retryAfterSeconds: number | null
+  constructor(message: string, status: number, retryAfterSeconds: number | null = null) {
+    super(message)
+    this.name = 'ResendEmailError'
+    this.status = status
+    this.retryAfterSeconds = retryAfterSeconds
+  }
+}
+
+interface ResendSendOptions {
+  apiKey: string
+  unsubscribeUrlBase: string
+}
+
+async function sendResendEmail(
+  payload: {
+    to: string
+    from: string
+    subject: string
+    html: string
+    text: string
+    label?: string
+    purpose?: string
+    idempotency_key?: string
+    unsubscribe_token?: string
+    message_id?: string
+  },
+  options: ResendSendOptions,
+): Promise<void> {
+  const body: Record<string, unknown> = {
+    from: payload.from,
+    to: [payload.to],
+    subject: payload.subject,
+    html: payload.html,
+    text: payload.text,
+  }
+
+  const tags: Array<{ name: string; value: string }> = []
+  if (payload.label) tags.push({ name: 'label', value: payload.label.slice(0, 256) })
+  if (payload.purpose) tags.push({ name: 'purpose', value: payload.purpose.slice(0, 256) })
+  if (payload.message_id) tags.push({ name: 'message_id', value: payload.message_id.slice(0, 256) })
+  if (tags.length > 0) body.tags = tags
+
+  if (payload.unsubscribe_token && options.unsubscribeUrlBase) {
+    const unsubUrl = `${options.unsubscribeUrlBase}?token=${encodeURIComponent(payload.unsubscribe_token)}`
+    body.headers = {
+      'List-Unsubscribe': `<${unsubUrl}>`,
+      'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+    }
+  }
+
+  const httpHeaders: Record<string, string> = {
+    'Authorization': `Bearer ${options.apiKey}`,
+    'Content-Type': 'application/json',
+  }
+  if (payload.idempotency_key) {
+    httpHeaders['Idempotency-Key'] = payload.idempotency_key
+  }
+
+  const res = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: httpHeaders,
+    body: JSON.stringify(body),
+  })
+
+  if (!res.ok) {
+    let errMsg = `Resend API ${res.status}`
+    try {
+      const json = await res.json()
+      errMsg = (json?.message as string) || (json?.error as string) || JSON.stringify(json)
+    } catch {
+      // body não-JSON
+    }
+    const retryAfterHeader = res.headers.get('Retry-After')
+    let retryAfterSecs: number | null = null
+    if (retryAfterHeader) {
+      const parsed = parseInt(retryAfterHeader, 10)
+      retryAfterSecs = isNaN(parsed) ? null : parsed
+    }
+    throw new ResendEmailError(errMsg, res.status, retryAfterSecs)
+  }
+}
+
 Deno.serve(async (req) => {
   const apiKey = Deno.env.get('LOVABLE_API_KEY')
   const supabaseUrl = Deno.env.get('SUPABASE_URL')
