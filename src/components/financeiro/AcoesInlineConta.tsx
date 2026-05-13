@@ -59,7 +59,7 @@ export default function AcoesInlineConta({ conta, onAbrirEditandoBanco }: Props)
     e.stopPropagation();
     fn();
   };
-  const stopVoid = (e: React.MouseEvent) => e.stopPropagation();
+  
 
   const extractMsg = (e: unknown) =>
     e instanceof Error
