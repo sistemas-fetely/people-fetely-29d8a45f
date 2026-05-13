@@ -390,7 +390,7 @@ export default function ContasPagar() {
         </div>
 
         {/* KPI cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           <KpiCard
             icon={Flame}
             label="Para agir"
@@ -430,6 +430,16 @@ export default function ContasPagar() {
             border="border-amber-300"
             active={kpiFilter === "pendencia"}
             onClick={() => setKpiFilter(kpiFilter === "pendencia" ? null : "pendencia")}
+          />
+          <KpiCard
+            icon={CircleCheck}
+            label="Bola redonda"
+            count={kpis.bola_redonda.count}
+            valor={kpis.bola_redonda.valor}
+            color="text-emerald-600"
+            border="border-emerald-300"
+            active={kpiFilter === "bola_redonda"}
+            onClick={() => setKpiFilter(kpiFilter === "bola_redonda" ? null : "bola_redonda")}
           />
         </div>
       </div>
