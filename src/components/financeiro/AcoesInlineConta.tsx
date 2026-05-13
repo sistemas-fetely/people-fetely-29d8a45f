@@ -196,7 +196,7 @@ export default function AcoesInlineConta({ conta, onAbrirEditandoBanco }: Props)
         : "Aprove antes de lançar em Movimentação";
 
   return (
-    <div className="flex items-center gap-1" onClick={stopVoid}>
+    <div className="flex items-center gap-1">
       {/* 1) NF — click propaga e abre o drawer (anexar NF é parte da edição da CPR — D-E). */}
       <Button
         size="icon"
