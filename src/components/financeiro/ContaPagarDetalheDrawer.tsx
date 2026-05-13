@@ -7,13 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
   Check,
@@ -31,7 +24,7 @@ import {
   Trash2,
   ArrowRightLeft,
   Loader2,
-  Sparkles,
+  
 } from "lucide-react";
 import {
   AlertDialog,
