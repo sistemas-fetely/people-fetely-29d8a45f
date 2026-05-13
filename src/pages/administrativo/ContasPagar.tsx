@@ -174,6 +174,89 @@ export default function ContasPagar() {
     },
   });
 
+  // Bola redonda — CPRs com todos os dados de pagamento prontos
+  const { data: bolaRedondaSet = new Set<string>() } = useQuery({
+    queryKey: ["contas-pagar-bola-redonda-set", (data || []).map((c) => c.id).join(",")],
+    enabled: !!data && data.length > 0,
+    queryFn: async () => {
+      const ids = (data || []).map((c) => c.id);
+      if (ids.length === 0) return new Set<string>();
+      const { data: rows, error } = await supabase
+        .from("v_cpr_bola_redonda")
+        .select("cpr_id, bola_redonda")
+        .in("cpr_id", ids);
+      if (error) throw error;
+      const s = new Set<string>();
+      (rows || []).forEach((r: { cpr_id: string | null; bola_redonda: boolean | null }) => {
+        if (r.bola_redonda && r.cpr_id) s.add(r.cpr_id);
+      });
+      return s;
+    },
+  });
+
+  // Solicitante — via pedido_compra. Retorna Map (cpr_id -> user_id) + options ordenadas pelo nome.
+  const { data: solicitanteData = { map: new Map<string, string>(), options: [] as { id: string; nome: string }[] } } = useQuery({
+    queryKey: ["contas-pagar-solicitante-data", (data || []).map((c) => c.id).join(",")],
+    enabled: !!data && data.length > 0,
+    queryFn: async () => {
+      const ids = (data || []).map((c) => c.id);
+      if (ids.length === 0) return { map: new Map<string, string>(), options: [] as { id: string; nome: string }[] };
+
+      const { data: cprs, error: e1 } = await supabase
+        .from("contas_pagar_receber")
+        .select("id, pedido_compra_id")
+        .in("id", ids)
+        .not("pedido_compra_id", "is", null);
+      if (e1) throw e1;
+
+      const pedidoIds = Array.from(
+        new Set((cprs || []).map((c) => c.pedido_compra_id).filter(Boolean) as string[]),
+      );
+      if (pedidoIds.length === 0) return { map: new Map<string, string>(), options: [] as { id: string; nome: string }[] };
+
+      const { data: pedidos, error: e2 } = await supabase
+        .from("pedidos_compra")
+        .select("id, solicitante_id")
+        .in("id", pedidoIds);
+      if (e2) throw e2;
+
+      const pedidoSolMap = new Map<string, string>();
+      (pedidos || []).forEach((p) => pedidoSolMap.set(p.id, p.solicitante_id));
+
+      const cprToSol = new Map<string, string>();
+      (cprs || []).forEach((c) => {
+        if (c.pedido_compra_id && pedidoSolMap.has(c.pedido_compra_id)) {
+          cprToSol.set(c.id, pedidoSolMap.get(c.pedido_compra_id)!);
+        }
+      });
+
+      const userIds = Array.from(new Set(Array.from(cprToSol.values())));
+      if (userIds.length === 0) return { map: cprToSol, options: [] as { id: string; nome: string }[] };
+
+      const [profilesRes, clRes] = await Promise.all([
+        supabase.from("profiles").select("user_id, full_name").in("user_id", userIds),
+        supabase.from("colaboradores_clt").select("user_id, nome_completo").in("user_id", userIds),
+      ]);
+
+      const nomeMap = new Map<string, string>();
+      for (const p of profilesRes.data || []) {
+        if (p.full_name) nomeMap.set(p.user_id as string, p.full_name);
+      }
+      for (const c of clRes.data || []) {
+        if (c.nome_completo && c.user_id) nomeMap.set(c.user_id, c.nome_completo);
+      }
+
+      const options = userIds
+        .map((id) => ({ id, nome: nomeMap.get(id) || "—" }))
+        .sort((a, b) => a.nome.localeCompare(b.nome));
+
+      return { map: cprToSol, options };
+    },
+  });
+
+  const solicitanteMap = solicitanteData.map;
+  const solicitantesOptions = solicitanteData.options;
+
   const kpis = useMemo(() => {
     const lista = data || [];
     const para_agir = lista.filter(
