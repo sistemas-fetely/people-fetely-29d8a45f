@@ -267,14 +267,16 @@ export default function ContasPagar() {
     );
     const aguardando = lista.filter((c) => c.status === "aguardando_pagamento");
     const pendencia = lista.filter((c) => pendenciaMap.has(c.id));
+    const bola_redonda = lista.filter((c) => bolaRedondaSet.has(c.id));
     const sumValor = (arr: Conta[]) => arr.reduce((s, c) => s + Number(c.valor || 0), 0);
     return {
       para_agir: { count: para_agir.length, valor: sumValor(para_agir) },
       atrasadas: { count: atrasadas.length, valor: sumValor(atrasadas) },
       aguardando: { count: aguardando.length, valor: sumValor(aguardando) },
       pendencia: { count: pendencia.length, valor: sumValor(pendencia) },
+      bola_redonda: { count: bola_redonda.length, valor: sumValor(bola_redonda) },
     };
-  }, [data, pendenciaMap]);
+  }, [data, pendenciaMap, bolaRedondaSet]);
 
   const filtrados = useMemo(() => {
     let lista = data || [];
@@ -290,6 +292,8 @@ export default function ContasPagar() {
       lista = lista.filter((c) => c.status === "aguardando_pagamento");
     } else if (kpiFilter === "pendencia") {
       lista = lista.filter((c) => pendenciaMap.has(c.id));
+    } else if (kpiFilter === "bola_redonda") {
+      lista = lista.filter((c) => bolaRedondaSet.has(c.id));
     }
     if (busca.trim()) {
       const b = busca.toLowerCase();
@@ -303,19 +307,28 @@ export default function ContasPagar() {
     if (statusFilter && statusFilter !== "todos") {
       lista = lista.filter((c) => c.status === statusFilter);
     }
+    if (solicitanteFilter && solicitanteFilter !== "todos") {
+      lista = lista.filter((c) => solicitanteMap.get(c.id) === solicitanteFilter);
+    }
     if (dataDe) lista = lista.filter((c) => (c.data_vencimento || "") >= dataDe);
     if (dataAte) lista = lista.filter((c) => (c.data_vencimento || "") <= dataAte);
     return lista;
-  }, [data, kpiFilter, busca, statusFilter, dataDe, dataAte, pendenciaMap]);
+  }, [data, kpiFilter, busca, statusFilter, solicitanteFilter, dataDe, dataAte, pendenciaMap, bolaRedondaSet, solicitanteMap]);
 
   const temFiltroAtivo =
-    !!busca.trim() || !!dataDe || !!dataAte || statusFilter !== "todos" || kpiFilter !== null;
+    !!busca.trim() ||
+    !!dataDe ||
+    !!dataAte ||
+    statusFilter !== "todos" ||
+    solicitanteFilter !== "todos" ||
+    kpiFilter !== null;
 
   function limparFiltros() {
     setBusca("");
     setDataDe("");
     setDataAte("");
     setStatusFilter("todos");
+    setSolicitanteFilter("todos");
     setKpiFilter(null);
   }
 
@@ -323,15 +336,11 @@ export default function ContasPagar() {
     qc.invalidateQueries({ queryKey: ["contas-pagar"] });
     qc.invalidateQueries({ queryKey: ["contas-pagar-pendencia-map"] });
     qc.invalidateQueries({ queryKey: ["contas-pagar-email-map"] });
+    qc.invalidateQueries({ queryKey: ["contas-pagar-bola-redonda-set"] });
+    qc.invalidateQueries({ queryKey: ["contas-pagar-solicitante-data"] });
   }
 
   function abrirNovaAvulsa() {
-    setInitialDataNovaConta(undefined);
-    setNovaContaOpen(true);
-  }
-
-  function abrirNovoTributo() {
-    // NovaContaPagarSheet não aceita "tipo" como initialData hoje — abre vazio.
     setInitialDataNovaConta(undefined);
     setNovaContaOpen(true);
   }
