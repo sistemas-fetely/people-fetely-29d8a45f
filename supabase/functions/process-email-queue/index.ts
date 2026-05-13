@@ -166,13 +166,30 @@ async function sendResendEmail(
 
 Deno.serve(async (req) => {
   const apiKey = Deno.env.get('LOVABLE_API_KEY')
+  const resendApiKey = Deno.env.get('RESEND_API_KEY')
+  const emailProvider = (Deno.env.get('EMAIL_PROVIDER') || 'resend').toLowerCase()
   const supabaseUrl = Deno.env.get('SUPABASE_URL')
   const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
 
-  if (!apiKey || !supabaseUrl || !supabaseServiceKey) {
-    console.error('Missing required environment variables')
+  if (!supabaseUrl || !supabaseServiceKey) {
+    console.error('Missing required Supabase environment variables')
     return new Response(
       JSON.stringify({ error: 'Server configuration error' }),
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
+    )
+  }
+
+  if (emailProvider === 'resend' && !resendApiKey) {
+    console.error('EMAIL_PROVIDER=resend but RESEND_API_KEY missing')
+    return new Response(
+      JSON.stringify({ error: 'RESEND_API_KEY not configured' }),
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
+    )
+  }
+  if (emailProvider === 'lovable' && !apiKey) {
+    console.error('EMAIL_PROVIDER=lovable but LOVABLE_API_KEY missing')
+    return new Response(
+      JSON.stringify({ error: 'LOVABLE_API_KEY not configured' }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     )
   }
