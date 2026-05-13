@@ -22,8 +22,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { X } from "lucide-react";
+import { X, AlertTriangle, FolderOpen } from "lucide-react";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 import { fetchCep } from "@/lib/viacep";
 import { CategoriaCombobox, CategoriaOption } from "@/components/financeiro/CategoriaCombobox";
 import { GrupoEmpresarialCombobox } from "@/components/financeiro/GrupoEmpresarialCombobox";
