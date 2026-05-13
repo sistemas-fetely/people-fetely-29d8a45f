@@ -880,6 +880,21 @@ export default function NFsStage() {
                             : STATUS_LABELS[nf.status] || nf.status}
                         </Badge>
                       </TableCell>
+                      <TableCell className="text-center">
+                        {nf.parceiro_id && pastaIdPorParceiro.get(nf.parceiro_id) ? (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 gap-1 text-xs"
+                            onClick={() => navigate(`/administrativo/ged?pasta=${pastaIdPorParceiro.get(nf.parceiro_id!)}`)}
+                          >
+                            <FolderOpen className="h-3.5 w-3.5" />
+                            Abrir
+                          </Button>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
                       <TableCell>
                         <div className="flex items-center justify-center gap-1">
                           {nf.tem_pdf && (
