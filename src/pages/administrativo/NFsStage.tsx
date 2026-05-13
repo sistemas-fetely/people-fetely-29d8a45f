@@ -53,7 +53,9 @@ import {
   FilePlus2,
   RefreshCw,
   Loader2,
+  FolderOpen,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
 import { cn } from "@/lib/utils";
@@ -170,8 +172,9 @@ type FiltroPill =
 
 export default function NFsStage() {
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const [busca, setBusca] = useState("");
-  const [filtroPill, setFiltroPill] = useState<FiltroPill>("todas");
+  const [filtroPill, setFiltroPill] = useState<FiltroPill>("nao_vinculadas");
   const [selecionadas, setSelecionadas] = useState<Set<string>>(new Set());
   const [paraDescartar, setParaDescartar] = useState<NFStage[]>([]);
   const [salvandoCategoria, setSalvandoCategoria] = useState<Set<string>>(new Set());
@@ -228,6 +231,23 @@ export default function NFsStage() {
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data || []) as NFStage[];
+    },
+  });
+
+  const { data: pastaIdPorParceiro = new Map<string, string>() } = useQuery({
+    queryKey: ["pastas-por-parceiro"],
+    queryFn: async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data } = await (supabase as any)
+        .from("ged_pastas")
+        .select("parceiro_id, id")
+        .eq("ativa", true)
+        .not("parceiro_id", "is", null);
+      const m = new Map<string, string>();
+      (data ?? []).forEach((p: { parceiro_id: string; id: string }) => {
+        m.set(p.parceiro_id, p.id);
+      });
+      return m;
     },
   });
 
@@ -556,10 +576,10 @@ export default function NFsStage() {
           <div>
             <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
               <Layers className="h-6 w-6 text-admin" />
-              Repositório de NFs
+              NFs aguardando vínculo a CPR
             </h1>
             <p className="text-muted-foreground text-sm mt-0.5">
-              Biblioteca de notas fiscais. Vincule manualmente quando necessário.{" "}
+              Notas fiscais recebidas que ainda não têm conta a pagar vinculada. Use auto-match ou vincule manualmente.{" "}
               <span className="text-[11px] opacity-70">
                 Atalhos: <kbd className="px-1 py-0.5 border rounded text-[10px]">/</kbd> buscar ·{" "}
                 <kbd className="px-1 py-0.5 border rounded text-[10px]">Del</kbd> remover ·{" "}
@@ -737,6 +757,7 @@ export default function NFsStage() {
                   <SortableTableHead column="status" sort={sort} onSort={setSort} className="w-24">
                     Status
                   </SortableTableHead>
+                  <TableHead className="w-24 text-center">Pasta GED</TableHead>
                   <TableHead className="w-24 text-center">Ações</TableHead>
                 </TableRow>
               </TableHeader>
@@ -858,6 +879,21 @@ export default function NFsStage() {
                             ? `Parcial (${despesasPorStage[nf.id] || 0}/${nf.qtd_boletos})`
                             : STATUS_LABELS[nf.status] || nf.status}
                         </Badge>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {nf.parceiro_id && pastaIdPorParceiro.get(nf.parceiro_id) ? (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 gap-1 text-xs"
+                            onClick={() => navigate(`/administrativo/ged?pasta=${pastaIdPorParceiro.get(nf.parceiro_id!)}`)}
+                          >
+                            <FolderOpen className="h-3.5 w-3.5" />
+                            Abrir
+                          </Button>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        )}
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center justify-center gap-1">
