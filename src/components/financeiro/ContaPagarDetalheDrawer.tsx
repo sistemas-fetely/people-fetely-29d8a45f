@@ -630,16 +630,28 @@ export default function ContaPagarDetalheDrawer({
                       </p>
                       <Button
                         className="w-full bg-purple-700 hover:bg-purple-800 text-white gap-2"
-                        onClick={() => {
+                        onClick={async () => {
+                          // 1. Cascata: aprova esta CPR + irmãs do mesmo grupo em status 'aberto'
+                          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                          const { data: cascata } = await (supabase as any).rpc(
+                            "aprovar_cpr_em_cascata",
+                            { p_cpr_id: conta.id },
+                          );
+                          const totalAprovadas = (cascata?.parcelas_aprovadas as number) || 1;
+                          if (totalAprovadas > 1) {
+                            toast.success(`${totalAprovadas} parcelas do grupo aprovadas`);
+                          }
+
                           if (isCartao) {
-                            // Família B (cartão): pula etapa de email — vai direto pra aguardando.
-                            // Pagamento será via fatura mensal, não cabe envio de cobrança ao fornecedor.
+                            // 2. Cartão: avança esta CPR pra aguardando_pagamento
+                            // (irmãs ficam em 'aprovado' — cada uma segue seu ciclo de vencimento)
                             avancar(
                               "aguardando_pagamento",
                               "Aprovado e enviado ao financeiro — pagamento via fatura de cartão (sem cobrança ao fornecedor).",
                             );
                           } else {
-                            avancar("aprovado");
+                            // 2. Não cartão: esta CPR já virou 'aprovado' via cascata, só fechar
+                            onClose();
                           }
                         }}
                       >
