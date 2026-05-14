@@ -11,7 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import EnviarPagamentoDialog from "./EnviarPagamentoDialog";
-import { useContaWorkflow, type ContaStatus } from "@/hooks/useContaWorkflow";
+
 import { cn } from "@/lib/utils";
 import {
   getFamiliaContaPagar,
