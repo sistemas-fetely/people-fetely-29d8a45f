@@ -372,7 +372,7 @@ export function PedidoCompraDialog({ open, onOpenChange, mode, pedido }: Props) 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto overflow-x-hidden">
         <DialogHeader>
           <DialogTitle>
             {mode === "criar" && "Novo pedido de compra"}
