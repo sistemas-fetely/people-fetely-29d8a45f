@@ -266,7 +266,11 @@ export default function ContasPagar() {
     );
     const aguardando = lista.filter((c) => c.status === "aguardando_pagamento");
     const pendencia = lista.filter((c) => pendenciaMap.has(c.id));
-    const bola_redonda = lista.filter((c) => bolaRedondaSet.has(c.id));
+    // "Pronto pra pagar" = tem dados completos E está em status acionável
+    // (paga/cancelado/aguardando ficam fora — não exigem ação interna)
+    const bola_redonda = lista.filter(
+      (c) => bolaRedondaSet.has(c.id) && ["aberto", "aprovado"].includes(c.status),
+    );
     const sumValor = (arr: Conta[]) => arr.reduce((s, c) => s + Number(c.valor || 0), 0);
     return {
       para_agir: { count: para_agir.length, valor: sumValor(para_agir) },
