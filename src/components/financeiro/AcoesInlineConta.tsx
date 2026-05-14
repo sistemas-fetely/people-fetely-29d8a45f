@@ -112,10 +112,12 @@ export default function AcoesInlineConta({ conta, onAbrirEditandoBanco }: Props)
     if (estadoAprovar !== "pendente") return;
     setAprovando(true);
     try {
+      // Cartão vai direto pra aguardando_pagamento (sem etapa de envio de email)
+      const statusAlvo = conta.is_cartao ? "aguardando_pagamento" : "aprovado";
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data: result, error } = await (supabase as any).rpc(
         "aprovar_cpr_em_cascata",
-        { p_cpr_id: conta.id },
+        { p_cpr_id: conta.id, p_status_alvo: statusAlvo },
       );
       if (error) throw error;
       if (!result?.ok) {
