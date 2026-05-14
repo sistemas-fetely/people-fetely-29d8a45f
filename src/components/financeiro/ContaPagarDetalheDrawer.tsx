@@ -255,6 +255,25 @@ export default function ContaPagarDetalheDrawer({
     },
   });
 
+  // Detectar se a CPR tem irmãs (mesmo pedido_compra_id, não-canceladas)
+  const { data: irmasInfo } = useQuery({
+    queryKey: ["cpr-irmas-info", (conta as unknown as { pedido_compra_id?: string | null })?.pedido_compra_id, conta?.id],
+    enabled: !!(conta as unknown as { pedido_compra_id?: string | null })?.pedido_compra_id && !!conta?.id,
+    queryFn: async () => {
+      const pedidoId = (conta as unknown as { pedido_compra_id?: string | null })?.pedido_compra_id;
+      if (!pedidoId || !conta?.id) return { totalIrmas: 0 };
+      const { count } = await supabase
+        .from("contas_pagar_receber")
+        .select("id", { count: "exact", head: true })
+        .eq("pedido_compra_id", pedidoId)
+        .neq("id", conta.id)
+        .neq("status", "cancelado");
+      return { totalIrmas: count || 0 };
+    },
+  });
+
+  const temIrmasAtivas = (irmasInfo?.totalIrmas ?? 0) > 0;
+
   const { data: comprovUrl } = useQuery({
     queryKey: ["comprovante-url", conta?.comprovante_url],
     enabled: !!conta?.comprovante_url,
