@@ -327,7 +327,7 @@ export default function ContaPagarDetalheDrawer({
     return cats.size > 1;
   })();
 
-  async function avancar(novoStatus: ContaStatus, observacao?: string) {
+  async function avancar(novoStatus: ContaStatus, observacao?: string, closeOnSuccess = true) {
     if (!conta) return;
     await workflow.mudarStatus.mutateAsync({
       contaId: conta.id,
@@ -335,7 +335,9 @@ export default function ContaPagarDetalheDrawer({
       novoStatus,
       observacao: observacao || undefined,
     });
-    // Drawer permanece aberto - usuário decide quando fechar
+    // Click inteligente: por padrão fecha o drawer após avançar status
+    // Próxima ação geralmente é avaliar outras CPRs
+    if (closeOnSuccess) onClose();
   }
 
   const dadosBancarios =
