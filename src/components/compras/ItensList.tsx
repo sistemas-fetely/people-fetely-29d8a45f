@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,6 +12,63 @@ import type { ItemEdit } from "@/lib/compras/types";
 
 const fmtBRL = (v: number) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v || 0);
+
+function formatMoedaBR(v: number): string {
+  return v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function parseMoedaBR(raw: string): number {
+  const clean = raw.replace(/\./g, "").replace(",", ".").replace(/[^\d.]/g, "");
+  return parseFloat(clean) || 0;
+}
+
+function InputMoedaBR({
+  value,
+  onChange,
+  disabled,
+  ariaInvalid,
+}: {
+  value: number;
+  onChange: (v: number) => void;
+  disabled?: boolean;
+  ariaInvalid?: boolean;
+}) {
+  const [display, setDisplay] = useState(() => (value > 0 ? formatMoedaBR(value) : ""));
+  const [isFocused, setIsFocused] = useState(false);
+
+  useEffect(() => {
+    if (!isFocused) setDisplay(value > 0 ? formatMoedaBR(value) : "");
+  }, [value, isFocused]);
+
+  return (
+    <div className="relative">
+      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm pointer-events-none">
+        R$
+      </span>
+      <Input
+        type="text"
+        inputMode="decimal"
+        value={display}
+        onChange={(e) => {
+          setDisplay(e.target.value);
+          onChange(parseMoedaBR(e.target.value));
+        }}
+        onFocus={() => {
+          setIsFocused(true);
+          if (value > 0) setDisplay(value.toFixed(2).replace(".", ","));
+        }}
+        onBlur={() => {
+          setIsFocused(false);
+          setDisplay(value > 0 ? formatMoedaBR(value) : "");
+        }}
+        disabled={disabled}
+        placeholder="0,00"
+        className="pl-10"
+        aria-invalid={ariaInvalid}
+      />
+    </div>
+  );
+}
 
 const itemStatusConfig: Record<string, { label: string; className: string }> = {
   pendente: { label: "Pendente", className: "bg-muted text-muted-foreground" },
@@ -232,17 +289,12 @@ function ItemCard({
             />
           </div>
           <div>
-            <Label>Valor unitário R$ *</Label>
-            <Input
-              type="number"
-              min={0}
-              step="0.01"
-              value={item.valor_estimado_unitario}
-              onChange={(e) =>
-                onChange({ valor_estimado_unitario: parseFloat(e.target.value) || 0 })
-              }
+            <Label>Valor unitário *</Label>
+            <InputMoedaBR
+              value={item.valor_estimado_unitario || 0}
+              onChange={(v) => onChange({ valor_estimado_unitario: v })}
               disabled={readOnly}
-              aria-invalid={!(item.valor_estimado_unitario > 0)}
+              ariaInvalid={!(item.valor_estimado_unitario > 0)}
             />
           </div>
           <div className="flex flex-col justify-end pb-2">
