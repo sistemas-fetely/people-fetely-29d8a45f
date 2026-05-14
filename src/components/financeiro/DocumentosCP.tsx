@@ -18,6 +18,8 @@ export const TIPO_DOC_LABEL: Record<string, string> = {
   nf: "NF",
   recibo: "Recibo",
   boleto: "Boleto",
+  orcamento: "Orçamento",
+  proposta: "Proposta",
   ticket_cartao: "Ticket cartão",
   comprovante: "Comprovante",
   contrato: "Contrato",
@@ -208,6 +210,8 @@ export default function DocumentosCP({
             <SelectItem value="nf">NF</SelectItem>
             <SelectItem value="recibo">Recibo</SelectItem>
             <SelectItem value="boleto">Boleto</SelectItem>
+            <SelectItem value="orcamento">Orçamento</SelectItem>
+            <SelectItem value="proposta">Proposta</SelectItem>
             <SelectItem value="ticket_cartao">Ticket cartão</SelectItem>
             <SelectItem value="comprovante">Comprovante</SelectItem>
             <SelectItem value="contrato">Contrato</SelectItem>
