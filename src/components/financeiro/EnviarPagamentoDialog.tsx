@@ -328,6 +328,10 @@ export default function EnviarPagamentoDialog({ open, onOpenChange, conta, onDon
   }, [documentosTodos]);
 
   async function handleEnviar() {
+    if (parceiroCadastroIncompleto) {
+      toast.error("Cadastro do Parceiro incompleto. Complete os dados bancários antes de enviar.");
+      return;
+    }
     if (!emailDestinatario) {
       toast.error("Selecione um destinatário");
       return;
