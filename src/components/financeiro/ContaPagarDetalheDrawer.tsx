@@ -807,7 +807,7 @@ export default function ContaPagarDetalheDrawer({
                     conta.status !== "finalizado" &&
                     conta.status !== "conciliado" && (
                       <div className="pt-4 border-t">
-                        <CancelarButton conta={conta} workflow={workflow} onClose={onClose} />
+                        <CancelarButton conta={conta} workflow={workflow} onClose={onClose} temIrmasAtivas={temIrmasAtivas} />
                       </div>
                     )}
                 </div>
