@@ -289,17 +289,12 @@ function ItemCard({
             />
           </div>
           <div>
-            <Label>Valor unitário R$ *</Label>
-            <Input
-              type="number"
-              min={0}
-              step="0.01"
-              value={item.valor_estimado_unitario}
-              onChange={(e) =>
-                onChange({ valor_estimado_unitario: parseFloat(e.target.value) || 0 })
-              }
+            <Label>Valor unitário *</Label>
+            <InputMoedaBR
+              value={item.valor_estimado_unitario || 0}
+              onChange={(v) => onChange({ valor_estimado_unitario: v })}
               disabled={readOnly}
-              aria-invalid={!(item.valor_estimado_unitario > 0)}
+              ariaInvalid={!(item.valor_estimado_unitario > 0)}
             />
           </div>
           <div className="flex flex-col justify-end pb-2">
