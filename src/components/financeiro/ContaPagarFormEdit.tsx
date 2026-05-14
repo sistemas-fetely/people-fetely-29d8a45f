@@ -84,6 +84,8 @@ export function ContaPagarFormEdit({
   }, [highlightCampo]);
 
   const isReadOnly = STATUS_READONLY.includes(conta.status);
+  const criticosTravados = STATUS_TRAVA_CRITICOS.includes(conta.status);
+  const enviadoAguardando = conta.status === "aguardando_pagamento";
 
   // Família + visibilidade dos campos por origem.
   // Família B (cartão) e C (OFX já saiu) deixam data_vencimento, forma de
