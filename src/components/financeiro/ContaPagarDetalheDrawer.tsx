@@ -491,6 +491,24 @@ export default function ContaPagarDetalheDrawer({
                 return <Linha label="Linha de investimento" value={txt || "—"} />;
               })()}
               <Linha label="Forma de pagamento" value={conta.formas_pagamento?.nome || "—"} />
+              {isCartao && faturaVinculada?.faturas_cartao && (
+                <Linha
+                  label="Fatura vinculada"
+                  value={
+                    <span className="text-xs text-primary">
+                      vence {formatDateBR(faturaVinculada.faturas_cartao.data_vencimento)}
+                      {" · "}
+                      {formatBRL(faturaVinculada.faturas_cartao.valor_total)}
+                    </span>
+                  }
+                />
+              )}
+              {isCartao && !faturaVinculada?.faturas_cartao && conta?.status !== "cancelado" && (
+                <Linha
+                  label="Fatura vinculada"
+                  value={<span className="text-xs text-muted-foreground">não vinculada</span>}
+                />
+              )}
               <Linha label="Vencimento" value={formatDateBR(conta.data_vencimento)} />
               {conta.data_pagamento && (
                 <Linha label="Pago em" value={formatDateBR(conta.data_pagamento)} />
