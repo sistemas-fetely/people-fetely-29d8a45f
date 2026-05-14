@@ -81,6 +81,9 @@ export default function Parceiros() {
     setSearchParams(next, { replace: true });
   };
 
+  // Se URL contém ?abrir=, abre o Sheet do parceiro automaticamente
+  const abrirParceiroId = searchParams.get("abrir");
+
   const [busca, setBusca] = useState("");
   const [filtroStatus, setFiltroStatus] = useState<string>("ativos");
   const [filtroGrupo, setFiltroGrupo] = useState<string>("todos");
