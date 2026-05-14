@@ -29,7 +29,7 @@ import {
   AlertTriangle,
   Clock,
   AlertCircle,
-  CircleCheck,
+  
   FileWarning,
   PackageOpen,
   X,
@@ -92,7 +92,7 @@ const diasAteVencer = (d: string | null) => {
   return Math.ceil((new Date(d + "T00:00:00").getTime() - Date.now()) / 86400000);
 };
 
-type KpiFilter = "para_agir" | "atrasadas" | "aguardando" | "pendencia" | "bola_redonda" | null;
+type KpiFilter = "para_agir" | "atrasadas" | "aguardando" | "pendencia" | null;
 
 export default function ContasPagar() {
   const qc = useQueryClient();
@@ -162,26 +162,6 @@ export default function ContasPagar() {
         }
       });
       return m;
-    },
-  });
-
-  // "Pronto pra pagar" (UI) ↔ bola_redonda (interno) — CPRs com todos os dados prontos
-  const { data: bolaRedondaSet = new Set<string>() } = useQuery({
-    queryKey: ["contas-pagar-bola-redonda-set", (data || []).map((c) => c.id).join(",")],
-    enabled: !!data && data.length > 0,
-    queryFn: async () => {
-      const ids = (data || []).map((c) => c.id);
-      if (ids.length === 0) return new Set<string>();
-      const { data: rows, error } = await supabase
-        .from("v_cpr_bola_redonda")
-        .select("cpr_id, bola_redonda")
-        .in("cpr_id", ids);
-      if (error) throw error;
-      const s = new Set<string>();
-      (rows || []).forEach((r: { cpr_id: string | null; bola_redonda: boolean | null }) => {
-        if (r.bola_redonda && r.cpr_id) s.add(r.cpr_id);
-      });
-      return s;
     },
   });
 
@@ -258,20 +238,14 @@ export default function ContasPagar() {
     );
     const aguardando = lista.filter((c) => c.status === "aguardando_pagamento");
     const pendencia = lista.filter((c) => pendenciaMap.has(c.id));
-    // "Pronto pra pagar" = tem dados completos E está em status acionável
-    // (paga/cancelado/aguardando ficam fora — não exigem ação interna)
-    const bola_redonda = lista.filter(
-      (c) => bolaRedondaSet.has(c.id) && ["aberto", "aprovado"].includes(c.status),
-    );
     const sumValor = (arr: Conta[]) => arr.reduce((s, c) => s + Number(c.valor || 0), 0);
     return {
       para_agir: { count: para_agir.length, valor: sumValor(para_agir) },
       atrasadas: { count: atrasadas.length, valor: sumValor(atrasadas) },
       aguardando: { count: aguardando.length, valor: sumValor(aguardando) },
       pendencia: { count: pendencia.length, valor: sumValor(pendencia) },
-      bola_redonda: { count: bola_redonda.length, valor: sumValor(bola_redonda) },
     };
-  }, [data, pendenciaMap, bolaRedondaSet]);
+  }, [data, pendenciaMap]);
 
   const filtrados = useMemo(() => {
     let lista = data || [];
@@ -287,10 +261,6 @@ export default function ContasPagar() {
       lista = lista.filter((c) => c.status === "aguardando_pagamento");
     } else if (kpiFilter === "pendencia") {
       lista = lista.filter((c) => pendenciaMap.has(c.id));
-    } else if (kpiFilter === "bola_redonda") {
-      lista = lista.filter(
-        (c) => bolaRedondaSet.has(c.id) && ["aberto", "aprovado"].includes(c.status),
-      );
     }
     if (busca.trim()) {
       const b = busca.toLowerCase();
@@ -310,7 +280,7 @@ export default function ContasPagar() {
     if (dataDe) lista = lista.filter((c) => (c.data_vencimento || "") >= dataDe);
     if (dataAte) lista = lista.filter((c) => (c.data_vencimento || "") <= dataAte);
     return lista;
-  }, [data, kpiFilter, busca, statusFilter, solicitanteFilter, dataDe, dataAte, pendenciaMap, bolaRedondaSet, solicitanteMap]);
+  }, [data, kpiFilter, busca, statusFilter, solicitanteFilter, dataDe, dataAte, pendenciaMap, solicitanteMap]);
 
   const temFiltroAtivo =
     !!busca.trim() ||
@@ -378,7 +348,7 @@ export default function ContasPagar() {
         </div>
 
         {/* KPI cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <KpiCard
             icon={Flame}
             label="Para agir"
@@ -418,16 +388,6 @@ export default function ContasPagar() {
             border="border-amber-300"
             active={kpiFilter === "pendencia"}
             onClick={() => setKpiFilter(kpiFilter === "pendencia" ? null : "pendencia")}
-          />
-          <KpiCard
-            icon={CircleCheck}
-            label="Pronto pra pagar"
-            count={kpis.bola_redonda.count}
-            valor={kpis.bola_redonda.valor}
-            color="text-emerald-600"
-            border="border-emerald-300"
-            active={kpiFilter === "bola_redonda"}
-            onClick={() => setKpiFilter(kpiFilter === "bola_redonda" ? null : "bola_redonda")}
           />
         </div>
       </div>
