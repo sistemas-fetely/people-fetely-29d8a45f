@@ -268,14 +268,6 @@ export default function EnviarPagamentoDialog({ open, onOpenChange, conta, onDon
     setFormaPagamentoId(conta.forma_pagamento_id || "");
   }, [open, conta]);
 
-  // Selecionar todos os documentos por default quando carregam (manuais + NFs do Stage)
-  useEffect(() => {
-    if (documentosTodos.length > 0 && docsSelecionados.size === 0) {
-      setDocsSelecionados(new Set(documentosTodos.map((d) => d.id)));
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [documentosTodos]);
-
   const fornecedorNome = useMemo(
     () =>
       conta.parceiros_comerciais?.razao_social ||
