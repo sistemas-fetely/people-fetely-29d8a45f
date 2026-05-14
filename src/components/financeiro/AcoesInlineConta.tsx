@@ -50,7 +50,7 @@ const COR_ICONE: Record<EstadoIcone, string> = {
 
 export default function AcoesInlineConta({ conta, onAbrirEditandoBanco }: Props) {
   const qc = useQueryClient();
-  const workflow = useContaWorkflow();
+  
   const [aprovando, setAprovando] = useState(false);
   const [lancandoMov, setLancandoMov] = useState(false);
   const [showEnviar, setShowEnviar] = useState(false);
