@@ -24,7 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { FileText, Loader2, Send, Info } from "lucide-react";
+import { FileText, Loader2, Send, Info, AlertCircle, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
 import { useContaWorkflow } from "@/hooks/useContaWorkflow";
