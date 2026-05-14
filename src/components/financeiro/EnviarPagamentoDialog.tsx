@@ -687,13 +687,13 @@ export default function EnviarPagamentoDialog({ open, onOpenChange, conta, onDon
           </div>
 
           {/* Documentos para anexar (selecionar quais) */}
-          {documentos && documentos.length > 0 && (
+          {documentosTodos.length > 0 && (
             <div className="space-y-2">
               <Label className="text-xs uppercase tracking-wide text-muted-foreground">
-                Documentos para anexar ({docsSelecionados.size}/{documentos.length})
+                Documentos para anexar ({docsSelecionados.size}/{documentosTodos.length})
               </Label>
               <div className="space-y-1.5 border rounded-md p-2">
-                {documentos.map((doc) => (
+                {documentosTodos.map((doc) => (
                   <div key={doc.id} className="flex items-center gap-2 text-xs">
                     <Checkbox
                       id={`doc-${doc.id}`}
@@ -725,7 +725,7 @@ export default function EnviarPagamentoDialog({ open, onOpenChange, conta, onDon
             </div>
           )}
 
-          {!documentos?.length && (
+          {documentosTodos.length === 0 && (
             <div className="text-xs text-amber-700 bg-amber-50 p-2 rounded-md border border-amber-200">
               ⚠ Nenhum documento anexado a esta conta. O envio será feito sem anexos.
             </div>
