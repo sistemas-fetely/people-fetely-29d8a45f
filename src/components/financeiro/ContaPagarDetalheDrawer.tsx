@@ -389,25 +389,7 @@ export default function ContaPagarDetalheDrawer({
                     {conta.status === "paga" ? "Ver dados" : "Editar"}
                   </Button>
                 )}
-                {!modoEdit
-                  && conta.status === "aguardando_pagamento"
-                  && !conta.movimentacao_bancaria_id && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="ml-1 border-blue-300 text-blue-700 hover:bg-blue-50 gap-1"
-                    onClick={handleLancarMov}
-                    disabled={lancandoMov}
-                    title="Antecipar lançamento em Movimentação (paga fora do sistema)"
-                  >
-                    {lancandoMov ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    ) : (
-                      <ArrowRightLeft className="h-3.5 w-3.5" />
-                    )}
-                    <span className="text-xs">Lançar em Mov</span>
-                  </Button>
-                )}
+                {/* Botão de Lançar em Mov movido pra área de ações por status (footer) — bloco aguardando_pagamento */}
               </div>
               <div className="text-2xl font-bold mt-2">{formatBRL(conta.valor)}</div>
               {conta.origem === "nf_pj_interno" && nfPjId && (
