@@ -518,7 +518,7 @@ export function ContaPagarFormEdit({
           options={categorias}
           value={contaId === "__none__" ? null : contaId}
           onChange={(id) => setContaId(id || "__none__")}
-          disabled={isReadOnly || salvando}
+          disabled={criticosTravados || salvando}
           placeholder="Selecionar categoria..."
           allowNull
         />
