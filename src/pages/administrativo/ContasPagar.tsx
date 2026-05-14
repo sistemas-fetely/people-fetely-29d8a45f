@@ -348,7 +348,7 @@ export default function ContasPagar() {
         </div>
 
         {/* KPI cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <KpiCard
             icon={Flame}
             label="Para agir"
