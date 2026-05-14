@@ -415,6 +415,17 @@ export function ContaPagarFormEdit({
         </div>
       )}
 
+      {enviadoAguardando && (
+        <div className="p-3 rounded-md border border-amber-300 bg-amber-50 text-amber-900 text-xs space-y-1">
+          <p className="font-medium">📧 Email de pagamento já enviado</p>
+          <p>
+            Campos críticos (categoria, centro de custo, meio de pagamento, vencimento, conta origem)
+            estão travados. Descrição, observação e metadados fiscais permanecem editáveis.
+            Pra alterar campos críticos, cancele esta CPR e crie uma nova.
+          </p>
+        </div>
+      )}
+
       {/* Descrição */}
       <div className="space-y-1">
         <Label htmlFor="cp-edit-descricao">Descrição</Label>
