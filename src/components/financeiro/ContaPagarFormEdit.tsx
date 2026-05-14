@@ -59,6 +59,11 @@ interface Props {
 
 const STATUS_READONLY = ["paga", "cancelado"];
 
+// Status em que campos CRÍTICOS (categoria, centro custo, vencimento, meio, conta origem)
+// ficam travados. Inclui `aguardando_pagamento` porque o email já saiu pro financeiro —
+// D-E (bola redonda): pacote enviado é imutável sem novo envio. Pra alterar = cancelar e recriar.
+const STATUS_TRAVA_CRITICOS = ["aguardando_pagamento", "paga", "cancelado"];
+
 export function ContaPagarFormEdit({
   conta,
   onSaved,
