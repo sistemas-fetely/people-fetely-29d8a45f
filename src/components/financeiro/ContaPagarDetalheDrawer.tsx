@@ -406,38 +406,6 @@ export default function ContaPagarDetalheDrawer({
                     <span className="text-xs">Lançar em Mov</span>
                   </Button>
                 )}
-                {!modoEdit && ["rascunho", "aberto", "aprovado", "aguardando_pagamento"].includes(conta.status) && (
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="ml-1 text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
-                        disabled={apagando}
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Apagar conta?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Apagar permanentemente "{conta.descricao}" — {formatBRL(conta.valor)}.
-                          Essa ação não pode ser desfeita.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                        <AlertDialogAction
-                          className="bg-red-600 hover:bg-red-700 text-white"
-                          onClick={() => handleApagar(false)}
-                        >
-                          Apagar
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                )}
               </div>
               <div className="text-2xl font-bold mt-2">{formatBRL(conta.valor)}</div>
               {conta.origem === "nf_pj_interno" && nfPjId && (
