@@ -944,19 +944,30 @@ function Linha({ label, value }: { label: string; value: React.ReactNode }) {
 }
 
 
-// Lista de NFs anexadas a uma CPR (modelo N:1: 1 CPR pode ter múltiplas NFs anexadas)
+// NF vinculada à CPR — usa cpr.nf_stage_id (vínculo unilateral CPR→NF)
+// V1: 1 CPR vê 1 NF. Várias CPRs (parcelas) podem apontar pra mesma NF — cada parcela vê a NF nesse drawer.
 function NFsAnexadasSecao({ contaId }: { contaId: string }) {
   const qc = useQueryClient();
 
   const { data: nfs = [] } = useQuery({
     queryKey: ["nfs-anexadas-cpr", contaId],
     queryFn: async () => {
+      // 1. Pega nf_stage_id da CPR
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: cpr } = await (supabase as any)
+        .from("contas_pagar_receber")
+        .select("nf_stage_id")
+        .eq("id", contaId)
+        .maybeSingle();
+
+      if (!cpr?.nf_stage_id) return [];
+
+      // 2. Busca a NF correspondente
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data, error } = await (supabase as any)
         .from("nfs_stage")
         .select("id, tipo_documento, fornecedor_razao_social, nf_numero, valor, nf_data_emissao")
-        .eq("conta_pagar_id", contaId)
-        .order("nf_data_emissao", { ascending: true });
+        .eq("id", cpr.nf_stage_id);
       if (error) throw error;
       return (data || []) as Array<{
         id: string;
@@ -969,12 +980,13 @@ function NFsAnexadasSecao({ contaId }: { contaId: string }) {
     },
   });
 
-  async function desanexarNF(nfId: string) {
+  async function desanexarNF() {
+    // Desanexa removendo o nf_stage_id da CPR (vínculo unilateral)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { error } = await (supabase as any)
-      .from("nfs_stage")
-      .update({ conta_pagar_id: null })
-      .eq("id", nfId);
+      .from("contas_pagar_receber")
+      .update({ nf_stage_id: null })
+      .eq("id", contaId);
     if (error) {
       toast.error("Erro ao desanexar: " + error.message);
       return;
