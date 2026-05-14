@@ -165,6 +165,28 @@ export default function ContasPagar() {
     },
   });
 
+  // Mapa: conta_id → data_vencimento da fatura de cartão vinculada
+  const { data: faturaMap = new Map<string, string>() } = useQuery({
+    queryKey: ["contas-pagar-fatura-map", (data || []).map((c) => c.id).join(",")],
+    enabled: !!data && data.some((c) => c.is_cartao),
+    queryFn: async () => {
+      const ids = (data || []).filter((c) => c.is_cartao).map((c) => c.id);
+      if (ids.length === 0) return new Map<string, string>();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: rows } = await (supabase as any)
+        .from("fatura_cartao_lancamentos")
+        .select("conta_pagar_id, faturas_cartao:fatura_id(data_vencimento)")
+        .in("conta_pagar_id", ids);
+      const m = new Map<string, string>();
+      (rows || []).forEach((r: { conta_pagar_id: string | null; faturas_cartao: { data_vencimento: string } | null }) => {
+        if (r.conta_pagar_id && r.faturas_cartao?.data_vencimento) {
+          m.set(r.conta_pagar_id, r.faturas_cartao.data_vencimento);
+        }
+      });
+      return m;
+    },
+  });
+
   // Solicitante — via pedido_compra. Retorna Map (cpr_id -> user_id) + options ordenadas pelo nome.
   const { data: solicitanteData = { map: new Map<string, string>(), options: [] as { id: string; nome: string }[] } } = useQuery({
     queryKey: ["contas-pagar-solicitante-data", (data || []).map((c) => c.id).join(",")],
