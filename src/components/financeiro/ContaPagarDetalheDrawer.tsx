@@ -327,7 +327,7 @@ export default function ContaPagarDetalheDrawer({
     return cats.size > 1;
   })();
 
-  async function avancar(novoStatus: ContaStatus, observacao?: string) {
+  async function avancar(novoStatus: ContaStatus, observacao?: string, closeOnSuccess = true) {
     if (!conta) return;
     await workflow.mudarStatus.mutateAsync({
       contaId: conta.id,
@@ -335,7 +335,9 @@ export default function ContaPagarDetalheDrawer({
       novoStatus,
       observacao: observacao || undefined,
     });
-    // Drawer permanece aberto - usuário decide quando fechar
+    // Click inteligente: por padrão fecha o drawer após avançar status
+    // Próxima ação geralmente é avaliar outras CPRs
+    if (closeOnSuccess) onClose();
   }
 
   const dadosBancarios =
@@ -387,25 +389,7 @@ export default function ContaPagarDetalheDrawer({
                     {conta.status === "paga" ? "Ver dados" : "Editar"}
                   </Button>
                 )}
-                {!modoEdit
-                  && conta.status === "aguardando_pagamento"
-                  && !conta.movimentacao_bancaria_id && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="ml-1 border-blue-300 text-blue-700 hover:bg-blue-50 gap-1"
-                    onClick={handleLancarMov}
-                    disabled={lancandoMov}
-                    title="Antecipar lançamento em Movimentação (paga fora do sistema)"
-                  >
-                    {lancandoMov ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    ) : (
-                      <ArrowRightLeft className="h-3.5 w-3.5" />
-                    )}
-                    <span className="text-xs">Lançar em Mov</span>
-                  </Button>
-                )}
+                {/* Botão de Lançar em Mov movido pra área de ações por status (footer) — bloco aguardando_pagamento */}
               </div>
               <div className="text-2xl font-bold mt-2">{formatBRL(conta.valor)}</div>
               {conta.origem === "nf_pj_interno" && nfPjId && (
@@ -699,6 +683,30 @@ export default function ContaPagarDetalheDrawer({
                     </div>
                   )}
 
+                  {/* AGUARDANDO_PAGAMENTO → permite marcar como paga manualmente (paga fora do sistema) */}
+                  {conta.status === "aguardando_pagamento" && !conta.movimentacao_bancaria_id && (
+                    <div className="space-y-2">
+                      <div className="p-3 rounded-lg bg-amber-50 text-amber-700 text-sm flex items-center gap-2">
+                        <Clock className="h-4 w-4" /> Aguardando pagamento — quando confirmar que foi paga, marque abaixo
+                      </div>
+                      <Button
+                        className="w-full bg-emerald-600 hover:bg-emerald-700 text-white gap-2"
+                        onClick={async () => {
+                          await handleLancarMov();
+                          onClose();
+                        }}
+                        disabled={lancandoMov}
+                      >
+                        {lancandoMov ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <ArrowRightLeft className="h-4 w-4" />
+                        )}
+                        Marcar como paga
+                      </Button>
+                    </div>
+                  )}
+
                   {/* DOC_PENDENTE → reenviar email + opção finalizar manual */}
                   {conta.status === "doc_pendente" && (
                     <div className="space-y-2">
@@ -746,7 +754,7 @@ export default function ContaPagarDetalheDrawer({
                       <Button
                         variant="outline"
                         className="w-full gap-2"
-                        onClick={() => avancar("aberto", "Reaberto após cancelamento")}
+                        onClick={() => avancar("aberto", "Reaberto após cancelamento", false)}
                       >
                         <RotateCcw className="h-4 w-4" /> Reabrir
                       </Button>
@@ -762,7 +770,7 @@ export default function ContaPagarDetalheDrawer({
                       <Button
                         variant="outline"
                         className="w-full gap-2"
-                        onClick={() => avancar("aberto", "Migrado para novo fluxo")}
+                        onClick={() => avancar("aberto", "Migrado para novo fluxo", false)}
                       >
                         <RotateCcw className="h-4 w-4" /> Reabrir para novo fluxo
                       </Button>
