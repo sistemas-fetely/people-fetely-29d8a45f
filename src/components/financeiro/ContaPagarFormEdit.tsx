@@ -571,7 +571,7 @@ export function ContaPagarFormEdit({
         <Select
           value={centroCustoId ?? "__none__"}
           onValueChange={(v) => setCentroCustoId(v === "__none__" ? null : v)}
-          disabled={isReadOnly || salvando}
+          disabled={criticosTravados || salvando}
         >
           <SelectTrigger>
             <SelectValue placeholder="Definir..." />
