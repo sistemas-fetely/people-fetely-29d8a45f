@@ -575,51 +575,60 @@ export default function EnviarPagamentoDialog({ open, onOpenChange, conta, onDon
             </div>
           )}
 
-          {/* Dados bancários */}
+          {/* Dados bancários — D-E: bola redonda entre processos.
+              Se parceiro com cadastro_incompleto → bloqueia envio + link pra completar.
+              Se completo → exibe read-only do cadastro. */}
           <div className="space-y-2">
             <Label className="text-xs uppercase tracking-wide text-muted-foreground">
               Dados bancários do fornecedor
             </Label>
-            {conta.parceiro_id && semDadosBancariosCadastrados && (
-              <div className="flex items-start gap-2 p-2 rounded-md border border-blue-200 bg-blue-50 text-xs text-blue-800">
-                <Info className="h-3.5 w-3.5 shrink-0 mt-0.5" />
-                <span>
-                  Sem dados bancários cadastrados pra este fornecedor. Preencha aqui — vamos salvar no cadastro pra próxima vez.
-                </span>
+
+            {parceiroCadastroIncompleto ? (
+              <div className="flex items-start gap-3 p-3 rounded-md border border-amber-300 bg-amber-50">
+                <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-amber-700" />
+                <div className="flex-1 space-y-2">
+                  <p className="text-sm font-medium text-amber-900">
+                    Cadastro do Parceiro incompleto
+                  </p>
+                  <p className="text-xs text-amber-800">
+                    Antes de enviar pagamento, complete os dados bancários no cadastro do Parceiro.
+                    O envio só fica liberado quando o cadastro está completo.
+                  </p>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="gap-2 border-amber-400 text-amber-900 hover:bg-amber-100"
+                    onClick={() => {
+                      onOpenChange(false);
+                      navigate(`/administrativo/parceiros?abrir=${conta.parceiro_id}`);
+                    }}
+                  >
+                    <ExternalLink className="h-3.5 w-3.5" />
+                    Abrir cadastro do Parceiro
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label className="text-xs">Banco</Label>
+                  <p className="text-sm font-medium px-3 py-2 rounded-md bg-muted/40 border">{dadosPgto.banco || "—"}</p>
+                </div>
+                <div>
+                  <Label className="text-xs">Agência</Label>
+                  <p className="text-sm font-medium px-3 py-2 rounded-md bg-muted/40 border">{dadosPgto.agencia || "—"}</p>
+                </div>
+                <div>
+                  <Label className="text-xs">Conta</Label>
+                  <p className="text-sm font-medium px-3 py-2 rounded-md bg-muted/40 border">{dadosPgto.conta || "—"}</p>
+                </div>
+                <div>
+                  <Label className="text-xs">PIX</Label>
+                  <p className="text-sm font-medium px-3 py-2 rounded-md bg-muted/40 border">{dadosPgto.pix || "—"}</p>
+                </div>
               </div>
             )}
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <Label className="text-xs">Banco</Label>
-                <Input
-                  value={dadosPgto.banco}
-                  onChange={(e) => setDadosPgto({ ...dadosPgto, banco: e.target.value })}
-                  placeholder="Ex: Itaú"
-                />
-              </div>
-              <div>
-                <Label className="text-xs">Agência</Label>
-                <Input
-                  value={dadosPgto.agencia}
-                  onChange={(e) => setDadosPgto({ ...dadosPgto, agencia: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label className="text-xs">Conta</Label>
-                <Input
-                  value={dadosPgto.conta}
-                  onChange={(e) => setDadosPgto({ ...dadosPgto, conta: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label className="text-xs">PIX</Label>
-                <Input
-                  value={dadosPgto.pix}
-                  onChange={(e) => setDadosPgto({ ...dadosPgto, pix: e.target.value })}
-                  placeholder="CNPJ, email, etc"
-                />
-              </div>
-            </div>
           </div>
 
           {/* Destinatário */}
