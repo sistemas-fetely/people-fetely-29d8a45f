@@ -255,17 +255,18 @@ export default function ContaPagarDetalheDrawer({
     },
   });
 
-  // Detectar se a CPR tem irmãs (mesmo pedido_compra_id, não-canceladas)
+  // Detectar se a CPR tem irmãs (mesmo parcela_grupo_id, não-canceladas)
+  // parcela_grupo_id é universal — cobre Pedido de Compra, NF parcelada, contrato, compromisso
   const { data: irmasInfo } = useQuery({
-    queryKey: ["cpr-irmas-info", (conta as unknown as { pedido_compra_id?: string | null })?.pedido_compra_id, conta?.id],
-    enabled: !!(conta as unknown as { pedido_compra_id?: string | null })?.pedido_compra_id && !!conta?.id,
+    queryKey: ["cpr-irmas-info", (conta as unknown as { parcela_grupo_id?: string | null })?.parcela_grupo_id, conta?.id],
+    enabled: !!(conta as unknown as { parcela_grupo_id?: string | null })?.parcela_grupo_id && !!conta?.id,
     queryFn: async () => {
-      const pedidoId = (conta as unknown as { pedido_compra_id?: string | null })?.pedido_compra_id;
-      if (!pedidoId || !conta?.id) return { totalIrmas: 0 };
+      const grupoId = (conta as unknown as { parcela_grupo_id?: string | null })?.parcela_grupo_id;
+      if (!grupoId || !conta?.id) return { totalIrmas: 0 };
       const { count } = await supabase
         .from("contas_pagar_receber")
         .select("id", { count: "exact", head: true })
-        .eq("pedido_compra_id", pedidoId)
+        .eq("parcela_grupo_id", grupoId)
         .neq("id", conta.id)
         .neq("status", "cancelado");
       return { totalIrmas: count || 0 };
