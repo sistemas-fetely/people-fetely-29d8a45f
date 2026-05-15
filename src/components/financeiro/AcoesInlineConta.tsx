@@ -30,9 +30,10 @@ type Conta = Record<string, any> & {
   nf_numero_repositorio?: string | null;
   email_pagamento_enviado?: boolean | null;
   // Campos pra regra do ícone email (família + forma de pagamento)
-  is_cartao?: boolean | null;
+  meio_pagamento_id?: string | null;
+  meios_pagamento?: { codigo?: string | null } | null;
   origem?: string | null;
-  formas_pagamento?: { codigo?: string | null; nome?: string | null } | null;
+  formas_pagamento?: { codigo?: string | null; nome?: string | null; cobra_email?: boolean | null } | null;
 };
 
 interface Props {
