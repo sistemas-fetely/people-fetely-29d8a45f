@@ -63,6 +63,9 @@ type Conta = {
   mov_conciliada: boolean | null;
   movimentacao_bancaria_id: string | null;
   nf_numero_repositorio: string | null;
+  nf_aplicavel?: boolean | null;
+  vinculo_nf_completo?: boolean | null;
+  valor_nf_vinculado?: number | null;
   plano_contas?: { codigo?: string | null; nome: string } | null;
   parceiros_comerciais?: { razao_social: string | null } | null;
   formas_pagamento?: { codigo: string | null; nome: string | null } | null;
