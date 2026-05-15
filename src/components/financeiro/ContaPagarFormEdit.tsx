@@ -347,6 +347,11 @@ export function ContaPagarFormEdit({
       return;
     }
 
+    if (!nfAplicavel && !nfAplicavelMotivo.trim()) {
+      toast.error("Informe o motivo de a NF não ser aplicável");
+      return;
+    }
+
     setSalvando(true);
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
