@@ -600,28 +600,12 @@ export default function NFsStage() {
         {/* KPI pills (clicáveis = filtros) */}
         <div className="flex flex-wrap gap-2">
           <KpiPill
-            label="Todas"
-            count={totals.total}
-            color="admin"
-            active={filtroPill === "todas"}
-            onClick={() => setFiltroPill("todas")}
-            icon={<Package className="h-3 w-3" />}
-          />
-          <KpiPill
-            label="Não vinculadas"
+            label="Aguardando vínculo"
             count={totals.naoVinculadas}
             color="amber"
             active={filtroPill === "nao_vinculadas"}
             onClick={() => setFiltroPill("nao_vinculadas")}
             icon={<Clock className="h-3 w-3" />}
-          />
-          <KpiPill
-            label="Vinculadas"
-            count={totals.vinculadas}
-            color="emerald"
-            active={filtroPill === "vinculadas"}
-            onClick={() => setFiltroPill("vinculadas")}
-            icon={<CheckCircle2 className="h-3 w-3" />}
           />
           <KpiPill
             label="Sem categoria"
@@ -646,6 +630,14 @@ export default function NFsStage() {
             active={filtroPill === "com_pdf"}
             onClick={() => setFiltroPill("com_pdf")}
             icon={<FileCheck className="h-3 w-3" />}
+          />
+          <KpiPill
+            label="Descartadas"
+            count={totals.descartadas}
+            color="gray"
+            active={filtroPill === "descartadas"}
+            onClick={() => setFiltroPill("descartadas")}
+            icon={<Trash2 className="h-3 w-3" />}
           />
         </div>
 
