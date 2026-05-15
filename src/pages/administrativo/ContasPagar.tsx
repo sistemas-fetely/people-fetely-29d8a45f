@@ -52,7 +52,8 @@ type Conta = {
   parceiro_id: string | null;
   conta_id: string | null;
   origem: string | null;
-  is_cartao: boolean | null;
+  meio_pagamento_id: string | null;
+  meios_pagamento?: { codigo: string | null } | null;
   tags: unknown;
   tem_doc_pendente: boolean | null;
   atrasada: boolean | null;
