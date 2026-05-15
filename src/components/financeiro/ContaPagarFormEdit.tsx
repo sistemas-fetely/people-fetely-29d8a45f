@@ -190,6 +190,8 @@ export function ContaPagarFormEdit({
     setNfNumero(conta.nf_numero || "");
     setNfSerie(conta.nf_serie || "");
     setNfChave(conta.nf_chave_acesso || "");
+    setNfAplicavel(conta.nf_aplicavel === false ? false : true);
+    setNfAplicavelMotivo(conta.nf_aplicavel_motivo || "");
     setPagoEmContaId(conta.pago_em_conta_id || "__none__");
     setLinhaInvestimentoId(conta.linha_investimento_id ?? null);
   }, [conta.id]); // eslint-disable-line react-hooks/exhaustive-deps
