@@ -29,7 +29,7 @@ export type ContaInput = {
   fornecedor_cliente: string | null;
   status?: string;
   nf_cnpj_emitente?: string | null;
-  is_cartao?: boolean | null;
+  eh_cartao?: boolean | null;
 };
 
 export type AgrupamentoSugerido = {
