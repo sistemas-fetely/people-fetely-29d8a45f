@@ -12,10 +12,19 @@ interface DocLink {
   url?: string
 }
 
+interface ParcelaItem {
+  numero?: string
+  valor?: string
+  vencimento?: string
+}
+
 interface PagamentoSolicitacaoProps {
   fornecedor?: string
   valor?: string
   vencimento?: string
+  parcelas?: ParcelaItem[]
+  valor_total?: string
+  forma_pagamento_nome?: string
   nf_numero?: string
   categoria?: string
   banco?: string
