@@ -171,15 +171,29 @@ export function ImportarNFDespesaDialog({
           parcela_grupo_id: grupoId,
           status: "aberto",
           origem: "manual",
-          nf_stage_id: nf.stageId,
         });
       }
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await (supabase as any)
+      const { data: inseridas, error } = await (supabase as any)
         .from("contas_pagar_receber")
-        .insert(rows);
+        .insert(rows)
+        .select("id, parcela_atual");
       if (error) throw error;
+
+      // Vincula a NF à PRIMEIRA parcela (modelo N:1: NF aponta para uma CPR).
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const primeira = (inseridas || []).find((r: any) => r.parcela_atual === 1);
+      if (primeira && nf.stageId) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { error: vincErr } = await (supabase as any).rpc("vincular_nf_a_conta", {
+          p_nf_id: nf.stageId,
+          p_conta_id: primeira.id,
+        });
+        if (vincErr) {
+          console.warn("Falha ao vincular NF à parcela 1:", vincErr);
+        }
+      }
 
       qc.invalidateQueries({ queryKey: ["contas-pagar"] });
       qc.invalidateQueries({ queryKey: ["nfs-stage"] });
