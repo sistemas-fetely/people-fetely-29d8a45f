@@ -278,6 +278,11 @@ export default function ContasPagar() {
   const solicitanteMap = solicitanteData.map;
   const solicitantesOptions = solicitanteData.options;
 
+  const temPendenciaNF = (id: string) => {
+    const s = nfStatusMap.get(id);
+    return !!s && s.nf_aplicavel && !s.vinculo_nf_completo;
+  };
+
   const kpis = useMemo(() => {
     const lista = data || [];
     const para_agir = lista.filter(
@@ -287,7 +292,9 @@ export default function ContasPagar() {
       (c) => c.atrasada && !["paga", "realizada", "cancelado"].includes(c.status),
     );
     const aguardando = lista.filter((c) => c.status === "aguardando_pagamento");
-    const pendencia = lista.filter((c) => pendenciaMap.has(c.id));
+    const pendencia = lista.filter(
+      (c) => pendenciaMap.has(c.id) || temPendenciaNF(c.id),
+    );
     const sumValor = (arr: Conta[]) => arr.reduce((s, c) => s + Number(c.valor || 0), 0);
     return {
       para_agir: { count: para_agir.length, valor: sumValor(para_agir) },
@@ -295,7 +302,8 @@ export default function ContasPagar() {
       aguardando: { count: aguardando.length, valor: sumValor(aguardando) },
       pendencia: { count: pendencia.length, valor: sumValor(pendencia) },
     };
-  }, [data, pendenciaMap]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data, pendenciaMap, nfStatusMap]);
 
   const filtrados = useMemo(() => {
     let lista = data || [];
@@ -310,7 +318,7 @@ export default function ContasPagar() {
     } else if (kpiFilter === "aguardando") {
       lista = lista.filter((c) => c.status === "aguardando_pagamento");
     } else if (kpiFilter === "pendencia") {
-      lista = lista.filter((c) => pendenciaMap.has(c.id));
+      lista = lista.filter((c) => pendenciaMap.has(c.id) || temPendenciaNF(c.id));
     }
     if (busca.trim()) {
       const b = busca.toLowerCase();
@@ -321,7 +329,9 @@ export default function ContasPagar() {
           c.fornecedor_cliente?.toLowerCase().includes(b),
       );
     }
-    if (statusFilter && statusFilter !== "todos") {
+    if (statusFilter === "pendencia_nf") {
+      lista = lista.filter((c) => temPendenciaNF(c.id));
+    } else if (statusFilter && statusFilter !== "todos") {
       lista = lista.filter((c) => c.status === statusFilter);
     }
     if (solicitanteFilter && solicitanteFilter !== "todos") {
@@ -330,7 +340,8 @@ export default function ContasPagar() {
     if (dataDe) lista = lista.filter((c) => (c.data_vencimento || "") >= dataDe);
     if (dataAte) lista = lista.filter((c) => (c.data_vencimento || "") <= dataAte);
     return lista;
-  }, [data, kpiFilter, busca, statusFilter, solicitanteFilter, dataDe, dataAte, pendenciaMap, solicitanteMap]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data, kpiFilter, busca, statusFilter, solicitanteFilter, dataDe, dataAte, pendenciaMap, solicitanteMap, nfStatusMap]);
 
   const temFiltroAtivo =
     !!busca.trim() ||
