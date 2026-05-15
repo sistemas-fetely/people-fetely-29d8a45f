@@ -48,7 +48,8 @@ type ContaEditavel = {
   pago_em_conta_id?: string | null;
   linha_investimento_id?: string | null;
   // Família (decide visibilidade dos campos)
-  is_cartao?: boolean | null;
+  meio_pagamento_id?: string | null;
+  meios_pagamento?: { codigo?: string | null } | null;
   origem?: string | null;
   formas_pagamento?: { codigo?: string | null; nome?: string | null } | null;
 };
