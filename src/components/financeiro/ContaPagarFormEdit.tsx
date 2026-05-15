@@ -123,6 +123,12 @@ export function ContaPagarFormEdit({
   const [nfNumero, setNfNumero] = useState(conta.nf_numero || "");
   const [nfSerie, setNfSerie] = useState(conta.nf_serie || "");
   const [nfChave, setNfChave] = useState(conta.nf_chave_acesso || "");
+  const [nfAplicavel, setNfAplicavel] = useState<boolean>(
+    conta.nf_aplicavel === false ? false : true,
+  );
+  const [nfAplicavelMotivo, setNfAplicavelMotivo] = useState(
+    conta.nf_aplicavel_motivo || "",
+  );
   const [pagoEmContaId, setPagoEmContaId] = useState(conta.pago_em_conta_id || "__none__");
   const [parceiroIdAtribuir, setParceiroIdAtribuir] = useState<string | null>(null);
   const [linhaInvestimentoId, setLinhaInvestimentoId] = useState<string | null>(
