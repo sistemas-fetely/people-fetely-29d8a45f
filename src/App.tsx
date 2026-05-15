@@ -64,6 +64,7 @@ const ProdutoLayout = lazy(() => import("@/layouts/ProdutoLayout"));
 const ProdutoIndex = lazy(() => import("@/pages/produto/ProdutoIndex"));
 const TIDashboard = lazy(() => import("@/pages/ti/TIDashboard"));
 const TIAtivos = lazy(() => import("@/pages/ti/TIAtivos"));
+const TesteEmailTemplate = lazy(() => import("@/pages/ti/TesteEmailTemplate"));
 const DocumentacaoDetalhe = lazy(() => import("@/pages/ti/DocumentacaoDetalhe"));
 const DocumentacaoForm = lazy(() => import("@/pages/ti/DocumentacaoForm"));
 const MinhasTarefas = lazy(() => import("@/pages/MinhasTarefas"));
@@ -214,6 +215,7 @@ const App = () => (
             <Route path="/ti" element={<ProtectedRoute><TILayout /></ProtectedRoute>}>
               <Route index element={<TIDashboard />} />
               <Route path="ativos" element={<TIAtivos />} />
+              <Route path="diagnosticos/teste-email" element={<TesteEmailTemplate />} />
               {/* Redirects legados — documentação migrou pra SNCF */}
               <Route path="documentacao" element={<Navigate to="/documentacao" replace />} />
               <Route path="documentacao/novo" element={<Navigate to="/documentacao/novo" replace />} />

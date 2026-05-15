@@ -1,4 +1,4 @@
-import { LayoutDashboard, Monitor, Package, LogOut, LayoutGrid, ClipboardList, Users, Shield, UsersRound, Landmark, MessageSquareWarning } from "lucide-react";
+import { LayoutDashboard, Monitor, Package, LogOut, LayoutGrid, ClipboardList, Users, Shield, UsersRound, Landmark, MessageSquareWarning, Send } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { cn } from "@/lib/utils";
 import { useLocation } from "react-router-dom";
@@ -126,6 +126,35 @@ export function TISidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {roles.includes("super_admin") && (
+          <SidebarGroup>
+            {!collapsed && (
+              <SidebarGroupLabel className="text-sidebar-muted text-[10px] uppercase tracking-widest font-semibold mb-1 px-4">
+                Diagnósticos
+              </SidebarGroupLabel>
+            )}
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <NavLink
+                      to="/ti/diagnosticos/teste-email"
+                      className={cn(
+                        "flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-all duration-200",
+                        location.pathname === "/ti/diagnosticos/teste-email" && "bg-sidebar-accent text-sidebar-foreground font-medium border-l-[3px] shadow-sm"
+                      )}
+                      style={location.pathname === "/ti/diagnosticos/teste-email" ? { borderLeftColor: TI_COLOR, color: TI_COLOR } : undefined}
+                    >
+                      <Send className="h-[18px] w-[18px] shrink-0" style={location.pathname === "/ti/diagnosticos/teste-email" ? { color: TI_COLOR } : undefined} />
+                      {!collapsed && <span>Teste de Email</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
       </SidebarContent>
 
       <SidebarFooter className="p-4">
