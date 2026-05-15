@@ -69,7 +69,7 @@ type Conta = {
   valor_nf_vinculado?: number | null;
   plano_contas?: { codigo?: string | null; nome: string } | null;
   parceiros_comerciais?: { razao_social: string | null } | null;
-  formas_pagamento?: { codigo: string | null; nome: string | null } | null;
+  formas_pagamento?: { codigo: string | null; nome: string | null; cobra_email: boolean | null; pula_aprovacao: boolean | null } | null;
   fornecedor_cliente?: string | null;
 };
 
