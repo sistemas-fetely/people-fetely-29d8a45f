@@ -239,9 +239,9 @@ export default function FaturasCartao() {
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data: todasParcelas } = await (supabase as any)
-        .from("contas_pagar_receber")
+        .from("contas_pagar_receber_ativas")
         .select("id, parcela_grupo_id")
-        .eq("is_cartao", true)
+        .eq("eh_cartao", true)
         .not("parcela_grupo_id", "is", null);
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
