@@ -57,7 +57,7 @@ type Conta = {
   tem_doc_pendente: boolean | null;
   atrasada: boolean | null;
   status_efetivo: string | null;
-  nf_stage_id: string | null;
+  
   nf_tipo: string | null;
   nf_fornecedor: string | null;
   mov_conciliada: boolean | null;
