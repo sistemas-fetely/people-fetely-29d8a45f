@@ -236,6 +236,20 @@ export type Database = {
             foreignKeyName: "auditoria_resumo_nfe_falhas_nfs_stage_id_fkey"
             columns: ["nfs_stage_id"]
             isOneToOne: false
+            referencedRelation: "vw_contas_pagar_consolidado"
+            referencedColumns: ["nf_stage_id"]
+          },
+          {
+            foreignKeyName: "auditoria_resumo_nfe_falhas_nfs_stage_id_fkey"
+            columns: ["nfs_stage_id"]
+            isOneToOne: false
+            referencedRelation: "vw_documentos_envio_estados"
+            referencedColumns: ["nf_stage_id"]
+          },
+          {
+            foreignKeyName: "auditoria_resumo_nfe_falhas_nfs_stage_id_fkey"
+            columns: ["nfs_stage_id"]
+            isOneToOne: false
             referencedRelation: "vw_nfs_stage_completude"
             referencedColumns: ["id"]
           },
@@ -2420,7 +2434,6 @@ export type Database = {
           nf_numero: string | null
           nf_pdf_url: string | null
           nf_serie: string | null
-          nf_stage_id: string | null
           nf_valor_impostos: number | null
           nf_valor_produtos: number | null
           nf_xml_url: string | null
@@ -2510,7 +2523,6 @@ export type Database = {
           nf_numero?: string | null
           nf_pdf_url?: string | null
           nf_serie?: string | null
-          nf_stage_id?: string | null
           nf_valor_impostos?: number | null
           nf_valor_produtos?: number | null
           nf_xml_url?: string | null
@@ -2600,7 +2612,6 @@ export type Database = {
           nf_numero?: string | null
           nf_pdf_url?: string | null
           nf_serie?: string | null
-          nf_stage_id?: string | null
           nf_valor_impostos?: number | null
           nf_valor_produtos?: number | null
           nf_xml_url?: string | null
@@ -2708,20 +2719,6 @@ export type Database = {
             columns: ["movimentacao_bancaria_id"]
             isOneToOne: false
             referencedRelation: "movimentacoes_bancarias"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "contas_pagar_receber_nf_stage_id_fkey"
-            columns: ["nf_stage_id"]
-            isOneToOne: false
-            referencedRelation: "nfs_stage"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "contas_pagar_receber_nf_stage_id_fkey"
-            columns: ["nf_stage_id"]
-            isOneToOne: false
-            referencedRelation: "vw_nfs_stage_completude"
             referencedColumns: ["id"]
           },
           {
@@ -4767,6 +4764,20 @@ export type Database = {
             foreignKeyName: "ged_documentos_nfs_stage_id_fkey"
             columns: ["nfs_stage_id"]
             isOneToOne: false
+            referencedRelation: "vw_contas_pagar_consolidado"
+            referencedColumns: ["nf_stage_id"]
+          },
+          {
+            foreignKeyName: "ged_documentos_nfs_stage_id_fkey"
+            columns: ["nfs_stage_id"]
+            isOneToOne: false
+            referencedRelation: "vw_documentos_envio_estados"
+            referencedColumns: ["nf_stage_id"]
+          },
+          {
+            foreignKeyName: "ged_documentos_nfs_stage_id_fkey"
+            columns: ["nfs_stage_id"]
+            isOneToOne: false
             referencedRelation: "vw_nfs_stage_completude"
             referencedColumns: ["id"]
           },
@@ -6183,6 +6194,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "nfs_stage"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nfs_stage_documentos_nfs_stage_id_fkey"
+            columns: ["nfs_stage_id"]
+            isOneToOne: false
+            referencedRelation: "vw_contas_pagar_consolidado"
+            referencedColumns: ["nf_stage_id"]
+          },
+          {
+            foreignKeyName: "nfs_stage_documentos_nfs_stage_id_fkey"
+            columns: ["nfs_stage_id"]
+            isOneToOne: false
+            referencedRelation: "vw_documentos_envio_estados"
+            referencedColumns: ["nf_stage_id"]
           },
           {
             foreignKeyName: "nfs_stage_documentos_nfs_stage_id_fkey"
@@ -10551,7 +10576,6 @@ export type Database = {
           nf_numero: string | null
           nf_pdf_url: string | null
           nf_serie: string | null
-          nf_stage_id: string | null
           nf_valor_impostos: number | null
           nf_valor_produtos: number | null
           nf_xml_url: string | null
@@ -10623,7 +10647,6 @@ export type Database = {
           nf_numero?: string | null
           nf_pdf_url?: string | null
           nf_serie?: string | null
-          nf_stage_id?: string | null
           nf_valor_impostos?: number | null
           nf_valor_produtos?: number | null
           nf_xml_url?: string | null
@@ -10695,7 +10718,6 @@ export type Database = {
           nf_numero?: string | null
           nf_pdf_url?: string | null
           nf_serie?: string | null
-          nf_stage_id?: string | null
           nf_valor_impostos?: number | null
           nf_valor_produtos?: number | null
           nf_xml_url?: string | null
@@ -10774,20 +10796,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "contas_pagar_receber_nf_stage_id_fkey"
-            columns: ["nf_stage_id"]
-            isOneToOne: false
-            referencedRelation: "nfs_stage"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "contas_pagar_receber_nf_stage_id_fkey"
-            columns: ["nf_stage_id"]
-            isOneToOne: false
-            referencedRelation: "vw_nfs_stage_completude"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "contas_pagar_receber_pago_em_conta_id_fkey"
             columns: ["pago_em_conta_id"]
             isOneToOne: false
@@ -10857,7 +10865,6 @@ export type Database = {
           nf_numero: string | null
           nf_pdf_url: string | null
           nf_serie: string | null
-          nf_stage_id: string | null
           nf_valor_impostos: number | null
           nf_valor_produtos: number | null
           nf_xml_url: string | null
@@ -10933,7 +10940,6 @@ export type Database = {
           nf_numero?: string | null
           nf_pdf_url?: string | null
           nf_serie?: string | null
-          nf_stage_id?: string | null
           nf_valor_impostos?: number | null
           nf_valor_produtos?: number | null
           nf_xml_url?: string | null
@@ -11009,7 +11015,6 @@ export type Database = {
           nf_numero?: string | null
           nf_pdf_url?: string | null
           nf_serie?: string | null
-          nf_stage_id?: string | null
           nf_valor_impostos?: number | null
           nf_valor_produtos?: number | null
           nf_xml_url?: string | null
@@ -11087,20 +11092,6 @@ export type Database = {
             columns: ["movimentacao_bancaria_id"]
             isOneToOne: false
             referencedRelation: "movimentacoes_bancarias"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "contas_pagar_receber_nf_stage_id_fkey"
-            columns: ["nf_stage_id"]
-            isOneToOne: false
-            referencedRelation: "nfs_stage"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "contas_pagar_receber_nf_stage_id_fkey"
-            columns: ["nf_stage_id"]
-            isOneToOne: false
-            referencedRelation: "vw_nfs_stage_completude"
             referencedColumns: ["id"]
           },
           {
@@ -11436,20 +11427,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "contas_pagar_receber_nf_stage_id_fkey"
-            columns: ["nf_stage_id"]
-            isOneToOne: false
-            referencedRelation: "nfs_stage"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "contas_pagar_receber_nf_stage_id_fkey"
-            columns: ["nf_stage_id"]
-            isOneToOne: false
-            referencedRelation: "vw_nfs_stage_completude"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "contas_pagar_receber_parceiro_id_fkey"
             columns: ["parceiro_id"]
             isOneToOne: false
@@ -11484,20 +11461,6 @@ export type Database = {
           valor: number | null
         }
         Relationships: [
-          {
-            foreignKeyName: "contas_pagar_receber_nf_stage_id_fkey"
-            columns: ["nf_stage_id"]
-            isOneToOne: false
-            referencedRelation: "nfs_stage"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "contas_pagar_receber_nf_stage_id_fkey"
-            columns: ["nf_stage_id"]
-            isOneToOne: false
-            referencedRelation: "vw_nfs_stage_completude"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "contas_pagar_receber_parceiro_id_fkey"
             columns: ["parceiro_id"]
@@ -12294,7 +12257,6 @@ export type Database = {
       desconciliar_movimentacao: { Args: { p_mov_id: string }; Returns: Json }
       desfazer_conciliacao_ofx: { Args: { p_ofx_id: string }; Returns: Json }
       desfazer_remessa: { Args: { p_remessa_id: string }; Returns: Json }
-      desvincular_nf_de_conta: { Args: { p_conta_id: string }; Returns: Json }
       detectar_duplicatas_nf: {
         Args: { p_chaves: string[]; p_cnpj_numero?: Json }
         Returns: {
@@ -12487,6 +12449,10 @@ export type Database = {
       fn_obter_ou_criar_pasta_parceiro: {
         Args: { p_parceiro_id: string }
         Returns: string
+      }
+      fn_recalcular_tags_doc_cpr: {
+        Args: { p_cpr_id: string }
+        Returns: undefined
       }
       fn_recalcular_vinculo_nf_cpr: {
         Args: { p_cpr_id: string }
