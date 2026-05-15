@@ -574,10 +574,10 @@ export default function NFsStage() {
           <div>
             <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
               <Layers className="h-6 w-6 text-admin" />
-              NFs aguardando vínculo a CPR
+              NFs aguardando vínculo
             </h1>
             <p className="text-muted-foreground text-sm mt-0.5">
-              Notas fiscais recebidas que ainda não têm conta a pagar vinculada. Use auto-match ou vincule manualmente.{" "}
+              Notas fiscais importadas que ainda não foram vinculadas a uma despesa.{" "}
               <span className="text-[11px] opacity-70">
                 Atalhos: <kbd className="px-1 py-0.5 border rounded text-[10px]">/</kbd> buscar ·{" "}
                 <kbd className="px-1 py-0.5 border rounded text-[10px]">Del</kbd> remover ·{" "}
