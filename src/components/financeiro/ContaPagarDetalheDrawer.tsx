@@ -1124,7 +1124,7 @@ function NFsAnexadasSecao({ contaId }: { contaId: string }) {
               <Button
                 size="sm"
                 variant="ghost"
-                onClick={() => desanexarNF()}
+                onClick={() => desanexarNF(nf.id)}
                 className="h-6 w-6 p-0 text-red-600 hover:bg-red-50 hover:text-red-700 shrink-0"
                 title="Desanexar esta NF"
               >
