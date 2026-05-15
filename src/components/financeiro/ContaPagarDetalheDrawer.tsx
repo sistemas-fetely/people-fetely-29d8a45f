@@ -1025,30 +1025,22 @@ function Linha({ label, value }: { label: string; value: React.ReactNode }) {
 }
 
 
-// NF vinculada à CPR — usa cpr.nf_stage_id (vínculo unilateral CPR→NF)
-// V1: 1 CPR vê 1 NF. Várias CPRs (parcelas) podem apontar pra mesma NF — cada parcela vê a NF nesse drawer.
+// NFs vinculadas à CPR — modelo N:1 via nfs_stage.conta_pagar_id
 function NFsAnexadasSecao({ contaId }: { contaId: string }) {
   const qc = useQueryClient();
 
   const { data: nfs = [] } = useQuery({
     queryKey: ["nfs-anexadas-cpr", contaId],
+    enabled: !!contaId,
+    staleTime: 30_000,
     queryFn: async () => {
-      // 1. Pega nf_stage_id da CPR
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: cpr } = await (supabase as any)
-        .from("contas_pagar_receber")
-        .select("nf_stage_id")
-        .eq("id", contaId)
-        .maybeSingle();
-
-      if (!cpr?.nf_stage_id) return [];
-
-      // 2. Busca a NF correspondente
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data, error } = await (supabase as any)
         .from("nfs_stage")
         .select("id, tipo_documento, fornecedor_razao_social, nf_numero, valor, nf_data_emissao")
-        .eq("id", cpr.nf_stage_id);
+        .eq("conta_pagar_id", contaId)
+        .neq("status", "descartada")
+        .order("nf_data_emissao", { ascending: false });
       if (error) throw error;
       return (data || []) as Array<{
         id: string;
@@ -1061,13 +1053,13 @@ function NFsAnexadasSecao({ contaId }: { contaId: string }) {
     },
   });
 
-  async function desanexarNF() {
-    // Desanexa removendo o nf_stage_id da CPR (vínculo unilateral)
+  async function desanexarNF(nfId: string) {
+    // Desanexa uma NF específica zerando seu conta_pagar_id
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { error } = await (supabase as any)
-      .from("contas_pagar_receber")
-      .update({ nf_stage_id: null })
-      .eq("id", contaId);
+      .from("nfs_stage")
+      .update({ conta_pagar_id: null })
+      .eq("id", nfId);
     if (error) {
       toast.error("Erro ao desanexar: " + error.message);
       return;
@@ -1078,6 +1070,7 @@ function NFsAnexadasSecao({ contaId }: { contaId: string }) {
     qc.invalidateQueries({ queryKey: ["nfs-stage"] });
     qc.invalidateQueries({ queryKey: ["contas-pagar"] });
   }
+
 
   const totalNFs = nfs.length;
 
