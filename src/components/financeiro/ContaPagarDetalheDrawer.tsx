@@ -84,6 +84,8 @@ type Conta = {
   nf_xml_url?: string | null;
   nf_aplicavel?: boolean | null;
   nf_aplicavel_motivo?: string | null;
+  vinculo_nf_completo?: boolean | null;
+  valor_nf_vinculado?: number | null;
   parcela_atual?: number | null;
   parcelas?: number | null;
   email_pagamento_enviado?: boolean | null;
