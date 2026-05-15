@@ -91,7 +91,7 @@ function ehFaturaOuLote(mov: MovInput): boolean {
 }
 
 function ehContaCartao(c: ContaInput): boolean {
-  return c.is_cartao === true;
+  return c.eh_cartao === true;
 }
 
 function chaveFornecedor(c: ContaInput): string {
