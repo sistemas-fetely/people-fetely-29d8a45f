@@ -487,6 +487,7 @@ export default function ContasPagar() {
             <SelectItem value="paga">Paga</SelectItem>
             <SelectItem value="realizada">Realizada (já paga)</SelectItem>
             <SelectItem value="cancelado">Cancelada</SelectItem>
+            <SelectItem value="pendencia_nf">Pendência NF</SelectItem>
           </SelectContent>
         </Select>
         {solicitantesOptions.length > 0 && (
