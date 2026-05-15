@@ -64,6 +64,7 @@ const ProdutoLayout = lazy(() => import("@/layouts/ProdutoLayout"));
 const ProdutoIndex = lazy(() => import("@/pages/produto/ProdutoIndex"));
 const TIDashboard = lazy(() => import("@/pages/ti/TIDashboard"));
 const TIAtivos = lazy(() => import("@/pages/ti/TIAtivos"));
+const TesteEmailTemplate = lazy(() => import("@/pages/ti/TesteEmailTemplate"));
 const DocumentacaoDetalhe = lazy(() => import("@/pages/ti/DocumentacaoDetalhe"));
 const DocumentacaoForm = lazy(() => import("@/pages/ti/DocumentacaoForm"));
 const MinhasTarefas = lazy(() => import("@/pages/MinhasTarefas"));
