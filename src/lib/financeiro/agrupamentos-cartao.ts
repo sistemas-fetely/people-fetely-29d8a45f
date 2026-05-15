@@ -29,7 +29,7 @@ export type ContaInput = {
   fornecedor_cliente: string | null;
   status?: string;
   nf_cnpj_emitente?: string | null;
-  is_cartao?: boolean | null;
+  eh_cartao?: boolean | null;
 };
 
 export type AgrupamentoSugerido = {
@@ -91,7 +91,7 @@ function ehFaturaOuLote(mov: MovInput): boolean {
 }
 
 function ehContaCartao(c: ContaInput): boolean {
-  return c.is_cartao === true;
+  return c.eh_cartao === true;
 }
 
 function chaveFornecedor(c: ContaInput): string {

@@ -30,9 +30,10 @@ type Conta = Record<string, any> & {
   nf_numero_repositorio?: string | null;
   email_pagamento_enviado?: boolean | null;
   // Campos pra regra do ícone email (família + forma de pagamento)
-  is_cartao?: boolean | null;
+  meio_pagamento_id?: string | null;
+  meios_pagamento?: { codigo?: string | null } | null;
   origem?: string | null;
-  formas_pagamento?: { codigo?: string | null; nome?: string | null } | null;
+  formas_pagamento?: { codigo?: string | null; nome?: string | null; cobra_email?: boolean | null } | null;
 };
 
 interface Props {
@@ -89,12 +90,12 @@ export default function AcoesInlineConta({ conta, onAbrirEditandoBanco }: Props)
   const estadoAprovar: EstadoIcone = aprovado ? "feito" : "pendente";
 
   const familia = getFamiliaContaPagar({
-    is_cartao: conta.is_cartao ?? null,
+    meio_codigo: conta.meios_pagamento?.codigo ?? null,
     origem: conta.origem ?? null,
   });
   const regraEmail = getRegraIconeEmail({
     familia,
-    forma_pagamento_codigo: conta.formas_pagamento?.codigo ?? null,
+    forma_cobra_email: conta.formas_pagamento?.cobra_email ?? null,
     status,
     email_pagamento_enviado: conta.email_pagamento_enviado ?? null,
   });
@@ -113,7 +114,7 @@ export default function AcoesInlineConta({ conta, onAbrirEditandoBanco }: Props)
     setAprovando(true);
     try {
       // Cartão vai direto pra aguardando_pagamento (sem etapa de envio de email)
-      const statusAlvo = conta.is_cartao ? "aguardando_pagamento" : "aprovado";
+      const statusAlvo = conta.meios_pagamento?.codigo === "fatura_cartao" ? "aguardando_pagamento" : "aprovado";
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data: result, error } = await (supabase as any).rpc(
         "aprovar_cpr_em_cascata",

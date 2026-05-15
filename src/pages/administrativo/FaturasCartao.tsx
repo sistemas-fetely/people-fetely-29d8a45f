@@ -194,9 +194,9 @@ export default function FaturasCartao() {
       // 1) Todas as contas a pagar de cartão pendentes (não pagas)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data: contas, error: errC } = await (supabase as any)
-        .from("contas_pagar_receber")
+        .from("contas_pagar_receber_ativas")
         .select("id, valor, parcela_grupo_id")
-        .eq("is_cartao", true)
+        .eq("eh_cartao", true)
         .in("status", ["aberto", "aprovado", "aguardando_pagamento"]);
       if (errC) throw errC;
       if (!contas?.length) return new Map<string, number>();
@@ -239,9 +239,9 @@ export default function FaturasCartao() {
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data: todasParcelas } = await (supabase as any)
-        .from("contas_pagar_receber")
+        .from("contas_pagar_receber_ativas")
         .select("id, parcela_grupo_id")
-        .eq("is_cartao", true)
+        .eq("eh_cartao", true)
         .not("parcela_grupo_id", "is", null);
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

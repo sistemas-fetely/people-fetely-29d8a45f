@@ -52,7 +52,8 @@ type Conta = {
   parceiro_id: string | null;
   conta_id: string | null;
   origem: string | null;
-  is_cartao: boolean | null;
+  meio_pagamento_id: string | null;
+  meios_pagamento?: { codigo: string | null } | null;
   tags: unknown;
   tem_doc_pendente: boolean | null;
   atrasada: boolean | null;
@@ -68,7 +69,7 @@ type Conta = {
   valor_nf_vinculado?: number | null;
   plano_contas?: { codigo?: string | null; nome: string } | null;
   parceiros_comerciais?: { razao_social: string | null } | null;
-  formas_pagamento?: { codigo: string | null; nome: string | null } | null;
+  formas_pagamento?: { codigo: string | null; nome: string | null; cobra_email: boolean | null; pula_aprovacao: boolean | null } | null;
   fornecedor_cliente?: string | null;
 };
 
@@ -120,7 +121,7 @@ export default function ContasPagar() {
       const { data, error } = await supabase
         .from("vw_contas_pagar_consolidado")
         .select(
-          "*, plano_contas:conta_id(codigo,nome), parceiros_comerciais:parceiro_id(razao_social), formas_pagamento:forma_pagamento_id(codigo,nome)",
+          "*, plano_contas:conta_id(codigo,nome), parceiros_comerciais:parceiro_id(razao_social), formas_pagamento:forma_pagamento_id(codigo,nome,cobra_email,pula_aprovacao), meios_pagamento:meio_pagamento_id(codigo)",
         )
         .order("data_vencimento", { ascending: true });
       if (error) throw error;
@@ -196,9 +197,9 @@ export default function ContasPagar() {
   // Mapa: conta_id → data_vencimento da fatura de cartão vinculada
   const { data: faturaMap = new Map<string, string>() } = useQuery({
     queryKey: ["contas-pagar-fatura-map", (data || []).map((c) => c.id).join(",")],
-    enabled: !!data && data.some((c) => c.is_cartao),
+    enabled: !!data && data.some((c) => c.meios_pagamento?.codigo === "fatura_cartao"),
     queryFn: async () => {
-      const ids = (data || []).filter((c) => c.is_cartao).map((c) => c.id);
+      const ids = (data || []).filter((c) => c.meios_pagamento?.codigo === "fatura_cartao").map((c) => c.id);
       if (ids.length === 0) return new Map<string, string>();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data: rows } = await (supabase as any)
@@ -592,7 +593,7 @@ export default function ContasPagar() {
                             ) : (
                               <span>{meio}</span>
                             )}
-                            {c.is_cartao && faturaMap.has(c.id) && (
+                            {c.meios_pagamento?.codigo === "fatura_cartao" && faturaMap.has(c.id) && (
                               <span className="text-[10px] text-muted-foreground pl-5">
                                 fatura vence {formatDateBR(faturaMap.get(c.id)!)}
                               </span>

@@ -25,7 +25,7 @@ import {
  * Doutrina cravada por Flavio:
  * - Edição liberada em status: rascunho, aberto, aprovado, aguardando_pagamento
  * - Read-only automático em: paga, cancelado
- * - Campos NUNCA editáveis aqui: valor, parceiro_id, data_compra, status, is_cartao
+ * - Campos NUNCA editáveis aqui: valor, parceiro_id, data_compra, status, meio_pagamento_id
  *   (rastreio fiel: muda só por fluxo, não por edição manual)
  * - Auditoria mínima: gravado editado_por + editado_em via RPC
  */
@@ -48,7 +48,8 @@ type ContaEditavel = {
   pago_em_conta_id?: string | null;
   linha_investimento_id?: string | null;
   // Família (decide visibilidade dos campos)
-  is_cartao?: boolean | null;
+  meio_pagamento_id?: string | null;
+  meios_pagamento?: { codigo?: string | null } | null;
   origem?: string | null;
   formas_pagamento?: { codigo?: string | null; nome?: string | null } | null;
 };
@@ -95,7 +96,7 @@ export function ContaPagarFormEdit({
   // pagamento e pago_em_conta como readonly (vêm da fatura/transação).
   // Família A em pré-pagamento marca pago_em_conta como obrigatório.
   const familia = getFamiliaContaPagar({
-    is_cartao: conta.is_cartao ?? null,
+    meio_codigo: conta.meios_pagamento?.codigo ?? null,
     origem: conta.origem ?? null,
   });
   const campos = getCamposVisiveis(familia, conta.status);

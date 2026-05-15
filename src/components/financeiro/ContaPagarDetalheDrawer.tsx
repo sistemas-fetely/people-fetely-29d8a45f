@@ -93,7 +93,8 @@ type Conta = {
   parcelas?: number | null;
   email_pagamento_enviado?: boolean | null;
   enviado_pagamento_em?: string | null;
-  is_cartao?: boolean | null;
+  meio_pagamento_id?: string | null;
+  meios_pagamento?: { codigo?: string | null } | null;
   docs_status?: "ok" | "pendente" | "parcial" | null;
   dados_bancarios_fornecedor?: { banco?: string; agencia?: string; conta?: string; pix?: string } | null;
   dados_pagamento_fornecedor?: { banco?: string; agencia?: string; conta?: string; pix?: string } | null;
@@ -251,7 +252,7 @@ export default function ContaPagarDetalheDrawer({
       const { data, error } = await supabase
         .from("contas_pagar_receber")
         .select(
-          `*, plano_contas:conta_id(codigo,nome), formas_pagamento:forma_pagamento_id(nome,codigo), parceiros_comerciais:parceiro_id(razao_social), centros_custo:centro_custo_id(codigo,nome), linhas_investimento:linha_investimento_id(descricao, temas_investimento:tema_id(nome, frentes_investimento:frente_id(nome)))`
+          `*, plano_contas:conta_id(codigo,nome), formas_pagamento:forma_pagamento_id(nome,codigo,cobra_email,pula_aprovacao), meios_pagamento:meio_pagamento_id(codigo), parceiros_comerciais:parceiro_id(razao_social), centros_custo:centro_custo_id(codigo,nome), linhas_investimento:linha_investimento_id(descricao, temas_investimento:tema_id(nome, frentes_investimento:frente_id(nome)))`
         )
         .eq("id", contaId!)
         .single();
@@ -348,7 +349,7 @@ export default function ContaPagarDetalheDrawer({
 
   const dadosBancarios =
     conta?.dados_bancarios_fornecedor || conta?.dados_pagamento_fornecedor || null;
-  const isCartao = !!conta?.is_cartao;
+  const isCartao = conta?.meios_pagamento?.codigo === "fatura_cartao";
 
   // Fatura de cartão vinculada a esta CPR (via fatura_cartao_lancamentos)
   const { data: faturaVinculada } = useQuery({
@@ -453,7 +454,8 @@ export default function ContaPagarDetalheDrawer({
                     pago_em_conta_id: conta.pago_em_conta_id ?? null,
                     parceiro_id: conta.parceiro_id ?? null,
                     // Campos pra família (visibilidade por origem)
-                    is_cartao: conta.is_cartao ?? null,
+                    meio_pagamento_id: conta.meio_pagamento_id ?? null,
+                    meios_pagamento: conta.meios_pagamento ?? null,
                     origem: conta.origem ?? null,
                     formas_pagamento: conta.formas_pagamento ?? null,
                   }}
