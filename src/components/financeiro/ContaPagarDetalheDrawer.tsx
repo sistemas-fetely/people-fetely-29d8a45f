@@ -93,7 +93,8 @@ type Conta = {
   parcelas?: number | null;
   email_pagamento_enviado?: boolean | null;
   enviado_pagamento_em?: string | null;
-  is_cartao?: boolean | null;
+  meio_pagamento_id?: string | null;
+  meios_pagamento?: { codigo?: string | null } | null;
   docs_status?: "ok" | "pendente" | "parcial" | null;
   dados_bancarios_fornecedor?: { banco?: string; agencia?: string; conta?: string; pix?: string } | null;
   dados_pagamento_fornecedor?: { banco?: string; agencia?: string; conta?: string; pix?: string } | null;
