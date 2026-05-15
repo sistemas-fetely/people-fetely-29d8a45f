@@ -576,6 +576,7 @@ export default function ContaPagarDetalheDrawer({
             {/* Documentos */}
             <Separator className="my-4" />
 
+            <VinculoNFStatusBadge conta={conta} />
             <NFsAnexadasSecao contaId={conta.id} />
             <DocumentosCP
               contaId={conta.id}
