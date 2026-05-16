@@ -170,7 +170,7 @@ export default function CaixaBanco() {
     },
   });
 
-  // meio_pagamento_id agora vem direto da view vw_lancamentos_caixa_banco
+  // forma_pagamento_id vem direto da view vw_lancamentos_caixa_banco
 
   // Receitas — direto de movimentacoes_bancarias (tipo=credito sem CPR vinculada)
   const { data: receitas = [] } = useQuery<Receita[]>({
