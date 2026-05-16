@@ -311,7 +311,9 @@ export default function Conciliacao() {
                           <div key={pl.planilha_id} className="flex items-center justify-between gap-4 px-3 py-2 text-xs">
                             <div className="min-w-0 flex-1">
                               <p className="font-medium truncate">{pl.nome_favorecido ?? "—"}</p>
-                              <p className="text-muted-foreground truncate">{pl.cnpj_favorecido ?? "—"}</p>
+                              <p className="text-muted-foreground truncate">
+                                {pl.cnpj_favorecido ?? "—"} · {pl.data_pagamento ? formatDateBR(pl.data_pagamento) : "—"}
+                              </p>
                             </div>
                             <div className="flex items-center gap-2 shrink-0">
                               <span>{formatBRL(pl.valor_pago)}</span>
@@ -359,6 +361,9 @@ export default function Conciliacao() {
                         <p className="font-medium text-sm truncate">{item.nome_favorecido ?? "—"}</p>
                         <p className="text-xs text-muted-foreground truncate">
                           {item.cnpj_favorecido ?? "Sem CNPJ"} · {item.tipo_pagamento ?? "—"}
+                          {item.data_pagamento && (
+                            <> · {formatDateBR(item.data_pagamento)}</>
+                          )}
                         </p>
                       </div>
 
