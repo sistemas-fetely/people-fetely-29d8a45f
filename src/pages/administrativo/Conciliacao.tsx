@@ -558,76 +558,86 @@ export default function Conciliacao() {
         />
       )}
 
-      <Dialog open={!!multiVinculoAberto} onOpenChange={(v) => { if (!v) { setMultiVinculoAberto(null); setMovsSelecionadas([]); } }}>
+      <Dialog open={!!multiVinculoAberto} onOpenChange={(v) => { if (!v) { setMultiVinculoAberto(null); } }}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Vincular múltiplas movimentações</DialogTitle>
+            <DialogTitle>Vincular faturas de cartão</DialogTitle>
             <DialogDescription>
               Planilha: {multiVinculoAberto?.nome_favorecido ?? "—"} · {formatBRL(valorPlanilhaAberta)}
             </DialogDescription>
           </DialogHeader>
 
-          <div className="flex items-center justify-between p-3 rounded bg-muted text-sm">
-            <span>Selecionadas: {formatBRL(somaMovsSelecionadas)}</span>
-            <span className={somaConfere ? "text-emerald-600 font-semibold" : "text-muted-foreground"}>
-              {somaConfere
-                ? "✓ Soma confere"
-                : `Faltam ${formatBRL(valorPlanilhaAberta - somaMovsSelecionadas)}`}
-            </span>
+          <div className="space-y-1.5 p-3 rounded-lg border">
+            <div className="flex justify-between text-xs">
+              <span className="text-muted-foreground">Vinculado</span>
+              <span className={`font-mono font-semibold ${
+                totalJaVinculado === valorPlanilhaAberta ? "text-emerald-600" : "text-foreground"
+              }`}>{formatBRL(totalJaVinculado)} / {formatBRL(valorPlanilhaAberta)}</span>
+            </div>
+            <div className="w-full bg-muted rounded-full h-1.5">
+              <div
+                className={`h-1.5 rounded-full transition-all ${
+                  totalJaVinculado === valorPlanilhaAberta ? "bg-emerald-500" : "bg-primary"
+                }`}
+                style={{ width: `${valorPlanilhaAberta > 0 ? Math.min(100, (totalJaVinculado / valorPlanilhaAberta) * 100) : 0}%` }}
+              />
+            </div>
+            {totalJaVinculado < valorPlanilhaAberta && (
+              <p className="text-[10px] text-muted-foreground">
+                Faltam {formatBRL(saldoRestante)} para conciliar totalmente
+              </p>
+            )}
           </div>
 
-          <div className="max-h-80 overflow-y-auto space-y-1">
-            {(movsElegiveis ?? []).map((mov) => {
-              const selecionada = movsSelecionadas.includes(mov.id);
-              return (
-                <div
-                  key={mov.id}
-                  onClick={() =>
-                    setMovsSelecionadas((prev) =>
-                      prev.includes(mov.id) ? prev.filter((id) => id !== mov.id) : [...prev, mov.id]
-                    )
-                  }
-                  className={`p-2 rounded border cursor-pointer text-xs flex items-center justify-between gap-2 ${
-                    selecionada ? "border-emerald-400 bg-emerald-50" : "hover:bg-muted/50"
-                  }`}
-                >
+          <div className="max-h-80 overflow-y-auto space-y-1.5">
+            {(faturasDisponiveis ?? []).map((fatura) => (
+              <div
+                key={fatura.fatura_id}
+                className={`p-3 rounded border text-xs ${
+                  fatura.ja_vinculada
+                    ? "border-emerald-300 bg-emerald-50/30 opacity-60"
+                    : "hover:bg-muted/50"
+                }`}
+              >
+                <div className="flex items-center justify-between gap-2">
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate">
-                      {mov.fornecedor_cliente ?? mov.descricao ?? "—"}
-                    </p>
+                    <p className="font-semibold">{fatura.cartao_nome}</p>
                     <p className="text-muted-foreground text-[10px]">
-                      {mov.cpr_descricao ?? "—"} · {mov.data_transacao ? formatDateBR(mov.data_transacao) : "—"}
+                      Venc. {formatDateBR(fatura.data_vencimento)} · {fatura.qtd_lancamentos} lançamentos
                     </p>
                   </div>
-                  <span className="font-mono font-semibold shrink-0">{formatBRL(Math.abs(Number(mov.valor) || 0))}</span>
-                  {selecionada && <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />}
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className="font-mono font-bold">{formatBRL(fatura.valor_total)}</span>
+                    {fatura.ja_vinculada ? (
+                      <Badge className="text-[9px] bg-emerald-100 text-emerald-800">✓ Vinculada</Badge>
+                    ) : (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 text-xs gap-1"
+                        disabled={fatura.valor_total > saldoRestante || vincularFaturaMutation.isPending}
+                        onClick={() =>
+                          vincularFaturaMutation.mutate({
+                            planilhaId: multiVinculoAberto!.planilha_id,
+                            faturaId: fatura.fatura_id,
+                          })
+                        }
+                      >
+                        <Link2 className="h-3 w-3" /> Vincular
+                      </Button>
+                    )}
+                  </div>
                 </div>
-              );
-            })}
-            {(movsElegiveis ?? []).length === 0 && (
-              <p className="text-xs text-muted-foreground text-center py-6">Nenhuma movimentação elegível.</p>
+              </div>
+            ))}
+            {(faturasDisponiveis ?? []).length === 0 && (
+              <p className="text-xs text-muted-foreground text-center py-6">Nenhuma fatura disponível.</p>
             )}
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => { setMultiVinculoAberto(null); setMovsSelecionadas([]); }}>
-              Cancelar
-            </Button>
-            <Button
-              disabled={!somaConfere || movsSelecionadas.length === 0 || multiVinculoMutation.isPending}
-              onClick={() =>
-                multiVinculoMutation.mutate({
-                  planilhaId: multiVinculoAberto!.planilha_id,
-                  movIds: movsSelecionadas,
-                })
-              }
-            >
-              {multiVinculoMutation.isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Link2 className="h-4 w-4" />
-              )}
-              Vincular {movsSelecionadas.length} movimentações
+            <Button variant="outline" onClick={() => setMultiVinculoAberto(null)}>
+              Fechar
             </Button>
           </DialogFooter>
         </DialogContent>
