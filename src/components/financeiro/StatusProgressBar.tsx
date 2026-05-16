@@ -38,7 +38,7 @@ export default function StatusProgressBar({ statusAtual, isCartao }: Props) {
   let statusEffective = statusAtual;
   if (statusAtual === "rascunho") statusEffective = "aberto";
   if (statusAtual === "agendado") statusEffective = "enviado_para_pagamento";
-  if (["enviado_para_pagamento", "conciliado"].includes(statusAtual)) statusEffective = "finalizado";
+  if (["conciliado"].includes(statusAtual)) statusEffective = "finalizado";
 
   let idxAtual = FLOW.findIndex((s) => s.key === statusEffective);
   if (statusAtual === "atrasado") idxAtual = FLOW.findIndex((s) => s.key === "aberto");
