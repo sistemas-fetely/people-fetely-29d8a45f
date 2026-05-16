@@ -1223,7 +1223,30 @@ function NovoContratoDialog({
     }
   }
 
-  async function salvar() {
+  async function processarDoGED() {
+    if (!pastaGedId) return;
+    setProcessandoIA(true);
+    try {
+      setPastaId(pastaGedId);
+      const { data: iaData, error: iaErr } = await supabase.functions.invoke(
+        "gerar-contrato-de-pasta",
+        { body: { pasta_id: pastaGedId } }
+      );
+      if (iaErr) throw new Error("IA: " + iaErr.message);
+      if ((iaData as any)?.error) throw new Error((iaData as any).error);
+      setDadosIA(iaData as DadosIA);
+      setEtapa(3);
+    } catch (err) {
+      toast({
+        title: "Erro ao processar",
+        description: err instanceof Error ? err.message : "Erro inesperado",
+        variant: "destructive",
+      });
+    } finally {
+      setProcessandoIA(false);
+    }
+  }
+
     if (!pastaId || !numero || !vigenciaInicio || !valorParcela || !dataPrimeiraParcela) {
       toast({ title: "Preencha os campos obrigatórios", variant: "destructive" });
       return;
