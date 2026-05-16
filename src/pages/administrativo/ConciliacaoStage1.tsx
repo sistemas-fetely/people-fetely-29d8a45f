@@ -318,6 +318,27 @@ export default function ConciliacaoStage1() {
           </DialogContent>
         </Dialog>
       )}
+
+      {drawerPlanilha && (
+        <CriarCPRAvulsaDialog
+          open={criarCPROpen}
+          onOpenChange={setCriarCPROpen}
+          origem="stage_1"
+          fonteId={drawerPlanilha.id}
+          resumo={{
+            titulo: drawerPlanilha.nome_favorecido ?? "—",
+            valor: drawerPlanilha.valor_pago ?? 0,
+            data: drawerPlanilha.data_pagamento,
+            info: drawerPlanilha.cnpj_favorecido ?? undefined,
+          }}
+          descricaoInicial={drawerPlanilha.nome_favorecido ?? ""}
+          onSucesso={() => {
+            setDrawerPlanilha(null);
+            qc.invalidateQueries({ queryKey: ["stage1-planilhas-pendentes", contaBancariaId] });
+            qc.invalidateQueries({ queryKey: ["conciliacao-hub-stage1-count"] });
+          }}
+        />
+      )}
     </div>
   );
 }
