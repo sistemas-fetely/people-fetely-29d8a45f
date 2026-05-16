@@ -224,18 +224,18 @@ export default function FaturasCartao() {
         }
       });
 
-      // 3) Faturas → conta_bancaria_id
+      // 3) Faturas → cartao_id
       const faturaIds = Array.from(new Set(contaToFatura.values()));
       const faturaToConta = new Map<string, string>();
       if (faturaIds.length > 0) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { data: fats } = await (supabase as any)
           .from("faturas_cartao")
-          .select("id, conta_bancaria_id")
+          .select("id, cartao_id")
           .in("id", faturaIds);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (fats || []).forEach((f: any) => {
-          if (f.conta_bancaria_id) faturaToConta.set(f.id, f.conta_bancaria_id);
+          if (f.cartao_id) faturaToConta.set(f.id, f.cartao_id);
         });
       }
 
