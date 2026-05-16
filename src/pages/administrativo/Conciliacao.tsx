@@ -84,6 +84,7 @@ export default function Conciliacao() {
   const [criarCPRPlanilha, setCriarCPRPlanilha] = useState<ItemConciliacao | null>(null);
   const [multiVinculoAberto, setMultiVinculoAberto] = useState<ItemConciliacao | null>(null);
   const [movsSelecionadas, setMovsSelecionadas] = useState<string[]>([]);
+  const [parciaisExpandidos, setParciaisExpandidos] = useState<Set<string>>(new Set());
 
   const { data: contas } = useQuery({
     queryKey: ["contas-bancarias-conciliacao"],
