@@ -27,6 +27,7 @@ import {
   ExternalLink,
   Ban,
   CheckCircle,
+  CheckCircle2,
   AlertTriangle,
 } from "lucide-react";
 import {
@@ -745,48 +746,17 @@ export default function ContaPagarDetalheDrawer({
                     </div>
                   )}
 
-                  {/* AGUARDANDO_PAGAMENTO → pagar via fatura (cartão c/ fatura) ou manualmente */}
-                  {conta.status === "enviado_para_pagamento" && !conta.movimentacao_bancaria_id && (
-                    <div className="space-y-2">
-                      {isCartao && faturaVinculada?.faturas_cartao ? (
-                        <div className="space-y-2">
-                          <div className="p-3 rounded-lg bg-blue-50 text-blue-700 text-sm flex items-start gap-2">
-                            <CreditCard className="h-4 w-4 mt-0.5 shrink-0" />
-                            <span>Pague pela fatura de cartão — todas as despesas vinculadas serão marcadas como pagas.</span>
-                          </div>
-                          <Button
-                            className="w-full bg-blue-600 hover:bg-blue-700 text-white gap-2"
-                            onClick={() => {
-                              onClose();
-                              window.location.href = "/administrativo/faturas-cartao";
-                            }}
-                          >
-                            <ExternalLink className="h-4 w-4" />
-                            Ir para Faturas de Cartão
-                          </Button>
-                        </div>
-                      ) : (
-                        <>
-                          <div className="p-3 rounded-lg bg-amber-50 text-amber-700 text-sm flex items-center gap-2">
-                            <Clock className="h-4 w-4" /> Enviado para pagamento — quando confirmar que foi pago, marque abaixo
-                          </div>
-                          <Button
-                            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white gap-2"
-                            onClick={async () => {
-                              await handleLancarMov();
-                              onClose();
-                            }}
-                            disabled={lancandoMov}
-                          >
-                            {lancandoMov ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <ArrowRightLeft className="h-4 w-4" />
-                            )}
-                            Marcar como paga
-                          </Button>
-                        </>
-                      )}
+                  {/* ENVIADO_PARA_PAGAMENTO — status terminal, conciliação automática */}
+                  {conta.status === "enviado_para_pagamento" && (
+                    <div className="p-4 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm flex items-start gap-3">
+                      <CheckCircle2 className="h-5 w-5 shrink-0 mt-0.5" />
+                      <div>
+                        <p className="font-medium">Enviado para pagamento</p>
+                        <p className="text-xs mt-1 text-emerald-700">
+                          A conciliação bancária irá confirmar automaticamente quando o débito aparecer no extrato.
+                          Acesse <strong>Conciliação → Stage 1</strong> para vincular à movimentação.
+                        </p>
+                      </div>
                     </div>
                   )}
 
