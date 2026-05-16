@@ -66,7 +66,7 @@ const STATUS_READONLY = ["enviado_para_pagamento", "cancelado"];
 // Status em que campos CRÍTICOS (categoria, centro custo, vencimento, meio, conta origem)
 // ficam travados. Inclui `aguardando_pagamento` porque o email já saiu pro financeiro —
 // D-E (bola redonda): pacote enviado é imutável sem novo envio. Pra alterar = cancelar e recriar.
-const STATUS_TRAVA_CRITICOS = ["enviado_para_pagamento", "enviado_para_pagamento", "cancelado"];
+const STATUS_TRAVA_CRITICOS = ["enviado_para_pagamento", "cancelado"];
 
 export function ContaPagarFormEdit({
   conta,
