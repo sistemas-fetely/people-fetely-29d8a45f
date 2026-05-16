@@ -418,6 +418,22 @@ export default function Conciliacao() {
     onError: (e: any) => toast.error("Erro: " + e.message),
   });
 
+  const vincularManualMutation = useMutation({
+    mutationFn: async ({ pagId, cprId }: { pagId: string; cprId: string }) => {
+      const { error } = await sb
+        .from("itau_pagamentos_stage")
+        .update({ conta_pagar_id: cprId, status_conciliacao: "conciliado_manual" })
+        .eq("id", pagId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("CPR vinculada com sucesso");
+      setBuscarCPRPag(null);
+      qc.invalidateQueries({ queryKey: ["itau-pagamentos-conta", contaBancariaId] });
+    },
+    onError: () => toast.error("Erro ao vincular CPR"),
+  });
+
   const reprocessarMutation = useMutation({
     mutationFn: async () => {
       const { data: imps } = await sb.from("itau_importacoes_stage")
