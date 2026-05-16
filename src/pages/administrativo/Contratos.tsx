@@ -66,6 +66,41 @@ interface ParcelaInfo {
   numero_parcela: number | null;
 }
 
+interface Parceiro {
+  id: string;
+  razao_social: string;
+  cnpj: string | null;
+  nome_fantasia: string | null;
+}
+
+interface FormasPagamento {
+  id: string;
+  nome: string;
+}
+
+interface DadosIA {
+  numero_sugerido?: string;
+  data_assinatura?: string;
+  vigencia_inicio?: string;
+  vigencia_fim?: string;
+  valor_total?: number;
+  valor_parcela?: number;
+  ciclo_pagamento?: string;
+  numero_parcelas?: number;
+  dia_vencimento?: number;
+  data_primeira_parcela?: string;
+  tem_setup?: boolean;
+  valor_setup?: number;
+  parcelas_setup?: number;
+  data_primeira_parcela_setup?: string;
+  reajuste_indice?: string;
+  reajuste_data?: string;
+  renova_automaticamente?: boolean;
+  permite_valor_variavel?: boolean;
+  resumo_ia?: string;
+  confianca?: string;
+}
+
 // ─── Helpers ───────────────────────────────────────────────────────
 function mrr(c: ContratoListagem): number {
   if (c.status !== "vigente") return 0;
