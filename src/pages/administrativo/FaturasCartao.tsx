@@ -282,7 +282,7 @@ export default function FaturasCartao() {
         .from("vw_faturas_cartao_resumo")
         .select(`
           *,
-          conta_bancaria:conta_bancaria_id ( nome_exibicao, banco )
+          cartao:cartao_id ( id, nome, bandeira, ultimos_digitos )
         `)
         .order("data_vencimento", { ascending: false });
       if (error) throw error;
