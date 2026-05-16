@@ -7,7 +7,7 @@ var corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-var BLING_BASE = "https://www.bling.com.br/Api/v3";
+var BLING_BASE = "https://api.bling.com.br/Api/v3";
 
 function ok(data: any) {
   return new Response(JSON.stringify(data), {
