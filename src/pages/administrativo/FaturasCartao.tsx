@@ -1000,11 +1000,12 @@ export default function FaturasCartao() {
                         </TableCell>
                         <TableCell>
                           <div className="text-sm font-medium">
-                            {f.conta_bancaria?.nome_exibicao || "—"}
+                            {f.cartao?.nome || "—"}
                           </div>
-                          {f.conta_bancaria?.banco && (
+                          {f.cartao?.bandeira && (
                             <div className="text-[10px] text-muted-foreground">
-                              {f.conta_bancaria.banco}
+                              {f.cartao.bandeira}
+                              {f.cartao.ultimos_digitos && ` · ****${f.cartao.ultimos_digitos}`}
                             </div>
                           )}
                         </TableCell>
