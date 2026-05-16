@@ -156,6 +156,53 @@ export default function Conciliacao() {
     onError: (e: any) => toast.error("Erro: " + e.message),
   });
 
+  const { data: movsElegiveis } = useQuery({
+    queryKey: ["movs-elegiveis-multi", contaBancariaId],
+    enabled: !!multiVinculoAberto && !!contaBancariaId,
+    queryFn: async () => {
+      const { data } = await sb
+        .from("movimentacoes_bancarias")
+        .select("id, descricao, valor, data_transacao, conta_pagar_id, contas_pagar_receber:conta_pagar_id(descricao, fornecedor_cliente)")
+        .is("pg_em", null)
+        .is("itau_planilha_id", null)
+        .eq("tipo", "debito")
+        .order("data_transacao", { ascending: false });
+      return (data || []) as Array<{
+        id: string;
+        descricao: string | null;
+        valor: number;
+        data_transacao: string | null;
+        conta_pagar_id: string | null;
+        contas_pagar_receber: { descricao: string | null; fornecedor_cliente: string | null } | null;
+      }>;
+    },
+  });
+
+  const multiVinculoMutation = useMutation({
+    mutationFn: async ({ planilhaId, movIds }: { planilhaId: string; movIds: string[] }) => {
+      const { data, error } = await sb.rpc("vincular_planilha_multiplas_movs", {
+        p_planilha_id: planilhaId,
+        p_movimentacao_ids: movIds,
+      });
+      if (error) throw error;
+      if (!data?.ok) throw new Error(data?.motivo || "Erro");
+      return data;
+    },
+    onSuccess: (d: any) => {
+      toast.success(`${d.vinculadas ?? movsSelecionadas.length} movimentações vinculadas ✓`);
+      setMultiVinculoAberto(null);
+      setMovsSelecionadas([]);
+      invalidar();
+    },
+    onError: (e: any) => toast.error("Erro: " + e.message),
+  });
+
+  const somaMovsSelecionadas = (movsElegiveis ?? [])
+    .filter((m) => movsSelecionadas.includes(m.id))
+    .reduce((acc, m) => acc + Math.abs(Number(m.valor) || 0), 0);
+  const valorPlanilhaAberta = multiVinculoAberto?.valor_pago ?? 0;
+  const somaConfere = Math.round(somaMovsSelecionadas * 100) === Math.round(valorPlanilhaAberta * 100);
+
   const itens = resultado?.itens ?? [];
   const lotes = resultado?.lotes ?? [];
   const completos =
