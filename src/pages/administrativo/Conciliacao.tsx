@@ -115,7 +115,13 @@ function ItemOperador({
           <SelectContent>
             {cprs.map((c) => (
               <SelectItem key={c.id} value={c.id}>
-                {c.descricao} · venc {formatDateBR(c.data_vencimento)} · {formatBRL(c.valor)}
+                {c.descricao}
+                {c.parcela_atual && c.parcelas ? ` (${c.parcela_atual}/${c.parcelas})` : ""}
+                {" · "}venc {c.data_vencimento ? formatDateBR(c.data_vencimento) : "—"}
+                {" · "}{formatBRL(c.valor)}
+                {Math.abs(c.valor - (pag.valor_pago ?? 0)) > 0.01
+                  ? ` · dif ${formatBRL(Math.abs(c.valor - (pag.valor_pago ?? 0)))}`
+                  : ""}
               </SelectItem>
             ))}
           </SelectContent>
