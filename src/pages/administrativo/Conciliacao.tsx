@@ -147,6 +147,7 @@ function ItemOperador({
 
 export default function Conciliacao() {
   const qc = useQueryClient();
+  const { user } = useAuth();
   const [contaBancariaId, setContaBancariaId] = useState<string>("");
   const [filtroOFX, setFiltroOFX] = useState("");
   const [acaoOFX, setAcaoOFX] = useState<string | null>(null);
