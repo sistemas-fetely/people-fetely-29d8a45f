@@ -789,7 +789,10 @@ export default function CaixaBanco() {
                 <TableBody>
                   {listaExibida.map((l) => {
                     const sv = statusVisual(l);
-                    const isRealizado = sv === "enviado_para_pagamento";
+                    const isRealizado =
+                      !!l.movimentacao_bancaria_id ||
+                      l.status_caixa === "pago" ||
+                      l.status_caixa === "conciliado";
                     const atrasada = isAtrasada(l);
                     const dias = diasAtraso(l);
                     const formaNome = l.forma_pagamento_id && mapFormas[l.forma_pagamento_id];
