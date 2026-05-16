@@ -112,6 +112,7 @@ const Conciliacao = lazy(() => import("@/pages/administrativo/Conciliacao"));
 const ConciliacaoStage1 = lazy(() => import("@/pages/administrativo/ConciliacaoStage1"));
 const ConciliacaoStage2 = lazy(() => import("@/pages/administrativo/ConciliacaoStage2"));
 const ConciliacaoLegacy = lazy(() => import("@/pages/administrativo/ConciliacaoLegacy"));
+const RegrasOFX = lazy(() => import("@/pages/administrativo/RegrasOFX"));
 const DashboardFinanceiro = lazy(() => import("@/pages/administrativo/DashboardFinanceiro"));
 const InvestimentoLancamento = lazy(() => import("@/pages/administrativo/InvestimentoLancamento"));
 const FluxoFuturoInvestimento = lazy(() => import("@/pages/administrativo/FluxoFuturoInvestimento"));
