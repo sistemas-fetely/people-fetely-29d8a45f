@@ -75,13 +75,19 @@ function ItemOperador({
     queryKey: ["cprs-operador", pag.parceiro_id, pag.valor_pago],
     enabled: !!pag.parceiro_id,
     queryFn: async () => {
+      if (!pag.parceiro_id) return [];
+      const tolerancia = (pag.valor_pago ?? 0) * 0.02;
+      const minVal = (pag.valor_pago ?? 0) - Math.max(tolerancia, 0.01);
+      const maxVal = (pag.valor_pago ?? 0) + Math.max(tolerancia, 0.01);
       const { data } = await sb
         .from("contas_pagar_receber")
-        .select("id, descricao, data_vencimento, valor")
+        .select("id, descricao, data_vencimento, valor, parcela_atual, parcelas")
         .eq("parceiro_id", pag.parceiro_id)
-        .eq("valor", pag.valor_pago)
-        .in("status", ["aprovado", "aguardando_pagamento"])
-        .is("movimentacao_bancaria_id", null);
+        .gte("valor", minVal)
+        .lte("valor", maxVal)
+        .in("status", ["aberto", "aprovado", "aguardando_pagamento"])
+        .is("movimentacao_bancaria_id", null)
+        .order("data_vencimento", { ascending: true });
       return (data || []) as CPRCandidato[];
     },
   });
