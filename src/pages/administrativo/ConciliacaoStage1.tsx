@@ -161,6 +161,7 @@ export default function ConciliacaoStage1() {
       setDrawerPlanilha(null);
       qc.invalidateQueries({ queryKey: ["stage1-linhas-combinadas", contaBancariaId] });
       qc.invalidateQueries({ queryKey: ["conciliacao-hub-stage1-count"] });
+      qc.invalidateQueries({ queryKey: ["stage1-vinculados", contaBancariaId] });
     },
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onError: (e: any) => toast.error("Erro: " + e.message),
