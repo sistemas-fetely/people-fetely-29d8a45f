@@ -12,10 +12,11 @@ import {
 import { Input } from "@/components/ui/input";
 import {
   CheckCircle2, AlertCircle, XCircle, Loader2, Link2, Plus, X,
-  ArrowLeftRight, FileSpreadsheet, RefreshCw, RotateCcw, Users, Zap,
+  ArrowLeftRight, FileSpreadsheet, RefreshCw, RotateCcw, Users, Zap, Search,
 } from "lucide-react";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
 import { ParceiroFormSheet } from "@/components/financeiro/ParceiroFormSheet";
+import { BuscarMatchManualDialog } from "@/components/financeiro/BuscarMatchManualDialog";
 import { useCategoriasPlano } from "@/hooks/useCategoriasPlano";
 import { useAplicarRegrasOFX } from "@/hooks/financeiro/useAplicarRegrasOFX";
 
