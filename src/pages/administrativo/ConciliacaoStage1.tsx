@@ -13,9 +13,10 @@ import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  FileSpreadsheet, Loader2, Link2, Search, AlertCircle, CheckCircle2,
+  FileSpreadsheet, Loader2, Link2, Search, AlertCircle, CheckCircle2, Plus,
 } from "lucide-react";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
+import { CriarCPRAvulsaDialog } from "@/components/financeiro/CriarCPRAvulsaDialog";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const sb = supabase as any;
