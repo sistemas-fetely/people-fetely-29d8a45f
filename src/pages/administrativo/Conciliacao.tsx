@@ -505,7 +505,7 @@ export default function Conciliacao() {
                               size="sm"
                               variant="outline"
                               className="gap-1 text-xs"
-                              onClick={() => { setMultiVinculoAberto(item); setMovsSelecionadas([]); }}
+                              onClick={() => { setMultiVinculoAberto(item); }}
                             >
                               <Layers className="h-3.5 w-3.5" /> Selecionar movs
                             </Button>
