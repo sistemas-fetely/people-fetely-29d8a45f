@@ -394,12 +394,12 @@ export default function Contratos() {
           </Button>
           <Button
             size="sm"
-            onClick={() => navigate("/administrativo-fetely/ged")}
+            onClick={() => setNovoContratoOpen(true)}
             style={{ background: VERDE }}
             className="text-white hover:opacity-90"
           >
-            Ir para o GED
-            <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
+            <Plus className="h-3.5 w-3.5 mr-1.5" />
+            Novo Contrato
           </Button>
         </div>
       </div>
