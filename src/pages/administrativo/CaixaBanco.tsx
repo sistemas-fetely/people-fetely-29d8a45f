@@ -952,7 +952,7 @@ export default function CaixaBanco() {
                               }
                               return <span>{formaNome}</span>;
                             })()}
-                            {ehCartao && (
+                            {l.fatura_id && (
                               <Badge
                                 variant="outline"
                                 className="text-[9px] py-0 px-1.5 h-4 border-violet-300 text-violet-700 bg-violet-50/50 gap-1 self-start"
