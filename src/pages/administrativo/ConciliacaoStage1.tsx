@@ -133,6 +133,20 @@ export default function ConciliacaoStage1() {
     },
   });
 
+  const { data: vinculados = [] } = useQuery({
+    queryKey: ["stage1-vinculados", contaBancariaId],
+    enabled: !!contaBancariaId,
+    queryFn: async () => {
+      const { data } = await sb
+        .from("itau_pagamentos_stage")
+        .select("id, nome_favorecido, cnpj_favorecido, valor_pago, data_pagamento, movimentacao_id, conta_pagar_id, conta_pagar:conta_pagar_id(descricao)")
+        .eq("conta_bancaria_id", contaBancariaId)
+        .eq("status_conciliacao", "aguardando_ofx")
+        .order("data_pagamento", { ascending: false });
+      return data || [];
+    },
+  });
+
   const vincularMutation = useMutation({
     mutationFn: async ({ planilhaId, movimentacaoId }: { planilhaId: string; movimentacaoId: string }) => {
       const { data, error } = await sb.rpc("vincular_stage_1", {
