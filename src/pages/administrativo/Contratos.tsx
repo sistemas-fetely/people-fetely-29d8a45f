@@ -1093,6 +1093,29 @@ function NovoContratoDialog({
     },
   });
 
+  const { data: pastasGED = [] } = useQuery({
+    queryKey: ["pastas-ged-com-parceiro"],
+    enabled: etapa === 2 && modoEtapa2 === "ged",
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from("vw_ged_pastas_kpis")
+        .select("id, nome, parceiro_id, total_contratos")
+        .eq("ativa", true)
+        .not("parceiro_id", "is", null)
+        .order("nome");
+      return (data || []) as {
+        id: string;
+        nome: string;
+        parceiro_id: string;
+        total_contratos: number;
+      }[];
+    },
+  });
+
+  const pastasGEDFiltradas = pastasGED.filter((p) =>
+    p.nome.toLowerCase().includes(buscaGed.toLowerCase())
+  );
+
   const parceirosFiltrados = parceiros.filter(
     (p) =>
       p.razao_social.toLowerCase().includes(buscaParceiro.toLowerCase()) ||
