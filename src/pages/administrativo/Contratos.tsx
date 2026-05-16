@@ -1394,55 +1394,137 @@ function NovoContratoDialog({
           </div>
         )}
 
-        {/* Etapa 2 — Upload */}
+        {/* Etapa 2 — Documento */}
         {etapa === 2 && (
           <div className="space-y-4">
-            <div
-              className="border-2 border-dashed rounded-lg p-8 text-center cursor-pointer hover:bg-muted/30"
-              onClick={() => document.getElementById("upload-contrato-novo")?.click()}
-            >
-              <input
-                id="upload-contrato-novo"
-                type="file"
-                accept="application/pdf"
-                className="hidden"
-                onChange={(e) => setArquivo(e.target.files?.[0] ?? null)}
-              />
-              {arquivo ? (
-                <div>
-                  <p className="font-medium text-sm">{arquivo.name}</p>
-                  <p className="text-xs text-slate-500 mt-1">
-                    {(arquivo.size / 1024).toFixed(0)} KB — clique para trocar
-                  </p>
-                </div>
-              ) : (
-                <div>
-                  <Upload className="h-8 w-8 mx-auto mb-2 text-slate-400" />
-                  <p className="text-sm font-medium">Clique para selecionar o PDF do contrato</p>
-                  <p className="text-xs text-slate-500 mt-1">A IA analisa e preenche os dados automaticamente</p>
-                </div>
-              )}
+            <div className="flex rounded-lg border overflow-hidden text-sm">
+              <button
+                className={`flex-1 py-2 px-3 text-center transition-colors ${
+                  modoEtapa2 === "upload"
+                    ? "bg-card font-medium"
+                    : "bg-muted/40 text-muted-foreground hover:bg-muted/60"
+                }`}
+                onClick={() => setModoEtapa2("upload")}
+              >
+                Upload novo
+              </button>
+              <button
+                className={`flex-1 py-2 px-3 text-center transition-colors ${
+                  modoEtapa2 === "ged"
+                    ? "bg-card font-medium"
+                    : "bg-muted/40 text-muted-foreground hover:bg-muted/60"
+                }`}
+                onClick={() => setModoEtapa2("ged")}
+              >
+                Importar do GED
+              </button>
             </div>
+
+            {modoEtapa2 === "upload" && (
+              <div
+                className="border-2 border-dashed rounded-lg p-8 text-center cursor-pointer hover:bg-muted/30"
+                onClick={() => document.getElementById("upload-contrato-novo")?.click()}
+              >
+                <input
+                  id="upload-contrato-novo"
+                  type="file"
+                  accept="application/pdf"
+                  className="hidden"
+                  onChange={(e) => setArquivo(e.target.files?.[0] ?? null)}
+                />
+                {arquivo ? (
+                  <div>
+                    <p className="font-medium text-sm">{arquivo.name}</p>
+                    <p className="text-xs text-slate-500 mt-1">
+                      {(arquivo.size / 1024).toFixed(0)} KB — clique para trocar
+                    </p>
+                  </div>
+                ) : (
+                  <div>
+                    <Upload className="h-8 w-8 mx-auto mb-2 text-slate-400" />
+                    <p className="text-sm font-medium">Clique para selecionar o PDF do contrato</p>
+                    <p className="text-xs text-slate-500 mt-1">A IA analisa e preenche os dados automaticamente</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {modoEtapa2 === "ged" && (
+              <div className="space-y-2">
+                <p className="text-xs text-muted-foreground">
+                  Selecione uma pasta do GED — a IA lê os documentos existentes e extrai os dados do contrato.
+                </p>
+                <Input
+                  placeholder="Buscar pasta..."
+                  value={buscaGed}
+                  onChange={(e) => setBuscaGed(e.target.value)}
+                />
+                <div className="border rounded-md max-h-52 overflow-y-auto divide-y">
+                  {pastasGEDFiltradas.length === 0 && (
+                    <p className="text-xs text-muted-foreground text-center py-6">
+                      Nenhuma pasta com parceiro encontrada.
+                    </p>
+                  )}
+                  {pastasGEDFiltradas.map((p) => (
+                    <div
+                      key={p.id}
+                      onClick={() => setPastaGedId(p.id)}
+                      className={`px-3 py-2.5 cursor-pointer text-sm hover:bg-muted/50 flex items-center justify-between ${
+                        pastaGedId === p.id
+                          ? "bg-emerald-50 border-l-2 border-l-emerald-500"
+                          : ""
+                      }`}
+                    >
+                      <p className="font-medium truncate">{p.nome}</p>
+                      {p.total_contratos > 0 && (
+                        <span className="text-[10px] text-muted-foreground shrink-0 ml-2">
+                          {p.total_contratos} contrato{p.total_contratos !== 1 ? "s" : ""}
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {processandoIA && (
               <div className="flex items-center justify-center gap-2 text-sm text-slate-600">
                 <Loader2 className="h-4 w-4 animate-spin" />
-                Analisando documento com IA...
+                Analisando documentos com IA...
               </div>
             )}
+
             <DialogFooter>
-              <Button variant="outline" onClick={() => setEtapa(1)} disabled={processandoIA}>Voltar</Button>
-              <Button
-                onClick={processarUploadEIA}
-                disabled={!arquivo || processandoIA}
-                style={{ background: VERDE }}
-                className="text-white"
-              >
-                {processandoIA ? (
-                  <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Processando...</>
-                ) : (
-                  "Processar com IA"
-                )}
+              <Button variant="outline" onClick={() => setEtapa(1)} disabled={processandoIA}>
+                Voltar
               </Button>
+              {modoEtapa2 === "upload" ? (
+                <Button
+                  onClick={processarUploadEIA}
+                  disabled={!arquivo || processandoIA}
+                  style={{ background: VERDE }}
+                  className="text-white"
+                >
+                  {processandoIA ? (
+                    <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Processando...</>
+                  ) : (
+                    "Processar com IA"
+                  )}
+                </Button>
+              ) : (
+                <Button
+                  onClick={processarDoGED}
+                  disabled={!pastaGedId || processandoIA}
+                  style={{ background: VERDE }}
+                  className="text-white"
+                >
+                  {processandoIA ? (
+                    <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Processando...</>
+                  ) : (
+                    "Gerar contrato com IA"
+                  )}
+                </Button>
+              )}
             </DialogFooter>
           </div>
         )}
