@@ -16,6 +16,10 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
+  Dialog, DialogContent, DialogDescription,
+  DialogFooter, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
+import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
 } from "recharts";
 import { useToast } from "@/hooks/use-toast";
@@ -23,6 +27,7 @@ import {
   FileSignature, Search, AlertTriangle, CheckCircle2, TrendingUp,
   FolderOpen, ArrowRight, Info, Trash2, Clock,
   Banknote, CalendarClock, Activity, ChevronDown, ChevronUp,
+  Plus, Loader2, Upload,
 } from "lucide-react";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
 
