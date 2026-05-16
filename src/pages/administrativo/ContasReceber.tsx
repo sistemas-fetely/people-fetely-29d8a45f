@@ -42,7 +42,7 @@ type Conta = {
 const STATUS_STYLES: Record<string, string> = {
   aberto: "bg-blue-100 text-blue-800 hover:bg-blue-100",
   atrasado: "bg-red-100 text-red-800 hover:bg-red-100",
-  pago: "bg-green-100 text-green-800 hover:bg-green-100",
+  enviado_para_pagamento: "bg-green-100 text-green-800 hover:bg-green-100",
   cancelado: "bg-gray-100 text-gray-700 hover:bg-gray-100",
 };
 
