@@ -605,6 +605,11 @@ export default function Conciliacao() {
                   <TabsTrigger value="concluidos" className="gap-1 text-xs">
                     <CheckCircle2 className="h-3 w-3 text-muted-foreground" />
                     Concluídos ({todosOsConcluidos.length})
+                    {aguardandoOFXCount > 0 && (
+                      <span className="ml-1 text-[9px] bg-amber-100 text-amber-800 px-1 rounded">
+                        {aguardandoOFXCount} ⏳
+                      </span>
+                    )}
                   </TabsTrigger>
                 </TabsList>
 
