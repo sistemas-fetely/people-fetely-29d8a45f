@@ -499,14 +499,24 @@ export default function Conciliacao() {
                           </Button>
                         )}
                         {item.tipo === "sem_mov" && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="gap-1"
-                            onClick={() => setCriarCPRPlanilha(item)}
-                          >
-                            <Plus className="h-3 w-3" /> Criar CPR
-                          </Button>
+                          <>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="gap-1 text-xs"
+                              onClick={() => { setMultiVinculoAberto(item); setMovsSelecionadas([]); }}
+                            >
+                              <Layers className="h-3.5 w-3.5" /> Selecionar movs
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="gap-1"
+                              onClick={() => setCriarCPRPlanilha(item)}
+                            >
+                              <Plus className="h-3 w-3" /> Criar CPR
+                            </Button>
+                          </>
                         )}
                       </div>
                     </div>
