@@ -1033,6 +1033,9 @@ function NovoContratoDialog({
   const [processandoIA, setProcessandoIA] = useState(false);
   const [dadosIA, setDadosIA] = useState<DadosIA | null>(null);
   const [pastaId, setPastaId] = useState<string | null>(null);
+  const [modoEtapa2, setModoEtapa2] = useState<"upload" | "ged">("upload");
+  const [pastaGedId, setPastaGedId] = useState("");
+  const [buscaGed, setBuscaGed] = useState("");
 
   const [numero, setNumero] = useState("");
   const [tipoContratoId, setTipoContratoId] = useState<string | null>(null);
