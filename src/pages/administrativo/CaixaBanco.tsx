@@ -883,8 +883,16 @@ export default function CaixaBanco() {
                         </TableCell>
 
                         <TableCell className="whitespace-nowrap text-xs">
-                          {l.data_pagamento ? (
-                            formatDateBR(l.data_pagamento)
+                          {l.data_enviada_para_pagamento ? (
+                            formatDateBR(l.data_enviada_para_pagamento)
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                        </TableCell>
+
+                        <TableCell className="whitespace-nowrap text-xs">
+                          {l.pago_em ? (
+                            formatDateBR(l.pago_em)
                           ) : (
                             <span className="text-muted-foreground">—</span>
                           )}
