@@ -564,7 +564,7 @@ export default function Contratos() {
                   <TableRow
                     key={c.id}
                     className="cursor-pointer hover:bg-slate-50"
-                    onClick={() => navigate(`/administrativo-fetely/ged?pasta=${c.pasta_id}`)}
+                    onClick={() => setContratoDetalhes(c)}
                   >
                     <TableCell>
                       <div
