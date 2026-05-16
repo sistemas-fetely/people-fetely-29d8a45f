@@ -67,9 +67,23 @@ type LoteConciliacao = {
   tipo: "lote_completo" | "lote_parcial";
 };
 
+type ItemAguardandoOFX = {
+  planilha_id: string;
+  nome_favorecido: string | null;
+  cnpj_favorecido: string | null;
+  valor_pago: number;
+  data_pagamento: string | null;
+  movimentacao_id: string;
+  cpr_descricao: string | null;
+  parceiro_nome: string | null;
+  ofx_sugerido: { id: string; descricao: string; valor: number; data_transacao: string } | null;
+  tipo: "aguardando_ofx_com_match" | "aguardando_ofx_sem_match";
+};
+
 type RespostaConciliacao = {
   itens: ItemConciliacao[];
   lotes: LoteConciliacao[];
+  aguardando_ofx?: ItemAguardandoOFX[];
 };
 
 export default function Conciliacao() {
@@ -153,6 +167,7 @@ export default function Conciliacao() {
 
   const itens = resultado?.itens ?? [];
   const lotes = resultado?.lotes ?? [];
+  const aguardandoOFX: ItemAguardandoOFX[] = resultado?.aguardando_ofx ?? [];
   const completos =
     itens.filter((i) => i.tipo === "completo").length +
     lotes.filter((l) => l.tipo === "lote_completo").length;
@@ -240,6 +255,88 @@ export default function Conciliacao() {
                   {semMov} sem movimentação
                 </Badge>
               )}
+              {aguardandoOFX.length > 0 && (
+                <Badge variant="outline" className="gap-1 border-blue-300 text-blue-800">
+                  <Clock className="h-3 w-3" />{aguardandoOFX.length} aguardando OFX
+                </Badge>
+              )}
+            </div>
+          )}
+
+          {/* Aguardando OFX — Stage 1 feito */}
+          {aguardandoOFX.length > 0 && (
+            <div className="space-y-2">
+              <p className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5 px-1">
+                <Clock className="h-3.5 w-3.5" /> Aguardando OFX — Stage 1 feito ({aguardandoOFX.length})
+              </p>
+              {aguardandoOFX.map((item) => (
+                <div
+                  key={item.planilha_id}
+                  className={`border rounded text-xs ${
+                    item.tipo === "aguardando_ofx_com_match"
+                      ? "border-l-4 border-l-blue-400 bg-blue-50/20"
+                      : "border-l-4 border-l-slate-300"
+                  }`}
+                >
+                  <div className="p-3 flex items-center gap-3">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium truncate">
+                        {item.nome_favorecido ?? item.parceiro_nome ?? "—"}
+                      </p>
+                      <p className="text-muted-foreground text-[10px]">
+                        {item.cnpj_favorecido ?? "—"}
+                        {item.data_pagamento && <> · {formatDateBR(item.data_pagamento)}</>}
+                      </p>
+                      {item.cpr_descricao && (
+                        <p className="text-muted-foreground text-[10px] truncate">
+                          CPR: {item.cpr_descricao}
+                        </p>
+                      )}
+                    </div>
+
+                    {item.ofx_sugerido ? (
+                      <div className="w-44 shrink-0 hidden lg:block">
+                        <span className="text-[9px] px-1.5 py-0.5 rounded font-semibold bg-blue-100 text-blue-800">
+                          OFX
+                        </span>
+                        <p className="truncate text-[10px] mt-0.5">{item.ofx_sugerido.descricao}</p>
+                        <p className="text-muted-foreground text-[10px]">
+                          {formatDateBR(item.ofx_sugerido.data_transacao)}
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="w-44 shrink-0 hidden lg:block">
+                        <span className="text-muted-foreground text-[10px]">— OFX não chegou ainda</span>
+                      </div>
+                    )}
+
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="font-mono font-semibold">{formatBRL(item.valor_pago)}</span>
+                      {item.tipo === "aguardando_ofx_com_match" && item.ofx_sugerido && (
+                        <Button
+                          size="sm"
+                          className="gap-1 bg-blue-600 hover:bg-blue-700 text-white"
+                          disabled={vincularMutation.isPending}
+                          onClick={() =>
+                            vincularMutation.mutate({
+                              planilhaId: item.planilha_id,
+                              movId: item.movimentacao_id,
+                              ofxId: item.ofx_sugerido!.id,
+                            })
+                          }
+                        >
+                          {vincularMutation.isPending ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <Link2 className="h-3.5 w-3.5" />
+                          )}
+                          Completar
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
 
