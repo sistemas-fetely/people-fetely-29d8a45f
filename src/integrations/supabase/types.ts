@@ -5306,6 +5306,48 @@ export type Database = {
         }
         Relationships: []
       }
+      integracoes_sync_cursor: {
+        Row: {
+          created_at: string
+          em_execucao: boolean | null
+          entidade: string
+          id: string
+          iniciado_em: string | null
+          sistema: string
+          total_processado: number | null
+          ultima_data_corte: string | null
+          ultima_pagina: number | null
+          ultimo_bling_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          em_execucao?: boolean | null
+          entidade: string
+          id?: string
+          iniciado_em?: string | null
+          sistema: string
+          total_processado?: number | null
+          ultima_data_corte?: string | null
+          ultima_pagina?: number | null
+          ultimo_bling_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          em_execucao?: boolean | null
+          entidade?: string
+          id?: string
+          iniciado_em?: string | null
+          sistema?: string
+          total_processado?: number | null
+          ultima_data_corte?: string | null
+          ultima_pagina?: number | null
+          ultimo_bling_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       integracoes_sync_log: {
         Row: {
           created_at: string | null
@@ -6025,6 +6067,80 @@ export type Database = {
             columns: ["nota_fiscal_id"]
             isOneToOne: false
             referencedRelation: "notas_fiscais_pj"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nfs_emitidas: {
+        Row: {
+          bling_id: string | null
+          chave_acesso: string | null
+          created_at: string
+          data_emissao: string | null
+          data_saida: string | null
+          id: string
+          numero: string | null
+          observacoes: string | null
+          origem: string | null
+          parceiro_id: string | null
+          pdf_url: string | null
+          pedido_venda_id: string | null
+          raw: Json | null
+          serie: string | null
+          situacao: string | null
+          tipo: string | null
+          updated_at: string
+          valor_nota: number | null
+          xml_url: string | null
+        }
+        Insert: {
+          bling_id?: string | null
+          chave_acesso?: string | null
+          created_at?: string
+          data_emissao?: string | null
+          data_saida?: string | null
+          id?: string
+          numero?: string | null
+          observacoes?: string | null
+          origem?: string | null
+          parceiro_id?: string | null
+          pdf_url?: string | null
+          pedido_venda_id?: string | null
+          raw?: Json | null
+          serie?: string | null
+          situacao?: string | null
+          tipo?: string | null
+          updated_at?: string
+          valor_nota?: number | null
+          xml_url?: string | null
+        }
+        Update: {
+          bling_id?: string | null
+          chave_acesso?: string | null
+          created_at?: string
+          data_emissao?: string | null
+          data_saida?: string | null
+          id?: string
+          numero?: string | null
+          observacoes?: string | null
+          origem?: string | null
+          parceiro_id?: string | null
+          pdf_url?: string | null
+          pedido_venda_id?: string | null
+          raw?: Json | null
+          serie?: string | null
+          situacao?: string | null
+          tipo?: string | null
+          updated_at?: string
+          valor_nota?: number | null
+          xml_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nfs_emitidas_parceiro_id_fkey"
+            columns: ["parceiro_id"]
+            isOneToOne: false
+            referencedRelation: "parceiros_comerciais"
             referencedColumns: ["id"]
           },
         ]
@@ -11895,6 +12011,24 @@ export type Database = {
           parceiro_cnpj: string
           parceiro_nome: string
           valor: number
+        }[]
+      }
+      apontar_matches_stage_1_em_lote: {
+        Args: { p_conta_bancaria_id: string }
+        Returns: {
+          melhor_nivel: number
+          melhor_nivel_descricao: string
+          planilha_id: string
+          pode_auto_sugerir: boolean
+          qtd_no_melhor_nivel: number
+          qtd_total: number
+          sugestao_conta_pagar_descricao: string
+          sugestao_conta_pagar_id: string
+          sugestao_data_transacao: string
+          sugestao_descricao: string
+          sugestao_movimentacao_id: string
+          sugestao_parceiro_nome: string
+          sugestao_valor: number
         }[]
       }
       apontar_matches_stage_2: { Args: { p_ofx_id: string }; Returns: Json }
