@@ -175,6 +175,16 @@ export default function ConciliacaoStage2() {
         </p>
       </div>
 
+      <div>
+        <Link
+          to="/administrativo/regras-ofx"
+          className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+        >
+          <Zap className="h-3.5 w-3.5" />
+          Configurar regras automáticas
+        </Link>
+      </div>
+
       <div className="flex items-center gap-3">
         <span className="text-sm font-medium">Conta bancária:</span>
         <Select value={contaBancariaId} onValueChange={setContaBancariaId}>
