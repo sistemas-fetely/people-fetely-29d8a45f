@@ -50,6 +50,7 @@ export default function ConciliacaoStage1() {
   const qc = useQueryClient();
   const [contaBancariaId, setContaBancariaId] = useState("");
   const [drawerPlanilha, setDrawerPlanilha] = useState<PlanilhaItem | null>(null);
+  const [criarCPROpen, setCriarCPROpen] = useState(false);
 
   const { data: contas } = useQuery({
     queryKey: ["contas-bancarias-stage1"],
