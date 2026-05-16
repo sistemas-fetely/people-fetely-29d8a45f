@@ -152,11 +152,22 @@ export default function ConciliacaoStage1() {
     onError: (e: any) => toast.error("Erro: " + e.message),
   });
 
-  const totalSugestoesAuto = linhas.filter((l) => l.sugestao?.pode_auto_sugerir).length;
-  const totalComCandidatos = linhas.filter(
+  const linhasOrdenadas = [...linhas].sort((a, b) => {
+    const prioridade = (l: LinhaCombinada) => {
+      if (l.sugestao?.pode_auto_sugerir) return 0;
+      if ((l.sugestao?.qtd_total ?? 0) > 0) return 1;
+      return 2;
+    };
+    const pri = prioridade(a) - prioridade(b);
+    if (pri !== 0) return pri;
+    return new Date(b.data_pagamento || 0).getTime() - new Date(a.data_pagamento || 0).getTime();
+  });
+
+  const totalSugestoesAuto = linhasOrdenadas.filter((l) => l.sugestao?.pode_auto_sugerir).length;
+  const totalComCandidatos = linhasOrdenadas.filter(
     (l) => (l.sugestao?.qtd_total ?? 0) > 0 && !l.sugestao?.pode_auto_sugerir
   ).length;
-  const totalSemMatch = linhas.filter((l) => !l.sugestao || l.sugestao.qtd_total === 0).length;
+  const totalSemMatch = linhasOrdenadas.filter((l) => !l.sugestao || l.sugestao.qtd_total === 0).length;
 
   return (
     <div className="p-6 space-y-6 max-w-6xl mx-auto">
