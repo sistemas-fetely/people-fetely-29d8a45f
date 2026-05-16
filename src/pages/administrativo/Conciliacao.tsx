@@ -211,6 +211,7 @@ export default function Conciliacao() {
     itens.filter((i) => i.tipo === "parcial").length +
     lotes.filter((l) => l.tipo === "lote_parcial").length;
   const semMov = itens.filter((i) => i.tipo === "sem_mov").length;
+  const parcialmenteConciliados = itens.filter((i) => i.tipo === "parcialmente_conciliado").length;
 
   function nivelBadge(nivel: number) {
     if (nivel <= 2) return "bg-emerald-100 text-emerald-800";
