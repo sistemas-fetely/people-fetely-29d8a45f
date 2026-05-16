@@ -593,6 +593,45 @@ export default function Conciliacao() {
                         )}
                       </div>
                     </div>
+
+                    {item.tipo === "parcialmente_conciliado" && parciaisExpandidos.has(item.planilha_id) && (
+                      <div className="border-t mt-2 pt-2">
+                        {(() => {
+                          const movs = movsVinculadasMap?.get(item.planilha_id) ?? [];
+                          if (movs.length === 0) {
+                            return (
+                              <p className="text-xs text-muted-foreground px-1 py-2">
+                                Nenhuma movimentação vinculada ainda.
+                              </p>
+                            );
+                          }
+                          return (
+                            <div className="divide-y">
+                              {movs.map((m) => (
+                                <div key={m.id} className="flex items-center justify-between gap-4 px-1 py-2 text-xs">
+                                  <div className="min-w-0 flex-1">
+                                    <p className="font-medium truncate">{m.descricao || "—"}</p>
+                                    <p className="text-muted-foreground">{formatDateBR(m.data_transacao)}</p>
+                                  </div>
+                                  <div className="flex items-center gap-2 shrink-0">
+                                    <span className="font-mono">{formatBRL(m.valor)}</span>
+                                    {m.pg_em ? (
+                                      <Badge variant="outline" className="text-[9px] border-emerald-300 text-emerald-700 bg-emerald-50">
+                                        Conciliado
+                                      </Badge>
+                                    ) : (
+                                      <Badge variant="outline" className="text-[9px] border-amber-300 text-amber-700 bg-amber-50">
+                                        Aguardando OFX
+                                      </Badge>
+                                    )}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    )}
                   </div>
                 );
               })}
