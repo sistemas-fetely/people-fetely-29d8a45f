@@ -800,7 +800,7 @@ export default function CaixaBanco() {
                     <TableHead>Enviado em</TableHead>
                     <SortableTableHead column="pago_em" sort={sort} onSort={setSort}>Pago em</SortableTableHead>
                     <TableHead>Categoria</TableHead>
-                    <TableHead>Meio de Pagamento</TableHead>
+                    <TableHead>Forma de Pagamento</TableHead>
                     <SortableTableHead column="valor" sort={sort} onSort={setSort} align="right" className="text-right">Valor</SortableTableHead>
                     <TableHead>Tags</TableHead>
                   </TableRow>
