@@ -170,27 +170,7 @@ export default function CaixaBanco() {
     },
   });
 
-  // Map conta_pagar_id -> meio_pagamento_id (não está na vw_lancamentos_caixa_banco)
-  const { data: cprMeioMap } = useQuery({
-    queryKey: ["cpr-meio-pagamento-map", (lancamentos || []).map((l) => l.id).join(",")],
-    enabled: !!lancamentos && lancamentos.length > 0,
-    queryFn: async () => {
-      const ids = (lancamentos || [])
-        .filter((l) => l.origem_view === "conta_pagar")
-        .map((l) => l.id);
-      const m: Record<string, string> = {};
-      if (!ids.length) return m;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data } = await (supabase as any)
-        .from("contas_pagar_receber")
-        .select("id, meio_pagamento_id")
-        .in("id", ids);
-      (data || []).forEach((r: { id: string; meio_pagamento_id: string | null }) => {
-        if (r.meio_pagamento_id) m[r.id] = r.meio_pagamento_id;
-      });
-      return m;
-    },
-  });
+  // meio_pagamento_id agora vem direto da view vw_lancamentos_caixa_banco
 
   // Receitas — direto de movimentacoes_bancarias (tipo=credito sem CPR vinculada)
   const { data: receitas = [] } = useQuery<Receita[]>({
@@ -817,6 +797,7 @@ export default function CaixaBanco() {
                     <SortableTableHead column="parceiro" sort={sort} onSort={setSort}>Parceiro</SortableTableHead>
                     <SortableTableHead column="descricao" sort={sort} onSort={setSort}>Descrição</SortableTableHead>
                     <SortableTableHead column="vencimento" sort={sort} onSort={setSort}>Vencimento</SortableTableHead>
+                    <TableHead>Enviado em</TableHead>
                     <SortableTableHead column="pago_em" sort={sort} onSort={setSort}>Pago em</SortableTableHead>
                     <TableHead>Categoria</TableHead>
                     <TableHead>Meio de Pagamento</TableHead>
@@ -833,7 +814,7 @@ export default function CaixaBanco() {
                       l.status_caixa === "conciliado";
                     const atrasada = isAtrasada(l);
                     const dias = diasAtraso(l);
-                    const meioId = cprMeioMap?.[l.id];
+                    const meioId = l.meio_pagamento_id;
                     const formaNome = meioId ? mapMeios[meioId] : null;
                     const categoriaNome = l.categoria_id && mapCategorias[l.categoria_id];
                     const flags = statusFlagsMap.get(l.id);
@@ -902,8 +883,16 @@ export default function CaixaBanco() {
                         </TableCell>
 
                         <TableCell className="whitespace-nowrap text-xs">
-                          {l.data_pagamento ? (
-                            formatDateBR(l.data_pagamento)
+                          {l.data_enviada_para_pagamento ? (
+                            formatDateBR(l.data_enviada_para_pagamento)
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                        </TableCell>
+
+                        <TableCell className="whitespace-nowrap text-xs">
+                          {l.pago_em ? (
+                            formatDateBR(l.pago_em)
                           ) : (
                             <span className="text-muted-foreground">—</span>
                           )}
