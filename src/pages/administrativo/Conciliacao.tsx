@@ -21,6 +21,18 @@ export default function Conciliacao() {
     },
   });
 
+  const { data: stage2Pendentes } = useQuery({
+    queryKey: ["conciliacao-hub-stage2-count"],
+    queryFn: async () => {
+      const { count } = await sb
+        .from("ofx_transacoes_stage")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "pendente")
+        .lt("valor", 0);
+      return count ?? 0;
+    },
+  });
+
   return (
     <div className="p-6 space-y-6 max-w-5xl mx-auto">
       <div className="space-y-2">
