@@ -605,6 +605,16 @@ export default function Conciliacao() {
                       <p className="font-semibold truncate">{mov.fornecedor_cliente ?? mov.descricao ?? "—"}</p>
                       <p className="text-muted-foreground text-[10px] truncate">{mov.cpr_descricao ?? "—"}</p>
                       <p className="text-muted-foreground text-[10px]">{mov.data_transacao ? formatDateBR(mov.data_transacao) : "—"}</p>
+                      {mov.forma_pagamento_nome && (
+                        <div className="flex items-center gap-1 mt-0.5">
+                          <span className="text-[10px] text-muted-foreground">{mov.forma_pagamento_nome}</span>
+                          {mov.fatura_vencimento && (
+                            <span className="text-[9px] px-1.5 py-0.5 rounded bg-purple-100 text-purple-700">
+                              venc {formatDateBR(mov.fatura_vencimento)}
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                       <span className="font-mono font-bold">{formatBRL(Math.abs(Number(mov.valor || 0)))}</span>
