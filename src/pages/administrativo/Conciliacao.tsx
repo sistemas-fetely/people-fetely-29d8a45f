@@ -167,6 +167,14 @@ export default function Conciliacao() {
     return "bg-muted text-muted-foreground";
   }
 
+  function corNivel(nivel: number | undefined | null): string {
+    if (!nivel) return "";
+    if (nivel === 1) return "border-l-4 border-l-emerald-500 bg-emerald-50/20";
+    if (nivel === 2) return "border-l-4 border-l-yellow-400 bg-yellow-50/20";
+    if (nivel === 3) return "border-l-4 border-l-orange-400 bg-orange-50/20";
+    return "border-l-4 border-l-red-400 bg-red-50/20";
+  }
+
   return (
     <div className="p-6 space-y-6 max-w-7xl mx-auto">
       {/* Header */}
@@ -245,14 +253,13 @@ export default function Conciliacao() {
                 const expandido = lotesExpandidos.has(lote.numero_lote);
                 const isCompleto = lote.tipo === "lote_completo";
                 const todasMovs = lote.planilhas.every((p) => !!p.mov_sugerida);
+                const nivelLote = lote.planilhas.every((p) => p.mov_sugerida)
+                  ? Math.max(...lote.planilhas.map((p) => p.mov_sugerida!.nivel))
+                  : null;
                 return (
                   <div
                     key={lote.numero_lote}
-                    className={`rounded-lg border bg-card transition-colors ${
-                      isCompleto
-                        ? "border-l-4 border-l-emerald-500 bg-emerald-50/30"
-                        : "border-l-4 border-l-amber-400"
-                    }`}
+                    className={`rounded-lg border bg-card transition-colors ${corNivel(nivelLote)}`}
                   >
                     <div className="flex items-center justify-between gap-4 p-3">
                       <div className="min-w-0 flex-1">
@@ -347,13 +354,7 @@ export default function Conciliacao() {
                 return (
                   <div
                     key={item.planilha_id}
-                    className={`rounded-lg border bg-card p-3 transition-colors ${
-                      isCompleto
-                        ? "border-l-4 border-l-emerald-500 bg-emerald-50/30"
-                        : isParcial
-                        ? "border-l-4 border-l-amber-400"
-                        : ""
-                    }`}
+                    className={`rounded-lg border bg-card p-3 transition-colors ${corNivel(item.mov_sugerida?.nivel)}`}
                   >
                     <div className="grid grid-cols-1 md:grid-cols-[1.5fr_1.5fr_1.5fr_auto] gap-3 items-center">
                       {/* Planilha */}
