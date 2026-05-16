@@ -662,7 +662,11 @@ export default function Conciliacao() {
                     <div key={p.id} className="p-3 border rounded text-xs flex items-center justify-between gap-2">
                       <div className="flex-1 min-w-0">
                         <p className="font-medium truncate">{p.nome_favorecido}</p>
-                        <p className="text-muted-foreground text-[10px]">{p.tipo_pagamento}</p>
+                        <p className="text-muted-foreground text-[10px]">
+                          {p.status_conciliacao === "sem_cnpj"
+                            ? "Sem CNPJ — vincule manualmente"
+                            : p.tipo_pagamento}
+                        </p>
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="text-sm text-muted-foreground">{p.data_pagamento ? formatDateBR(p.data_pagamento) : "—"}</span>
