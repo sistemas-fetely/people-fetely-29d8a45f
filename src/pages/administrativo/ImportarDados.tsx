@@ -55,20 +55,24 @@ export default function ImportarDados() {
     setSyncing(true);
     setSyncResult(null);
     try {
-      const tipos = ["contas_receber", "pedidos", "produtos"] as const;
-      const totals = { criados: 0, atualizados: 0, duracao_ms: 0 };
-      for (const tipo of tipos) {
+      let continuar = true;
+      let tentativas = 0;
+      const totals = { criados: 0, atualizados: 0, duracao_ms: 0, erros: 0 };
+      while (continuar && tentativas < 6) {
         if (controller.signal.aborted) throw new Error("Cancelado pelo usuário");
+        tentativas++;
         const { data, error } = await supabase.functions.invoke(
           "sync-bling-financeiro",
-          { body: { tipo } }
+          { body: { tipo: "sync" } }
         );
         if (controller.signal.aborted) throw new Error("Cancelado pelo usuário");
         if (error) throw new Error(error.message);
-        if (data?.sucesso === false) throw new Error(data.erro || `Erro em ${tipo}`);
+        if (data?.sucesso === false) throw new Error(data.erro || "Erro no sync");
         totals.criados += data?.criados || 0;
         totals.atualizados += data?.atualizados || 0;
+        totals.erros += data?.erros || 0;
         totals.duracao_ms += data?.duracao_ms || 0;
+        continuar = !!data?.continuar;
       }
       setSyncResult(totals);
       toast.success("Sincronização concluída");

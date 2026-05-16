@@ -22,6 +22,16 @@ import { ptBR } from "date-fns/locale";
 
 const CALLBACK_URL = "https://people-fetely.lovable.app/administrativo/bling-callback";
 
+type EntidadeBling = "contatos" | "produtos" | "contas_receber" | "pedidos" | "nfe";
+
+const ENTIDADES: Array<{ id: EntidadeBling; label: string }> = [
+  { id: "contatos", label: "Contatos / Clientes" },
+  { id: "produtos", label: "Produtos" },
+  { id: "contas_receber", label: "Contas a Receber" },
+  { id: "pedidos", label: "Pedidos de Venda" },
+  { id: "nfe", label: "Notas Fiscais (NFe)" },
+];
+
 export default function ConfiguracaoIntegracao() {
   const qc = useQueryClient();
   const [showSecret, setShowSecret] = useState(false);
@@ -96,6 +106,18 @@ export default function ConfiguracaoIntegracao() {
       return data || [];
     },
     refetchInterval: syncing ? 2000 : false,
+  });
+
+  const { data: cursores = [] } = useQuery({
+    queryKey: ["integracao-bling-cursores"],
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from("integracoes_sync_cursor")
+        .select("*")
+        .eq("sistema", "bling");
+      return data || [];
+    },
+    refetchInterval: syncing ? 2000 : 10_000,
   });
 
   const { data: configFinanceiro = [] } = useQuery({
@@ -206,25 +228,25 @@ export default function ConfiguracaoIntegracao() {
     qc.invalidateQueries({ queryKey: ["integracao-bling"] });
   }
 
-  async function sincronizar(tipo: "contas_receber" | "pedidos" | "produtos") {
-    setSyncing(tipo);
+  async function sincronizar(entidade: EntidadeBling) {
+    setSyncing(entidade);
     setSyncResult(null);
-    const { data, error } = await supabase.functions.invoke("sync-bling-financeiro", {
-      body: { tipo },
-    });
-    setSyncing(null);
-    if (error) {
-      toast.error("Falha: " + error.message);
-      return;
+    try {
+      const { data, error } = await supabase.functions.invoke("sync-bling-financeiro", {
+        body: { tipo: "sync", entidades: [entidade] },
+      });
+      if (error) throw new Error(error.message);
+      if (data?.sucesso === false) throw new Error(data.erro || "Erro");
+      setSyncResult(data);
+      toast.success(`Sync ${entidade}: ${data?.criados || 0} novos, ${data?.atualizados || 0} atualizados${data?.continuar ? " (continua)" : ""}`);
+    } catch (e: any) {
+      toast.error("Falha: " + (e?.message || String(e)));
+    } finally {
+      setSyncing(null);
+      qc.invalidateQueries({ queryKey: ["integracao-bling"] });
+      qc.invalidateQueries({ queryKey: ["integracao-bling-logs"] });
+      qc.invalidateQueries({ queryKey: ["integracao-bling-cursores"] });
     }
-    if (data?.sucesso === false) {
-      toast.error(data.erro || "Erro desconhecido");
-      return;
-    }
-    setSyncResult(data);
-    toast.success(`Sync concluída: ${data?.criados || 0} novos, ${data?.atualizados || 0} atualizados`);
-    qc.invalidateQueries({ queryKey: ["integracao-bling"] });
-    qc.invalidateQueries({ queryKey: ["integracao-bling-logs"] });
   }
 
   async function testarConexao() {
@@ -235,7 +257,7 @@ export default function ConfiguracaoIntegracao() {
       });
       if (error) throw new Error(error.message);
       if (data?.sucesso === false) throw new Error(data.erro || "Erro");
-      toast.success("Conexão OK: " + (data?.mensagem || "Edge Function ativa"));
+      toast.success("Conexão OK: " + (data?.mensagem || "Edge ativa"));
     } catch (e: any) {
       toast.error("Falha: " + (e?.message || String(e)));
     } finally {
@@ -246,33 +268,28 @@ export default function ConfiguracaoIntegracao() {
   async function handleSyncFull() {
     setSyncing("full");
     setSyncResult(null);
-    let totalCriados = 0;
-    let totalAtualizados = 0;
-    let totalErros = 0;
-    const detalhes: string[] = [];
     const startTime = Date.now();
-
-    const etapas: Array<{ tipo: "contas_receber" | "pedidos" | "produtos"; label: string }> = [
-      { tipo: "contas_receber", label: "contas a receber" },
-      { tipo: "pedidos", label: "pedidos de venda" },
-      { tipo: "produtos", label: "produtos" },
-    ];
-
     try {
-      for (const etapa of etapas) {
-        toast.info(`Sincronizando ${etapa.label}...`);
+      // Server processa as 5 entidades em ordem (contatos → produtos → contas_receber → pedidos → nfe).
+      // Se algo não finalizar em 120s, voltamos a chamar com `continuar=true`.
+      let continuar = true;
+      let totalCriados = 0, totalAtualizados = 0, totalErros = 0;
+      const detalhes: string[] = [];
+      let tentativas = 0;
+
+      while (continuar && tentativas < 6) {
+        tentativas++;
         const { data, error } = await supabase.functions.invoke("sync-bling-financeiro", {
-          body: { tipo: etapa.tipo },
+          body: { tipo: "sync" },
         });
         if (error) throw new Error(error.message);
-        if (data?.sucesso === false) throw new Error(data.erro || "Erro desconhecido");
-        if (data) {
-          totalCriados += data.criados || 0;
-          totalAtualizados += data.atualizados || 0;
-          totalErros += data.erros || 0;
-          if (data.detalhes) detalhes.push(data.detalhes);
-        }
-        qc.invalidateQueries({ queryKey: ["integracao-bling-logs"] });
+        if (data?.sucesso === false) throw new Error(data.erro || "Erro");
+        totalCriados += data?.criados || 0;
+        totalAtualizados += data?.atualizados || 0;
+        totalErros += data?.erros || 0;
+        if (data?.detalhes) detalhes.push(data.detalhes);
+        continuar = !!data?.continuar;
+        qc.invalidateQueries({ queryKey: ["integracao-bling-cursores"] });
       }
 
       setSyncResult({
@@ -282,14 +299,37 @@ export default function ConfiguracaoIntegracao() {
         detalhes: detalhes.join(" | "),
         duracao_ms: Date.now() - startTime,
       });
-      toast.success(`Sync completo! ${totalCriados} novos, ${totalAtualizados} atualizados`);
+      toast.success(`Sync completo: ${totalCriados} novos, ${totalAtualizados} atualizados${totalErros ? `, ${totalErros} erros` : ""}`);
     } catch (e: any) {
-      toast.error("Erro no sync: " + (e?.message || String(e)));
+      toast.error("Erro: " + (e?.message || String(e)));
     } finally {
       setSyncing(null);
       qc.invalidateQueries({ queryKey: ["integracao-bling"] });
       qc.invalidateQueries({ queryKey: ["integracao-bling-logs"] });
+      qc.invalidateQueries({ queryKey: ["integracao-bling-cursores"] });
     }
+  }
+
+  async function resetarCursor(entidade: EntidadeBling) {
+    const ok = window.confirm(`Resetar cursor de "${entidade}"? Próxima sync vai começar do zero (mais lenta).`);
+    if (!ok) return;
+    const { error } = await supabase.functions.invoke("sync-bling-financeiro", {
+      body: { tipo: "resetar_cursor", entidade },
+    });
+    if (error) { toast.error("Falha: " + error.message); return; }
+    toast.success("Cursor resetado");
+    qc.invalidateQueries({ queryKey: ["integracao-bling-cursores"] });
+  }
+
+  async function desconectarBling() {
+    const ok = window.confirm("Desconectar do Bling? Tokens serão apagados (Client ID/Secret ficam).");
+    if (!ok) return;
+    const { error } = await supabase.functions.invoke("sync-bling-financeiro", {
+      body: { tipo: "desconectar" },
+    });
+    if (error) { toast.error("Falha: " + error.message); return; }
+    toast.success("Bling desconectado");
+    qc.invalidateQueries({ queryKey: ["integracao-bling"] });
   }
 
   async function processarCodeManual() {
@@ -512,68 +552,115 @@ export default function ConfiguracaoIntegracao() {
             </CardContent>
           </Card>
 
-          {/* Sincronização */}
+          {/* Sincronização por entidade */}
           <Card>
             <CardHeader>
-              <CardTitle>Sincronização</CardTitle>
-              <CardDescription>
-                {config?.ultima_sync_at
-                  ? `Última sincronização ${formatDistanceToNow(new Date(config.ultima_sync_at), { addSuffix: true, locale: ptBR })}`
-                  : "Nunca sincronizado"}
-                {config?.ultima_sync_detalhes && (
-                  <span className="block mt-1 text-xs">{config.ultima_sync_detalhes}</span>
-                )}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  size="lg"
-                  className="bg-admin hover:bg-admin/90 text-admin-foreground"
-                  onClick={handleSyncFull}
-                  disabled={!!syncing || !form.access_token}
-                >
-                  {syncing === "full" ? (
-                    <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                  ) : (
-                    <RefreshCw className="h-5 w-5 mr-2" />
+              <div className="flex items-center justify-between gap-3 flex-wrap">
+                <div>
+                  <CardTitle>Sincronização</CardTitle>
+                  <CardDescription>
+                    {config?.ultima_sync_at
+                      ? `Última sincronização ${formatDistanceToNow(new Date(config.ultima_sync_at), { addSuffix: true, locale: ptBR })}`
+                      : "Nunca sincronizado"}
+                  </CardDescription>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={handleSyncFull}
+                    disabled={!!syncing || !config?.access_token}
+                    className="bg-admin hover:bg-admin/90 text-admin-foreground"
+                  >
+                    {syncing === "full"
+                      ? <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      : <RefreshCw className="h-4 w-4 mr-2" />}
+                    Sincronizar tudo
+                  </Button>
+                  {config?.access_token && (
+                    <Button variant="outline" onClick={desconectarBling}>
+                      Desconectar
+                    </Button>
                   )}
-                  Sincronizar tudo
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => sincronizar("contas_receber")}
-                  disabled={!!syncing || !form.access_token}
-                >
-                  Contas a receber
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => sincronizar("pedidos")}
-                  disabled={!!syncing || !form.access_token}
-                >
-                  Pedidos de venda
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => sincronizar("produtos")}
-                  disabled={!!syncing || !form.access_token}
-                >
-                  Produtos
-                </Button>
+                </div>
               </div>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Entidade</TableHead>
+                    <TableHead>Estado</TableHead>
+                    <TableHead className="text-right">Página atual</TableHead>
+                    <TableHead className="text-right">Total processado</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {ENTIDADES.map((ent) => {
+                    const cur: any = cursores.find((c: any) => c.entidade === ent.id) || {};
+                    const emExec = cur.em_execucao || syncing === ent.id;
+                    return (
+                      <TableRow key={ent.id}>
+                        <TableCell className="font-medium">{ent.label}</TableCell>
+                        <TableCell>
+                          {emExec ? (
+                            <Badge variant="outline"><Loader2 className="h-3 w-3 mr-1 animate-spin" />Sincronizando</Badge>
+                          ) : cur.ultima_data_corte ? (
+                            <Badge className="bg-emerald-600 hover:bg-emerald-600">
+                              <CheckCircle2 className="h-3 w-3 mr-1" />
+                              {formatDistanceToNow(new Date(cur.ultima_data_corte), { addSuffix: true, locale: ptBR })}
+                            </Badge>
+                          ) : cur.ultima_pagina > 0 ? (
+                            <Badge className="bg-amber-500 hover:bg-amber-500">
+                              <AlertCircle className="h-3 w-3 mr-1" />Pausada
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline">Nunca</Badge>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right text-xs tabular-nums">
+                          {cur.ultima_pagina || 0}
+                        </TableCell>
+                        <TableCell className="text-right text-xs tabular-nums">
+                          {cur.total_processado || 0}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex gap-1 justify-end">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => sincronizar(ent.id)}
+                              disabled={!!syncing || !config?.access_token}
+                            >
+                              {syncing === ent.id
+                                ? <Loader2 className="h-3 w-3 animate-spin" />
+                                : <RefreshCw className="h-3 w-3" />}
+                            </Button>
+                            {cur.ultima_pagina > 0 && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => resetarCursor(ent.id)}
+                                disabled={!!syncing}
+                                title="Resetar cursor"
+                              >
+                                ↺
+                              </Button>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
 
               {syncResult && (
-                <div className="p-4 rounded-lg border bg-emerald-50 dark:bg-emerald-950/30 text-sm">
-                  <div className="font-medium text-emerald-900 dark:text-emerald-200 mb-1">
-                    ✅ Sincronização concluída
-                  </div>
-                  <div className="text-emerald-800 dark:text-emerald-300">
-                    {syncResult.criados} novos | {syncResult.atualizados} atualizados |{" "}
-                    {syncResult.erros} erros | {syncResult.duracao_ms}ms
+                <div className="p-3 rounded-lg border bg-emerald-50 dark:bg-emerald-950/30 text-sm">
+                  <div className="font-medium text-emerald-900 dark:text-emerald-200">
+                    ✅ {syncResult.criados} novos | {syncResult.atualizados} atualizados | {syncResult.erros} erros · {syncResult.duracao_ms}ms
                   </div>
                   {syncResult.detalhes && (
-                    <div className="text-xs text-emerald-700 dark:text-emerald-400 mt-1">
+                    <div className="text-xs text-emerald-700 dark:text-emerald-400 mt-1 font-mono">
                       {syncResult.detalhes}
                     </div>
                   )}

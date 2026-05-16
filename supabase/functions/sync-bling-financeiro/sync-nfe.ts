@@ -1,0 +1,95 @@
+import type { BlingClient } from "./bling-client.ts";
+
+function sleep(ms: number) { return new Promise((r) => setTimeout(r, ms)); }
+
+async function resolveParceiroId(supabase: any, contato: any): Promise<string | null> {
+  if (!contato?.id) return null;
+  const blingId = String(contato.id);
+  const { data: found } = await supabase
+    .from("parceiros_comerciais").select("id").eq("bling_id", blingId).maybeSingle();
+  if (found) return found.id;
+  if (!contato.nome) return null;
+  const { data: novo } = await supabase.from("parceiros_comerciais").insert({
+    razao_social: contato.nome, tipo: "pj", tipos: ["cliente"], origem: "api_bling", bling_id: blingId,
+  }).select("id").maybeSingle();
+  return novo?.id ?? null;
+}
+
+// Bling NFe situação: 1=Pendente, 2=Emitida, 3=Cancelada, 4=Em digitação, 5=Rejeitada, 6=Autorizada, 7=Inutilizada, 8=Denegada
+const SITUACAO_MAP: Record<number, string> = {
+  1: "pendente", 2: "emitida", 3: "cancelada", 4: "rascunho",
+  5: "rejeitada", 6: "autorizada", 7: "inutilizada", 8: "denegada",
+};
+
+export async function syncNfe(
+  supabase: any,
+  client: BlingClient,
+  timeUp: () => boolean,
+  cursor: { ultima_pagina: number; ultima_data_corte: string | null },
+  ultimaSync: string | null,
+) {
+  let criados = 0, atualizados = 0, erros = 0;
+  let pagina = Math.max(cursor.ultima_pagina + 1, 1);
+  let ultimoErro = "";
+  const corteISO = cursor.ultima_data_corte || ultimaSync || null;
+  const corteDate = corteISO ? corteISO.split("T")[0] : null;
+
+  while (!timeUp()) {
+    let data: any;
+    try {
+      const filtro = corteDate ? `&dataEmissaoInicial=${corteDate}` : "";
+      data = await client.get(`/nfe?limite=100&pagina=${pagina}${filtro}`);
+    } catch (e) {
+      ultimoErro = `pagina ${pagina}: ${(e as Error).message}`;
+      break;
+    }
+    const items = data?.data || [];
+    if (items.length === 0) { pagina = 0; break; }
+
+    for (const nf of items) {
+      try {
+        const blingId = String(nf.id);
+        const parceiro_id = await resolveParceiroId(supabase, nf.contato);
+        const sitNum = typeof nf.situacao === "object" ? nf.situacao?.valor : nf.situacao;
+        const registro = {
+          bling_id: blingId,
+          numero: nf.numero != null ? String(nf.numero) : null,
+          serie: nf.serie != null ? String(nf.serie) : null,
+          chave_acesso: nf.chaveAcesso || null,
+          tipo: nf.tipo === 0 ? "entrada" : "saida",
+          situacao: SITUACAO_MAP[Number(sitNum)] || String(sitNum || ""),
+          data_emissao: nf.dataEmissao ? String(nf.dataEmissao).split("T")[0] : null,
+          data_saida: nf.dataOperacao ? String(nf.dataOperacao).split("T")[0] : null,
+          valor_nota: Number(nf.valorNota) || 0,
+          parceiro_id,
+          xml_url: nf.xml || null,
+          pdf_url: nf.linkPDF || null,
+          raw: nf,
+          origem: "api_bling",
+          updated_at: new Date().toISOString(),
+        };
+        const { data: existing } = await supabase
+          .from("nfs_emitidas").select("id").eq("bling_id", blingId).maybeSingle();
+        if (existing) {
+          await supabase.from("nfs_emitidas").update(registro).eq("id", existing.id);
+          atualizados++;
+        } else {
+          await supabase.from("nfs_emitidas").insert(registro);
+          criados++;
+        }
+      } catch (e) {
+        erros++;
+        ultimoErro = `item ${nf?.id}: ${(e as Error).message}`;
+      }
+    }
+
+    await supabase.from("integracoes_sync_cursor")
+      .update({ ultima_pagina: pagina, total_processado: criados + atualizados, updated_at: new Date().toISOString() })
+      .eq("sistema", "bling").eq("entidade", "nfe");
+
+    pagina++;
+    await sleep(300);
+  }
+
+  return { criados, atualizados, erros, ultimoErro, proximaPagina: pagina };
+}

@@ -1,517 +1,238 @@
+// Edge Function: sync-bling-financeiro
+// Router modular: OAuth + sync por entidade (contatos, produtos, contas_receber, pedidos, nfe).
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
+import { BLING_BASE, ensureFreshToken, makeBlingClient, type BlingConfig } from "./bling-client.ts";
+import { syncContatos } from "./sync-contatos.ts";
+import { syncProdutos } from "./sync-produtos.ts";
+import { syncContasReceber } from "./sync-contas-receber.ts";
+import { syncPedidos } from "./sync-pedidos.ts";
+import { syncNfe } from "./sync-nfe.ts";
 
-var corsHeaders = {
+const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-var BLING_BASE = "https://api.bling.com.br/Api/v3";
+const ok = (data: any, status = 200) =>
+  new Response(JSON.stringify(data), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+const err = (msg: string, status = 400) =>
+  new Response(JSON.stringify({ sucesso: false, erro: msg }), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
-function ok(data: any) {
-  return new Response(JSON.stringify(data), {
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
-  });
+const MAX_EXEC_MS = 120_000;
+
+type Entidade = "contatos" | "produtos" | "contas_receber" | "pedidos" | "nfe";
+const ORDEM: Entidade[] = ["contatos", "produtos", "contas_receber", "pedidos", "nfe"];
+
+async function getOrCreateCursor(supabase: any, entidade: Entidade) {
+  const { data } = await supabase.from("integracoes_sync_cursor")
+    .select("*").eq("sistema", "bling").eq("entidade", entidade).maybeSingle();
+  if (data) return data;
+  const { data: created } = await supabase.from("integracoes_sync_cursor")
+    .insert({ sistema: "bling", entidade, ultima_pagina: 0 })
+    .select("*").maybeSingle();
+  return created;
 }
 
-function err(message: any, status?: any) {
-  return new Response(
-    JSON.stringify({ sucesso: false, erro: message }),
-    { status: status || 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-  );
-}
+async function runEntity(
+  supabase: any, client: any, entidade: Entidade, ultimaSync: string | null, timeUp: () => boolean,
+) {
+  const cursor = await getOrCreateCursor(supabase, entidade);
+  await supabase.from("integracoes_sync_cursor").update({
+    em_execucao: true, iniciado_em: new Date().toISOString(),
+  }).eq("sistema", "bling").eq("entidade", entidade);
 
-function sleep(ms: number) {
-  return new Promise(function (resolve) { setTimeout(resolve, ms); });
-}
-
-// Tempo máximo total da execução (Edge tem limite de 150s — paramos antes pra responder).
-var MAX_EXEC_MS = 120000;
-var execStartTs = 0;
-function timeUp() {
-  return (Date.now() - execStartTs) > MAX_EXEC_MS;
-}
-
-async function blingGet(endpoint: string, accessToken: string): Promise<any> {
-  var url = BLING_BASE + endpoint;
-  var res = await fetch(url, {
-    method: "GET",
-    headers: { "Authorization": "Bearer " + accessToken, "Accept": "application/json" }
-  });
-  if (res.status === 429) {
-    await sleep(1200);
-    return blingGet(endpoint, accessToken);
+  let result: any;
+  try {
+    if (entidade === "contatos") result = await syncContatos(supabase, client, timeUp, cursor);
+    else if (entidade === "produtos") result = await syncProdutos(supabase, client, timeUp, cursor);
+    else if (entidade === "contas_receber") result = await syncContasReceber(supabase, client, timeUp, cursor, ultimaSync);
+    else if (entidade === "pedidos") result = await syncPedidos(supabase, client, timeUp, cursor, ultimaSync);
+    else if (entidade === "nfe") result = await syncNfe(supabase, client, timeUp, cursor, ultimaSync);
+  } finally {
+    const finalizada = result?.proximaPagina === 0;
+    await supabase.from("integracoes_sync_cursor").update({
+      em_execucao: false,
+      ultima_pagina: finalizada ? 0 : (result?.proximaPagina ?? cursor.ultima_pagina),
+      ultima_data_corte: finalizada ? new Date().toISOString() : cursor.ultima_data_corte,
+      updated_at: new Date().toISOString(),
+    }).eq("sistema", "bling").eq("entidade", entidade);
   }
-  if (!res.ok) {
-    var text = await res.text();
-    throw new Error("Bling API erro " + res.status + ": " + text);
-  }
-  return res.json();
+  return { entidade, ...result, finalizada: result?.proximaPagina === 0 };
 }
 
-async function refreshToken(supabase: any, config: any) {
-  var credentials = config.client_id + ":" + config.client_secret;
-  var encoded = btoa(credentials);
-  var params = new URLSearchParams();
-  params.set("grant_type", "refresh_token");
-  params.set("refresh_token", config.refresh_token);
-
-  var res = await fetch(BLING_BASE + "/oauth/token", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-      "Accept": "application/json",
-      "Authorization": "Basic " + encoded
-    },
-    body: params
-  });
-  if (!res.ok) throw new Error("Falha ao renovar token. Reconecte o Bling.");
-
-  var tokens = await res.json();
-  await supabase.from("integracoes_config").update({
-    access_token: tokens.access_token,
-    refresh_token: tokens.refresh_token,
-    token_expires_at: new Date(Date.now() + ((tokens.expires_in || 3600) * 1000)).toISOString(),
-    updated_at: new Date().toISOString()
-  }).eq("sistema", "bling");
-
-  return tokens.access_token;
-}
-
-// === SYNC: CONTAS A RECEBER ===
-async function syncContasReceber(supabase: any, accessToken: string, ultimaSync: any) {
-  var criados = 0, atualizados = 0, erros = 0;
-  var pagina = 1;
-  var temMais = true;
-
-  while (temMais) {
-    if (timeUp()) { temMais = false; break; }
-    try {
-      var url = "/contas/receber?limite=100&pagina=" + pagina;
-      if (ultimaSync) {
-        url = url + "&dataEmissao[gte]=" + ultimaSync.split("T")[0];
-      }
-      var data = await blingGet(url, accessToken);
-      var contas = (data && data.data) ? data.data : [];
-      if (contas.length === 0) { temMais = false; break; }
-
-      for (var i = 0; i < contas.length; i++) {
-        try {
-          var conta = contas[i];
-          var status = "aberto";
-          if (conta.situacao === 2 || conta.situacao === 5) status = "pago";
-          else if (conta.situacao === 3) status = "cancelado";
-          if (status === "aberto" && conta.vencimento && new Date(conta.vencimento) < new Date()) {
-            status = "atrasado";
-          }
-
-          var nomeContato = (conta.contato && conta.contato.nome) ? conta.contato.nome : null;
-          var blingId = String(conta.id);
-
-          var parceiro_id = null;
-          if (conta.contato && conta.contato.id) {
-            var parcResult = await supabase
-              .from("parceiros_comerciais")
-              .select("id")
-              .eq("bling_id", String(conta.contato.id))
-              .maybeSingle();
-
-            if (parcResult.data) {
-              parceiro_id = parcResult.data.id;
-            } else if (nomeContato) {
-              var novoParceiro = await supabase
-                .from("parceiros_comerciais")
-                .insert({
-                  razao_social: nomeContato,
-                  tipo: "pj",
-                  tipos: ["cliente"],
-                  origem: "bling",
-                  bling_id: String(conta.contato.id)
-                })
-                .select("id")
-                .maybeSingle();
-              parceiro_id = novoParceiro.data ? novoParceiro.data.id : null;
-            }
-          }
-
-          var registro = {
-            tipo: "receber",
-            descricao: conta.historico || conta.nroDocumento || "Sem descricao",
-            valor: parseFloat(conta.valor) || 0,
-            data_vencimento: conta.vencimento || null,
-            data_pagamento: conta.dataPagamento || null,
-            status: status,
-            fornecedor_cliente: nomeContato,
-            parceiro_id: parceiro_id,
-            origem: "api_bling",
-            bling_id: blingId,
-            observacao: conta.ocorrencia || null
-          };
-
-          var existing = await supabase
-            .from("contas_pagar_receber")
-            .select("id")
-            .eq("bling_id", blingId)
-            .eq("tipo", "receber")
-            .maybeSingle();
-
-          if (existing.data) {
-            await supabase.from("contas_pagar_receber").update(registro).eq("id", existing.data.id);
-            atualizados++;
-          } else {
-            await supabase.from("contas_pagar_receber").insert(registro);
-            criados++;
-          }
-        } catch (e) { erros++; }
-      }
-      pagina++;
-      await sleep(400);
-    } catch (e) { erros++; temMais = false; }
-  }
-  return { criados: criados, atualizados: atualizados, erros: erros };
-}
-
-// === SYNC: PEDIDOS DE VENDA ===
-async function syncPedidos(supabase: any, accessToken: string, ultimaSync: any) {
-  var criados = 0, atualizados = 0, erros = 0;
-  var pagina = 1;
-  var temMais = true;
-
-  while (temMais) {
-    if (timeUp()) { temMais = false; break; }
-    try {
-      var url = "/pedidos/vendas?limite=100&pagina=" + pagina;
-      if (ultimaSync) {
-        url = url + "&dataInicial=" + ultimaSync.split("T")[0];
-      }
-      var data = await blingGet(url, accessToken);
-      var pedidos = (data && data.data) ? data.data : [];
-      if (pedidos.length === 0) { temMais = false; break; }
-
-      for (var i = 0; i < pedidos.length; i++) {
-        try {
-          var ped = pedidos[i];
-          var blingId = String(ped.id);
-
-          var parceiro_id = null;
-          var clienteNome = (ped.contato && ped.contato.nome) ? ped.contato.nome : null;
-          if (ped.contato && ped.contato.id) {
-            var parcResult = await supabase
-              .from("parceiros_comerciais")
-              .select("id")
-              .eq("bling_id", String(ped.contato.id))
-              .maybeSingle();
-            if (parcResult.data) {
-              parceiro_id = parcResult.data.id;
-            } else if (clienteNome) {
-              var novoParceiro = await supabase
-                .from("parceiros_comerciais")
-                .insert({
-                  razao_social: clienteNome,
-                  tipo: "pj",
-                  tipos: ["cliente"],
-                  origem: "bling",
-                  bling_id: String(ped.contato.id)
-                })
-                .select("id")
-                .maybeSingle();
-              parceiro_id = novoParceiro.data ? novoParceiro.data.id : null;
-            }
-          }
-
-          var registro = {
-            bling_id: blingId,
-            numero: ped.numero ? String(ped.numero) : null,
-            numero_loja: ped.numeroLoja || null,
-            data_pedido: ped.data || null,
-            data_prevista_entrega: ped.dataPrevista || null,
-            data_saida: ped.dataSaida || null,
-            parceiro_id: parceiro_id,
-            cliente_nome: clienteNome,
-            valor_produtos: parseFloat(ped.totalProdutos) || 0,
-            valor_frete: parseFloat(ped.frete) || 0,
-            valor_desconto: parseFloat(ped.desconto) || 0,
-            valor_total: parseFloat(ped.total) || 0,
-            situacao: ped.situacao ? ped.situacao.valor : null,
-            observacoes: ped.observacoes || null,
-            origem: "api_bling",
-            updated_at: new Date().toISOString()
-          };
-
-          var existing = await supabase
-            .from("pedidos_venda")
-            .select("id")
-            .eq("bling_id", blingId)
-            .maybeSingle();
-
-          if (existing.data) {
-            await supabase.from("pedidos_venda").update(registro).eq("id", existing.data.id);
-            atualizados++;
-          } else {
-            await supabase.from("pedidos_venda").insert(registro);
-            criados++;
-          }
-        } catch (e) { erros++; }
-      }
-      pagina++;
-      await sleep(400);
-    } catch (e) { erros++; temMais = false; }
-  }
-  return { criados: criados, atualizados: atualizados, erros: erros };
-}
-
-// === SYNC: PRODUTOS ===
-async function syncProdutos(supabase: any, accessToken: string) {
-  var criados = 0, atualizados = 0, erros = 0;
-  var ultimoErro = "";
-  var pagina = 1;
-  var temMais = true;
-
-  while (temMais) {
-    if (timeUp()) { temMais = false; break; }
-    try {
-      var url = "/produtos?limite=100&pagina=" + pagina;
-      var data = await blingGet(url, accessToken);
-      var produtos = (data && data.data) ? data.data : [];
-      if (produtos.length === 0) { temMais = false; break; }
-
-      for (var i = 0; i < produtos.length; i++) {
-        try {
-          var prod = produtos[i];
-          var blingId = String(prod.id);
-
-          var registro = {
-            bling_id: blingId,
-            codigo: prod.codigo || null,
-            nome: prod.nome || "Sem nome",
-            descricao: prod.descricaoCurta || null,
-            tipo: prod.tipo === "S" ? "servico" : "produto",
-            peso_bruto: parseFloat(prod.pesoBruto) || null,
-            peso_liquido: parseFloat(prod.pesoLiquido) || null,
-            unidade: prod.unidade || "UN",
-            ncm: prod.ncm || null,
-            gtin: prod.gtin || null,
-            preco_custo: parseFloat(prod.precoCusto) || null,
-            preco_venda: parseFloat(prod.preco) || null,
-            imagem_url: (prod.midia && prod.midia.url && prod.midia.url.miniatura) ? prod.midia.url.miniatura : null,
-            ativo: prod.situacao === "A",
-            origem: "api_bling",
-            updated_at: new Date().toISOString()
-          };
-
-          var existing = await supabase
-            .from("produtos")
-            .select("id")
-            .eq("bling_id", blingId)
-            .maybeSingle();
-
-          if (existing.data) {
-            await supabase.from("produtos").update(registro).eq("id", existing.data.id);
-            atualizados++;
-          } else {
-            await supabase.from("produtos").insert(registro);
-            criados++;
-          }
-        } catch (e) {
-          erros++;
-          ultimoErro = "item: " + ((e instanceof Error) ? e.message : String(e));
-          console.error("[syncProdutos][item]", ultimoErro);
-        }
-      }
-      pagina++;
-      await sleep(400);
-    } catch (e) {
-      erros++;
-      ultimoErro = "pagina " + pagina + ": " + ((e instanceof Error) ? e.message : String(e));
-      console.error("[syncProdutos][page]", ultimoErro);
-      temMais = false;
-    }
-  }
-  return { criados: criados, atualizados: atualizados, erros: erros, ultimoErro: ultimoErro };
-}
-
-// === MAIN HANDLER ===
 serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    var supabase = createClient(
+    const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
-    var authHeader = req.headers.get("Authorization");
-    if (!authHeader) throw new Error("Nao autorizado");
+    // Auth + super_admin
+    const auth = req.headers.get("Authorization");
+    if (!auth) return err("Não autorizado", 401);
+    const { data: userData, error: userErr } = await supabase.auth.getUser(auth.replace("Bearer ", ""));
+    if (userErr || !userData.user) return err("Não autorizado", 401);
+    const user = userData.user;
+    const { data: roleData } = await supabase.from("user_roles")
+      .select("role").eq("user_id", user.id).eq("role", "super_admin").maybeSingle();
+    if (!roleData) return err("Apenas super_admin", 403);
 
-    var jwt = authHeader.replace("Bearer ", "");
-    var authResult = await supabase.auth.getUser(jwt);
-    if (authResult.error || !authResult.data.user) throw new Error("Nao autorizado");
-    var user = authResult.data.user;
+    const body = await req.json().catch(() => ({ tipo: "ping" }));
+    const tipo = body.tipo || "ping";
 
-    var roleResult = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", user.id)
-      .eq("role", "super_admin")
-      .maybeSingle();
-    if (!roleResult.data) throw new Error("Apenas super_admin");
+    if (tipo === "ping") return ok({ sucesso: true, mensagem: "Edge OK" });
 
-    var body = await req.json().catch(function () { return { tipo: "ping" }; });
-    var tipo = body.tipo || "ping";
+    // OAuth: troca code por tokens
+    if (tipo === "token_exchange" || tipo === "oauth.exchange") {
+      if (!body.code) return err("code obrigatório");
+      const { data: cfg } = await supabase.from("integracoes_config")
+        .select("client_id, client_secret").eq("sistema", "bling").maybeSingle();
+      if (!cfg?.client_id || !cfg?.client_secret) return err("Client ID/Secret não cadastrados");
 
-    if (tipo === "ping") {
-      return ok({ sucesso: true, mensagem: "Edge Function ativa!" });
-    }
-
-    if (tipo === "token_exchange" && body.code) {
-      var cfgResult = await supabase
-        .from("integracoes_config")
-        .select("client_id, client_secret")
-        .eq("sistema", "bling")
-        .maybeSingle();
-
-      if (!cfgResult.data || !cfgResult.data.client_id || !cfgResult.data.client_secret) {
-        throw new Error("Client ID/Secret nao cadastrados");
-      }
-
-      var credentials = cfgResult.data.client_id + ":" + cfgResult.data.client_secret;
-      var encoded = btoa(credentials);
-      var params = new URLSearchParams();
+      const encoded = btoa(`${cfg.client_id}:${cfg.client_secret}`);
+      const params = new URLSearchParams();
       params.set("grant_type", "authorization_code");
       params.set("code", body.code);
       params.set("redirect_uri", body.redirect_uri || "https://people-fetely.lovable.app/administrativo/bling-callback");
-
-      var tokenRes = await fetch("https://www.bling.com.br/Api/v3/oauth/token", {
+      const tokenRes = await fetch(`${BLING_BASE}/oauth/token`, {
         method: "POST",
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
-          "Accept": "application/json",
-          "Authorization": "Basic " + encoded
+          Accept: "application/json",
+          Authorization: `Basic ${encoded}`,
         },
-        body: params
+        body: params,
       });
-
-      if (!tokenRes.ok) {
-        var errText = await tokenRes.text();
-        throw new Error("Bling rejeitou: " + tokenRes.status + " " + errText);
-      }
-
-      var tokens = await tokenRes.json();
+      if (!tokenRes.ok) return err(`Bling rejeitou: ${tokenRes.status} ${await tokenRes.text()}`);
+      const tokens = await tokenRes.json();
       await supabase.from("integracoes_config").update({
         access_token: tokens.access_token,
         refresh_token: tokens.refresh_token,
-        token_expires_at: new Date(Date.now() + ((tokens.expires_in || 3600) * 1000)).toISOString(),
+        token_expires_at: new Date(Date.now() + (tokens.expires_in || 3600) * 1000).toISOString(),
         ativo: true,
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
       }).eq("sistema", "bling");
-
-      return ok({ sucesso: true, mensagem: "Bling conectado com sucesso!" });
+      return ok({ sucesso: true, mensagem: "Bling conectado" });
     }
 
+    // Desconectar (limpa tokens, preserva client_id/secret)
+    if (tipo === "desconectar") {
+      await supabase.from("integracoes_config").update({
+        access_token: null, refresh_token: null, token_expires_at: null,
+        ativo: false, updated_at: new Date().toISOString(),
+      }).eq("sistema", "bling");
+      return ok({ sucesso: true });
+    }
+
+    // Resetar cursor de uma entidade (força sync full)
+    if (tipo === "resetar_cursor") {
+      const ent = body.entidade as Entidade;
+      if (!ORDEM.includes(ent)) return err("entidade inválida");
+      await supabase.from("integracoes_sync_cursor").update({
+        ultima_pagina: 0, ultima_data_corte: null, total_processado: 0, em_execucao: false,
+      }).eq("sistema", "bling").eq("entidade", ent);
+      return ok({ sucesso: true });
+    }
+
+    // Limpa logs travados
     if (tipo === "limpar_travados") {
-      // Marca como "cancelado" qualquer log "executando" há mais de 3 minutos
-      var limite = new Date(Date.now() - 3 * 60 * 1000).toISOString();
-      var upd = await supabase.from("integracoes_sync_log")
-        .update({ status: "cancelado", detalhes: "Cancelado automaticamente (timeout)" })
-        .eq("status", "executando")
-        .lt("created_at", limite)
-        .select("id");
-      return ok({ sucesso: true, cancelados: upd.data ? upd.data.length : 0 });
+      const limite = new Date(Date.now() - 3 * 60_000).toISOString();
+      const { data: upd } = await supabase.from("integracoes_sync_log")
+        .update({ status: "cancelado", detalhes: "Timeout automático" })
+        .eq("status", "executando").lt("created_at", limite).select("id");
+      await supabase.from("integracoes_sync_cursor").update({ em_execucao: false })
+        .eq("sistema", "bling").lt("iniciado_em", limite);
+      return ok({ sucesso: true, cancelados: upd?.length ?? 0 });
     }
 
-    if (tipo === "contas_receber" || tipo === "pedidos" || tipo === "produtos") {
-      var configResult = await supabase
-        .from("integracoes_config")
-        .select("*")
-        .eq("sistema", "bling")
-        .maybeSingle();
+    // === SYNC ===
+    if (tipo === "sync" || tipo === "contas_receber" || tipo === "pedidos" || tipo === "produtos") {
+      const entidades: Entidade[] =
+        tipo === "sync"
+          ? (Array.isArray(body.entidades) && body.entidades.length > 0 ? body.entidades : ORDEM)
+          : tipo === "contas_receber" ? ["contas_receber"]
+          : tipo === "pedidos" ? ["pedidos"]
+          : ["produtos"];
 
-      if (!configResult.data || !configResult.data.access_token) {
-        throw new Error("Bling nao configurado. Conecte primeiro.");
+      for (const e of entidades) {
+        if (!ORDEM.includes(e)) return err(`entidade inválida: ${e}`);
       }
 
-      var config = configResult.data;
-      var accessToken = config.access_token;
+      const { data: cfgData } = await supabase.from("integracoes_config")
+        .select("*").eq("sistema", "bling").maybeSingle();
+      if (!cfgData?.access_token) return err("Bling não conectado. Conecte primeiro.");
 
-      if (config.token_expires_at) {
-        var expiresDate = new Date(config.token_expires_at);
-        if (expiresDate < new Date()) {
-          accessToken = await refreshToken(supabase, config);
-        }
-      }
+      const cfg: BlingConfig = cfgData as any;
+      const accessToken = await ensureFreshToken(supabase, cfg);
+      const client = makeBlingClient(supabase, cfg, accessToken);
 
-      // Limpa logs travados antes de iniciar (>3 min em "executando")
-      var limiteTravado = new Date(Date.now() - 3 * 60 * 1000).toISOString();
-      await supabase.from("integracoes_sync_log")
-        .update({ status: "cancelado", detalhes: "Cancelado automaticamente (timeout)" })
-        .eq("status", "executando")
-        .lt("created_at", limiteTravado);
+      const startTs = Date.now();
+      const timeUp = () => Date.now() - startTs > MAX_EXEC_MS;
 
-      var logResult = await supabase.from("integracoes_sync_log").insert({
-        sistema: "bling", tipo: tipo, status: "executando", iniciado_por: user.id
+      const { data: logRow } = await supabase.from("integracoes_sync_log").insert({
+        sistema: "bling", tipo: entidades.join(","), status: "executando", iniciado_por: user.id,
       }).select("id").maybeSingle();
-      var logId = logResult.data ? logResult.data.id : null;
+      const logId = logRow?.id ?? null;
 
-      var startTime = Date.now();
-      execStartTs = startTime;
-      var result = { criados: 0, atualizados: 0, erros: 0 };
-
+      const resultados: any[] = [];
       try {
-        if (tipo === "contas_receber") {
-          result = await syncContasReceber(supabase, accessToken, config.ultima_sync_at);
-        } else if (tipo === "pedidos") {
-          result = await syncPedidos(supabase, accessToken, config.ultima_sync_at);
-        } else if (tipo === "produtos") {
-          result = await syncProdutos(supabase, accessToken);
+        for (const entidade of entidades) {
+          if (timeUp()) break;
+          const r = await runEntity(supabase, client, entidade, cfg.ultima_sync_at, timeUp);
+          resultados.push(r);
         }
-      } catch (eSync) {
-        var msgSync = (eSync instanceof Error) ? eSync.message : String(eSync);
-        if (logId) {
-          await supabase.from("integracoes_sync_log").update({
-            status: "erro",
-            detalhes: "Falha: " + msgSync,
-            duracao_ms: Date.now() - startTime
-          }).eq("id", logId);
-        }
-        throw eSync;
-      }
-
-      var duracao = Date.now() - startTime;
-      var statusFinal = (result.erros > 0) ? "parcial" : "sucesso";
-      var ultimoErro = (result as any).ultimoErro || "";
-      var detalhe = tipo + ": " + result.criados + " novos, " + result.atualizados + " atualizados"
-        + (ultimoErro ? " | erro: " + ultimoErro.slice(0, 500) : "");
-
-      if (logId) {
-        await supabase.from("integracoes_sync_log").update({
-          status: statusFinal, registros_criados: result.criados,
-          registros_atualizados: result.atualizados, registros_erro: result.erros,
-          detalhes: detalhe, duracao_ms: duracao
+      } catch (e) {
+        if (logId) await supabase.from("integracoes_sync_log").update({
+          status: "erro", detalhes: `Falha: ${(e as Error).message}`,
+          duracao_ms: Date.now() - startTs,
         }).eq("id", logId);
+        throw e;
       }
+
+      const totais = resultados.reduce((acc, r) => ({
+        criados: acc.criados + (r.criados || 0),
+        atualizados: acc.atualizados + (r.atualizados || 0),
+        erros: acc.erros + (r.erros || 0),
+      }), { criados: 0, atualizados: 0, erros: 0 });
+
+      const algumNaoFinalizou = resultados.some((r) => !r.finalizada);
+      const statusFinal = totais.erros > 0 ? "parcial" : algumNaoFinalizou ? "parcial" : "sucesso";
+      const detalhe = resultados.map((r) =>
+        `${r.entidade}: ${r.criados}n/${r.atualizados}a/${r.erros}e${r.finalizada ? "" : "↪"}`
+      ).join(" | ");
+
+      if (logId) await supabase.from("integracoes_sync_log").update({
+        status: statusFinal,
+        registros_criados: totais.criados,
+        registros_atualizados: totais.atualizados,
+        registros_erro: totais.erros,
+        detalhes: detalhe,
+        duracao_ms: Date.now() - startTs,
+      }).eq("id", logId);
 
       await supabase.from("integracoes_config").update({
         ultima_sync_at: new Date().toISOString(),
         ultima_sync_status: statusFinal,
         ultima_sync_detalhes: detalhe,
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
       }).eq("sistema", "bling");
 
       return ok({
-        sucesso: true, criados: result.criados,
-        atualizados: result.atualizados, erros: result.erros,
-        detalhes: detalhe, duracao_ms: duracao,
-        ultimo_erro: ultimoErro || null
+        sucesso: true,
+        ...totais,
+        detalhes: detalhe,
+        duracao_ms: Date.now() - startTs,
+        continuar: algumNaoFinalizou,
+        resultados,
       });
     }
 
-    throw new Error("Tipo nao reconhecido: " + tipo);
-
+    return err(`Tipo não reconhecido: ${tipo}`);
   } catch (e) {
-    var msg = (e instanceof Error) ? e.message : String(e);
-    return err(msg, 400);
+    return err((e as Error).message || String(e), 500);
   }
 });
