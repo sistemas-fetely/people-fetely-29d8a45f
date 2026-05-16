@@ -813,7 +813,7 @@ export default function CaixaBanco() {
                       l.status_caixa === "conciliado";
                     const atrasada = isAtrasada(l);
                     const dias = diasAtraso(l);
-                    const meioId = cprMeioMap?.[l.id];
+                    const meioId = l.meio_pagamento_id;
                     const formaNome = meioId ? mapMeios[meioId] : null;
                     const categoriaNome = l.categoria_id && mapCategorias[l.categoria_id];
                     const flags = statusFlagsMap.get(l.id);
