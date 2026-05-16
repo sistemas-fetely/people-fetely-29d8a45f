@@ -441,6 +441,7 @@ const App = () => (
               <Route path="ofx-stage" element={<OFXStage />} />
               <Route path="conciliacao" element={<Conciliacao />} />
               <Route path="conciliacao/stage-1" element={<ConciliacaoStage1 />} />
+              <Route path="conciliacao/stage-2" element={<ConciliacaoStage2 />} />
               <Route path="conciliacao/legacy" element={<ConciliacaoLegacy />} />
               <Route path="contas-receber" element={<ContasReceber />} />
               <Route path="parceiros" element={<Parceiros />} />
