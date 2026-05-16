@@ -145,7 +145,7 @@ function ItemOperador({
 
 // ─── Componente principal ─────────────────────────────────────────────────
 
-export default function Conciliacao() {
+export default function ConciliacaoLegacy() {
   const qc = useQueryClient();
   const { user } = useAuth();
   const [contaBancariaId, setContaBancariaId] = useState<string>("");
