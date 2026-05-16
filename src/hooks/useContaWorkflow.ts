@@ -6,7 +6,7 @@ import { toast } from "sonner";
 export const STATUS_FLOW = [
   { key: "aberto", label: "Aberto" },
   { key: "aprovado", label: "Aprovado" },
-  { key: "enviado_para_pagamento", label: "Aguardando pagamento" },
+  { key: "enviado_para_pagamento", label: "Enviado para Pagamento" },
 ] as const;
 
 export type ContaStatus =
