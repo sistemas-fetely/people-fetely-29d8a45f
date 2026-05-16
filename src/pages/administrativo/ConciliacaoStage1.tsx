@@ -133,6 +133,20 @@ export default function ConciliacaoStage1() {
     },
   });
 
+  const { data: vinculados = [] } = useQuery({
+    queryKey: ["stage1-vinculados", contaBancariaId],
+    enabled: !!contaBancariaId,
+    queryFn: async () => {
+      const { data } = await sb
+        .from("itau_pagamentos_stage")
+        .select("id, nome_favorecido, cnpj_favorecido, valor_pago, data_pagamento, movimentacao_id, conta_pagar_id, conta_pagar:conta_pagar_id(descricao)")
+        .eq("conta_bancaria_id", contaBancariaId)
+        .eq("status_conciliacao", "aguardando_ofx")
+        .order("data_pagamento", { ascending: false });
+      return data || [];
+    },
+  });
+
   const vincularMutation = useMutation({
     mutationFn: async ({ planilhaId, movimentacaoId }: { planilhaId: string; movimentacaoId: string }) => {
       const { data, error } = await sb.rpc("vincular_stage_1", {
@@ -147,6 +161,7 @@ export default function ConciliacaoStage1() {
       setDrawerPlanilha(null);
       qc.invalidateQueries({ queryKey: ["stage1-linhas-combinadas", contaBancariaId] });
       qc.invalidateQueries({ queryKey: ["conciliacao-hub-stage1-count"] });
+      qc.invalidateQueries({ queryKey: ["stage1-vinculados", contaBancariaId] });
     },
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onError: (e: any) => toast.error("Erro: " + e.message),
@@ -357,6 +372,36 @@ export default function ConciliacaoStage1() {
               );
             })}
           </div>
+
+          {vinculados.length > 0 && (
+            <div className="mt-6 border-t pt-4 space-y-2">
+              <p className="text-xs font-medium text-muted-foreground flex items-center gap-2">
+                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+                Vinculados — aguardando Stage 2 ({vinculados.length})
+              </p>
+              {vinculados.map((v: any) => (
+                <div key={v.id} className="p-3 border border-emerald-100 bg-emerald-50/20 rounded text-xs flex items-center justify-between gap-2 opacity-75">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium truncate">{v.nome_favorecido ?? "—"}</p>
+                    <p className="text-muted-foreground text-[10px]">
+                      CPR: {v.conta_pagar?.descricao ?? "—"}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3 shrink-0">
+                    <span className="text-sm text-muted-foreground">
+                      {v.data_pagamento ? formatDateBR(v.data_pagamento) : "—"}
+                    </span>
+                    <span className="font-mono font-semibold text-sm">
+                      {formatBRL(v.valor_pago ?? 0)}
+                    </span>
+                    <Badge variant="outline" className="text-[9px] border-emerald-300 text-emerald-700">
+                      ✓ Stage 1 feito
+                    </Badge>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </>
       )}
 
