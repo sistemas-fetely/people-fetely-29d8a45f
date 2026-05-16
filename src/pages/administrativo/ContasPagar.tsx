@@ -431,7 +431,7 @@ export default function ContasPagar() {
           />
           <KpiCard
             icon={Clock}
-            label="Aguardando pagamento"
+            label="Enviado para Pagamento"
             count={kpis.aguardando.count}
             valor={kpis.aguardando.valor}
             color="text-teal-600"
