@@ -31,7 +31,6 @@ export type Lancamento = {
   categoria_sugerida_ia?: boolean | null;
   nf_stage_id?: string | null;
   data_enviada_para_pagamento: string | null;
-  meio_pagamento_id: string | null;
   conta_pagar_id: string | null;
 };
 

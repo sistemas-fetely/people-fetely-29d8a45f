@@ -170,7 +170,7 @@ export default function CaixaBanco() {
     },
   });
 
-  // meio_pagamento_id agora vem direto da view vw_lancamentos_caixa_banco
+  // forma_pagamento_id vem direto da view vw_lancamentos_caixa_banco
 
   // Receitas — direto de movimentacoes_bancarias (tipo=credito sem CPR vinculada)
   const { data: receitas = [] } = useQuery<Receita[]>({
@@ -222,15 +222,7 @@ export default function CaixaBanco() {
     },
   });
 
-  // Meios de Pagamento (dimensão silenciosa: a_vista, parcelado_fornecedor, fatura_cartao, recorrente, nascida_paga)
-  const { data: meiosPagamento } = useQuery({
-    queryKey: ["meios-pagamento-lite"],
-    queryFn: async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data } = await (supabase as any).from("meios_pagamento").select("id, nome");
-      return (data || []) as { id: string; nome: string }[];
-    },
-  });
+  // (meios_pagamento é dimensão silenciosa — não exibida ao operador)
 
   const { data: parceiros } = useQuery({
     queryKey: ["parceiros-lite"],
@@ -395,12 +387,6 @@ export default function CaixaBanco() {
     (formasPagamento || []).forEach((f) => (m[f.id] = f.nome));
     return m;
   }, [formasPagamento]);
-
-  const mapMeios = useMemo(() => {
-    const m: Record<string, string> = {};
-    (meiosPagamento || []).forEach((f) => (m[f.id] = f.nome));
-    return m;
-  }, [meiosPagamento]);
 
   const mapParceiros = useMemo(() => {
     const m: Record<string, string> = {};
@@ -800,7 +786,7 @@ export default function CaixaBanco() {
                     <TableHead>Enviado em</TableHead>
                     <SortableTableHead column="pago_em" sort={sort} onSort={setSort}>Pago em</SortableTableHead>
                     <TableHead>Categoria</TableHead>
-                    <TableHead>Meio de Pagamento</TableHead>
+                    <TableHead>Forma de Pagamento</TableHead>
                     <SortableTableHead column="valor" sort={sort} onSort={setSort} align="right" className="text-right">Valor</SortableTableHead>
                     <TableHead>Tags</TableHead>
                   </TableRow>
@@ -814,8 +800,8 @@ export default function CaixaBanco() {
                       l.status_caixa === "conciliado";
                     const atrasada = isAtrasada(l);
                     const dias = diasAtraso(l);
-                    const meioId = l.meio_pagamento_id;
-                    const formaNome = meioId ? mapMeios[meioId] : null;
+                    const formaId = l.forma_pagamento_id;
+                    const formaNome = formaId ? mapFormas[formaId] : null;
                     const categoriaNome = l.categoria_id && mapCategorias[l.categoria_id];
                     const flags = statusFlagsMap.get(l.id);
                     const remessa = contadorMap?.get(l.id);
@@ -823,8 +809,7 @@ export default function CaixaBanco() {
                     const qDoc = getQualidadeDocumento(l, nfMap);
                     const qCat = getQualidadeCategoria(l);
                     const ci = compromissoInfoMap.get(l.id);
-                    const ehCartao =
-                      l.vinculada_cartao || l.origem_view === "cartao_lancamento";
+
 
                     return (
                       <TableRow
@@ -952,7 +937,7 @@ export default function CaixaBanco() {
                               }
                               return <span>{formaNome}</span>;
                             })()}
-                            {ehCartao && (
+                            {l.fatura_id && (
                               <Badge
                                 variant="outline"
                                 className="text-[9px] py-0 px-1.5 h-4 border-violet-300 text-violet-700 bg-violet-50/50 gap-1 self-start"
