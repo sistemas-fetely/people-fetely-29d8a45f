@@ -408,20 +408,20 @@ export default function FaturasCartao() {
       list = list.filter((f) => f.status === filtroPill);
     }
     if (filtroCartao !== "__todos__") {
-      list = list.filter((f) => f.conta_bancaria_id === filtroCartao);
+      list = list.filter((f) => f.cartao_id === filtroCartao);
     }
     if (busca.trim()) {
       const t = busca.toLowerCase();
       list = list.filter(
         (f) =>
-          f.conta_bancaria?.nome_exibicao?.toLowerCase().includes(t) ||
+          f.cartao?.nome?.toLowerCase().includes(t) ||
           f.observacao?.toLowerCase().includes(t),
       );
     }
 
     list = ordenarPor(list, sort, {
       vencimento: (f) => f.data_vencimento || "",
-      cartao: (f) => f.conta_bancaria?.nome_exibicao || "",
+      cartao: (f) => f.cartao?.nome || "",
       valor: (f) => f.valor_total || 0,
       status: (f) => f.status || "",
       lancamentos: (f) => f.qtd_lancamentos || 0,
