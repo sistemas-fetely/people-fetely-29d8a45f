@@ -140,7 +140,7 @@ function tipoBadgeClass(tipo: string): string {
 }
 
 export function PastaDetalhe({ pasta, onAtualizado }: Props) {
-  const [aba, setAba] = useState("contrato");
+  const [aba, setAba] = useState("documentos");
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
