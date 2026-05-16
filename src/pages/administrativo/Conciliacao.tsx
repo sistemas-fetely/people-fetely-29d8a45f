@@ -272,7 +272,7 @@ export default function Conciliacao() {
       ) : (
         <>
           {/* Resumo */}
-          {(completos + parciais + semMov) > 0 && (
+          {(completos + parciais + semMov + parcialmenteConciliados) > 0 && (
             <div className="flex flex-wrap items-center gap-2">
               {completos > 0 && (
                 <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100 gap-1">
@@ -290,6 +290,12 @@ export default function Conciliacao() {
                 <Badge variant="outline" className="gap-1">
                   <AlertCircle className="h-3 w-3" />
                   {semMov} sem movimentação
+                </Badge>
+              )}
+              {parcialmenteConciliados > 0 && (
+                <Badge variant="outline" className="gap-1 border-blue-300 text-blue-800">
+                  <Clock className="h-3 w-3" />
+                  {parcialmenteConciliados} parcialmente conciliado{parcialmenteConciliados !== 1 ? "s" : ""}
                 </Badge>
               )}
             </div>
