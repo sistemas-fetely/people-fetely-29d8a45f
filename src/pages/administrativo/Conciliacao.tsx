@@ -609,7 +609,7 @@ export default function Conciliacao() {
                     <AlertCircle className="h-3 w-3 text-amber-500" /> Operador ({operador.length})
                   </TabsTrigger>
                   <TabsTrigger value="semcpr" className="gap-1 text-xs">
-                    <AlertCircle className="h-3 w-3 text-orange-500" /> Sem CPR ({semCpr.length})
+                    <AlertCircle className="h-3 w-3 text-orange-500" /> Sem CPR / CNPJ ({semCpr.length})
                   </TabsTrigger>
                   <TabsTrigger value="semparc" className="gap-1 text-xs">
                     <XCircle className="h-3 w-3 text-red-500" /> Sem Parceiro ({semParc.length})
