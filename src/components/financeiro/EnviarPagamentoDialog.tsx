@@ -531,13 +531,51 @@ export default function EnviarPagamentoDialog({ open, onOpenChange, conta, onDon
                 <span className="font-medium">{categoriaTxt}</span>
               </div>
             )}
-            {dadosAgrupamento?.formaNome && (
+            {formaInfo?.nome && (
               <div>
                 <span className="text-muted-foreground">Forma de pagamento:</span>{" "}
-                <span className="font-medium">{dadosAgrupamento.formaNome}</span>
+                <span className="font-medium">{formaInfo.nome}</span>
               </div>
             )}
           </div>
+
+          {/* Dados bancários do destinatário — quando forma requer */}
+          {formaInfo?.requer_dados_bancarios_destinatario &&
+            parceiroDadosBancarios &&
+            (parceiroDadosBancarios.banco ||
+              parceiroDadosBancarios.agencia ||
+              parceiroDadosBancarios.conta ||
+              parceiroDadosBancarios.pix) && (
+              <div className="rounded-md border border-emerald-200 bg-emerald-50 p-3 space-y-1 text-sm">
+                <div className="font-semibold text-emerald-900 mb-1">
+                  Dados bancários do destinatário
+                </div>
+                {parceiroDadosBancarios.pix && (
+                  <div>
+                    <span className="text-muted-foreground">PIX:</span>{" "}
+                    <span className="font-medium">{parceiroDadosBancarios.pix}</span>
+                  </div>
+                )}
+                {parceiroDadosBancarios.banco && (
+                  <div>
+                    <span className="text-muted-foreground">Banco:</span>{" "}
+                    <span className="font-medium">{parceiroDadosBancarios.banco}</span>
+                  </div>
+                )}
+                {parceiroDadosBancarios.agencia && (
+                  <div>
+                    <span className="text-muted-foreground">Agência:</span>{" "}
+                    <span className="font-medium">{parceiroDadosBancarios.agencia}</span>
+                  </div>
+                )}
+                {parceiroDadosBancarios.conta && (
+                  <div>
+                    <span className="text-muted-foreground">Conta:</span>{" "}
+                    <span className="font-medium">{parceiroDadosBancarios.conta}</span>
+                  </div>
+                )}
+              </div>
+            )}
 
           {/* Pré-validação cadastro_incompleto */}
           {parceiroCadastroIncompleto && (
