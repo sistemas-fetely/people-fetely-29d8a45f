@@ -160,19 +160,7 @@ export default function Conciliacao() {
     queryKey: ["movs-elegiveis-multi", multiVinculoAberto?.planilha_id],
     enabled: !!multiVinculoAberto,
     queryFn: async () => {
-      const { data, error } = await sb
-        .from("movimentacoes_bancarias")
-        .select(`
-          id,
-          descricao,
-          valor,
-          data_transacao,
-          conta_pagar_id,
-          contas_pagar_receber:conta_pagar_id(descricao, fornecedor_cliente)
-        `)
-        .is("pg_em", null)
-        .eq("tipo", "debito")
-        .order("data_transacao", { ascending: false });
+      const { data, error } = await (sb as any).rpc("listar_movimentacoes_elegiveis");
       if (error) throw error;
       return (data || []) as Array<{
         id: string;
@@ -180,7 +168,8 @@ export default function Conciliacao() {
         valor: number;
         data_transacao: string | null;
         conta_pagar_id: string | null;
-        contas_pagar_receber: { descricao: string | null; fornecedor_cliente: string | null } | null;
+        cpr_descricao: string | null;
+        fornecedor_cliente: string | null;
       }>;
     },
   });
@@ -599,10 +588,10 @@ export default function Conciliacao() {
                 >
                   <div className="flex-1 min-w-0">
                     <p className="font-medium truncate">
-                      {mov.contas_pagar_receber?.fornecedor_cliente ?? mov.descricao ?? "—"}
+                      {mov.fornecedor_cliente ?? mov.descricao ?? "—"}
                     </p>
                     <p className="text-muted-foreground text-[10px]">
-                      {mov.contas_pagar_receber?.descricao ?? "—"} · {mov.data_transacao ? formatDateBR(mov.data_transacao) : "—"}
+                      {mov.cpr_descricao ?? "—"} · {mov.data_transacao ? formatDateBR(mov.data_transacao) : "—"}
                     </p>
                   </div>
                   <span className="font-mono font-semibold shrink-0">{formatBRL(Math.abs(Number(mov.valor) || 0))}</span>
