@@ -238,15 +238,24 @@ export default function ConciliacaoStage1() {
                   <Loader2 className="h-4 w-4 animate-spin" /> Buscando matches…
                 </div>
               ) : candidatos.length === 0 ? (
-                <div className="flex items-start gap-3 p-4 border rounded-md bg-amber-50 text-amber-900">
-                  <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />
-                  <div className="space-y-1">
-                    <p className="font-medium">Nenhuma movimentação candidata encontrada nesta conta.</p>
-                    <p className="text-xs">
-                      Possível causa: a CPR correspondente ainda não foi marcada como paga (sem movimentação criada).
-                      Resolva em Contas a Pagar e volte aqui.
-                    </p>
+                <div className="space-y-3">
+                  <div className="flex items-start gap-3 p-4 border rounded-md bg-amber-50 text-amber-900">
+                    <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />
+                    <div className="space-y-1">
+                      <p className="font-medium">Nenhuma movimentação candidata encontrada.</p>
+                      <p className="text-xs">
+                        A CPR pode não estar registrada ainda — você pode criá-la avulsa agora e já vincular este pagamento.
+                      </p>
+                    </div>
                   </div>
+                  <Button
+                    size="sm"
+                    className="gap-1.5 w-full"
+                    onClick={() => setCriarCPROpen(true)}
+                  >
+                    <Plus className="h-4 w-4" />
+                    Criar CPR avulsa e vincular
+                  </Button>
                 </div>
               ) : (
                 <div className="space-y-2">
