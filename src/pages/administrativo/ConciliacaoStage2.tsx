@@ -13,7 +13,7 @@ import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  ArrowLeft, Banknote, Loader2, Link2, Search, AlertCircle, CheckCircle2, Layers,
+  ArrowLeft, Banknote, Loader2, Link2, Search, AlertCircle, CheckCircle2, Layers, Zap,
 } from "lucide-react";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
 
@@ -173,6 +173,16 @@ export default function ConciliacaoStage2() {
           Cada linha do extrato OFX bate com 1 planilha (avulso) ou N planilhas (lote, mesmo número).
           A IA aponta — você confirma. Quando vinculado, a data efetiva de pagamento é preenchida nas movimentações.
         </p>
+      </div>
+
+      <div>
+        <Link
+          to="/administrativo/regras-ofx"
+          className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+        >
+          <Zap className="h-3.5 w-3.5" />
+          Configurar regras automáticas
+        </Link>
       </div>
 
       <div className="flex items-center gap-3">
