@@ -170,6 +170,7 @@ export default function Conciliacao() {
         valor_total: number;
         qtd_lancamentos: number;
         ja_vinculada: boolean;
+        parceiros: string | null;
       }>;
     },
   });
