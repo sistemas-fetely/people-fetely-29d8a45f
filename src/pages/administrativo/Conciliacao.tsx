@@ -556,6 +556,81 @@ export default function Conciliacao() {
           onSucesso={() => { setCriarCPRPlanilha(null); invalidar(); }}
         />
       )}
+
+      <Dialog open={!!multiVinculoAberto} onOpenChange={(v) => { if (!v) { setMultiVinculoAberto(null); setMovsSelecionadas([]); } }}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Vincular múltiplas movimentações</DialogTitle>
+            <DialogDescription>
+              Planilha: {multiVinculoAberto?.nome_favorecido ?? "—"} · {formatBRL(valorPlanilhaAberta)}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex items-center justify-between p-3 rounded bg-muted text-sm">
+            <span>Selecionadas: {formatBRL(somaMovsSelecionadas)}</span>
+            <span className={somaConfere ? "text-emerald-600 font-semibold" : "text-muted-foreground"}>
+              {somaConfere
+                ? "✓ Soma confere"
+                : `Faltam ${formatBRL(valorPlanilhaAberta - somaMovsSelecionadas)}`}
+            </span>
+          </div>
+
+          <div className="max-h-80 overflow-y-auto space-y-1">
+            {(movsElegiveis ?? []).map((mov) => {
+              const selecionada = movsSelecionadas.includes(mov.id);
+              return (
+                <div
+                  key={mov.id}
+                  onClick={() =>
+                    setMovsSelecionadas((prev) =>
+                      prev.includes(mov.id) ? prev.filter((id) => id !== mov.id) : [...prev, mov.id]
+                    )
+                  }
+                  className={`p-2 rounded border cursor-pointer text-xs flex items-center justify-between gap-2 ${
+                    selecionada ? "border-emerald-400 bg-emerald-50" : "hover:bg-muted/50"
+                  }`}
+                >
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium truncate">
+                      {mov.contas_pagar_receber?.fornecedor_cliente ?? mov.descricao ?? "—"}
+                    </p>
+                    <p className="text-muted-foreground text-[10px]">
+                      {mov.contas_pagar_receber?.descricao ?? "—"} · {mov.data_transacao ? formatDateBR(mov.data_transacao) : "—"}
+                    </p>
+                  </div>
+                  <span className="font-mono font-semibold shrink-0">{formatBRL(Math.abs(Number(mov.valor) || 0))}</span>
+                  {selecionada && <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />}
+                </div>
+              );
+            })}
+            {(movsElegiveis ?? []).length === 0 && (
+              <p className="text-xs text-muted-foreground text-center py-6">Nenhuma movimentação elegível.</p>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setMultiVinculoAberto(null); setMovsSelecionadas([]); }}>
+              Cancelar
+            </Button>
+            <Button
+              disabled={!somaConfere || movsSelecionadas.length === 0 || multiVinculoMutation.isPending}
+              onClick={() =>
+                multiVinculoMutation.mutate({
+                  planilhaId: multiVinculoAberto!.planilha_id,
+                  movIds: movsSelecionadas,
+                })
+              }
+            >
+              {multiVinculoMutation.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Link2 className="h-4 w-4" />
+              )}
+              Vincular {movsSelecionadas.length} movimentações
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
