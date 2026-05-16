@@ -478,6 +478,9 @@ export default function Conciliacao() {
     ? ofxPendentes.filter((o) => o.descricao.toLowerCase().includes(filtroOFX.toLowerCase()))
     : ofxPendentes;
 
+  const aguardandoOFXCount = pagamentos.filter(
+    (p) => p.status_conciliacao === "aguardando_ofx"
+  ).length;
   const pendentesReais = operador.length + semCpr.length + semParc.length + cprCriada.length;
   const pendentesTotal = pendentesReais; // auto vai para Concluídos
   const defaultSubTab = pendentesReais > 0 ? "pendentes" : "concluidos";
@@ -495,7 +498,8 @@ export default function Conciliacao() {
   });
   const todosOsConcluidos = [...auto, ...concluidos];
   const aguardandoOFX = todosOsConcluidos.filter(
-    (p) => !p.movimentacao_id && p.status_conciliacao !== "ignorado" && !!p.conta_pagar_id
+    (p) => p.status_conciliacao === "aguardando_ofx" ||
+           (!p.movimentacao_id && p.status_conciliacao !== "ignorado" && !!p.conta_pagar_id)
   );
   const resolvidos = todosOsConcluidos.filter(
     (p) => !!p.movimentacao_id || p.status_conciliacao === "ignorado"
