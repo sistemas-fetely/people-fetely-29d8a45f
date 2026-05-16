@@ -170,6 +170,28 @@ export default function CaixaBanco() {
     },
   });
 
+  // Map conta_pagar_id -> meio_pagamento_id (não está na vw_lancamentos_caixa_banco)
+  const { data: cprMeioMap } = useQuery({
+    queryKey: ["cpr-meio-pagamento-map", (lancamentos || []).map((l) => l.id).join(",")],
+    enabled: !!lancamentos && lancamentos.length > 0,
+    queryFn: async () => {
+      const ids = (lancamentos || [])
+        .filter((l) => l.origem_view === "conta_pagar")
+        .map((l) => l.id);
+      const m: Record<string, string> = {};
+      if (!ids.length) return m;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data } = await (supabase as any)
+        .from("contas_pagar_receber")
+        .select("id, meio_pagamento_id")
+        .in("id", ids);
+      (data || []).forEach((r: { id: string; meio_pagamento_id: string | null }) => {
+        if (r.meio_pagamento_id) m[r.id] = r.meio_pagamento_id;
+      });
+      return m;
+    },
+  });
+
   // Receitas — direto de movimentacoes_bancarias (tipo=credito sem CPR vinculada)
   const { data: receitas = [] } = useQuery<Receita[]>({
     queryKey: ["receitas-caixa-banco", contaBancariaFilter],
