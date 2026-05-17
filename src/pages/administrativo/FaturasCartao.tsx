@@ -54,6 +54,7 @@ import {
 import { exportarFaturaPDF } from "@/lib/exportar-fatura-cartao";
 import { toast } from "sonner";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
+import { parseValorBR } from "@/lib/financeiro/parsers";
 import { ImportarFaturaCartaoDialog } from "@/components/financeiro/ImportarFaturaCartaoDialog";
 import { AcoesLancamentoCartao } from "@/components/financeiro/AcoesLancamentoCartao";
 import { descartarFatura } from "@/lib/financeiro/fatura-cartao-handler";
@@ -179,7 +180,7 @@ export default function FaturasCartao() {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data, error } = await (supabase as any)
         .from("cartoes_credito")
-        .select("id, nome, bandeira, ultimos_digitos, ativo")
+        .select("id, nome, bandeira, ultimos_digitos, ativo, limite")
         .eq("ativo", true)
         .order("nome");
       if (error) throw error;
@@ -189,6 +190,7 @@ export default function FaturasCartao() {
         bandeira: string | null;
         ultimos_digitos: string | null;
         ativo: boolean;
+        limite: number | null;
       }>;
     },
   });
@@ -203,7 +205,7 @@ export default function FaturasCartao() {
         .from("contas_pagar_receber_ativas")
         .select("id, valor, parcela_grupo_id")
         .eq("eh_cartao", true)
-        .in("status", ["aberto", "aprovado", "aguardando_pagamento"]);
+        .in("status", ["aberto", "aprovado", "enviado_para_pagamento"]);
       if (errC) throw errC;
       if (!contas?.length) return new Map<string, number>();
 
@@ -606,7 +608,7 @@ export default function FaturasCartao() {
             )
             .map((cartao) => {
               const comprometido = comprometidoMap.get(cartao.id) || 0;
-              const limite = 0;
+              const limite = Number(cartao.limite ?? 0);
               const disponivel = limite - comprometido;
               const percentUsado = limite > 0 ? (comprometido / limite) * 100 : 0;
               const ativo = filtroCartao === cartao.id;
@@ -634,9 +636,7 @@ export default function FaturasCartao() {
                         <div className="text-[9px] uppercase tracking-wide text-muted-foreground">
                           Limite
                         </div>
-                        <div className="text-xs font-semibold font-mono">
-                          {formatBRL(limite)}
-                        </div>
+                        <LimiteInlineEdit cartaoId={cartao.id} valor={limite} />
                       </div>
                       <div>
                         <div className="text-[9px] uppercase tracking-wide text-muted-foreground">
@@ -1398,6 +1398,78 @@ function KpiPill({ label, count, color, active, onClick, icon, description }: Kp
       {description && (
         <div className="text-[9px] opacity-75 mt-0.5">{description}</div>
       )}
+    </button>
+  );
+}
+
+// === Inline edit do Limite do cartão ===
+function LimiteInlineEdit({ cartaoId, valor }: { cartaoId: string; valor: number }) {
+  const [editando, setEditando] = useState(false);
+  const [tempValor, setTempValor] = useState<string>(
+    valor > 0 ? valor.toFixed(2).replace(".", ",") : "",
+  );
+  const [salvando, setSalvando] = useState(false);
+  const qc = useQueryClient();
+
+  async function salvar() {
+    const novo = parseValorBR(tempValor) ?? 0;
+    if (novo === valor) {
+      setEditando(false);
+      return;
+    }
+    setSalvando(true);
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase as any)
+        .from("cartoes_credito")
+        .update({ limite: novo, updated_at: new Date().toISOString() })
+        .eq("id", cartaoId);
+      if (error) throw error;
+      toast.success("Limite atualizado");
+      qc.invalidateQueries({ queryKey: ["cartoes-credito-listagem"] });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      toast.error("Erro ao atualizar limite: " + msg);
+      setTempValor(valor > 0 ? valor.toFixed(2).replace(".", ",") : "");
+    } finally {
+      setSalvando(false);
+      setEditando(false);
+    }
+  }
+
+  if (editando) {
+    return (
+      <input
+        autoFocus
+        type="text"
+        inputMode="decimal"
+        value={tempValor}
+        onChange={(e) => setTempValor(e.target.value)}
+        onBlur={salvar}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            (e.currentTarget as HTMLInputElement).blur();
+          }
+          if (e.key === "Escape") {
+            setTempValor(valor > 0 ? valor.toFixed(2).replace(".", ",") : "");
+            setEditando(false);
+          }
+        }}
+        disabled={salvando}
+        placeholder="0,00"
+        className="text-xs font-semibold font-mono w-full px-1 py-0 border border-input rounded outline-none focus:ring-1 focus:ring-primary bg-background"
+      />
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={() => setEditando(true)}
+      className="text-xs font-semibold font-mono hover:underline cursor-pointer text-left block w-full"
+      title="Clique para editar"
+    >
+      {formatBRL(valor)}
     </button>
   );
 }
