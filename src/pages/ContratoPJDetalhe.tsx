@@ -773,7 +773,9 @@ export default function ContratoPJDetalhe() {
           </TabsContent>
 
           <TabsContent value="pagamentos">
-            <TabPagamentos contratoId={id!} />
+            <div className="rounded-md border bg-muted/30 p-4 text-sm text-muted-foreground">
+              Pagamentos agora são gerenciados via <strong>Contas a Pagar</strong>. As despesas deste prestador aparecem automaticamente lá após a aprovação da NF.
+            </div>
           </TabsContent>
 
           <TabsContent value="movimentacoes">
