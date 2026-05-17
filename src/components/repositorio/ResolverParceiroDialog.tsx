@@ -354,22 +354,37 @@ export function ResolverParceiroDialog({
                   <Input
                     value={termo}
                     onChange={(e) => setTermo(e.target.value)}
-                    placeholder="Buscar por nome ou CNPJ..."
+                    placeholder="Buscar por razão social ou CNPJ"
                     className="pl-8"
+                    autoFocus
                   />
                 </div>
 
                 <div className="space-y-1 max-h-64 overflow-y-auto">
-                  {buscando && (
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground py-2">
+                  {buscaVazia && (
+                    <p className="text-xs text-muted-foreground italic px-1 py-2">
+                      Digite a razão social ou CNPJ do parceiro
+                    </p>
+                  )}
+                  {termoMuitoCurto && (
+                    <p className="text-xs text-muted-foreground italic px-1 py-2">
+                      Digite ao menos 3 caracteres para buscar...
+                    </p>
+                  )}
+                  {!buscaVazia && !termoMuitoCurto && buscando && (
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground py-2 px-1">
                       <Loader2 className="h-3 w-3 animate-spin" /> Buscando...
                     </div>
                   )}
-                  {!buscando && termoDebounced.trim() && resultados.length === 0 && (
-                    <p className="text-xs text-muted-foreground py-2">
-                      Nenhum parceiro encontrado. Tente "Cadastrar parceiro novo" abaixo.
-                    </p>
-                  )}
+                  {!buscaVazia &&
+                    !termoMuitoCurto &&
+                    !buscando &&
+                    termoDebounced.trim() &&
+                    resultados.length === 0 && (
+                      <p className="text-xs text-muted-foreground italic px-1 py-2">
+                        Nenhum parceiro encontrado. Tente "Cadastrar parceiro novo" abaixo.
+                      </p>
+                    )}
                   {resultados.map((p) => {
                     const sel = parceiroEscolhido?.id === p.id;
                     return (
