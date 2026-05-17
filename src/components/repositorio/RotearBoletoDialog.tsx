@@ -93,7 +93,7 @@ export function RotearBoletoDialog({
     setEtapa("loading");
     setCprEscolhida(null);
     setCategoriaId(null);
-    setMeioPagamentoId(null);
+    setFormaPagamentoId(null);
     setDescricao(nomeDocumento ?? "");
     try {
       const { data, error } = await supabase.rpc("rotear_documento_para_boleto", {
