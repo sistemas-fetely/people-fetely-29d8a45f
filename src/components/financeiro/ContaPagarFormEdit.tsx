@@ -344,7 +344,7 @@ export function ContaPagarFormEdit({
     }
   }
 
-  async function handleSalvar() {
+  async function handleSalvar(fecharDrawer: boolean = false) {
     if (isReadOnly) {
       toast.error("Conta com status read-only — edição bloqueada");
       return;
