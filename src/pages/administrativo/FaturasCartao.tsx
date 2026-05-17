@@ -180,7 +180,7 @@ export default function FaturasCartao() {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data, error } = await (supabase as any)
         .from("cartoes_credito")
-        .select("id, nome, bandeira, ultimos_digitos, ativo")
+        .select("id, nome, bandeira, ultimos_digitos, ativo, limite")
         .eq("ativo", true)
         .order("nome");
       if (error) throw error;
@@ -190,6 +190,7 @@ export default function FaturasCartao() {
         bandeira: string | null;
         ultimos_digitos: string | null;
         ativo: boolean;
+        limite: number | null;
       }>;
     },
   });
