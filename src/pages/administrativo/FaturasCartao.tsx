@@ -636,9 +636,7 @@ export default function FaturasCartao() {
                         <div className="text-[9px] uppercase tracking-wide text-muted-foreground">
                           Limite
                         </div>
-                        <div className="text-xs font-semibold font-mono">
-                          {formatBRL(limite)}
-                        </div>
+                        <LimiteInlineEdit cartaoId={cartao.id} valor={limite} />
                       </div>
                       <div>
                         <div className="text-[9px] uppercase tracking-wide text-muted-foreground">
