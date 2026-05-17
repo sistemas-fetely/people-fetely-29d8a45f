@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Loader2 } from "lucide-react";
+import { Loader2, CheckCircle2, Sparkles } from "lucide-react";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
 import { CategoriaCombobox } from "@/components/financeiro/CategoriaCombobox";
 import { useCategoriasPlano } from "@/hooks/useCategoriasPlano";
@@ -84,8 +84,23 @@ export function RotearBoletoDialog({
   const [descricao, setDescricao] = useState("");
   const [salvando, setSalvando] = useState(false);
 
+  type EtapaCpr = "criar" | "oferta_lote" | "executando_lote";
+  const [etapaCpr, setEtapaCpr] = useState<EtapaCpr>("criar");
+  const [pendentesLote, setPendentesLote] = useState<{
+    qtd: number;
+    ids: string[];
+    parceiro_nome: string | null;
+  } | null>(null);
+  const [dadosLote, setDadosLote] = useState<{
+    categoria_id: string;
+    forma_pagamento_id: string;
+  } | null>(null);
+
   useEffect(() => {
     if (!open || !gedDocumentoId) return;
+    setEtapaCpr("criar");
+    setPendentesLote(null);
+    setDadosLote(null);
     void iniciar();
   }, [open, gedDocumentoId]);
 
@@ -199,7 +214,7 @@ export function RotearBoletoDialog({
     }
     setSalvando(true);
     try {
-      const { data, error } = await supabase.rpc("criar_cpr_de_boleto", {
+      const { data, error } = await (supabase as any).rpc("criar_cpr_de_boleto", {
         p_boleto_stage_id: boleto.id,
         p_categoria_id: categoriaId,
         p_forma_pagamento_id: formaPagamentoId,
@@ -213,12 +228,88 @@ export function RotearBoletoDialog({
           : "CPR criada",
       );
       invalidar();
-      if (fechar) onOpenChange(false);
+
+      // Doutrina #119 — verifica se há outros boletos pendentes do mesmo parceiro
+      const { data: contagem } = await (supabase as any).rpc(
+        "contar_boletos_pendentes_mesmo_parceiro",
+        { p_boleto_stage_id_referencia: boleto.id },
+      );
+      const c = (contagem ?? {}) as {
+        qtd?: number;
+        ids?: string[];
+        parceiro_nome?: string | null;
+      };
+      const qtd = c.qtd ?? 0;
+
+      if (qtd > 0) {
+        setPendentesLote({
+          qtd,
+          ids: c.ids ?? [],
+          parceiro_nome: c.parceiro_nome ?? null,
+        });
+        setDadosLote({
+          categoria_id: categoriaId,
+          forma_pagamento_id: formaPagamentoId,
+        });
+        setEtapaCpr("oferta_lote");
+      } else {
+        if (fechar) onOpenChange(false);
+      }
     } catch (e) {
       toast.error("Erro ao criar CPR: " + extractError(e), { duration: 15000 });
     } finally {
       setSalvando(false);
     }
+  }
+
+  async function aplicarLote() {
+    if (!pendentesLote || !dadosLote) return;
+    setSalvando(true);
+    setEtapaCpr("executando_lote");
+    try {
+      const { data, error } = await (supabase as any).rpc(
+        "criar_cpr_de_boleto_em_lote",
+        {
+          p_boleto_stage_ids: pendentesLote.ids,
+          p_categoria_id: dadosLote.categoria_id,
+          p_forma_pagamento_id: dadosLote.forma_pagamento_id,
+        },
+      );
+      if (error) throw error;
+      const res = (data ?? {}) as {
+        qtd_sucesso?: number;
+        qtd_falha?: number;
+        falhas?: Array<{ erro?: string }>;
+      };
+      const sucesso = res.qtd_sucesso ?? 0;
+      const falha = res.qtd_falha ?? 0;
+
+      if (falha === 0) {
+        toast.success(`${sucesso} CPR(s) criada(s) em lote`);
+      } else if (sucesso === 0) {
+        toast.error(
+          `Nenhuma CPR criada. Falhas: ${
+            res.falhas?.map((f) => f.erro).join("; ") ?? "desconhecido"
+          }`,
+          { duration: 15000 },
+        );
+      } else {
+        toast.warning(`${sucesso} CPR(s) criada(s), ${falha} falharam`, {
+          duration: 12000,
+        });
+      }
+      invalidar();
+      onOpenChange(false);
+    } catch (e) {
+      toast.error("Erro ao aplicar em lote: " + extractError(e), { duration: 15000 });
+      setEtapaCpr("oferta_lote");
+    } finally {
+      setSalvando(false);
+    }
+  }
+
+  function pularLote() {
+    onOpenChange(false);
   }
 
   return (
