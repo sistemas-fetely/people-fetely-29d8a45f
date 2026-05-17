@@ -174,7 +174,12 @@ export function ResolverParceiroDialog({
       );
       if (error) throw error;
 
-      const res = (data ?? {}) as { ok?: boolean; mensagem?: string; decisao?: string };
+      const res = (data ?? {}) as {
+        ok?: boolean;
+        mensagem?: string;
+        decisao?: string;
+        parceiro_id?: string;
+      };
 
       if (res.mensagem) {
         toast.success(res.mensagem);
@@ -188,6 +193,45 @@ export function ResolverParceiroDialog({
 
       qc.invalidateQueries({ queryKey: ["repositorio-documentos"] });
       qc.invalidateQueries({ queryKey: ["repositorio-kpis"] });
+      qc.invalidateQueries({ queryKey: ["repositorio-qtd-pendentes"] });
+
+      // Doutrina #119 — checa se há outros pendentes com mesmo CNPJ
+      const cnpjIa = (classificacaoIa.parceiro_cnpj ?? "").replace(/\D/g, "");
+      if (cnpjIa) {
+        try {
+          const { data: contagem } = await supabase.rpc(
+            "contar_pendentes_mesmo_cnpj",
+            { p_ged_documento_id_referencia: gedDocumentoId } as never,
+          );
+          const qtdOutros =
+            ((contagem as { qtd?: number } | null) ?? {}).qtd ?? 0;
+          if (qtdOutros > 0) {
+            setDadosResolucao({
+              decisao: opcao,
+              parceiro_id:
+                opcao === "vincular_existente"
+                  ? parceiroEscolhido?.id
+                  : res.parceiro_id ?? null,
+              dados_novo_parceiro:
+                opcao === "criar_novo"
+                  ? {
+                      razao_social: dadosNovo.razao_social.trim(),
+                      nome_fantasia: dadosNovo.nome_fantasia.trim() || null,
+                      cnpj: dadosNovo.cnpj.replace(/\D/g, "") || null,
+                    }
+                  : null,
+              cnpj_ia: classificacaoIa.parceiro_cnpj ?? "",
+              razao_social_ia: classificacaoIa.parceiro_razao_social ?? "",
+            });
+            setPendentesMesmoCnpj(qtdOutros);
+            setEtapa("oferta_lote");
+            return; // não fecha — operador decide lote
+          }
+        } catch {
+          // ignora silenciosamente erro de contagem; não bloqueia fluxo
+        }
+      }
+
       onResolvido?.();
       onOpenChange(false);
     } catch (e) {
