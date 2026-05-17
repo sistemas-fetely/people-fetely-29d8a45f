@@ -34,6 +34,7 @@ interface MenuItem {
 
 // Grupo 1: Ativos & Patrimônio
 const patrimonioItems: MenuItem[] = [
+  { title: "Repositório", url: "/administrativo-fetely/repositorio", icon: FolderOpen },
   { title: "Contratos", url: "/administrativo-fetely/contratos", icon: FileSignature },
   { title: "Imóveis", url: "/administrativo-fetely/imoveis", icon: Building2 },
   { title: "Seguros", url: "/administrativo-fetely/seguros", icon: ShieldCheck },
