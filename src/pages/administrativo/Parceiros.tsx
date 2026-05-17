@@ -292,7 +292,7 @@ export default function Parceiros() {
       return v * mult;
     };
     return [...list].sort(sortFn);
-  }, [data, filtroStatus, filtroGrupo, busca, tabAtiva, sort, categoriaNomeMap, centroCustoNomeMap]);
+  }, [data, filtroStatus, filtroGrupo, busca, tabAtiva, sort, categoriaNomeMap, centroCustoNomeMap, filtroIncompleto]);
 
   const handleOpenNew = () => {
     setEditing(null);
