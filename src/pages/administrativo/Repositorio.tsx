@@ -515,8 +515,22 @@ export default function Repositorio() {
         doc={docSelecionado}
         open={drawerOpen}
         onOpenChange={setDrawerOpen}
-        onRotearBoleto={abrirRotear}
-        onVincular={abrirVincular}
+        onRotearBoleto={(d) => comResolucaoParceiro(d, abrirRotear)}
+        onVincular={(d) => comResolucaoParceiro(d, abrirVincular)}
+      />
+      <ResolverParceiroDialog
+        open={!!docResolverParceiro}
+        onOpenChange={(open) => !open && setDocResolverParceiro(null)}
+        gedDocumentoId={docResolverParceiro?.id ?? ""}
+        classificacaoIa={(docResolverParceiro?.classificacao_ia as never) ?? {}}
+        onResolvido={() => {
+          // Após resolver, se era boleto, abre Rotear automaticamente
+          if (docResolverParceiro?.tipo_documento === "boleto") {
+            setDocAcao(docResolverParceiro);
+            setRotearOpen(true);
+          }
+          setDocResolverParceiro(null);
+        }}
       />
     </div>
   );
