@@ -215,6 +215,20 @@ export default function Repositorio() {
     setDrawerOpen(false);
   }
 
+  /** Se o doc tem parceiro pendente (e não dispensado), abre ResolverParceiroDialog e
+   *  posterga a ação original; senão, executa a ação. */
+  function comResolucaoParceiro(
+    doc: DocumentoRepositorio,
+    acao: (d: DocumentoRepositorio) => void,
+  ) {
+    if (doc.parceiro_resolucao_pendente && !doc.parceiro_resolucao_dispensada) {
+      setDocAcao(doc);
+      setDocResolverParceiro(doc);
+    } else {
+      acao(doc);
+    }
+  }
+
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
