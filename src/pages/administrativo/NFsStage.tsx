@@ -96,6 +96,7 @@ type NFStage = {
   valor: number;
   descricao: string | null;
   categoria_id: string | null;
+  categoria_sugerida_ia?: boolean | null;
   data_vencimento: string | null;
   status: string;
   conta_pagar_existente_id: string | null;
@@ -179,6 +180,31 @@ export default function NFsStage() {
   const [salvandoCategoria, setSalvandoCategoria] = useState<Set<string>>(new Set());
   const [expandidas, setExpandidas] = useState<Set<string>>(new Set());
   const [gerandoResumo, setGerandoResumo] = useState<Set<string>>(new Set());
+  const [classificandoIA, setClassificandoIA] = useState(false);
+
+  async function classificarComIA() {
+    setClassificandoIA(true);
+    try {
+      const resp = await supabase.functions.invoke("classificar-nfs-ia", { body: {} });
+      if (resp.error) throw new Error(resp.error.message);
+      const resultado = resp.data as {
+        classificadas: number;
+        erros: string[];
+        cnpjs_processados: number;
+      };
+      toast.success(
+        `IA classificou ${resultado.classificadas} NFs (${resultado.cnpjs_processados} fornecedores)`,
+      );
+      if (resultado.erros?.length > 0) {
+        console.warn("Erros na classificação:", resultado.erros);
+      }
+      qc.invalidateQueries({ queryKey: ["nfs-stage"] });
+    } catch (e) {
+      toast.error("Erro na classificação: " + (e instanceof Error ? e.message : String(e)));
+    } finally {
+      setClassificandoIA(false);
+    }
+  }
 
   const handleGerarResumo = async (nf: NFStage, regerar: boolean) => {
     if (regerar) {
@@ -400,6 +426,7 @@ export default function NFsStage() {
         .from("nfs_stage")
         .update({
           categoria_id: categoriaId || null,
+          categoria_sugerida_ia: false,
         })
         .eq("id", id);
       if (error) throw error;
