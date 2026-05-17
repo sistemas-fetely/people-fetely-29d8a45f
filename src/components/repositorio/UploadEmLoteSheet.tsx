@@ -24,6 +24,7 @@ import { sha256Hex } from "@/lib/repositorio/hash";
 import { sanitizeStorageKey } from "@/lib/repositorio/storage-key";
 import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
+import { extractError } from "@/lib/extract-error";
 
 type Estado = "pendente" | "upload" | "classificando" | "concluido" | "duplicado" | "erro";
 
@@ -176,7 +177,7 @@ export function UploadEmLoteSheet({ open, onOpenChange }: Props) {
           ),
         );
       } catch (e) {
-        const msg = e instanceof Error ? e.message : String(e);
+        const msg = extractError(e);
         setItens((p) =>
           p.map((i) =>
             i.id === item.id ? { ...i, estado: "erro", erro: msg, progresso: 100 } : i,

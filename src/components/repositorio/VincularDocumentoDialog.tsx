@@ -17,6 +17,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Loader2 } from "lucide-react";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
+import { extractError } from "@/lib/extract-error";
 
 type EntidadeTipo = "cpr" | "movimentacao_bancaria" | "pasta_contrato" | "parceiro";
 
@@ -141,9 +142,7 @@ export function VincularDocumentoDialog({
       qc.invalidateQueries({ queryKey: ["ged-vinculos", gedDocumentoId] });
       if (fechar) onOpenChange(false);
     } catch (e) {
-      toast.error("Erro ao vincular: " + (e instanceof Error ? e.message : String(e)), {
-        duration: 15000,
-      });
+      toast.error("Erro ao vincular: " + extractError(e), { duration: 15000 });
     } finally {
       setSalvando(false);
     }

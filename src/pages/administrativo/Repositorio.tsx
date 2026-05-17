@@ -56,6 +56,7 @@ import { VincularDocumentoDialog } from "@/components/repositorio/VincularDocume
 import { DetalheDocumentoDrawer } from "@/components/repositorio/DetalheDocumentoDrawer";
 import { ResolverParceiroDialog } from "@/components/repositorio/ResolverParceiroDialog";
 import { cn } from "@/lib/utils";
+import { extractError } from "@/lib/extract-error";
 
 export interface DocumentoRepositorio {
   id: string;
@@ -213,7 +214,7 @@ export default function Repositorio() {
       qc.invalidateQueries({ queryKey: ["repositorio-documentos"] });
       qc.invalidateQueries({ queryKey: ["repositorio-qtd-pendentes"] });
     } catch (e) {
-      toast.error("Erro: " + (e instanceof Error ? e.message : String(e)), { duration: 15000 });
+      toast.error("Erro: " + extractError(e), { duration: 15000 });
     }
   }
 
