@@ -70,6 +70,17 @@ export function ResolverParceiroDialog({
 
   const [salvando, setSalvando] = useState(false);
 
+  type Etapa = "resolver" | "oferta_lote" | "executando_lote";
+  const [etapa, setEtapa] = useState<Etapa>("resolver");
+  const [pendentesMesmoCnpj, setPendentesMesmoCnpj] = useState(0);
+  const [dadosResolucao, setDadosResolucao] = useState<{
+    decisao: Opcao;
+    parceiro_id?: string | null;
+    dados_novo_parceiro?: Record<string, unknown> | null;
+    cnpj_ia: string;
+    razao_social_ia: string;
+  } | null>(null);
+
   // Inicializa ao abrir
   useEffect(() => {
     if (!open) return;
