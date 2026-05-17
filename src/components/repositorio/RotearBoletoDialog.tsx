@@ -330,7 +330,7 @@ export function RotearBoletoDialog({
               <Button
                 variant="secondary"
                 onClick={() => criar(false)}
-                disabled={salvando || !categoriaId || !meioPagamentoId}
+                disabled={salvando || !categoriaId || !formaPagamentoId}
               >
                 Criar
               </Button>
