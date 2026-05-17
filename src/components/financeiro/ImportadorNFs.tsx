@@ -147,14 +147,11 @@ function deduplicarLote(nfs: NFParsed[]): NFParsed[] {
   const resultado = [...nfs];
 
   nfs.forEach((nf, i) => {
-    const chave = [
-      nf.fornecedor_cnpj ?? "",
-      normalizarNumeroNF(nf.nf_numero),
-      String(nf.valor ?? ""),
-      nf.nf_data_emissao ?? "",
-    ].join("|");
+    const chave = nf.nf_chave_acesso
+      ? nf.nf_chave_acesso
+      : [nf.fornecedor_cnpj ?? "", normalizarNumeroNF(nf.nf_numero)].join("|");
 
-    if (!nf.fornecedor_cnpj && !nf.nf_numero) return;
+    if (!nf.fornecedor_cnpj && !nf.nf_numero && !nf.nf_chave_acesso) return;
 
     const existenteIdx = vistas.get(chave);
 
