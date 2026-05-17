@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import EnviarPagamentoDialog from "./EnviarPagamentoDialog";
+import { NfStageBuscadorModal } from "./NfStageBuscadorModal";
 
 import { cn } from "@/lib/utils";
 import {
