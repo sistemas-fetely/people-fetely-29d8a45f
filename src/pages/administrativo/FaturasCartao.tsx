@@ -195,89 +195,30 @@ export default function FaturasCartao() {
     },
   });
 
-  // Comprometido por cartão (3 queries simples encadeadas)
+  // Comprometido por cartão = soma do valor_total das faturas abertas.
+  // Doutrina implícita: "espelhar o instrumento, não o sistema".
+  // Fatura aberta = limite usado, independente de CPR existir ou não.
+  // Quando a fatura vira 'paga' (trigger automático), sai do cálculo.
   const { data: comprometidoMap = new Map<string, number>() } = useQuery({
-    queryKey: ["cartoes-comprometido-v4"],
+    queryKey: ["cartoes-comprometido-v5"],
     queryFn: async () => {
-      // 1) Todas as contas a pagar de cartão pendentes (não pagas)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: contas, error: errC } = await (supabase as any)
-        .from("contas_pagar_receber_ativas")
-        .select("id, valor, parcela_grupo_id")
-        .eq("eh_cartao", true)
-        .in("status", ["aberto", "aprovado", "enviado_para_pagamento"]);
-      if (errC) throw errC;
-      if (!contas?.length) return new Map<string, number>();
+      const { data, error } = await (supabase as any)
+        .from("faturas_cartao")
+        .select("cartao_id, valor_total")
+        .not("cartao_id", "is", null)
+        .not("status", "in", "(paga,conciliada,cancelada)");
+      if (error) throw error;
 
-      // 2) Lançamentos de cartão → mapa conta_id → fatura_id
-      //    (busca TODAS as contas vinculadas a fatura, não só as pendentes,
-      //     porque queremos propagar via parcela_grupo)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: lancsTodos } = await (supabase as any)
-        .from("fatura_cartao_lancamentos")
-        .select("conta_pagar_id, fatura_id")
-        .not("conta_pagar_id", "is", null);
-
-      const contaToFatura = new Map<string, string>();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (lancsTodos || []).forEach((l: any) => {
-        if (l.conta_pagar_id && l.fatura_id) {
-          contaToFatura.set(l.conta_pagar_id, l.fatura_id);
-        }
-      });
-
-      // 3) Faturas → cartao_id
-      const faturaIds = Array.from(new Set(contaToFatura.values()));
-      const faturaToConta = new Map<string, string>();
-      if (faturaIds.length > 0) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { data: fats } = await (supabase as any)
-          .from("faturas_cartao")
-          .select("id, cartao_id")
-          .in("id", faturaIds);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (fats || []).forEach((f: any) => {
-          if (f.cartao_id) faturaToConta.set(f.id, f.cartao_id);
-        });
-      }
-
-      // 4) Construir grupoToConta — propaga: se 1 parcela do grupo está
-      //    em fatura X (cartão Y), TODAS as parcelas do grupo são do cartão Y
-      const grupoToConta = new Map<string, string>();
-
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: todasParcelas } = await (supabase as any)
-        .from("contas_pagar_receber_ativas")
-        .select("id, parcela_grupo_id")
-        .eq("eh_cartao", true)
-        .not("parcela_grupo_id", "is", null);
-
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (todasParcelas || []).forEach((p: any) => {
-        if (!p.parcela_grupo_id) return;
-        if (grupoToConta.has(p.parcela_grupo_id)) return;
-        const fId = contaToFatura.get(p.id);
-        if (!fId) return;
-        const cbId = faturaToConta.get(fId);
-        if (!cbId) return;
-        grupoToConta.set(p.parcela_grupo_id, cbId);
-      });
-
-      // 5) Soma comprometido por cartão
       const map = new Map<string, number>();
-      for (const c of contas) {
-        let cbId: string | undefined;
-        const fId = contaToFatura.get(c.id);
-        if (fId) cbId = faturaToConta.get(fId);
-
-        if (!cbId && c.parcela_grupo_id) {
-          cbId = grupoToConta.get(c.parcela_grupo_id);
-        }
-
-        if (!cbId) continue;
-        map.set(cbId, (map.get(cbId) || 0) + Number(c.valor || 0));
-      }
-
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (data || []).forEach((f: any) => {
+        if (!f.cartao_id) return;
+        map.set(
+          f.cartao_id,
+          (map.get(f.cartao_id) || 0) + Number(f.valor_total || 0),
+        );
+      });
       return map;
     },
   });
