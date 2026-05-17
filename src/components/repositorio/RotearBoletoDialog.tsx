@@ -202,7 +202,7 @@ export function RotearBoletoDialog({
       const { data, error } = await supabase.rpc("criar_cpr_de_boleto", {
         p_boleto_stage_id: boleto.id,
         p_categoria_id: categoriaId,
-        p_meio_pagamento_id: meioPagamentoId,
+        p_forma_pagamento_id: formaPagamentoId,
         p_descricao_extra: descricao || undefined,
       });
       if (error) throw error;
