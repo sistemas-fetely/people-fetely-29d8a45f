@@ -83,6 +83,9 @@ export interface DocumentoRepositorio {
   origem_porta: string;
   tags: string[] | null;
   created_at: string;
+  boleto_stage_status: string | null;
+  boleto_stage_id: string | null;
+  boleto_stage_cpr_id: string | null;
 }
 
 type SortCol = "nome" | "tipo_documento" | "valor" | "vencimento" | "created_at" | "confianca_ia";
