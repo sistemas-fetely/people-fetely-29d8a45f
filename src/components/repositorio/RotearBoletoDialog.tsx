@@ -19,6 +19,8 @@ import { formatBRL, formatDateBR } from "@/lib/format-currency";
 import { CategoriaCombobox } from "@/components/financeiro/CategoriaCombobox";
 import { useCategoriasPlano } from "@/hooks/useCategoriasPlano";
 import { useFormasPagamento } from "@/hooks/financeiro/useFormasPagamento";
+import { extractError } from "@/lib/extract-error";
+import { useQuery } from "@tanstack/react-query";
 import {
   Select,
   SelectContent,
@@ -62,8 +64,17 @@ export function RotearBoletoDialog({
   nomeDocumento,
 }: Props) {
   const qc = useQueryClient();
-  const { data: categorias = [] } = useCategoriasPlano();
+  const { data: categoriasAll = [] } = useCategoriasPlano();
   const { data: meios = [] } = useFormasPagamento();
+
+  // Doutrina #07.6 — apenas categorias folha do tipo despesa
+  const categorias = (() => {
+    const arr = categoriasAll as Array<{ id: string; parent_id?: string | null }>;
+    const idsComFilhos = new Set(
+      arr.map((c) => c.parent_id).filter((id): id is string => Boolean(id)),
+    );
+    return arr.filter((c) => !idsComFilhos.has(c.id)) as typeof categoriasAll;
+  })();
 
   const [etapa, setEtapa] = useState<Etapa>("loading");
   const [boleto, setBoleto] = useState<BoletoStage | null>(null);
@@ -137,7 +148,7 @@ export function RotearBoletoDialog({
         setEtapa("criar");
       }
     } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
+      const msg = extractError(e);
       if (msg.includes("Resolução de parceiro pendente")) {
         toast.error(
           "Resolva o parceiro deste documento antes de rotear. Clique no chip amarelo na coluna Parceiro.",
@@ -170,35 +181,42 @@ export function RotearBoletoDialog({
       invalidar();
       onOpenChange(false);
     } catch (e) {
-      toast.error("Erro: " + (e instanceof Error ? e.message : String(e)), {
-        duration: 15000,
-      });
+      toast.error("Erro: " + extractError(e), { duration: 15000 });
     } finally {
       setSalvando(false);
     }
   }
 
   async function criar(fechar: boolean) {
-    if (!boleto || !categoriaId) {
+    if (!boleto) return;
+    // Validações cliente (espelham a RPC — Doutrina #120)
+    if (!categoriaId) {
       toast.error("Selecione a categoria");
+      return;
+    }
+    if (!meioPagamentoId) {
+      toast.error("Selecione o meio de pagamento");
       return;
     }
     setSalvando(true);
     try {
-      const { error } = await supabase.rpc("criar_cpr_de_boleto", {
+      const { data, error } = await supabase.rpc("criar_cpr_de_boleto", {
         p_boleto_stage_id: boleto.id,
         p_categoria_id: categoriaId,
-        p_meio_pagamento_id: meioPagamentoId ?? undefined,
+        p_meio_pagamento_id: meioPagamentoId,
         p_descricao_extra: descricao || undefined,
       });
       if (error) throw error;
-      toast.success("CPR criada a partir do boleto");
+      const res = (data ?? {}) as { ok?: boolean; cpr_id?: string };
+      toast.success(
+        res?.cpr_id
+          ? "CPR criada com sucesso a partir do boleto"
+          : "CPR criada",
+      );
       invalidar();
       if (fechar) onOpenChange(false);
     } catch (e) {
-      toast.error("Erro: " + (e instanceof Error ? e.message : String(e)), {
-        duration: 15000,
-      });
+      toast.error("Erro ao criar CPR: " + extractError(e), { duration: 15000 });
     } finally {
       setSalvando(false);
     }
@@ -281,13 +299,15 @@ export function RotearBoletoDialog({
                 />
               </div>
               <div>
-                <Label>Meio de pagamento (opcional)</Label>
+                <Label>Meio de pagamento *</Label>
                 <Select
                   value={meioPagamentoId ?? ""}
                   onValueChange={(v) => setMeioPagamentoId(v || null)}
                 >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Nenhum" />
+                  <SelectTrigger
+                    className={!meioPagamentoId ? "border-amber-300" : ""}
+                  >
+                    <SelectValue placeholder="Selecione o meio de pagamento" />
                   </SelectTrigger>
                   <SelectContent>
                     {meios.map((m) => (
@@ -311,13 +331,13 @@ export function RotearBoletoDialog({
               <Button
                 variant="secondary"
                 onClick={() => criar(false)}
-                disabled={salvando || !categoriaId}
+                disabled={salvando || !categoriaId || !meioPagamentoId}
               >
                 Criar
               </Button>
               <Button
                 onClick={() => criar(true)}
-                disabled={salvando || !categoriaId}
+                disabled={salvando || !categoriaId || !meioPagamentoId}
                 className="bg-[#1A4A3A] hover:bg-[#1A4A3A]/90"
               >
                 {salvando && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}

@@ -17,6 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Loader2, Sparkles, Search, AlertTriangle, Info, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { extractError } from "@/lib/extract-error";
 
 type Opcao = "vincular_existente" | "criar_novo" | "dispensar";
 
@@ -119,8 +120,7 @@ export function ResolverParceiroDialog({
         if (error) throw error;
         if (!cancelado) setResultados(((data ?? []) as unknown) as ParceiroResultado[]);
       } catch (e) {
-        if (!cancelado)
-          toast.error("Erro ao buscar: " + (e instanceof Error ? e.message : String(e)));
+        if (!cancelado) toast.error("Erro ao buscar: " + extractError(e));
       } finally {
         if (!cancelado) setBuscando(false);
       }
@@ -235,10 +235,7 @@ export function ResolverParceiroDialog({
       onResolvido?.();
       onOpenChange(false);
     } catch (e) {
-      toast.error(
-        "Erro ao resolver parceiro: " + (e instanceof Error ? e.message : String(e)),
-        { duration: 15000 },
-      );
+      toast.error("Erro ao resolver parceiro: " + extractError(e), { duration: 15000 });
     } finally {
       setSalvando(false);
     }
@@ -264,10 +261,7 @@ export function ResolverParceiroDialog({
       onResolvido?.();
       onOpenChange(false);
     } catch (e) {
-      toast.error(
-        "Erro ao aplicar em lote: " + (e instanceof Error ? e.message : String(e)),
-        { duration: 15000 },
-      );
+      toast.error("Erro ao aplicar em lote: " + extractError(e), { duration: 15000 });
       setEtapa("oferta_lote");
     } finally {
       setSalvando(false);

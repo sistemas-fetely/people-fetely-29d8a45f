@@ -36,6 +36,7 @@ import {
   tipoBadgeClass,
 } from "@/lib/repositorio/hash";
 import type { DocumentoRepositorio } from "@/pages/administrativo/Repositorio";
+import { extractError } from "@/lib/extract-error";
 
 interface Props {
   doc: DocumentoRepositorio | null;
@@ -108,9 +109,7 @@ export function DetalheDocumentoDrawer({
       qc.invalidateQueries({ queryKey: ["repositorio-documentos"] });
       qc.invalidateQueries({ queryKey: ["repositorio-kpis"] });
     } catch (e) {
-      toast.error("Erro: " + (e instanceof Error ? e.message : String(e)), {
-        duration: 15000,
-      });
+      toast.error("Erro: " + extractError(e), { duration: 15000 });
     } finally {
       setAcaoLoading(false);
       setReclassConfirm(false);
@@ -131,9 +130,7 @@ export function DetalheDocumentoDrawer({
       qc.invalidateQueries({ queryKey: ["repositorio-kpis"] });
       onOpenChange(false);
     } catch (e) {
-      toast.error("Erro: " + (e instanceof Error ? e.message : String(e)), {
-        duration: 15000,
-      });
+      toast.error("Erro: " + extractError(e), { duration: 15000 });
     } finally {
       setAcaoLoading(false);
       setDescartarConfirm(false);
