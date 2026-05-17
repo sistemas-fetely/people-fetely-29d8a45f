@@ -11714,6 +11714,7 @@ export type Database = {
       vw_nfs_stage_completude: {
         Row: {
           categoria_id: string | null
+          categoria_sugerida_ia: boolean | null
           completude: string | null
           conta_pagar_id: string | null
           created_at: string | null
