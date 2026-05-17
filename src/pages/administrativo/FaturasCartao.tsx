@@ -54,6 +54,7 @@ import {
 import { exportarFaturaPDF } from "@/lib/exportar-fatura-cartao";
 import { toast } from "sonner";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
+import { parseValorBR } from "@/lib/financeiro/parsers";
 import { ImportarFaturaCartaoDialog } from "@/components/financeiro/ImportarFaturaCartaoDialog";
 import { AcoesLancamentoCartao } from "@/components/financeiro/AcoesLancamentoCartao";
 import { descartarFatura } from "@/lib/financeiro/fatura-cartao-handler";
