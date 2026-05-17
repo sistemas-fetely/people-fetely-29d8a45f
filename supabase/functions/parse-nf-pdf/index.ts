@@ -100,7 +100,7 @@ Responda APENAS com JSON neste formato (sem markdown, sem explicações):
   "taxa_conversao": number ou null (multiplicador moeda_origem → BRL — preencher SOMENTE se moeda != BRL),
   "data_emissao": string formato YYYY-MM-DD,
   "data_vencimento": string formato YYYY-MM-DD ou null,
-  "descricao": string (descrição dos itens/serviços),
+  "descricao": string (descrição resumida dos itens/serviços, MÁXIMO 280 caracteres — se houver muitos itens, resuma como "N itens: primeiro item; segundo item; ..." sem listar todos),
   "numero_documento": string (número da NF para nfe/nfse, número do recibo/invoice, OU para boleto: "Nosso Número" ou "Número do Documento" do banco),
   "serie": string ou null (série, só pra NF-e/NFS-e brasileiras),
   "chave_acesso": string ou null (EXATAMENTE 44 dígitos pra NF-e, ID do InfNfse pra NFS-e. **OBRIGATORIAMENTE null pra recibo E boleto** — NUNCA preencher chave_acesso quando tipo_documento for boleto, mesmo que haja números longos no documento — esses são linha digitável, não chave.),
@@ -180,7 +180,7 @@ REGRAS GERAIS:
           },
         ],
         temperature: 0.1,
-        max_tokens: 1500,
+        max_tokens: 3000,
       }),
     });
 
@@ -210,17 +210,30 @@ REGRAS GERAIS:
     try {
       parsed = JSON.parse(cleaned);
     } catch {
-      console.error("Failed to parse AI response:", content);
-      return new Response(
-        JSON.stringify({
-          error: "Não foi possível extrair dados do PDF",
-          raw: content,
-        }),
-        {
-          status: 422,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+      // Tentativa de recuperação: resposta provavelmente truncada no meio de "descricao".
+      // Corta no último campo conhecido válido e fecha o objeto.
+      try {
+        const lastValidComma = cleaned.lastIndexOf('",\n');
+        if (lastValidComma > 0) {
+          const truncated = cleaned.slice(0, lastValidComma + 1) + "\n}";
+          parsed = JSON.parse(truncated);
+          console.warn("Recovered from truncated AI response");
+        } else {
+          throw new Error("no recovery point");
         }
-      );
+      } catch {
+        console.error("Failed to parse AI response:", content);
+        return new Response(
+          JSON.stringify({
+            error: "Não foi possível extrair dados do PDF",
+            raw: content,
+          }),
+          {
+            status: 422,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+      }
     }
 
     // Validação leve: garante campos mínimos com defaults
