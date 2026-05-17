@@ -101,6 +101,7 @@ const AdminContratos = lazy(() => import("@/pages/administrativo/Contratos"));
 const AdminImoveis = lazy(() => import("@/pages/administrativo/Imoveis"));
 const AdminSeguros = lazy(() => import("@/pages/administrativo/Seguros"));
 const AdminGED = lazy(() => import("@/pages/administrativo/GED"));
+const Repositorio = lazy(() => import("@/pages/administrativo/Repositorio"));
 const ConfiguracaoIntegracao = lazy(() => import("@/pages/administrativo/ConfiguracaoIntegracao"));
 const BlingCallback = lazy(() => import("@/pages/administrativo/BlingCallback"));
 const PedidosVenda = lazy(() => import("@/pages/administrativo/PedidosVenda"));
