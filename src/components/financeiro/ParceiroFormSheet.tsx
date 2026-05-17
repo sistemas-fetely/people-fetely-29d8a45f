@@ -119,6 +119,33 @@ export function ParceiroFormSheet({ open, onOpenChange, editing, categorias, onS
   const { data: canaisVenda = [] } = useCanaisVenda();
   const { data: formasPagamento = [] } = useFormasPagamento();
 
+  const { data: grupoInfo } = useQuery({
+    queryKey: ["grupo-info", grupoId],
+    enabled: !!grupoId,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("grupos_empresariais")
+        .select("id, nome")
+        .eq("id", grupoId)
+        .maybeSingle();
+      return data;
+    },
+  });
+
+  const { data: irmaos } = useQuery({
+    queryKey: ["grupo-irmaos", grupoId, editing?.id],
+    enabled: !!grupoId,
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from("parceiros_comerciais")
+        .select("id, razao_social, nome_fantasia, cnpj, tipos, ativo")
+        .eq("grupo_id", grupoId)
+        .neq("id", editing?.id || "")
+        .order("razao_social");
+      return data || [];
+    },
+  });
+
   const [tiposSelecionados, setTiposSelecionados] = useState<string[]>(["fornecedor"]);
   const [tipoPessoa, setTipoPessoa] = useState<"PF" | "PJ">("PJ");
   const [cnpj, setCnpj] = useState("");
