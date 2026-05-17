@@ -412,22 +412,29 @@ export default function Repositorio() {
                     )}
                   </TableCell>
                   <TableCell className="text-sm">
-                    {d.parceiro_nome ? (
-                      <div className="flex items-center gap-1.5">
-                        <span className="truncate max-w-[200px]" title={d.parceiro_nome}>
-                          {d.parceiro_nome}
+                    {d.parceiro_id && d.parceiro_nome ? (
+                      <span className="truncate max-w-[200px] inline-block align-middle" title={d.parceiro_nome}>
+                        {d.parceiro_nome}
+                      </span>
+                    ) : d.parceiro_resolucao_pendente && !d.parceiro_resolucao_dispensada ? (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDocResolverParceiro(d);
+                        }}
+                        className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md border border-amber-300 bg-amber-50 text-amber-800 text-xs hover:bg-amber-100 transition"
+                        title="Clique para resolver o parceiro"
+                      >
+                        <AlertCircle className="h-3 w-3" />
+                        <span className="truncate max-w-[160px]">
+                          {(d.classificacao_ia?.parceiro_razao_social as string) ?? "Resolver parceiro"}
                         </span>
-                        {d.parceiro_inferido && (
-                          <Badge
-                            variant="outline"
-                            className="text-[9px] px-1 py-0 h-4 border-amber-300 bg-amber-50 text-amber-700"
-                            title="Sugerido pela IA — não cadastrado em Parceiros"
-                          >
-                            IA
-                          </Badge>
-                        )}
-                      </div>
-                    ) : "—"}
+                      </button>
+                    ) : d.parceiro_resolucao_dispensada ? (
+                      <span className="text-xs text-muted-foreground italic">Sem parceiro</span>
+                    ) : (
+                      "—"
+                    )}
                   </TableCell>
                   <TableCell className="text-right text-sm">
                     {d.valor != null ? formatBRL(d.valor) : "—"}
