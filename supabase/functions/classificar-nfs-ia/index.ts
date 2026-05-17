@@ -1,50 +1,55 @@
-// Edge function: classificar-nfs-ia
-// Classifica NFs em stage sem categoria, agrupando por CNPJ do fornecedor.
-// 1) Tenta usar histórico (mode da categoria já usada para o mesmo CNPJ).
-// 2) Se não houver histórico, chama Lovable AI Gateway com o plano de contas.
-// Marca as NFs com categoria_sugerida_ia=true para o operador revisar.
-
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.7";
+// Edge function: classifica NFs do Stage usando Gemini.
+// Agrupa por CNPJ para eficiência — 1 chamada por fornecedor único.
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-interface NFStageRow {
+interface NFParaClassificar {
   id: string;
   fornecedor_cnpj: string | null;
   fornecedor_razao_social: string | null;
-  fornecedor_cliente: string | null;
   descricao: string | null;
+  itens: { descricao: string; ncm?: string }[] | null;
+  valor: number | null;
 }
 
-interface PlanoContaRow {
+interface CategoriaPlano {
   id: string;
   codigo: string;
   nome: string;
+  tipo: string;
 }
 
-serve(async (req) => {
+interface SugestaoIA {
+  cnpj: string;
+  categoria_id: string;
+  motivo: string;
+}
+
+Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ error: "Não autorizado" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const supabase = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_ANON_KEY")!,
+      { global: { headers: { Authorization: authHeader } } }
     );
 
-    // Auth: exige usuário logado
-    const authHeader = req.headers.get("Authorization") ?? "";
-    const userClient = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
-      { global: { headers: { Authorization: authHeader } } },
-    );
-    const { data: { user } } = await userClient.auth.getUser();
+    const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       return new Response(JSON.stringify({ error: "Não autorizado" }), {
         status: 401,
@@ -52,213 +57,154 @@ serve(async (req) => {
       });
     }
 
-    const body = await req.json().catch(() => ({}));
-    const ids: string[] | undefined = Array.isArray(body?.ids) ? body.ids : undefined;
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY não configurada");
 
-    // Carrega NFs sem categoria
-    let query = supabase
+    const body = await req.json();
+    const { ids } = body as { ids?: string[] };
+
+    let query = (supabase as any)
       .from("nfs_stage")
-      .select("id, fornecedor_cnpj, fornecedor_razao_social, fornecedor_cliente, descricao")
-      .is("categoria_id", null)
-      .eq("status", "nao_vinculada");
-    if (ids && ids.length > 0) query = query.in("id", ids);
+      .select("id, fornecedor_cnpj, fornecedor_razao_social, descricao, itens, valor")
+      .not("status", "in", '("descartada","duplicata")');
 
-    const { data: nfs, error: errNfs } = await query;
-    if (errNfs) throw errNfs;
-
-    const lista = (nfs ?? []) as NFStageRow[];
-    if (lista.length === 0) {
-      return new Response(
-        JSON.stringify({ classificadas: 0, erros: [], total_nfs: 0, cnpjs_processados: 0 }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
+    if (ids && ids.length > 0) {
+      query = query.in("id", ids);
+    } else {
+      query = query.is("categoria_id", null);
     }
 
-    // Agrupa por CNPJ (se sem CNPJ, agrupa por razão social como fallback)
-    const grupos = new Map<string, NFStageRow[]>();
-    for (const nf of lista) {
-      const chave = nf.fornecedor_cnpj
-        ?? nf.fornecedor_razao_social
-        ?? nf.fornecedor_cliente
-        ?? `__sem_id_${nf.id}`;
-      if (!grupos.has(chave)) grupos.set(chave, []);
-      grupos.get(chave)!.push(nf);
+    const { data: nfs, error: nfsErr } = await query;
+    if (nfsErr) throw new Error("Erro ao buscar NFs: " + nfsErr.message);
+    if (!nfs || nfs.length === 0) {
+      return new Response(JSON.stringify({ classificadas: 0, mensagem: "Nenhuma NF sem categoria" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
-    // Carrega plano de contas (analítico)
-    const { data: planoRaw, error: errPlano } = await supabase
+    const { data: categorias, error: catErr } = await (supabase as any)
       .from("plano_contas")
-      .select("id, codigo, nome, tipo, ativo")
-      .eq("ativo", true);
-    if (errPlano) throw errPlano;
-    const plano = (planoRaw ?? []).filter((c: { tipo?: string }) => c.tipo !== "sintetica") as PlanoContaRow[];
+      .select("id, codigo, nome, tipo")
+      .eq("ativo", true)
+      .order("codigo");
 
-    let classificadas = 0;
+    if (catErr) throw new Error("Erro ao buscar categorias: " + catErr.message);
+
+    const porCnpj = new Map<string, NFParaClassificar[]>();
+    for (const nf of nfs as NFParaClassificar[]) {
+      const chave = nf.fornecedor_cnpj || `sem_cnpj_${nf.id}`;
+      if (!porCnpj.has(chave)) porCnpj.set(chave, []);
+      porCnpj.get(chave)!.push(nf);
+    }
+
+    const resultados: { id: string; categoria_id: string; motivo: string }[] = [];
     const erros: string[] = [];
 
-    for (const [chaveGrupo, nfsGrupo] of grupos) {
+    for (const [cnpj, grupo] of porCnpj) {
       try {
-        const cnpj = nfsGrupo[0].fornecedor_cnpj;
-        let categoriaId: string | null = null;
+        const nfRef = grupo[0];
+        const nomeFornecedor = nfRef.fornecedor_razao_social || cnpj;
 
-        // 1) Tenta histórico: categoria mais usada para esse CNPJ em nfs_stage já categorizadas
-        if (cnpj) {
-          const { data: hist } = await supabase
-            .from("nfs_stage")
-            .select("categoria_id")
-            .eq("fornecedor_cnpj", cnpj)
-            .not("categoria_id", "is", null)
-            .eq("categoria_sugerida_ia", false)
-            .limit(50);
-          if (hist && hist.length > 0) {
-            const contagem = new Map<string, number>();
-            for (const h of hist) {
-              const k = (h as { categoria_id: string }).categoria_id;
-              contagem.set(k, (contagem.get(k) ?? 0) + 1);
-            }
-            categoriaId = [...contagem.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
-          }
+        const itensTexto = nfRef.itens && nfRef.itens.length > 0
+          ? nfRef.itens.slice(0, 5).map((i: { descricao: string; ncm?: string }) =>
+              `  - ${i.descricao}${i.ncm ? ` (NCM: ${i.ncm})` : ""}`).join("\n")
+          : nfRef.descricao
+            ? `  - ${nfRef.descricao}`
+            : "  - (sem descrição de itens)";
 
-          // Fallback: contas_pagar_receber
-          if (!categoriaId) {
-            const { data: histCPR } = await supabase
-              .from("contas_pagar_receber")
-              .select("conta_id")
-              .eq("nf_cnpj_emitente", cnpj)
-              .not("conta_id", "is", null)
-              .limit(50);
-            if (histCPR && histCPR.length > 0) {
-              const c = new Map<string, number>();
-              for (const h of histCPR) {
-                const k = (h as { conta_id: string }).conta_id;
-                c.set(k, (c.get(k) ?? 0) + 1);
-              }
-              categoriaId = [...c.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
-            }
-          }
-        }
+        const prompt = `Você é um contador especializado em classificação de despesas empresariais brasileiras.
 
-        // 2) Sem histórico → Lovable AI
-        if (!categoriaId) {
-          const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-          if (!LOVABLE_API_KEY) {
-            erros.push(`${chaveGrupo}: sem histórico e LOVABLE_API_KEY ausente`);
-            continue;
-          }
-          const fornecedorTxt = nfsGrupo[0].fornecedor_razao_social
-            ?? nfsGrupo[0].fornecedor_cliente
-            ?? "Fornecedor desconhecido";
-          const descricaoTxt = nfsGrupo
-            .map((n) => n.descricao)
-            .filter(Boolean)
-            .slice(0, 3)
-            .join(" | ");
+EMPRESA: FETELY COMERCIO IMPORTACAO E EXPORTACAO LTDA
+Segmento: artigos de celebração, velas, pratos e copos descartáveis, decoração de festas.
 
-          const planoTxt = plano
-            .map((c) => `${c.codigo} - ${c.nome} (id: ${c.id})`)
-            .join("\n");
+CATEGORIAS DISPONÍVEIS NO PLANO DE CONTAS (use APENAS os IDs desta lista):
+${(categorias as CategoriaPlano[]).map(c => `ID: ${c.id} | ${c.codigo} — ${c.nome} (${c.tipo})`).join("\n")}
 
-          const prompt = `Você é especialista em contabilidade brasileira. Dado um fornecedor e uma lista de categorias do plano de contas, escolha a categoria mais adequada.
+FORNECEDOR PARA CLASSIFICAR:
+CNPJ: ${cnpj}
+Razão Social: ${nomeFornecedor}
+Itens/Serviços da NF:
+${itensTexto}
+Valor médio: R$ ${nfRef.valor?.toFixed(2) || "?"}
 
-Fornecedor: ${fornecedorTxt}
-CNPJ: ${cnpj ?? "não informado"}
-Descrição/exemplos: ${descricaoTxt || "(sem descrição)"}
+Com base no fornecedor e nos itens, qual categoria do plano de contas acima melhor representa esta despesa?
 
-Plano de contas disponível:
-${planoTxt}
+Responda APENAS com JSON válido, sem markdown, sem texto antes ou depois:
+{"categoria_id": "UUID_DA_CATEGORIA", "motivo": "Explicação em 1 frase"}`;
 
-Retorne APENAS o id (UUID) da categoria escolhida via tool call.`;
+        const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${LOVABLE_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: "google/gemini-2.5-flash",
+            messages: [
+              {
+                role: "system",
+                content: "Você é um contador especializado. Responda APENAS com JSON válido, sem markdown, sem texto adicional.",
+              },
+              { role: "user", content: prompt },
+            ],
+          }),
+        });
 
-          const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${LOVABLE_API_KEY}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              model: "google/gemini-2.5-flash",
-              messages: [
-                { role: "system", content: "Você classifica despesas em categorias contábeis. Sempre responda usando a tool fornecida." },
-                { role: "user", content: prompt },
-              ],
-              tools: [{
-                type: "function",
-                function: {
-                  name: "escolher_categoria",
-                  description: "Escolhe a categoria mais adequada para o fornecedor",
-                  parameters: {
-                    type: "object",
-                    properties: {
-                      categoria_id: { type: "string", description: "UUID exato da categoria escolhida" },
-                      motivo: { type: "string", description: "Curto motivo da escolha" },
-                    },
-                    required: ["categoria_id"],
-                  },
-                },
-              }],
-              tool_choice: { type: "function", function: { name: "escolher_categoria" } },
-            }),
-          });
-
-          if (!aiResp.ok) {
-            erros.push(`${chaveGrupo}: AI gateway ${aiResp.status}`);
-            continue;
-          }
-          const aiJson = await aiResp.json();
-          const call = aiJson?.choices?.[0]?.message?.tool_calls?.[0];
-          if (!call) {
-            erros.push(`${chaveGrupo}: AI não retornou tool_call`);
-            continue;
-          }
-          const args = JSON.parse(call.function?.arguments ?? "{}");
-          const candidato = args.categoria_id as string | undefined;
-          if (candidato && plano.some((c) => c.id === candidato)) {
-            categoriaId = candidato;
-          } else {
-            erros.push(`${chaveGrupo}: categoria_id inválido retornado pela IA`);
-            continue;
-          }
-        }
-
-        if (!categoriaId) {
-          erros.push(`${chaveGrupo}: nenhuma categoria encontrada`);
+        if (!aiResp.ok) {
+          erros.push(`${nomeFornecedor}: erro ${aiResp.status}`);
           continue;
         }
 
-        // Atualiza todas as NFs do grupo
-        const grupoIds = nfsGrupo.map((n) => n.id);
-        const { error: errUpd } = await supabase
-          .from("nfs_stage")
-          .update({
-            categoria_id: categoriaId,
-            categoria_sugerida_ia: true,
-          })
-          .in("id", grupoIds);
-        if (errUpd) {
-          erros.push(`${chaveGrupo}: ${errUpd.message}`);
+        const aiData = await aiResp.json();
+        let raw = aiData?.choices?.[0]?.message?.content ?? "";
+        let jsonStr = String(raw).trim();
+        const fenceMatch = jsonStr.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+        if (fenceMatch) jsonStr = fenceMatch[1].trim();
+        const firstBrace = jsonStr.indexOf("{");
+        const lastBrace = jsonStr.lastIndexOf("}");
+        if (firstBrace !== -1 && lastBrace !== -1) jsonStr = jsonStr.slice(firstBrace, lastBrace + 1);
+
+        let sugestao: SugestaoIA;
+        try {
+          sugestao = JSON.parse(jsonStr);
+        } catch {
+          erros.push(`${nomeFornecedor}: resposta inválida da IA`);
           continue;
         }
-        classificadas += grupoIds.length;
+
+        const categoriaValida = (categorias as CategoriaPlano[]).find(c => c.id === sugestao.categoria_id);
+        if (!categoriaValida) {
+          erros.push(`${nomeFornecedor}: categoria_id inválido retornado pela IA`);
+          continue;
+        }
+
+        for (const nf of grupo) {
+          resultados.push({ id: nf.id, categoria_id: sugestao.categoria_id, motivo: sugestao.motivo });
+        }
       } catch (e) {
-        const msg = e instanceof Error ? e.message : String(e);
-        erros.push(`${chaveGrupo}: ${msg}`);
+        erros.push(`${cnpj}: ${e instanceof Error ? e.message : String(e)}`);
       }
     }
 
+    let classificadas = 0;
+    for (const r of resultados) {
+      const { error } = await (supabase as any)
+        .from("nfs_stage")
+        .update({ categoria_id: r.categoria_id, categoria_sugerida_ia: true })
+        .eq("id", r.id);
+      if (!error) classificadas++;
+    }
+
     return new Response(
-      JSON.stringify({
-        classificadas,
-        erros,
-        total_nfs: lista.length,
-        cnpjs_processados: grupos.size,
-      }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      JSON.stringify({ classificadas, erros, total_nfs: nfs.length, cnpjs_processados: porCnpj.size }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
+
   } catch (e) {
-    const msg = e instanceof Error ? e.message : String(e);
-    return new Response(JSON.stringify({ error: msg }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    console.error("classificar-nfs-ia erro:", e);
+    return new Response(
+      JSON.stringify({ error: e instanceof Error ? e.message : String(e) }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
   }
 });
