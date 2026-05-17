@@ -538,11 +538,13 @@ export default function Repositorio() {
                           <DropdownMenuItem onClick={() => abrirDetalhe(d)}>
                             Ver detalhes
                           </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => comResolucaoParceiro(d, abrirVincular)}
-                          >
-                            Vincular
-                          </DropdownMenuItem>
+                          {!(d.tipo_documento === "boleto" && d.status_classificacao === "roteada") && (
+                            <DropdownMenuItem
+                              onClick={() => comResolucaoParceiro(d, abrirVincular)}
+                            >
+                              Vincular
+                            </DropdownMenuItem>
+                          )}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
