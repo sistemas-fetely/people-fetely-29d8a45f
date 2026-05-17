@@ -193,8 +193,8 @@ export function RotearBoletoDialog({
       toast.error("Selecione a categoria");
       return;
     }
-    if (!meioPagamentoId) {
-      toast.error("Selecione o meio de pagamento");
+    if (!formaPagamentoId) {
+      toast.error("Selecione a forma de pagamento");
       return;
     }
     setSalvando(true);
