@@ -290,13 +290,26 @@ export default function Repositorio() {
             Stage Universal de Documentos · suba qualquer arquivo, a IA classifica e roteia.
           </p>
         </div>
-        <Button
-          onClick={() => setUploadOpen(true)}
-          className="bg-[#1A4A3A] hover:bg-[#1A4A3A]/90"
-        >
-          <Upload className="h-4 w-4 mr-2" />
-          Subir arquivos
-        </Button>
+        <div className="flex items-center gap-2">
+          {qtdPendentes > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-9 border-amber-300 text-amber-700 hover:bg-amber-50"
+              onClick={tentarResolverPendentes}
+            >
+              <Sparkles className="h-4 w-4 mr-2" />
+              Tentar resolver {qtdPendentes} pendente{qtdPendentes > 1 ? "s" : ""}
+            </Button>
+          )}
+          <Button
+            onClick={() => setUploadOpen(true)}
+            className="bg-[#1A4A3A] hover:bg-[#1A4A3A]/90"
+          >
+            <Upload className="h-4 w-4 mr-2" />
+            Subir arquivos
+          </Button>
+        </div>
       </div>
 
       {/* KPIs */}
