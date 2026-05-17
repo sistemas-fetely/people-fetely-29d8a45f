@@ -55,6 +55,7 @@ export interface NFParsed {
   _selecionada?: boolean;
   _duplicata?: boolean;
   _ambigua?: boolean; // score 2 — pergunta no preview
+  _ja_existe?: boolean; // já existe no banco (match exato)
   _candidatos_match?: {
     id: string;
     score: number;
