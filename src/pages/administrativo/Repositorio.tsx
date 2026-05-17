@@ -632,29 +632,68 @@ function AcaoInline({
   const parceiroPendente =
     doc.parceiro_resolucao_pendente && !doc.parceiro_resolucao_dispensada;
 
-  if (doc.tipo_documento === "boleto" && doc.status_classificacao === "classificada") {
-    if (parceiroPendente) {
+  if (doc.tipo_documento === "boleto") {
+    // Estado 1: ainda não roteado
+    if (doc.status_classificacao === "classificada") {
+      if (parceiroPendente) {
+        return (
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-8 border-amber-300 text-amber-700 hover:bg-amber-50"
+            onClick={() => onResolverParceiro(doc)}
+            title="Resolva o parceiro antes de rotear"
+          >
+            <AlertCircle className="h-3.5 w-3.5 mr-1" /> Resolver parceiro
+          </Button>
+        );
+      }
+      return (
+        <Button
+          size="sm"
+          className="bg-[#1A4A3A] hover:bg-[#1A4A3A]/90 h-8"
+          onClick={() => onRotear(doc)}
+        >
+          Rotear
+        </Button>
+      );
+    }
+
+    // Estado 2: roteado mas aguardando ancoragem
+    if (
+      doc.status_classificacao === "roteada" &&
+      doc.boleto_stage_status === "aguardando_ancoragem"
+    ) {
       return (
         <Button
           size="sm"
           variant="outline"
-          className="h-8 border-amber-300 text-amber-700 hover:bg-amber-50"
-          onClick={() => onResolverParceiro(doc)}
-          title="Resolva o parceiro antes de rotear"
+          className="h-8 border-blue-300 text-blue-700 hover:bg-blue-50"
+          onClick={() => onRotear(doc)}
+          title="Boleto criado, falta ancorar em CPR"
         >
-          <AlertCircle className="h-3.5 w-3.5 mr-1" /> Resolver parceiro
+          Continuar ancoragem
         </Button>
       );
     }
-    return (
-      <Button
-        size="sm"
-        className="bg-[#1A4A3A] hover:bg-[#1A4A3A]/90 h-8"
-        onClick={() => onRotear(doc)}
-      >
-        Rotear
-      </Button>
-    );
+
+    // Estado 3: ancorado / CPR criada
+    if (doc.status_classificacao === "roteada" && doc.boleto_stage_cpr_id) {
+      return (
+        <Button
+          asChild
+          size="sm"
+          variant="ghost"
+          className="h-8 text-muted-foreground hover:text-foreground"
+        >
+          <Link to={`/contas-pagar?id=${doc.boleto_stage_cpr_id}`}>
+            <ExternalLink className="h-3.5 w-3.5 mr-1" /> Ver CPR
+          </Link>
+        </Button>
+      );
+    }
+
+    return null;
   }
 
   if (doc.tipo_documento === "nf") {
