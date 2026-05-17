@@ -86,6 +86,9 @@ export function ResolverParceiroDialog({
     if (!open) return;
     setOpcao("vincular_existente");
     setParceiroEscolhido(null);
+    setEtapa("resolver");
+    setDadosResolucao(null);
+    setPendentesMesmoCnpj(0);
     const razao = classificacaoIa.parceiro_razao_social ?? "";
     const cnpj = classificacaoIa.parceiro_cnpj ?? "";
     setTermo(razao);
