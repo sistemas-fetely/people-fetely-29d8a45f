@@ -368,7 +368,7 @@ export function RotearBoletoDialog({
           </>
         )}
 
-        {etapa === "criar" && boleto && (
+        {etapa === "criar" && boleto && etapaCpr === "criar" && (
           <>
             <DialogHeader>
               <DialogTitle>Criar nova CPR a partir deste boleto</DialogTitle>
