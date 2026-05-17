@@ -217,7 +217,6 @@ export function ImportadorNFs({ onImported }: Props) {
 
       let processadas = [...novas];
       processadas = await verificarDuplicatas(processadas);
-      processadas = deduplicarLote(processadas);
       processadas = processadas.map((n) => ({
         ...n,
         _selecionada: !n._duplicata && !n._ambigua,
