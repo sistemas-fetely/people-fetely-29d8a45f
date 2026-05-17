@@ -9,7 +9,7 @@
  * sncf_documentacao slug "arquitetura-sistemas-fetely" v2 → seção 3 → Administrativo Fetely.
  */
 
-import { Building2, ShieldCheck, FileSignature, FolderArchive, Package, ShoppingCart, ClipboardList, UsersRound, Landmark } from "lucide-react";
+import { Building2, ShieldCheck, FileSignature, FolderArchive, FolderOpen, Package, ShoppingCart, ClipboardList, UsersRound, Landmark } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { cn } from "@/lib/utils";
 import { useLocation } from "react-router-dom";
@@ -34,6 +34,7 @@ interface MenuItem {
 
 // Grupo 1: Ativos & Patrimônio
 const patrimonioItems: MenuItem[] = [
+  { title: "Repositório", url: "/administrativo-fetely/repositorio", icon: FolderOpen },
   { title: "Contratos", url: "/administrativo-fetely/contratos", icon: FileSignature },
   { title: "Imóveis", url: "/administrativo-fetely/imoveis", icon: Building2 },
   { title: "Seguros", url: "/administrativo-fetely/seguros", icon: ShieldCheck },
