@@ -22,7 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { X, AlertTriangle, FolderOpen } from "lucide-react";
+import { X, AlertTriangle, FolderOpen, Building2 } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { fetchCep } from "@/lib/viacep";
