@@ -244,21 +244,69 @@ export function ResolverParceiroDialog({
     }
   }
 
+  async function handleAplicarLote() {
+    if (!dadosResolucao) return;
+    setSalvando(true);
+    setEtapa("executando_lote");
+    try {
+      const { data, error } = await supabase.rpc("resolver_parceiro_em_lote", {
+        p_cnpj_ia: dadosResolucao.cnpj_ia,
+        p_decisao: dadosResolucao.decisao,
+        p_parceiro_id: dadosResolucao.parceiro_id ?? null,
+        p_dados_novo_parceiro: dadosResolucao.dados_novo_parceiro ?? null,
+      } as never);
+      if (error) throw error;
+      const res = (data ?? {}) as { qtd_afetada?: number };
+      toast.success(`${res.qtd_afetada ?? 0} documento(s) atualizado(s) em lote`);
+      qc.invalidateQueries({ queryKey: ["repositorio-documentos"] });
+      qc.invalidateQueries({ queryKey: ["repositorio-kpis"] });
+      qc.invalidateQueries({ queryKey: ["repositorio-qtd-pendentes"] });
+      onResolvido?.();
+      onOpenChange(false);
+    } catch (e) {
+      toast.error(
+        "Erro ao aplicar em lote: " + (e instanceof Error ? e.message : String(e)),
+        { duration: 15000 },
+      );
+      setEtapa("oferta_lote");
+    } finally {
+      setSalvando(false);
+    }
+  }
+
+  function handlePularLote() {
+    onResolvido?.();
+    onOpenChange(false);
+  }
+
   const podeConfirmar =
     (opcao === "vincular_existente" && !!parceiroEscolhido) ||
     (opcao === "criar_novo" && !!dadosNovo.razao_social.trim()) ||
     opcao === "dispensar";
 
+  const termoTrim = termo.trim();
+  const buscaVazia = termoTrim.length === 0;
+  const termoMuitoCurto = termoTrim.length > 0 && termoTrim.length < 3;
+
+  const tituloDialog =
+    etapa === "resolver"
+      ? "Resolver parceiro do documento"
+      : etapa === "oferta_lote"
+        ? "Aplicar resolução em lote?"
+        : "Aplicando em lote...";
+
   return (
     <Dialog open={open} onOpenChange={(v) => !salvando && onOpenChange(v)}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Resolver parceiro do documento</DialogTitle>
-          <DialogDescription>
-            {classificacaoIa.tipo_documento
-              ? `Tipo: ${classificacaoIa.tipo_documento}`
-              : "Defina como vincular este documento a um parceiro comercial."}
-          </DialogDescription>
+          <DialogTitle>{tituloDialog}</DialogTitle>
+          {etapa === "resolver" && (
+            <DialogDescription>
+              {classificacaoIa.tipo_documento
+                ? `Tipo: ${classificacaoIa.tipo_documento}`
+                : "Defina como vincular este documento a um parceiro comercial."}
+            </DialogDescription>
+          )}
         </DialogHeader>
 
         {/* Bloco IA */}
