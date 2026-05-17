@@ -72,6 +72,7 @@ const STATUS_TRAVA_CRITICOS = ["enviado_para_pagamento", "cancelado"];
 export function ContaPagarFormEdit({
   conta,
   onSaved,
+  onSaveAndClose,
   onCancel,
   highlightCampo = null,
 }: Props) {
