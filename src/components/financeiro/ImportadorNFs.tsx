@@ -235,6 +235,7 @@ export function ImportadorNFs({ onImported }: Props) {
         } else {
           toast.error(
             `Importação concluída com erros: ${resumo.join(", ")}. ${result.erros.slice(0, 3).join("; ")}`,
+            { duration: 15000, closeButton: true },
           );
         }
         console.error(result.erros);

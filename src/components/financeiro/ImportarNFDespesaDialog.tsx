@@ -170,7 +170,7 @@ export function ImportarNFDespesaDialog({
           parcela_atual: i + 1,
           parcela_grupo_id: grupoId,
           status: "aberto",
-          origem: "manual",
+          origem: nf.stageId ? "nf_import" : "manual",
         });
       }
 
@@ -191,7 +191,11 @@ export function ImportarNFDespesaDialog({
           p_conta_id: primeira.id,
         });
         if (vincErr) {
-          console.warn("Falha ao vincular NF à parcela 1:", vincErr);
+          console.error("Falha ao vincular NF à CPR:", vincErr);
+          toast.error(
+            `Despesa criada, mas falhou ao vincular a NF do Stage: ${vincErr.message}. Vincule manualmente pelo Drawer.`,
+            { duration: 12000, closeButton: true },
+          );
         }
       }
 
