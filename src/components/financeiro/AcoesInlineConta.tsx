@@ -56,6 +56,34 @@ export default function AcoesInlineConta({ conta, onAbrirEditandoBanco }: Props)
   const [aprovando, setAprovando] = useState(false);
   const [lancandoMov, setLancandoMov] = useState(false);
   const [showEnviar, setShowEnviar] = useState(false);
+  const [showAnexarNF, setShowAnexarNF] = useState(false);
+  const [vinculandoNF, setVinculandoNF] = useState(false);
+
+  async function handleSelecionarNFDoStage(nfStageId: string) {
+    setVinculandoNF(true);
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: result, error } = await (supabase as any).rpc(
+        "vincular_nf_a_conta",
+        { p_nf_id: nfStageId, p_conta_id: conta.id },
+      );
+      if (error) throw error;
+      if (!result?.ok && !result?.success) {
+        const msg = result?.erro || result?.error || "Falha ao vincular NF";
+        toast.error(typeof msg === "string" ? msg : "Falha ao vincular NF");
+        return;
+      }
+      toast.success("NF vinculada à conta");
+      setShowAnexarNF(false);
+      qc.invalidateQueries({ queryKey: ["contas-pagar"] });
+      qc.invalidateQueries({ queryKey: ["conta-pagar-detalhe", conta.id] });
+      qc.invalidateQueries({ queryKey: ["nfs-stage"] });
+    } catch (e) {
+      toast.error("Erro: " + extractMsg(e));
+    } finally {
+      setVinculandoNF(false);
+    }
+  }
 
   const stop = (fn: () => void) => (e: React.MouseEvent) => {
     e.stopPropagation();
