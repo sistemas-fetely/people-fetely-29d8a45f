@@ -20,7 +20,6 @@ import { CategoriaCombobox } from "@/components/financeiro/CategoriaCombobox";
 import { useCategoriasPlano } from "@/hooks/useCategoriasPlano";
 import { useFormasPagamento } from "@/hooks/financeiro/useFormasPagamento";
 import { extractError } from "@/lib/extract-error";
-import { useQuery } from "@tanstack/react-query";
 import {
   Select,
   SelectContent,
