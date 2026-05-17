@@ -76,15 +76,15 @@ export function VincularDocumentoDialog({
       if (tipo === "movimentacao_bancaria") {
         const { data, error } = await supabase
           .from("movimentacoes_bancarias")
-          .select("id, descricao, valor, data")
+          .select("id, descricao, valor, data_transacao")
           .ilike("descricao", termo)
-          .order("data", { ascending: false })
+          .order("data_transacao", { ascending: false })
           .limit(20);
         if (error) throw error;
         return (data ?? []).map((r) => ({
           id: r.id as string,
           rotulo: (r.descricao as string) ?? "(sem descrição)",
-          detalhe: `${formatBRL((r.valor as number) ?? 0)} · ${formatDateBR(r.data as string)}`,
+          detalhe: `${formatBRL((r.valor as number) ?? 0)} · ${formatDateBR(r.data_transacao as string)}`,
         }));
       }
       if (tipo === "pasta_contrato") {
