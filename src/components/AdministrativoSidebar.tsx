@@ -9,7 +9,7 @@
  * sncf_documentacao slug "arquitetura-sistemas-fetely" v2 → seção 3 → Administrativo Fetely.
  */
 
-import { Building2, ShieldCheck, FileSignature, FolderArchive, Package, ShoppingCart, ClipboardList, UsersRound, Landmark } from "lucide-react";
+import { Building2, ShieldCheck, FileSignature, FolderArchive, FolderOpen, Package, ShoppingCart, ClipboardList, UsersRound, Landmark } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { cn } from "@/lib/utils";
 import { useLocation } from "react-router-dom";
