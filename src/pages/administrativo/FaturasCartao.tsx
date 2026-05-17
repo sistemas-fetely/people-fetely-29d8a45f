@@ -205,7 +205,7 @@ export default function FaturasCartao() {
         .from("contas_pagar_receber_ativas")
         .select("id, valor, parcela_grupo_id")
         .eq("eh_cartao", true)
-        .in("status", ["aberto", "aprovado", "aguardando_pagamento"]);
+        .in("status", ["aberto", "aprovado", "enviado_para_pagamento"]);
       if (errC) throw errC;
       if (!contas?.length) return new Map<string, number>();
 
