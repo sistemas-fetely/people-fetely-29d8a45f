@@ -137,6 +137,48 @@ async function parsePdfFile(file: File): Promise<NFParsed | null> {
   return nf;
 }
 
+function normalizarNumeroNF(n: string | undefined): string {
+  if (!n) return "";
+  return n.replace(/\D/g, "").replace(/^0+/, "");
+}
+
+function deduplicarLote(nfs: NFParsed[]): NFParsed[] {
+  const vistas = new Map<string, number>();
+  const resultado = [...nfs];
+
+  nfs.forEach((nf, i) => {
+    const chave = [
+      nf.fornecedor_cnpj ?? "",
+      normalizarNumeroNF(nf.nf_numero),
+      String(nf.valor ?? ""),
+      nf.nf_data_emissao ?? "",
+    ].join("|");
+
+    if (!nf.fornecedor_cnpj && !nf.nf_numero) return;
+
+    const existenteIdx = vistas.get(chave);
+
+    if (existenteIdx === undefined) {
+      vistas.set(chave, i);
+      return;
+    }
+
+    const existente = resultado[existenteIdx];
+    const chegandoEhXml = nf._source === "xml_nfe" || nf._source === "xml_nfse";
+    const existenteEhXml =
+      existente._source === "xml_nfe" || existente._source === "xml_nfse";
+
+    if (chegandoEhXml && !existenteEhXml) {
+      resultado[existenteIdx] = { ...existente, _duplicata: true };
+      vistas.set(chave, i);
+    } else {
+      resultado[i] = { ...nf, _duplicata: true };
+    }
+  });
+
+  return resultado;
+}
+
 export function ImportadorNFs({ onImported }: Props) {
   const qc = useQueryClient();
   const [parsing, setParsing] = useState(false);
@@ -177,6 +219,7 @@ export function ImportadorNFs({ onImported }: Props) {
       }
 
       let processadas = [...novas];
+      processadas = deduplicarLote(processadas);
       processadas = await verificarDuplicatas(processadas);
       processadas = processadas.map((n) => ({
         ...n,
