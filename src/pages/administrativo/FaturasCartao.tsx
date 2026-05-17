@@ -608,7 +608,7 @@ export default function FaturasCartao() {
             )
             .map((cartao) => {
               const comprometido = comprometidoMap.get(cartao.id) || 0;
-              const limite = 0;
+              const limite = Number(cartao.limite ?? 0);
               const disponivel = limite - comprometido;
               const percentUsado = limite > 0 ? (comprometido / limite) * 100 : 0;
               const ativo = filtroCartao === cartao.id;
