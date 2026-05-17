@@ -107,6 +107,7 @@ const TIPOS = [
 const STATUSES = ["aguardando", "classificada", "roteada", "descartada", "erro"];
 
 export default function Repositorio() {
+  const qc = useQueryClient();
   const [uploadOpen, setUploadOpen] = useState(false);
   const [busca, setBusca] = useState("");
   const [filtroStatus, setFiltroStatus] = useState<string>("ativos");
