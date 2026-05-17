@@ -127,6 +127,7 @@ export default function Repositorio() {
           `id, nome, arquivo_original, storage_path, mime_type, tipo_documento,
            status_classificacao, confianca_ia, classificacao_ia, resumo_ia,
            parceiro_id, lote_id, origem_porta, tags, created_at,
+           parceiro_resolucao_pendente, parceiro_resolucao_dispensada,
            parceiros_comerciais ( razao_social )`,
         )
         .order("created_at", { ascending: false })
