@@ -461,7 +461,12 @@ export default function Repositorio() {
                   </TableCell>
                   <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center justify-end gap-1">
-                      <AcaoInline doc={d} onRotear={abrirRotear} onVincular={abrirVincular} />
+                      <AcaoInline
+                        doc={d}
+                        onRotear={(x) => comResolucaoParceiro(x, abrirRotear)}
+                        onVincular={(x) => comResolucaoParceiro(x, abrirVincular)}
+                        onResolverParceiro={(x) => setDocResolverParceiro(x)}
+                      />
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -472,7 +477,9 @@ export default function Repositorio() {
                           <DropdownMenuItem onClick={() => abrirDetalhe(d)}>
                             Ver detalhes
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => abrirVincular(d)}>
+                          <DropdownMenuItem
+                            onClick={() => comResolucaoParceiro(d, abrirVincular)}
+                          >
                             Vincular
                           </DropdownMenuItem>
                         </DropdownMenuContent>
