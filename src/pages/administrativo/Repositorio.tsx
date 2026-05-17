@@ -113,6 +113,7 @@ export default function Repositorio() {
   });
 
   const [docSelecionado, setDocSelecionado] = useState<DocumentoRepositorio | null>(null);
+  const [docResolverParceiro, setDocResolverParceiro] = useState<DocumentoRepositorio | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [rotearOpen, setRotearOpen] = useState(false);
   const [vincularOpen, setVincularOpen] = useState(false);
