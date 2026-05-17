@@ -874,6 +874,12 @@ export default function NFsStage() {
                               placeholder="Classificar..."
                               disabled={salvando}
                             />
+                            {nf.categoria_sugerida_ia && nf.categoria_id && (
+                              <Sparkles
+                                className="h-3 w-3 text-purple-500 shrink-0"
+                                aria-label="Categoria sugerida pela IA — revise e confirme"
+                              />
+                            )}
                             {sugestao && (() => {
                               const conf = sugestao.confianca || 0;
                               const corBadge =
@@ -900,8 +906,11 @@ export default function NFsStage() {
                             })()}
                           </div>
                         ) : nf.categoria_id ? (
-                          <span className="text-xs text-muted-foreground">
+                          <span className="text-xs text-muted-foreground inline-flex items-center gap-1">
                             {mapCategorias[nf.categoria_id] || "—"}
+                            {nf.categoria_sugerida_ia && (
+                              <Sparkles className="h-3 w-3 text-purple-500" />
+                            )}
                           </span>
                         ) : (
                           <span className="text-xs text-muted-foreground italic">—</span>
