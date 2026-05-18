@@ -162,7 +162,7 @@ serve(async (req) => {
     }
 
     // === BUSCAR DOCS VIA RPC (v4 - bypass RLS) ===
-    type DocFonte = { tipo: string; nome_arquivo: string; storage_path: string };
+    type DocFonte = { tipo: string; nome_arquivo: string; storage_path: string; bucket: string };
     const docsFromBanco: DocFonte[] = [];
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -179,6 +179,7 @@ serve(async (req) => {
         tipo: d.tipo || "outro",
         nome_arquivo: d.nome_arquivo || "documento",
         storage_path: d.storage_path,
+        bucket: d.bucket || "financeiro-docs",
       });
     }
 
@@ -201,13 +202,13 @@ serve(async (req) => {
     for (const doc of docsUnicos) {
       try {
         const { data: blob, error: dlErr } = await supabaseService.storage
-          .from("financeiro-docs")
+          .from(doc.bucket)
           .download(doc.storage_path);
 
         if (dlErr || !blob) {
           console.error(`[email-pagto] download falhou: ${doc.storage_path}`, dlErr);
           const { data: signed } = await supabaseService.storage
-            .from("financeiro-docs")
+            .from(doc.bucket)
             .createSignedUrl(doc.storage_path, SIGNED_URL_DURACAO_SEG);
           if (signed?.signedUrl) {
             linksDocs.push({
@@ -232,7 +233,7 @@ serve(async (req) => {
           tamanhoTotalBase64 += tamanhoBase64Est;
         } else {
           const { data: signed } = await supabaseService.storage
-            .from("financeiro-docs")
+            .from(doc.bucket)
             .createSignedUrl(doc.storage_path, SIGNED_URL_DURACAO_SEG);
           if (signed?.signedUrl) {
             linksDocs.push({
@@ -245,7 +246,7 @@ serve(async (req) => {
       } catch (e) {
         console.error("[email-pagto] erro processando", doc.nome_arquivo, e);
         const { data: signed } = await supabaseService.storage
-          .from("financeiro-docs")
+          .from(doc.bucket)
           .createSignedUrl(doc.storage_path, SIGNED_URL_DURACAO_SEG);
         if (signed?.signedUrl) {
           linksDocs.push({
@@ -330,7 +331,7 @@ serve(async (req) => {
             num_parcelas_enviadas: parcelasCPRs.length,
             num_attachments: attachments.length,
             num_links: linksDocs.length,
-            patch_version: "v5-debug-rpc",
+            patch_version: "v6-bucket-dinamico",
             // Debug v5 — saber por que RPC retorna 0
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             rpc_error: rpcErr ? JSON.stringify(rpcErr) : null,
