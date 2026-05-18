@@ -95,6 +95,7 @@ serve(async (req) => {
     const emailDestinatario: string = body.email_destinatario;
     const mensagemPersonalizada: string = body.mensagem_personalizada ?? "";
     const docs: DocInput[] = Array.isArray(body.docs) ? body.docs : [];
+    const pastaContratoId: string | null = body.pasta_contrato_id ?? null;
 
     if (!cprId || !emailDestinatario) {
       return new Response(
@@ -108,7 +109,7 @@ serve(async (req) => {
       .select(`
         id, valor, data_vencimento, status, nf_numero, descricao,
         fornecedor_cliente, parceiro_id, observacao_pagamento,
-        parcelas, parcela_atual, parcela_grupo_id,
+        parcelas, parcela_atual, parcela_grupo_id, pasta_contrato_id,
         forma_pagamento:formas_pagamento (id, codigo, nome, envio_agrupa_parcelas),
         plano_contas (codigo, nome),
         parceiros_comerciais (razao_social, dados_bancarios)
@@ -140,6 +141,17 @@ serve(async (req) => {
         .in("status", ["aberto", "aprovado"])
         .order("parcela_atual", { ascending: true });
       if (irmas && irmas.length > 0) parcelasCPRs = irmas;
+    }
+
+    const ehAgrupadoPorContrato = formaAgrupa && !!pastaContratoId && !temGrupo;
+    if (ehAgrupadoPorContrato) {
+      const { data: irmasContrato } = await supabaseService
+        .from("contas_pagar_receber")
+        .select("id, valor, data_vencimento, parcela_atual, parcelas, status")
+        .eq("pasta_contrato_id", pastaContratoId)
+        .in("status", ["aberto", "aprovado"])
+        .order("data_vencimento", { ascending: true });
+      if (irmasContrato && irmasContrato.length > 0) parcelasCPRs = irmasContrato;
     }
 
     const idsAtualizar = parcelasCPRs.map((p) => p.id);

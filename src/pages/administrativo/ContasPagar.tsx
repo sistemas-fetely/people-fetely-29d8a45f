@@ -656,20 +656,6 @@ export default function ContasPagar() {
                           <Badge className={STATUS_STYLES[c.status] || "bg-muted"}>
                             {STATUS_LABELS[c.status] || c.status}
                           </Badge>
-                          {pend?.com_pendencia && (
-                            <Badge
-                              variant="outline"
-                              className="bg-amber-50 text-amber-800 border-amber-300 gap-1"
-                              title={
-                                pend.pendencias?.length
-                                  ? `Pendências: ${pend.pendencias.join(", ")}`
-                                  : "Pagamento marcado com pendência"
-                              }
-                            >
-                              <FileWarning className="h-3 w-3" />
-                              Pendência
-                            </Badge>
-                          )}
                         </div>
                       </TableCell>
                       <TableCell

@@ -62,6 +62,7 @@ type Conta = {
   parcela_atual?: number | null;
   parcelas?: number | null;
   parcela_grupo_id?: string | null;
+  pasta_contrato_id?: string | null;
   plano_contas?: { codigo?: string | null; nome?: string | null } | null;
   parceiros_comerciais?: { razao_social?: string | null } | null;
   dados_pagamento_fornecedor?: {
@@ -219,6 +220,32 @@ export default function EnviarPagamentoDialog({ open, onOpenChange, conta, onDon
   });
 
   const ehEnvioAgrupado = !!dadosAgrupamento && dadosAgrupamento.parcelas.length > 1;
+
+  const { data: dadosAgrupamentoContrato } = useQuery({
+    queryKey: ["envio-agrupamento-contrato", conta.pasta_contrato_id, conta.forma_pagamento_id],
+    enabled: open && !!conta.pasta_contrato_id && !!conta.forma_pagamento_id && !conta.parcela_grupo_id,
+    queryFn: async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: forma } = await (supabase as any)
+        .from("formas_pagamento")
+        .select("envio_agrupa_parcelas, nome")
+        .eq("id", conta.forma_pagamento_id)
+        .maybeSingle();
+      if (!forma?.envio_agrupa_parcelas) return null;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: parcelas } = await (supabase as any)
+        .from("contas_pagar_receber")
+        .select("id, numero_parcela, parcelas, valor, data_vencimento, status")
+        .eq("pasta_contrato_id", conta.pasta_contrato_id!)
+        .in("status", ["aberto", "aprovado"])
+        .order("data_vencimento", { ascending: true });
+      if (!parcelas || parcelas.length <= 1) return null;
+      return { parcelas, formaAgrupa: true };
+    },
+  });
+
+  const [enviarTodas, setEnviarTodas] = useState(true);
+  const ehEnvioAgrupadoContrato = !!dadosAgrupamentoContrato && dadosAgrupamentoContrato.parcelas.length > 1;
 
   useEffect(() => {
     if (!open) return;
@@ -411,6 +438,7 @@ export default function EnviarPagamentoDialog({ open, onOpenChange, conta, onDon
       const emailResult = await supabase.functions.invoke("enviar-email-pagamento", {
         body: {
           cpr_id: conta.id,
+          pasta_contrato_id: ehEnvioAgrupadoContrato && enviarTodas ? conta.pasta_contrato_id : undefined,
           email_destinatario: emailDestinatario,
           mensagem_personalizada: "",
           docs: docsParaEnviar.map((d) => ({
@@ -626,6 +654,22 @@ export default function EnviarPagamentoDialog({ open, onOpenChange, conta, onDon
                     <span className="font-semibold text-blue-900">{formatBRL(p.valor)}</span>
                   </div>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {ehEnvioAgrupadoContrato && (
+            <div className="rounded-md border border-blue-200 bg-blue-50 p-3 text-sm mb-3">
+              <p className="font-medium text-blue-800 mb-2">
+                Este contrato tem {dadosAgrupamentoContrato!.parcelas.length} parcelas em aberto.
+              </p>
+              <div className="flex gap-2">
+                <Button size="sm" variant={enviarTodas ? "default" : "outline"} onClick={() => setEnviarTodas(true)}>
+                  Enviar todas ({dadosAgrupamentoContrato!.parcelas.length})
+                </Button>
+                <Button size="sm" variant={!enviarTodas ? "default" : "outline"} onClick={() => setEnviarTodas(false)}>
+                  Só esta parcela
+                </Button>
               </div>
             </div>
           )}
