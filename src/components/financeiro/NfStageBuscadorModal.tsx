@@ -33,7 +33,7 @@ export function NfStageBuscadorModal({
   const [busca, setBusca] = useState("");
 
   const { data: nfs } = useQuery({
-    queryKey: ["nf-stage-buscador", busca, valorEsperado, fornecedorEsperado, open],
+    queryKey: ["nf-stage-buscador", busca, valorEsperado, fornecedorEsperado, parceiroId, open],
     enabled: open,
     queryFn: async () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -42,17 +42,42 @@ export function NfStageBuscadorModal({
         .select("id, tipo_documento, fornecedor_razao_social, nf_numero, valor, nf_data_emissao, status")
         .neq("status", "vinculada")
         .order("nf_data_emissao", { ascending: false })
-        .limit(30);
+        .limit(50);
 
       const termo = busca.trim();
+
       if (termo) {
+        // PRIORIDADE 1: busca digitada
         query = query.or(
-          `fornecedor_razao_social.ilike.%${termo}%,nf_numero.ilike.%${termo}%`,
+          `fornecedor_razao_social.ilike.%${termo}%,nf_numero.ilike.%${termo}%,fornecedor_cliente.ilike.%${termo}%`,
         );
+      } else if (parceiroId) {
+        // PRIORIDADE 2: usa parceiro_id pra buscar palavra-chave do nome
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data: parceiro } = await (supabase as any)
+          .from("parceiros_comerciais")
+          .select("razao_social, nome_fantasia")
+          .eq("id", parceiroId)
+          .single();
+
+        const nome = parceiro?.razao_social || parceiro?.nome_fantasia || "";
+        // Pega primeira palavra de pelo menos 3 chars, ignorando "ABCasa-Assoc" etc
+        const palavraChave = nome
+          .split(/[\s\-,.]+/)
+          .find((p: string) => p.length >= 3);
+
+        if (palavraChave) {
+          query = query.or(
+            `fornecedor_razao_social.ilike.%${palavraChave}%,fornecedor_cliente.ilike.%${palavraChave}%`,
+          );
+        }
       } else if (fornecedorEsperado) {
-        const palavraChave = fornecedorEsperado.split(" ")[0];
-        if (palavraChave && palavraChave.length >= 3) {
-          query = query.ilike("fornecedor_razao_social", `%${palavraChave}%`);
+        // PRIORIDADE 3: fallback antigo
+        const palavraChave = fornecedorEsperado.split(/[\s\-,.]+/).find((p: string) => p.length >= 3);
+        if (palavraChave) {
+          query = query.or(
+            `fornecedor_razao_social.ilike.%${palavraChave}%,fornecedor_cliente.ilike.%${palavraChave}%`,
+          );
         }
       }
 
