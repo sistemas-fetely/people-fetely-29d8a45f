@@ -354,6 +354,7 @@ serve(async (req) => {
             num_parcelas_enviadas: parcelasCPRs.length,
             num_attachments: attachments.length,
             num_links: linksDocs.length,
+            patch_version: "v3-busca-cpr-atual",
           },
         }),
       }
