@@ -22,6 +22,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
+  SortableTableHead,
+  ordenarPor,
+  type SortState,
+} from "@/components/shared/SortableTableHead";
+import {
   ArrowUpFromLine,
   Plus,
   Upload,
@@ -281,6 +286,9 @@ export default function ContasPagar() {
     const s = nfStatusMap.get(id);
     return !!s && s.nf_aplicavel && !s.vinculo_nf_completo;
   };
+
+  type SortColumn = "parceiro" | "descricao" | "vencimento" | "meio_pagamento" | "categoria" | "valor" | "status";
+  const [sort, setSort] = useState<SortState<SortColumn> | null>({ column: "vencimento", direction: "asc" });
 
   const kpis = useMemo(() => {
     const lista = data || [];
