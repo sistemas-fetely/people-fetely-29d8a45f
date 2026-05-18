@@ -318,7 +318,7 @@ export default function DashboardFinanceiro() {
 
     const catMap = new Map<string, { nome: string; valor: number }>();
     for (const c of pagasMesAtual) {
-      const nome = (c as any).contas?.nome || "Sem categoria";
+      const nome = (c as any).plano_contas?.nome || "Sem categoria";
       const cur = catMap.get(nome) ?? { nome, valor: 0 };
       cur.valor += Number(c.valor);
       catMap.set(nome, cur);
