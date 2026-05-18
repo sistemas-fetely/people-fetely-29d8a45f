@@ -779,7 +779,7 @@ function ContratoDetalheDrawer({
     };
     const label: Record<string, string> = {
       aprovado: "Aprovado",
-      enviado_para_pagamento: "Pago",
+      enviado_para_pagamento: "Enviado p/ pagamento",
       cancelado: "Cancelado",
       aberto: "Aberto",
     };
