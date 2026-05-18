@@ -12260,6 +12260,7 @@ export type Database = {
       buscar_docs_pagamento: {
         Args: { p_cpr_id: string }
         Returns: {
+          bucket: string
           fonte: string
           nome_arquivo: string
           storage_path: string

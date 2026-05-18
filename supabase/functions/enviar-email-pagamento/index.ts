@@ -162,7 +162,7 @@ serve(async (req) => {
     }
 
     // === BUSCAR DOCS VIA RPC (v4 - bypass RLS) ===
-    type DocFonte = { tipo: string; nome_arquivo: string; storage_path: string };
+    type DocFonte = { tipo: string; nome_arquivo: string; storage_path: string; bucket: string };
     const docsFromBanco: DocFonte[] = [];
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -179,6 +179,7 @@ serve(async (req) => {
         tipo: d.tipo || "outro",
         nome_arquivo: d.nome_arquivo || "documento",
         storage_path: d.storage_path,
+        bucket: d.bucket || "financeiro-docs",
       });
     }
 
