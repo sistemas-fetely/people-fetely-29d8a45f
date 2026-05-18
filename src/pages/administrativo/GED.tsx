@@ -587,21 +587,28 @@ export function NovaPastaDialog({
               onChange={(e) => setDescricao(e.target.value)}
             />
           </div>
-          <div className="space-y-1">
-            <Label>Parceiro relacionado</Label>
-            <Select value={parceiroId} onValueChange={setParceiroId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Opcional" />
-              </SelectTrigger>
-              <SelectContent>
-                {(parceiros as any[]).map((p) => (
-                  <SelectItem key={p.id} value={p.id}>
-                    {p.razao_social}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          {!parentId && (
+            <div className="space-y-1">
+              <Label>Parceiro relacionado</Label>
+              <Select value={parceiroId} onValueChange={setParceiroId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Opcional" />
+                </SelectTrigger>
+                <SelectContent>
+                  {(parceiros as any[]).map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.razao_social}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+          {parentId && parentNome && (
+            <div className="text-sm text-muted-foreground">
+              Subpasta de "{parentNome}" — parceiro será herdado automaticamente.
+            </div>
+          )}
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
