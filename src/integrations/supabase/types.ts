@@ -556,142 +556,6 @@ export type Database = {
           },
         ]
       }
-      boleto_stage: {
-        Row: {
-          ancorado_em: string | null
-          ancorado_por: string | null
-          beneficiario_cnpj: string | null
-          beneficiario_nome: string | null
-          codigo_barras: string | null
-          contas_pagar_receber_id: string | null
-          cpr_match_candidatos: Json | null
-          created_at: string
-          criado_por: string | null
-          ged_documento_id: string
-          id: string
-          linha_digitavel: string | null
-          metadados_parse: Json | null
-          pagador_cnpj: string | null
-          pagador_nome: string | null
-          parceiro_id: string | null
-          pasta_contrato_id: string | null
-          status: string
-          updated_at: string
-          valor: number | null
-          vencimento: string | null
-        }
-        Insert: {
-          ancorado_em?: string | null
-          ancorado_por?: string | null
-          beneficiario_cnpj?: string | null
-          beneficiario_nome?: string | null
-          codigo_barras?: string | null
-          contas_pagar_receber_id?: string | null
-          cpr_match_candidatos?: Json | null
-          created_at?: string
-          criado_por?: string | null
-          ged_documento_id: string
-          id?: string
-          linha_digitavel?: string | null
-          metadados_parse?: Json | null
-          pagador_cnpj?: string | null
-          pagador_nome?: string | null
-          parceiro_id?: string | null
-          pasta_contrato_id?: string | null
-          status?: string
-          updated_at?: string
-          valor?: number | null
-          vencimento?: string | null
-        }
-        Update: {
-          ancorado_em?: string | null
-          ancorado_por?: string | null
-          beneficiario_cnpj?: string | null
-          beneficiario_nome?: string | null
-          codigo_barras?: string | null
-          contas_pagar_receber_id?: string | null
-          cpr_match_candidatos?: Json | null
-          created_at?: string
-          criado_por?: string | null
-          ged_documento_id?: string
-          id?: string
-          linha_digitavel?: string | null
-          metadados_parse?: Json | null
-          pagador_cnpj?: string | null
-          pagador_nome?: string | null
-          parceiro_id?: string | null
-          pasta_contrato_id?: string | null
-          status?: string
-          updated_at?: string
-          valor?: number | null
-          vencimento?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "boleto_stage_contas_pagar_receber_id_fkey"
-            columns: ["contas_pagar_receber_id"]
-            isOneToOne: false
-            referencedRelation: "contas_pagar"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "boleto_stage_contas_pagar_receber_id_fkey"
-            columns: ["contas_pagar_receber_id"]
-            isOneToOne: false
-            referencedRelation: "contas_pagar_receber"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "boleto_stage_contas_pagar_receber_id_fkey"
-            columns: ["contas_pagar_receber_id"]
-            isOneToOne: false
-            referencedRelation: "contas_pagar_receber_ativas"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "boleto_stage_contas_pagar_receber_id_fkey"
-            columns: ["contas_pagar_receber_id"]
-            isOneToOne: false
-            referencedRelation: "v_cpr_bola_redonda"
-            referencedColumns: ["cpr_id"]
-          },
-          {
-            foreignKeyName: "boleto_stage_contas_pagar_receber_id_fkey"
-            columns: ["contas_pagar_receber_id"]
-            isOneToOne: false
-            referencedRelation: "vw_contas_pagar_consolidado"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "boleto_stage_contas_pagar_receber_id_fkey"
-            columns: ["contas_pagar_receber_id"]
-            isOneToOne: false
-            referencedRelation: "vw_documentos_envio_estados"
-            referencedColumns: ["conta_id"]
-          },
-          {
-            foreignKeyName: "boleto_stage_ged_documento_id_fkey"
-            columns: ["ged_documento_id"]
-            isOneToOne: false
-            referencedRelation: "ged_documentos"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "boleto_stage_parceiro_id_fkey"
-            columns: ["parceiro_id"]
-            isOneToOne: false
-            referencedRelation: "parceiros_comerciais"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "boleto_stage_pasta_contrato_id_fkey"
-            columns: ["pasta_contrato_id"]
-            isOneToOne: false
-            referencedRelation: "pasta_contratos"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       canais_venda: {
         Row: {
           ativo: boolean | null
@@ -1164,7 +1028,6 @@ export type Database = {
           conta_pagamento_id: string | null
           created_at: string
           id: string
-          limite: number
           nome: string
           ultimos_digitos: string | null
           updated_at: string
@@ -1175,7 +1038,6 @@ export type Database = {
           conta_pagamento_id?: string | null
           created_at?: string
           id?: string
-          limite?: number
           nome: string
           ultimos_digitos?: string | null
           updated_at?: string
@@ -1186,7 +1048,6 @@ export type Database = {
           conta_pagamento_id?: string | null
           created_at?: string
           id?: string
-          limite?: number
           nome?: string
           ultimos_digitos?: string | null
           updated_at?: string
@@ -4876,26 +4737,19 @@ export type Database = {
           created_at: string
           criado_por: string | null
           descricao: string | null
-          hash_arquivo: string | null
           id: string
-          lote_id: string | null
           mime_type: string | null
           nfs_stage_id: string | null
           nome: string
-          origem_porta: string
           parceiro_id: string | null
-          parceiro_resolucao_dispensada: boolean
-          parceiro_resolucao_pendente: boolean
           pasta_contrato_id: string | null
           pasta_id: string | null
           resumo_ia: string | null
-          status_classificacao: string
           storage_path: string
           tags: string[] | null
           tamanho_bytes: number | null
           tipo_documento: string
           updated_at: string
-          vinculacao_proposta: Json | null
         }
         Insert: {
           arquivo_original: string
@@ -4904,26 +4758,19 @@ export type Database = {
           created_at?: string
           criado_por?: string | null
           descricao?: string | null
-          hash_arquivo?: string | null
           id?: string
-          lote_id?: string | null
           mime_type?: string | null
           nfs_stage_id?: string | null
           nome: string
-          origem_porta?: string
           parceiro_id?: string | null
-          parceiro_resolucao_dispensada?: boolean
-          parceiro_resolucao_pendente?: boolean
           pasta_contrato_id?: string | null
           pasta_id?: string | null
           resumo_ia?: string | null
-          status_classificacao?: string
           storage_path: string
           tags?: string[] | null
           tamanho_bytes?: number | null
           tipo_documento: string
           updated_at?: string
-          vinculacao_proposta?: Json | null
         }
         Update: {
           arquivo_original?: string
@@ -4932,26 +4779,19 @@ export type Database = {
           created_at?: string
           criado_por?: string | null
           descricao?: string | null
-          hash_arquivo?: string | null
           id?: string
-          lote_id?: string | null
           mime_type?: string | null
           nfs_stage_id?: string | null
           nome?: string
-          origem_porta?: string
           parceiro_id?: string | null
-          parceiro_resolucao_dispensada?: boolean
-          parceiro_resolucao_pendente?: boolean
           pasta_contrato_id?: string | null
           pasta_id?: string | null
           resumo_ia?: string | null
-          status_classificacao?: string
           storage_path?: string
           tags?: string[] | null
           tamanho_bytes?: number | null
           tipo_documento?: string
           updated_at?: string
-          vinculacao_proposta?: Json | null
         }
         Relationships: [
           {
@@ -6502,7 +6342,6 @@ export type Database = {
           criado_em: string
           criado_por: string | null
           data_vencimento: string | null
-          ged_documento_id: string | null
           id: string
           linha_digitavel: string | null
           nfs_stage_id: string
@@ -6515,7 +6354,6 @@ export type Database = {
           criado_em?: string
           criado_por?: string | null
           data_vencimento?: string | null
-          ged_documento_id?: string | null
           id?: string
           linha_digitavel?: string | null
           nfs_stage_id: string
@@ -6528,7 +6366,6 @@ export type Database = {
           criado_em?: string
           criado_por?: string | null
           data_vencimento?: string | null
-          ged_documento_id?: string | null
           id?: string
           linha_digitavel?: string | null
           nfs_stage_id?: string
@@ -6537,13 +6374,6 @@ export type Database = {
           valor?: number | null
         }
         Relationships: [
-          {
-            foreignKeyName: "nfs_stage_documentos_ged_documento_id_fkey"
-            columns: ["ged_documento_id"]
-            isOneToOne: false
-            referencedRelation: "ged_documentos"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "nfs_stage_documentos_nfs_stage_id_fkey"
             columns: ["nfs_stage_id"]
@@ -12068,10 +11898,6 @@ export type Database = {
     }
     Functions: {
       _meio_pagamento_nascida_paga: { Args: never; Returns: string }
-      ancorar_boleto_em_cpr: {
-        Args: { p_boleto_stage_id: string; p_cpr_id: string }
-        Returns: Json
-      }
       apagar_conta_pagar: {
         Args: { p_apagar_grupo_inteiro?: boolean; p_id: string }
         Returns: Json
@@ -12221,10 +12047,6 @@ export type Database = {
           valor_nf: number
         }[]
       }
-      buscar_parceiro_por_cnpj_ou_nome: {
-        Args: { p_termo: string }
-        Returns: Json
-      }
       calcular_docs_status: { Args: { p_conta_id: string }; Returns: string }
       cancelar_conta_pagar: { Args: { p_conta_id: string }; Returns: Json }
       cancelar_item_pedido: {
@@ -12284,14 +12106,6 @@ export type Database = {
         Args: { p_conta_pagar_id: string; p_pagamento_id: string }
         Returns: Json
       }
-      contar_boletos_pendentes_mesmo_parceiro: {
-        Args: { p_boleto_stage_id_referencia: string }
-        Returns: Json
-      }
-      contar_pendentes_mesmo_cnpj: {
-        Args: { p_ged_documento_id_referencia: string }
-        Returns: Json
-      }
       contar_uso_template: { Args: { _template_id: string }; Returns: Json }
       contas_para_match_ofx: {
         Args: never
@@ -12307,23 +12121,6 @@ export type Database = {
           status: string
           valor: number
         }[]
-      }
-      criar_cpr_de_boleto: {
-        Args: {
-          p_boleto_stage_id: string
-          p_categoria_id: string
-          p_descricao_extra?: string
-          p_forma_pagamento_id?: string
-        }
-        Returns: Json
-      }
-      criar_cpr_de_boleto_em_lote: {
-        Args: {
-          p_boleto_stage_ids: string[]
-          p_categoria_id: string
-          p_forma_pagamento_id: string
-        }
-        Returns: Json
       }
       criar_cpr_e_vincular_stage_1: {
         Args: {
@@ -12814,10 +12611,6 @@ export type Database = {
         Args: { p_compra_id: string; p_observacao?: string }
         Returns: Json
       }
-      marcar_documento_classificado: {
-        Args: { p_ged_documento_id: string; p_resultado_ia: Json }
-        Returns: Json
-      }
       marcar_nf_enviada_pagamento: {
         Args: { _email_destinatario: string; _nota_id: string }
         Returns: Json
@@ -13079,7 +12872,6 @@ export type Database = {
         Args: { p_regra_id: string }
         Returns: undefined
       }
-      registrar_documento_intake: { Args: { p_dados: Json }; Returns: Json }
       registrar_log_fiscal_nf: {
         Args: {
           _ator_papel?: string
@@ -13094,29 +12886,7 @@ export type Database = {
         Args: { _motivo: string; _nota_id: string }
         Returns: Json
       }
-      resolver_parceiro_do_documento: {
-        Args: {
-          p_dados_novo_parceiro?: Json
-          p_decisao: string
-          p_ged_documento_id: string
-          p_parceiro_id?: string
-        }
-        Returns: Json
-      }
-      resolver_parceiro_em_lote: {
-        Args: {
-          p_cnpj_ia: string
-          p_dados_novo_parceiro?: Json
-          p_decisao: string
-          p_parceiro_id?: string
-        }
-        Returns: Json
-      }
       revogar_acessos_ex_colaboradores: { Args: never; Returns: number }
-      rotear_documento_para_boleto: {
-        Args: { p_ged_documento_id: string }
-        Returns: Json
-      }
       score_match_nf: {
         Args: {
           p_cnpj_a: string
@@ -13230,7 +13000,6 @@ export type Database = {
         Args: { _cargo_id: string }
         Returns: string
       }
-      tentar_match_parceiro_retroativo: { Args: never; Returns: Json }
       termo_uso_versao_vigente: { Args: never; Returns: string }
       unaccent: { Args: { "": string }; Returns: string }
       user_perfis_detalhados: {
@@ -13267,15 +13036,6 @@ export type Database = {
           p_movimentacao_id: string
           p_ofx_id?: string
           p_planilha_id: string
-        }
-        Returns: Json
-      }
-      vincular_documento_polimorfico: {
-        Args: {
-          p_entidade_id: string
-          p_entidade_tipo: string
-          p_ged_documento_id: string
-          p_observacao?: string
         }
         Returns: Json
       }
