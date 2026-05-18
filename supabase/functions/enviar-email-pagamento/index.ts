@@ -147,7 +147,7 @@ serve(async (req) => {
     const { error: updateErr } = await supabaseService
       .from("contas_pagar_receber")
       .update({
-        status: "aguardando_pagamento",
+        status: "enviado_para_pagamento",
         enviado_pagamento_em: agora,
         enviado_pagamento_por: callerId,
         email_pagamento_enviado: true,
