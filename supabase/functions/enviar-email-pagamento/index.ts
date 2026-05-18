@@ -161,17 +161,66 @@ serve(async (req) => {
       );
     }
 
+    // === BUSCAR DOCS DIRETO DO BANCO (não confiar no front) ===
+    type DocFonte = { tipo: string; nome_arquivo: string; storage_path: string };
+    const docsFromBanco: DocFonte[] = [];
+
+    // Fonte 1: contas_pagar_documentos (boletos, comprovantes, anexos manuais)
+    const { data: cpDocs } = await supabaseService
+      .from("contas_pagar_documentos")
+      .select("tipo, nome_arquivo, storage_path")
+      .in("conta_id", idsAtualizar);
+    
+    for (const d of cpDocs || []) {
+      if (d?.storage_path) docsFromBanco.push({
+        tipo: d.tipo || "outro",
+        nome_arquivo: d.nome_arquivo || "documento",
+        storage_path: d.storage_path,
+      });
+    }
+
+    // Fonte 2: NFs vinculadas via nfs_stage.conta_pagar_id (recibos vinculados pelo modal)
+    const { data: nfsVinc } = await supabaseService
+      .from("nfs_stage")
+      .select("id, nf_numero, nfs_stage_documentos(tipo, arquivo_nome, storage_path)")
+      .in("conta_pagar_id", idsAtualizar);
+    
+    for (const nf of nfsVinc || []) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      for (const sd of ((nf as any).nfs_stage_documentos || [])) {
+        if (sd?.storage_path) docsFromBanco.push({
+          tipo: "nf",
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          nome_arquivo: sd.arquivo_nome || `NF ${(nf as any).nf_numero || nf.id}.pdf`,
+          storage_path: sd.storage_path,
+        });
+      }
+    }
+
+    // Dedup por storage_path (não anexar 2x o mesmo arquivo)
+    const docsUnicos: DocFonte[] = [];
+    const seenPaths = new Set<string>();
+    for (const d of docsFromBanco) {
+      if (!seenPaths.has(d.storage_path)) {
+        seenPaths.add(d.storage_path);
+        docsUnicos.push(d);
+      }
+    }
+
+    console.log(`[email-pagto] CPRs=${idsAtualizar.length}, docs_encontrados=${docsUnicos.length}, docs_no_body=${docs.length}`);
+
     const attachments: Array<{ filename: string; content: string }> = [];
     const linksDocs: DocLink[] = [];
     let tamanhoTotalBase64 = 0;
 
-    for (const doc of docs) {
+    for (const doc of docsUnicos) {
       try {
         const { data: blob, error: dlErr } = await supabaseService.storage
           .from("financeiro-docs")
           .download(doc.storage_path);
 
         if (dlErr || !blob) {
+          console.error(`[email-pagto] download falhou: ${doc.storage_path}`, dlErr);
           const { data: signed } = await supabaseService.storage
             .from("financeiro-docs")
             .createSignedUrl(doc.storage_path, SIGNED_URL_DURACAO_SEG);
@@ -209,7 +258,7 @@ serve(async (req) => {
           }
         }
       } catch (e) {
-        console.error("Falha ao processar doc", doc.nome_arquivo, e);
+        console.error("[email-pagto] erro processando", doc.nome_arquivo, e);
         const { data: signed } = await supabaseService.storage
           .from("financeiro-docs")
           .createSignedUrl(doc.storage_path, SIGNED_URL_DURACAO_SEG);
