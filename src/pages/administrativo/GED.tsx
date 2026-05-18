@@ -93,6 +93,16 @@ export default function GED() {
   const [novaPastaOpen, setNovaPastaOpen] = useState(false);
   const [uploadOpen, setUploadOpen] = useState(false);
   const [docDetalhe, setDocDetalhe] = useState<Documento | null>(null);
+  const [pastasExpandidas, setPastasExpandidas] = useState<Set<string>>(new Set());
+
+  function toggleExpandir(pastaId: string) {
+    setPastasExpandidas((prev) => {
+      const novo = new Set(prev);
+      if (novo.has(pastaId)) novo.delete(pastaId);
+      else novo.add(pastaId);
+      return novo;
+    });
+  }
 
   const { data: pastas = [], isLoading: loadingPastas } = useQuery({
     queryKey: ["ged-pastas"],
