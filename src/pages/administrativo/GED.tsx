@@ -40,6 +40,8 @@ import {
   Info,
   X,
   Files,
+  ChevronRight,
+  ChevronDown,
 } from "lucide-react";
 import { useParametros } from "@/hooks/useParametros";
 import { formatDateBR } from "@/lib/format-currency";
