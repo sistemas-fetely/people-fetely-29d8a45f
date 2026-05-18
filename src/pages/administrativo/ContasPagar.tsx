@@ -353,7 +353,7 @@ export default function ContasPagar() {
       descricao: (c) => c.descricao || "",
       vencimento: (c) => c.data_vencimento || "",
       meio_pagamento: (c) => c.formas_pagamento?.nome || "",
-      categoria: (c) => c.plano_contas?.nome || c.contas?.nome || "",
+      categoria: (c) => c.plano_contas?.nome || "",
       valor: (c) => Number(c.valor) || 0,
       status: (c) => c.status || "",
     });
