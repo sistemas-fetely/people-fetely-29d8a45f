@@ -34,6 +34,7 @@ import {
   type ContaPagarParaMatch,
 } from "@/lib/financeiro/match-engine";
 import { BuscarMatchManualDialog } from "@/components/financeiro/BuscarMatchManualDialog";
+import { ImportarOFXDialog } from "@/components/financeiro/ImportarOFXDialog";
 
 type Movimentacao = {
   id: string;
