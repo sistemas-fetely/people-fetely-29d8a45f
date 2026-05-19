@@ -68,17 +68,17 @@ export async function exportarFaturaPDF(fatura: FaturaInput): Promise<void> {
 
   // 2) Contas a pagar vinculadas (pra trazer categoria via plano_contas)
   const cpIds = Array.from(new Set(lancamentos.map((l) => l.conta_pagar_id).filter((id): id is string => Boolean(id))));
-  const cpMap = new Map<string, { conta_id: string | null }>();
+  const cpMap = new Map<string, { plano_contas_id: string | null }>();
   if (cpIds.length > 0) {
     const { data: cpRows } = await supabase
       .from("contas_pagar_receber")
-      .select("id, conta_id")
+      .select("id, plano_contas_id")
       .in("id", cpIds);
-    (cpRows || []).forEach((r) => cpMap.set(r.id, { conta_id: r.conta_id }));
+    (cpRows || []).forEach((r) => cpMap.set(r.id, { plano_contas_id: r.plano_contas_id }));
   }
 
   // 3) Plano de contas (categorias)
-  const planoIds = Array.from(new Set(Array.from(cpMap.values()).map((c) => c.conta_id).filter((id): id is string => Boolean(id))));
+  const planoIds = Array.from(new Set(Array.from(cpMap.values()).map((c) => c.plano_contas_id).filter((id): id is string => Boolean(id))));
   const planoMap = new Map<string, { codigo: string | null; nome: string }>();
   if (planoIds.length > 0) {
     const { data: planoRows } = await supabase
@@ -91,8 +91,8 @@ export async function exportarFaturaPDF(fatura: FaturaInput): Promise<void> {
   function categoriaDoLancamento(l: { conta_pagar_id: string | null }): string {
     if (!l.conta_pagar_id) return "—";
     const cp = cpMap.get(l.conta_pagar_id);
-    if (!cp || !cp.conta_id) return "—";
-    const p = planoMap.get(cp.conta_id);
+    if (!cp || !cp.plano_contas_id) return "—";
+    const p = planoMap.get(cp.plano_contas_id);
     if (!p) return "—";
     return `${p.codigo || ""} ${p.nome}`.trim();
   }

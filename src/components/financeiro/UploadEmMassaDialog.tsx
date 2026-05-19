@@ -204,7 +204,7 @@ export function UploadEmMassaDialog({ open, onClose }: Props) {
 
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const { error: insErr } = await (supabase as any).from("contas_pagar_documentos").insert({
-            conta_id: a.contaIdSugerida,
+            plano_contas_id: a.contaIdSugerida,
             tipo: a.tipoDoc,
             nome_arquivo: a.file.name,
             storage_path: path,

@@ -113,7 +113,7 @@ type LancamentoRow = {
   ramo_estabelecimento: string | null;
   cnpj_estabelecimento: string | null;
   parceiro_id: string | null;
-  categoria_id: string | null;
+  plano_contas_id: string | null;
   status: string;
   nf_vinculada_id: string | null;
   conta_pagar_id?: string | null;
@@ -261,7 +261,7 @@ export default function FaturasCartao() {
 
   // Helper: pega sugestão pra um lançamento usando o engine universal
   function obterSugestao(lanc: LancamentoRow): SugestaoResult | null {
-    if (lanc.categoria_id) return null; // já classificado
+    if (lanc.plano_contas_id) return null; // já classificado
     if (lanc.status === "descartado") return null;
 
     return sugerirNoClient(
@@ -414,7 +414,7 @@ export default function FaturasCartao() {
       const { error } = await (supabase as any)
         .from("fatura_cartao_lancamentos")
         .update({
-          categoria_id: categoriaId || null,
+          plano_contas_id: categoriaId || null,
           // status do lançamento NÃO muda ao classificar — categorização é dimensão separada
         })
         .eq("id", lancId);
@@ -428,7 +428,7 @@ export default function FaturasCartao() {
             descricao: lanc.descricao,
             cnpj: lanc.cnpj_estabelecimento,
             parceiro_id: lanc.parceiro_id,
-            categoria_id: categoriaId,
+            plano_contas_id: categoriaId,
             origem: "cartao",
           });
         }
@@ -470,7 +470,7 @@ export default function FaturasCartao() {
         const { error } = await (supabase as any)
           .from("fatura_cartao_lancamentos")
           .update({
-            categoria_id: sug!.categoria_id,
+            plano_contas_id: sug!.plano_contas_id,
             // status NÃO muda ao classificar — categorização é dimensão separada
           })
           .eq("id", l.id);
@@ -481,7 +481,7 @@ export default function FaturasCartao() {
             descricao: l.descricao,
             cnpj: l.cnpj_estabelecimento,
             parceiro_id: l.parceiro_id,
-            categoria_id: sug!.categoria_id,
+            plano_contas_id: sug!.plano_contas_id,
             origem: "cartao",
           });
         }
@@ -1161,7 +1161,7 @@ export default function FaturasCartao() {
                                               <div className="flex-1 min-w-[160px] [&_button]:h-7 [&_button]:text-[10px]">
                                                 <CategoriaCombobox
                                                   options={categoriasDespesa}
-                                                  value={l.categoria_id || null}
+                                                  value={l.plano_contas_id || null}
                                                   onChange={(id) =>
                                                     id &&
                                                     alterarCategoriaLanc(
@@ -1181,9 +1181,9 @@ export default function FaturasCartao() {
                                                     variant="outline"
                                                     className="h-7 text-[9px] gap-1 border-violet-300 text-violet-700 hover:bg-violet-50 px-1.5 shrink-0"
                                                     onClick={() =>
-                                                      alterarCategoriaLanc(l.id, sug.categoria_id)
+                                                      alterarCategoriaLanc(l.id, sug.plano_contas_id)
                                                     }
-                                                    title={`${mapCategorias[sug.categoria_id]} (${sug.motivo})`}
+                                                    title={`${mapCategorias[sug.plano_contas_id]} (${sug.motivo})`}
                                                   >
                                                     <Sparkles className="h-3 w-3" />
                                                     Sugerir

@@ -16,7 +16,7 @@ export interface ItemNFParsed {
   valor_cofins?: number;
 
   // Categoria por item (quando expandido)
-  _categoria_id?: string | null;
+  _plano_contas_id?: string | null;
   _categoria_nome?: string | null;
   _centro_custo?: string | null;
   _regra_origem?: "parceiro" | "ncm" | "texto" | "manual" | null;
@@ -66,12 +66,12 @@ export interface NFParsed {
     tipo_documento: string;
     parcela: string | null;
   }[];
-  _categoria_id?: string | null;
+  _plano_contas_id?: string | null;
   _categoria_nome?: string | null;
   _centro_custo?: string | null;
   _regra_origem?: "parceiro" | "ncm" | "texto" | null;
 
-  // Quando true, importação usa categoria por item (campo `_categoria_id` de cada item)
+  // Quando true, importação usa categoria por item (campo `_plano_contas_id` de cada item)
   _expandirItens?: boolean;
 
   // Match com pagamento existente (ao invés de criar nova conta, vincula NF)
@@ -81,7 +81,7 @@ export interface NFParsed {
     conta_descricao: string;
     conta_status: string;
     conta_docs_status: string | null;
-    conta_categoria_id?: string | null;
+    conta_plano_contas_id?: string | null;
   } | null;
 
   // Metadado de origem do import
@@ -117,7 +117,7 @@ export interface RegraCategorizacao {
   cnpj_emitente: string | null;
   ncm_prefixo: string | null;
   descricao_contem: string | null;
-  conta_plano_id: string;
+  plano_contas_id: string;
   centro_custo_id: string | null;
   prioridade: number;
   ativo: boolean;

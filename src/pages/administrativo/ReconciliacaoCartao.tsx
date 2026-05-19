@@ -23,7 +23,7 @@ type LancamentoSemMatch = {
   descricao: string;
   valor: number;
   cnpj_estabelecimento: string | null;
-  categoria_id: string | null;
+  plano_contas_id: string | null;
   fatura: {
     id: string;
     conta_bancaria: { nome_exibicao: string | null } | null;
@@ -37,7 +37,7 @@ type SugestaoMatch = {
   nf_cnpj: string | null;
   nf_valor: number;
   nf_data: string;
-  nf_categoria_id: string | null;
+  nf_plano_contas_id: string | null;
   score: number;
   motivo: string;
 };
@@ -67,7 +67,7 @@ export default function ReconciliacaoCartao() {
       const { data, error } = await (supabase as any)
         .from("fatura_cartao_lancamentos")
         .select(`
-          id, data_compra, descricao, valor, cnpj_estabelecimento, categoria_id,
+          id, data_compra, descricao, valor, cnpj_estabelecimento, plano_contas_id,
           fatura:faturas_cartao(id, conta_bancaria:contas_bancarias(nome_exibicao))
         `)
         .is("nf_vinculada_id", null)
@@ -128,13 +128,13 @@ export default function ReconciliacaoCartao() {
       const updates: {
         nf_vinculada_id: string;
         status: string;
-        categoria_id?: string;
+        plano_contas_id?: string;
       } = {
         nf_vinculada_id: sug.nf_id,
         status: "classificado",
       };
-      if (sug.nf_categoria_id) {
-        updates.categoria_id = sug.nf_categoria_id;
+      if (sug.nf_plano_contas_id) {
+        updates.plano_contas_id = sug.nf_plano_contas_id;
       }
       const { error } = await supabase
         .from("fatura_cartao_lancamentos")
@@ -144,11 +144,11 @@ export default function ReconciliacaoCartao() {
       if (error) throw error;
 
       const lanc = lancamentos?.find((l) => l.id === lancId);
-      if (lanc && sug.nf_categoria_id) {
+      if (lanc && sug.nf_plano_contas_id) {
         await classificarComAprendizado({
           descricao: lanc.descricao,
           cnpj: lanc.cnpj_estabelecimento,
-          categoria_id: sug.nf_categoria_id,
+          plano_contas_id: sug.nf_plano_contas_id,
           origem: "cartao",
         });
       }

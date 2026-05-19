@@ -151,8 +151,8 @@ export async function importarNFs(nfs: NFParsed[]): Promise<ImportResult> {
         };
 
         // Se a conta existente não tem categoria, aplica a regra que matcheou na NF
-        if (!nf._match_pagamento.conta_categoria_id && nf._categoria_id) {
-          updateData.conta_id = nf._categoria_id;
+        if (!nf._match_pagamento.conta_plano_contas_id && nf._plano_contas_id) {
+          updateData.plano_contas_id = nf._plano_contas_id;
           updateData.centro_custo_id = (nf as unknown as { _centro_custo_id?: string | null })._centro_custo_id || null;
           updateData.categoria_sugerida_ia = true;
           updateData.categoria_confirmada = false;
@@ -193,7 +193,7 @@ export async function importarNFs(nfs: NFParsed[]): Promise<ImportResult> {
               valor_icms: item.valor_icms ?? 0,
               valor_pis: item.valor_pis ?? 0,
               valor_cofins: item.valor_cofins ?? 0,
-              conta_plano_id: item._categoria_id || nf._categoria_id || null,
+              plano_contas_id: item._plano_contas_id || nf._plano_contas_id || null,
             }));
             await supabase.from("contas_pagar_itens").insert(itensInsert as any);
           }
@@ -250,14 +250,14 @@ export async function importarNFs(nfs: NFParsed[]): Promise<ImportResult> {
 
       // 3. Insert conta a pagar
       // Se expandida por item, conta principal usa a categoria do item de maior valor
-      let categoriaContaPrincipal = nf._categoria_id || null;
+      let categoriaContaPrincipal = nf._plano_contas_id || null;
       let centroCustoIdContaPrincipal = (nf as unknown as { _centro_custo_id?: string | null })._centro_custo_id || null;
       if (nf._expandirItens && nf.itens && nf.itens.length > 0) {
         const principal = nf.itens.reduce((a, b) =>
           (a.valor_total || 0) >= (b.valor_total || 0) ? a : b,
         );
-        if (principal._categoria_id) {
-          categoriaContaPrincipal = principal._categoria_id;
+        if (principal._plano_contas_id) {
+          categoriaContaPrincipal = principal._plano_contas_id;
           centroCustoIdContaPrincipal = (principal as unknown as { _centro_custo_id?: string | null })._centro_custo_id || null;
         }
       }
@@ -271,7 +271,7 @@ export async function importarNFs(nfs: NFParsed[]): Promise<ImportResult> {
           data_vencimento: nf.nf_data_emissao || new Date().toISOString().substring(0, 10),
           // PR2: importação sempre cria como "aberto" (validação acontece no fluxo)
           status: "aberto",
-          conta_id: categoriaContaPrincipal,
+          plano_contas_id: categoriaContaPrincipal,
           centro_custo_id: centroCustoIdContaPrincipal,
           fornecedor_cliente: nf.fornecedor_nome,
           parceiro_id,
@@ -312,9 +312,9 @@ export async function importarNFs(nfs: NFParsed[]): Promise<ImportResult> {
           valor_pis: item.valor_pis ?? 0,
           valor_cofins: item.valor_cofins ?? 0,
           // Categoria por item — usada quando expandida; cai pra categoria geral senão
-          conta_plano_id: nf._expandirItens
-            ? item._categoria_id || nf._categoria_id || null
-            : nf._categoria_id || null,
+          plano_contas_id: nf._expandirItens
+            ? item._plano_contas_id || nf._plano_contas_id || null
+            : nf._plano_contas_id || null,
         }));
         const { error: itErr } = await supabase
           .from("contas_pagar_itens")

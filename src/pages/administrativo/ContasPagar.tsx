@@ -55,7 +55,7 @@ type Conta = {
   data_pagamento: string | null;
   status: string;
   parceiro_id: string | null;
-  conta_id: string | null;
+  plano_contas_id: string | null;
   origem: string | null;
   meio_pagamento_id: string | null;
   meios_pagamento?: { codigo: string | null } | null;
@@ -124,7 +124,7 @@ export default function ContasPagar() {
       const { data, error } = await supabase
         .from("vw_contas_pagar_consolidado")
         .select(
-          "*, plano_contas:conta_id(codigo,nome), parceiros_comerciais:parceiro_id(razao_social), formas_pagamento:forma_pagamento_id(codigo,nome,cobra_email,pula_aprovacao), meios_pagamento:meio_pagamento_id(codigo)",
+          "*, plano_contas:plano_contas_id(codigo,nome), parceiros_comerciais:parceiro_id(razao_social), formas_pagamento:forma_pagamento_id(codigo,nome,cobra_email,pula_aprovacao), meios_pagamento:meio_pagamento_id(codigo)",
         )
         .order("data_vencimento", { ascending: true });
       if (error) throw error;

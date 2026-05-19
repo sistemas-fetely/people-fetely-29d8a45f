@@ -54,7 +54,7 @@ export function exportarParceirosXlsx(
   nomeArquivo = "parceiros.xlsx",
 ) {
   const linhas = parceiros.map((p) => {
-    const cat = p.categoria_padrao_id ? maps.categorias.get(p.categoria_padrao_id) : null;
+    const cat = p.plano_contas_id ? maps.categorias.get(p.plano_contas_id) : null;
     return {
       id: p.id,
       razao_social: p.razao_social ?? "",
@@ -74,7 +74,7 @@ export function exportarParceirosXlsx(
       bairro: p.bairro ?? "",
       cidade: p.cidade ?? "",
       uf: p.uf ?? "",
-      categoria_id: p.categoria_padrao_id ?? "",
+      categoria_id: p.plano_contas_id ?? "",
       categoria_codigo: cat?.codigo ?? "",
       categoria_nome: cat?.nome ?? "",
       centro_custo_id: p.centro_custo_id ?? "",
@@ -218,7 +218,7 @@ export async function importarParceirosXlsx(
         pix_chave: nullable(row.pix_chave),
         tags: parseTags(row.tags),
         observacao: nullable(row.observacao),
-        categoria_padrao_id: resolveLookup(row.categoria_id, row.categoria_nome, maps.categoriasByNome),
+        plano_contas_id: resolveLookup(row.categoria_id, row.categoria_nome, maps.categoriasByNome),
         centro_custo_id: resolveLookup(row.centro_custo_id, row.centro_custo_nome, maps.centrosByNome),
         forma_pagamento_padrao_id: resolveLookup(
           row.forma_pagamento_id,

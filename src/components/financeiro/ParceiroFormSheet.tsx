@@ -53,7 +53,7 @@ export type Parceiro = {
   tipos: string[] | null;
   canal_venda_id: string | null;
   segmento: string | null;
-  categoria_padrao_id: string | null;
+  plano_contas_id: string | null;
   centro_custo_id: string | null;
   tags: string[] | null;
   grupo_id: string | null;
@@ -201,7 +201,7 @@ export function ParceiroFormSheet({ open, onOpenChange, editing, categorias, onS
       setEmail(editing.email || "");
       setCanalVendaId(editing.canal_venda_id ?? null);
       setSegmento(editing.segmento || "");
-      setCategoriaPadrao(editing.categoria_padrao_id);
+      setCategoriaPadrao(editing.plano_contas_id);
       setCentroCustoId(editing.centro_custo_id ?? null);
       setTags(editing.tags || []);
       setGrupoId(editing.grupo_id ?? null);
@@ -339,7 +339,7 @@ export function ParceiroFormSheet({ open, onOpenChange, editing, categorias, onS
         email: email.trim() || null,
         canal_venda_id: canalVendaId,
         segmento: segmento.trim() || null,
-        categoria_padrao_id: categoriaPadrao,
+        plano_contas_id: categoriaPadrao,
         grupo_id: grupoId,
         centro_custo_id: centroCustoId,
         tags: tags.length ? tags : null,

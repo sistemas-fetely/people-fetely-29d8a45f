@@ -30,7 +30,7 @@ type Regra = {
   tipo_transacao: TipoTransacao;
   valor_exato: number | null;
   conta_bancaria_id: string | null;
-  categoria_id: string;
+  plano_contas_id: string;
   parceiro_id: string | null;
   descricao_override: string | null;
   ativa: boolean;
@@ -55,7 +55,7 @@ const FORM_INICIAL: FormState = {
   tipo_transacao: "ambos",
   valor_exato: null,
   conta_bancaria_id: null,
-  categoria_id: "",
+  plano_contas_id: "",
   parceiro_id: null,
   descricao_override: null,
   ativa: true,
@@ -124,7 +124,7 @@ export default function RegrasOFX() {
         tipo_transacao: f.tipo_transacao,
         valor_exato: f.valor_exato,
         conta_bancaria_id: f.conta_bancaria_id,
-        categoria_id: f.categoria_id,
+        plano_contas_id: f.plano_contas_id,
         parceiro_id: f.parceiro_id,
         descricao_override: f.descricao_override,
         ativa: f.ativa,
@@ -192,7 +192,7 @@ export default function RegrasOFX() {
   }
 
   const tipoSel = (() => {
-    const cat = categorias.find((c) => c.id === form.categoria_id);
+    const cat = categorias.find((c) => c.id === form.plano_contas_id);
     return cat?.tipo === "receita" ? "receita" : "despesa";
   })();
 
@@ -247,7 +247,7 @@ export default function RegrasOFX() {
                   Quando descrição contém <code className="font-mono bg-muted px-1 rounded">{r.padrao_descricao}</code>
                   {r.valor_exato !== null ? ` e valor = ${formatBRL(r.valor_exato)}` : ""}
                   {" → "}
-                  {getCategoriaLabel(r.categoria_id)}
+                  {getCategoriaLabel(r.plano_contas_id)}
                   {getParceiroLabel(r.parceiro_id) ? ` · ${getParceiroLabel(r.parceiro_id)}` : ""}
                   {" · "}
                   {getContaLabel(r.conta_bancaria_id)}
@@ -340,8 +340,8 @@ export default function RegrasOFX() {
             <div className="space-y-1.5">
               <Label className="text-xs">Categoria (plano de contas)</Label>
               <Select
-                value={form.categoria_id}
-                onValueChange={(v) => setForm({ ...form, categoria_id: v })}
+                value={form.plano_contas_id}
+                onValueChange={(v) => setForm({ ...form, plano_contas_id: v })}
               >
                 <SelectTrigger className="h-9">
                   <SelectValue placeholder="Selecione uma categoria" />
@@ -417,7 +417,7 @@ export default function RegrasOFX() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
             <Button
-              disabled={!form.nome || !form.padrao_descricao || !form.categoria_id || upsertMutation.isPending}
+              disabled={!form.nome || !form.padrao_descricao || !form.plano_contas_id || upsertMutation.isPending}
               onClick={() => upsertMutation.mutate(form)}
               className="gap-1"
             >

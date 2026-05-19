@@ -151,7 +151,7 @@ export function NovaContaPagarSheet({ open, onOpenChange, initialData }: Props) 
       );
       if (error) throw error;
       return (data || []) as Array<{
-        categoria_id: string;
+        plano_contas_id: string;
         categoria_codigo: string;
         categoria_nome: string;
         score: number;
@@ -170,7 +170,7 @@ export function NovaContaPagarSheet({ open, onOpenChange, initialData }: Props) 
     queryFn: async () => {
       const { data, error } = await supabase
         .from("parceiros_comerciais")
-        .select("id,razao_social,nome_fantasia,cnpj,categoria_padrao_id,centro_custo_id,canal_venda_id,forma_pagamento_padrao_id,tipos,tipo,cpf,cep,logradouro,numero,bairro,cidade,uf,telefone,email,segmento,tags,ativo,observacao,origem,dados_bancarios,pix_chave,pix_tipo")
+        .select("id,razao_social,nome_fantasia,cnpj,plano_contas_id,centro_custo_id,canal_venda_id,forma_pagamento_padrao_id,tipos,tipo,cpf,cep,logradouro,numero,bairro,cidade,uf,telefone,email,segmento,tags,ativo,observacao,origem,dados_bancarios,pix_chave,pix_tipo")
         .contains("tipos", ["fornecedor"])
         .eq("ativo", true)
         .order("razao_social");
@@ -215,7 +215,7 @@ export function NovaContaPagarSheet({ open, onOpenChange, initialData }: Props) 
     if (!parceiroId || !parceiros) return;
     const p = parceiros.find((x) => x.id === parceiroId);
     if (!p) return;
-    if (p.categoria_padrao_id && !categoriaId) setCategoriaId(p.categoria_padrao_id);
+    if (p.plano_contas_id && !categoriaId) setCategoriaId(p.plano_contas_id);
     if (p.centro_custo_id && !centroCustoId) setCentroCustoId(p.centro_custo_id);
     if (p.forma_pagamento_padrao_id && !formaPgtoId) setFormaPgtoId(p.forma_pagamento_padrao_id);
 
@@ -571,7 +571,7 @@ export function NovaContaPagarSheet({ open, onOpenChange, initialData }: Props) 
                         variant="outline"
                         className="shrink-0 border-blue-300 bg-white hover:bg-blue-100 dark:bg-blue-900/40"
                         onClick={() => {
-                          setCategoriaId(topSugestao.categoria_id);
+                          setCategoriaId(topSugestao.plano_contas_id);
                           setSugestaoAplicada(true);
                           toast.success("Categoria aplicada");
                         }}
@@ -822,7 +822,7 @@ export function NovaContaPagarSheet({ open, onOpenChange, initialData }: Props) 
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const { data: nf } = await (supabase as any)
             .from("nfs_stage")
-            .select("valor, nf_data_emissao, data_vencimento, descricao, categoria_id, parceiro_id, fornecedor_razao_social, fornecedor_cliente, fornecedor_cnpj")
+            .select("valor, nf_data_emissao, data_vencimento, descricao, plano_contas_id, parceiro_id, fornecedor_razao_social, fornecedor_cliente, fornecedor_cnpj")
             .eq("id", id)
             .maybeSingle();
 
@@ -857,7 +857,7 @@ export function NovaContaPagarSheet({ open, onOpenChange, initialData }: Props) 
           if (!dataVenc && (nf.data_vencimento || nf.nf_data_emissao)) {
             setDataVenc(nf.data_vencimento || nf.nf_data_emissao);
           }
-          if (!categoriaId && nf.categoria_id) setCategoriaId(nf.categoria_id);
+          if (!categoriaId && nf.plano_contas_id) setCategoriaId(nf.plano_contas_id);
 
           toast.success("Dados da NF preenchidos automaticamente");
         }}

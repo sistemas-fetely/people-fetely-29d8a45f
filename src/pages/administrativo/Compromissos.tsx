@@ -58,7 +58,7 @@ type CompromissoRecorrente = {
   data_inicio: string;
   data_fim: string | null;
   status: "ativo" | "pausado" | "encerrado";
-  categoria_id: string | null;
+  plano_contas_id: string | null;
   parceiro_id: string | null;
   conta_bancaria_id: string | null;
   observacao: string | null;
@@ -78,7 +78,7 @@ type CompromissoParcelado = {
   data_compra: string;
   data_primeira_parcela: string;
   status: string;
-  categoria_id: string | null;
+  plano_contas_id: string | null;
   conta_bancaria?: { nome_exibicao: string } | null;
 };
 
@@ -130,7 +130,7 @@ export default function Compromissos() {
         .from("compromissos_recorrentes")
         .select(`
           id, descricao, valor, periodicidade, dia_vencimento,
-          data_inicio, data_fim, status, categoria_id, parceiro_id,
+          data_inicio, data_fim, status, plano_contas_id, parceiro_id,
           conta_bancaria_id, observacao,
           parceiro:parceiros_comerciais(razao_social),
           conta_bancaria:contas_bancarias(nome_exibicao)
@@ -151,7 +151,7 @@ export default function Compromissos() {
         .select(`
           id, descricao, origem, valor_total, valor_parcela, qtd_parcelas,
           parcelas_pagas, parcelas_previstas, data_compra, data_primeira_parcela,
-          status, categoria_id,
+          status, plano_contas_id,
           conta_bancaria:contas_bancarias(nome_exibicao)
         `)
         .order("data_compra", { ascending: false });
@@ -383,7 +383,7 @@ export default function Compromissos() {
                             )}
                           </TableCell>
                           <TableCell className="text-xs text-muted-foreground">
-                            {r.categoria_id ? mapCategorias[r.categoria_id] : "—"}
+                            {r.plano_contas_id ? mapCategorias[r.plano_contas_id] : "—"}
                           </TableCell>
                           <TableCell>
                             <Badge
@@ -517,7 +517,7 @@ export default function Compromissos() {
                             </div>
                           </TableCell>
                           <TableCell className="text-xs text-muted-foreground">
-                            {p.categoria_id ? mapCategorias[p.categoria_id] : "—"}
+                            {p.plano_contas_id ? mapCategorias[p.plano_contas_id] : "—"}
                           </TableCell>
                           <TableCell>
                             <Badge

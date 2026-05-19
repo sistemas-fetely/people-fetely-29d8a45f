@@ -53,16 +53,16 @@ export function PreviewNFsImport({
   const visibleIdx = useMemo(() => {
     return nfs
       .map((nf, i) => ({ nf, i }))
-      .filter(({ nf }) => (showOnlyMissing ? !nf._categoria_id : true));
+      .filter(({ nf }) => (showOnlyMissing ? !nf._plano_contas_id : true));
   }, [nfs, showOnlyMissing]);
 
   const totals = useMemo(() => {
-    const semCat = nfs.filter((n) => !n._categoria_id && !n._duplicata && !n._match_pagamento).length;
+    const semCat = nfs.filter((n) => !n._plano_contas_id && !n._duplicata && !n._match_pagamento).length;
     const dup = nfs.filter((n) => n._duplicata).length;
     const sel = nfs.filter((n) => n._selecionada && !n._duplicata).length;
     const vincular = nfs.filter((n) => n._match_pagamento && !n._duplicata).length;
     const novosProntos = nfs.filter(
-      (n) => !n._match_pagamento && !n._duplicata && n._categoria_id,
+      (n) => !n._match_pagamento && !n._duplicata && n._plano_contas_id,
     ).length;
     return { semCat, dup, sel, vincular, novosProntos };
   }, [nfs]);
@@ -99,13 +99,13 @@ export function PreviewNFsImport({
     const opt = categoriaId ? categorias.find((c) => c.id === categoriaId) || null : null;
     const nfAnterior = nfs[idx];
     const mudouManualmente =
-      categoriaId && categoriaId !== nfAnterior._categoria_id;
+      categoriaId && categoriaId !== nfAnterior._plano_contas_id;
     onChange(
       nfs.map((n, i) =>
         i === idx
           ? {
               ...n,
-              _categoria_id: categoriaId,
+              _plano_contas_id: categoriaId,
               _categoria_nome: opt ? `${opt.codigo} — ${opt.nome}` : null,
               _regra_origem: null, // foi manual
             }
@@ -128,7 +128,7 @@ export function PreviewNFsImport({
         let itens = n.itens;
         if (expandir && itens) {
           // Aplica regras nos itens que ainda não têm categoria
-          itens = itens.map((it) => (it._categoria_id ? it : aplicarRegrasItem(it, regras)));
+          itens = itens.map((it) => (it._plano_contas_id ? it : aplicarRegrasItem(it, regras)));
         }
         return { ...n, _expandirItens: expandir, itens };
       }),
@@ -149,7 +149,7 @@ export function PreviewNFsImport({
             ? it
             : {
                 ...it,
-                _categoria_id: categoriaId,
+                _plano_contas_id: categoriaId,
                 _categoria_nome: opt ? `${opt.codigo} — ${opt.nome}` : null,
                 _regra_origem: "manual" as const,
               },
@@ -230,14 +230,14 @@ export function PreviewNFsImport({
               const temItens = !!(nf.itens && nf.itens.length > 1);
               const expandido = !!nf._expandirItens;
               const itensClassificados = expandido && nf.itens
-                ? nf.itens.filter((it) => it._categoria_id).length
+                ? nf.itens.filter((it) => it._plano_contas_id).length
                 : 0;
               return (
                 <Fragment key={`${nf.nf_chave_acesso || nf.nf_numero}-${i}`}>
                   <TableRow
                     className={cn(
                       nf._duplicata && "opacity-50",
-                      !nf._duplicata && !nf._categoria_id && !expandido && "bg-muted/40",
+                      !nf._duplicata && !nf._plano_contas_id && !expandido && "bg-muted/40",
                       expandido && "bg-admin/5",
                     )}
                   >
@@ -287,7 +287,7 @@ export function PreviewNFsImport({
                           <div className="flex-1 min-w-0">
                             <CategoriaCombobox
                               options={categorias}
-                              value={nf._categoria_id || null}
+                              value={nf._plano_contas_id || null}
                               onChange={(id) => setCategoria(i, id)}
                               placeholder="Definir conta"
                             />
@@ -356,7 +356,7 @@ export function PreviewNFsImport({
                             Parcial
                           </Badge>
                         )
-                      ) : !nf._categoria_id ? (
+                      ) : !nf._plano_contas_id ? (
                         <Badge variant="outline" className="border-warning text-warning">
                           Sem categoria
                         </Badge>
@@ -396,14 +396,14 @@ export function PreviewNFsImport({
                       <TableCell>
                         <CategoriaCombobox
                           options={categorias}
-                          value={item._categoria_id || null}
+                          value={item._plano_contas_id || null}
                           onChange={(id) => setCategoriaItem(i, idx, id)}
                           placeholder="Definir conta"
                         />
                       </TableCell>
                       <TableCell></TableCell>
                       <TableCell>
-                        {item._categoria_id ? (
+                        {item._plano_contas_id ? (
                           <Badge
                             variant="outline"
                             className="text-[10px] border-success text-success"

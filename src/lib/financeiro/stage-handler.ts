@@ -100,7 +100,7 @@ export async function moverParaStage(
             valor: nf.valor || 0,
             data_vencimento: nf.nf_data_vencimento || null,
             nf_data_emissao: nf.nf_data_emissao || null,
-            conta_id: nf._categoria_id || null,
+            conta_id: nf._plano_contas_id || null,
             parceiro_id: nf._parceiro_id_resolvido || null,
             fornecedor_cliente: nf.fornecedor_nome || null,
             parcelas: 1,
@@ -145,7 +145,7 @@ export async function moverParaStage(
         nf_serie: nf.nf_serie || null,
         valor: nf.valor || 0,
         descricao: nf._categoria_nome || null,
-        categoria_id: nf._categoria_id || null,
+        plano_contas_id: nf._plano_contas_id || null,
         data_vencimento: nf.nf_data_vencimento || nf.nf_data_emissao || null,
         status,
         itens: nf.itens || null,
@@ -206,7 +206,7 @@ export async function moverParaStage(
         .from("nfs_stage")
         .select("id")
         .in("id", result.stageIdsCriados)
-        .is("categoria_id", null);
+        .is("plano_contas_id", null);
 
       const idsParaClassificar: string[] = (semCategoria || []).map(
         (r: { id: string }) => r.id,

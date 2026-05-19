@@ -34,7 +34,7 @@ type ContaEditavel = {
   id: string;
   descricao: string;
   data_vencimento: string | null;
-  conta_id: string | null;
+  plano_contas_id: string | null;
   centro_custo_id: string | null;
   forma_pagamento_id: string | null;
   observacao: string | null;
@@ -119,7 +119,7 @@ export function ContaPagarFormEdit({
   // Estado local do form
   const [descricao, setDescricao] = useState(conta.descricao || "");
   const [dataVencimento, setDataVencimento] = useState(conta.data_vencimento || "");
-  const [contaId, setContaId] = useState(conta.conta_id || "__none__");
+  const [contaId, setContaId] = useState(conta.plano_contas_id || "__none__");
   const [centroCustoId, setCentroCustoId] = useState<string | null>(conta.centro_custo_id ?? null);
   const [formaPagamentoId, setFormaPagamentoId] = useState(conta.forma_pagamento_id || "__none__");
   const [observacao, setObservacao] = useState(conta.observacao || "");
@@ -168,7 +168,7 @@ export function ContaPagarFormEdit({
       );
       if (error) throw error;
       return (data || []) as Array<{
-        categoria_id: string;
+        plano_contas_id: string;
         categoria_codigo: string;
         categoria_nome: string;
         score: number;
@@ -186,7 +186,7 @@ export function ContaPagarFormEdit({
   useEffect(() => {
     setDescricao(conta.descricao || "");
     setDataVencimento(conta.data_vencimento || "");
-    setContaId(conta.conta_id || "__none__");
+    setContaId(conta.plano_contas_id || "__none__");
     setCentroCustoId(conta.centro_custo_id ?? null);
     setFormaPagamentoId(conta.forma_pagamento_id || "__none__");
     setObservacao(conta.observacao || "");
@@ -240,7 +240,7 @@ export function ContaPagarFormEdit({
       const { data, error } = await (supabase as any)
         .from("parceiros_comerciais")
         .select(
-          "id, razao_social, cnpj, categoria_padrao_id, centro_custo_id, forma_pagamento_padrao_id",
+          "id, razao_social, cnpj, plano_contas_id, centro_custo_id, forma_pagamento_padrao_id",
         )
         .eq("ativo", true)
         .order("razao_social");
@@ -249,7 +249,7 @@ export function ContaPagarFormEdit({
         id: string;
         razao_social: string;
         cnpj: string | null;
-        categoria_padrao_id: string | null;
+        plano_contas_id: string | null;
         centro_custo_id: string | null;
         forma_pagamento_padrao_id: string | null;
       }>;
@@ -268,7 +268,7 @@ export function ContaPagarFormEdit({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: parceiro, error } = await (supabase as any)
       .from("parceiros_comerciais")
-      .select("categoria_padrao_id, centro_custo_id, forma_pagamento_padrao_id, razao_social")
+      .select("plano_contas_id, centro_custo_id, forma_pagamento_padrao_id, razao_social")
       .eq("id", conta.parceiro_id)
       .single();
 
@@ -280,8 +280,8 @@ export function ContaPagarFormEdit({
     let camposAplicados = 0;
     const detalhes: string[] = [];
 
-    if (parceiro.categoria_padrao_id) {
-      setContaId(parceiro.categoria_padrao_id);
+    if (parceiro.plano_contas_id) {
+      setContaId(parceiro.plano_contas_id);
       camposAplicados++;
       detalhes.push("Categoria");
     }
@@ -317,8 +317,8 @@ export function ContaPagarFormEdit({
     let aplicados = 0;
     const detalhes: string[] = [];
 
-    if (parceiro.categoria_padrao_id) {
-      setContaId(parceiro.categoria_padrao_id);
+    if (parceiro.plano_contas_id) {
+      setContaId(parceiro.plano_contas_id);
       aplicados++;
       detalhes.push("Categoria");
     }
@@ -583,7 +583,7 @@ export function ContaPagarFormEdit({
                   variant="outline"
                   className="h-7 px-2 border-blue-300 text-blue-700 hover:bg-blue-100 shrink-0"
                   onClick={() => {
-                    setContaId(topSugestao.categoria_id);
+                    setContaId(topSugestao.plano_contas_id);
                     setSugestaoAplicada(true);
                     toast.success("Categoria aplicada");
                   }}

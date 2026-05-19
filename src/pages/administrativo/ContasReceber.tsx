@@ -34,7 +34,7 @@ type Conta = {
   status: string;
   fornecedor_cliente: string | null;
   parceiro_id: string | null;
-  conta_id: string | null;
+  plano_contas_id: string | null;
   plano_contas?: { nome: string } | null;
   parceiros_comerciais?: { razao_social: string | null } | null;
 };
@@ -60,7 +60,7 @@ export default function ContasReceber() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("contas_pagar_receber")
-        .select("*, plano_contas:conta_id(nome), parceiros_comerciais:parceiro_id(razao_social)")
+        .select("*, plano_contas:plano_contas_id(nome), parceiros_comerciais:parceiro_id(razao_social)")
         .eq("tipo", "receber")
         .order("data_vencimento", { ascending: true });
       if (error) throw error;

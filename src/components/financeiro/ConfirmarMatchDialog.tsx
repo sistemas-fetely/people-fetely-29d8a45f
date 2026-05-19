@@ -130,7 +130,7 @@ export function ConfirmarMatchDialog({
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await (supabase as any).from("contas_pagar_historico").insert({
-          conta_id: conta!.id,
+          plano_contas_id: conta!.id,
           status_anterior: "finalizado",
           status_novo: "finalizado",
           observacao: obsHistorico,

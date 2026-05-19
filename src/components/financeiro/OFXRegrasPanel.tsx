@@ -31,7 +31,7 @@ type Regra = {
   pattern: string;
   acao: "lancar" | "ignorar";
   conta_bancaria_id: string | null;
-  conta_plano_id: string;
+  plano_contas_id: string;
   centro_custo_id: string | null;
   descricao_override: string | null;
   ativo: boolean;
@@ -46,7 +46,7 @@ type FormState = {
   pattern: string;
   acao: "lancar" | "ignorar";
   conta_bancaria_id: string | null;
-  conta_plano_id: string;
+  plano_contas_id: string;
   centro_custo_id: string | null;
   descricao_override: string | null;
   ativo: boolean;
@@ -54,7 +54,7 @@ type FormState = {
 
 const EMPTY: FormState = {
   nome: "", pattern: "", acao: "lancar", conta_bancaria_id: null,
-  conta_plano_id: "", centro_custo_id: null, descricao_override: null, ativo: true,
+  plano_contas_id: "", centro_custo_id: null, descricao_override: null, ativo: true,
 };
 
 export function OFXRegrasPanel() {
@@ -81,7 +81,7 @@ export function OFXRegrasPanel() {
     queryFn: async () => {
       const { data, error } = await sb
         .from("ofx_regras_automaticas")
-        .select("id, nome, pattern, acao, conta_bancaria_id, conta_plano_id, centro_custo_id, descricao_override, ativo, conta_plano:conta_plano_id(nome, codigo), centro_custo:centro_custo_id(nome)")
+        .select("id, nome, pattern, acao, conta_bancaria_id, plano_contas_id, centro_custo_id, descricao_override, ativo, conta_plano:plano_contas_id(nome, codigo), centro_custo:centro_custo_id(nome)")
         .order("nome");
       if (error) throw error;
       return (data || []) as Regra[];
@@ -99,7 +99,7 @@ export function OFXRegrasPanel() {
     setForm({
       nome: r.nome, pattern: r.pattern, acao: r.acao ?? "lancar",
       conta_bancaria_id: r.conta_bancaria_id,
-      conta_plano_id: r.conta_plano_id,
+      plano_contas_id: r.plano_contas_id,
       centro_custo_id: r.centro_custo_id,
       descricao_override: r.descricao_override,
       ativo: r.ativo,
@@ -111,14 +111,14 @@ export function OFXRegrasPanel() {
     mutationFn: async () => {
       if (!form.nome.trim()) throw new Error("Nome obrigatório");
       if (!form.pattern.trim()) throw new Error("Padrão obrigatório");
-      if (form.acao === "lancar" && !form.conta_plano_id) throw new Error("Conta do plano obrigatória para ação Lançar");
+      if (form.acao === "lancar" && !form.plano_contas_id) throw new Error("Conta do plano obrigatória para ação Lançar");
 
       const payload = {
         nome: form.nome.trim(),
         pattern: form.pattern.trim().toLowerCase(),
         acao: form.acao,
         conta_bancaria_id: form.conta_bancaria_id || null,
-        conta_plano_id: form.conta_plano_id || null,
+        plano_contas_id: form.plano_contas_id || null,
         centro_custo_id: form.centro_custo_id || null,
         descricao_override: form.descricao_override?.trim() || null,
         ativo: form.ativo,
@@ -278,8 +278,8 @@ export function OFXRegrasPanel() {
               <Label>Conta do Plano de Contas *</Label>
               <CategoriaCombobox
                 options={categorias}
-                value={form.conta_plano_id || null}
-                onChange={(v) => setForm({ ...form, conta_plano_id: v ?? "" })}
+                value={form.plano_contas_id || null}
+                onChange={(v) => setForm({ ...form, plano_contas_id: v ?? "" })}
                 placeholder="Selecione a conta..."
               />
             </div>

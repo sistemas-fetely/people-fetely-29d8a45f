@@ -10,7 +10,7 @@ export function useAplicarRegrasOFX() {
   async function aplicarRegras(contaBancariaId: string): Promise<{ aplicados: number }> {
     const { data: regras } = await sb
       .from("ofx_regras_automaticas")
-      .select("id, pattern, acao, conta_plano_id, centro_custo_id, descricao_override")
+      .select("id, pattern, acao, plano_contas_id, centro_custo_id, descricao_override")
       .eq("ativo", true)
       .or(`conta_bancaria_id.eq.${contaBancariaId},conta_bancaria_id.is.null`);
 
@@ -46,7 +46,7 @@ export function useAplicarRegrasOFX() {
         data_transacao: ofx.data_transacao,
         valor: ofx.valor,
         descricao: regra.descricao_override || ofx.descricao,
-        conta_plano_id: regra.conta_plano_id,
+        plano_contas_id: regra.plano_contas_id,
         centro_custo_id: regra.centro_custo_id ?? null,
         tipo: ofx.valor >= 0 ? "credito" : "debito",
         origem: "ofx",

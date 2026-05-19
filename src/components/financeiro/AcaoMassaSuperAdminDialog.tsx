@@ -118,7 +118,7 @@ export function AcaoMassaSuperAdminDialog({
         // Histórico (best-effort)
         try {
           const historicoRows = contas.map((c) => ({
-            conta_id: c.id,
+            plano_contas_id: c.id,
             status_anterior: c.status,
             status_novo: "finalizado",
             observacao,

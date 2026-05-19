@@ -25,7 +25,7 @@ interface CategoriaPlano {
 
 interface SugestaoIA {
   cnpj: string;
-  categoria_id: string;
+  plano_contas_id: string;
   motivo: string;
 }
 
@@ -71,7 +71,7 @@ Deno.serve(async (req) => {
     if (ids && ids.length > 0) {
       query = query.in("id", ids);
     } else {
-      query = query.is("categoria_id", null);
+      query = query.is("plano_contas_id", null);
     }
 
     const { data: nfs, error: nfsErr } = await query;
@@ -97,7 +97,7 @@ Deno.serve(async (req) => {
       porCnpj.get(chave)!.push(nf);
     }
 
-    const resultados: { id: string; categoria_id: string; motivo: string }[] = [];
+    const resultados: { id: string; plano_contas_id: string; motivo: string }[] = [];
     const erros: string[] = [];
 
     for (const [cnpj, grupo] of porCnpj) {
@@ -105,17 +105,17 @@ Deno.serve(async (req) => {
         // Se já existe regra manual para este CNPJ, aplica direto sem chamar IA
         const { data: regraExistente } = await (supabase as any)
           .from("regras_categorizacao")
-          .select("categoria_id")
+          .select("plano_contas_id")
           .eq("cnpj_emitente", cnpj)
           .order("vezes_aplicada", { ascending: false })
           .limit(1)
           .maybeSingle();
 
-        if (regraExistente?.categoria_id) {
+        if (regraExistente?.plano_contas_id) {
           for (const nf of grupo) {
             resultados.push({
               id: nf.id,
-              categoria_id: regraExistente.categoria_id,
+              plano_contas_id: regraExistente.plano_contas_id,
               motivo: "Regra manual existente para este CNPJ",
             });
           }
@@ -150,7 +150,7 @@ Valor médio: R$ ${nfRef.valor?.toFixed(2) || "?"}
 Com base no fornecedor e nos itens, qual categoria do plano de contas acima melhor representa esta despesa?
 
 Responda APENAS com JSON válido, sem markdown, sem texto antes ou depois:
-{"categoria_id": "UUID_DA_CATEGORIA", "motivo": "Explicação em 1 frase"}`;
+{"plano_contas_id": "UUID_DA_CATEGORIA", "motivo": "Explicação em 1 frase"}`;
 
         const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
           method: "POST",
@@ -192,14 +192,14 @@ Responda APENAS com JSON válido, sem markdown, sem texto antes ou depois:
           continue;
         }
 
-        const categoriaValida = (categorias as CategoriaPlano[]).find(c => c.id === sugestao.categoria_id);
+        const categoriaValida = (categorias as CategoriaPlano[]).find(c => c.id === sugestao.plano_contas_id);
         if (!categoriaValida) {
-          erros.push(`${nomeFornecedor}: categoria_id inválido retornado pela IA`);
+          erros.push(`${nomeFornecedor}: plano_contas_id inválido retornado pela IA`);
           continue;
         }
 
         for (const nf of grupo) {
-          resultados.push({ id: nf.id, categoria_id: sugestao.categoria_id, motivo: sugestao.motivo });
+          resultados.push({ id: nf.id, plano_contas_id: sugestao.plano_contas_id, motivo: sugestao.motivo });
         }
       } catch (e) {
         erros.push(`${cnpj}: ${e instanceof Error ? e.message : String(e)}`);
@@ -210,7 +210,7 @@ Responda APENAS com JSON válido, sem markdown, sem texto antes ou depois:
     for (const r of resultados) {
       const { error } = await (supabase as any)
         .from("nfs_stage")
-        .update({ categoria_id: r.categoria_id, categoria_sugerida_ia: true })
+        .update({ plano_contas_id: r.plano_contas_id, categoria_sugerida_ia: true })
         .eq("id", r.id);
       if (!error) classificadas++;
     }

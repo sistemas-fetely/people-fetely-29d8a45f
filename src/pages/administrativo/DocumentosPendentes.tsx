@@ -70,7 +70,7 @@ import { cn } from "@/lib/utils";
 type Aba = "cobrar" | "pronto" | "enviado";
 
 type ParcelaDetalhe = {
-  conta_id: string;
+  plano_contas_id: string;
   descricao: string;
   valor: number;
   data_vencimento: string;
@@ -83,7 +83,7 @@ type ParcelaDetalhe = {
 
 type ContaItem = {
   // Identificador da entrada — pra compromisso é a parcela "principal" (drawer abre nela)
-  conta_id: string;
+  plano_contas_id: string;
   // Discriminador do tipo de evento. Ausente = legado (trata como avulsa).
   tipo?: "conta_avulsa" | "compromisso";
   compromisso_id?: string | null;
@@ -117,9 +117,9 @@ type ContaItem = {
 // IDs reais de contas_pagar_receber dentro de uma entrada (1 pra avulsa, N pra compromisso)
 function contaIdsDoItem(c: ContaItem): string[] {
   if (c.tipo === "compromisso" && c.parcelas && c.parcelas.length > 0) {
-    return c.parcelas.map((p) => p.conta_id);
+    return c.parcelas.map((p) => p.plano_contas_id);
   }
-  return [c.conta_id];
+  return [c.plano_contas_id];
 }
 
 // -----------------------------------------------------------------------------
@@ -391,7 +391,7 @@ export default function DocumentosPendentes() {
       for (const r of data || []) {
         const { data: itens } = await supabase
           .from("remessas_contador_itens")
-          .select("conta_id, contas_pagar_receber!inner(valor, status)")
+          .select("plano_contas_id, contas_pagar_receber!inner(valor, status)")
           .eq("remessa_id", r.id);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const items = (itens || []) as any[];
@@ -475,7 +475,7 @@ export default function DocumentosPendentes() {
 
   const totalSelecionadoValor = useMemo(() => {
     return todasContasPronto
-      .filter((c) => selecionadas.has(c.conta_id))
+      .filter((c) => selecionadas.has(c.plano_contas_id))
       .reduce((s, c) => s + Number(c.valor || 0), 0);
   }, [todasContasPronto, selecionadas]);
 
@@ -483,7 +483,7 @@ export default function DocumentosPendentes() {
   const idsContasParaEnvio = useMemo(() => {
     const ids: string[] = [];
     for (const c of todasContasPronto) {
-      if (!selecionadas.has(c.conta_id)) continue;
+      if (!selecionadas.has(c.plano_contas_id)) continue;
       ids.push(...contaIdsDoItem(c));
     }
     return ids;
@@ -499,7 +499,7 @@ export default function DocumentosPendentes() {
   }
 
   function toggleSelecaoFornecedor(grupo: GrupoFornecedor) {
-    const ids = grupo.contas_json.map((c) => c.conta_id);
+    const ids = grupo.contas_json.map((c) => c.plano_contas_id);
     const todasJaSelecionadas = ids.every((id) => selecionadas.has(id));
     setSelecionadas((prev) => {
       const next = new Set(prev);
@@ -510,7 +510,7 @@ export default function DocumentosPendentes() {
   }
 
   function selecionarTodas() {
-    setSelecionadas(new Set(todasContasPronto.map((c) => c.conta_id)));
+    setSelecionadas(new Set(todasContasPronto.map((c) => c.plano_contas_id)));
   }
 
   function limparSelecao() {
@@ -763,7 +763,7 @@ export default function DocumentosPendentes() {
               grupos.map((grupo) => {
                 const key = grupo.parceiro_id || grupo.parceiro_razao_social;
                 const isOpen = expandidos.has(key);
-                const idsDoGrupo = grupo.contas_json.map((c) => c.conta_id);
+                const idsDoGrupo = grupo.contas_json.map((c) => c.plano_contas_id);
                 const todasSelecionadas =
                   aba === "pronto" && idsDoGrupo.every((id) => selecionadas.has(id));
                 const algumaSelecionada =
@@ -807,16 +807,16 @@ export default function DocumentosPendentes() {
                         <div className="border-t divide-y">
                           {grupo.contas_json.map((c) => (
                             <ItemLinha
-                              key={c.conta_id}
+                              key={c.plano_contas_id}
                               conta={c}
                               aba={aba}
-                              isSelected={selecionadas.has(c.conta_id)}
-                              onToggleSelecao={() => toggleSelecao(c.conta_id)}
+                              isSelected={selecionadas.has(c.plano_contas_id)}
+                              onToggleSelecao={() => toggleSelecao(c.plano_contas_id)}
                               onAbrirDrawer={(id) => setContaIdDrawer(id)}
                               onBuscarNF={(conta) => setContaParaBuscar(conta)}
-                              expandidoCompromisso={parcelasExpandidas.has(c.conta_id)}
+                              expandidoCompromisso={parcelasExpandidas.has(c.plano_contas_id)}
                               onToggleExpandirCompromisso={() =>
-                                toggleParcelas(c.conta_id)
+                                toggleParcelas(c.plano_contas_id)
                               }
                             />
                           ))}
@@ -1000,20 +1000,20 @@ export default function DocumentosPendentes() {
         open={enviarSistemaOpen}
         onClose={() => setEnviarSistemaOpen(false)}
         contasSelecionadas={todasContasPronto
-          .filter((c) => selecionadas.has(c.conta_id))
+          .filter((c) => selecionadas.has(c.plano_contas_id))
           .flatMap((c) => {
             // Pra compromisso: expande em todas as parcelas (com seus próprios valores/datas).
             // Pra avulsa: 1 entrada igual à conta.
             if (c.tipo === "compromisso" && c.parcelas && c.parcelas.length > 0) {
               return c.parcelas.map((p) => ({
-                conta_id: p.conta_id,
+                plano_contas_id: p.plano_contas_id,
                 valor: Number(p.valor || 0),
                 data_vencimento: p.data_vencimento,
                 data_pagamento: p.data_pagamento,
               }));
             }
             return [{
-              conta_id: c.conta_id,
+              plano_contas_id: c.plano_contas_id,
               valor: Number(c.valor || 0),
               data_vencimento: c.data_vencimento,
               data_pagamento: c.data_pagamento,
@@ -1026,7 +1026,7 @@ export default function DocumentosPendentes() {
         <BuscarNFStageDialog
           open={!!contaParaBuscar}
           onOpenChange={(o) => !o && setContaParaBuscar(null)}
-          contaId={contaParaBuscar.conta_id}
+          contaId={contaParaBuscar.plano_contas_id}
           contaDescricao={contaParaBuscar.descricao}
           contaValor={Number(contaParaBuscar.valor || 0)}
           onVinculado={() => {
@@ -1086,7 +1086,7 @@ function RemessaContas({
         .from("remessas_contador_itens")
         .select(
           `
-          conta_id,
+          plano_contas_id,
           contas_pagar_receber!inner(
             id, descricao, valor, data_pagamento, status, nf_numero,
             parceiros_comerciais:parceiro_id(razao_social),
@@ -1113,12 +1113,12 @@ function RemessaContas({
         const cancelada = c?.status === "cancelado";
         return (
           <div
-            key={it.conta_id}
+            key={it.plano_contas_id}
             className={cn(
               "px-3 py-2 text-xs flex items-center gap-3 cursor-pointer hover:bg-muted/40",
               cancelada && "bg-rose-50/40",
             )}
-            onClick={() => onAbrirConta(it.conta_id)}
+            onClick={() => onAbrirConta(it.plano_contas_id)}
           >
             <div className="flex-1 min-w-0">
               <div className="truncate font-medium">{fornecedor}</div>
@@ -1208,7 +1208,7 @@ function ItemLinha({
         )}
         <div
           className="flex-1 min-w-0 cursor-pointer"
-          onClick={() => onAbrirDrawer(conta.conta_id)}
+          onClick={() => onAbrirDrawer(conta.plano_contas_id)}
         >
           <div className="text-xs truncate flex items-center gap-1.5" title={conta.descricao}>
             <span className="truncate">{conta.descricao}</span>
@@ -1251,9 +1251,9 @@ function ItemLinha({
         <div className="border-t bg-muted/20 divide-y">
           {conta.parcelas!.map((p, idx) => (
             <div
-              key={p.conta_id}
+              key={p.plano_contas_id}
               className="pl-12 pr-4 py-1.5 flex items-center gap-3 text-[11px] cursor-pointer hover:bg-muted/40"
-              onClick={() => onAbrirDrawer(p.conta_id)}
+              onClick={() => onAbrirDrawer(p.plano_contas_id)}
             >
               <span className="text-muted-foreground shrink-0">
                 Parcela {idx + 1}/{conta.qtd_parcelas ?? conta.parcelas!.length}

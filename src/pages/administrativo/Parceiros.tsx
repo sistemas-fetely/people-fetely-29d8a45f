@@ -220,7 +220,7 @@ export default function Parceiros() {
       total: all.length,
       fornecedores: all.filter((p) => (p.tipos || []).includes("fornecedor")).length,
       clientes: all.filter((p) => (p.tipos || []).includes("cliente")).length,
-      semCategoria: all.filter((p) => !p.categoria_padrao_id).length,
+      semCategoria: all.filter((p) => !p.plano_contas_id).length,
       semCentroCusto: all.filter((p) => !p.centro_custo_id).length,
       semMeioPgto: all.filter((p) => !temMeioPagamento(p)).length,
     };
@@ -255,7 +255,7 @@ export default function Parceiros() {
       );
     }
 
-    if (filtroIncompleto === "sem_categoria") list = list.filter((p) => !p.categoria_padrao_id);
+    if (filtroIncompleto === "sem_categoria") list = list.filter((p) => !p.plano_contas_id);
     else if (filtroIncompleto === "sem_meio_pgto") list = list.filter((p) => !temMeioPagamento(p));
     else if (filtroIncompleto === "sem_centro_custo") list = list.filter((p) => !p.centro_custo_id);
 
@@ -271,8 +271,8 @@ export default function Parceiros() {
           v = (a.tipos?.[0] || "").localeCompare(b.tipos?.[0] || "");
           break;
         case "categoria": {
-          const aN = a.categoria_padrao_id ? categoriaNomeMap.get(a.categoria_padrao_id)?.nome || "" : "";
-          const bN = b.categoria_padrao_id ? categoriaNomeMap.get(b.categoria_padrao_id)?.nome || "" : "";
+          const aN = a.plano_contas_id ? categoriaNomeMap.get(a.plano_contas_id)?.nome || "" : "";
+          const bN = b.plano_contas_id ? categoriaNomeMap.get(b.plano_contas_id)?.nome || "" : "";
           v = aN.localeCompare(bN, "pt-BR");
           break;
         }
@@ -582,8 +582,8 @@ export default function Parceiros() {
                           const tipos = p.tipos || [];
                           const tipoLabel =
                             tipos.length === 2 ? "ambos" : tipos[0] || "fornecedor";
-                          const cat = p.categoria_padrao_id
-                            ? categoriaNomeMap.get(p.categoria_padrao_id)
+                          const cat = p.plano_contas_id
+                            ? categoriaNomeMap.get(p.plano_contas_id)
                             : null;
                           const ccNome = p.centro_custo_id
                             ? centroCustoNomeMap.get(p.centro_custo_id)

@@ -96,7 +96,7 @@ export function CriarRegraDialog({
       if ((tipo === "fornecedor" || tipo === "ambos") && cnpj) {
         inserts.push({
           cnpj_emitente: cnpj,
-          conta_plano_id: categoriaId,
+          plano_contas_id: categoriaId,
           centro_custo: centroCusto || null,
           prioridade: 5,
           ativo: true,
@@ -106,7 +106,7 @@ export function CriarRegraDialog({
       if ((tipo === "ncm" || tipo === "ambos") && ncmPrefixo) {
         inserts.push({
           ncm_prefixo: ncmPrefixo,
-          conta_plano_id: categoriaId,
+          plano_contas_id: categoriaId,
           centro_custo: centroCusto || null,
           prioridade: 10,
           ativo: true,
@@ -117,7 +117,7 @@ export function CriarRegraDialog({
         inserts.push({
           cnpj_emitente: cnpj,
           ncm_prefixo: ncmPrefixo,
-          conta_plano_id: categoriaId,
+          plano_contas_id: categoriaId,
           centro_custo: centroCusto || null,
           prioridade: 1,
           ativo: true,

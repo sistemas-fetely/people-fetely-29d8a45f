@@ -67,7 +67,7 @@ export function ImportarNFDespesaDialog({
       const { data: stages, error } = await (supabase as any)
         .from("nfs_stage")
         .select(
-          "id, fornecedor_razao_social, fornecedor_cliente, nf_numero, valor, nf_data_emissao, data_vencimento, parceiro_id, categoria_id, descricao",
+          "id, fornecedor_razao_social, fornecedor_cliente, nf_numero, valor, nf_data_emissao, data_vencimento, parceiro_id, plano_contas_id, descricao",
         )
         .in("id", result.stageIdsCriados);
 
@@ -112,7 +112,7 @@ export function ImportarNFDespesaDialog({
           dataEmissao: (s.nf_data_emissao as string | null) ?? null,
           dataVencimento: (s.data_vencimento as string | null) ?? null,
           parceiroId: (s.parceiro_id as string | null) ?? null,
-          categoriaId: (s.categoria_id as string | null) ?? null,
+          categoriaId: (s.plano_contas_id as string | null) ?? null,
           descricao: (s.descricao as string | null) ?? null,
         },
         boletos: boletosPorStage.get(s.id as string) || [],

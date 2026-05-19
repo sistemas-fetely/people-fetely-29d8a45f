@@ -95,7 +95,7 @@ type NFStage = {
   nf_data_emissao: string | null;
   valor: number;
   descricao: string | null;
-  categoria_id: string | null;
+  plano_contas_id: string | null;
   categoria_sugerida_ia?: boolean | null;
   data_vencimento: string | null;
   status: string;
@@ -313,7 +313,7 @@ export default function NFsStage() {
     } else if (filtroPill === "descartadas") {
       list = list.filter((n) => n.status === "descartada");
     } else if (filtroPill === "sem_categoria") {
-      list = list.filter((n) => !n.categoria_id && n.status !== "descartada");
+      list = list.filter((n) => !n.plano_contas_id && n.status !== "descartada");
     } else if (filtroPill === "com_xml") {
       list = list.filter((n) => n.tem_xml && n.status !== "descartada");
     } else if (filtroPill === "com_pdf") {
@@ -336,7 +336,7 @@ export default function NFsStage() {
       nf: (n) => n.nf_numero || "",
       data: (n) => n.nf_data_emissao || "",
       valor: (n) => n.valor || 0,
-      categoria: (n) => n.categoria_id || "",
+      categoria: (n) => n.plano_contas_id || "",
       status: (n) => n.status || "",
     });
 
@@ -350,7 +350,7 @@ export default function NFsStage() {
       naoVinculadas: all.filter((n) => n.status === "nao_vinculada").length,
       vinculadas: all.filter((n) => n.status === "vinculada").length,
       descartadas: all.filter((n) => n.status === "descartada").length,
-      semCategoria: all.filter((n) => !n.categoria_id && n.status !== "descartada").length,
+      semCategoria: all.filter((n) => !n.plano_contas_id && n.status !== "descartada").length,
       comXml: all.filter((n) => n.tem_xml && n.status !== "descartada").length,
       comPdf: all.filter((n) => n.tem_pdf && n.status !== "descartada").length,
       comBoleto: all.filter((n) => n.tem_boleto).length,
@@ -380,7 +380,7 @@ export default function NFsStage() {
   const sugestoesPorNf = useMemo(() => {
     const map: Record<string, SugestaoResult> = {};
     for (const nf of nfs || []) {
-      if (nf.categoria_id) continue;
+      if (nf.plano_contas_id) continue;
       if (nf.status === "descartada") continue;
       const sug = sugerirNoClient(
         {
@@ -429,7 +429,7 @@ export default function NFsStage() {
       const { error } = await (supabase as any)
         .from("nfs_stage")
         .update({
-          categoria_id: categoriaId || null,
+          plano_contas_id: categoriaId || null,
           categoria_sugerida_ia: false,
         })
         .eq("id", id);
@@ -443,7 +443,7 @@ export default function NFsStage() {
             descricao: nf.fornecedor_razao_social || nf.fornecedor_cliente,
             cnpj: nf.fornecedor_cnpj,
             parceiro_id: nf.parceiro_id,
-            categoria_id: categoriaId,
+            plano_contas_id: categoriaId,
             origem: "nf",
           });
         }
@@ -473,14 +473,14 @@ export default function NFsStage() {
   async function aceitarSugestao(nf: NFStage) {
     const sug = sugestoesPorNf[nf.id];
     if (!sug) return;
-    await alterarCategoria(nf.id, sug.categoria_id);
+    await alterarCategoria(nf.id, sug.plano_contas_id);
     toast.success("Sugestão aplicada");
   }
 
   async function aceitarTodasSugestoes() {
     if (!nfs) return;
     const aplicar = nfs.filter(
-      (n) => !n.categoria_id && sugestoesPorNf[n.id],
+      (n) => !n.plano_contas_id && sugestoesPorNf[n.id],
     );
     if (aplicar.length === 0) {
       toast.info("Nenhuma sugestão automática disponível.");
@@ -495,7 +495,7 @@ export default function NFsStage() {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { error } = await (supabase as any)
           .from("nfs_stage")
-          .update({ categoria_id: sug.categoria_id })
+          .update({ plano_contas_id: sug.plano_contas_id })
           .eq("id", nf.id);
         if (!error) {
           ok++;
@@ -504,7 +504,7 @@ export default function NFsStage() {
             descricao: nf.fornecedor_razao_social || nf.fornecedor_cliente,
             cnpj: nf.fornecedor_cnpj,
             parceiro_id: nf.parceiro_id,
-            categoria_id: sug.categoria_id,
+            plano_contas_id: sug.plano_contas_id,
             origem: "nf",
           });
         }
@@ -814,7 +814,7 @@ export default function NFsStage() {
                   const podeClassificar = nf.status === "nao_vinculada";
                   const salvando = salvandoCategoria.has(nf.id);
                   const sugestao =
-                    !nf.categoria_id ? sugestoesPorNf[nf.id] : null;
+                    !nf.plano_contas_id ? sugestoesPorNf[nf.id] : null;
 
                   const temItens = !!(nf.itens && Array.isArray(nf.itens) && nf.itens.length > 0);
                   const isExpandida = expandidas.has(nf.id);
@@ -879,14 +879,14 @@ export default function NFsStage() {
                           <div className="flex items-center gap-1.5">
                             <CategoriaCombobox
                               options={categorias}
-                              value={nf.categoria_id || null}
+                              value={nf.plano_contas_id || null}
                               onChange={(id) =>
                                 alterarCategoria(nf.id, id || "")
                               }
                               placeholder="Classificar..."
                               disabled={salvando}
                             />
-                            {nf.categoria_sugerida_ia && nf.categoria_id && (
+                            {nf.categoria_sugerida_ia && nf.plano_contas_id && (
                               <Sparkles
                                 className="h-3 w-3 text-purple-500 shrink-0"
                                 aria-label="Categoria sugerida pela IA — revise e confirme"
@@ -908,7 +908,7 @@ export default function NFsStage() {
                                   className={`h-8 text-[10px] gap-1 px-2 ${corBadge}`}
                                   onClick={() => aceitarSugestao(nf)}
                                   disabled={salvando}
-                                  title={`${mapCategorias[sugestao.categoria_id]} · Confiança ${labelConf} · ${sugestao.motivo}`}
+                                  title={`${mapCategorias[sugestao.plano_contas_id]} · Confiança ${labelConf} · ${sugestao.motivo}`}
                                 >
                                   <Sparkles className="h-3 w-3" />
                                   Sugerir
@@ -917,9 +917,9 @@ export default function NFsStage() {
                               );
                             })()}
                           </div>
-                        ) : nf.categoria_id ? (
+                        ) : nf.plano_contas_id ? (
                           <span className="text-xs text-muted-foreground inline-flex items-center gap-1">
-                            {mapCategorias[nf.categoria_id] || "—"}
+                            {mapCategorias[nf.plano_contas_id] || "—"}
                             {nf.categoria_sugerida_ia && (
                               <Sparkles className="h-3 w-3 text-purple-500" />
                             )}

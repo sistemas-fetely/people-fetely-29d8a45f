@@ -127,7 +127,7 @@ export default function DialogNovoParceladoManual({
         data_compra: dataPrimeiraParcela,
         data_primeira_parcela: dataPrimeiraParcela,
         status: "ativo",
-        categoria_id: categoriaId || null,
+        plano_contas_id: categoriaId || null,
         parceiro_id: parceiroId || null,
         conta_bancaria_id: contaBancariaId || null,
         observacao: observacao || null,

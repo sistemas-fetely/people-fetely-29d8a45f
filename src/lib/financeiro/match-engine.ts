@@ -178,7 +178,7 @@ export function calcularSugestoes(
   // Calcula todos os pares possíveis
   const pares: Array<{
     mov_id: string;
-    conta_id: string;
+    plano_contas_id: string;
     score: number;
     motivos: string[];
   }> = [];
@@ -192,7 +192,7 @@ export function calcularSugestoes(
       if (score >= threshold) {
         pares.push({
           mov_id: mov.id,
-          conta_id: conta.id,
+          plano_contas_id: conta.id,
           score,
           motivos,
         });
@@ -209,12 +209,12 @@ export function calcularSugestoes(
   const sugestoes: SugestaoMatch[] = [];
 
   for (const p of pares) {
-    if (movsUsadas.has(p.mov_id) || contasUsadas.has(p.conta_id)) continue;
+    if (movsUsadas.has(p.mov_id) || contasUsadas.has(p.plano_contas_id)) continue;
     movsUsadas.add(p.mov_id);
-    contasUsadas.add(p.conta_id);
+    contasUsadas.add(p.plano_contas_id);
     sugestoes.push({
       movimentacao_id: p.mov_id,
-      conta_pagar_id: p.conta_id,
+      conta_pagar_id: p.plano_contas_id,
       score: p.score,
       motivos: p.motivos,
     });

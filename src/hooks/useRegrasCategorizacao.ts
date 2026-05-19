@@ -24,7 +24,7 @@ export function useRegrasCategorizacao() {
  */
 export function aplicarRegras(nf: NFParsed, regras: RegraCategorizacao[] | undefined): NFParsed {
   if (!regras || regras.length === 0) {
-    return { ...nf, _categoria_id: null, _categoria_nome: null, _regra_origem: null };
+    return { ...nf, _plano_contas_id: null, _categoria_nome: null, _regra_origem: null };
   }
 
   // 1. Regra por CNPJ do parceiro
@@ -33,7 +33,7 @@ export function aplicarRegras(nf: NFParsed, regras: RegraCategorizacao[] | undef
     if (r && r.conta) {
       return {
         ...nf,
-        _categoria_id: r.conta_plano_id,
+        _plano_contas_id: r.plano_contas_id,
         _categoria_nome: `${r.conta.codigo} — ${r.conta.nome}`,
         _centro_custo: r.centro_custo_id,
         _regra_origem: "parceiro",
@@ -47,7 +47,7 @@ export function aplicarRegras(nf: NFParsed, regras: RegraCategorizacao[] | undef
     if (r && r.conta) {
       return {
         ...nf,
-        _categoria_id: r.conta_plano_id,
+        _plano_contas_id: r.plano_contas_id,
         _categoria_nome: `${r.conta.codigo} — ${r.conta.nome}`,
         _centro_custo: r.centro_custo_id,
         _regra_origem: "ncm",
@@ -63,14 +63,14 @@ export function aplicarRegras(nf: NFParsed, regras: RegraCategorizacao[] | undef
   if (r && r.conta) {
     return {
       ...nf,
-      _categoria_id: r.conta_plano_id,
+      _plano_contas_id: r.plano_contas_id,
       _categoria_nome: `${r.conta.codigo} — ${r.conta.nome}`,
       _centro_custo: r.centro_custo_id,
       _regra_origem: "texto",
     };
   }
 
-  return { ...nf, _categoria_id: null, _categoria_nome: null, _regra_origem: null };
+  return { ...nf, _plano_contas_id: null, _categoria_nome: null, _regra_origem: null };
 }
 
 /**
@@ -89,7 +89,7 @@ export function aplicarRegrasItem(
     if (r && r.conta) {
       return {
         ...item,
-        _categoria_id: r.conta_plano_id,
+        _plano_contas_id: r.plano_contas_id,
         _categoria_nome: `${r.conta.codigo} — ${r.conta.nome}`,
         _centro_custo: r.centro_custo_id,
         _regra_origem: "ncm",
@@ -106,7 +106,7 @@ export function aplicarRegrasItem(
     if (r && r.conta) {
       return {
         ...item,
-        _categoria_id: r.conta_plano_id,
+        _plano_contas_id: r.plano_contas_id,
         _categoria_nome: `${r.conta.codigo} — ${r.conta.nome}`,
         _centro_custo: r.centro_custo_id,
         _regra_origem: "texto",

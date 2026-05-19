@@ -81,7 +81,7 @@ export function NovoFornecedorRapidoDialog({ open, onOpenChange, onCriado }: Pro
           razao_social: razaoSocial.trim(),
           nome_fantasia: nomeFantasia.trim() || null,
           cnpj: cnpjLimpo || null,
-          categoria_padrao_id: categoriaPadraoId,
+          plano_contas_id: categoriaPadraoId,
           ativo: true,
           tipo: "pj",
           origem: "manual",

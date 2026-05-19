@@ -117,7 +117,7 @@ export function RegistrarCompraDialog({ open, onOpenChange, pedido }: Props) {
     queryFn: async () => {
       const { data } = await supabase
         .from("parceiros_comerciais")
-        .select("id, razao_social, nome_fantasia, cnpj, categoria_padrao_id")
+        .select("id, razao_social, nome_fantasia, cnpj, plano_contas_id")
         .eq("ativo", true)
         .order("razao_social");
       return data || [];
@@ -198,7 +198,7 @@ export function RegistrarCompraDialog({ open, onOpenChange, pedido }: Props) {
     try {
       const res = await registrar.mutateAsync({
         pedido_id: pedido.id,
-        conta_id: contaId || null,
+        plano_contas_id: contaId || null,
         parceiro_id: parceiroId,
         valor_total: valorTotalNum,
         data_compra: format(dataCompra, "yyyy-MM-dd"),
@@ -262,8 +262,8 @@ export function RegistrarCompraDialog({ open, onOpenChange, pedido }: Props) {
   const handleSelectParceiro = (id: string) => {
     setParceiroId(id);
     const p = parceiros.find((x) => x.id === id);
-    if (p?.categoria_padrao_id && !contaId) {
-      setContaId(p.categoria_padrao_id);
+    if (p?.plano_contas_id && !contaId) {
+      setContaId(p.plano_contas_id);
       toast.info("Categoria preenchida automaticamente do fornecedor");
     }
     setParceiroOpen(false);

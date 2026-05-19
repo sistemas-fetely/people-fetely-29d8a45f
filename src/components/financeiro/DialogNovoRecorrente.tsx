@@ -33,7 +33,7 @@ type RecorrenteEditando = {
   dia_vencimento: number;
   data_inicio: string;
   data_fim: string | null;
-  categoria_id: string | null;
+  plano_contas_id: string | null;
   parceiro_id: string | null;
   conta_bancaria_id: string | null;
   observacao: string | null;
@@ -77,7 +77,7 @@ export default function DialogNovoRecorrente({
       setDiaVencimento(String(recorrenteEditando.dia_vencimento));
       setDataInicio(recorrenteEditando.data_inicio);
       setDataFim(recorrenteEditando.data_fim || "");
-      setCategoriaId(recorrenteEditando.categoria_id || "");
+      setCategoriaId(recorrenteEditando.plano_contas_id || "");
       setParceiroId(recorrenteEditando.parceiro_id || "");
       setContaBancariaId(recorrenteEditando.conta_bancaria_id || "");
       setObservacao(recorrenteEditando.observacao || "");
@@ -154,7 +154,7 @@ export default function DialogNovoRecorrente({
         dia_vencimento: diaNum,
         data_inicio: dataInicio,
         data_fim: dataFim || null,
-        categoria_id: categoriaId || null,
+        plano_contas_id: categoriaId || null,
         parceiro_id: parceiroId || null,
         conta_bancaria_id: contaBancariaId || null,
         observacao: observacao || null,

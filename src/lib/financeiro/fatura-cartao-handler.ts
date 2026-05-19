@@ -138,7 +138,7 @@ export async function salvarFaturaCartao(
       num_autorizacao: l.num_autorizacao,
       cnpj_estabelecimento: l.cnpj_estabelecimento,
       parceiro_id: null,
-      categoria_id: null,
+      plano_contas_id: null,
       status: "pendente",
       linha_original_csv: l.linha_original_csv,
     }));

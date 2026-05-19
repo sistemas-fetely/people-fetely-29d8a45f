@@ -25,7 +25,7 @@ export interface SugerirInput {
 
 export interface SugestaoResult {
   regra_id: string;
-  categoria_id: string;
+  plano_contas_id: string;
   centro_custo_id: string | null;
   confianca: number;
   tipo_match: "parceiro" | "cnpj" | "ncm" | "token" | "descricao";
@@ -36,7 +36,7 @@ export interface RegistrarClassificacaoInput {
   descricao?: string | null;
   cnpj?: string | null;
   parceiro_id?: string | null;
-  categoria_id: string;
+  plano_contas_id: string;
   origem?: string;
 }
 
@@ -79,7 +79,7 @@ export async function registrarClassificacao(
     p_descricao: input.descricao || null,
     p_cnpj: input.cnpj || null,
     p_parceiro_id: input.parceiro_id || null,
-    p_categoria_id: input.categoria_id,
+    p_plano_contas_id: input.plano_contas_id,
     p_origem: input.origem || "manual",
     p_user_id: user?.id || null,
   });
@@ -117,7 +117,7 @@ export function useRegrasAtivas() {
         .from("regras_categorizacao")
         .select(`
           id, parceiro_id, cnpj_emitente, ncm_prefixo, descricao_contem,
-          token_principal, conta_plano_id, centro_custo_id, prioridade,
+          token_principal, plano_contas_id, centro_custo_id, prioridade,
           confianca, vezes_aplicada, vezes_corrigida, escopo_origem,
           aprendida_automaticamente,
           conta:plano_contas(id, codigo, nome)
@@ -138,7 +138,7 @@ export interface RegraEngine {
   ncm_prefixo: string | null;
   descricao_contem: string | null;
   token_principal: string | null;
-  conta_plano_id: string;
+  plano_contas_id: string;
   centro_custo_id: string | null;
   prioridade: number;
   confianca: number;
@@ -261,7 +261,7 @@ export function sugerirNoClient(
   const escolhida = candidatas[0];
   return {
     regra_id: escolhida.r.id,
-    categoria_id: escolhida.r.conta_plano_id,
+    plano_contas_id: escolhida.r.plano_contas_id,
     centro_custo_id: escolhida.r.centro_custo_id,
     confianca: escolhida.r.confianca,
     tipo_match: escolhida.tipo,
@@ -305,14 +305,14 @@ function extrairToken(desc: string): string | null {
  * @param descricao - texto livre do lançamento
  * @param cnpj - CNPJ do estabelecimento (se houver)
  * @param parceiro_id - ID do parceiro (se houver)
- * @param categoria_id - categoria escolhida
+ * @param plano_contas_id - categoria escolhida
  * @param origem - origem do lançamento (cartao, nf, extrato, manual)
  */
 export async function classificarComAprendizado(args: {
   descricao?: string | null;
   cnpj?: string | null;
   parceiro_id?: string | null;
-  categoria_id: string;
+  plano_contas_id: string;
   origem?: string;
 }): Promise<void> {
   // Fire and forget - não bloqueia o usuário

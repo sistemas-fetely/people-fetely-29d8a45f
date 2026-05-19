@@ -18,7 +18,7 @@ export type Lancamento = {
   fornecedor_cliente: string | null;
   parceiro_id: string | null;
   forma_pagamento_id: string | null;
-  categoria_id: string | null;
+  plano_contas_id: string | null;
   unidade: string | null;
   nf_numero: string | null;
   origem_view: "conta_pagar" | "cartao_lancamento";
@@ -91,9 +91,9 @@ export function getQualidadeDocumento(
  * ÍCONE 2 — Categoria
  */
 export function getQualidadeCategoria(m: {
-  categoria_id: string | null;
+  plano_contas_id: string | null;
 }): { cor: "verde" | "vermelho"; temCategoria: boolean; motivo: string } {
-  const temCat = m.categoria_id !== null;
+  const temCat = m.plano_contas_id !== null;
   return temCat
     ? { cor: "verde", temCategoria: true, motivo: "Categoria definida" }
     : { cor: "vermelho", temCategoria: false, motivo: "Sem categoria" };

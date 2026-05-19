@@ -65,7 +65,7 @@ type Conta = {
   status: string;
   fornecedor_cliente: string | null;
   parceiro_id: string | null;
-  conta_id: string | null;
+  plano_contas_id: string | null;
   centro_custo_id: string | null;
   centros_custo?: { codigo: string; nome: string } | null;
   linhas_investimento?: {
@@ -253,7 +253,7 @@ export default function ContaPagarDetalheDrawer({
       const { data, error } = await supabase
         .from("contas_pagar_receber")
         .select(
-          `*, plano_contas:conta_id(codigo,nome), formas_pagamento:forma_pagamento_id(nome,codigo,cobra_email,pula_aprovacao), meios_pagamento:meio_pagamento_id(codigo), parceiros_comerciais:parceiro_id(razao_social), centros_custo:centro_custo_id(codigo,nome), linhas_investimento:linha_investimento_id(descricao, temas_investimento:tema_id(nome, frentes_investimento:frente_id(nome)))`
+          `*, plano_contas:plano_contas_id(codigo,nome), formas_pagamento:forma_pagamento_id(nome,codigo,cobra_email,pula_aprovacao), meios_pagamento:meio_pagamento_id(codigo), parceiros_comerciais:parceiro_id(razao_social), centros_custo:centro_custo_id(codigo,nome), linhas_investimento:linha_investimento_id(descricao, temas_investimento:tema_id(nome, frentes_investimento:frente_id(nome)))`
         )
         .eq("id", contaId!)
         .single();
@@ -313,7 +313,7 @@ export default function ContaPagarDetalheDrawer({
     queryFn: async () => {
       const { data, error } = await supabase
         .from("contas_pagar_itens")
-        .select("id, descricao, ncm, quantidade, unidade, valor_total, conta_plano_id, plano_contas:conta_plano_id(codigo, nome)")
+        .select("id, descricao, ncm, quantidade, unidade, valor_total, plano_contas_id, plano_contas:plano_contas_id(codigo, nome)")
         .eq("conta_id", contaId!);
       if (error) throw error;
       return (data || []) as Array<{
@@ -323,7 +323,7 @@ export default function ContaPagarDetalheDrawer({
         quantidade: number | null;
         unidade: string | null;
         valor_total: number | null;
-        conta_plano_id: string | null;
+        plano_contas_id: string | null;
         plano_contas?: { codigo?: string | null; nome?: string | null } | null;
       }>;
     },
@@ -331,7 +331,7 @@ export default function ContaPagarDetalheDrawer({
 
   const temCategoriasMultiplas = (() => {
     if (!itens || itens.length < 2) return false;
-    const cats = new Set(itens.map((i) => i.conta_plano_id || "_sem"));
+    const cats = new Set(itens.map((i) => i.plano_contas_id || "_sem"));
     return cats.size > 1;
   })();
 
@@ -442,7 +442,7 @@ export default function ContaPagarDetalheDrawer({
                     id: conta.id,
                     descricao: conta.descricao,
                     data_vencimento: conta.data_vencimento,
-                    conta_id: conta.conta_id,
+                    plano_contas_id: conta.plano_contas_id,
                     centro_custo_id: conta.centro_custo_id,
                     forma_pagamento_id: conta.forma_pagamento_id,
                     observacao: conta.observacao ?? null,

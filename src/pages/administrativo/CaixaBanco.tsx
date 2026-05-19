@@ -100,7 +100,7 @@ type Receita = {
   data_transacao: string;
   descricao: string | null;
   valor: number;
-  conta_plano_id: string | null;
+  plano_contas_id: string | null;
   centro_custo_id: string | null;
   conta_bancaria_id: string;
   origem: string | null;
@@ -181,7 +181,7 @@ export default function CaixaBanco() {
       let q = (supabase as any)
         .from("movimentacoes_bancarias")
         .select(
-          "id, data_transacao, descricao, valor, conta_plano_id, centro_custo_id, conta_bancaria_id, origem",
+          "id, data_transacao, descricao, valor, plano_contas_id, centro_custo_id, conta_bancaria_id, origem",
         )
         .eq("tipo", "credito")
         .is("conta_pagar_id", null);
@@ -750,7 +750,7 @@ export default function CaixaBanco() {
                   </TableHeader>
                   <TableBody>
                     {receitasFiltradas.map((r) => {
-                      const cat = (categorias || []).find((c) => c.id === r.conta_plano_id);
+                      const cat = (categorias || []).find((c) => c.id === r.plano_contas_id);
                       const cb = (contasBancarias || []).find((b) => b.id === r.conta_bancaria_id);
                       return (
                         <TableRow key={r.id}>
@@ -817,7 +817,7 @@ export default function CaixaBanco() {
                     const dias = diasAtraso(l);
                     const formaId = l.forma_pagamento_id;
                     const formaNome = formaId ? mapFormas[formaId] : null;
-                    const categoriaNome = l.categoria_id && mapCategorias[l.categoria_id];
+                    const categoriaNome = l.plano_contas_id && mapCategorias[l.plano_contas_id];
                     const flags = statusFlagsMap.get(l.id);
                     const remessa = contadorMap?.get(l.id);
                     const enviadoContador = !!remessa;

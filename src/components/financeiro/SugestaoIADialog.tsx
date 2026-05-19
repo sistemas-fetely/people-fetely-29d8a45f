@@ -19,7 +19,7 @@ interface Props {
 }
 
 interface Sugestao {
-  categoria_id: string;
+  plano_contas_id: string;
   categoria_codigo: string;
   categoria_nome: string;
   score: number;
@@ -128,7 +128,7 @@ export default function SugestaoIADialog({ movId, onClose, onApply }: Props) {
           ) : (
             sugestoes.map((s) => (
               <div
-                key={s.categoria_id}
+                key={s.plano_contas_id}
                 className="border rounded-md p-3 hover:bg-muted/30"
               >
                 <div className="flex items-start gap-3">
@@ -154,7 +154,7 @@ export default function SugestaoIADialog({ movId, onClose, onApply }: Props) {
                   </div>
                   <Button
                     size="sm"
-                    onClick={() => handleAplicar(s.categoria_id)}
+                    onClick={() => handleAplicar(s.plano_contas_id)}
                     disabled={aplicando}
                     className="gap-1 bg-emerald-600 hover:bg-emerald-700"
                   >

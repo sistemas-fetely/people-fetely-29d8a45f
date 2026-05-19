@@ -60,7 +60,7 @@ export interface ItemCobertoInput {
 
 export interface RegistrarCompraInput {
   pedido_id: string;
-  conta_id: string | null;
+  plano_contas_id: string | null;
   parceiro_id: string;
   valor_total: number;
   data_compra: string;
