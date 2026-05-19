@@ -23,6 +23,7 @@ import {
   Sparkles,
   Search,
   Zap,
+  Upload,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
@@ -33,6 +34,7 @@ import {
   type ContaPagarParaMatch,
 } from "@/lib/financeiro/match-engine";
 import { BuscarMatchManualDialog } from "@/components/financeiro/BuscarMatchManualDialog";
+import { ImportarOFXDialog } from "@/components/financeiro/ImportarOFXDialog";
 
 type Movimentacao = {
   id: string;
@@ -84,6 +86,7 @@ export default function Conciliacao() {
   const [conciliando, setConciliando] = useState<Set<string>>(new Set());
   const [buscarMatchOpen, setBuscarMatchOpen] = useState(false);
   const [movParaBusca, setMovParaBusca] = useState<Movimentacao | null>(null);
+  const [importOfxOpen, setImportOfxOpen] = useState(false);
 
   const { data: contasBancarias } = useQuery({
     queryKey: ["contas-bancarias-conciliacao"],
@@ -305,6 +308,15 @@ export default function Conciliacao() {
                 </SelectContent>
               </Select>
             </div>
+
+            <Button
+              variant="outline"
+              onClick={() => setImportOfxOpen(true)}
+              className="gap-2"
+            >
+              <Upload className="h-4 w-4" />
+              Importar OFX
+            </Button>
 
             {contaBancariaId && movsComSugestao.length > 0 && (
               <Button
@@ -580,6 +592,16 @@ export default function Conciliacao() {
             confirmarMatch(movParaBusca.id, contaId);
             setBuscarMatchOpen(false);
           }
+        }}
+      />
+
+      <ImportarOFXDialog
+        open={importOfxOpen}
+        onOpenChange={setImportOfxOpen}
+        onSuccess={() => {
+          qc.invalidateQueries({ queryKey: ["movs-nao-conciliadas", contaBancariaId] });
+          qc.invalidateQueries({ queryKey: ["contas-para-match"] });
+          qc.invalidateQueries({ queryKey: ["lancamentos-caixa-banco"] });
         }}
       />
     </div>
