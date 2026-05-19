@@ -162,7 +162,7 @@ export function ImportarNFDespesaDialog({
           valor: valorDaParcela(nf.valor, data.parcelas, i),
           data_vencimento: venc,
           nf_data_emissao: nf.dataEmissao,
-          conta_id: nf.categoriaId,
+          plano_contas_id: nf.categoriaId,
           parceiro_id: nf.parceiroId,
           fornecedor_cliente: nf.fornecedor,
           forma_pagamento_id: data.formaPgtoId,
