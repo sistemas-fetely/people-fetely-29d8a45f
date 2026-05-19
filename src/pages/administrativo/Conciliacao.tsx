@@ -23,6 +23,7 @@ import {
   Sparkles,
   Search,
   Zap,
+  Upload,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
