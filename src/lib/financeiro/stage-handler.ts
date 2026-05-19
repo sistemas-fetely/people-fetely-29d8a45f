@@ -100,7 +100,7 @@ export async function moverParaStage(
             valor: nf.valor || 0,
             data_vencimento: nf.nf_data_vencimento || null,
             nf_data_emissao: nf.nf_data_emissao || null,
-            conta_id: nf._plano_contas_id || null,
+            plano_contas_id: nf._plano_contas_id || null,
             parceiro_id: nf._parceiro_id_resolvido || null,
             fornecedor_cliente: nf.fornecedor_nome || null,
             parcelas: 1,

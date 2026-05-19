@@ -178,10 +178,10 @@ export async function importarNFs(nfs: NFParsed[]): Promise<ImportResult> {
           const { count } = await supabase
             .from("contas_pagar_itens")
             .select("id", { count: "exact", head: true })
-            .eq("conta_id", contaId);
+            .eq("conta_pagar_id", contaId);
           if (!count || count === 0) {
             const itensInsert = nf.itens.map((item) => ({
-              conta_id: contaId,
+              conta_pagar_id: contaId,
               codigo_produto: item.codigo_produto || null,
               descricao: item.descricao,
               ncm: item.ncm || null,
@@ -299,7 +299,7 @@ export async function importarNFs(nfs: NFParsed[]): Promise<ImportResult> {
       // 4. Itens (se existirem)
       if (nf.itens && nf.itens.length > 0 && contaCriada) {
         const itensInsert = nf.itens.map((item) => ({
-          conta_id: contaCriada.id,
+          conta_pagar_id: contaCriada.id,
           codigo_produto: item.codigo_produto || null,
           descricao: item.descricao,
           ncm: item.ncm || null,
