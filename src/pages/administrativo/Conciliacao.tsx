@@ -309,6 +309,15 @@ export default function Conciliacao() {
               </Select>
             </div>
 
+            <Button
+              variant="outline"
+              onClick={() => setImportOfxOpen(true)}
+              className="gap-2"
+            >
+              <Upload className="h-4 w-4" />
+              Importar OFX
+            </Button>
+
             {contaBancariaId && movsComSugestao.length > 0 && (
               <Button
                 onClick={conciliarTodosFortes}
