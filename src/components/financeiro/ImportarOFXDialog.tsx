@@ -201,7 +201,7 @@ export function ImportarOFXDialog({ open, onOpenChange, onSuccess }: Props) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { error: errLote } = await (supabase as any)
           .from("ofx_transacoes_stage")
-          .insert(lote);
+          .upsert(lote, { onConflict: "hash_unico", ignoreDuplicates: true });
         if (errLote) throw errLote;
       }
 
