@@ -86,6 +86,7 @@ export default function Conciliacao() {
   const [conciliando, setConciliando] = useState<Set<string>>(new Set());
   const [buscarMatchOpen, setBuscarMatchOpen] = useState(false);
   const [movParaBusca, setMovParaBusca] = useState<Movimentacao | null>(null);
+  const [importOfxOpen, setImportOfxOpen] = useState(false);
 
   const { data: contasBancarias } = useQuery({
     queryKey: ["contas-bancarias-conciliacao"],
