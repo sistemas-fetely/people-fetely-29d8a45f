@@ -11,10 +11,15 @@ import {
 import {
   Loader2, CheckCircle2, Link2, Plus, ChevronDown, ChevronUp,
   Sparkles, Clock, AlertCircle, Layers, ArrowLeftRight, Upload,
+  FileSpreadsheet, Inbox, ArrowRight,
 } from "lucide-react";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
 import { CriarCPRAvulsaDialog } from "@/components/financeiro/CriarCPRAvulsaDialog";
 import { ImportarOFXDialog } from "@/components/financeiro/ImportarOFXDialog";
+import { ImportadorItauPagamentos } from "@/components/financeiro/ImportadorItauPagamentos";
+import {
+  Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription,
+} from "@/components/ui/sheet";
 import { Link } from "react-router-dom";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
@@ -87,6 +92,7 @@ export default function Conciliacao() {
   const [movsSelecionadas, setMovsSelecionadas] = useState<string[]>([]);
   const [parciaisExpandidos, setParciaisExpandidos] = useState<Set<string>>(new Set());
   const [importOfxOpen, setImportOfxOpen] = useState(false);
+  const [importPlanilhaOpen, setImportPlanilhaOpen] = useState(false);
 
   const { data: contas } = useQuery({
     queryKey: ["contas-bancarias-conciliacao"],
@@ -144,7 +150,35 @@ export default function Conciliacao() {
 
   const invalidar = () => {
     qc.invalidateQueries({ queryKey: ["conciliacao-unificada", contaBancariaId] });
+    qc.invalidateQueries({ queryKey: ["ofx-stage-count", contaBancariaId] });
+    qc.invalidateQueries({ queryKey: ["planilha-stage-count", contaBancariaId] });
   };
+
+  const { data: ofxStageCount } = useQuery({
+    queryKey: ["ofx-stage-count", contaBancariaId],
+    enabled: !!contaBancariaId,
+    queryFn: async () => {
+      const { count } = await sb
+        .from("ofx_transacoes_stage")
+        .select("id", { count: "exact", head: true })
+        .eq("conta_bancaria_id", contaBancariaId)
+        .eq("status", "pendente");
+      return count ?? 0;
+    },
+  });
+
+  const { data: planilhaStageCount } = useQuery({
+    queryKey: ["planilha-stage-count", contaBancariaId],
+    enabled: !!contaBancariaId,
+    queryFn: async () => {
+      const { count } = await sb
+        .from("itau_pagamentos_stage")
+        .select("id", { count: "exact", head: true })
+        .eq("conta_bancaria_id", contaBancariaId)
+        .eq("status", "pendente");
+      return count ?? 0;
+    },
+  });
 
   const vincularMutation = useMutation({
     mutationFn: async ({
@@ -301,6 +335,15 @@ export default function Conciliacao() {
         >
           <Upload className="h-4 w-4" />
           Importar OFX
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setImportPlanilhaOpen(true)}
+          className="gap-2"
+        >
+          <FileSpreadsheet className="h-4 w-4" />
+          Importar Planilha
         </Button>
       </div>
 
@@ -713,13 +756,50 @@ export default function Conciliacao() {
             </div>
           )}
 
+          {(ofxStageCount ?? 0) + (planilhaStageCount ?? 0) > 0 && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {(ofxStageCount ?? 0) > 0 && (
+                <Link
+                  to="/administrativo/ofx-stage"
+                  className="rounded-md border border-amber-200 bg-amber-50 hover:bg-amber-100 transition-colors p-4 flex items-center gap-3"
+                >
+                  <Inbox className="h-5 w-5 text-amber-700 shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-amber-900">
+                      {ofxStageCount} {ofxStageCount === 1 ? "transação OFX pendente" : "transações OFX pendentes"}
+                    </p>
+                    <p className="text-xs text-amber-700">Validar em Stage OFX</p>
+                  </div>
+                  <ArrowRight className="h-4 w-4 text-amber-700 shrink-0" />
+                </Link>
+              )}
+              {(planilhaStageCount ?? 0) > 0 && (
+                <Link
+                  to="/administrativo/conciliacao/stage-1"
+                  className="rounded-md border border-amber-200 bg-amber-50 hover:bg-amber-100 transition-colors p-4 flex items-center gap-3"
+                >
+                  <FileSpreadsheet className="h-5 w-5 text-amber-700 shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-amber-900">
+                      {planilhaStageCount} {planilhaStageCount === 1 ? "planilha Itaú pendente" : "planilhas Itaú pendentes"}
+                    </p>
+                    <p className="text-xs text-amber-700">Conciliar em Stage 1 — Planilha ↔ Movimentação</p>
+                  </div>
+                  <ArrowRight className="h-4 w-4 text-amber-700 shrink-0" />
+                </Link>
+              )}
+            </div>
+          )}
+
           {itens.length === 0 && lotes.length === 0 && (
             <Card>
               <CardContent className="py-12 text-center space-y-2">
                 <Sparkles className="h-8 w-8 mx-auto text-muted-foreground" />
-                <p className="text-sm text-muted-foreground">Nenhuma planilha pendente nesta conta.</p>
+                <p className="text-sm text-muted-foreground">Nenhum match pronto pra conciliar nesta conta.</p>
                 <p className="text-xs text-muted-foreground">
-                  Importe uma planilha em <Link to="/administrativo/importar" className="underline">Importar Dados</Link>.
+                  {((ofxStageCount ?? 0) + (planilhaStageCount ?? 0) > 0)
+                    ? "Há dados em Stage aguardando processamento (acima)."
+                    : <>Importe uma planilha ou OFX nos botões acima.</>}
                 </p>
               </CardContent>
             </Card>
@@ -749,6 +829,20 @@ export default function Conciliacao() {
         onOpenChange={setImportOfxOpen}
         onSuccess={invalidar}
       />
+
+      <Sheet open={importPlanilhaOpen} onOpenChange={setImportPlanilhaOpen}>
+        <SheetContent className="w-full sm:max-w-2xl overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>Importar Planilha Itaú Pagamentos</SheetTitle>
+            <SheetDescription>
+              Suba a planilha de pagamentos efetuados (exportada do Itaú). As linhas pendentes aparecerão como Stage 1.
+            </SheetDescription>
+          </SheetHeader>
+          <div className="py-4">
+            <ImportadorItauPagamentos />
+          </div>
+        </SheetContent>
+      </Sheet>
 
       <Dialog open={!!multiVinculoAberto} onOpenChange={(v) => { if (!v) { setMultiVinculoAberto(null); setMovsSelecionadas([]); } }}>
         <DialogContent className="max-w-2xl">
