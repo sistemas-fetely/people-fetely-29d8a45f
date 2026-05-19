@@ -75,7 +75,7 @@ export default function SugestaoIADialog({ movId, onClose, onApply }: Props) {
       const { error } = await (supabase as any)
         .from("contas_pagar_receber")
         .update({
-          conta_id: catId,
+          plano_contas_id: catId,
           categoria_confirmada: true,
           categoria_sugerida_ia: false,
           updated_at: new Date().toISOString(),

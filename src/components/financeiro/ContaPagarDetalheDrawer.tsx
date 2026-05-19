@@ -314,7 +314,7 @@ export default function ContaPagarDetalheDrawer({
       const { data, error } = await supabase
         .from("contas_pagar_itens")
         .select("id, descricao, ncm, quantidade, unidade, valor_total, plano_contas_id, plano_contas:plano_contas_id(codigo, nome)")
-        .eq("conta_id", contaId!);
+        .eq("conta_pagar_id", contaId!);
       if (error) throw error;
       return (data || []) as Array<{
         id: string;
