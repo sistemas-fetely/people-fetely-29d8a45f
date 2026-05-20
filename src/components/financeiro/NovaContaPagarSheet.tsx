@@ -88,6 +88,7 @@ export function NovaContaPagarSheet({ open, onOpenChange, initialData }: Props) 
   const [linhaInvestimentoId, setLinhaInvestimentoId] = useState<string | null>(null);
   const [unidadeId, setUnidadeId] = useState<string | null>(null);
   const [formaPgtoId, setFormaPgtoId] = useState<string>("");
+  const [cartaoId, setCartaoId] = useState<string>("");
   const [parcelas, setParcelas] = useState(1);
   const [nfStageId, setNfStageId] = useState<string | null>(null);
   const [nfStageBuscaOpen, setNfStageBuscaOpen] = useState(false);
@@ -210,6 +211,26 @@ export function NovaContaPagarSheet({ open, onOpenChange, initialData }: Props) 
     },
   });
 
+  const { data: cartoes } = useQuery({
+    queryKey: ["cartoes-credito-ativos"],
+    enabled: open,
+    queryFn: async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase as any)
+        .from("cartoes_credito")
+        .select("id, nome, ultimos_digitos, ativo")
+        .eq("ativo", true)
+        .order("nome");
+      if (error) throw error;
+      return (data || []) as Array<{
+        id: string;
+        nome: string;
+        ultimos_digitos: string | null;
+        ativo: boolean;
+      }>;
+    },
+  });
+
   // Auto preenche categoria/centro/dados bancários se parceiro tem
   useEffect(() => {
     if (!parceiroId || !parceiros) return;
@@ -296,8 +317,19 @@ export function NovaContaPagarSheet({ open, onOpenChange, initialData }: Props) 
     codFormaPgto === "transferencia" ||
     codFormaPgto === "transferencia_bancaria" ||
     codFormaPgto === "doc";
+  // Modelo 3D — cartão é instância específica de meio
+  const exigeCartao =
+    codFormaPgto === "cartao_credito" ||
+    codFormaPgto === "cartao_debito" ||
+    codFormaPgto.includes("cartao") ||
+    codFormaPgto.includes("cartão");
   const mostrarCamposBancarios =
     !!parceiroId && (exigePix || exigeBanco) && (!parceiroJaTemDados || editandoDadosBancarios);
+
+  // Limpa cartão se forma de pagamento muda pra não-cartão
+  useEffect(() => {
+    if (!exigeCartao && cartaoId) setCartaoId("");
+  }, [exigeCartao, cartaoId]);
 
   // Vindo de boleto via import: trava parcelas + bloqueia valor/vencimento
   const veioDeBoleto = !!initialData?.nfStageDocumentoId;
@@ -309,7 +341,10 @@ export function NovaContaPagarSheet({ open, onOpenChange, initialData }: Props) 
       if (!valorNum || valorNum <= 0) throw new Error("Valor inválido");
       if (!dataVenc) throw new Error("Data de vencimento obrigatória");
 
-      // Validações de dados bancários conforme forma de pagamento
+      // Validações específicas por forma de pagamento
+      if (exigeCartao && !cartaoId) {
+        throw new Error("Cartão é obrigatório quando forma de pagamento é Cartão");
+      }
       if (exigePix && !pixChave.trim()) {
         throw new Error("Chave PIX é obrigatória para pagamento via PIX");
       }
@@ -344,6 +379,7 @@ export function NovaContaPagarSheet({ open, onOpenChange, initialData }: Props) 
           linha_investimento_id: linhaInvestimentoId,
           unidade_id: unidadeId,
           forma_pagamento_id: formaPgtoId || null,
+          cartao_id: cartaoId || null,
           parcelas,
           parcela_atual: i + 1,
           parcela_grupo_id: grupoId,
@@ -660,6 +696,30 @@ export function NovaContaPagarSheet({ open, onOpenChange, initialData }: Props) 
                   )}
                 </div>
               </div>
+
+              {exigeCartao && (
+                <div>
+                  <Label>Cartão *</Label>
+                  <Select value={cartaoId || "_none"} onValueChange={(v) => setCartaoId(v === "_none" ? "" : v)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o cartão" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="_none">— Selecione —</SelectItem>
+                      {cartoes?.map((c) => (
+                        <SelectItem key={c.id} value={c.id}>
+                          {c.nome}{c.ultimos_digitos ? ` ····${c.ultimos_digitos}` : ""}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {(!cartoes || cartoes.length === 0) && (
+                    <p className="text-[10px] text-muted-foreground mt-1">
+                      Nenhum cartão ativo cadastrado.
+                    </p>
+                  )}
+                </div>
+              )}
 
               {parcelas > 1 && valorNum > 0 && (
                 <p className="text-xs text-muted-foreground">
