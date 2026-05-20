@@ -300,7 +300,9 @@ export default function ContasPagar() {
     );
     const aguardando = lista.filter((c) => c.status === "enviado_para_pagamento");
     const pendencia = lista.filter(
-      (c) => pendenciaMap.has(c.id) || temPendenciaNF(c.id),
+      (c) =>
+        !["cancelado", "realizada"].includes(c.status) &&
+        (pendenciaMap.has(c.id) || temPendenciaNF(c.id)),
     );
     const sumValor = (arr: Conta[]) => arr.reduce((s, c) => s + Number(c.valor || 0), 0);
     return {
@@ -325,7 +327,11 @@ export default function ContasPagar() {
     } else if (kpiFilter === "aguardando") {
       lista = lista.filter((c) => c.status === "enviado_para_pagamento");
     } else if (kpiFilter === "pendencia") {
-      lista = lista.filter((c) => pendenciaMap.has(c.id) || temPendenciaNF(c.id));
+      lista = lista.filter(
+        (c) =>
+          !["cancelado", "realizada"].includes(c.status) &&
+          (pendenciaMap.has(c.id) || temPendenciaNF(c.id)),
+      );
     }
     if (busca.trim()) {
       const b = busca.toLowerCase();
