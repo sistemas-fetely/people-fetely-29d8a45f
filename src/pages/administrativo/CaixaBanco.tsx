@@ -817,6 +817,9 @@ export default function CaixaBanco() {
                     const dias = diasAtraso(l);
                     const formaId = l.forma_pagamento_id;
                     const formaNome = formaId ? mapFormas[formaId] : null;
+                    // Modelo 3D: quando há cartão, mostra nome do cartão (instância)
+                    // em vez do meio genérico ("Cartão de Crédito").
+                    const meioDisplay = l.cartao_nome || formaNome;
                     const categoriaNome = l.plano_contas_id && mapCategorias[l.plano_contas_id];
                     const flags = statusFlagsMap.get(l.id);
                     const remessa = contadorMap?.get(l.id);
@@ -943,22 +946,23 @@ export default function CaixaBanco() {
                         <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
                           <div className="flex flex-col gap-0.5">
                             {(() => {
-                              if (!formaNome) return <span>—</span>;
-                              const ico = getMeioPagamentoIcon(formaNome);
+                              if (!meioDisplay) return <span>—</span>;
+                              // Ícone segue o tipo de meio (formaNome), texto usa nome do cartão se houver
+                              const ico = formaNome ? getMeioPagamentoIcon(formaNome) : null;
                               if (ico) {
                                 return (
                                   <span
                                     className="flex items-center gap-1.5 whitespace-nowrap"
-                                    title={formaNome}
+                                    title={meioDisplay}
                                   >
                                     <ico.Icon
                                       className={`h-4 w-4 ${ico.cor} shrink-0`}
                                     />
-                                    <span>{formaNome}</span>
+                                    <span>{meioDisplay}</span>
                                   </span>
                                 );
                               }
-                              return <span>{formaNome}</span>;
+                              return <span>{meioDisplay}</span>;
                             })()}
                             {l.fatura_id && (
                               <Badge

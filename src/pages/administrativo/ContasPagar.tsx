@@ -124,7 +124,7 @@ export default function ContasPagar() {
       const { data, error } = await supabase
         .from("vw_contas_pagar_consolidado")
         .select(
-          "*, plano_contas:plano_contas_id(codigo,nome), parceiros_comerciais:parceiro_id(razao_social), formas_pagamento:forma_pagamento_id(codigo,nome,cobra_email,pula_aprovacao), meios_pagamento:meio_pagamento_id(codigo)",
+          "*, plano_contas:plano_contas_id(codigo,nome), parceiros_comerciais:parceiro_id(razao_social), formas_pagamento:forma_pagamento_id(codigo,nome,cobra_email,pula_aprovacao), meios_pagamento:meio_pagamento_id(codigo), cartoes_credito:cartao_id(nome,ultimos_digitos)",
         )
         .order("data_vencimento", { ascending: true });
       if (error) throw error;
@@ -585,6 +585,13 @@ export default function ContasPagar() {
                   const parceiro =
                     c.parceiros_comerciais?.razao_social || c.fornecedor_cliente || "—";
                   const meio = c.formas_pagamento?.nome ?? null;
+                  // Modelo 3D: cartão específico tem precedência sobre forma genérica
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  const cartaoData = (c as any).cartoes_credito as { nome: string; ultimos_digitos: string | null } | null;
+                  const cartaoNome = cartaoData
+                    ? cartaoData.nome + (cartaoData.ultimos_digitos ? ` ····${cartaoData.ultimos_digitos}` : "")
+                    : null;
+                  const meioDisplay = cartaoNome || meio;
                   const ico = meio ? getMeioPagamentoIcon(meio) : null;
                   const pend = pendenciaMap.get(c.id);
                   const atrasada =
@@ -617,12 +624,12 @@ export default function ContasPagar() {
                         {meio ? (
                           <div className="flex flex-col gap-0.5">
                             {ico ? (
-                              <span className="flex items-center gap-1.5" title={meio}>
+                              <span className="flex items-center gap-1.5" title={meioDisplay || ""}>
                                 <ico.Icon className={cn("h-4 w-4 shrink-0", ico.cor)} />
-                                <span>{meio}</span>
+                                <span>{meioDisplay}</span>
                               </span>
                             ) : (
-                              <span>{meio}</span>
+                              <span>{meioDisplay}</span>
                             )}
                             {c.meios_pagamento?.codigo === "fatura_cartao" && faturaMap.has(c.id) && (
                               <span className="text-[10px] text-muted-foreground pl-5">

@@ -34,6 +34,8 @@ export type Lancamento = {
   meio_pagamento_id: string | null;
   conta_pagar_id: string | null;
   conta_bancaria_nome: string | null;
+  cartao_id: string | null;
+  cartao_nome: string | null;
 };
 
 export type ContaBancariaLite = {

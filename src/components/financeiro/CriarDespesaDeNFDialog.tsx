@@ -47,6 +47,7 @@ interface Props {
   processando?: boolean;
   onConfirmar: (data: {
     formaPgtoId: string | null;
+    cartaoId: string | null;
     parcelas: number;
     dataPrimeiraParcela: string;
   }) => Promise<void>;
@@ -86,6 +87,7 @@ export function CriarDespesaDeNFDialog({
   const parcelasDefault = temBoletos ? boletos!.length : 1;
 
   const [formaPgtoId, setFormaPgtoId] = useState<string>("");
+  const [cartaoId, setCartaoId] = useState<string>("");
   const [parcelas, setParcelas] = useState<number>(parcelasDefault);
   const [dataPrimeira, setDataPrimeira] = useState<string>(
     boletos?.[0]?.data_vencimento || nf.dataVencimento || nf.dataEmissao || "",
@@ -93,6 +95,7 @@ export function CriarDespesaDeNFDialog({
 
   useEffect(() => {
     setFormaPgtoId("");
+    setCartaoId("");
     setParcelas(parcelasDefault);
     setDataPrimeira(
       boletos?.[0]?.data_vencimento || nf.dataVencimento || nf.dataEmissao || "",
@@ -114,6 +117,40 @@ export function CriarDespesaDeNFDialog({
     },
   });
 
+  const { data: cartoes } = useQuery({
+    queryKey: ["cartoes-credito-ativos"],
+    enabled: open,
+    queryFn: async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase as any)
+        .from("cartoes_credito")
+        .select("id, nome, ultimos_digitos, ativo")
+        .eq("ativo", true)
+        .order("nome");
+      if (error) throw error;
+      return (data || []) as Array<{
+        id: string;
+        nome: string;
+        ultimos_digitos: string | null;
+        ativo: boolean;
+      }>;
+    },
+  });
+
+  // Modelo 3D — detectar quando forma é cartão
+  const formaSel = formasPgto?.find((f) => f.id === formaPgtoId);
+  const codFormaPgto = formaSel?.codigo?.toLowerCase() || "";
+  const exigeCartao =
+    codFormaPgto === "cartao_credito" ||
+    codFormaPgto === "cartao_debito" ||
+    codFormaPgto.includes("cartao") ||
+    codFormaPgto.includes("cartão");
+
+  // Limpa cartão quando forma muda pra não-cartão
+  useEffect(() => {
+    if (!exigeCartao && cartaoId) setCartaoId("");
+  }, [exigeCartao, cartaoId]);
+
   const valorParcelaPreview = useMemo(
     () => (parcelas > 0 ? valorDaParcela(nf.valor, parcelas, 0) : nf.valor),
     [nf.valor, parcelas],
@@ -121,8 +158,13 @@ export function CriarDespesaDeNFDialog({
 
   async function handleConfirmar() {
     if (!dataPrimeira) return;
+    if (exigeCartao && !cartaoId) {
+      alert("Cartão é obrigatório quando forma de pagamento é Cartão");
+      return;
+    }
     await onConfirmar({
       formaPgtoId: formaPgtoId || null,
+      cartaoId: cartaoId || null,
       parcelas,
       dataPrimeiraParcela: dataPrimeira,
     });
@@ -203,6 +245,30 @@ export function CriarDespesaDeNFDialog({
               </SelectContent>
             </Select>
           </div>
+
+          {exigeCartao && (
+            <div className="space-y-1.5">
+              <Label>Cartão *</Label>
+              <Select value={cartaoId || "_none"} onValueChange={(v) => setCartaoId(v === "_none" ? "" : v)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o cartão" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="_none">— Selecione —</SelectItem>
+                  {cartoes?.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.nome}{c.ultimos_digitos ? ` ····${c.ultimos_digitos}` : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {(!cartoes || cartoes.length === 0) && (
+                <p className="text-[10px] text-muted-foreground">
+                  Nenhum cartão ativo cadastrado.
+                </p>
+              )}
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">

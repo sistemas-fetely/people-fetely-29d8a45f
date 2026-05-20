@@ -132,6 +132,7 @@ export function ImportarNFDespesaDialog({
 
   async function criarDespesa(data: {
     formaPgtoId: string | null;
+    cartaoId: string | null;
     parcelas: number;
     dataPrimeiraParcela: string;
   }) {
@@ -166,6 +167,7 @@ export function ImportarNFDespesaDialog({
           parceiro_id: nf.parceiroId,
           fornecedor_cliente: nf.fornecedor,
           forma_pagamento_id: data.formaPgtoId,
+          cartao_id: data.cartaoId,
           parcelas: data.parcelas,
           parcela_atual: i + 1,
           parcela_grupo_id: grupoId,
