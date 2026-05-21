@@ -293,12 +293,36 @@ export default function Conciliacao() {
     onError: (e: any) => toast.error("Erro: " + e.message),
   });
 
-  const conciliarSemMovMutation = useMutation({
-    mutationFn: async ({ planilhaId, ofxId }: { planilhaId: string; ofxId: string }) => {
+  const [faturaSelecionada, setFaturaSelecionada] = useState<string | null>(null);
+
+  const { data: faturasDisponiveis } = useQuery({
+    queryKey: ["faturas-disponiveis", confirmacaoAberta?.planilha_id],
+    enabled: !!confirmacaoAberta,
+    queryFn: async () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data, error } = await (sb as any).rpc("conciliar_semov_com_ofx", {
+      const { data, error } = await (sb as any).rpc("listar_faturas_disponiveis_para_planilha", {
+        p_planilha_id: confirmacaoAberta!.planilha_id,
+      });
+      if (error) throw error;
+      return (data || []) as Array<{
+        fatura_id: string;
+        cartao_nome: string;
+        data_vencimento: string;
+        valor_total: number;
+        qtd_lancamentos: number;
+        ja_vinculada: boolean;
+        parceiros: string;
+      }>;
+    },
+  });
+
+  const conciliarFaturaMutation = useMutation({
+    mutationFn: async ({ planilhaId, faturaId, ofxId }: { planilhaId: string; faturaId: string; ofxId?: string }) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (sb as any).rpc("conciliar_semov_fatura", {
         p_planilha_id: planilhaId,
-        p_ofx_id: ofxId,
+        p_fatura_id: faturaId,
+        p_ofx_id: ofxId ?? null,
       });
       if (error) throw error;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -306,7 +330,9 @@ export default function Conciliacao() {
       return data;
     },
     onSuccess: () => {
-      toast.success("Conciliado ✓ — movimentação criada a partir do OFX");
+      toast.success("Fatura vinculada ✓ — conciliação completa");
+      setConfirmacaoAberta(null);
+      setFaturaSelecionada(null);
       invalidar();
     },
     onError: (e: any) => toast.error("Erro: " + e.message),
