@@ -760,7 +760,7 @@ export default function Conciliacao() {
                           <Button
                             size="sm"
                             className="bg-emerald-600 hover:bg-emerald-700 text-white gap-1"
-                            disabled={conciliarSemMovMutation.isPending}
+                            disabled={conciliarFaturaMutation.isPending}
                             onClick={() => setConfirmacaoAberta(item)}
                           >
                             <Link2 className="h-3 w-3" />
