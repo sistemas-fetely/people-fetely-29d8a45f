@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -174,6 +174,7 @@ export default function Conciliacao() {
 
   const invalidar = () => {
     qc.invalidateQueries({ queryKey: ["conciliacao-unificada", contaBancariaId] });
+    qc.invalidateQueries({ queryKey: ["lancamentos-caixa-banco"] });
   };
 
   const vincularMutation = useMutation({
@@ -337,6 +338,25 @@ export default function Conciliacao() {
     },
     onError: (e: any) => toast.error("Erro: " + e.message),
   });
+
+  const faturasOrdenadas = useMemo(() => {
+    if (!faturasDisponiveis || !confirmacaoAberta) return [];
+    const valorPlanilha = Number(confirmacaoAberta.valor_pago ?? 0);
+    return faturasDisponiveis
+      .map((f) => {
+        const diferenca = Math.abs(Number(f.valor_total) - valorPlanilha);
+        return {
+          ...f,
+          matchExato: diferenca < 0.005,
+          diferenca,
+        };
+      })
+      .sort((a, b) => {
+        if (a.ja_vinculada !== b.ja_vinculada) return a.ja_vinculada ? 1 : -1;
+        if (a.matchExato !== b.matchExato) return a.matchExato ? -1 : 1;
+        return a.diferenca - b.diferenca;
+      });
+  }, [faturasDisponiveis, confirmacaoAberta]);
 
   const itens = resultado?.itens ?? [];
   const aguardandoOfx = resultado?.aguardando_ofx ?? [];
@@ -1106,32 +1126,41 @@ export default function Conciliacao() {
                   <p className="text-xs text-muted-foreground py-3 text-center">Nenhuma fatura disponível para vinculação.</p>
                 ) : (
                   <div className="space-y-2 max-h-80 overflow-y-auto">
-                    {faturasDisponiveis.map((f) => (
-                      <div
-                        key={f.fatura_id}
-                        onClick={() => !f.ja_vinculada && setFaturaSelecionada(f.fatura_id)}
-                        className={`p-3 rounded border cursor-pointer text-xs transition-colors ${
-                          f.ja_vinculada
-                            ? "opacity-50 cursor-not-allowed bg-muted/20"
-                            : faturaSelecionada === f.fatura_id
-                              ? "border-emerald-400 bg-emerald-50/40"
-                              : "hover:bg-muted/50"
-                        }`}
-                      >
-                        <div className="flex justify-between items-start gap-3">
-                          <div className="min-w-0 flex-1">
-                            <p className="font-semibold truncate">{f.cartao_nome}</p>
-                            <p className="text-muted-foreground truncate">{f.parceiros}</p>
-                            <p className="text-[10px] text-muted-foreground mt-0.5">Vence {formatDateBR(f.data_vencimento)} · {f.qtd_lancamentos} lançamentos</p>
-                          </div>
-                          <div className="flex flex-col items-end gap-1 shrink-0">
-                            <p className="font-mono font-bold">{formatBRL(f.valor_total)}</p>
-                            {f.ja_vinculada && <Badge variant="outline" className="text-[9px]">já vinculada</Badge>}
-                            {faturaSelecionada === f.fatura_id && <CheckCircle2 className="h-4 w-4 text-emerald-600" />}
+                    {faturasOrdenadas.map((f) => {
+                      const destaqueExato = f.matchExato && !f.ja_vinculada;
+                      const isSelecionada = faturaSelecionada === f.fatura_id;
+                      return (
+                        <div
+                          key={f.fatura_id}
+                          onClick={() => !f.ja_vinculada && setFaturaSelecionada(f.fatura_id)}
+                          className={`p-3 rounded border cursor-pointer text-xs transition-colors ${
+                            f.ja_vinculada
+                              ? "opacity-50 cursor-not-allowed bg-muted/20"
+                              : isSelecionada
+                                ? "border-emerald-500 bg-emerald-50/60"
+                                : destaqueExato
+                                  ? "border-emerald-400 bg-emerald-50/30 hover:bg-emerald-50/60"
+                                  : "hover:bg-muted/50"
+                          }`}
+                        >
+                          <div className="flex justify-between items-start gap-3">
+                            <div className="min-w-0 flex-1">
+                              <p className="font-semibold truncate">{f.cartao_nome}</p>
+                              <p className="text-muted-foreground truncate">{f.parceiros}</p>
+                              <p className="text-[10px] text-muted-foreground mt-0.5">Vence {formatDateBR(f.data_vencimento)} · {f.qtd_lancamentos} lançamentos</p>
+                            </div>
+                            <div className="flex flex-col items-end gap-1 shrink-0">
+                              <p className={`font-mono font-bold ${destaqueExato ? "text-emerald-700" : ""}`}>{formatBRL(f.valor_total)}</p>
+                              {destaqueExato && (
+                                <Badge className="bg-emerald-600 hover:bg-emerald-700 text-white text-[9px]">valor exato</Badge>
+                              )}
+                              {f.ja_vinculada && <Badge variant="outline" className="text-[9px]">já vinculada</Badge>}
+                              {isSelecionada && <CheckCircle2 className="h-4 w-4 text-emerald-600" />}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>
