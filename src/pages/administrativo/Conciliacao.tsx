@@ -113,6 +113,7 @@ export default function Conciliacao() {
   const [criarCPROfx, setCriarCPROfx] = useState<OfxOrfao | null>(null);
   const [multiVinculoAberto, setMultiVinculoAberto] = useState<ItemConciliacao | null>(null);
   const [movsSelecionadas, setMovsSelecionadas] = useState<string[]>([]);
+  const [confirmacaoAberta, setConfirmacaoAberta] = useState<ItemConciliacao | null>(null);
   const [parciaisExpandidos, setParciaisExpandidos] = useState<Set<string>>(new Set());
   const [importOfxOpen, setImportOfxOpen] = useState(false);
   const [importPlanilhaOpen, setImportPlanilhaOpen] = useState(false);
@@ -235,6 +236,35 @@ export default function Conciliacao() {
         fornecedor_cliente: string | null;
         forma_pagamento_nome: string | null;
         fatura_vencimento: string | null;
+      }>;
+    },
+  });
+
+  const { data: itensConciliados } = useQuery({
+    queryKey: ["conciliados", contaBancariaId],
+    enabled: !!contaBancariaId,
+    queryFn: async () => {
+      const { data, error } = await sb
+        .from("itau_pagamentos_stage")
+        .select(`
+          id, nome_favorecido, cnpj_favorecido, valor_pago, data_pagamento,
+          ofx_transacao_id, status_conciliacao,
+          ofx_transacoes_stage!ofx_transacao_id(descricao, data_transacao, valor)
+        `)
+        .eq("conta_bancaria_id", contaBancariaId)
+        .eq("status_conciliacao", "conciliado")
+        .order("data_pagamento", { ascending: false })
+        .limit(50);
+      if (error) throw error;
+      return (data || []) as Array<{
+        id: string;
+        nome_favorecido: string | null;
+        cnpj_favorecido: string | null;
+        valor_pago: number;
+        data_pagamento: string | null;
+        ofx_transacao_id: string | null;
+        status_conciliacao: string;
+        ofx_transacoes_stage: { descricao: string; data_transacao: string; valor: number } | null;
       }>;
     },
   });
@@ -705,18 +735,9 @@ export default function Conciliacao() {
                             size="sm"
                             className="bg-emerald-600 hover:bg-emerald-700 text-white gap-1"
                             disabled={conciliarSemMovMutation.isPending}
-                            onClick={() =>
-                              conciliarSemMovMutation.mutate({
-                                planilhaId: item.planilha_id,
-                                ofxId: item.ofx_sugerido!.id,
-                              })
-                            }
+                            onClick={() => setConfirmacaoAberta(item)}
                           >
-                            {conciliarSemMovMutation.isPending ? (
-                              <Loader2 className="h-3 w-3 animate-spin" />
-                            ) : (
-                              <Link2 className="h-3 w-3" />
-                            )}
+                            <Link2 className="h-3 w-3" />
                             Conciliar
                           </Button>
                         )}
@@ -1020,6 +1041,89 @@ export default function Conciliacao() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Dialog de confirmação */}
+      <Dialog open={!!confirmacaoAberta} onOpenChange={(v) => !v && setConfirmacaoAberta(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Link2 className="h-5 w-5 text-emerald-600" />
+              Confirmar conciliação
+            </DialogTitle>
+          </DialogHeader>
+          {confirmacaoAberta && (
+            <div className="space-y-3 py-2">
+              <div className="rounded-md border p-3 space-y-1 text-sm">
+                <p className="text-[10px] font-semibold uppercase text-muted-foreground">Planilha Itaú</p>
+                <p className="font-semibold">{confirmacaoAberta.nome_favorecido ?? "—"}</p>
+                <p className="text-muted-foreground text-xs">{confirmacaoAberta.cnpj_favorecido}</p>
+                <p className="font-mono font-bold text-base">{formatBRL(confirmacaoAberta.valor_pago)}</p>
+                <p className="text-xs text-muted-foreground">{confirmacaoAberta.data_pagamento ? formatDateBR(confirmacaoAberta.data_pagamento) : "—"}</p>
+              </div>
+              {confirmacaoAberta.ofx_sugerido && (
+                <div className="rounded-md border p-3 space-y-1 text-sm bg-muted/20">
+                  <p className="text-[10px] font-semibold uppercase text-muted-foreground">OFX detectado</p>
+                  <p className="font-medium truncate">{confirmacaoAberta.ofx_sugerido.descricao}</p>
+                  <p className="font-mono font-bold text-base">{formatBRL(confirmacaoAberta.ofx_sugerido.valor)}</p>
+                  <p className="text-xs text-muted-foreground">{formatDateBR(confirmacaoAberta.ofx_sugerido.data_transacao)}</p>
+                </div>
+              )}
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirmacaoAberta(null)}>
+              Cancelar
+            </Button>
+            <Button
+              className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2"
+              disabled={conciliarSemMovMutation.isPending}
+              onClick={() => {
+                if (!confirmacaoAberta?.ofx_sugerido) return;
+                conciliarSemMovMutation.mutate({
+                  planilhaId: confirmacaoAberta.planilha_id,
+                  ofxId: confirmacaoAberta.ofx_sugerido.id,
+                });
+                setConfirmacaoAberta(null);
+              }}
+            >
+              {conciliarSemMovMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Link2 className="h-4 w-4" />}
+              Confirmar conciliação
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Seção de itens conciliados */}
+      {itensConciliados && itensConciliados.length > 0 && (
+        <div className="space-y-2 pt-4 border-t">
+          <h2 className="text-sm font-semibold flex items-center gap-2 text-emerald-700">
+            <CheckCircle2 className="h-4 w-4" />
+            Conciliados ({itensConciliados.length})
+          </h2>
+          <div className="space-y-1">
+            {itensConciliados.map((item) => (
+              <div key={item.id} className="rounded-md border border-emerald-200 bg-emerald-50/30 p-3 text-xs flex items-center justify-between gap-4">
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold truncate">{item.nome_favorecido ?? "—"}</p>
+                  <p className="text-muted-foreground text-[10px]">{item.cnpj_favorecido}</p>
+                  {item.ofx_transacoes_stage && (
+                    <p className="text-muted-foreground text-[10px] truncate mt-0.5">
+                      OFX: {item.ofx_transacoes_stage.descricao} · {formatDateBR(item.ofx_transacoes_stage.data_transacao)}
+                    </p>
+                  )}
+                </div>
+                <div className="text-right shrink-0">
+                  <p className="font-mono font-bold">{formatBRL(item.valor_pago)}</p>
+                  <p className="text-[10px] text-muted-foreground">{item.data_pagamento ? formatDateBR(item.data_pagamento) : "—"}</p>
+                  <Badge variant="outline" className="text-[9px] border-emerald-400 text-emerald-700 bg-emerald-50 mt-0.5">
+                    Conciliado ✓
+                  </Badge>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
