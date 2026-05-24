@@ -314,7 +314,10 @@ export function RegistrarCompraDialog({
         !l.descricao_livre?.trim()
       ) {
         return "Item novo precisa de descrição";
+      if (l.tipo_linha === "desconto" && !l.descricao_livre?.trim()) {
+        return "Linha de desconto precisa de motivo (descrição)";
       }
+    }
     }
 
     const itensPendentes = pedido.pedidos_compra_itens.filter((i) => i.status === "pendente");
