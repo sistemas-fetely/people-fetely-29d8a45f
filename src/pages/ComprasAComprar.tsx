@@ -122,6 +122,56 @@ export default function ComprasAComprar() {
     return pedidos.filter((p) => (p.descricao_geral || "").toLowerCase().includes(q));
   }, [pedidos, busca]);
 
+  // Rascunhos ativos do comprador
+  const { data: rascunhosAtivos = [] } = useQuery({
+    queryKey: ["compras", "rascunhos-meus", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from("compras_registradas")
+        .select("id, pedido_id, valor_total, updated_at")
+        .eq("comprador_id", user!.id)
+        .eq("status", "rascunho");
+      return data || [];
+    },
+  });
+
+  const rascunhoPorPedido = useMemo(() => {
+    const map = new Map<string, { id: string; valor_total: number; updated_at: string }>();
+    for (const r of rascunhosAtivos as any[]) {
+      if (r.pedido_id) {
+        map.set(r.pedido_id, {
+          id: r.id,
+          valor_total: Number(r.valor_total),
+          updated_at: r.updated_at,
+        });
+      }
+    }
+    return map;
+  }, [rascunhosAtivos]);
+
+  const handleFinalizadoENova = async (pedidoAtualId: string) => {
+    if (!user) return;
+    const { data: proximos } = await supabase
+      .from("pedidos_compra")
+      .select(
+        "*, centros_custo(id, codigo, nome), linhas_investimento(id, descricao), parceiros_comerciais:parceiro_preferencial_id(id, nome_fantasia, razao_social), pedidos_compra_itens(*), pedidos_compra_anexos(*)",
+      )
+      .eq("status", "em_compra")
+      .eq("comprador_id", user.id)
+      .neq("id", pedidoAtualId)
+      .order("enviado_em", { ascending: true })
+      .limit(1);
+
+    if (proximos && proximos.length > 0) {
+      setPedidoParaRegistrar(proximos[0] as unknown as PedidoCompraFull);
+    } else {
+      setRegistrarOpen(false);
+      toast.success("Todos os pedidos finalizados. Mesa limpa.");
+    }
+  };
+
+
   if (!podeVer) {
     return (
       <div className="container mx-auto p-6">
