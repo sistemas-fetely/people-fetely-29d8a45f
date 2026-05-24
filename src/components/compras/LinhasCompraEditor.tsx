@@ -153,6 +153,7 @@ export function LinhasCompraEditor({ linhas, onChange, pedidoItens, readonly }: 
   };
 
   const cicloStatus = (linha: LinhaCompra) => {
+    if (linha.tipo_linha === "desconto") return;
     if (linha.status_linha === "comprada") {
       // → nao_comprada: zera
       updateLinha(linha._local_id, {
