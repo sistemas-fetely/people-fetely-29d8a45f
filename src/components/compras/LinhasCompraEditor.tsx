@@ -337,7 +337,11 @@ export function LinhasCompraEditor({ linhas, onChange, pedidoItens, readonly }: 
                           onChange={(e) =>
                             updateLinha(l._local_id, { descricao_livre: e.target.value })
                           }
-                          placeholder={tipoBadge[l.tipo_linha].label}
+                          placeholder={
+                            l.tipo_linha === "desconto"
+                              ? "Motivo do desconto (ex: à vista, fidelidade)"
+                              : tipoBadge[l.tipo_linha].label
+                          }
                           className="h-8"
                           disabled={readonly || isSubstituida || isNaoComprada}
                         />
