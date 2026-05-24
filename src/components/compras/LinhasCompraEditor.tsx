@@ -46,6 +46,10 @@ const tipoBadge: Record<TipoLinha, { label: string; cls: string }> = {
     label: "Extra",
     cls: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300",
   },
+  desconto: {
+    label: "Desconto",
+    cls: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300",
+  },
 };
 
 const statusBadge: Record<StatusLinha, { label: string; cls: string }> = {
@@ -109,7 +113,11 @@ export function LinhasCompraEditor({ linhas, onChange, pedidoItens, readonly }: 
     () =>
       linhas
         .filter((l) => l.status_linha === "comprada")
-        .reduce((s, l) => s + l._valor_total, 0),
+        .reduce(
+          (s, l) =>
+            l.tipo_linha === "desconto" ? s - l._valor_total : s + l._valor_total,
+          0,
+        ),
     [linhas],
   );
 
@@ -126,7 +134,6 @@ export function LinhasCompraEditor({ linhas, onChange, pedidoItens, readonly }: 
   };
 
   const handleAdd = (tipo: TipoLinha) => {
-    const novaQtd = tipo === "frete" || tipo === "extra" ? 1 : 1;
     const nova: LinhaCompra = recomputeLinha(
       {
         _local_id: newLocalId(),
@@ -135,7 +142,7 @@ export function LinhasCompraEditor({ linhas, onChange, pedidoItens, readonly }: 
         pedido_item_id: null,
         substitui_pedido_item_id: null,
         descricao_livre: "",
-        quantidade_real: novaQtd,
+        quantidade_real: 1,
         valor_unitario_real: 0,
         _descricao_exibicao: "",
         _valor_total: 0,
@@ -146,6 +153,7 @@ export function LinhasCompraEditor({ linhas, onChange, pedidoItens, readonly }: 
   };
 
   const cicloStatus = (linha: LinhaCompra) => {
+    if (linha.tipo_linha === "desconto") return;
     if (linha.status_linha === "comprada") {
       // → nao_comprada: zera
       updateLinha(linha._local_id, {
@@ -329,7 +337,11 @@ export function LinhasCompraEditor({ linhas, onChange, pedidoItens, readonly }: 
                           onChange={(e) =>
                             updateLinha(l._local_id, { descricao_livre: e.target.value })
                           }
-                          placeholder={tipoBadge[l.tipo_linha].label}
+                          placeholder={
+                            l.tipo_linha === "desconto"
+                              ? "Motivo do desconto (ex: à vista, fidelidade)"
+                              : tipoBadge[l.tipo_linha].label
+                          }
                           className="h-8"
                           disabled={readonly || isSubstituida || isNaoComprada}
                         />
@@ -339,19 +351,23 @@ export function LinhasCompraEditor({ linhas, onChange, pedidoItens, readonly }: 
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Input
-                      type="number"
-                      min="0"
-                      step="1"
-                      value={l.quantidade_real}
-                      onChange={(e) =>
-                        updateLinha(l._local_id, {
-                          quantidade_real: Math.max(0, Number(e.target.value) || 0),
-                        })
-                      }
-                      disabled={readonly || !isComprada}
-                      className={cn("h-8 w-full text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none", qtdInvalid && "border-destructive")}
-                    />
+                    {l.tipo_linha === "desconto" ? (
+                      <span className="text-xs text-muted-foreground">—</span>
+                    ) : (
+                      <Input
+                        type="number"
+                        min="0"
+                        step="1"
+                        value={l.quantidade_real}
+                        onChange={(e) =>
+                          updateLinha(l._local_id, {
+                            quantidade_real: Math.max(0, Number(e.target.value) || 0),
+                          })
+                        }
+                        disabled={readonly || !isComprada}
+                        className={cn("h-8 w-full text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none", qtdInvalid && "border-destructive")}
+                      />
+                    )}
                   </TableCell>
                   <TableCell>
                     <InputMoedaBR
@@ -361,23 +377,32 @@ export function LinhasCompraEditor({ linhas, onChange, pedidoItens, readonly }: 
                       invalid={valorInvalid}
                     />
                   </TableCell>
-                  <TableCell className="text-right text-sm font-medium">
-                    {fmtBRL(l._valor_total)}
+                  <TableCell
+                    className={cn(
+                      "text-right text-sm font-medium",
+                      l.tipo_linha === "desconto" && "text-rose-600 dark:text-rose-400",
+                    )}
+                  >
+                    {l.tipo_linha === "desconto" ? `− ${fmtBRL(l._valor_total)}` : fmtBRL(l._valor_total)}
                   </TableCell>
                   <TableCell className="text-center">
-                    <button
-                      type="button"
-                      onClick={() => !readonly && cicloStatus(l)}
-                      disabled={readonly}
-                      className={cn(
-                        "cursor-pointer hover:opacity-80 transition-opacity",
-                        readonly && "cursor-default",
-                      )}
-                    >
-                      <Badge className={cn("text-[10px]", statusBadge[l.status_linha].cls)}>
-                        {statusBadge[l.status_linha].label}
-                      </Badge>
-                    </button>
+                    {l.tipo_linha === "desconto" ? (
+                      <span className="text-xs text-muted-foreground">—</span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => !readonly && cicloStatus(l)}
+                        disabled={readonly}
+                        className={cn(
+                          "cursor-pointer hover:opacity-80 transition-opacity",
+                          readonly && "cursor-default",
+                        )}
+                      >
+                        <Badge className={cn("text-[10px]", statusBadge[l.status_linha].cls)}>
+                          {statusBadge[l.status_linha].label}
+                        </Badge>
+                      </button>
+                    )}
                   </TableCell>
                   <TableCell>
                     <DropdownMenu>
