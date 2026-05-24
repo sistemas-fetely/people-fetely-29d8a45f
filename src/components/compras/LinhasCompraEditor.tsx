@@ -46,6 +46,10 @@ const tipoBadge: Record<TipoLinha, { label: string; cls: string }> = {
     label: "Extra",
     cls: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300",
   },
+  desconto: {
+    label: "Desconto",
+    cls: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300",
+  },
 };
 
 const statusBadge: Record<StatusLinha, { label: string; cls: string }> = {
