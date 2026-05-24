@@ -389,6 +389,7 @@ export default function ComprasAComprar() {
         open={registrarOpen}
         onOpenChange={setRegistrarOpen}
         pedido={pedidoParaRegistrar}
+        onFinalizadoENova={handleFinalizadoENova}
       />
     </div>
   );
