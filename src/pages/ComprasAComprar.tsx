@@ -12,6 +12,7 @@ import {
   Clock,
   ShoppingBag,
   CheckCircle2,
+  FileEdit,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -20,6 +21,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { toast } from "sonner";
 import {
   Table,
   TableBody,
@@ -119,6 +121,56 @@ export default function ComprasAComprar() {
     const q = busca.toLowerCase();
     return pedidos.filter((p) => (p.descricao_geral || "").toLowerCase().includes(q));
   }, [pedidos, busca]);
+
+  // Rascunhos ativos do comprador
+  const { data: rascunhosAtivos = [] } = useQuery({
+    queryKey: ["compras", "rascunhos-meus", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from("compras_registradas")
+        .select("id, pedido_id, valor_total, updated_at")
+        .eq("comprador_id", user!.id)
+        .eq("status", "rascunho");
+      return data || [];
+    },
+  });
+
+  const rascunhoPorPedido = useMemo(() => {
+    const map = new Map<string, { id: string; valor_total: number; updated_at: string }>();
+    for (const r of rascunhosAtivos as any[]) {
+      if (r.pedido_id) {
+        map.set(r.pedido_id, {
+          id: r.id,
+          valor_total: Number(r.valor_total),
+          updated_at: r.updated_at,
+        });
+      }
+    }
+    return map;
+  }, [rascunhosAtivos]);
+
+  const handleFinalizadoENova = async (pedidoAtualId: string) => {
+    if (!user) return;
+    const { data: proximos } = await supabase
+      .from("pedidos_compra")
+      .select(
+        "*, centros_custo(id, codigo, nome), linhas_investimento(id, descricao), parceiros_comerciais:parceiro_preferencial_id(id, nome_fantasia, razao_social), pedidos_compra_itens(*), pedidos_compra_anexos(*)",
+      )
+      .eq("status", "em_compra")
+      .eq("comprador_id", user.id)
+      .neq("id", pedidoAtualId)
+      .order("enviado_em", { ascending: true })
+      .limit(1);
+
+    if (proximos && proximos.length > 0) {
+      setPedidoParaRegistrar(proximos[0] as unknown as PedidoCompraFull);
+    } else {
+      setRegistrarOpen(false);
+      toast.success("Todos os pedidos finalizados. Mesa limpa.");
+    }
+  };
+
 
   if (!podeVer) {
     return (
@@ -267,12 +319,21 @@ export default function ComprasAComprar() {
                       </TableCell>
                       <TableCell className="text-sm">{fmtDate(p.enviado_em)}</TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-1.5 flex-wrap">
                           <PedidoStatusBadge status={p.status} />
                           {p.status === "comprado" &&
                             (p.pedidos_compra_itens || []).some((i) => i.status === "cancelado") && (
                               <Badge variant="secondary" className="text-xs">Parcial</Badge>
                             )}
+                          {rascunhoPorPedido.has(p.id) && (
+                            <Badge
+                              variant="outline"
+                              className="text-xs bg-amber-50 text-amber-700 border-amber-300 dark:bg-amber-900/30 dark:text-amber-300"
+                            >
+                              <FileEdit className="h-3 w-3 mr-1" />
+                              Rascunho • {fmtBRL(rascunhoPorPedido.get(p.id)!.valor_total)}
+                            </Badge>
+                          )}
                         </div>
                       </TableCell>
                       <TableCell onClick={(e) => e.stopPropagation()}>
@@ -297,7 +358,7 @@ export default function ComprasAComprar() {
                             {podeAgir && ehMeu && (
                               <>
                                 <DropdownMenuItem onClick={() => abrirRegistrar(p)}>
-                                  Registrar compra
+                                  {rascunhoPorPedido.has(p.id) ? "Continuar compra" : "Registrar compra"}
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => abrirDetalhe(p)}>
                                   Cancelar item...
@@ -328,6 +389,7 @@ export default function ComprasAComprar() {
         open={registrarOpen}
         onOpenChange={setRegistrarOpen}
         pedido={pedidoParaRegistrar}
+        onFinalizadoENova={handleFinalizadoENova}
       />
     </div>
   );
