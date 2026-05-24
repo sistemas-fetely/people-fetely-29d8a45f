@@ -72,3 +72,60 @@ export interface RegistrarCompraInput {
   observacao?: string | null;
   itens: ItemCobertoInput[];
 }
+
+// =========================================================================
+// B-42 — Linhas heterogêneas e workflow rascunho/finalizada
+// =========================================================================
+
+export type TipoLinha = "produto" | "frete" | "servico" | "extra";
+export type StatusLinha = "comprada" | "nao_comprada" | "substituida";
+export type StatusAlvo = "rascunho" | "finalizada";
+
+export interface LinhaCompra {
+  _local_id: string;
+  tipo_linha: TipoLinha;
+  status_linha: StatusLinha;
+  pedido_item_id: string | null;
+  substitui_pedido_item_id: string | null;
+  descricao_livre: string | null;
+  quantidade_real: number;
+  valor_unitario_real: number;
+  _descricao_exibicao: string;
+  _valor_total: number;
+}
+
+export interface LinhaCompraPersist {
+  tipo_linha: TipoLinha;
+  status_linha: StatusLinha;
+  pedido_item_id: string | null;
+  substitui_pedido_item_id: string | null;
+  descricao_livre: string | null;
+  quantidade_real: number;
+  valor_unitario_real: number;
+}
+
+export interface RegistrarCompraInputV2 {
+  pedido_id: string;
+  status_alvo: StatusAlvo;
+  linhas: LinhaCompraPersist[];
+  parceiro_id: string;
+  meio_pagamento_id: string;
+  data_compra: string;
+  parcelas_count: number;
+  primeira_parcela_data: string;
+  intervalo_dias: number;
+  periodicidade: "dias" | "meses";
+  plano_contas_id: string | null;
+  observacao: string | null;
+  compra_id?: string | null;
+  parceiro_id_pedido_original?: string | null;
+}
+
+export interface RegistrarCompraResultV2 {
+  compra_id: string;
+  pedido_id: string;
+  parcela_grupo_id: string;
+  status: "rascunho" | "finalizada";
+  valor_total: number;
+  cprs_geradas: number;
+}
