@@ -134,7 +134,6 @@ export function LinhasCompraEditor({ linhas, onChange, pedidoItens, readonly }: 
   };
 
   const handleAdd = (tipo: TipoLinha) => {
-    const novaQtd = tipo === "frete" || tipo === "extra" ? 1 : 1;
     const nova: LinhaCompra = recomputeLinha(
       {
         _local_id: newLocalId(),
@@ -143,7 +142,7 @@ export function LinhasCompraEditor({ linhas, onChange, pedidoItens, readonly }: 
         pedido_item_id: null,
         substitui_pedido_item_id: null,
         descricao_livre: "",
-        quantidade_real: novaQtd,
+        quantidade_real: 1,
         valor_unitario_real: 0,
         _descricao_exibicao: "",
         _valor_total: 0,
