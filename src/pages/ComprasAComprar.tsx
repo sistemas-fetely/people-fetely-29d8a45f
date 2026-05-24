@@ -319,12 +319,21 @@ export default function ComprasAComprar() {
                       </TableCell>
                       <TableCell className="text-sm">{fmtDate(p.enviado_em)}</TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-1.5 flex-wrap">
                           <PedidoStatusBadge status={p.status} />
                           {p.status === "comprado" &&
                             (p.pedidos_compra_itens || []).some((i) => i.status === "cancelado") && (
                               <Badge variant="secondary" className="text-xs">Parcial</Badge>
                             )}
+                          {rascunhoPorPedido.has(p.id) && (
+                            <Badge
+                              variant="outline"
+                              className="text-xs bg-amber-50 text-amber-700 border-amber-300 dark:bg-amber-900/30 dark:text-amber-300"
+                            >
+                              <FileEdit className="h-3 w-3 mr-1" />
+                              Rascunho • {fmtBRL(rascunhoPorPedido.get(p.id)!.valor_total)}
+                            </Badge>
+                          )}
                         </div>
                       </TableCell>
                       <TableCell onClick={(e) => e.stopPropagation()}>
