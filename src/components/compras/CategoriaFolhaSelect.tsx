@@ -11,7 +11,11 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { useCategoriasFolha, type CategoriaFolhaTipo } from "@/hooks/compras/useCategoriasFolha";
+import {
+  useCategoriasFolha,
+  type CategoriaFolhaTipo,
+  type CategoriaFolha,
+} from "@/hooks/compras/useCategoriasFolha";
 
 interface Props {
   value: string | null;
@@ -25,6 +29,23 @@ export function CategoriaFolhaSelect({ value, onChange, tipo = "despesa", disabl
   const { data: folhas = [], isLoading } = useCategoriasFolha(tipo);
   const selecionada = useMemo(() => folhas.find((f) => f.id === value), [folhas, value]);
 
+  // Agrupa folhas por paiNome, ordenando grupos por paiCodigo
+  const grupos = useMemo(() => {
+    const map = new Map<string, { paiNome: string; paiCodigo: string | null; folhas: CategoriaFolha[] }>();
+    for (const f of folhas) {
+      const chave = f.paiNome ?? "(sem categoria-pai)";
+      if (!map.has(chave)) {
+        map.set(chave, { paiNome: chave, paiCodigo: f.paiCodigo, folhas: [] });
+      }
+      map.get(chave)!.folhas.push(f);
+    }
+    return Array.from(map.values()).sort((a, b) => {
+      const ca = a.paiCodigo ?? "zzz";
+      const cb = b.paiCodigo ?? "zzz";
+      return ca.localeCompare(cb);
+    });
+  }, [folhas]);
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -37,7 +58,12 @@ export function CategoriaFolhaSelect({ value, onChange, tipo = "despesa", disabl
           {isLoading ? (
             <Loader2 className="h-4 w-4 animate-spin" />
           ) : selecionada ? (
-            <span className="truncate">{selecionada.path}</span>
+            <span className="truncate">
+              {selecionada.nome}
+              {selecionada.paiNome && (
+                <span className="text-muted-foreground"> · {selecionada.paiNome}</span>
+              )}
+            </span>
           ) : (
             <span>Selecione a categoria...</span>
           )}
@@ -47,25 +73,37 @@ export function CategoriaFolhaSelect({ value, onChange, tipo = "despesa", disabl
       <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
         <Command>
           <CommandInput placeholder="Buscar categoria..." />
-          <CommandList className="max-h-[320px]">
+          <CommandList className="max-h-[400px]">
             <CommandEmpty>Nenhuma categoria encontrada.</CommandEmpty>
-            <CommandGroup>
-              {folhas.map((f) => (
-                <CommandItem
-                  key={f.id}
-                  value={f.path}
-                  onSelect={() => {
-                    onChange(f.id);
-                    setOpen(false);
-                  }}
-                >
-                  <Check
-                    className={cn("mr-2 h-4 w-4", value === f.id ? "opacity-100" : "opacity-0")}
-                  />
-                  <span className="text-sm">{f.path}</span>
-                </CommandItem>
-              ))}
-            </CommandGroup>
+            {grupos.map((g) => (
+              <CommandGroup
+                key={g.paiNome}
+                heading={
+                  g.paiCodigo
+                    ? `${g.paiCodigo} — ${g.paiNome}`
+                    : g.paiNome
+                }
+              >
+                {g.folhas.map((f) => (
+                  <CommandItem
+                    key={f.id}
+                    value={`${f.nome} ${f.paiNome ?? ""}`}
+                    onSelect={() => {
+                      onChange(f.id);
+                      setOpen(false);
+                    }}
+                  >
+                    <Check
+                      className={cn(
+                        "mr-2 h-4 w-4",
+                        value === f.id ? "opacity-100" : "opacity-0",
+                      )}
+                    />
+                    <span className="text-sm">{f.nome}</span>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            ))}
           </CommandList>
         </Command>
       </PopoverContent>
