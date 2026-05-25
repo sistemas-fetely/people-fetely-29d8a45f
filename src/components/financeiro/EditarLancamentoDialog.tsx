@@ -145,7 +145,7 @@ export function EditarLancamentoDialog({
                   <SelectItem key={cb.id} value={cb.id}>
                     {cb.nome_exibicao}{" "}
                     <span className="text-muted-foreground text-xs ml-1">
-                      ({cb.tipo === "cartao_credito" ? "Cartão" : cb.banco})
+                      ({cb.banco})
                     </span>
                   </SelectItem>
                 ))}

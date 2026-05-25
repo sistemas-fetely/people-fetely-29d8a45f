@@ -36,7 +36,7 @@ export function getVinculoOrigemIcon(
   const o = origem.toLowerCase().trim();
 
   // Cartão de crédito
-  if (o === "cartao" || o === "cartao_credito" || o.includes("cart")) {
+  if (o === "cartao" || o.includes("cart")) {
     return {
       Icon: CreditCard,
       cor: "text-violet-600",
