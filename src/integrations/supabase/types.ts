@@ -147,6 +147,13 @@ export type Database = {
             referencedRelation: "parceiros_comerciais"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "analise_credito_scores_parceiro_id_fkey"
+            columns: ["parceiro_id"]
+            isOneToOne: false
+            referencedRelation: "v_credito_resumo_financeiro"
+            referencedColumns: ["parceiro_id"]
+          },
         ]
       }
       analise_credito_transicoes: {
@@ -280,6 +287,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "parceiros_comerciais"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "analises_credito_parceiro_id_fkey"
+            columns: ["parceiro_id"]
+            isOneToOne: false
+            referencedRelation: "v_credito_resumo_financeiro"
+            referencedColumns: ["parceiro_id"]
           },
           {
             foreignKeyName: "analises_credito_pedido_id_fkey"
@@ -751,6 +765,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "parceiros_comerciais"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "boleto_stage_parceiro_id_fkey"
+            columns: ["parceiro_id"]
+            isOneToOne: false
+            referencedRelation: "v_credito_resumo_financeiro"
+            referencedColumns: ["parceiro_id"]
           },
           {
             foreignKeyName: "boleto_stage_pasta_contrato_id_fkey"
@@ -1854,11 +1875,25 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "compras_registradas_parceiro_id_fkey"
+            columns: ["parceiro_id"]
+            isOneToOne: false
+            referencedRelation: "v_credito_resumo_financeiro"
+            referencedColumns: ["parceiro_id"]
+          },
+          {
             foreignKeyName: "compras_registradas_parceiro_id_pedido_original_fkey"
             columns: ["parceiro_id_pedido_original"]
             isOneToOne: false
             referencedRelation: "parceiros_comerciais"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compras_registradas_parceiro_id_pedido_original_fkey"
+            columns: ["parceiro_id_pedido_original"]
+            isOneToOne: false
+            referencedRelation: "v_credito_resumo_financeiro"
+            referencedColumns: ["parceiro_id"]
           },
           {
             foreignKeyName: "compras_registradas_pedido_id_fkey"
@@ -2164,6 +2199,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "compromissos_parcelados_parceiro_id_fkey"
+            columns: ["parceiro_id"]
+            isOneToOne: false
+            referencedRelation: "v_credito_resumo_financeiro"
+            referencedColumns: ["parceiro_id"]
+          },
+          {
             foreignKeyName: "compromissos_parcelados_plano_contas_id_fkey"
             columns: ["plano_contas_id"]
             isOneToOne: false
@@ -2244,6 +2286,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "parceiros_comerciais"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compromissos_recorrentes_parceiro_id_fkey"
+            columns: ["parceiro_id"]
+            isOneToOne: false
+            referencedRelation: "v_credito_resumo_financeiro"
+            referencedColumns: ["parceiro_id"]
           },
           {
             foreignKeyName: "compromissos_recorrentes_plano_contas_id_fkey"
@@ -3022,6 +3071,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "contas_pagar_receber_parceiro_id_fkey"
+            columns: ["parceiro_id"]
+            isOneToOne: false
+            referencedRelation: "v_credito_resumo_financeiro"
+            referencedColumns: ["parceiro_id"]
+          },
+          {
             foreignKeyName: "contas_pagar_receber_pasta_contrato_id_fkey"
             columns: ["pasta_contrato_id"]
             isOneToOne: false
@@ -3418,6 +3474,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "parceiros_comerciais"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contratos_pj_parceiro_comercial_id_fkey"
+            columns: ["parceiro_comercial_id"]
+            isOneToOne: false
+            referencedRelation: "v_credito_resumo_financeiro"
+            referencedColumns: ["parceiro_id"]
           },
           {
             foreignKeyName: "contratos_pj_unidade_id_fkey"
@@ -4409,6 +4472,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "fatura_cartao_lancamentos_parceiro_id_fkey"
+            columns: ["parceiro_id"]
+            isOneToOne: false
+            referencedRelation: "v_credito_resumo_financeiro"
+            referencedColumns: ["parceiro_id"]
+          },
+          {
             foreignKeyName: "fatura_cartao_lancamentos_plano_contas_id_fkey"
             columns: ["plano_contas_id"]
             isOneToOne: false
@@ -5117,6 +5187,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "ged_documentos_parceiro_id_fkey"
+            columns: ["parceiro_id"]
+            isOneToOne: false
+            referencedRelation: "v_credito_resumo_financeiro"
+            referencedColumns: ["parceiro_id"]
+          },
+          {
             foreignKeyName: "ged_documentos_pasta_contrato_id_fkey"
             columns: ["pasta_contrato_id"]
             isOneToOne: false
@@ -5212,6 +5289,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "parceiros_comerciais"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ged_pastas_parceiro_id_fkey"
+            columns: ["parceiro_id"]
+            isOneToOne: false
+            referencedRelation: "v_credito_resumo_financeiro"
+            referencedColumns: ["parceiro_id"]
           },
           {
             foreignKeyName: "ged_pastas_parent_id_fkey"
@@ -5422,11 +5506,25 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "fk_grupos_economicos_matriz"
+            columns: ["parceiro_matriz_id"]
+            isOneToOne: false
+            referencedRelation: "v_credito_resumo_financeiro"
+            referencedColumns: ["parceiro_id"]
+          },
+          {
             foreignKeyName: "grupos_economicos_fundido_em_grupo_id_fkey"
             columns: ["fundido_em_grupo_id"]
             isOneToOne: false
             referencedRelation: "grupos_economicos"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "grupos_economicos_fundido_em_grupo_id_fkey"
+            columns: ["fundido_em_grupo_id"]
+            isOneToOne: false
+            referencedRelation: "v_credito_resumo_financeiro_grupo"
+            referencedColumns: ["grupo_economico_id"]
           },
         ]
       }
@@ -5526,6 +5624,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "parceiros_comerciais"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "grupos_parceiros_log_parceiro_id_fkey"
+            columns: ["parceiro_id"]
+            isOneToOne: false
+            referencedRelation: "v_credito_resumo_financeiro"
+            referencedColumns: ["parceiro_id"]
           },
         ]
       }
@@ -5954,6 +6059,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "parceiros_comerciais"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "itau_pagamentos_stage_parceiro_id_fkey"
+            columns: ["parceiro_id"]
+            isOneToOne: false
+            referencedRelation: "v_credito_resumo_financeiro"
+            referencedColumns: ["parceiro_id"]
           },
         ]
       }
@@ -6532,6 +6644,13 @@ export type Database = {
             referencedRelation: "parceiros_comerciais"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "nfs_emitidas_parceiro_id_fkey"
+            columns: ["parceiro_id"]
+            isOneToOne: false
+            referencedRelation: "v_credito_resumo_financeiro"
+            referencedColumns: ["parceiro_id"]
+          },
         ]
       }
       nfs_stage: {
@@ -6701,6 +6820,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "parceiros_comerciais"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nfs_stage_parceiro_id_fkey"
+            columns: ["parceiro_id"]
+            isOneToOne: false
+            referencedRelation: "v_credito_resumo_financeiro"
+            referencedColumns: ["parceiro_id"]
           },
           {
             foreignKeyName: "nfs_stage_plano_contas_id_fkey"
@@ -7413,6 +7539,13 @@ export type Database = {
             referencedRelation: "parceiros_comerciais"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "parceiro_eventos_externos_parceiro_id_fkey"
+            columns: ["parceiro_id"]
+            isOneToOne: false
+            referencedRelation: "v_credito_resumo_financeiro"
+            referencedColumns: ["parceiro_id"]
+          },
         ]
       }
       parceiro_marcos: {
@@ -7459,6 +7592,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "parceiros_comerciais"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "parceiro_marcos_parceiro_id_fkey"
+            columns: ["parceiro_id"]
+            isOneToOne: false
+            referencedRelation: "v_credito_resumo_financeiro"
+            referencedColumns: ["parceiro_id"]
           },
         ]
       }
@@ -7636,6 +7776,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "grupos_economicos"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "parceiros_comerciais_grupo_economico_id_fkey"
+            columns: ["grupo_economico_id"]
+            isOneToOne: false
+            referencedRelation: "v_credito_resumo_financeiro_grupo"
+            referencedColumns: ["grupo_economico_id"]
           },
           {
             foreignKeyName: "parceiros_comerciais_grupo_id_fkey"
@@ -8032,6 +8179,13 @@ export type Database = {
             referencedRelation: "parceiros_comerciais"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "pedidos_parceiro_id_fkey"
+            columns: ["parceiro_id"]
+            isOneToOne: false
+            referencedRelation: "v_credito_resumo_financeiro"
+            referencedColumns: ["parceiro_id"]
+          },
         ]
       }
       pedidos_compra: {
@@ -8145,6 +8299,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "parceiros_comerciais"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pedidos_compra_parceiro_preferencial_id_fkey"
+            columns: ["parceiro_preferencial_id"]
+            isOneToOne: false
+            referencedRelation: "v_credito_resumo_financeiro"
+            referencedColumns: ["parceiro_id"]
           },
           {
             foreignKeyName: "pedidos_compra_unidade_id_fkey"
@@ -8367,6 +8528,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "parceiros_comerciais"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pedidos_venda_parceiro_id_fkey"
+            columns: ["parceiro_id"]
+            isOneToOne: false
+            referencedRelation: "v_credito_resumo_financeiro"
+            referencedColumns: ["parceiro_id"]
           },
         ]
       }
@@ -9658,6 +9826,13 @@ export type Database = {
             referencedRelation: "parceiros_comerciais"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "regras_automaticas_ofx_parceiro_id_fkey"
+            columns: ["parceiro_id"]
+            isOneToOne: false
+            referencedRelation: "v_credito_resumo_financeiro"
+            referencedColumns: ["parceiro_id"]
+          },
         ]
       }
       regras_categorizacao: {
@@ -9746,11 +9921,25 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "regras_categorizacao_fornecedor_id_fkey"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "v_credito_resumo_financeiro"
+            referencedColumns: ["parceiro_id"]
+          },
+          {
             foreignKeyName: "regras_categorizacao_parceiro_id_fkey"
             columns: ["parceiro_id"]
             isOneToOne: false
             referencedRelation: "parceiros_comerciais"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "regras_categorizacao_parceiro_id_fkey"
+            columns: ["parceiro_id"]
+            isOneToOne: false
+            referencedRelation: "v_credito_resumo_financeiro"
+            referencedColumns: ["parceiro_id"]
           },
           {
             foreignKeyName: "regras_categorizacao_plano_contas_id_fkey"
@@ -10808,6 +10997,13 @@ export type Database = {
             referencedRelation: "parceiros_comerciais"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "socios_parceiro_parceiro_id_fkey"
+            columns: ["parceiro_id"]
+            isOneToOne: false
+            referencedRelation: "v_credito_resumo_financeiro"
+            referencedColumns: ["parceiro_id"]
+          },
         ]
       }
       suppressed_emails: {
@@ -11642,6 +11838,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "contas_pagar_receber_parceiro_id_fkey"
+            columns: ["parceiro_id"]
+            isOneToOne: false
+            referencedRelation: "v_credito_resumo_financeiro"
+            referencedColumns: ["parceiro_id"]
+          },
+          {
             foreignKeyName: "contas_pagar_receber_plano_contas_id_fkey"
             columns: ["conta_id"]
             isOneToOne: false
@@ -11798,6 +12001,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "parceiros_comerciais"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contas_pagar_receber_parceiro_id_fkey"
+            columns: ["parceiro_id"]
+            isOneToOne: false
+            referencedRelation: "v_credito_resumo_financeiro"
+            referencedColumns: ["parceiro_id"]
           },
           {
             foreignKeyName: "contas_pagar_receber_plano_contas_id_fkey"
@@ -12056,6 +12266,67 @@ export type Database = {
         }
         Relationships: []
       }
+      v_credito_resumo_financeiro: {
+        Row: {
+          a_vencer: number | null
+          atraso_medio_dias: number | null
+          cnpj: string | null
+          em_aberto: number | null
+          maior_compra: number | null
+          pago: number | null
+          parceiro_id: string | null
+          razao_social: string | null
+          ultima_compra_em: string | null
+          vencidos: number | null
+        }
+        Relationships: []
+      }
+      v_credito_resumo_financeiro_grupo: {
+        Row: {
+          a_vencer: number | null
+          atraso_medio_dias: number | null
+          em_aberto: number | null
+          grupo_economico_id: string | null
+          grupo_nome: string | null
+          maior_compra: number | null
+          pago: number | null
+          qtd_parceiros: number | null
+          ultima_compra_em: string | null
+          vencidos: number | null
+        }
+        Relationships: []
+      }
+      v_parceiro_timeline: {
+        Row: {
+          criado_em: string | null
+          id: string | null
+          motivo: string | null
+          operador_email: string | null
+          operador_id: string | null
+          parceiro_id: string | null
+          referencia_id: string | null
+          referencia_tipo: string | null
+          tipo_marco: string | null
+          valor_anterior: string | null
+          valor_novo: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "parceiro_marcos_parceiro_id_fkey"
+            columns: ["parceiro_id"]
+            isOneToOne: false
+            referencedRelation: "parceiros_comerciais"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "parceiro_marcos_parceiro_id_fkey"
+            columns: ["parceiro_id"]
+            isOneToOne: false
+            referencedRelation: "v_credito_resumo_financeiro"
+            referencedColumns: ["parceiro_id"]
+          },
+        ]
+      }
       vw_contas_pagar_consolidado: {
         Row: {
           aprovado_em: string | null
@@ -12153,6 +12424,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "contas_pagar_receber_parceiro_id_fkey"
+            columns: ["parceiro_id"]
+            isOneToOne: false
+            referencedRelation: "v_credito_resumo_financeiro"
+            referencedColumns: ["parceiro_id"]
+          },
+          {
             foreignKeyName: "contas_pagar_receber_pasta_contrato_id_fkey"
             columns: ["pasta_contrato_id"]
             isOneToOne: false
@@ -12200,6 +12478,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "parceiros_comerciais"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contas_pagar_receber_parceiro_id_fkey"
+            columns: ["parceiro_id"]
+            isOneToOne: false
+            referencedRelation: "v_credito_resumo_financeiro"
+            referencedColumns: ["parceiro_id"]
           },
           {
             foreignKeyName: "remessas_contador_itens_remessa_id_fkey"
@@ -12344,6 +12629,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "parceiros_comerciais"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ged_pastas_parceiro_id_fkey"
+            columns: ["parceiro_id"]
+            isOneToOne: false
+            referencedRelation: "v_credito_resumo_financeiro"
+            referencedColumns: ["parceiro_id"]
           },
           {
             foreignKeyName: "ged_pastas_parent_id_fkey"
@@ -12553,6 +12845,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "nfs_stage_parceiro_id_fkey"
+            columns: ["parceiro_id"]
+            isOneToOne: false
+            referencedRelation: "v_credito_resumo_financeiro"
+            referencedColumns: ["parceiro_id"]
+          },
+          {
             foreignKeyName: "nfs_stage_plano_contas_id_fkey"
             columns: ["categoria_id"]
             isOneToOne: false
@@ -12592,6 +12891,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "parceiros_comerciais"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ged_pastas_parceiro_id_fkey"
+            columns: ["parceiro_id"]
+            isOneToOne: false
+            referencedRelation: "v_credito_resumo_financeiro"
+            referencedColumns: ["parceiro_id"]
           },
           {
             foreignKeyName: "ged_pastas_parent_id_fkey"
@@ -12741,6 +13047,10 @@ export type Database = {
         Args: { _dados: Json; _token: string }
         Returns: boolean
       }
+      baixar_bandeira_vermelha: {
+        Args: { p_motivo: string; p_parceiro_id: string }
+        Returns: Json
+      }
       buscar_docs_pagamento: {
         Args: { p_cpr_id: string }
         Returns: {
@@ -12877,6 +13187,23 @@ export type Database = {
           status: string
           valor: number
         }[]
+      }
+      criar_analise_credito: {
+        Args: {
+          p_cnpj: string
+          p_condicao_solicitada: string
+          p_data_pedido: string
+          p_desconto_pct?: number
+          p_forma_solicitada: string
+          p_id_externo: string
+          p_itens_json?: Json
+          p_origem?: string
+          p_recebido_via?: string
+          p_valor_bruto: number
+          p_valor_liquido: number
+          p_vendedor?: string
+        }
+        Returns: Json
       }
       criar_cpr_de_boleto: {
         Args: {
@@ -13153,6 +13480,10 @@ export type Database = {
         }[]
       }
       enviar_pedido_compra: { Args: { p_pedido_id: string }; Returns: Json }
+      erguer_bandeira_vermelha: {
+        Args: { p_motivo: string; p_parceiro_id: string }
+        Returns: Json
+      }
       excluir_comentario_pedido: {
         Args: { p_comentario_id: string }
         Returns: Json
@@ -13803,6 +14134,23 @@ export type Database = {
       }
       tentar_match_parceiro_retroativo: { Args: never; Returns: Json }
       termo_uso_versao_vigente: { Args: never; Returns: string }
+      transicionar_analise: {
+        Args: {
+          p_acao: string
+          p_analise_id: string
+          p_delta_ia?: Json
+          p_estagio_destino?: string
+          p_formas_aceitas?: string[]
+          p_limite_concedido?: number
+          p_motivo?: string
+          p_parecer_final?: string
+          p_perfil_aplicado?: string
+          p_prazo_max_dias?: number
+          p_ressalva?: string
+          p_validade_ate?: string
+        }
+        Returns: Json
+      }
       unaccent: { Args: { "": string }; Returns: string }
       user_perfis_detalhados: {
         Args: { _user_id: string }
