@@ -114,6 +114,8 @@ const RegrasOFX = lazy(() => import("@/pages/administrativo/RegrasOFX"));
 const DashboardFinanceiro = lazy(() => import("@/pages/administrativo/DashboardFinanceiro"));
 const InvestimentoLancamento = lazy(() => import("@/pages/administrativo/InvestimentoLancamento"));
 const FluxoFuturoInvestimento = lazy(() => import("@/pages/administrativo/FluxoFuturoInvestimento"));
+const CreditoIndex = lazy(() => import("@/pages/Credito/CreditoIndex"));
+const AnaliseDetalhe = lazy(() => import("@/pages/Credito/AnaliseDetalhe"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -212,6 +214,8 @@ const App = () => (
               <Route path="/documentacao/:slug" element={<DocumentacaoDetalhe />} />
               <Route path="/compras" element={<Compras />} />
               <Route path="/compras/a-comprar" element={<ComprasAComprar />} />
+              <Route path="/credito" element={<CreditoIndex />} />
+              <Route path="/credito/analises/:id" element={<AnaliseDetalhe />} />
             </Route>
 
             {/* TI Fetely */}
