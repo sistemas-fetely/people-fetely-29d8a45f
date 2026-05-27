@@ -439,8 +439,6 @@ const App = () => (
               } />
             </Route>
 
-            {/* Bling OAuth callback — rota independente, fora do layout */}
-            <Route path="/administrativo/bling-callback" element={<BlingCallback />} />
 
             {/* ═══════════════════════════════════════════════
                 Pilar Administrativo (Financeiro, Contratos, Imóveis, Seguros, GED)
@@ -498,7 +496,7 @@ const App = () => (
                 Recebe Dashboard + Relatórios (vindos do People).
                 URLs preservadas (/dashboard, /relatorios) — só layout muda.
                 ═══════════════════════════════════════════════ */}
-            <Route element={<ProtectedRoute><GestaoVistaLayout /></ProtectedRoute>}>
+            <Route element={<GestaoVistaLayout />}>
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/gestao-a-vista" element={<GestaoAVista />} />
               <Route path="/relatorios" element={
@@ -507,6 +505,9 @@ const App = () => (
                 </ProtectedRoute>
               } />
             </Route>
+
+            </Route>
+            {/* fecha wrapper CasaLayout */}
 
             {/* 404 — dentro do PublicLayout pra reaproveitar a boundary de Suspense */}
             <Route element={<PublicLayout />}>
