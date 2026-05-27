@@ -3,6 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { BadgesContextuais } from "./BadgesContextuais";
+import { BoxDevolucaoRecente } from "./BoxDevolucaoRecente";
+import { EditarProgramaInline } from "./EditarProgramaInline";
 import { EncaminharDialog } from "./dialogs/EncaminharDialog";
 import { CancelarAnaliseDialog } from "./dialogs/CancelarAnaliseDialog";
 import { ArrowLeft } from "lucide-react";
@@ -41,15 +43,15 @@ export function AnaliseDetalheEntrada({ analiseId }: Props) {
     return <p className="text-muted-foreground">Análise não encontrada.</p>;
   }
 
-  const { analise, pedido, parceiro, socios, kpisFinanceiros, kpisGrupo, analisesAnteriores } = data;
+  const { analise, pedido, parceiro, socios, transicoes, kpisFinanceiros, kpisGrupo, analisesAnteriores } = data;
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="space-y-3">
-        <Button variant="ghost" size="sm" className="gap-2 -ml-2" onClick={() => navigate("/credito")}>
+        <Button variant="ghost" size="sm" className="gap-2 -ml-2" onClick={() => navigate("/credito?tab=entrada")}>
           <ArrowLeft className="h-4 w-4" />
-          Fila de Entrada
+          Fila (Entrada)
         </Button>
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div className="space-y-1">
@@ -74,6 +76,9 @@ export function AnaliseDetalheEntrada({ analiseId }: Props) {
           />
         </div>
       </div>
+
+      {/* Box devolução, se aplicável */}
+      <BoxDevolucaoRecente transicoes={transicoes} estagioAtual="entrada" />
 
       {/* 3 colunas */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -109,8 +114,13 @@ export function AnaliseDetalheEntrada({ analiseId }: Props) {
             <Linha label="UF" value={parceiro?.uf} />
             <Linha label="Situação" value={parceiro?.situacao_cadastral} />
             <Separator className="my-2" />
-            <Linha label="Nível Programa" value={parceiro?.nivel_programa} />
-            {parceiro?.categoria_ka && <Linha label="Categoria KA" value={parceiro.categoria_ka} />}
+            {parceiro?.id && (
+              <EditarProgramaInline
+                parceiro_id={parceiro.id}
+                nivel_atual={parceiro.nivel_programa || "convive"}
+                categoria_ka_atual={parceiro.categoria_ka ?? null}
+              />
+            )}
             <Separator className="my-2" />
             <div className="space-y-1">
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">

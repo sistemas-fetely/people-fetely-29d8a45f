@@ -1,14 +1,16 @@
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useAnaliseDetalhe } from "@/hooks/credito/useAnaliseDetalhe";
 import { AnaliseDetalheEntrada } from "@/components/credito/AnaliseDetalheEntrada";
 import { AnaliseDetalheAnalise } from "@/components/credito/AnaliseDetalheAnalise";
 import { AnaliseDetalheDecisao } from "@/components/credito/AnaliseDetalheDecisao";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
-import { CheckCircle2, XCircle, AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { CheckCircle2, XCircle, AlertCircle, ArrowLeft } from "lucide-react";
 
 export default function AnaliseDetalhe() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const { data, isLoading } = useAnaliseDetalhe(id);
 
   if (isLoading) {
@@ -37,7 +39,16 @@ export default function AnaliseDetalhe() {
     };
 
     return (
-      <div className="max-w-3xl mx-auto">
+      <div className="max-w-3xl mx-auto space-y-3">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="gap-2 -ml-2"
+          onClick={() => navigate("/credito?tab=decididas")}
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Fila (Decididas)
+        </Button>
         <Card>
           <CardContent className="p-8 space-y-5 text-center">
             <div className="flex justify-center">{iconMap[statusFinal]}</div>

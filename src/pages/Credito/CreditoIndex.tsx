@@ -2,8 +2,19 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { CreditoStatsCards } from "@/components/credito/CreditoStatsCards";
 import { FilaPorEstagio } from "@/components/credito/FilaPorEstagio";
 import { NovaAnaliseModalDialog } from "@/components/credito/NovaAnaliseModalDialog";
+import { useSearchParams } from "react-router-dom";
+
+const TABS_VALIDAS = ["entrada", "analise", "decisao", "decididas"];
 
 export default function CreditoIndex() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabParam = searchParams.get("tab");
+  const tabAtiva = tabParam && TABS_VALIDAS.includes(tabParam) ? tabParam : "entrada";
+
+  const handleTabChange = (v: string) => {
+    setSearchParams({ tab: v });
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-4 flex-wrap">
@@ -18,7 +29,7 @@ export default function CreditoIndex() {
 
       <CreditoStatsCards />
 
-      <Tabs defaultValue="entrada" className="space-y-4">
+      <Tabs value={tabAtiva} onValueChange={handleTabChange} className="space-y-4">
         <TabsList>
           <TabsTrigger value="entrada">Entrada</TabsTrigger>
           <TabsTrigger value="analise">Análise</TabsTrigger>
