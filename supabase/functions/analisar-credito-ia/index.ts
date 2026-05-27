@@ -199,7 +199,7 @@ CLIENTE:
 - CNPJ: ${analise.parceiro?.cnpj}
 - Razão social: ${analise.parceiro?.razao_social}
 - Nome fantasia: ${analise.parceiro?.nome_fantasia || "—"}
-- Cidade/UF: ${analise.parceiro?.municipio || "—"}/${analise.parceiro?.uf || "—"}
+- Cidade/UF: ${analise.parceiro?.cidade || "—"}/${analise.parceiro?.uf || "—"}
 - Cadastro completo: ${analise.parceiro?.cadastro_incompleto ? "NÃO" : "sim"}
 - Sócios: ${JSON.stringify(socios || [])}
 - Contexto bureau (histórico): ${JSON.stringify(analise.parceiro?.contexto_bureau || {})}
