@@ -233,7 +233,7 @@ const App = () => (
             </Route>
 
             {/* TI Fetely */}
-            <Route path="/ti" element={<ProtectedRoute><TILayout /></ProtectedRoute>}>
+            <Route path="/ti" element={<TILayout />}>
               <Route index element={<TIDashboard />} />
               <Route path="ativos" element={<TIAtivos />} />
               <Route path="diagnosticos/teste-email" element={<TesteEmailTemplate />} />
