@@ -2,6 +2,7 @@ import {
   LayoutGrid, ClipboardList, UsersRound, UserCog, Workflow,
   LogOut, Network, Sparkles, BookOpen, Shield, ExternalLink, FileText,
   PartyPopper, MessageSquareWarning, Users, Monitor, Landmark,
+  Wallet,
 } from "lucide-react";
 import * as LucideIcons from "lucide-react";
 import { Link } from "react-router-dom";
@@ -45,6 +46,7 @@ const operacionalItems: MenuItem[] = [
   { title: "Portal", url: "/sncf", icon: LayoutGrid, end: true },
   { title: "Minhas Tarefas", url: "/tarefas", icon: ClipboardList, end: true },
   { title: "Tarefas do Time", url: "/tarefas/time", icon: UsersRound, requireRole: "gestor_or_rh" },
+  { title: "Análise de Crédito", url: "/credito", icon: Wallet },
 ];
 
 const minhasNotasItem: MenuItem = {
