@@ -117,7 +117,7 @@ Deno.serve(async (req) => {
         pedido:pedidos(id, id_externo, data_pedido, valor_bruto, valor_liquido, desconto_pct,
           condicao_solicitada, forma_solicitada, vendedor, origem, itens_json),
         parceiro:parceiros_comerciais(id, cnpj, razao_social, nome_fantasia, cep, logradouro,
-          municipio, uf, telefone, email, cadastro_incompleto, bandeira_vermelha,
+          cidade, uf, telefone, email, cadastro_incompleto, bandeira_vermelha,
           bandeira_vermelha_motivo, bandeira_vermelha_em, grupo_economico_id, nivel_programa,
           categoria_ka, perfil_credito, contexto_bureau)
       `)
@@ -125,8 +125,9 @@ Deno.serve(async (req) => {
       .single();
 
     if (aErr || !analise) {
+      console.error("Erro buscando análise:", aErr, "analise:", analise);
       return new Response(
-        JSON.stringify({ error: "Análise não encontrada" }),
+        JSON.stringify({ error: "Análise não encontrada", details: aErr?.message || aErr }),
         { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -198,7 +199,7 @@ CLIENTE:
 - CNPJ: ${analise.parceiro?.cnpj}
 - Razão social: ${analise.parceiro?.razao_social}
 - Nome fantasia: ${analise.parceiro?.nome_fantasia || "—"}
-- Cidade/UF: ${analise.parceiro?.municipio || "—"}/${analise.parceiro?.uf || "—"}
+- Cidade/UF: ${analise.parceiro?.cidade || "—"}/${analise.parceiro?.uf || "—"}
 - Cadastro completo: ${analise.parceiro?.cadastro_incompleto ? "NÃO" : "sim"}
 - Sócios: ${JSON.stringify(socios || [])}
 - Contexto bureau (histórico): ${JSON.stringify(analise.parceiro?.contexto_bureau || {})}
