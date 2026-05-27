@@ -98,7 +98,12 @@ export function PainelIaConsolidado({
               {conf}% · {labelConf}
             </span>
           </div>
-          <Progress value={conf} className={cn("h-2", `[&>div]:${corConf}`)} />
+          <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
+            <div
+              className={cn("h-full transition-all", corConf)}
+              style={{ width: `${conf}%` }}
+            />
+          </div>
         </div>
 
         {iaResumo && (
