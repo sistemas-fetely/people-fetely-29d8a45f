@@ -72,7 +72,13 @@ export function AnaliseDetalheAnalise({ analiseId }: Props) {
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div className="space-y-1">
             <h1 className="text-2xl font-bold tracking-tight">
-              {parceiro?.razao_social || "Cliente sem razão"}
+              <button
+                type="button"
+                onClick={() => parceiro?.id && navigate(`/credito/clientes/${parceiro.id}`)}
+                className="hover:underline text-left"
+              >
+                {parceiro?.razao_social || "Cliente sem razão"}
+              </button>
             </h1>
             <p className="text-sm text-muted-foreground">
               Análise {analise.id.slice(0, 8)}... · Estágio:{" "}
