@@ -51,13 +51,6 @@ function qualificacao(codigo: number | null | undefined): string {
   return QUALIFICACAO_MAP[codigo] || "Sócio";
 }
 
-function situacaoNormalizada(desc: string | null | undefined): string | null {
-  if (!desc) return null;
-  const d = desc.toLowerCase();
-  if (d.includes("ativa")) return "ativo";
-  if (d.includes("suspensa") || d.includes("inapta") || d.includes("baixada")) return "inativo";
-  return null;
-}
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function jsonResponse(body: any, status = 200) {
@@ -146,19 +139,15 @@ Deno.serve(async (req) => {
     const updates: Record<string, unknown> = {
       razao_social: dataApi.razao_social || parceiro.razao_social,
       nome_fantasia: dataApi.nome_fantasia || parceiro.nome_fantasia,
-      municipio: dataApi.municipio || parceiro.municipio,
+      cidade: dataApi.municipio || parceiro.cidade,
       uf: dataApi.uf || parceiro.uf,
       cadastro_incompleto: false,
       contexto_bureau: novoContexto,
     };
 
-    const situacao = situacaoNormalizada(dataApi.descricao_situacao_cadastral);
-    if (situacao) updates.situacao = situacao;
-
     if (dataApi.cep) updates.cep = dataApi.cep;
-    if (dataApi.logradouro) {
-      updates.endereco = `${dataApi.descricao_tipo_de_logradouro || ""} ${dataApi.logradouro}, ${dataApi.numero || "S/N"}${dataApi.complemento ? ` - ${dataApi.complemento}` : ""}`.trim();
-    }
+    if (dataApi.logradouro) updates.logradouro = dataApi.logradouro;
+    if (dataApi.numero) updates.numero = dataApi.numero;
     if (dataApi.bairro) updates.bairro = dataApi.bairro;
     if (dataApi.ddd_telefone_1) updates.telefone = dataApi.ddd_telefone_1;
 

@@ -52,7 +52,7 @@ export default function ClienteDetalhe() {
             <p className="text-sm text-muted-foreground">
               CNPJ {parceiro?.cnpj}
               {parceiro?.nome_fantasia && ` · ${parceiro.nome_fantasia}`}
-              {parceiro?.municipio && parceiro?.uf && ` · ${parceiro.municipio}/${parceiro.uf}`}
+              {parceiro?.cidade && parceiro?.uf && ` · ${parceiro.cidade}/${parceiro.uf}`}
             </p>
           </div>
           {parceiro?.bandeira_vermelha ? (
@@ -111,7 +111,7 @@ export default function ClienteDetalhe() {
             <Linha label="CNPJ" value={parceiro?.cnpj} />
             <Linha label="Razão social" value={parceiro?.razao_social} />
             <Linha label="Nome fantasia" value={parceiro?.nome_fantasia} />
-            <Linha label="Município/UF" value={parceiro?.municipio && parceiro?.uf ? `${parceiro.municipio}/${parceiro.uf}` : null} />
+            <Linha label="Cidade/UF" value={parceiro?.cidade && parceiro?.uf ? `${parceiro.cidade}/${parceiro.uf}` : null} />
             <Linha label="Telefone" value={parceiro?.telefone} />
             <Linha label="E-mail" value={parceiro?.email} />
             <Linha label="Perfil de crédito" value={parceiro?.perfil_credito} />
