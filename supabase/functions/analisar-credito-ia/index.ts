@@ -117,7 +117,7 @@ Deno.serve(async (req) => {
         pedido:pedidos(id, id_externo, data_pedido, valor_bruto, valor_liquido, desconto_pct,
           condicao_solicitada, forma_solicitada, vendedor, origem, itens_json),
         parceiro:parceiros_comerciais(id, cnpj, razao_social, nome_fantasia, cep, logradouro,
-          municipio, uf, telefone, email, cadastro_incompleto, bandeira_vermelha,
+          cidade, uf, telefone, email, cadastro_incompleto, bandeira_vermelha,
           bandeira_vermelha_motivo, bandeira_vermelha_em, grupo_economico_id, nivel_programa,
           categoria_ka, perfil_credito, contexto_bureau)
       `)
