@@ -98,7 +98,7 @@ export function PainelIaConsolidado({
               {conf}% · {labelConf}
             </span>
           </div>
-          <Progress value={conf} className="h-2" indicatorClassName={corConf} />
+          <Progress value={conf} className={cn("h-2", `[&>div]:${corConf}`)} />
         </div>
 
         {iaResumo && (
