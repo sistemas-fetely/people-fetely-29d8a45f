@@ -125,8 +125,9 @@ Deno.serve(async (req) => {
       .single();
 
     if (aErr || !analise) {
+      console.error("Erro buscando análise:", aErr, "analise:", analise);
       return new Response(
-        JSON.stringify({ error: "Análise não encontrada" }),
+        JSON.stringify({ error: "Análise não encontrada", details: aErr?.message || aErr }),
         { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
