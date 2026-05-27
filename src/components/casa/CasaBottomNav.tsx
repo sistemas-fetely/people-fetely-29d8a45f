@@ -3,13 +3,13 @@ import { Home, Users, Wallet, BookOpen, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCasaApp } from "@/hooks/useCasaApp";
 
-const ITEMS = [
+const ITEMS: Array<{ id: string; to: string; label: string; icon: typeof Home; end?: boolean }> = [
   { id: "casa", to: "/", label: "Casa", icon: Home, end: true },
   { id: "pessoas", to: "/pessoas", label: "Pessoas", icon: Users },
   { id: "financas", to: "/administrativo", label: "Finanças", icon: Wallet },
   { id: "marca", to: "/administrativo-fetely", label: "Marca", icon: Sparkles },
   { id: "acervo", to: "/documentacao", label: "Acervo", icon: BookOpen },
-] as const;
+];
 
 export function CasaBottomNav() {
   const activeApp = useCasaApp();
