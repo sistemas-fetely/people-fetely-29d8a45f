@@ -1,0 +1,121 @@
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import type {
+  AnaliseDetalheCompleto,
+  AnaliseListItem,
+  AnaliseScore,
+  AnaliseTransicao,
+  KpiFinanceiro,
+  KpiFinanceiroGrupo,
+  ParceiroMarco,
+  SocioParceiro,
+} from "@/types/credito";
+
+export function useAnaliseDetalhe(analiseId: string | undefined) {
+  return useQuery({
+    queryKey: ["analise-detalhe", analiseId],
+    enabled: !!analiseId,
+    staleTime: 10 * 1000,
+    queryFn: async (): Promise<AnaliseDetalheCompleto> => {
+      if (!analiseId) throw new Error("analiseId obrigatório");
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const sb = supabase as any;
+
+      const { data: analiseData, error: aErr } = await sb
+        .from("analises_credito")
+        .select(`
+          *,
+          pedido:pedidos(*),
+          parceiro:parceiros_comerciais(*)
+        `)
+        .eq("id", analiseId)
+        .single();
+      if (aErr) throw aErr;
+
+      const parceiroId = analiseData.parceiro_id;
+      const grupoId = analiseData.parceiro?.grupo_economico_id;
+
+      const { data: sociosData } = await sb
+        .from("socios_parceiro")
+        .select("*")
+        .eq("parceiro_id", parceiroId)
+        .is("desligado_em", null);
+
+      const { data: scoresData } = await sb
+        .from("analise_credito_scores")
+        .select("*")
+        .eq("analise_id", analiseId)
+        .order("anexado_em", { ascending: false });
+
+      const { data: transicoesData } = await sb
+        .from("analise_credito_transicoes")
+        .select("*")
+        .eq("analise_id", analiseId)
+        .order("criado_em", { ascending: true });
+
+      const { data: kpisData } = await sb
+        .from("v_credito_resumo_financeiro")
+        .select("*")
+        .eq("parceiro_id", parceiroId)
+        .maybeSingle();
+
+      let kpisGrupo: KpiFinanceiroGrupo | null = null;
+      if (grupoId) {
+        const { data: kg } = await sb
+          .from("v_credito_resumo_financeiro_grupo")
+          .select("*")
+          .eq("grupo_economico_id", grupoId)
+          .maybeSingle();
+        kpisGrupo = (kg as KpiFinanceiroGrupo) || null;
+      }
+
+      const { data: anterioresData } = await sb
+        .from("analises_credito")
+        .select(`
+          id, pedido_id, parceiro_id, estagio_atual, status_final,
+          criado_em, decidido_em, analise_ia_confianca, analise_ia_processada_em,
+          parceiro:parceiros_comerciais(cnpj, razao_social),
+          pedido:pedidos(id_externo, valor_liquido, condicao_solicitada)
+        `)
+        .eq("parceiro_id", parceiroId)
+        .neq("id", analiseId)
+        .order("criado_em", { ascending: false })
+        .limit(20);
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const anteriores: AnaliseListItem[] = (anterioresData || []).map((r: any) => ({
+        id: r.id, pedido_id: r.pedido_id, parceiro_id: r.parceiro_id,
+        estagio_atual: r.estagio_atual, status_final: r.status_final,
+        criado_em: r.criado_em, decidido_em: r.decidido_em,
+        parceiro_cnpj: r.parceiro?.cnpj ?? null,
+        parceiro_razao: r.parceiro?.razao_social ?? null,
+        pedido_valor_liquido: Number(r.pedido?.valor_liquido ?? 0),
+        pedido_condicao: r.pedido?.condicao_solicitada ?? "",
+        pedido_id_externo: r.pedido?.id_externo ?? "",
+        analise_ia_confianca: r.analise_ia_confianca,
+        analise_ia_processada_em: r.analise_ia_processada_em,
+      }));
+
+      const { data: marcosData } = await sb
+        .from("v_parceiro_timeline")
+        .select("*")
+        .eq("parceiro_id", parceiroId)
+        .order("criado_em", { ascending: false })
+        .limit(50);
+
+      return {
+        analise: analiseData,
+        pedido: analiseData.pedido,
+        parceiro: analiseData.parceiro,
+        socios: (sociosData || []) as SocioParceiro[],
+        scores: (scoresData || []) as AnaliseScore[],
+        transicoes: (transicoesData || []) as AnaliseTransicao[],
+        kpisFinanceiros: (kpisData as KpiFinanceiro) || null,
+        kpisGrupo,
+        analisesAnteriores: anteriores,
+        marcos: (marcosData || []) as ParceiroMarco[],
+      };
+    },
+  });
+}
