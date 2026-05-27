@@ -217,6 +217,7 @@ const App = () => (
               <Route path="/compras/a-comprar" element={<ComprasAComprar />} />
               <Route path="/credito" element={<CreditoIndex />} />
               <Route path="/credito/analises/:id" element={<AnaliseDetalhe />} />
+              <Route path="/credito/clientes/:id" element={<ClienteDetalhe />} />
             </Route>
 
             {/* TI Fetely */}
