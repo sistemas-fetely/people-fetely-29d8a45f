@@ -9,6 +9,7 @@ import { ScoresAnexados } from "./ScoresAnexados";
 import { AnaliseIaCard } from "./AnaliseIaCard";
 import { EncaminharParaDecisaoDialog } from "./dialogs/EncaminharParaDecisaoDialog";
 import { DevolverParaEntradaDialog } from "./dialogs/DevolverParaEntradaDialog";
+import { BoxDevolucaoRecente } from "./BoxDevolucaoRecente";
 import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -47,6 +48,7 @@ export function AnaliseDetalheAnalise({ analiseId }: Props) {
     parceiro,
     socios,
     scores,
+    transicoes,
     kpisFinanceiros,
     kpisGrupo,
     analisesAnteriores,
@@ -64,10 +66,10 @@ export function AnaliseDetalheAnalise({ analiseId }: Props) {
           variant="ghost"
           size="sm"
           className="gap-2 -ml-2"
-          onClick={() => navigate("/credito")}
+          onClick={() => navigate("/credito?tab=analise")}
         >
           <ArrowLeft className="h-4 w-4" />
-          Fila
+          Fila (Análise)
         </Button>
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div className="space-y-1">
@@ -93,6 +95,9 @@ export function AnaliseDetalheAnalise({ analiseId }: Props) {
           />
         </div>
       </div>
+
+      {/* Box devolução, se aplicável */}
+      <BoxDevolucaoRecente transicoes={transicoes} estagioAtual="analise" />
 
       {/* 2 colunas */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">

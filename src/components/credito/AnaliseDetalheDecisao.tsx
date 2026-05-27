@@ -10,6 +10,7 @@ import { PainelIaConsolidado } from "./PainelIaConsolidado";
 import { FormDecisaoCredito, type CamposDecisao } from "./FormDecisaoCredito";
 import { HistoricoClienteAccordion } from "./HistoricoClienteAccordion";
 import { ScoresAnexados } from "./ScoresAnexados";
+import { BoxDevolucaoRecente } from "./BoxDevolucaoRecente";
 import { AprovarDialog } from "./dialogs/AprovarDialog";
 import { ReprovarDialog } from "./dialogs/ReprovarDialog";
 import { DevolverParaAnaliseDialog } from "./dialogs/DevolverParaAnaliseDialog";
@@ -52,11 +53,8 @@ export function AnaliseDetalheDecisao({ analiseId }: Props) {
         perfil_aplicado: (sugestaoIA.perfil_aplicado as PerfilCredito) || "novo_entrada",
         limite_concedido: sugestaoIA.limite_concedido || 5000,
         prazo_max_dias: sugestaoIA.prazo_max_dias || 30,
-        formas_aceitas: (sugestaoIA.formas_aceitas as FormaPagamento[]) || [
-          "boleto",
-          "pix",
-          "cartao",
-        ],
+        formas_aceitas:
+          (sugestaoIA.formas_aceitas as FormaPagamento[]) || ["boleto", "pix", "cartao"],
         parecer_final: sugestaoIA.parecer_final || "",
         ressalva: sugestaoIA.ressalva || "",
         validade_ate: sugestaoIA.validade_ate || "",
@@ -87,6 +85,7 @@ export function AnaliseDetalheDecisao({ analiseId }: Props) {
     kpisGrupo,
     analisesAnteriores,
     marcos,
+    transicoes,
   } = data;
 
   return (
@@ -97,10 +96,10 @@ export function AnaliseDetalheDecisao({ analiseId }: Props) {
           variant="ghost"
           size="sm"
           className="gap-2 -ml-2"
-          onClick={() => navigate("/credito")}
+          onClick={() => navigate("/credito?tab=decisao")}
         >
           <ArrowLeft className="h-4 w-4" />
-          Fila
+          Fila (Decisão)
         </Button>
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div className="space-y-1">
@@ -138,22 +137,10 @@ export function AnaliseDetalheDecisao({ analiseId }: Props) {
         />
       </div>
 
-      {/* PAINEL IA CENTRAL */}
-      <PainelIaConsolidado
-        iaJson={iaJson}
-        iaResumo={analise.analise_ia_resumo ?? null}
-        iaConfianca={analise.analise_ia_confianca ?? null}
-        iaProcessadaEm={analise.analise_ia_processada_em ?? null}
-      />
+      {/* Box devolução, se aplicável */}
+      <BoxDevolucaoRecente transicoes={transicoes} estagioAtual="decisao" />
 
-      {/* FORMULÁRIO */}
-      <FormDecisaoCredito
-        valores={campos}
-        sugestaoIA={sugestaoIA}
-        onChange={setCampos}
-      />
-
-      {/* 3 painéis menores */}
+      {/* 3 painéis de informação */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <Card>
           <CardHeader>
@@ -170,14 +157,8 @@ export function AnaliseDetalheDecisao({ analiseId }: Props) {
                 />
                 <Linha label="A vencer" value={fmtBRL.format(kpisFinanceiros.a_vencer)} />
                 <Linha label="Pago total" value={fmtBRL.format(kpisFinanceiros.pago)} />
-                <Linha
-                  label="Maior compra"
-                  value={fmtBRL.format(kpisFinanceiros.maior_compra)}
-                />
-                <Linha
-                  label="Última compra"
-                  value={fmtDate(kpisFinanceiros.ultima_compra_em)}
-                />
+                <Linha label="Maior compra" value={fmtBRL.format(kpisFinanceiros.maior_compra)} />
+                <Linha label="Última compra" value={fmtDate(kpisFinanceiros.ultima_compra_em)} />
                 <Linha
                   label="Atraso médio"
                   value={`${kpisFinanceiros.atraso_medio_dias || 0}d`}
@@ -250,7 +231,7 @@ export function AnaliseDetalheDecisao({ analiseId }: Props) {
         </Card>
       </div>
 
-      {/* Bureaus */}
+      {/* Bureaus anexados */}
       <ScoresAnexados scores={scores} analiseId={analiseId} />
 
       {/* Histórico */}
@@ -259,11 +240,22 @@ export function AnaliseDetalheDecisao({ analiseId }: Props) {
         marcos={marcos}
       />
 
-      {/* AÇÕES — barra fixa no rodapé */}
+      {/* PAINEL IA — vem antes da decisão (info → IA → decisão) */}
+      <PainelIaConsolidado
+        iaJson={iaJson}
+        iaResumo={analise.analise_ia_resumo ?? null}
+        iaConfianca={analise.analise_ia_confianca ?? null}
+        iaProcessadaEm={analise.analise_ia_processada_em ?? null}
+      />
+
+      {/* FORMULÁRIO DE DECISÃO */}
+      <FormDecisaoCredito valores={campos} sugestaoIA={sugestaoIA} onChange={setCampos} />
+
+      {/* AÇÕES — barra fixa */}
       <div className="fixed bottom-0 left-0 right-0 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 z-40">
         <div className="container max-w-screen-2xl mx-auto py-3 px-4 flex items-center justify-between gap-4 flex-wrap">
           <p className="text-xs text-muted-foreground max-w-md">
-            Confira o formulário. Aprovar usa os valores acima. Outras ações apenas registram o motivo.
+            Joseph tem autonomia total. Programa é norte, não bloqueio.
           </p>
           <div className="flex gap-2 flex-wrap">
             <CancelarAnaliseDialog analise_id={analise.id} />

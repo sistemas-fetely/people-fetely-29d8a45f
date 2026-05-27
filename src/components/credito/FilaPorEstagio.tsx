@@ -5,9 +5,9 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, ArrowRight, Sparkles } from "lucide-react";
+import { Search, Sparkles, Undo2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import type { EstagioAnalise } from "@/types/credito";
 
 const fmtBRL = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
@@ -66,65 +66,80 @@ export function FilaPorEstagio({ estagio }: Props) {
               <TableHead>Condição</TableHead>
               <TableHead>{estagio === "decididas" ? "Status" : "Na fila"}</TableHead>
               <TableHead>IA</TableHead>
-              <TableHead />
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading && (
               <TableRow>
-                <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
                   Carregando...
                 </TableCell>
               </TableRow>
             )}
             {!isLoading && (!filtradas || filtradas.length === 0) && (
               <TableRow>
-                <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
                   Nenhum pedido nesta fila.
                 </TableCell>
               </TableRow>
             )}
-            {filtradas?.map((a) => (
-              <TableRow
-                key={a.id}
-                className="cursor-pointer"
-                onClick={() => navigate(`/credito/analises/${a.id}`)}
-              >
-                <TableCell className="font-mono text-xs">{a.pedido_id_externo}</TableCell>
-                <TableCell>
-                  <p className="text-sm font-medium">{a.parceiro_razao || "Cliente novo"}</p>
-                  <p className="text-xs text-muted-foreground">{a.parceiro_cnpj}</p>
-                </TableCell>
-                <TableCell className="text-right font-medium">
-                  {fmtBRL.format(a.pedido_valor_liquido)}
-                </TableCell>
-                <TableCell className="text-sm">{a.pedido_condicao}</TableCell>
-                <TableCell>
-                  {estagio === "decididas" ? (
-                    <Badge variant="secondary">{a.status_final}</Badge>
-                  ) : (
-                    <span className="text-xs text-muted-foreground">
-                      {tempoNaFila(a.criado_em)}
-                    </span>
+            {filtradas?.map((a) => {
+              const devolvida = a.foi_devolvida && !a.status_final;
+              return (
+                <TableRow
+                  key={a.id}
+                  className={cn(
+                    "cursor-pointer hover:bg-muted/50",
+                    devolvida && "border-l-4 border-l-orange-400",
                   )}
-                </TableCell>
-                <TableCell>
-                  {a.analise_ia_processada_em ? (
-                    <span className="inline-flex items-center gap-1 text-xs">
-                      <Sparkles className="h-3 w-3 text-primary" />
-                      {a.analise_ia_confianca ? `${a.analise_ia_confianca}%` : "ok"}
-                    </span>
-                  ) : (
-                    <span className="text-xs text-muted-foreground">—</span>
-                  )}
-                </TableCell>
-                <TableCell className="text-right">
-                  <Button variant="ghost" size="sm" className="gap-1">
-                    Abrir <ArrowRight className="h-3 w-3" />
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
+                  onClick={() => navigate(`/credito/analises/${a.id}`)}
+                >
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-xs font-semibold text-primary">
+                        {a.pedido_id_externo}
+                      </span>
+                      {devolvida && (
+                        <Badge
+                          variant="outline"
+                          className="gap-1 text-[10px] py-0 px-1.5 border-orange-300 text-orange-700"
+                        >
+                          <Undo2 className="h-2.5 w-2.5" />
+                          Devolvida
+                        </Badge>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <p className="text-sm font-medium">{a.parceiro_razao || "Cliente novo"}</p>
+                    <p className="text-xs text-muted-foreground">{a.parceiro_cnpj}</p>
+                  </TableCell>
+                  <TableCell className="text-right font-medium">
+                    {fmtBRL.format(a.pedido_valor_liquido)}
+                  </TableCell>
+                  <TableCell className="text-sm">{a.pedido_condicao}</TableCell>
+                  <TableCell>
+                    {estagio === "decididas" ? (
+                      <Badge variant="secondary">{a.status_final}</Badge>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">
+                        {tempoNaFila(a.criado_em)}
+                      </span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {a.analise_ia_processada_em ? (
+                      <span className="inline-flex items-center gap-1 text-xs">
+                        <Sparkles className="h-3 w-3 text-primary" />
+                        {a.analise_ia_confianca ? `${a.analise_ia_confianca}%` : "ok"}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">—</span>
+                    )}
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </div>
