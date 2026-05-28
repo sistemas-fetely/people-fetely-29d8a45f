@@ -11,6 +11,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 // Layouts são pequenos (~30-80L cada) e não justificam code-splitting.
 import { AppLayout } from "@/components/AppLayout";
 import AdminFinanceiroLayout from "@/layouts/AdminFinanceiroLayout";
+const FinancasLayout = lazy(() => import("./layouts/FinancasLayout"));
 import AdministrativoLayout from "@/layouts/AdministrativoLayout";
 import TILayout from "@/layouts/TILayout";
 import AdminLayout from "@/layouts/AdminLayout";
@@ -444,7 +445,7 @@ const App = () => (
                 Pilar Administrativo (Financeiro, Contratos, Imóveis, Seguros, GED)
                 Acesso restrito a super_admin (Fase 1)
                 ═══════════════════════════════════════════════ */}
-            <Route path="/administrativo" element={<AdminFinanceiroLayout />}>
+            <Route path="/administrativo" element={<FinancasLayout />}>
               <Route index element={<DashboardFinanceiro />} />
               <Route path="plano-contas" element={<PlanoDeContas />} />
               <Route path="investimento-lancamento" element={<InvestimentoLancamento />} />
