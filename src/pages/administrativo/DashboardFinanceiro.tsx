@@ -12,6 +12,7 @@ import {
   FolderTree, Zap,
 } from "lucide-react";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
+import { CasaPageHeader } from "@/components/casa/CasaPageHeader";
 
 // ─── Paleta Fetely ─────────────────────────────────────────────────
 const VERDE = "#1A4A3A";
@@ -374,13 +375,16 @@ export default function DashboardFinanceiro() {
   };
 
   return (
-    <div className="space-y-6 p-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Dashboard Financeiro</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Visão consolidada do desempenho financeiro · atualizado agora
-        </p>
-      </div>
+    <div className="p-6 animate-casa-fade-in">
+      <CasaPageHeader
+        breadcrumb={[
+          { label: "Casa", to: "/" },
+          { label: "Finanças" },
+        ]}
+        title="Visão Geral"
+        subtitle="Visão consolidada do desempenho financeiro · atualizado agora"
+      />
+      <div className="space-y-6">
 
       <HeroBalance
         saldo={saldoBancario}
