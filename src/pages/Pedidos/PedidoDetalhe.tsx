@@ -245,7 +245,7 @@ export default function PedidoDetalhe() {
                 {analiseCredito.perfil_aplicado && (
                   <div className="space-y-0.5">
                     <p className="text-muted-foreground">Perfil</p>
-                    <p className="font-semibold capitalize">{String(analiseCredito.perfil_aplicado).replaceAll("_", " ")}</p>
+                    <p className="font-semibold capitalize">{String(analiseCredito.perfil_aplicado).split("_").join(" ")}</p>
                   </div>
                 )}
               </div>
