@@ -30,8 +30,7 @@ export default function ParceiroDetalhe() {
   const enriquecer = useEnriquecerParceiro();
 
   const handleVoltar = () => {
-    if (window.history.length > 2) navigate(-1);
-    else navigate("/pedidos");
+    navigate(-1);
   };
 
   if (isLoading) {
