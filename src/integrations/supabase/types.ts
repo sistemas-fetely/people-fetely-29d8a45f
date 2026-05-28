@@ -302,6 +302,13 @@ export type Database = {
             referencedRelation: "pedidos"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "analises_credito_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
+            referencedRelation: "v_pedidos_fila"
+            referencedColumns: ["id"]
+          },
         ]
       }
       atribuicao_origem: {
@@ -8122,51 +8129,216 @@ export type Database = {
           },
         ]
       }
+      pedido_eventos: {
+        Row: {
+          area_anterior: string | null
+          area_nova: string | null
+          automatico: boolean
+          criado_em: string
+          descricao: string | null
+          estagio_anterior: string | null
+          estagio_novo: string | null
+          id: string
+          metadata: Json | null
+          operador_id: string | null
+          pedido_id: string
+          tipo_evento: string
+        }
+        Insert: {
+          area_anterior?: string | null
+          area_nova?: string | null
+          automatico?: boolean
+          criado_em?: string
+          descricao?: string | null
+          estagio_anterior?: string | null
+          estagio_novo?: string | null
+          id?: string
+          metadata?: Json | null
+          operador_id?: string | null
+          pedido_id: string
+          tipo_evento: string
+        }
+        Update: {
+          area_anterior?: string | null
+          area_nova?: string | null
+          automatico?: boolean
+          criado_em?: string
+          descricao?: string | null
+          estagio_anterior?: string | null
+          estagio_novo?: string | null
+          id?: string
+          metadata?: Json | null
+          operador_id?: string | null
+          pedido_id?: string
+          tipo_evento?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pedido_eventos_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
+            referencedRelation: "pedidos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pedido_eventos_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
+            referencedRelation: "v_pedidos_fila"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pedido_itens: {
+        Row: {
+          criado_em: string
+          desconto_pct: number
+          descricao: string
+          id: string
+          ordem: number
+          pedido_id: string
+          quantidade: number
+          sku: string | null
+          subtotal: number | null
+          valor_unitario: number
+          valor_unitario_tabela: number | null
+        }
+        Insert: {
+          criado_em?: string
+          desconto_pct?: number
+          descricao: string
+          id?: string
+          ordem?: number
+          pedido_id: string
+          quantidade: number
+          sku?: string | null
+          subtotal?: number | null
+          valor_unitario: number
+          valor_unitario_tabela?: number | null
+        }
+        Update: {
+          criado_em?: string
+          desconto_pct?: number
+          descricao?: string
+          id?: string
+          ordem?: number
+          pedido_id?: string
+          quantidade?: number
+          sku?: string | null
+          subtotal?: number | null
+          valor_unitario?: number
+          valor_unitario_tabela?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pedido_itens_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
+            referencedRelation: "pedidos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pedido_itens_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
+            referencedRelation: "v_pedidos_fila"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pedidos: {
         Row: {
+          area_atual: string
+          cancelado_em: string | null
+          cancelado_motivo: string | null
+          cancelado_por: string | null
+          cliente_nome_snapshot: string | null
           condicao_solicitada: string
+          contexto_anotacoes: string | null
           data_pedido: string
           desconto_pct: number | null
+          entregue_em: string | null
+          estagio: string
+          exportado_bling_em: string | null
+          faturado_em: string | null
           forma_solicitada: string
           id: string
           id_externo: string
           itens_json: Json | null
           origem: string | null
           parceiro_id: string
+          prioridade_motivo: string | null
+          prioridade_score: number
+          pronto_pro_bling_em: string | null
+          proxima_acao: string | null
           recebido_em: string
           recebido_via: string
+          tipo_pagamento: string | null
+          triado_em: string | null
           valor_bruto: number
           valor_liquido: number
           vendedor: string | null
         }
         Insert: {
+          area_atual?: string
+          cancelado_em?: string | null
+          cancelado_motivo?: string | null
+          cancelado_por?: string | null
+          cliente_nome_snapshot?: string | null
           condicao_solicitada: string
+          contexto_anotacoes?: string | null
           data_pedido: string
           desconto_pct?: number | null
+          entregue_em?: string | null
+          estagio?: string
+          exportado_bling_em?: string | null
+          faturado_em?: string | null
           forma_solicitada: string
           id?: string
           id_externo: string
           itens_json?: Json | null
           origem?: string | null
           parceiro_id: string
+          prioridade_motivo?: string | null
+          prioridade_score?: number
+          pronto_pro_bling_em?: string | null
+          proxima_acao?: string | null
           recebido_em?: string
           recebido_via?: string
+          tipo_pagamento?: string | null
+          triado_em?: string | null
           valor_bruto: number
           valor_liquido: number
           vendedor?: string | null
         }
         Update: {
+          area_atual?: string
+          cancelado_em?: string | null
+          cancelado_motivo?: string | null
+          cancelado_por?: string | null
+          cliente_nome_snapshot?: string | null
           condicao_solicitada?: string
+          contexto_anotacoes?: string | null
           data_pedido?: string
           desconto_pct?: number | null
+          entregue_em?: string | null
+          estagio?: string
+          exportado_bling_em?: string | null
+          faturado_em?: string | null
           forma_solicitada?: string
           id?: string
           id_externo?: string
           itens_json?: Json | null
           origem?: string | null
           parceiro_id?: string
+          prioridade_motivo?: string | null
+          prioridade_score?: number
+          pronto_pro_bling_em?: string | null
+          proxima_acao?: string | null
           recebido_em?: string
           recebido_via?: string
+          tipo_pagamento?: string | null
+          triado_em?: string | null
           valor_bruto?: number
           valor_liquido?: number
           vendedor?: string | null
@@ -12348,6 +12520,65 @@ export type Database = {
           },
         ]
       }
+      v_pedidos_fila: {
+        Row: {
+          analise_credito_id: string | null
+          area_atual: string | null
+          bandeira_vermelha: boolean | null
+          cancelado_em: string | null
+          cancelado_motivo: string | null
+          categoria_ka: string | null
+          condicao_solicitada: string | null
+          data_pedido: string | null
+          estagio: string | null
+          faturado_em: string | null
+          forma_solicitada: string | null
+          id: string | null
+          id_externo: string | null
+          idade_minutos: number | null
+          nivel_programa: string | null
+          origem: string | null
+          parceiro_cnpj: string | null
+          parceiro_id: string | null
+          parceiro_razao: string | null
+          prioridade_motivo: string | null
+          prioridade_score: number | null
+          proxima_acao: string | null
+          recebido_em: string | null
+          recebido_via: string | null
+          sla_estourado: boolean | null
+          tipo_pagamento: string | null
+          valor_bruto: number | null
+          valor_liquido: number | null
+          vendedor: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pedidos_parceiro_id_fkey"
+            columns: ["parceiro_id"]
+            isOneToOne: false
+            referencedRelation: "parceiros_comerciais"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pedidos_parceiro_id_fkey"
+            columns: ["parceiro_id"]
+            isOneToOne: false
+            referencedRelation: "v_credito_resumo_financeiro"
+            referencedColumns: ["parceiro_id"]
+          },
+        ]
+      }
+      v_pedidos_pipeline: {
+        Row: {
+          area_atual: string | null
+          estagio: string | null
+          qtd: number | null
+          qtd_sla_estourado: number | null
+          soma_valor: number | null
+        }
+        Relationships: []
+      }
       vw_contas_pagar_consolidado: {
         Row: {
           aprovado_em: string | null
@@ -13127,6 +13358,10 @@ export type Database = {
       cancelar_parcelas_futuras_recorrente: {
         Args: { p_recorrente_id: string }
         Returns: number
+      }
+      cancelar_pedido: {
+        Args: { p_motivo: string; p_pedido_id: string }
+        Returns: Json
       }
       cancelar_pedido_inteiro_via_cpr: {
         Args: { p_cpr_id: string }
@@ -14003,6 +14238,15 @@ export type Database = {
         Returns: undefined
       }
       registrar_documento_intake: { Args: { p_dados: Json }; Returns: Json }
+      registrar_evento_pedido: {
+        Args: {
+          p_descricao: string
+          p_metadata?: Json
+          p_pedido_id: string
+          p_tipo_evento: string
+        }
+        Returns: Json
+      }
       registrar_log_fiscal_nf: {
         Args: {
           _ator_papel?: string
@@ -14184,6 +14428,15 @@ export type Database = {
           p_prazo_max_dias?: number
           p_ressalva?: string
           p_validade_ate?: string
+        }
+        Returns: Json
+      }
+      transicionar_pedido: {
+        Args: {
+          p_motivo?: string
+          p_para_estagio: string
+          p_pedido_id: string
+          p_proxima_acao?: string
         }
         Returns: Json
       }

@@ -120,6 +120,7 @@ const FluxoFuturoInvestimento = lazy(() => import("@/pages/administrativo/FluxoF
 const CreditoIndex = lazy(() => import("@/pages/Credito/CreditoIndex"));
 const AnaliseDetalhe = lazy(() => import("@/pages/Credito/AnaliseDetalhe"));
 const ClienteDetalhe = lazy(() => import("@/pages/Credito/ClienteDetalhe"));
+const PedidosIndex = lazy(() => import("@/pages/Pedidos/PedidosIndex"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -231,6 +232,7 @@ const App = () => (
               <Route path="/credito" element={<CreditoIndex />} />
               <Route path="/credito/analises/:id" element={<AnaliseDetalhe />} />
               <Route path="/credito/clientes/:id" element={<ClienteDetalhe />} />
+              <Route path="/pedidos" element={<PedidosIndex />} />
             </Route>
 
             {/* TI Fetely */}
