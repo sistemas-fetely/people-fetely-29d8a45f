@@ -275,9 +275,119 @@ export default function ParceiroDetalhe() {
         </Card>
       </div>
 
-      <p className="text-xs text-muted-foreground">
-        Mais info do parceiro (sócios, atividade comercial detalhada, histórico) virão em próximas fases.
-      </p>
+      {/* Receita Federal */}
+      {rf && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base flex items-center justify-between gap-2">
+              <span className="flex items-center gap-2">
+                <Building2 className="h-4 w-4" />
+                Receita Federal
+              </span>
+              {rf.consultado_em && (
+                <span className="text-xs font-normal text-muted-foreground">
+                  consultado em {fmtDateBR(rf.consultado_em as string)}
+                </span>
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="grid gap-2 sm:grid-cols-2">
+              {rf.situacao_cadastral != null && (
+                <Linha label="Situação cadastral" value={String(rf.situacao_cadastral)} />
+              )}
+              {rf.data_inicio_atividade != null && (
+                <Linha label="Início da atividade" value={fmtDateBR(rf.data_inicio_atividade as string)} />
+              )}
+              {rf.porte != null && (
+                <Linha label="Porte" value={String(rf.porte)} />
+              )}
+              {rf.capital_social != null && (
+                <Linha label="Capital social" value={fmtBRL.format(Number(rf.capital_social))} />
+              )}
+              {rf.natureza_juridica != null && (
+                <Linha label="Natureza jurídica" value={String(rf.natureza_juridica)} />
+              )}
+              {rf.cnae_fiscal != null && (
+                <Linha label="CNAE principal" value={String(rf.cnae_fiscal)} />
+              )}
+            </div>
+
+            {rf.cnae_fiscal_descricao != null && (
+              <>
+                <Separator />
+                <div className="space-y-0.5">
+                  <p className="text-xs text-muted-foreground uppercase tracking-wide">Atividade principal</p>
+                  <p className="text-sm">{String(rf.cnae_fiscal_descricao)}</p>
+                </div>
+              </>
+            )}
+
+            <Separator />
+            <div className="flex flex-wrap gap-4">
+              <div className="flex items-center gap-1.5 text-sm">
+                {rf.opcao_pelo_simples ? (
+                  <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                ) : (
+                  <XCircle className="h-4 w-4 text-muted-foreground" />
+                )}
+                Simples Nacional
+              </div>
+              <div className="flex items-center gap-1.5 text-sm">
+                {rf.opcao_pelo_mei ? (
+                  <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                ) : (
+                  <XCircle className="h-4 w-4 text-muted-foreground" />
+                )}
+                MEI
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Sócios */}
+      {socios && socios.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base flex items-center justify-between gap-2">
+              <span className="flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                Quadro Societário
+              </span>
+              <Badge variant="secondary">{socios.length}</Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+              {socios.map((s: any) => (
+                <div key={s.id} className="flex items-start justify-between gap-3 py-2 border-b last:border-b-0">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium truncate">{s.nome}</p>
+                    <div className="flex flex-wrap gap-1.5 mt-1">
+                      {s.qualificacao && <Badge variant="outline" className="text-xs">{s.qualificacao}</Badge>}
+                      {s.cpf_cnpj && <span className="text-xs text-muted-foreground">{s.cpf_cnpj}</span>}
+                      {s.fonte && <span className="text-xs text-muted-foreground">· {s.fonte}</span>}
+                    </div>
+                  </div>
+                  {s.participacao_pct != null && (
+                    <div className="text-sm font-semibold shrink-0">
+                      {Number(s.participacao_pct).toFixed(2)}%
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {!rf && !(socios && socios.length > 0) && (
+        <p className="text-xs text-muted-foreground">
+          Mais info da Receita Federal aparecerá aqui depois do enriquecimento.
+        </p>
+      )}
     </div>
   );
 }
