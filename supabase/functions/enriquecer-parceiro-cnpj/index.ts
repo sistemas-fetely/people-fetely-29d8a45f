@@ -99,13 +99,10 @@ Deno.serve(async (req) => {
       headers: { Accept: "application/json" },
     });
 
-    if (resp.status === 404) {
-      return jsonResponse({ enriquecido: false, motivo: "cnpj_nao_encontrado" });
-    }
-
-    if (resp.status === 400) {
-      const txt = await resp.text().catch(() => "");
-      console.warn("BrasilAPI 400 (CNPJ inválido/inexistente)", txt);
+    // 404 = não existe na Receita
+    // 400/422 = CNPJ malformado/DV inválido (BrasilAPI rejeita validação)
+    // Todos tratados como "não encontrado" pra UX graceful
+    if (resp.status === 404 || resp.status === 400 || resp.status === 422) {
       return jsonResponse({ enriquecido: false, motivo: "cnpj_nao_encontrado" });
     }
 
