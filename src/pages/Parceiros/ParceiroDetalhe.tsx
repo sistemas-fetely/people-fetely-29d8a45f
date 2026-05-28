@@ -26,6 +26,7 @@ export default function ParceiroDetalhe() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { data, isLoading } = useParceiroDetalhe(id);
+  const enriquecer = useEnriquecerParceiro();
 
   const handleVoltar = () => {
     if (window.history.length > 2) navigate(-1);
