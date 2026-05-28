@@ -5,8 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  ArrowLeft, ExternalLink, FileText, Receipt, AlertCircle,
+  ArrowLeft, ExternalLink, FileText, AlertCircle,
 } from "lucide-react";
+import { CardAnalisePedido } from "@/components/pedidos/CardAnalisePedido";
+import { EditarProgramaInline } from "@/components/credito/EditarProgramaInline";
 import { EstagioBadge, BadgesContextuaisPedido, FormatoIdade } from "@/components/pedidos/BadgesPedido";
 import { PedidoTimeline } from "@/components/pedidos/PedidoTimeline";
 import { TransicionarPedidoDialog } from "@/components/pedidos/dialogs/TransicionarPedidoDialog";
@@ -129,7 +131,7 @@ export default function PedidoDetalhe() {
         <Card>
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
-              <Receipt className="h-4 w-4" />
+              <FileText className="h-4 w-4" />
               Pedido
             </CardTitle>
           </CardHeader>
@@ -156,9 +158,14 @@ export default function PedidoDetalhe() {
           <CardContent className="space-y-2">
             <Linha label="Razão" value={parceiro?.razao_social} />
             <Linha label="CNPJ" value={parceiro?.cnpj} />
-            <Linha label="Nível" value={parceiro?.nivel_programa} />
-            {parceiro?.categoria_ka && (
-              <Linha label="KA" value={parceiro.categoria_ka} />
+            {parceiro?.id && (
+              <div className="pt-1">
+                <EditarProgramaInline
+                  parceiro_id={parceiro.id}
+                  nivel_atual={parceiro.nivel_programa || "convive"}
+                  categoria_ka_atual={parceiro.categoria_ka ?? null}
+                />
+              </div>
             )}
             {parceiro?.bandeira_vermelha && (
               <p className="text-sm font-medium text-destructive">🚩 Bandeira Vermelha</p>
@@ -178,43 +185,94 @@ export default function PedidoDetalhe() {
           </CardContent>
         </Card>
 
+        <CardAnalisePedido
+          pedido_id={pedido.id}
+          status={pedido.analise_pedido_status ?? null}
+          motivo={pedido.analise_pedido_motivo ?? null}
+          detalhes={pedido.analise_pedido_detalhes ?? null}
+          executada_em={pedido.analise_pedido_executada_em ?? null}
+        />
+      </div>
+
+      {/* Box secundário: Análise de Crédito vinculada */}
+      {analiseCredito && (
         <Card>
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <FileText className="h-4 w-4" />
-              Análise de Crédito
+              Análise de Crédito vinculada
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2">
-            {analiseCredito ? (
-              <>
-                <Linha label="Estágio" value={analiseCredito.estagio_atual} />
-                <Linha label="Status final" value={analiseCredito.status_final} />
-                <Linha label="Criada" value={fmtDateTime(analiseCredito.criado_em)} />
-                {analiseCredito.decidido_em && (
-                  <Linha label="Decidida" value={fmtDateTime(analiseCredito.decidido_em)} />
+          <CardContent className="space-y-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs text-muted-foreground">
+                {analiseCredito.estagio_atual === "entrada" && "Aguardando triagem"}
+                {analiseCredito.estagio_atual === "analise" && "Em análise"}
+                {analiseCredito.estagio_atual === "decisao" && "Aguardando decisão"}
+              </span>
+              {analiseCredito.status_final === "aprovado" && (
+                <span className="text-xs font-medium text-emerald-600">✓ Aprovado</span>
+              )}
+              {analiseCredito.status_final === "aprovado_com_ressalva" && (
+                <span className="text-xs font-medium text-amber-600">⚠ Aprovado c/ ressalva</span>
+              )}
+              {analiseCredito.status_final === "reprovado" && (
+                <span className="text-xs font-medium text-destructive">✗ Reprovado</span>
+              )}
+              {analiseCredito.status_final === "cancelado" && (
+                <span className="text-xs text-muted-foreground">Cancelado</span>
+              )}
+            </div>
+
+            {analiseCredito.limite_concedido != null && (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                <div className="space-y-0.5">
+                  <p className="text-muted-foreground">Limite</p>
+                  <p className="font-semibold">{fmtBRL.format(analiseCredito.limite_concedido)}</p>
+                </div>
+                {analiseCredito.prazo_max_dias != null && (
+                  <div className="space-y-0.5">
+                    <p className="text-muted-foreground">Prazo máx</p>
+                    <p className="font-semibold">{analiseCredito.prazo_max_dias} dias</p>
+                  </div>
                 )}
-                {analiseCredito.analise_ia_confianca != null && (
-                  <Linha label="Confiança IA" value={`${Math.round(analiseCredito.analise_ia_confianca * 100)}%`} />
+                {analiseCredito.validade_ate && (
+                  <div className="space-y-0.5">
+                    <p className="text-muted-foreground">Válido até</p>
+                    <p className="font-semibold">{fmtDate(analiseCredito.validade_ate)}</p>
+                  </div>
                 )}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full gap-2 mt-2"
-                  onClick={() => navigate(`/credito/analises/${analiseCredito.id}`)}
-                >
-                  <ExternalLink className="h-4 w-4" />
-                  Ver análise
-                </Button>
-              </>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                Sem análise de crédito vinculada ainda.
-              </p>
+                {analiseCredito.perfil_aplicado && (
+                  <div className="space-y-0.5">
+                    <p className="text-muted-foreground">Perfil</p>
+                    <p className="font-semibold capitalize">{String(analiseCredito.perfil_aplicado).split("_").join(" ")}</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {analiseCredito.parecer_final && (
+              <div className="space-y-1">
+                <p className="text-xs text-muted-foreground uppercase tracking-wide">Parecer</p>
+                <p className="text-sm leading-relaxed">{analiseCredito.parecer_final}</p>
+              </div>
+            )}
+            {analiseCredito.ressalva && (
+              <div className="space-y-1">
+                <p className="text-xs text-muted-foreground uppercase tracking-wide">Ressalva</p>
+                <p className="text-sm leading-relaxed">{analiseCredito.ressalva}</p>
+              </div>
+            )}
+
+            {analiseCredito.analise_ia_resumo && (
+              <div className="space-y-1">
+                <p className="text-xs text-muted-foreground uppercase tracking-wide">Resumo IA</p>
+                <p className="text-sm leading-relaxed text-muted-foreground">{analiseCredito.analise_ia_resumo}</p>
+              </div>
             )}
           </CardContent>
         </Card>
-      </div>
+      )}
 
       {/* Itens */}
       <Card>
