@@ -177,7 +177,7 @@ export default function PedidoDetalhe() {
               variant="outline"
               size="sm"
               className="w-full gap-2 mt-2"
-              onClick={() => parceiro?.id && navigate(`/credito/clientes/${parceiro.id}`)}
+              onClick={() => parceiro?.id && navigate(`/parceiros/${parceiro.id}`)}
             >
               <ExternalLink className="h-4 w-4" />
               Ver perfil completo
@@ -193,6 +193,44 @@ export default function PedidoDetalhe() {
           executada_em={pedido.analise_pedido_executada_em ?? null}
         />
       </div>
+
+      {/* Itens */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center justify-between">
+            <span>Itens do pedido</span>
+            <span className="text-xs text-muted-foreground font-normal">{itens.length}</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {itens.length === 0 ? (
+            <div className="text-sm text-muted-foreground space-y-2">
+              <p>Itens ainda não importados (sub-fase do importador FOP).</p>
+              {pedido.itens_json && Array.isArray(pedido.itens_json) && pedido.itens_json.length > 0 && (
+                <p className="text-xs">
+                  Itens em formato bruto: <strong>{pedido.itens_json.length}</strong> no <code>itens_json</code> original.
+                </p>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {itens.map((item) => (
+                <div key={item.id} className="flex justify-between gap-3 border-b border-border pb-2 last:border-0">
+                  <div className="space-y-0.5">
+                    <p className="text-sm font-medium">{item.descricao}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {item.sku && `SKU ${item.sku} · `}
+                      {item.quantidade} × {fmtBRL.format(item.valor_unitario)}
+                      {item.desconto_pct > 0 && ` · ${item.desconto_pct}% desc`}
+                    </p>
+                  </div>
+                  <p className="text-sm font-semibold">{fmtBRL.format(item.subtotal || 0)}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Box secundário: Análise de Crédito vinculada */}
       {analiseCredito && (
@@ -273,44 +311,6 @@ export default function PedidoDetalhe() {
           </CardContent>
         </Card>
       )}
-
-      {/* Itens */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base flex items-center justify-between">
-            <span>Itens do pedido</span>
-            <span className="text-xs text-muted-foreground font-normal">{itens.length}</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {itens.length === 0 ? (
-            <div className="text-sm text-muted-foreground space-y-2">
-              <p>Itens ainda não importados (sub-fase do importador FOP).</p>
-              {pedido.itens_json && Array.isArray(pedido.itens_json) && pedido.itens_json.length > 0 && (
-                <p className="text-xs">
-                  Itens em formato bruto: <strong>{pedido.itens_json.length}</strong> no <code>itens_json</code> original.
-                </p>
-              )}
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {itens.map((item) => (
-                <div key={item.id} className="flex justify-between gap-3 border-b border-border pb-2 last:border-0">
-                  <div className="space-y-0.5">
-                    <p className="text-sm font-medium">{item.descricao}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {item.sku && `SKU ${item.sku} · `}
-                      {item.quantidade} × {fmtBRL.format(item.valor_unitario)}
-                      {item.desconto_pct > 0 && ` · ${item.desconto_pct}% desc`}
-                    </p>
-                  </div>
-                  <p className="text-sm font-semibold">{fmtBRL.format(item.subtotal || 0)}</p>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
 
       {/* Timeline */}
       <PedidoTimeline eventos={eventos} />
