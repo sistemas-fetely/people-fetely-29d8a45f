@@ -8,7 +8,7 @@ export function CasaTopNav({ className }: { className?: string }) {
   const visibleApps = CASA_APPS.filter((a) => !a.hiddenFromTopNav);
 
   return (
-    <nav className={cn("flex items-center gap-1", className)} aria-label="Apps da Casa Fetély">
+    <nav className={cn("flex items-center gap-2", className)} aria-label="Apps da Casa Fetély">
       {visibleApps.map((app) => {
         const isActive = activeApp.id === app.id;
         return (
@@ -17,7 +17,7 @@ export function CasaTopNav({ className }: { className?: string }) {
             to={app.defaultRoute}
             end={app.id === "casa"}
             className={cn(
-              "px-3 py-2 text-[11px] uppercase tracking-[2.5px] transition-colors relative",
+              "px-4 py-2.5 text-[13px] uppercase tracking-[2px] transition-colors relative",
               "hover:text-foreground",
               isActive
                 ? "text-gold font-medium"
@@ -28,7 +28,7 @@ export function CasaTopNav({ className }: { className?: string }) {
             {isActive && (
               <span
                 aria-hidden="true"
-                className="absolute -bottom-[11px] left-3 right-3 h-[1.5px] bg-gold"
+                className="absolute -bottom-[12px] left-4 right-4 h-[1.5px] bg-gold"
               />
             )}
           </NavLink>
