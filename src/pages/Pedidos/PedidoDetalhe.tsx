@@ -13,6 +13,9 @@ import { EstagioBadge, BadgesContextuaisPedido, FormatoIdade } from "@/component
 import { PedidoTimeline } from "@/components/pedidos/PedidoTimeline";
 import { TransicionarPedidoDialog } from "@/components/pedidos/dialogs/TransicionarPedidoDialog";
 import { TriarPedidoDialog } from "@/components/pedidos/dialogs/TriarPedidoDialog";
+import { OperacaoCartaoDialog } from "@/components/pedidos/dialogs/OperacaoCartaoDialog";
+import { OperacaoPixDialog } from "@/components/pedidos/dialogs/OperacaoPixDialog";
+import { OperacaoBoletoDialog } from "@/components/pedidos/dialogs/OperacaoBoletoDialog";
 import { CancelarPedidoDialog } from "@/components/pedidos/dialogs/CancelarPedidoDialog";
 import { AnotarPedidoDialog } from "@/components/pedidos/dialogs/AnotarPedidoDialog";
 import { isEstagioFinal } from "@/lib/pedidoTransicoes";
@@ -328,6 +331,26 @@ export default function PedidoDetalhe() {
             <div className="flex items-center gap-2">
               <AnotarPedidoDialog pedido_id={pedido.id} />
               <CancelarPedidoDialog pedido_id={pedido.id} />
+              {pedido.estagio === "em_cobranca_cartao" && (
+                <OperacaoCartaoDialog
+                  pedido_id={pedido.id}
+                  contato_email={parceiro?.email}
+                  contato_telefone={parceiro?.telefone}
+                />
+              )}
+              {pedido.estagio === "em_cobranca_pix" && (
+                <OperacaoPixDialog
+                  pedido_id={pedido.id}
+                  contato_email={parceiro?.email}
+                  contato_telefone={parceiro?.telefone}
+                />
+              )}
+              {pedido.estagio === "em_cobranca_boleto" && (
+                <OperacaoBoletoDialog
+                  pedido_id={pedido.id}
+                  valor_padrao={Number(pedido.valor_liquido)}
+                />
+              )}
               {(pedido.estagio === "em_cobranca_cartao" ||
                 pedido.estagio === "em_cobranca_pix" ||
                 pedido.estagio === "em_cobranca_boleto" ||
