@@ -158,9 +158,14 @@ export default function PedidoDetalhe() {
           <CardContent className="space-y-2">
             <Linha label="Razão" value={parceiro?.razao_social} />
             <Linha label="CNPJ" value={parceiro?.cnpj} />
-            <Linha label="Nível" value={parceiro?.nivel_programa} />
-            {parceiro?.categoria_ka && (
-              <Linha label="KA" value={parceiro.categoria_ka} />
+            {parceiro?.id && (
+              <div className="pt-1">
+                <EditarProgramaInline
+                  parceiro_id={parceiro.id}
+                  nivel_atual={parceiro.nivel_programa || "convive"}
+                  categoria_ka_atual={parceiro.categoria_ka ?? null}
+                />
+              </div>
             )}
             {parceiro?.bandeira_vermelha && (
               <p className="text-sm font-medium text-destructive">🚩 Bandeira Vermelha</p>
