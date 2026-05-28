@@ -685,6 +685,8 @@ export default function DashboardFinanceiro() {
           </div>
         </ChartCard>
       )}
+      </div>
     </div>
   );
 }
+
