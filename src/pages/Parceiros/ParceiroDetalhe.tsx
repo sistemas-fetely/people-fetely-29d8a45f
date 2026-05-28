@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, ShieldAlert, AlertCircle, MapPin, FileText, Sparkles, Loader2 } from "lucide-react";
 import { EditarProgramaInline } from "@/components/credito/EditarProgramaInline";
 import { useEnriquecerParceiro } from "@/hooks/credito/useEnriquecerParceiro";
+import { validateCNPJ } from "@/lib/cnpj";
 
 const fmtBRL = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -102,42 +103,56 @@ export default function ParceiroDetalhe() {
         )}
       </div>
 
-      {/* Box enriquecer — só quando cadastro incompleto e tem CNPJ válido */}
-      {parceiro.cadastro_incompleto && parceiro.cnpj && parceiro.cnpj.length === 14 && (
-        <Card className="border-amber-500/50 bg-amber-50/50 dark:bg-amber-950/20">
-          <CardContent className="pt-6">
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex items-start gap-3 flex-1">
-                <AlertCircle className="h-5 w-5 text-amber-600 mt-0.5 shrink-0" />
-                <div className="space-y-1">
-                  <p className="text-sm font-medium">Cadastro incompleto</p>
-                  <p className="text-sm text-muted-foreground">
-                    Faltam dados de razão social, endereço, e/ou sócios. Enriqueça via BrasilAPI pra completar automaticamente.
-                  </p>
+      {/* Box enriquecer — quando cadastro incompleto */}
+      {parceiro.cadastro_incompleto && parceiro.cnpj && parceiro.cnpj.length === 14 && (() => {
+        const cnpjValido = validateCNPJ(parceiro.cnpj);
+        return (
+          <Card className={`border-l-4 ${cnpjValido ? "border-l-amber-500 bg-amber-50/40" : "border-l-destructive bg-destructive/5"}`}>
+            <CardContent className="py-3 flex items-center justify-between gap-3 flex-wrap">
+              <div className="flex items-start gap-2 flex-1 min-w-0">
+                <AlertCircle className={`h-4 w-4 shrink-0 mt-0.5 ${cnpjValido ? "text-amber-600" : "text-destructive"}`} />
+                <div className="min-w-0">
+                  {cnpjValido ? (
+                    <>
+                      <p className="text-sm font-medium text-amber-900">Cadastro incompleto</p>
+                      <p className="text-xs text-amber-800">
+                        Faltam dados de razão social, endereço, e/ou sócios. Enriqueça via BrasilAPI pra completar automaticamente.
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-sm font-medium text-destructive">CNPJ com dígito verificador inválido</p>
+                      <p className="text-xs text-destructive/80">
+                        Esse CNPJ não passa na validação. Corrija manualmente pela edição rápida (lápis na listagem).
+                      </p>
+                    </>
+                  )}
                 </div>
               </div>
-              <Button
-                size="sm"
-                onClick={() => parceiro.id && enriquecer.mutate(parceiro.id)}
-                disabled={enriquecer.isPending}
-                className="gap-2 shrink-0"
-              >
-                {enriquecer.isPending ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Enriquecendo...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="h-4 w-4" />
-                    Enriquecer agora
-                  </>
-                )}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+              {cnpjValido && (
+                <Button
+                  size="sm"
+                  className="gap-2 shrink-0"
+                  onClick={() => parceiro.id && enriquecer.mutate(parceiro.id)}
+                  disabled={enriquecer.isPending}
+                >
+                  {enriquecer.isPending ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Enriquecendo...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="h-4 w-4" />
+                      Enriquecer agora
+                    </>
+                  )}
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+        );
+      })()}
 
       {/* KPIs */}
       <div className="grid gap-4 md:grid-cols-3">
