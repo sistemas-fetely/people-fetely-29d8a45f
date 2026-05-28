@@ -5,8 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, ShieldAlert, AlertCircle, MapPin, FileText } from "lucide-react";
+import { ArrowLeft, ShieldAlert, AlertCircle, MapPin, FileText, Sparkles, Loader2 } from "lucide-react";
 import { EditarProgramaInline } from "@/components/credito/EditarProgramaInline";
+import { useEnriquecerParceiro } from "@/hooks/credito/useEnriquecerParceiro";
 
 const fmtBRL = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
