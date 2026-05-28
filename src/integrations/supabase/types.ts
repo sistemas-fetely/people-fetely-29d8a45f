@@ -14285,6 +14285,16 @@ export type Database = {
         }
         Returns: string
       }
+      registrar_operacao_pedido: {
+        Args: {
+          p_descricao: string
+          p_metadata?: Json
+          p_pedido_id: string
+          p_proxima_acao?: string
+          p_tipo_evento: string
+        }
+        Returns: Json
+      }
       rejeitar_nf_pj: {
         Args: { _motivo: string; _nota_id: string }
         Returns: Json
