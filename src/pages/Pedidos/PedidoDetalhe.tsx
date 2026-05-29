@@ -491,6 +491,14 @@ export default function PedidoDetalhe() {
                   estagio_atual={estagio}
                 />
               )}
+              {estagio === "pre_faturado" && !pedido.bling_id_destino && (
+                <EnviarBlingDialog
+                  pedido_id={pedido.id}
+                  id_externo={pedido.id_externo}
+                  valor_liquido={pedido.valor_liquido}
+                  forma_solicitada={pedido.forma_solicitada}
+                />
+              )}
               <TransicionarPedidoDialog
                 pedido_id={pedido.id}
                 estagio_atual={estagio}
