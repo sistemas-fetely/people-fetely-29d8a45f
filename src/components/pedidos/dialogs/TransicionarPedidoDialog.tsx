@@ -36,8 +36,12 @@ export function TransicionarPedidoDialog({
 
   if (transicoes.length === 0) return null;
 
+  const motivoObrigatorio = para === "cancelado" || para === "recuperacao_venda";
+  const motivoFaltando = motivoObrigatorio && !motivo.trim();
+
   const handleConfirm = async () => {
     if (!para) return;
+    if (motivoFaltando) return;
     await transicionar.mutateAsync({
       pedido_id,
       para_estagio: para as EstagioPedido,
@@ -92,17 +96,23 @@ export function TransicionarPedidoDialog({
             />
           </div>
           <div className="space-y-2">
-            <Label>Motivo/observação (opcional)</Label>
+            <Label>
+              Motivo/observação{motivoObrigatorio ? <span className="text-destructive"> *</span> : <span className="text-muted-foreground"> (opcional)</span>}
+            </Label>
             <Textarea
               value={motivo}
               onChange={(e) => setMotivo(e.target.value)}
-              placeholder="Por que está avançando? Vai pro audit trail."
+              placeholder={
+                motivoObrigatorio
+                  ? "Obrigatório — descreva o motivo. Vai pro audit trail."
+                  : "Por que está avançando? Vai pro audit trail."
+              }
             />
           </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
-          <Button onClick={handleConfirm} disabled={!para || transicionar.isPending}>
+          <Button onClick={handleConfirm} disabled={!para || motivoFaltando || transicionar.isPending}>
             {transicionar.isPending ? "Avançando..." : "Confirmar"}
           </Button>
         </DialogFooter>

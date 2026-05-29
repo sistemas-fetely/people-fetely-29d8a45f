@@ -5,178 +5,166 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { RefreshCw, CreditCard, QrCode, Receipt, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { ArrowRight, Zap, X, GitBranch } from "lucide-react";
 import { useTransicionarPedido } from "@/hooks/pedidos/useTransicionarPedido";
-import { podePularAnaliseParaBoleto } from "@/lib/pedidoTransicoes";
+import { podePularAnaliseCredito } from "@/lib/pedidoTransicoes";
 import type { EstagioPedido } from "@/types/pedido";
 
-type Trilha = "cartao" | "pix" | "boleto";
+type Acao = "analise" | "pular" | "cancelar";
 
 interface Props {
   pedido_id: string;
   perfil_credito: string | null | undefined;
   estagio_atual: EstagioPedido;
-  /** Texto do botão. Default: "Mudar trilha" */
   triggerLabel?: string;
-  /** Variante visual do botão trigger. Default: "outline" */
   triggerVariant?: "default" | "outline" | "ghost";
 }
 
 export function TriarPedidoDialog({
   pedido_id,
   perfil_credito,
-  estagio_atual,
-  triggerLabel = "Mudar trilha",
-  triggerVariant = "outline",
+  estagio_atual: _estagio_atual,
+  triggerLabel = "Triar pedido",
+  triggerVariant = "default",
 }: Props) {
   const [open, setOpen] = useState(false);
-  const [trilha, setTrilha] = useState<Trilha | null>(null);
-  const [proximaAcao, setProximaAcao] = useState("");
+  const [acao, setAcao] = useState<Acao | null>(null);
   const [motivo, setMotivo] = useState("");
 
   const transicionar = useTransicionarPedido();
-  const boletoDireto = podePularAnaliseParaBoleto(perfil_credito);
+  const podePular = podePularAnaliseCredito(perfil_credito);
 
-  // Trilha "atual" (pra desabilitar o card correspondente)
-  const trilhaAtual: Trilha | null =
-    estagio_atual === "em_cobranca_cartao" ? "cartao" :
-    estagio_atual === "em_cobranca_pix" ? "pix" :
-    estagio_atual === "em_cobranca_boleto" || estagio_atual === "em_analise_credito" ? "boleto" :
-    null;
+  // F-2: parser de condicao_solicitada → condicao_final_aprovada ainda não existe.
+  // Trigger SQL exige condicao_final_aprovada antes de aprovar análise.
+  // Botão "Pular análise" desabilitado até F-3.
+  const pularDisponivel = false;
 
   const handleConfirm = async () => {
-    if (!trilha) return;
+    if (!acao) return;
+
+    if (acao === "cancelar" && !motivo.trim()) return;
 
     let destino: EstagioPedido;
-    let motivoFinal = motivo;
-
-    if (trilha === "cartao") destino = "em_cobranca_cartao";
-    else if (trilha === "pix") destino = "em_cobranca_pix";
-    else if (boletoDireto) destino = "em_cobranca_boleto";
-    else {
-      destino = "em_analise_credito";
-      if (!motivoFinal) {
-        motivoFinal = `Mudança pra boleto — perfil ${perfil_credito || "indefinido"} requer análise prévia`;
-      }
-    }
+    if (acao === "analise") destino = "em_analise_credito";
+    else if (acao === "pular") destino = "credito_aprovado";
+    else destino = "cancelado";
 
     await transicionar.mutateAsync({
       pedido_id,
       para_estagio: destino,
-      proxima_acao: proximaAcao || undefined,
-      motivo: motivoFinal || `Mudança de trilha solicitada`,
+      motivo: motivo || (acao === "analise" ? "Encaminhado pra análise de crédito" : undefined),
     });
 
     setOpen(false);
-    setTrilha(null);
+    setAcao(null);
     setMotivo("");
-    setProximaAcao("");
   };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button size="sm" variant={triggerVariant} className="gap-2">
-          <RefreshCw className="h-4 w-4" />
+          <ArrowRight className="h-4 w-4" />
           {triggerLabel}
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Mudar trilha de pagamento</DialogTitle>
+          <DialogTitle>Triar pedido</DialogTitle>
           <DialogDescription>
-            Use só quando o cliente mudar a forma de pagamento. O sistema já alocou a trilha
-            automaticamente baseado no que veio do pedido.
+            Decida o próximo passo. A triagem encaminha o pedido pra análise de crédito,
+            pula análise (perfis dispensados) ou cancela.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
-          <div className="grid grid-cols-3 gap-3">
-            <TrilhaCard
-              icone={<CreditCard className="h-8 w-8" />}
-              titulo="Cartão"
-              subtitulo="de crédito"
-              cor="blue"
-              ativa={trilha === "cartao"}
-              atual={trilhaAtual === "cartao"}
-              onClick={() => setTrilha("cartao")}
-            />
-            <TrilhaCard
-              icone={<QrCode className="h-8 w-8" />}
-              titulo="PIX"
-              subtitulo="chave ou QR"
-              cor="cyan"
-              ativa={trilha === "pix"}
-              atual={trilhaAtual === "pix"}
-              onClick={() => setTrilha("pix")}
-            />
-            <TrilhaCard
-              icone={<Receipt className="h-8 w-8" />}
-              titulo="Boleto"
-              subtitulo={boletoDireto ? "direto · perfil OK" : "via análise"}
-              badge={
-                boletoDireto ? (
-                  <Badge variant="outline" className="gap-1 text-emerald-700 border-emerald-300 bg-emerald-50">
-                    <CheckCircle2 className="h-3 w-3" />
-                    direto
-                  </Badge>
-                ) : (
-                  <Badge variant="outline" className="gap-1 text-amber-700 border-amber-300 bg-amber-50">
-                    <AlertCircle className="h-3 w-3" />
-                    análise
-                  </Badge>
-                )
-              }
-              cor="amber"
-              ativa={trilha === "boleto"}
-              atual={trilhaAtual === "boleto"}
-              onClick={() => setTrilha("boleto")}
-            />
-          </div>
+        <div className="space-y-2">
+          <AcaoCard
+            ativa={acao === "analise"}
+            onClick={() => setAcao("analise")}
+            icone={<GitBranch className="h-5 w-5 text-blue-600" />}
+            titulo="Encaminhar pra Análise de Crédito"
+            descricao="Padrão. Análise verifica limite, prazo e perfil antes de aprovar."
+          />
 
-          {trilha === "boleto" && !boletoDireto && (
-            <div className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm">
-              <p className="font-medium text-amber-900 flex items-center gap-2">
-                <AlertCircle className="h-4 w-4" />
-                Boleto vai passar por análise de crédito
-              </p>
-              <p className="text-amber-800 mt-1">
-                Perfil <strong>{perfil_credito || "indefinido"}</strong> não pula análise. O pedido vai pra Crédito antes de emitir o boleto.
-              </p>
-            </div>
-          )}
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div>
+                  <AcaoCard
+                    ativa={acao === "pular"}
+                    onClick={() => pularDisponivel && podePular && setAcao("pular")}
+                    desabilitada={!pularDisponivel || !podePular}
+                    icone={<Zap className="h-5 w-5 text-emerald-600" />}
+                    titulo="Pular Análise (perfil dispensa)"
+                    descricao={
+                      podePular
+                        ? `Perfil ${perfil_credito} dispensa análise — aprovação direta.`
+                        : "Disponível pra perfis Premium e Recorrente Bom Pagador."
+                    }
+                  />
+                </div>
+              </TooltipTrigger>
+              {!pularDisponivel && (
+                <TooltipContent side="bottom" className="max-w-xs">
+                  Pular análise ainda não disponível — precisa do parser de condição (F-3).
+                </TooltipContent>
+              )}
+              {pularDisponivel && !podePular && (
+                <TooltipContent side="bottom" className="max-w-xs">
+                  Perfil <strong>{perfil_credito || "indefinido"}</strong> precisa passar pela análise.
+                </TooltipContent>
+              )}
+            </Tooltip>
+          </TooltipProvider>
 
+          <AcaoCard
+            ativa={acao === "cancelar"}
+            onClick={() => setAcao("cancelar")}
+            icone={<X className="h-5 w-5 text-destructive" />}
+            titulo="Cancelar pedido"
+            descricao="Encerra o pedido. Motivo obrigatório."
+            destrutiva
+          />
+        </div>
+
+        {acao === "cancelar" && (
           <div className="space-y-2">
-            <Label>Próxima ação (opcional)</Label>
-            <Input
-              value={proximaAcao}
-              onChange={(e) => setProximaAcao(e.target.value)}
-              placeholder="Ex: Enviar link de cartão, esperar pagamento, etc."
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label>Motivo da mudança</Label>
+            <Label>Motivo do cancelamento</Label>
             <Textarea
               value={motivo}
               onChange={(e) => setMotivo(e.target.value)}
-              placeholder="Ex: Cliente preferiu PIX em vez de boleto. Vai pro audit trail."
+              placeholder="Ex: Cliente desistiu, divergência de preço, etc."
               rows={2}
             />
           </div>
-        </div>
+        )}
+
+        {acao === "analise" && (
+          <div className="space-y-2">
+            <Label>Observação (opcional)</Label>
+            <Textarea
+              value={motivo}
+              onChange={(e) => setMotivo(e.target.value)}
+              placeholder="Algo que a Crédito precisa saber? Vai pro audit trail."
+              rows={2}
+            />
+          </div>
+        )}
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
+          <Button variant="outline" onClick={() => setOpen(false)}>Fechar</Button>
           <Button
             onClick={handleConfirm}
-            disabled={!trilha || trilha === trilhaAtual || transicionar.isPending}
+            disabled={
+              !acao ||
+              (acao === "cancelar" && !motivo.trim()) ||
+              transicionar.isPending
+            }
+            variant={acao === "cancelar" ? "destructive" : "default"}
           >
-            {transicionar.isPending ? "Mudando..." : "Confirmar mudança"}
+            {transicionar.isPending ? "Aplicando..." : "Confirmar"}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -184,49 +172,37 @@ export function TriarPedidoDialog({
   );
 }
 
-interface TrilhaCardProps {
+interface AcaoCardProps {
+  ativa: boolean;
+  onClick: () => void;
   icone: React.ReactNode;
   titulo: string;
-  subtitulo: string;
-  cor: "blue" | "cyan" | "amber";
-  ativa: boolean;
-  atual: boolean;
-  badge?: React.ReactNode;
-  onClick: () => void;
+  descricao: string;
+  desabilitada?: boolean;
+  destrutiva?: boolean;
 }
 
-function TrilhaCard({ icone, titulo, subtitulo, cor, ativa, atual, badge, onClick }: TrilhaCardProps) {
-  const borderActive: Record<string, string> = {
-    blue: "border-blue-500 ring-2 ring-blue-500/30 bg-blue-50/50",
-    cyan: "border-cyan-500 ring-2 ring-cyan-500/30 bg-cyan-50/50",
-    amber: "border-amber-500 ring-2 ring-amber-500/30 bg-amber-50/50",
-  };
-  const iconColor: Record<string, string> = {
-    blue: "text-blue-600",
-    cyan: "text-cyan-600",
-    amber: "text-amber-600",
-  };
-
+function AcaoCard({ ativa, onClick, icone, titulo, descricao, desabilitada, destrutiva }: AcaoCardProps) {
   return (
-    <Card
-      className={`cursor-pointer transition-all hover:border-foreground/30 relative ${
-        ativa ? borderActive[cor] : ""
-      } ${atual ? "opacity-60" : ""}`}
+    <button
+      type="button"
       onClick={onClick}
+      disabled={desabilitada}
+      className={[
+        "w-full text-left rounded-md border p-3 flex items-start gap-3 transition-colors",
+        ativa
+          ? destrutiva
+            ? "border-destructive bg-destructive/5 ring-2 ring-destructive/20"
+            : "border-foreground/40 bg-accent ring-2 ring-foreground/10"
+          : "border-border hover:bg-accent/60",
+        desabilitada ? "opacity-50 cursor-not-allowed hover:bg-transparent" : "cursor-pointer",
+      ].join(" ")}
     >
-      <CardContent className="py-4 flex flex-col items-center text-center gap-2">
-        <div className={iconColor[cor]}>{icone}</div>
-        <div>
-          <p className="font-semibold text-sm">{titulo}</p>
-          <p className="text-xs text-muted-foreground">{subtitulo}</p>
-        </div>
-        {badge && <div>{badge}</div>}
-        {atual && (
-          <Badge variant="secondary" className="text-[10px] absolute top-1 right-1">
-            atual
-          </Badge>
-        )}
-      </CardContent>
-    </Card>
+      <div className="shrink-0 mt-0.5">{icone}</div>
+      <div className="space-y-0.5">
+        <p className="text-sm font-medium">{titulo}</p>
+        <p className="text-xs text-muted-foreground">{descricao}</p>
+      </div>
+    </button>
   );
 }

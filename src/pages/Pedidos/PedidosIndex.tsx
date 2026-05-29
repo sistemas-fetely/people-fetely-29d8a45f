@@ -1,12 +1,16 @@
 import { useSearchParams } from "react-router-dom";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { CreditCard, QrCode, Receipt, Shield, Factory, Archive, LayoutGrid } from "lucide-react";
+import {
+  LayoutGrid, Shield, CheckCircle2, FileClock, Factory, Undo2, PackageCheck, XCircle,
+} from "lucide-react";
 import { PedidosStatsCards } from "@/components/pedidos/PedidosStatsCards";
 import { PipelineHorizontal } from "@/components/pedidos/PipelineHorizontal";
 import { FilaPedidosPorArea } from "@/components/pedidos/FilaPedidosPorArea";
 import type { EstagioPedido } from "@/types/pedido";
 
-const TABS_VALIDAS = ["todas", "credito", "cartao", "pix", "boleto", "faturamento", "concluidos"];
+const TABS_VALIDAS = [
+  "todas", "analise", "aprovado", "pre_faturado", "bling", "recuperacao", "entregues", "cancelados",
+];
 
 export default function PedidosIndex() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -33,7 +37,7 @@ export default function PedidosIndex() {
       <div>
         <h1 className="text-2xl font-bold">Casa dos Pedidos</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Portal único de pedidos B2B — recebimento, triagem, crédito, cobrança, exportação pro Bling.
+          Portal único de pedidos B2B — recebimento, triagem, crédito, pré-faturamento, envio pro Bling.
         </p>
       </div>
 
@@ -50,29 +54,33 @@ export default function PedidosIndex() {
             <LayoutGrid className="h-4 w-4" />
             Todos
           </TabsTrigger>
-          <TabsTrigger value="credito" className="gap-1.5">
+          <TabsTrigger value="analise" className="gap-1.5">
             <Shield className="h-4 w-4" />
-            Crédito
+            Em Análise
           </TabsTrigger>
-          <TabsTrigger value="cartao" className="gap-1.5">
-            <CreditCard className="h-4 w-4" />
-            Cartão
+          <TabsTrigger value="aprovado" className="gap-1.5">
+            <CheckCircle2 className="h-4 w-4" />
+            Crédito Aprovado
           </TabsTrigger>
-          <TabsTrigger value="pix" className="gap-1.5">
-            <QrCode className="h-4 w-4" />
-            PIX
+          <TabsTrigger value="pre_faturado" className="gap-1.5">
+            <FileClock className="h-4 w-4" />
+            Pré-faturamento
           </TabsTrigger>
-          <TabsTrigger value="boleto" className="gap-1.5">
-            <Receipt className="h-4 w-4" />
-            Boleto
-          </TabsTrigger>
-          <TabsTrigger value="faturamento" className="gap-1.5">
+          <TabsTrigger value="bling" className="gap-1.5">
             <Factory className="h-4 w-4" />
-            Faturamento
+            No Bling
           </TabsTrigger>
-          <TabsTrigger value="concluidos" className="gap-1.5">
-            <Archive className="h-4 w-4" />
-            Concluídos
+          <TabsTrigger value="recuperacao" className="gap-1.5">
+            <Undo2 className="h-4 w-4" />
+            Recuperação
+          </TabsTrigger>
+          <TabsTrigger value="entregues" className="gap-1.5">
+            <PackageCheck className="h-4 w-4" />
+            Entregues
+          </TabsTrigger>
+          <TabsTrigger value="cancelados" className="gap-1.5">
+            <XCircle className="h-4 w-4" />
+            Cancelados
           </TabsTrigger>
         </TabsList>
 
@@ -83,31 +91,30 @@ export default function PedidosIndex() {
             apenasAtivos={false}
           />
         </TabsContent>
-        <TabsContent value="credito">
+        <TabsContent value="analise">
           <FilaPedidosPorArea area="todas" estagios={["em_analise_credito"]} apenasAtivos />
         </TabsContent>
-        <TabsContent value="cartao">
-          <FilaPedidosPorArea area="todas" estagios={["em_cobranca_cartao"]} apenasAtivos />
+        <TabsContent value="aprovado">
+          <FilaPedidosPorArea area="todas" estagios={["credito_aprovado"]} apenasAtivos />
         </TabsContent>
-        <TabsContent value="pix">
-          <FilaPedidosPorArea area="todas" estagios={["em_cobranca_pix"]} apenasAtivos />
+        <TabsContent value="pre_faturado">
+          <FilaPedidosPorArea area="todas" estagios={["pre_faturado"]} apenasAtivos />
         </TabsContent>
-        <TabsContent value="boleto">
-          <FilaPedidosPorArea area="todas" estagios={["em_cobranca_boleto"]} apenasAtivos />
-        </TabsContent>
-        <TabsContent value="faturamento">
+        <TabsContent value="bling">
           <FilaPedidosPorArea
             area="todas"
-            estagios={["pronto_pro_bling", "em_separacao", "faturado", "em_transporte"]}
+            estagios={["em_separacao", "faturado", "em_transporte"]}
             apenasAtivos
           />
         </TabsContent>
-        <TabsContent value="concluidos">
-          <FilaPedidosPorArea
-            area="todas"
-            estagios={["entregue", "cancelado"]}
-            apenasAtivos={false}
-          />
+        <TabsContent value="recuperacao">
+          <FilaPedidosPorArea area="todas" estagios={["recuperacao_venda"]} apenasAtivos />
+        </TabsContent>
+        <TabsContent value="entregues">
+          <FilaPedidosPorArea area="todas" estagios={["entregue"]} apenasAtivos={false} />
+        </TabsContent>
+        <TabsContent value="cancelados">
+          <FilaPedidosPorArea area="todas" estagios={["cancelado"]} apenasAtivos={false} />
         </TabsContent>
       </Tabs>
     </div>
