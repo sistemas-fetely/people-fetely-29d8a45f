@@ -1,8 +1,22 @@
 import { Badge } from "@/components/ui/badge";
-import { Shield, Crown, Clock, AlertTriangle, Sparkles } from "lucide-react";
-import { ESTAGIO_LABELS, ESTAGIO_CORES } from "@/types/pedido";
+import { Crown, Clock, AlertTriangle, Sparkles } from "lucide-react";
+import { ESTAGIO_LABELS } from "@/types/pedido";
 import type { EstagioPedido, PedidoFilaItem } from "@/types/pedido";
 import { cn } from "@/lib/utils";
+
+/** Cores por estágio — fonte única de verdade pra Badge + barra do pipeline. */
+export const ESTAGIO_CORES: Record<EstagioPedido, string> = {
+  recebido: "bg-slate-500",
+  em_analise_credito: "bg-blue-500",
+  credito_aprovado: "bg-emerald-500",
+  pre_faturado: "bg-amber-500",
+  em_separacao: "bg-sky-600",
+  faturado: "bg-sky-700",
+  em_transporte: "bg-indigo-500",
+  entregue: "bg-green-600",
+  cancelado: "bg-red-500",
+  recuperacao_venda: "bg-orange-500",
+};
 
 export function EstagioBadge({ estagio }: { estagio: EstagioPedido }) {
   return (

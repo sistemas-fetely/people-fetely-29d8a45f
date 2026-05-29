@@ -1,30 +1,77 @@
+// Estágios canônicos do pedido (D5 + estados pré/terminais).
+// Alinhado com check constraint em public.pedidos.estagio (F-1).
 export type EstagioPedido =
-  | "recebido"
-  | "em_analise_credito"
-  | "em_cobranca" // legado — mantido até refator completo da UI/SQL
-  | "em_cobranca_cartao"
-  | "em_cobranca_pix"
-  | "em_cobranca_boleto"
-  | "pronto_pro_bling"
-  | "em_separacao"
-  | "faturado"
-  | "em_transporte"
-  | "entregue"
-  | "cancelado";
+  | "recebido"               // veio do FOP, sem análise
+  | "em_analise_credito"     // análise em andamento
+  | "credito_aprovado"       // D5 #1 — análise aprovou
+  | "pre_faturado"           // D5 #2 — títulos gerados, aguarda envio Bling
+  | "em_separacao"           // D5 #3 — Bling separando
+  | "faturado"               // D5 #4 — NF emitida
+  | "em_transporte"          // D5 #5 — saiu pra entrega
+  | "entregue"               // D5 #6 — final
+  | "cancelado"              // terminal
+  | "recuperacao_venda";     // entrada não paga → time comercial recupera
 
 export type AreaPedido = "sops" | "credito" | "bling" | "sistema" | "nenhuma";
 
 export type TipoPagamento = "a_prazo" | "a_vista";
 
-/**
- * As 3 trilhas de cobrança da Fase C.
- * Útil pra agrupar nas tabs e mini-pipeline.
- */
-export const TRILHAS_COBRANCA: readonly EstagioPedido[] = [
-  "em_cobranca_cartao",
-  "em_cobranca_pix",
-  "em_cobranca_boleto",
+export const ESTAGIO_LABELS: Record<EstagioPedido, string> = {
+  recebido: "Recebido",
+  em_analise_credito: "Em análise crédito",
+  credito_aprovado: "Crédito aprovado",
+  pre_faturado: "Pré-faturamento",
+  em_separacao: "Em separação",
+  faturado: "Faturado",
+  em_transporte: "Em transporte",
+  entregue: "Entregue",
+  cancelado: "Cancelado",
+  recuperacao_venda: "Recuperação de venda",
+};
+
+export const AREA_LABELS: Record<AreaPedido, string> = {
+  sops: "SOps",
+  credito: "Crédito",
+  bling: "Bling",
+  sistema: "Sistema",
+  nenhuma: "—",
+};
+
+/** Pipeline visual: ordem dos estágios "ativos" no fluxo principal */
+export const PIPELINE_PRINCIPAL: readonly EstagioPedido[] = [
+  "recebido",
+  "em_analise_credito",
+  "credito_aprovado",
+  "pre_faturado",
+  "em_separacao",
+  "faturado",
+  "em_transporte",
+  "entregue",
 ] as const;
+
+/** Estágios fora do fluxo principal */
+export const ESTAGIOS_TERMINAIS: readonly EstagioPedido[] = [
+  "entregue",
+  "cancelado",
+] as const;
+
+export const ESTAGIOS_RECUPERAVEIS: readonly EstagioPedido[] = [
+  "recuperacao_venda",
+] as const;
+
+/** Mapeamento estágio → área responsável */
+export const ESTAGIO_AREA: Record<EstagioPedido, AreaPedido> = {
+  recebido: "sistema",
+  em_analise_credito: "credito",
+  credito_aprovado: "sops",
+  pre_faturado: "sops",
+  em_separacao: "bling",
+  faturado: "bling",
+  em_transporte: "bling",
+  entregue: "nenhuma",
+  cancelado: "nenhuma",
+  recuperacao_venda: "sops",
+};
 
 export interface PedidoFilaItem {
   id: string;
@@ -66,82 +113,70 @@ export interface PipelineItem {
   soma_valor: number;
 }
 
-export const ESTAGIO_LABELS: Record<EstagioPedido, string> = {
-  recebido: "Recebido",
-  em_analise_credito: "Em análise crédito",
-  em_cobranca: "Em cobrança",
-  em_cobranca_cartao: "Cobrança · Cartão",
-  em_cobranca_pix: "Cobrança · PIX",
-  em_cobranca_boleto: "Cobrança · Boleto",
-  pronto_pro_bling: "Pronto pro Bling",
-  em_separacao: "Em separação",
-  faturado: "Faturado",
-  em_transporte: "Em transporte",
-  entregue: "Entregue",
+// ─────────────────────────────────────────────
+// Tipos do Sub-módulo Contas a Receber (5.2)
+// ─────────────────────────────────────────────
+
+export type StatusTitulo =
+  | "aguardando_pagamento"
+  | "aguardando_envio_bling"
+  | "aguardando_emissao_nf"
+  | "vigente"
+  | "vigente_parcial"
+  | "pago"
+  | "pago_com_atraso"
+  | "pago_judicial"
+  | "vencido"
+  | "vencido_suspenso"
+  | "em_juridico"
+  | "renegociado"
+  | "baixado_por_perda"
+  | "cancelado"
+  | "cancelado_recuperacao";
+
+export type TipoTituloPagamento = "boleto" | "pix" | "cartao" | "troca_mercadoria";
+
+export const STATUS_TITULO_LABELS: Record<StatusTitulo, string> = {
+  aguardando_pagamento: "Aguardando pagamento",
+  aguardando_envio_bling: "Aguardando envio Bling",
+  aguardando_emissao_nf: "Aguardando NF",
+  vigente: "Vigente",
+  vigente_parcial: "Vigente parcial",
+  pago: "Pago",
+  pago_com_atraso: "Pago com atraso",
+  pago_judicial: "Pago (judicial)",
+  vencido: "Vencido",
+  vencido_suspenso: "Vencido suspenso",
+  em_juridico: "Em jurídico",
+  renegociado: "Renegociado",
+  baixado_por_perda: "Baixado por perda",
   cancelado: "Cancelado",
+  cancelado_recuperacao: "Cancelado (recuperação)",
 };
 
-export const AREA_LABELS: Record<AreaPedido, string> = {
-  sops: "SOps",
-  credito: "Crédito",
-  bling: "Bling",
-  sistema: "Sistema",
-  nenhuma: "—",
-};
-
-export const ESTAGIO_CORES: Record<EstagioPedido, string> = {
-  recebido: "bg-slate-500",
-  em_analise_credito: "bg-purple-500",
-  em_cobranca: "bg-stone-400", // legado, tom dessaturado
-  em_cobranca_cartao: "bg-blue-500",
-  em_cobranca_pix: "bg-cyan-500",
-  em_cobranca_boleto: "bg-amber-500",
-  pronto_pro_bling: "bg-emerald-500",
-  em_separacao: "bg-blue-700",
-  faturado: "bg-teal-600",
-  em_transporte: "bg-indigo-500",
-  entregue: "bg-green-600",
-  cancelado: "bg-red-500",
-};
-
-export const ESTAGIO_ORDEM: EstagioPedido[] = [
-  "recebido",
-  "em_analise_credito",
-  "em_cobranca_cartao",
-  "em_cobranca_pix",
-  "em_cobranca_boleto",
-  "em_cobranca", // legado — depois das 3 trilhas oficiais
-  "pronto_pro_bling",
-  "em_separacao",
-  "faturado",
-  "em_transporte",
-  "entregue",
-  "cancelado",
-];
-
-export type FaseCluster = "entrada" | "analise" | "cobranca" | "faturamento" | "concluido";
-
-export const FASE_LABELS: Record<FaseCluster, string> = {
-  entrada: "Entrada",
-  analise: "Análise",
-  cobranca: "Cobrança",
-  faturamento: "Faturamento",
-  concluido: "Concluído",
-};
-
-export const ESTAGIO_FASE: Record<EstagioPedido, FaseCluster> = {
-  recebido: "entrada",
-  em_analise_credito: "analise",
-  em_cobranca: "cobranca",
-  em_cobranca_cartao: "cobranca",
-  em_cobranca_pix: "cobranca",
-  em_cobranca_boleto: "cobranca",
-  pronto_pro_bling: "faturamento",
-  em_separacao: "faturamento",
-  faturado: "faturamento",
-  em_transporte: "faturamento",
-  entregue: "concluido",
-  cancelado: "concluido",
-};
-
-export const FASE_ORDEM: FaseCluster[] = ["entrada", "analise", "cobranca", "faturamento", "concluido"];
+export interface TituloAReceber {
+  id: string;
+  numero_titulo: string;
+  conta_id: string;
+  pedido_id: string;
+  nf_id: string | null;
+  analise_credito_id: string | null;
+  valor_bruto: number;
+  valor_desconto: number;
+  valor_juros: number;
+  valor_multa: number;
+  valor_correcao: number;
+  valor_atual: number;
+  data_criacao: string;
+  data_emissao_nf: string | null;
+  data_vencimento_original: string;
+  data_vencimento_atual: string;
+  data_pagamento: string | null;
+  numero_parcela: number;
+  total_parcelas: number;
+  tipo_pagamento: TipoTituloPagamento;
+  eh_entrada: boolean;
+  status: StatusTitulo;
+  subestado_atraso: string;
+  flag_bandeira_amarela: boolean;
+}

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { usePedidosFila } from "@/hooks/pedidos/usePedidosFila";
 import {
@@ -10,7 +10,10 @@ import { Search } from "lucide-react";
 import {
   EstagioBadge, BadgesContextuaisPedido, FormatoIdade,
 } from "./BadgesPedido";
-import { ESTAGIO_LABELS, ESTAGIO_ORDEM } from "@/types/pedido";
+import {
+  ESTAGIO_LABELS, ESTAGIO_AREA, PIPELINE_PRINCIPAL,
+  ESTAGIOS_TERMINAIS, ESTAGIOS_RECUPERAVEIS,
+} from "@/types/pedido";
 import type { AreaPedido, EstagioPedido } from "@/types/pedido";
 
 const fmtBRL = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
@@ -21,6 +24,15 @@ interface Props {
   /** Múltiplos estágios — quando preenchido, esconde o Select interno */
   estagios?: EstagioPedido[];
   apenasAtivos?: boolean;
+}
+
+/** Lista completa de estágios pra Select (pipeline + cancelado + recuperação). */
+function todosOsEstagios(): EstagioPedido[] {
+  return [
+    ...PIPELINE_PRINCIPAL,
+    ...ESTAGIOS_RECUPERAVEIS,
+    ...ESTAGIOS_TERMINAIS.filter((e) => !PIPELINE_PRINCIPAL.includes(e)),
+  ];
 }
 
 export function FilaPedidosPorArea({
@@ -34,6 +46,13 @@ export function FilaPedidosPorArea({
   const navigate = useNavigate();
 
   const usarEstagiosMultiplos = !!(estagios && estagios.length > 0);
+
+  // Estágios oferecidos no Select — se área específica, filtra pela ESTAGIO_AREA
+  const estagiosDoSelect = useMemo(() => {
+    const completo = todosOsEstagios();
+    if (area === "todas") return completo;
+    return completo.filter((e) => ESTAGIO_AREA[e] === area);
+  }, [area]);
 
   const { data, isLoading } = usePedidosFila({
     area,
@@ -65,7 +84,7 @@ export function FilaPedidosPorArea({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="todos">Todos os estágios</SelectItem>
-              {ESTAGIO_ORDEM.map((e) => (
+              {estagiosDoSelect.map((e) => (
                 <SelectItem key={e} value={e}>{ESTAGIO_LABELS[e]}</SelectItem>
               ))}
             </SelectContent>

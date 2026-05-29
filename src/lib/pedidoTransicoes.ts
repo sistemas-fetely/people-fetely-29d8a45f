@@ -1,29 +1,49 @@
 import type { EstagioPedido } from "@/types/pedido";
 
+/**
+ * Matriz de transições válidas POR INICIATIVA HUMANA.
+ *
+ * Transições silenciosas (via trigger do banco) NÃO estão aqui:
+ *   - analise_credito.status_final = 'aprovado' → pedido vai pra credito_aprovado → pre_faturado
+ *   - sync Bling atualiza em_separacao/faturado/em_transporte/entregue (futuro F-5)
+ *
+ * Aqui só ficam as transições que UM HUMANO opera explicitamente.
+ */
 export const TRANSICOES_VALIDAS: Record<EstagioPedido, EstagioPedido[]> = {
   recebido: [
-    "em_analise_credito",
-    "em_cobranca_cartao",
-    "em_cobranca_pix",
-    "em_cobranca_boleto",
+    "em_analise_credito",   // SOps encaminha pra crédito
+    "credito_aprovado",     // SOps pula análise (perfis premium/recorrente_bom_pagador)
     "cancelado",
   ],
   em_analise_credito: [
-    "em_cobranca_cartao",
-    "em_cobranca_pix",
-    "em_cobranca_boleto",
+    "cancelado",
+    // credito_aprovado é silencioso (trigger quando análise vira aprovada)
+  ],
+  credito_aprovado: [
+    "pre_faturado",         // SOps move (raro — geralmente trigger faz)
     "cancelado",
   ],
-  em_cobranca: ["pronto_pro_bling", "cancelado"], // legado, mantido
-  em_cobranca_cartao: ["pronto_pro_bling", "cancelado"],
-  em_cobranca_pix: ["pronto_pro_bling", "cancelado"],
-  em_cobranca_boleto: ["pronto_pro_bling", "cancelado"],
-  pronto_pro_bling: ["em_separacao", "faturado", "cancelado"],
-  em_separacao: ["faturado", "cancelado"],
-  faturado: ["em_transporte"],
-  em_transporte: ["entregue"],
+  pre_faturado: [
+    "em_separacao",         // SOps aperta "Enviar pro Bling" (F-3)
+    "recuperacao_venda",    // entrada não paga → SOps migra
+    "cancelado",
+  ],
+  em_separacao: [
+    "faturado",             // sync Bling (futuro), mas SOps pode forçar
+    "cancelado",
+  ],
+  faturado: [
+    "em_transporte",        // sync Bling (futuro)
+  ],
+  em_transporte: [
+    "entregue",             // sync Bling (futuro)
+  ],
   entregue: [],
   cancelado: [],
+  recuperacao_venda: [
+    "pre_faturado",         // cliente quitou entrada → reverte
+    "cancelado",
+  ],
 };
 
 export function isEstagioFinal(estagio: EstagioPedido): boolean {
@@ -39,16 +59,24 @@ export function transicoesPara(estagio: EstagioPedido): EstagioPedido[] {
 }
 
 /**
- * Decide se um pedido pode pular análise de crédito direto pra cobrança boleto.
- * Regra: perfis premium e recorrente_bom_pagador pulam.
+ * Decide se um pedido pode pular análise de crédito direto pra credito_aprovado.
+ *
+ * Regra mantida do desenho anterior: perfis `premium` e `recorrente_bom_pagador` pulam.
  * Outros perfis precisam passar pela análise.
  *
- * Usado no dialog de triagem (C.3) pra habilitar/desabilitar
- * o botão "Boleto direto" vs "Boleto via análise".
+ * No novo desenho (v1.1 SNCF-first), pular significa ir direto a credito_aprovado
+ * (NÃO mais pra "cobrança boleto" — esse conceito foi descontinuado).
+ *
+ * IMPORTANTE: quem pula análise não tem humano da Joseph pra setar
+ * condicao_final_aprovada manualmente. A condição é derivada automaticamente
+ * de condicao_solicitada do FOP. Esse parser entra em F-3.
  */
-export function podePularAnaliseParaBoleto(
+export function podePularAnaliseCredito(
   perfilCredito: string | null | undefined
 ): boolean {
   if (!perfilCredito) return false;
   return ["premium", "recorrente_bom_pagador"].includes(perfilCredito);
 }
+
+/** @deprecated Use podePularAnaliseCredito. Mantido pra compat retroativa. */
+export const podePularAnaliseParaBoleto = podePularAnaliseCredito;
