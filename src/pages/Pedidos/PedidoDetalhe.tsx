@@ -21,6 +21,7 @@ import { TransicionarPedidoDialog } from "@/components/pedidos/dialogs/Transicio
 import { TriarPedidoDialog } from "@/components/pedidos/dialogs/TriarPedidoDialog";
 import { CancelarPedidoDialog } from "@/components/pedidos/dialogs/CancelarPedidoDialog";
 import { AnotarPedidoDialog } from "@/components/pedidos/dialogs/AnotarPedidoDialog";
+import { EnviarBlingDialog } from "@/components/pedidos/dialogs/EnviarBlingDialog";
 import { isEstagioFinal } from "@/lib/pedidoTransicoes";
 import {
   AREA_LABELS, ESTAGIO_LABELS, STATUS_TITULO_LABELS,
@@ -275,6 +276,18 @@ export default function PedidoDetalhe() {
             <Linha label="Condição" value={pedido.condicao_solicitada} />
             <Linha label="Forma" value={pedido.forma_solicitada} />
             <Linha label="Tipo pagamento" value={pedido.tipo_pagamento} />
+            {pedido.bling_id_destino && (
+              <>
+                <Separator />
+                <Linha
+                  label="Bling"
+                  value={`#${pedido.bling_id_destino} · enviado ${fmtDateTime(pedido.bling_enviado_em)}`}
+                />
+              </>
+            )}
+            {pedido.bling_envio_erro && (
+              <Linha label="Erro último envio" value={pedido.bling_envio_erro} />
+            )}
           </CardContent>
         </Card>
 
@@ -476,6 +489,14 @@ export default function PedidoDetalhe() {
                   pedido_id={pedido.id}
                   perfil_credito={parceiro?.perfil_credito}
                   estagio_atual={estagio}
+                />
+              )}
+              {estagio === "pre_faturado" && !pedido.bling_id_destino && (
+                <EnviarBlingDialog
+                  pedido_id={pedido.id}
+                  id_externo={pedido.id_externo}
+                  valor_liquido={pedido.valor_liquido}
+                  forma_solicitada={pedido.forma_solicitada}
                 />
               )}
               <TransicionarPedidoDialog
