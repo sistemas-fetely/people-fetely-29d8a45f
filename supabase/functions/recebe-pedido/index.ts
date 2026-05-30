@@ -71,6 +71,7 @@ Deno.serve(async (req) => {
     }
 
     const { data, error } = await supabase.rpc("receber_pedido_externo", {
+      // Originais (12)
       p_cnpj: body.cnpj,
       p_id_externo: body.id_externo,
       p_data_pedido: body.data_pedido,
@@ -83,6 +84,29 @@ Deno.serve(async (req) => {
       p_origem: body.origem ?? null,
       p_itens_json: body.itens_json ?? null,
       p_recebido_via: body.recebido_via ?? "api",
+      // Novos: dados cadastrais do cliente (todos opcionais, repassados se vierem)
+      p_razao_social: body.razao_social ?? null,
+      p_nome_fantasia: body.nome_fantasia ?? null,
+      p_inscricao_estadual: body.inscricao_estadual ?? null,
+      p_isento_ie: body.isento_ie ?? null,
+      p_situacao_cadastral: body.situacao_cadastral ?? null,
+      p_cep: body.cep ?? null,
+      p_logradouro: body.logradouro ?? null,
+      p_numero: body.numero ?? null,
+      p_complemento: body.complemento ?? null,
+      p_bairro: body.bairro ?? null,
+      p_cidade: body.cidade ?? null,
+      p_uf: body.uf ?? null,
+      p_telefone: body.telefone ?? null,
+      p_email: body.email ?? null,
+      p_endereco_entrega: body.endereco_entrega ?? null,
+      p_contatos: body.contatos ?? null,
+      p_segmento: body.segmento ?? null,
+      p_regiao_atuacao: body.regiao_atuacao ?? null,
+      p_canal_fop: body.canal_fop ?? null,
+      p_tags: body.tags ?? null,
+      p_observacao: body.observacao ?? null,
+      p_premissas: body.premissas ?? null,
     });
 
     if (error) {
