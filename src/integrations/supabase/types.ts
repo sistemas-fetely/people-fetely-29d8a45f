@@ -13899,23 +13899,6 @@ export type Database = {
           valor: number
         }[]
       }
-      criar_analise_credito: {
-        Args: {
-          p_cnpj: string
-          p_condicao_solicitada: string
-          p_data_pedido: string
-          p_desconto_pct?: number
-          p_forma_solicitada: string
-          p_id_externo: string
-          p_itens_json?: Json
-          p_origem?: string
-          p_recebido_via?: string
-          p_valor_bruto: number
-          p_valor_liquido: number
-          p_vendedor?: string
-        }
-        Returns: Json
-      }
       criar_cpr_de_boleto: {
         Args: {
           p_boleto_stage_id: string
