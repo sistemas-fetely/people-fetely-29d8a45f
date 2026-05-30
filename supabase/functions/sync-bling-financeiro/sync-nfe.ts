@@ -15,6 +15,16 @@ async function resolveParceiroId(supabase: any, contato: any): Promise<string | 
   return novo?.id ?? null;
 }
 
+async function resolvePedidoId(supabase: any, numeroLoja: any): Promise<string | null> {
+  if (numeroLoja === null || numeroLoja === undefined || numeroLoja === "") return null;
+  const { data: pedido } = await supabase
+    .from("pedidos")
+    .select("id")
+    .eq("id_externo", String(numeroLoja))
+    .maybeSingle();
+  return pedido?.id ?? null;
+}
+
 // Bling NFe situação: 1=Pendente, 2=Emitida, 3=Cancelada, 4=Em digitação, 5=Rejeitada, 6=Autorizada, 7=Inutilizada, 8=Denegada
 const SITUACAO_MAP: Record<number, string> = {
   1: "pendente", 2: "emitida", 3: "cancelada", 4: "rascunho",
@@ -50,8 +60,9 @@ export async function syncNfe(
       try {
         const blingId = String(nf.id);
         const parceiro_id = await resolveParceiroId(supabase, nf.contato);
+        const pedido_venda_id = await resolvePedidoId(supabase, nf.numeroLoja);
         const sitNum = typeof nf.situacao === "object" ? nf.situacao?.valor : nf.situacao;
-        const registro = {
+        const registro: any = {
           bling_id: blingId,
           numero: nf.numero != null ? String(nf.numero) : null,
           serie: nf.serie != null ? String(nf.serie) : null,
@@ -68,6 +79,9 @@ export async function syncNfe(
           origem: "api_bling",
           updated_at: new Date().toISOString(),
         };
+        if (pedido_venda_id !== null) {
+          registro.pedido_venda_id = pedido_venda_id;
+        }
         const { data: existing } = await supabase
           .from("nfs_emitidas").select("id").eq("bling_id", blingId).maybeSingle();
         if (existing) {
