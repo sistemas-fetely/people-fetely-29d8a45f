@@ -4,7 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import type { CriarAnalisePayload } from "@/types/credito";
 
 /**
- * D3 (30/05 tarde): hook migrado de `criar_analise_credito` (legacy, removida)
+ * D3 (30/05 tarde): hook migrado da RPC legacy removida
  * para `receber_pedido_externo` (portaria única — doutrina PORTARIA-NOVA-NÃO-LEGACY).
  *
  * receber_pedido_externo retorna campos extras (estagio_inicial, area_inicial)
