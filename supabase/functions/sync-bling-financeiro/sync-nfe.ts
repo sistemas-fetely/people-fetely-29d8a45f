@@ -60,8 +60,9 @@ export async function syncNfe(
       try {
         const blingId = String(nf.id);
         const parceiro_id = await resolveParceiroId(supabase, nf.contato);
+        const pedido_venda_id = await resolvePedidoId(supabase, nf.numeroLoja);
         const sitNum = typeof nf.situacao === "object" ? nf.situacao?.valor : nf.situacao;
-        const registro = {
+        const registro: any = {
           bling_id: blingId,
           numero: nf.numero != null ? String(nf.numero) : null,
           serie: nf.serie != null ? String(nf.serie) : null,
@@ -78,6 +79,9 @@ export async function syncNfe(
           origem: "api_bling",
           updated_at: new Date().toISOString(),
         };
+        if (pedido_venda_id !== null) {
+          registro.pedido_venda_id = pedido_venda_id;
+        }
         const { data: existing } = await supabase
           .from("nfs_emitidas").select("id").eq("bling_id", blingId).maybeSingle();
         if (existing) {
