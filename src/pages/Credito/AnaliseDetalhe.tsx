@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import { useParams, useNavigate, Navigate } from "react-router-dom";
 import { useAnaliseDetalhe } from "@/hooks/credito/useAnaliseDetalhe";
 import { AnaliseDetalheAnalise } from "@/components/credito/AnaliseDetalheAnalise";
