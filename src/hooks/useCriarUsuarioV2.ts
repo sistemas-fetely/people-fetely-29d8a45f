@@ -69,7 +69,7 @@ export function useCriarUsuarioV2() {
       const grupos = data.grupos_atribuidos > 0
         ? ` em ${data.grupos_atribuidos} grupo(s)`
         : "";
-      toast.success(`Usuário ${data.email} criado${grupos}. Link de acesso enviado por email.`);
+      toast.success(`Usuário ${data.email} criado${grupos}. Copie o link de primeiro acesso abaixo.`);
     },
     onError: (e: Error) => {
       toast.error(`Erro ao criar usuário: ${e.message}`);
