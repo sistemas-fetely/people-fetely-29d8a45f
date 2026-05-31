@@ -153,6 +153,7 @@ export default function NovoUsuarioDialog({ open, onOpenChange }: NovoUsuarioDia
           <DialogTitle>Novo Usuário</DialogTitle>
         </DialogHeader>
 
+        {!resultado && (<>
         {/* Stepper */}
         <div className="flex items-start justify-center gap-2 py-4">
           {stepperItems.map((item, idx) => {
