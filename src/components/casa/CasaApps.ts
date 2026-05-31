@@ -79,6 +79,14 @@ export const CASA_APPS: CasaApp[] = [
     permModule: null,
   },
   {
+    id: "recebimento",
+    label: "Recebimento",
+    defaultRoute: "/recebimento",
+    routeMatchers: ["/recebimento"],
+    icon: HandCoins,
+    permModule: null,
+  },
+  {
     id: "acervo",
     label: "Acervo",
     defaultRoute: "/documentacao",
