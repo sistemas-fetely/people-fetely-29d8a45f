@@ -79,7 +79,7 @@ export function FilaPedidosPorArea({
   });
 
   const scoreMap = useMemo(() => {
-    const m = new Map<string, { score: number; breakdown: typeof priorizados extends Array<infer T> ? T extends { score_breakdown: infer B } ? B : never : never }>();
+    const m = new Map<string, { score: number; breakdown: ScoreBreakdown }>();
     (priorizados || []).forEach((p) => {
       m.set(p.id, { score: p.score_total, breakdown: p.score_breakdown });
     });
