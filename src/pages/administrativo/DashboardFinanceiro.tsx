@@ -691,14 +691,6 @@ export default function DashboardFinanceiro() {
               descricao={`Total de ${formatBRL(metrics.aVencerValor)} a desembolsar.`}
             />
           )}
-          {(recorrenciaData?.mrr ?? 0) > 0 && (
-            <Insight
-              icon={Zap}
-              tipo="sucesso"
-              titulo={`MRR de ${formatBRL(recorrenciaData?.mrr ?? 0)}`}
-              descricao={`ARR projetado: ${formatBRL((recorrenciaData?.mrr ?? 0) * 12)}.`}
-            />
-          )}
           {metrics.atrasadasCount === 0 && metrics.aVencerCount === 0 && (
             <Insight
               icon={CheckCircle2}
