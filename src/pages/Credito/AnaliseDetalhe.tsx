@@ -1,6 +1,6 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useEffect } from "react";
+import { useParams, useNavigate, Navigate } from "react-router-dom";
 import { useAnaliseDetalhe } from "@/hooks/credito/useAnaliseDetalhe";
-import { AnaliseDetalheEntrada } from "@/components/credito/AnaliseDetalheEntrada";
 import { AnaliseDetalheAnalise } from "@/components/credito/AnaliseDetalheAnalise";
 import { AnaliseDetalheDecisao } from "@/components/credito/AnaliseDetalheDecisao";
 import { Skeleton } from "@/components/ui/skeleton";
