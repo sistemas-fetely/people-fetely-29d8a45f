@@ -73,10 +73,6 @@ export function FinancasContextSidebar() {
                 <FinancasSidebarItem to="/administrativo/conciliacao" icon={CheckCheck} label="Conciliação" />
               </FinancasSidebarSection>
 
-              <FinancasSidebarSection title="Documentos">
-                <FinancasSidebarItem to="/administrativo/importar" icon={Upload} label="Importar Dados" />
-                <FinancasSidebarItem to="/administrativo/nfs-stage" icon={FileText} label="NFs em Stage" />
-                <FinancasSidebarItem to="/administrativo/documentos-pendentes" icon={FileWarning} label="Documentos Pendentes" />
               </FinancasSidebarSection>
             </FinancasSidebarSection>
           </SidebarGroupContent>
