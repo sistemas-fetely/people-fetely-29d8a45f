@@ -464,75 +464,81 @@ export default function DashboardFinanceiro() {
         status={metrics.status}
       />
 
-      {/* Linha 1 — Saúde do Mês */}
+      {/* Linha 1 — NEGÓCIO */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <MetricCard
-          label="Pago no mês"
-          value={formatBRL(metrics.pagoMes)}
+          label="Faturamento do mês"
+          value={formatBRL(pedidosData?.faturamentoMes ?? 0)}
           delta={
-            metrics.pagoMesAnt > 0
-              ? { valor: deltaPercent(metrics.pagoMes, metrics.pagoMesAnt) ?? 0, rotulo: "vs. mês anterior" }
+            (pedidosData?.faturamentoMesAnterior ?? 0) > 0
+              ? { valor: deltaPercent(pedidosData?.faturamentoMes ?? 0, pedidosData?.faturamentoMesAnterior ?? 0) ?? 0, rotulo: "vs. mês anterior" }
               : null
           }
-          icon={ArrowDownRight}
-          accent={ROSA}
+          icon={TrendingUp}
+          accent={VERDE}
         />
         <MetricCard
-          label="A vencer (30d)"
-          value={formatBRL(metrics.aVencerValor)}
-          sub={`${metrics.aVencerCount} compromissos`}
-          icon={Calendar}
+          label="Pedidos faturados"
+          value={String(pedidosData?.pedidosFaturadosMes ?? 0)}
+          sub={`Ticket médio ${formatBRL(pedidosData?.ticketMedio ?? 0)}`}
+          icon={CheckCircle2}
+          accent={VERDE}
+        />
+        <MetricCard
+          label="Pipeline em aberto"
+          value={formatBRL(pedidosData?.pipelineValor ?? 0)}
+          sub={`${pedidosData?.pipelineCount ?? 0} pedidos no funil`}
+          icon={Activity}
           accent={AZUL}
         />
         <MetricCard
-          label="Em atraso"
-          value={formatBRL(metrics.atrasadasValor)}
-          sub={`${metrics.atrasadasCount} contas vencidas`}
-          icon={AlertTriangle}
+          label="Desconto médio"
+          value={`${(pedidosData?.descontoMedioMes ?? 0).toFixed(1)}%`}
+          sub="Concedido nos pedidos do mês"
+          icon={ArrowDownRight}
           accent={AMBAR}
-          alert={metrics.atrasadasCount > 0}
+        />
+      </div>
+
+      {/* Linha 2 — CAIXA & RECEBÍVEIS */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <MetricCard
+          label="A receber (a vencer)"
+          value={formatBRL(recebiveisData?.valorAReceberAVencer ?? 0)}
+          sub="Títulos em aberto"
+          icon={Calendar}
+          accent={VERDE}
         />
         <MetricCard
-          label="Runway"
+          label="Inadimplência"
+          value={`${(recebiveisData?.inadimplenciaPct ?? 0).toFixed(1)}%`}
+          sub={
+            `${formatBRL(recebiveisData?.valorEmAtraso ?? 0)} em atraso` +
+            ((recebiveisData?.qtdBandeiraAmarela ?? 0) > 0
+              ? ` · ${recebiveisData?.qtdBandeiraAmarela} bandeira amarela`
+              : "")
+          }
+          icon={AlertTriangle}
+          accent={ROSA}
+          alert={(recebiveisData?.inadimplenciaPct ?? 0) > 10}
+        />
+        <MetricCard
+          label="A pagar (30d)"
+          value={formatBRL(metrics.aVencerValor)}
+          sub={`${metrics.aVencerCount} compromissos`}
+          icon={Clock}
+          accent={AMBAR}
+        />
+        <MetricCard
+          label="Fôlego de Caixa"
           value={metrics.runway === null ? "—" : `${metrics.runway.toFixed(1)} meses`}
-          sub={metrics.burnMedio > 0 ? `Burn médio: ${formatBRL(metrics.burnMedio)}` : "Sem histórico"}
+          sub={metrics.runway === null ? "Sem histórico suficiente" : `Burn médio: ${formatBRL(metrics.burnMedio)}`}
           icon={Activity}
           accent={VERDE}
           alert={metrics.runway !== null && metrics.runway < 6}
         />
       </div>
 
-      {/* Linha 2 — Recorrência */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <MetricCard
-          label="MRR"
-          value={formatBRL(recorrenciaData?.mrr ?? 0)}
-          sub="Receita recorrente mensal"
-          icon={Zap}
-          accent={VERDE}
-        />
-        <MetricCard
-          label="ARR"
-          value={formatBRL((recorrenciaData?.mrr ?? 0) * 12)}
-          sub="Projeção anualizada"
-          icon={TrendingUp}
-          accent={VERDE_MED}
-        />
-        <MetricCard
-          label="Compromisso 12m"
-          value={formatBRL(recorrenciaData?.compromisso12m ?? 0)}
-          sub="Parcelas a vencer"
-          icon={Target}
-          accent={AZUL}
-        />
-        <MetricCard
-          label="Contratos vigentes"
-          value={String(recorrenciaData?.vigentesCount ?? 0)}
-          sub="Em execução"
-          icon={Users}
-          accent={ROSA}
-        />
-      </div>
 
       {/* Evolução 6 meses */}
       <ChartCard
