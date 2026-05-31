@@ -100,6 +100,30 @@ export function FilaPedidosPorArea({
     });
   }, [data, ordenacao, scoreMap]);
 
+  // Estágio da análise de crédito por pedido (somente para pedidos em em_analise_credito)
+  const pedidoIdsEmAnalise = useMemo(
+    () => (linhas || []).filter((p) => p.estagio === "em_analise_credito").map((p) => p.id),
+    [linhas]
+  );
+  const { data: analiseStages } = useQuery({
+    queryKey: ["fila-analise-stages", pedidoIdsEmAnalise],
+    enabled: pedidoIdsEmAnalise.length > 0,
+    staleTime: 30 * 1000,
+    queryFn: async () => {
+      const { data: rows, error } = await supabase
+        .from("analises_credito")
+        .select("pedido_id, estagio_atual, criado_em")
+        .in("pedido_id", pedidoIdsEmAnalise)
+        .order("criado_em", { ascending: false });
+      if (error) throw error;
+      const m = new Map<string, string>();
+      (rows || []).forEach((r: { pedido_id: string; estagio_atual: string }) => {
+        if (!m.has(r.pedido_id)) m.set(r.pedido_id, r.estagio_atual);
+      });
+      return m;
+    },
+  });
+
   return (
     <div className="space-y-3">
       <div className="flex flex-col sm:flex-row gap-2">
