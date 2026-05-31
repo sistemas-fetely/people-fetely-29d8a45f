@@ -80,18 +80,6 @@ export default function CreditoIndex() {
             >
               Decididas
             </TabsTrigger>
-            <TabsTrigger
-              value="cobranca"
-              className="rounded-none border-b-2 border-transparent bg-transparent px-1 pb-3 pt-1 text-muted-foreground data-[state=active]:text-gold data-[state=active]:border-gold data-[state=active]:shadow-none data-[state=active]:bg-transparent"
-            >
-              Cobrança
-            </TabsTrigger>
-            <TabsTrigger
-              value="aguardando_pagamento"
-              className="rounded-none border-b-2 border-transparent bg-transparent px-1 pb-3 pt-1 text-muted-foreground data-[state=active]:text-gold data-[state=active]:border-gold data-[state=active]:shadow-none data-[state=active]:bg-transparent"
-            >
-              Aguardando pagamento
-            </TabsTrigger>
           </TabsList>
           <TabsContent value="entrada"><FilaPorEstagio estagio="entrada" /></TabsContent>
           <TabsContent value="analise"><FilaPorEstagio estagio="analise" /></TabsContent>
