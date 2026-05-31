@@ -2,17 +2,22 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { CreditoStatsCards } from "@/components/credito/CreditoStatsCards";
 import { FilaPorEstagio } from "@/components/credito/FilaPorEstagio";
 import { NovaAnaliseModalDialog } from "@/components/credito/NovaAnaliseModalDialog";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { CasaPageHeader } from "@/components/casa/CasaPageHeader";
 
 const TABS_VALIDAS = ["entrada", "analise", "decisao", "decididas"];
 
 export default function CreditoIndex() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const tabParam = searchParams.get("tab");
   const tabAtiva = tabParam && TABS_VALIDAS.includes(tabParam) ? tabParam : "entrada";
 
   const handleTabChange = (v: string) => {
+    if (v === "cobranca") {
+      navigate("/credito/cobranca");
+      return;
+    }
     setSearchParams({ tab: v });
   };
 
@@ -56,6 +61,12 @@ export default function CreditoIndex() {
               className="rounded-none border-b-2 border-transparent bg-transparent px-1 pb-3 pt-1 text-muted-foreground data-[state=active]:text-gold data-[state=active]:border-gold data-[state=active]:shadow-none data-[state=active]:bg-transparent"
             >
               Decididas
+            </TabsTrigger>
+            <TabsTrigger
+              value="cobranca"
+              className="rounded-none border-b-2 border-transparent bg-transparent px-1 pb-3 pt-1 text-muted-foreground data-[state=active]:text-gold data-[state=active]:border-gold data-[state=active]:shadow-none data-[state=active]:bg-transparent"
+            >
+              Cobrança
             </TabsTrigger>
           </TabsList>
           <TabsContent value="entrada"><FilaPorEstagio estagio="entrada" /></TabsContent>

@@ -226,3 +226,40 @@ export interface TransicionarPayload {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   delta_ia?: any;
 }
+
+// ──────────────────────────────────────────────────────────────────
+// Cobrança (Fase 3 — proposta volátil + materialização)
+// ──────────────────────────────────────────────────────────────────
+
+export interface TituloProposto {
+  ordem: number;
+  numero_parcela: number;
+  total_parcelas: number;
+  eh_entrada: boolean;
+  tipo_pagamento: "pix" | "cartao" | "boleto";
+  valor_bruto: number;
+  data_vencimento: string; // YYYY-MM-DD
+  condicao_pagamento: string;
+}
+
+export interface PropostaCobranca {
+  pedido_id: string;
+  parceiro_id: string;
+  pedido_id_externo: string;
+  analise_credito_id: string;
+  valor_total: number;
+  tem_entrada: boolean;
+  condicao_original: string;
+  titulos_propostos: TituloProposto[];
+}
+
+export interface CobrancaFilaItem {
+  pedido_id: string;
+  id_externo: string;
+  parceiro_nome: string;
+  parceiro_cnpj: string;
+  valor_liquido: number;
+  estagio_atualizado_em: string;
+  perfil_aplicado: PerfilCredito | null;
+  condicao_solicitada: string;
+}
