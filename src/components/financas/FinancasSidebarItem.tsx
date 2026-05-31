@@ -19,10 +19,10 @@ export function FinancasSidebarItem({ to, icon: Icon, label, end = false }: Fina
           end={end}
           className={({ isActive }) =>
             cn(
-              "flex items-center gap-2 px-3 py-1.5 text-sm transition-colors border-l-2 border-transparent bg-transparent hover:bg-transparent",
+              "flex items-center gap-3 px-3 py-2 text-[13px] transition-colors border-l-2 border-transparent bg-transparent hover:bg-transparent",
               isActive
                 ? "border-gold text-gold font-medium [&_svg]:text-gold"
-                : "text-muted-foreground hover:text-foreground"
+                : "text-foreground/70 hover:text-foreground [&_svg]:opacity-70"
             )
           }
         >
