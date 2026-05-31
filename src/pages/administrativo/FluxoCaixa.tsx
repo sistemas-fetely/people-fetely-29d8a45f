@@ -8,106 +8,132 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
-import { Link } from "react-router-dom";
-import { TrendingUp, Upload } from "lucide-react";
+import { TrendingUp } from "lucide-react";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
+import { InputMoedaBR } from "@/components/compras/InputMoedaBR";
 import {
   ComposedChart, Line, Area, XAxis, YAxis, Tooltip, Legend,
   ResponsiveContainer, CartesianGrid, ReferenceLine,
 } from "recharts";
 
-type Conta = {
-  id: string;
-  tipo: string;
-  status: string;
-  descricao: string;
-  valor: number;
-  data_vencimento: string | null;
-  fornecedor_cliente: string | null;
-};
+interface LinhaFluxo {
+  dia: string;
+  entradas_dia: number;
+  saidas_dia: number;
+  entradas_conservador_dia: number;
+  saldo_otimista: number;
+  saldo_conservador: number;
+}
 
-const COLORS = {
-  receita: "#1A4A3A",
-  despesa: "#8B1A2F",
-  saldo: "#2563EB",
-};
+const COR_POSITIVO = "#1A4A3A";
+const COR_NEGATIVO = "#8B1A2F";
+const COR_SALDO = "#2563EB";
+
+function formatK(v: number): string {
+  const abs = Math.abs(v);
+  if (abs >= 1_000_000) return `R$ ${(v / 1_000_000).toFixed(1)}M`;
+  if (abs >= 1_000) return `R$ ${Math.round(v / 1_000)}k`;
+  return `R$ ${v.toFixed(0)}`;
+}
+
+function diaCurto(iso: string): string {
+  const d = new Date(iso + (iso.length === 10 ? "T00:00:00" : ""));
+  return `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
 
 export default function FluxoCaixa() {
-  const [horizonte, setHorizonte] = useState<30 | 60 | 90>(30);
-  const [tipoFilter, setTipoFilter] = useState<"todos" | "pagar" | "receber">("todos");
+  const [horizonte, setHorizonte] = useState<30 | 60 | 90>(90);
+  const [saldoInicialOverride, setSaldoInicialOverride] = useState<number | null>(null);
+  const [saldoInput, setSaldoInput] = useState<number>(0);
 
-  const { data, isLoading } = useQuery({
-    queryKey: ["fluxo-caixa"],
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["fluxo-caixa", horizonte, saldoInicialOverride],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("contas_pagar_receber")
-        .select("id, tipo, status, descricao, valor, data_vencimento, fornecedor_cliente")
-        .in("status", ["aberto", "atrasado"])
-        .order("data_vencimento", { ascending: true });
+      const { data, error } = await supabase.rpc("fn_fluxo_caixa_projetado", {
+        p_horizonte: horizonte,
+        p_saldo_inicial: saldoInicialOverride,
+      } as never);
       if (error) throw error;
-      return (data || []) as Conta[];
+      return (data || []) as LinhaFluxo[];
     },
   });
 
-  const inicio = useMemo(() => {
-    const d = new Date();
-    d.setHours(0, 0, 0, 0);
-    return d;
-  }, []);
+  const linhas = data || [];
 
-  const dentro = useMemo(() => {
-    const limite = new Date(inicio);
-    limite.setDate(limite.getDate() + horizonte);
-    return (data || []).filter((c) => {
-      if (!c.data_vencimento) return false;
-      const dv = new Date(c.data_vencimento + "T00:00:00");
-      return dv >= inicio && dv <= limite;
-    });
-  }, [data, horizonte, inicio]);
-
-  const grafico = useMemo(() => {
-    const dias: {
-      dia: string; receber: number; pagar: number;
-      acumReceber: number; acumPagar: number; saldo: number;
-    }[] = [];
-    for (let i = 0; i < horizonte; i++) {
-      const d = new Date(inicio);
-      d.setDate(d.getDate() + i);
-      dias.push({
-        dia: `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}`,
-        receber: 0, pagar: 0, acumReceber: 0, acumPagar: 0, saldo: 0,
-      });
+  const indicadores = useMemo(() => {
+    if (linhas.length === 0) {
+      return {
+        saldoHoje: 0, runwayDias: null as number | null, runwayData: null as string | null,
+        menorSaldo: 0, menorSaldoData: null as string | null,
+        maiorPico: 0, maiorPicoData: null as string | null,
+        totalEntradas: 0, totalSaidas: 0,
+      };
     }
-    dentro.forEach((c) => {
-      if (!c.data_vencimento) return;
-      const dv = new Date(c.data_vencimento + "T00:00:00");
-      const idx = Math.floor((dv.getTime() - inicio.getTime()) / (1000 * 60 * 60 * 24));
-      if (idx < 0 || idx >= horizonte) return;
-      const v = Number(c.valor || 0);
-      if (c.tipo === "receber") dias[idx].receber += v;
-      else if (c.tipo === "pagar") dias[idx].pagar += v;
-    });
-    let ar = 0, ap = 0;
-    dias.forEach((d) => {
-      ar += d.receber;
-      ap += d.pagar;
-      d.acumReceber = ar;
-      d.acumPagar = ap;
-      d.saldo = ar - ap;
-    });
-    return dias;
-  }, [dentro, horizonte, inicio]);
+    const l0 = linhas[0];
+    const ancora = saldoInicialOverride != null
+      ? saldoInicialOverride
+      : l0.saldo_otimista - l0.entradas_dia + l0.saidas_dia;
 
-  const tabelaFiltrada = useMemo(() => {
-    if (tipoFilter === "todos") return dentro;
-    return dentro.filter((c) => c.tipo === tipoFilter);
-  }, [dentro, tipoFilter]);
+    let runwayDias: number | null = null;
+    let runwayData: string | null = null;
+    for (let i = 0; i < linhas.length; i++) {
+      if (linhas[i].saldo_conservador < 0) {
+        runwayDias = i;
+        runwayData = linhas[i].dia;
+        break;
+      }
+    }
 
-  const saldoFinal = grafico.length ? grafico[grafico.length - 1].saldo : 0;
-  const temSaldoNegativo = grafico.some((d) => d.saldo < 0);
+    let menorSaldo = linhas[0].saldo_conservador;
+    let menorSaldoData = linhas[0].dia;
+    let maiorPico = linhas[0].saldo_otimista;
+    let maiorPicoData = linhas[0].dia;
+    let totalEntradas = 0;
+    let totalSaidas = 0;
+    for (const l of linhas) {
+      if (l.saldo_conservador < menorSaldo) { menorSaldo = l.saldo_conservador; menorSaldoData = l.dia; }
+      if (l.saldo_otimista > maiorPico) { maiorPico = l.saldo_otimista; maiorPicoData = l.dia; }
+      totalEntradas += Number(l.entradas_dia || 0);
+      totalSaidas += Number(l.saidas_dia || 0);
+    }
+
+    return { saldoHoje: ancora, runwayDias, runwayData, menorSaldo, menorSaldoData, maiorPico, maiorPicoData, totalEntradas, totalSaidas };
+  }, [linhas, saldoInicialOverride]);
+
+  const grafico = useMemo(() => linhas.map((l) => ({
+    diaLabel: diaCurto(l.dia),
+    diaISO: l.dia,
+    saldo_otimista: Number(l.saldo_otimista),
+    saldo_conservador: Number(l.saldo_conservador),
+    entradas_dia: Number(l.entradas_dia),
+    saidas_dia: Number(l.saidas_dia),
+  })), [linhas]);
+
+  const eventos = useMemo(() => {
+    const out: { dia: string; tipo: "Entrada" | "Saída"; valor: number; saldoConservador: number }[] = [];
+    for (const l of linhas) {
+      if (l.entradas_dia > 0) out.push({ dia: l.dia, tipo: "Entrada", valor: l.entradas_dia, saldoConservador: l.saldo_conservador });
+      if (l.saidas_dia > 0) out.push({ dia: l.dia, tipo: "Saída", valor: l.saidas_dia, saldoConservador: l.saldo_conservador });
+    }
+    return out.slice(0, 15);
+  }, [linhas]);
+
+  const semMovimento = linhas.length > 0 && eventos.length === 0;
+
+  // Cor do menor saldo
+  const menorSaldoCor =
+    indicadores.menorSaldo < 0 ? "text-red-700"
+    : indicadores.menorSaldo < indicadores.saldoHoje * 0.1 ? "text-amber-700"
+    : "text-green-700";
+
+  // Frase CFO
+  const frase = indicadores.runwayDias == null
+    ? `No cenário conservador, seu caixa permanece positivo nos próximos ${horizonte} dias. Menor folga: ${formatBRL(indicadores.menorSaldo)} em ${formatDateBR(indicadores.menorSaldoData)}.`
+    : `Atenção: no cenário conservador o caixa zera em ${indicadores.runwayDias} dias (${formatDateBR(indicadores.runwayData)}). Diferença para o cenário otimista = risco de inadimplência a monitorar.`;
 
   return (
     <div className="p-6 space-y-6">
+      {/* HEADER */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
@@ -115,87 +141,185 @@ export default function FluxoCaixa() {
             Fluxo de Caixa
           </h1>
           <p className="text-muted-foreground text-sm mt-1">
-            Projeção baseada em contas a pagar e receber em aberto.
+            Projeção gerencial ancorada no saldo de hoje (otimista x conservador).
           </p>
         </div>
-        <div className="flex gap-1">
-          {([30, 60, 90] as const).map((h) => (
-            <Button key={h} size="sm" variant={horizonte === h ? "default" : "outline"} onClick={() => setHorizonte(h)}>
-              {h} dias
-            </Button>
-          ))}
+        <div className="flex items-end gap-3 flex-wrap">
+          <div className="flex gap-1">
+            {([30, 60, 90] as const).map((h) => (
+              <Button key={h} size="sm" variant={horizonte === h ? "default" : "outline"} onClick={() => setHorizonte(h)}>
+                {h} dias
+              </Button>
+            ))}
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs text-muted-foreground">Saldo inicial (override)</label>
+            <div className="flex gap-2">
+              <div className="w-44">
+                <InputMoedaBR value={saldoInput} onChange={setSaldoInput} />
+              </div>
+              <Button size="sm" variant="outline" onClick={() => setSaldoInicialOverride(saldoInput > 0 ? saldoInput : null)}>
+                Aplicar
+              </Button>
+              {saldoInicialOverride != null && (
+                <Button size="sm" variant="ghost" onClick={() => { setSaldoInicialOverride(null); setSaldoInput(0); }}>
+                  Limpar
+                </Button>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
-      {isLoading ? (
-        <Skeleton className="h-96 w-full" />
-      ) : (data || []).length === 0 ? (
+      {error ? (
         <Card>
-          <CardContent className="flex flex-col items-center justify-center py-16 gap-4 text-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-admin-muted">
-              <Upload className="h-8 w-8 text-admin" />
-            </div>
-            <p className="text-lg font-semibold">Sem dados para projetar</p>
-            <p className="text-sm text-muted-foreground max-w-md">
-              Sincronize com o Bling para ver a projeção de fluxo de caixa.
-            </p>
-            <Button asChild className="bg-admin hover:bg-admin-accent text-admin-foreground">
-              <Link to="/administrativo/importar">Ir para importação</Link>
-            </Button>
+          <CardContent className="py-8 text-sm text-red-700">
+            Erro ao carregar projeção: {(error as Error).message}
           </CardContent>
         </Card>
+      ) : isLoading ? (
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Skeleton className="h-32" /><Skeleton className="h-32" /><Skeleton className="h-32" />
+          </div>
+          <Skeleton className="h-[340px] w-full" />
+        </div>
       ) : (
         <>
+          {/* KPIs PRINCIPAIS */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm text-muted-foreground font-medium">Saldo hoje</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-mono font-semibold tabular-nums">{formatBRL(indicadores.saldoHoje)}</div>
+                <div className="text-xs text-muted-foreground mt-1">ponto de partida</div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm text-muted-foreground font-medium">Dias de caixa (runway)</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {indicadores.runwayDias == null ? (
+                  <div className="text-3xl font-mono font-semibold tabular-nums text-green-700">Positivo no horizonte</div>
+                ) : (
+                  <>
+                    <div className="text-3xl font-mono font-semibold tabular-nums text-red-700">
+                      fura em {indicadores.runwayDias} dias
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-1">{formatDateBR(indicadores.runwayData)}</div>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm text-muted-foreground font-medium">Menor saldo projetado</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className={`text-3xl font-mono font-semibold tabular-nums ${menorSaldoCor}`}>
+                  {formatBRL(indicadores.menorSaldo)}
+                </div>
+                <div className="text-xs text-muted-foreground mt-1">em {formatDateBR(indicadores.menorSaldoData)} (conservador)</div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* FRASE CFO */}
+          <div className={`px-4 py-3 rounded-md text-sm border ${indicadores.runwayDias == null ? "bg-green-50 text-green-900 border-green-200" : "bg-red-50 text-red-900 border-red-200"}`}>
+            {frase}
+          </div>
+
+          {/* GRÁFICO */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-base flex items-center justify-between">
-                <span>Projeção acumulada</span>
-                <span className={`text-sm font-mono ${saldoFinal >= 0 ? "text-green-700" : "text-red-700"}`}>
-                  Saldo final: {formatBRL(saldoFinal)}
-                </span>
-              </CardTitle>
+              <CardTitle className="text-base">Projeção de saldo — otimista x conservador</CardTitle>
             </CardHeader>
             <CardContent>
-              {temSaldoNegativo && (
-                <div className="mb-3 px-3 py-2 rounded-md bg-red-50 text-red-800 text-xs border border-red-200">
-                  ⚠️ Saldo projetado fica negativo em algum ponto do horizonte.
-                </div>
-              )}
               <ResponsiveContainer width="100%" height={340}>
                 <ComposedChart data={grafico}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="dia" tick={{ fontSize: 10 }} />
-                  <YAxis tickFormatter={(v) => `R$ ${(v / 1000).toFixed(0)}k`} />
-                  <Tooltip formatter={(v: number) => formatBRL(v)} />
-                  <Legend />
-                  <ReferenceLine y={0} stroke="#999" />
-                  <Area type="monotone" dataKey="saldo" fill={COLORS.saldo} fillOpacity={0.15} stroke="none" name="Saldo (área)" />
-                  <Line type="monotone" dataKey="acumReceber" stroke={COLORS.receita} name="Recebimentos acum." strokeWidth={2} dot={false} />
-                  <Line type="monotone" dataKey="acumPagar" stroke={COLORS.despesa} name="Pagamentos acum." strokeWidth={2} dot={false} />
-                  <Line type="monotone" dataKey="saldo" stroke={COLORS.saldo} name="Saldo projetado" strokeWidth={2} dot={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis dataKey="diaLabel" tick={{ fontSize: 10 }} />
+                  <YAxis tickFormatter={formatK} tick={{ fontSize: 11 }} width={70} />
+                  <Tooltip
+                    content={({ active, payload }) => {
+                      if (!active || !payload || !payload.length) return null;
+                      const p = payload[0].payload as typeof grafico[number];
+                      return (
+                        <div className="rounded-md border bg-background p-2 text-xs shadow-sm">
+                          <div className="font-semibold mb-1">{formatDateBR(p.diaISO)}</div>
+                          <div>Otimista: <span className="font-mono">{formatBRL(p.saldo_otimista)}</span></div>
+                          <div>Conservador: <span className="font-mono">{formatBRL(p.saldo_conservador)}</span></div>
+                          <div className="text-green-700">Entradas dia: <span className="font-mono">{formatBRL(p.entradas_dia)}</span></div>
+                          <div className="text-red-700">Saídas dia: <span className="font-mono">{formatBRL(p.saidas_dia)}</span></div>
+                        </div>
+                      );
+                    }}
+                  />
+                  <Legend wrapperStyle={{ fontSize: 12 }} />
+                  <ReferenceLine y={0} stroke={COR_NEGATIVO} strokeDasharray="4 4" label={{ value: "Zero", position: "insideTopRight", fontSize: 10, fill: COR_NEGATIVO }} />
+                  <Area type="monotone" dataKey="saldo_conservador" fill={COR_NEGATIVO} fillOpacity={0.1} stroke="none" name="" legendType="none" />
+                  <Line type="monotone" dataKey="saldo_otimista" stroke={COR_SALDO} strokeWidth={2} dot={false} name="Saldo otimista" />
+                  <Line type="monotone" dataKey="saldo_conservador" stroke={COR_NEGATIVO} strokeWidth={2} strokeDasharray="5 4" dot={false} name="Saldo conservador" />
                 </ComposedChart>
               </ResponsiveContainer>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between gap-3 flex-wrap">
-                <CardTitle className="text-base">Vencimentos no período</CardTitle>
-                <div className="flex gap-1">
-                  {(["todos", "pagar", "receber"] as const).map((t) => (
-                    <Button key={t} size="sm" variant={tipoFilter === t ? "default" : "outline"} onClick={() => setTipoFilter(t)} className="capitalize">
-                      {t}
-                    </Button>
-                  ))}
+          {/* KPIs SECUNDÁRIOS */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm text-muted-foreground font-medium">Maior pico de caixa</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-mono font-semibold tabular-nums" style={{ color: COR_SALDO }}>
+                  {formatBRL(indicadores.maiorPico)}
                 </div>
-              </div>
+                <div className="text-xs text-muted-foreground mt-1">
+                  em {formatDateBR(indicadores.maiorPicoData)} — melhor janela para antecipar compras.
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm text-muted-foreground font-medium">Total a receber ({horizonte}d)</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-mono font-semibold tabular-nums" style={{ color: COR_POSITIVO }}>
+                  {formatBRL(indicadores.totalEntradas)}
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm text-muted-foreground font-medium">Total a pagar ({horizonte}d)</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-mono font-semibold tabular-nums" style={{ color: COR_NEGATIVO }}>
+                  {formatBRL(indicadores.totalSaidas)}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* TABELA EVENTOS */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Próximos eventos de caixa</CardTitle>
             </CardHeader>
             <CardContent>
-              {tabelaFiltrada.length === 0 ? (
-                <div className="py-12 text-center text-sm text-muted-foreground">
-                  Sem vencimentos no período/filtro.
+              {semMovimento ? (
+                <div className="rounded-md border bg-muted/30 p-6 text-sm text-muted-foreground">
+                  Sem lançamentos no horizonte ainda. Defina um saldo inicial acima para visualizar a projeção,
+                  ou cadastre títulos a receber e contas a pagar.
                 </div>
+              ) : eventos.length === 0 ? (
+                <div className="py-8 text-center text-sm text-muted-foreground">Sem eventos.</div>
               ) : (
                 <div className="border rounded-md overflow-x-auto">
                   <Table>
@@ -203,28 +327,28 @@ export default function FluxoCaixa() {
                       <TableRow>
                         <TableHead>Data</TableHead>
                         <TableHead>Tipo</TableHead>
-                        <TableHead>Descrição</TableHead>
-                        <TableHead>Parceiro</TableHead>
                         <TableHead className="text-right">Valor</TableHead>
-                        <TableHead>Status</TableHead>
+                        <TableHead className="text-right">Saldo conservador no dia</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {tabelaFiltrada.map((c) => (
-                        <TableRow key={c.id}>
-                          <TableCell className="whitespace-nowrap">{formatDateBR(c.data_vencimento)}</TableCell>
+                      {eventos.map((e, i) => (
+                        <TableRow key={`${e.dia}-${e.tipo}-${i}`}>
+                          <TableCell className="whitespace-nowrap">{formatDateBR(e.dia)}</TableCell>
                           <TableCell>
-                            <Badge className={c.tipo === "pagar" ? "bg-[#8B1A2F] text-white hover:bg-[#8B1A2F]" : "bg-[#1A4A3A] text-white hover:bg-[#1A4A3A]"}>
-                              {c.tipo === "pagar" ? "Pagar" : "Receber"}
+                            <Badge
+                              className={e.tipo === "Entrada"
+                                ? "bg-[#1A4A3A] text-white hover:bg-[#1A4A3A]"
+                                : "bg-[#8B1A2F] text-white hover:bg-[#8B1A2F]"}
+                            >
+                              {e.tipo}
                             </Badge>
                           </TableCell>
-                          <TableCell className="max-w-xs truncate" title={c.descricao}>{c.descricao}</TableCell>
-                          <TableCell>{c.fornecedor_cliente || "—"}</TableCell>
-                          <TableCell className="text-right font-mono whitespace-nowrap">{formatBRL(c.valor)}</TableCell>
-                          <TableCell>
-                            <Badge className={c.status === "atrasado" ? "bg-red-100 text-red-800 hover:bg-red-100" : "bg-blue-100 text-blue-800 hover:bg-blue-100"}>
-                              {c.status}
-                            </Badge>
+                          <TableCell className="text-right font-mono tabular-nums whitespace-nowrap">
+                            {formatBRL(e.valor)}
+                          </TableCell>
+                          <TableCell className={`text-right font-mono tabular-nums whitespace-nowrap ${e.saldoConservador < 0 ? "text-red-700" : ""}`}>
+                            {formatBRL(e.saldoConservador)}
                           </TableCell>
                         </TableRow>
                       ))}

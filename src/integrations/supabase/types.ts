@@ -14472,6 +14472,17 @@ export type Database = {
         Returns: string
       }
       fn_cron_rolling_contratos: { Args: never; Returns: number }
+      fn_fluxo_caixa_projetado: {
+        Args: { p_horizonte?: number; p_saldo_inicial?: number }
+        Returns: {
+          dia: string
+          entradas_conservador_dia: number
+          entradas_dia: number
+          saidas_dia: number
+          saldo_conservador: number
+          saldo_otimista: number
+        }[]
+      }
       fn_gerar_cprs_de_contrato: {
         Args: { p_contrato_id: string }
         Returns: number
