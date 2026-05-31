@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { RotaGate } from "@/components/RotaGate";
 
 // Layouts — importados diretamente (não lazy) para evitar Suspense na raiz e soluço de navegação.
 // Layouts são pequenos (~30-80L cada) e não justificam code-splitting.
@@ -208,7 +209,7 @@ const App = () => (
                 Casa Fetély — wrapper de auth + visual global
                 Doutrina CASA-1 — substitui Regra de Ouro dos Menus.
                 ═══════════════════════════════════════════════ */}
-            <Route element={<ProtectedRoute><CasaLayout /></ProtectedRoute>}>
+            <Route element={<ProtectedRoute><RotaGate><CasaLayout /></RotaGate></ProtectedRoute>}>
               <Route path="/" element={<CasaHome />} />
 
               {/* ═══════════════════════════════════════════════
