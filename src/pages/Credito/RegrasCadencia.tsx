@@ -45,7 +45,7 @@ function resumirCriterio(c: RegraCadenciaCriterio): string {
   const partes: string[] = [];
   if (c.perfil_in?.length)
     partes.push(`perfil ${c.perfil_in.map((p) => PERFIL_LABEL[p] ?? p).join("|")}`);
-  if (c.valor_max !== undefined) partes.push(`≤ ${formatCurrency(c.valor_max)}`);
+  if (c.valor_max !== undefined) partes.push(`≤ ${formatBRL(c.valor_max)}`);
   if (c.sem_bandeira) partes.push("sem bandeira");
   if (c.titulos_pagos_no_prazo_min !== undefined)
     partes.push(`min ${c.titulos_pagos_no_prazo_min} pagos`);
