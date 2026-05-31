@@ -24,11 +24,19 @@ import { AnotarPedidoDialog } from "@/components/pedidos/dialogs/AnotarPedidoDia
 import { EnviarBlingDialog } from "@/components/pedidos/dialogs/EnviarBlingDialog";
 import { isEstagioFinal } from "@/lib/pedidoTransicoes";
 import {
-  AREA_LABELS, ESTAGIO_LABELS, STATUS_TITULO_LABELS,
+  AREA_LABELS, ESTAGIO_LABELS, STATUS_TITULO_LABELS, URGENCIA_LABELS,
 } from "@/types/pedido";
 import type {
   AreaPedido, EstagioPedido, StatusTitulo, TipoTituloPagamento, TituloAReceber,
+  UrgenciaDeclarada,
 } from "@/types/pedido";
+import { useState, useEffect } from "react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Loader2, Sparkles } from "lucide-react";
+import { BadgePriorizacao } from "@/components/pedidos/BadgePriorizacao";
+import { usePedidoPriorizado } from "@/hooks/pedidos/useFilaPedidosPriorizada";
+import { useAtualizarUrgencia } from "@/hooks/pedidos/useAtualizarUrgencia";
 import { cn } from "@/lib/utils";
 
 const fmtBRL = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
