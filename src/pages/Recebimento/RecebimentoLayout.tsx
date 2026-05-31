@@ -15,6 +15,8 @@ export default function RecebimentoLayout() {
       navigate("/recebimento/aguardando-pagamento");
     } else if (v === "pedidos_venda") {
       navigate("/pedidos");
+    } else if (v === "parceiros") {
+      navigate("/administrativo-fetely/parceiros");
     } else {
       navigate("/recebimento/cobranca");
     }
