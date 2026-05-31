@@ -31,11 +31,14 @@ const dashboardItem: MenuItem = {
   title: "Dashboard Financeiro", url: "/administrativo", icon: LayoutDashboard, end: true,
 };
 
+const tudoAVistaItems: MenuItem[] = [
+  { title: "Painel Financeiro da Conta", url: "/administrativo/painel-financeiro-conta", icon: Users },
+];
+
 const financeiroItems: MenuItem[] = [
   { title: "Contas a Pagar", url: "/administrativo/contas-pagar", icon: ArrowUpFromLine },
   { title: "Faturas de Cartão", url: "/administrativo/faturas-cartao", icon: CreditCard },
   { title: "Contas a Receber", url: "/administrativo/contas-receber", icon: ArrowDownToLine },
-  { title: "Painel Financeiro da Conta", url: "/administrativo/painel-financeiro-conta", icon: Users },
   { title: "Fluxo de Caixa", url: "/administrativo/fluxo-caixa", icon: TrendingUp },
 ];
 
@@ -129,6 +132,16 @@ export function AdminFinanceiroSidebar() {
       <SidebarContent className="px-2 space-y-1">
         <SidebarGroup>
           <SidebarGroupContent>{renderItems([dashboardItem])}</SidebarGroupContent>
+        </SidebarGroup>
+
+        <div className="mx-4 border-t border-sidebar-border/40" />
+        <SidebarGroup>
+          {!collapsed && (
+            <SidebarGroupLabel className="text-sidebar-muted text-[10px] uppercase tracking-widest font-semibold mb-1 px-4">
+              Tudo à Vista
+            </SidebarGroupLabel>
+          )}
+          <SidebarGroupContent>{renderItems(tudoAVistaItems)}</SidebarGroupContent>
         </SidebarGroup>
 
         <div className="mx-4 border-t border-sidebar-border/40" />
