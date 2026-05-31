@@ -22,6 +22,7 @@ import {
   SidebarContent,
   SidebarGroup,
   SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
 } from "@/components/ui/sidebar";
@@ -43,6 +44,7 @@ export function FinancasContextSidebar() {
       <SidebarContent className="pt-3">
         {/* Item raiz */}
         <SidebarGroup>
+          <SidebarGroupLabel>Tudo à Vista</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               <FinancasSidebarItem
