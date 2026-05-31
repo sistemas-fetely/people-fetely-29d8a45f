@@ -95,6 +95,7 @@ const PlanoDeContas = lazy(() => import("@/pages/administrativo/PlanoDeContas"))
 const FluxoCaixa = lazy(() => import("@/pages/administrativo/FluxoCaixa"));
 const ContasPagar = lazy(() => import("@/pages/administrativo/ContasPagar"));
 const ContasReceber = lazy(() => import("@/pages/administrativo/ContasReceber"));
+const RecebimentosConciliar = lazy(() => import("@/pages/administrativo/RecebimentosConciliar"));
 const Parceiros = lazy(() => import("@/pages/administrativo/Parceiros"));
 const ImportarDados = lazy(() => import("@/pages/administrativo/ImportarDados"));
 const NFsStage = lazy(() => import("@/pages/administrativo/NFsStage"));
@@ -482,6 +483,7 @@ const App = () => (
               <Route path="conciliacao" element={<Conciliacao />} />
               <Route path="regras-ofx" element={<RegrasOFX />} />
               <Route path="contas-receber" element={<ContasReceber />} />
+              <Route path="recebimentos-conciliar" element={<RecebimentosConciliar />} />
               <Route path="parceiros" element={<Navigate to="/administrativo-fetely/parceiros" replace />} />
               <Route path="importar" element={<Navigate to="/administrativo-fetely/importar" replace />} />
               <Route path="nfs-stage" element={<Navigate to="/administrativo-fetely/nfs-stage" replace />} />
