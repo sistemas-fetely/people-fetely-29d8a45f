@@ -115,7 +115,7 @@ export default function NovoUsuarioDialog({ open, onOpenChange }: NovoUsuarioDia
     }
 
     try {
-      await criar.mutateAsync({
+      const out = await criar.mutateAsync({
         email: email.trim(),
         full_name: fullName.trim(),
         vinculo_tipo,
@@ -124,9 +124,19 @@ export default function NovoUsuarioDialog({ open, onOpenChange }: NovoUsuarioDia
         tipo_externo,
         grupo_ids: grupoIds,
       });
-      handleOpenChange(false);
+      setResultado(out);
     } catch {
       // Toast já vem do hook — manter dialog aberto
+    }
+  };
+
+  const copiarLink = async () => {
+    if (!resultado?.link_primeiro_acesso) return;
+    try {
+      await navigator.clipboard.writeText(resultado.link_primeiro_acesso);
+      toast.success("Link copiado");
+    } catch {
+      toast.error("Não foi possível copiar. Selecione o link manualmente.");
     }
   };
 
