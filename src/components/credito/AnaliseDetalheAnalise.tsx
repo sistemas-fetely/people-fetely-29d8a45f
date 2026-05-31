@@ -1,4 +1,5 @@
 import { useAnaliseDetalhe } from "@/hooks/credito/useAnaliseDetalhe";
+import { useConfirmarPreAprovacao } from "@/hooks/credito/useConfirmarPreAprovacao";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
@@ -10,11 +11,11 @@ import { AnaliseIaCard } from "./AnaliseIaCard";
 import { EncaminharParaDecisaoDialog } from "./dialogs/EncaminharParaDecisaoDialog";
 import { DevolverParaEntradaDialog } from "./dialogs/DevolverParaEntradaDialog";
 import { BoxDevolucaoRecente } from "./BoxDevolucaoRecente";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Sparkles, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import type { AnaliseIaJson } from "@/types/credito";
+import type { AnaliseIaJson, PreAprovacaoPayload } from "@/types/credito";
 
 const fmtBRL = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 const fmtDate = (s: string | null | undefined) =>
@@ -27,6 +28,7 @@ interface Props {
 export function AnaliseDetalheAnalise({ analiseId }: Props) {
   const { data, isLoading } = useAnaliseDetalhe(analiseId);
   const navigate = useNavigate();
+  const confirmarPre = useConfirmarPreAprovacao();
 
   if (isLoading) {
     return (
@@ -95,6 +97,19 @@ export function AnaliseDetalheAnalise({ analiseId }: Props) {
           />
         </div>
       </div>
+
+      {/* Card de pré-aprovação (Joseph confirma 1-clique) */}
+      {analise.pre_aprovado_regra_id && !analise.status_final && (
+        <PreAprovacaoCard
+          payload={analise.pre_aprovacao_payload as PreAprovacaoPayload | null}
+          loading={confirmarPre.isPending}
+          onConfirmar={() =>
+            confirmarPre.mutate(analise.id, {
+              onSuccess: () => navigate("/credito?tab=analise"),
+            })
+          }
+        />
+      )}
 
       {/* Box devolução, se aplicável */}
       <BoxDevolucaoRecente transicoes={transicoes} estagioAtual="analise" />
@@ -226,5 +241,81 @@ function Linha({
         {value ?? "—"}
       </span>
     </div>
+  );
+}
+
+function resumirCondicao(c: unknown): string {
+  if (!c || typeof c !== "object") return "—";
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const cond = c as any;
+  if (typeof cond.resumo === "string") return cond.resumo;
+  const partes: string[] = [];
+  if (cond.condicao) partes.push(String(cond.condicao));
+  if (cond.forma) partes.push(String(cond.forma).toUpperCase());
+  if (typeof cond.limite_concedido === "number")
+    partes.push(fmtBRL.format(cond.limite_concedido));
+  if (typeof cond.prazo_max_dias === "number") partes.push(`até ${cond.prazo_max_dias}d`);
+  return partes.length ? partes.join(" · ") : JSON.stringify(cond);
+}
+
+function PreAprovacaoCard({
+  payload,
+  loading,
+  onConfirmar,
+}: {
+  payload: PreAprovacaoPayload | null;
+  loading: boolean;
+  onConfirmar: () => void;
+}) {
+  return (
+    <Card className="border-emerald-200 bg-emerald-50 dark:bg-emerald-950/30 dark:border-emerald-800">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base flex items-center gap-2 text-emerald-800 dark:text-emerald-200">
+          <Sparkles className="h-4 w-4" />
+          Pré-aprovado pela regra "{payload?.regra_nome ?? "regra desconhecida"}"
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="space-y-2 text-sm">
+          <div>
+            <p className="text-xs font-medium text-emerald-900/70 dark:text-emerald-200/70 uppercase tracking-wide">
+              Parecer sugerido
+            </p>
+            <p className="text-emerald-900 dark:text-emerald-100 whitespace-pre-wrap">
+              {payload?.parecer_sugerido || "—"}
+            </p>
+          </div>
+          <div>
+            <p className="text-xs font-medium text-emerald-900/70 dark:text-emerald-200/70 uppercase tracking-wide">
+              Condição sugerida
+            </p>
+            <p className="text-emerald-900 dark:text-emerald-100">
+              {resumirCondicao(payload?.condicao_sugerida)}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex flex-col items-start gap-1.5">
+          <Button
+            onClick={onConfirmar}
+            disabled={loading}
+            className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2"
+          >
+            {loading ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" /> Confirmando...
+              </>
+            ) : (
+              <>
+                <Sparkles className="h-4 w-4" /> Confirmar pré-aprovação
+              </>
+            )}
+          </Button>
+          <p className="text-xs text-emerald-900/70 dark:text-emerald-200/70">
+            Você ainda pode decidir manualmente nos botões abaixo se preferir.
+          </p>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
