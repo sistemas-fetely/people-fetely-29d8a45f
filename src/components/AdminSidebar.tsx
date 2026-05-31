@@ -149,8 +149,6 @@ export function AdminSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
         <div className="mx-4 border-t border-sidebar-border/40" />
-        {renderGroup("Documentação & Processos", docItems)}
-        <div className="mx-4 border-t border-sidebar-border/40" />
         {renderGroup("Pessoas & Acessos", pessoasItems)}
         <div className="mx-4 border-t border-sidebar-border/40" />
         {renderGroup("Sistema", sistemaItems)}
