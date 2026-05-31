@@ -31,7 +31,7 @@ export function useMaterializarCobranca() {
         title: "Cobrança materializada",
         description: "Títulos criados e pedido avançado.",
       });
-      navigate("/credito/cobranca");
+      navigate("/recebimento/cobranca");
     },
     onError: (e: Error) => {
       console.error("[materializar_cobranca]", e);
