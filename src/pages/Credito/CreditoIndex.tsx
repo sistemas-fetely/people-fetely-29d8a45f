@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Settings2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
-const TABS_VALIDAS = ["entrada", "analise", "decisao", "decididas"];
+const TABS_VALIDAS = ["analise", "decisao", "decididas"];
 
 export default function CreditoIndex() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -16,7 +16,7 @@ export default function CreditoIndex() {
   const { roles } = useAuth();
   const isAdmin = roles?.some((r) => ["super_admin", "admin_rh"].includes(r));
   const tabParam = searchParams.get("tab");
-  const tabAtiva = tabParam && TABS_VALIDAS.includes(tabParam) ? tabParam : "entrada";
+  const tabAtiva = tabParam && TABS_VALIDAS.includes(tabParam) ? tabParam : "analise";
 
   const handleTabChange = (v: string) => {
     setSearchParams({ tab: v });
