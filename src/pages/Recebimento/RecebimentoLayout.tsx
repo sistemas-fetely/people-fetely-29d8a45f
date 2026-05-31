@@ -53,6 +53,12 @@ export default function RecebimentoLayout() {
           >
             Pedidos de Venda
           </TabsTrigger>
+          <TabsTrigger
+            value="parceiros"
+            className="rounded-none border-b-2 border-transparent bg-transparent px-1 pb-3 pt-1 text-muted-foreground data-[state=active]:text-gold data-[state=active]:border-gold data-[state=active]:shadow-none data-[state=active]:bg-transparent"
+          >
+            Parceiros Comerciais
+          </TabsTrigger>
         </TabsList>
       </Tabs>
 
