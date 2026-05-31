@@ -38,11 +38,10 @@ const financeiroItems: MenuItem[] = [
   { title: "Contas a Receber", url: "/administrativo/contas-receber", icon: ArrowDownToLine },
   { title: "Conciliação", url: "/administrativo/conciliacao", icon: CheckSquare },
   { title: "Contratos Recorrentes", url: "/administrativo/compromissos", icon: Receipt },
+  { title: "Movimentações", url: "/administrativo/caixa-banco", icon: Wallet },
 ];
 
 const caixaBancoItems: MenuItem[] = [
-  { title: "Movimentações", url: "/administrativo/caixa-banco", icon: Wallet },
-  
   { title: "Fluxo de Caixa", url: "/administrativo/fluxo-caixa", icon: TrendingUp },
   { title: "Fluxo Futuro Investimento", url: "/administrativo/fluxo-futuro-investimento", icon: Target },
   { title: "Fluxo Futuro", url: "/administrativo/fluxo-futuro", icon: Calendar },
