@@ -1,5 +1,8 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Badge } from "@/components/ui/badge";
 import { usePedidosFila } from "@/hooks/pedidos/usePedidosFila";
 import {
   useFilaPedidosPriorizada,
@@ -96,6 +99,30 @@ export function FilaPedidosPorArea({
       return new Date(a.recebido_em).getTime() - new Date(b.recebido_em).getTime();
     });
   }, [data, ordenacao, scoreMap]);
+
+  // Estágio da análise de crédito por pedido (somente para pedidos em em_analise_credito)
+  const pedidoIdsEmAnalise = useMemo(
+    () => (linhas || []).filter((p) => p.estagio === "em_analise_credito").map((p) => p.id),
+    [linhas]
+  );
+  const { data: analiseStages } = useQuery({
+    queryKey: ["fila-analise-stages", pedidoIdsEmAnalise],
+    enabled: pedidoIdsEmAnalise.length > 0,
+    staleTime: 30 * 1000,
+    queryFn: async () => {
+      const { data: rows, error } = await supabase
+        .from("analises_credito")
+        .select("pedido_id, estagio_atual, criado_em")
+        .in("pedido_id", pedidoIdsEmAnalise)
+        .order("criado_em", { ascending: false });
+      if (error) throw error;
+      const m = new Map<string, string>();
+      (rows || []).forEach((r: { pedido_id: string; estagio_atual: string }) => {
+        if (!m.has(r.pedido_id)) m.set(r.pedido_id, r.estagio_atual);
+      });
+      return m;
+    },
+  });
 
   return (
     <div className="space-y-3">
@@ -206,7 +233,19 @@ export function FilaPedidosPorArea({
                     </p>
                   </TableCell>
                   <TableCell>
-                    <EstagioBadge estagio={p.estagio} />
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <EstagioBadge estagio={p.estagio} />
+                      {p.estagio === "em_analise_credito" && analiseStages?.get(p.id) === "entrada" && (
+                        <Badge className="bg-amber-500 text-white border-0 text-[10px]">
+                          Aguardando liberação
+                        </Badge>
+                      )}
+                      {p.estagio === "em_analise_credito" && analiseStages?.get(p.id) === "analise" && (
+                        <Badge variant="secondary" className="text-[10px]">
+                          Em análise
+                        </Badge>
+                      )}
+                    </div>
                   </TableCell>
                   <TableCell>
                     <BadgesContextuaisPedido p={p} />

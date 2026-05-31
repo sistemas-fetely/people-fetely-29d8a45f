@@ -1,6 +1,5 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Navigate } from "react-router-dom";
 import { useAnaliseDetalhe } from "@/hooks/credito/useAnaliseDetalhe";
-import { AnaliseDetalheEntrada } from "@/components/credito/AnaliseDetalheEntrada";
 import { AnaliseDetalheAnalise } from "@/components/credito/AnaliseDetalheAnalise";
 import { AnaliseDetalheDecisao } from "@/components/credito/AnaliseDetalheDecisao";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -115,7 +114,9 @@ export default function AnaliseDetalhe() {
     );
   }
 
-  if (estagio === "entrada") return <AnaliseDetalheEntrada analiseId={id} />;
+  if (estagio === "entrada") {
+    return <Navigate to={`/pedidos/${data.analise.pedido_id}`} replace />;
+  }
   if (estagio === "analise") return <AnaliseDetalheAnalise analiseId={id} />;
   if (estagio === "decisao") return <AnaliseDetalheDecisao analiseId={id} />;
 

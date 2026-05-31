@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Settings2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
-const TABS_VALIDAS = ["entrada", "analise", "decisao", "decididas"];
+const TABS_VALIDAS = ["analise", "decisao", "decididas"];
 
 export default function CreditoIndex() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -16,7 +16,7 @@ export default function CreditoIndex() {
   const { roles } = useAuth();
   const isAdmin = roles?.some((r) => ["super_admin", "admin_rh"].includes(r));
   const tabParam = searchParams.get("tab");
-  const tabAtiva = tabParam && TABS_VALIDAS.includes(tabParam) ? tabParam : "entrada";
+  const tabAtiva = tabParam && TABS_VALIDAS.includes(tabParam) ? tabParam : "analise";
 
   const handleTabChange = (v: string) => {
     setSearchParams({ tab: v });
@@ -30,7 +30,7 @@ export default function CreditoIndex() {
           { label: "Crédito" },
         ]}
         title="Análise de Crédito"
-        subtitle="Pipeline B2B — Entrada (Mariana) → Análise (Time) → Decisão (Joseph)"
+        subtitle="Pipeline B2B — Análise (Time) → Decisão (Joseph)"
         actions={
           <div className="flex items-center gap-2">
             {isAdmin && (
@@ -57,12 +57,6 @@ export default function CreditoIndex() {
         <Tabs value={tabAtiva} onValueChange={handleTabChange} className="space-y-4">
           <TabsList className="bg-transparent border-b border-border rounded-none w-full justify-start h-auto p-0 gap-6">
             <TabsTrigger
-              value="entrada"
-              className="rounded-none border-b-2 border-transparent bg-transparent px-1 pb-3 pt-1 text-muted-foreground data-[state=active]:text-gold data-[state=active]:border-gold data-[state=active]:shadow-none data-[state=active]:bg-transparent"
-            >
-              Entrada
-            </TabsTrigger>
-            <TabsTrigger
               value="analise"
               className="rounded-none border-b-2 border-transparent bg-transparent px-1 pb-3 pt-1 text-muted-foreground data-[state=active]:text-gold data-[state=active]:border-gold data-[state=active]:shadow-none data-[state=active]:bg-transparent"
             >
@@ -81,7 +75,6 @@ export default function CreditoIndex() {
               Decididas
             </TabsTrigger>
           </TabsList>
-          <TabsContent value="entrada"><FilaPorEstagio estagio="entrada" /></TabsContent>
           <TabsContent value="analise"><FilaPorEstagio estagio="analise" /></TabsContent>
           <TabsContent value="decisao"><FilaPorEstagio estagio="decisao" /></TabsContent>
           <TabsContent value="decididas"><FilaPorEstagio estagio="decididas" /></TabsContent>
