@@ -19,14 +19,6 @@ export default function CreditoIndex() {
   const tabAtiva = tabParam && TABS_VALIDAS.includes(tabParam) ? tabParam : "entrada";
 
   const handleTabChange = (v: string) => {
-    if (v === "cobranca") {
-      navigate("/credito/cobranca");
-      return;
-    }
-    if (v === "aguardando_pagamento") {
-      navigate("/credito/aguardando-pagamento");
-      return;
-    }
     setSearchParams({ tab: v });
   };
 
@@ -87,18 +79,6 @@ export default function CreditoIndex() {
               className="rounded-none border-b-2 border-transparent bg-transparent px-1 pb-3 pt-1 text-muted-foreground data-[state=active]:text-gold data-[state=active]:border-gold data-[state=active]:shadow-none data-[state=active]:bg-transparent"
             >
               Decididas
-            </TabsTrigger>
-            <TabsTrigger
-              value="cobranca"
-              className="rounded-none border-b-2 border-transparent bg-transparent px-1 pb-3 pt-1 text-muted-foreground data-[state=active]:text-gold data-[state=active]:border-gold data-[state=active]:shadow-none data-[state=active]:bg-transparent"
-            >
-              Cobrança
-            </TabsTrigger>
-            <TabsTrigger
-              value="aguardando_pagamento"
-              className="rounded-none border-b-2 border-transparent bg-transparent px-1 pb-3 pt-1 text-muted-foreground data-[state=active]:text-gold data-[state=active]:border-gold data-[state=active]:shadow-none data-[state=active]:bg-transparent"
-            >
-              Aguardando pagamento
             </TabsTrigger>
           </TabsList>
           <TabsContent value="entrada"><FilaPorEstagio estagio="entrada" /></TabsContent>

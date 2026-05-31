@@ -102,7 +102,7 @@ export default function AguardandoPagamentoDetalhe() {
         <Button
           variant="ghost"
           className="mt-4"
-          onClick={() => navigate("/credito/aguardando-pagamento")}
+          onClick={() => navigate("/recebimento/aguardando-pagamento")}
         >
           <ArrowLeft className="h-4 w-4" /> Voltar
         </Button>
@@ -155,8 +155,8 @@ export default function AguardandoPagamentoDetalhe() {
       <CasaPageHeader
         breadcrumb={[
           { label: "Casa", to: "/" },
-          { label: "Crédito", to: "/credito" },
-          { label: "Aguardando pagamento", to: "/credito/aguardando-pagamento" },
+          { label: "Recebimento", to: "/recebimento" },
+          { label: "Aguardando pagamento", to: "/recebimento/aguardando-pagamento" },
           { label: pedido.id_externo ?? "—" },
         ]}
         title={`Aguardando pagamento — ${pedido.id_externo ?? ""}`}
@@ -273,7 +273,7 @@ export default function AguardandoPagamentoDetalhe() {
           <div className="flex justify-start mt-6">
             <Button
               variant="outline"
-              onClick={() => navigate("/credito/aguardando-pagamento")}
+              onClick={() => navigate("/recebimento/aguardando-pagamento")}
             >
               <ArrowLeft className="h-4 w-4" /> Voltar à fila
             </Button>

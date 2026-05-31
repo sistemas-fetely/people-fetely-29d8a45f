@@ -127,6 +127,7 @@ const CobrancaFila = lazy(() => import("@/pages/Credito/CobrancaFila"));
 const CobrancaDetalhe = lazy(() => import("@/pages/Credito/CobrancaDetalhe"));
 const AguardandoPagamentoFila = lazy(() => import("@/pages/Credito/AguardandoPagamentoFila"));
 const AguardandoPagamentoDetalhe = lazy(() => import("@/pages/Credito/AguardandoPagamentoDetalhe"));
+const RecebimentoLayout = lazy(() => import("@/pages/Recebimento/RecebimentoLayout"));
 const RegrasCadencia = lazy(() => import("@/pages/Credito/RegrasCadencia"));
 const PedidosIndex = lazy(() => import("@/pages/Pedidos/PedidosIndex"));
 const PedidoDetalhe = lazy(() => import("@/pages/Pedidos/PedidoDetalhe"));
@@ -217,10 +218,13 @@ const App = () => (
               <Route path="/credito" element={<CreditoIndex />} />
               <Route path="/credito/analises/:id" element={<AnaliseDetalhe />} />
               <Route path="/credito/clientes/:id" element={<ClienteDetalhe />} />
-              <Route path="/credito/cobranca" element={<CobrancaFila />} />
-              <Route path="/credito/cobranca/:pedidoId" element={<CobrancaDetalhe />} />
-              <Route path="/credito/aguardando-pagamento" element={<AguardandoPagamentoFila />} />
-              <Route path="/credito/aguardando-pagamento/:pedidoId" element={<AguardandoPagamentoDetalhe />} />
+              <Route path="/recebimento" element={<RecebimentoLayout />}>
+                <Route index element={<Navigate to="/recebimento/cobranca" replace />} />
+                <Route path="cobranca" element={<CobrancaFila />} />
+                <Route path="aguardando-pagamento" element={<AguardandoPagamentoFila />} />
+              </Route>
+              <Route path="/recebimento/cobranca/:pedidoId" element={<CobrancaDetalhe />} />
+              <Route path="/recebimento/aguardando-pagamento/:pedidoId" element={<AguardandoPagamentoDetalhe />} />
               <Route path="/credito/regras-cadencia" element={<RegrasCadencia />} />
 
               {/* ═══════════════════════════════════════════════

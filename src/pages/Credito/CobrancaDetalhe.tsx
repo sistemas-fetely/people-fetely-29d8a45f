@@ -148,7 +148,7 @@ export default function CobrancaDetalhe() {
         <Alert variant="destructive">
           <AlertDescription>Pedido não encontrado.</AlertDescription>
         </Alert>
-        <Button variant="ghost" className="mt-4" onClick={() => navigate("/credito/cobranca")}>
+        <Button variant="ghost" className="mt-4" onClick={() => navigate("/recebimento/cobranca")}>
           <ArrowLeft className="h-4 w-4" /> Voltar
         </Button>
       </div>
@@ -166,7 +166,7 @@ export default function CobrancaDetalhe() {
             <strong>{pedidoQ.data.estagio}</strong>).
           </AlertDescription>
         </Alert>
-        <Button variant="ghost" onClick={() => navigate("/credito/cobranca")}>
+        <Button variant="ghost" onClick={() => navigate("/recebimento/cobranca")}>
           <ArrowLeft className="h-4 w-4" /> Voltar à fila
         </Button>
       </div>
@@ -182,7 +182,7 @@ export default function CobrancaDetalhe() {
             Erro ao calcular proposta: {(propostaQ.error as Error).message}
           </AlertDescription>
         </Alert>
-        <Button variant="ghost" onClick={() => navigate("/credito/cobranca")}>
+        <Button variant="ghost" onClick={() => navigate("/recebimento/cobranca")}>
           <ArrowLeft className="h-4 w-4" /> Voltar
         </Button>
       </div>
@@ -197,8 +197,8 @@ export default function CobrancaDetalhe() {
       <CasaPageHeader
         breadcrumb={[
           { label: "Casa", to: "/" },
-          { label: "Crédito", to: "/credito" },
-          { label: "Cobrança", to: "/credito/cobranca" },
+          { label: "Recebimento", to: "/recebimento" },
+          { label: "Cobrança", to: "/recebimento/cobranca" },
           { label: pedido.id_externo ?? "—" },
         ]}
         title={`Cobrança — ${pedido.id_externo ?? ""}`}
@@ -364,7 +364,7 @@ export default function CobrancaDetalhe() {
           )}
 
           <div className="flex justify-end gap-3 mt-6">
-            <Button variant="outline" onClick={() => navigate("/credito/cobranca")}>
+            <Button variant="outline" onClick={() => navigate("/recebimento/cobranca")}>
               Cancelar
             </Button>
             <Button
