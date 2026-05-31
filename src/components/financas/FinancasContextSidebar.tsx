@@ -54,6 +54,7 @@ export function FinancasContextSidebar() {
                 label="Visão Geral"
                 end
               />
+              <FinancasSidebarItem to="/administrativo/painel-financeiro-conta" icon={Users} label="Painel Financeiro da Conta" />
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -64,7 +65,6 @@ export function FinancasContextSidebar() {
             <FinancasSidebarSection title="CPR" variant="primary">
               <FinancasSidebarItem to="/administrativo/contas-pagar" icon={ArrowDownCircle} label="Contas a Pagar" />
               <FinancasSidebarItem to="/administrativo/contas-receber" icon={ArrowUpCircle} label="Contas a Receber" />
-              <FinancasSidebarItem to="/administrativo/painel-financeiro-conta" icon={Users} label="Painel Financeiro da Conta" />
               <FinancasSidebarItem to="/administrativo/caixa-banco" icon={ArrowLeftRight} label="Movimentações" end />
               <FinancasSidebarItem to="/administrativo/fluxo-caixa" icon={LineChart} label="Fluxo de Caixa" />
             </FinancasSidebarSection>
