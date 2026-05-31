@@ -211,6 +211,8 @@ const App = () => (
               <Route path="/credito" element={<CreditoIndex />} />
               <Route path="/credito/analises/:id" element={<AnaliseDetalhe />} />
               <Route path="/credito/clientes/:id" element={<ClienteDetalhe />} />
+              <Route path="/credito/cobranca" element={<CobrancaFila />} />
+              <Route path="/credito/cobranca/:pedidoId" element={<CobrancaDetalhe />} />
 
               {/* ═══════════════════════════════════════════════
                   App Pedidos — App Simples (sem sidebar lateral)
