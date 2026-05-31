@@ -21,7 +21,7 @@ import {
   ESTAGIO_LABELS, ESTAGIO_AREA, PIPELINE_PRINCIPAL,
   ESTAGIOS_TERMINAIS, ESTAGIOS_RECUPERAVEIS,
 } from "@/types/pedido";
-import type { AreaPedido, EstagioPedido, PedidoFilaItem } from "@/types/pedido";
+import type { AreaPedido, EstagioPedido, PedidoFilaItem, ScoreBreakdown } from "@/types/pedido";
 
 const fmtBRL = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
