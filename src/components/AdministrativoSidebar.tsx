@@ -9,7 +9,7 @@
  * sncf_documentacao slug "arquitetura-sistemas-fetely" v2 → seção 3 → Administrativo Fetely.
  */
 
-import { Building2, ShieldCheck, FileSignature, FolderArchive, Package, ShoppingCart, ClipboardList, UsersRound, Landmark, Users } from "lucide-react";
+import { Building2, ShieldCheck, FileSignature, FolderArchive, Package, ShoppingCart, ClipboardList, UsersRound, Landmark, Users, Upload, Layers, FileWarning } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { cn } from "@/lib/utils";
 import { useLocation } from "react-router-dom";
@@ -49,6 +49,13 @@ const parceirosItems: MenuItem[] = [
 const vendasItems: MenuItem[] = [
   { title: "Pedidos de Venda", url: "/administrativo-fetely/pedidos", icon: ShoppingCart, badge: "⚠️" },
   { title: "Produtos", url: "/administrativo-fetely/produtos", icon: Package, badge: "⚠️" },
+];
+
+// Grupo 4: Documentos (migrado de Finanças em 31/05/2026)
+const documentosItems: MenuItem[] = [
+  { title: "Importar Dados", url: "/administrativo-fetely/importar", icon: Upload },
+  { title: "NFs em Stage", url: "/administrativo-fetely/nfs-stage", icon: Layers },
+  { title: "Documentos Pendentes", url: "/administrativo-fetely/documentos-pendentes", icon: FileWarning },
 ];
 
 export function AdministrativoSidebar() {
@@ -166,6 +173,8 @@ export function AdministrativoSidebar() {
         {renderGroup("Parceiros & Rede", parceirosItems)}
         <div className="mx-4 border-t border-sidebar-border/40" />
         {renderGroup("Vendas & Produtos", vendasItems)}
+        <div className="mx-4 border-t border-sidebar-border/40" />
+        {renderGroup("Documentos", documentosItems)}
       </SidebarContent>
 
       <SidebarFooter className="p-4 space-y-2">
