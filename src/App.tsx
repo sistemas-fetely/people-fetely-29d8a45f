@@ -28,6 +28,7 @@ const Pessoas = lazy(() => import("@/pages/Pessoas"));
 const ColaboradorDetalhe = lazy(() => import("@/pages/ColaboradorDetalhe"));
 const CadastroColaboradorCLTWrapper = lazy(() => import("@/components/colaborador-clt/CadastroColaboradorCLT").then(m => ({ default: m.CadastroColaboradorCLTWrapper })));
 const PlaceholderPage = lazy(() => import("@/pages/PlaceholderPage"));
+const Configuracoes = lazy(() => import("@/pages/Configuracoes"));
 const Organograma = lazy(() => import("@/pages/Organograma"));
 const Login = lazy(() => import("@/pages/Login"));
 const RecuperarSenha = lazy(() => import("@/pages/RecuperarSenha"));
@@ -444,9 +445,7 @@ const App = () => (
                 <ProtectedRoute permModule="parametros"><Parametros /></ProtectedRoute>
               } />
               <Route path="configuracoes" element={
-                <ProtectedRoute permModule="usuarios">
-                  <PlaceholderPage title="Configurações" description="Parâmetros do sistema e permissões" />
-                </ProtectedRoute>
+                <ProtectedRoute permModule="usuarios"><Configuracoes /></ProtectedRoute>
               } />
               <Route path="usuarios" element={
                 <ProtectedRoute permModule="usuarios"><GerenciarUsuarios /></ProtectedRoute>
