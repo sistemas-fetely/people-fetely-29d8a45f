@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Search, Sparkles, Undo2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { BadgePreAprovado } from "./BadgePreAprovado";
 import type { EstagioAnalise } from "@/types/credito";
 
 const fmtBRL = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
