@@ -98,6 +98,19 @@ export function AnaliseDetalheAnalise({ analiseId }: Props) {
         </div>
       </div>
 
+      {/* Card de pré-aprovação (Joseph confirma 1-clique) */}
+      {analise.pre_aprovado_regra_id && !analise.status_final && (
+        <PreAprovacaoCard
+          payload={analise.pre_aprovacao_payload as PreAprovacaoPayload | null}
+          loading={confirmarPre.isPending}
+          onConfirmar={() =>
+            confirmarPre.mutate(analise.id, {
+              onSuccess: () => navigate("/credito?tab=analise"),
+            })
+          }
+        />
+      )}
+
       {/* Box devolução, se aplicável */}
       <BoxDevolucaoRecente transicoes={transicoes} estagioAtual="analise" />
 
