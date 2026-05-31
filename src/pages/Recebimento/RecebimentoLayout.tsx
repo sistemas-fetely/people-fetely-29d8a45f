@@ -15,6 +15,8 @@ export default function RecebimentoLayout() {
       navigate("/recebimento/aguardando-pagamento");
     } else if (v === "pedidos_venda") {
       navigate("/pedidos");
+    } else if (v === "parceiros") {
+      navigate("/administrativo-fetely/parceiros");
     } else {
       navigate("/recebimento/cobranca");
     }
@@ -50,6 +52,12 @@ export default function RecebimentoLayout() {
             className="rounded-none border-b-2 border-transparent bg-transparent px-1 pb-3 pt-1 text-muted-foreground data-[state=active]:text-gold data-[state=active]:border-gold data-[state=active]:shadow-none data-[state=active]:bg-transparent"
           >
             Pedidos de Venda
+          </TabsTrigger>
+          <TabsTrigger
+            value="parceiros"
+            className="rounded-none border-b-2 border-transparent bg-transparent px-1 pb-3 pt-1 text-muted-foreground data-[state=active]:text-gold data-[state=active]:border-gold data-[state=active]:shadow-none data-[state=active]:bg-transparent"
+          >
+            Parceiros Comerciais
           </TabsTrigger>
         </TabsList>
       </Tabs>
