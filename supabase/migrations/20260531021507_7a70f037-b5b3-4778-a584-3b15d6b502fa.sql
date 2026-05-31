@@ -1,0 +1,1 @@
+UPDATE public.sncf_sistemas SET nome = 'Marca' WHERE id = '6da34f58-ba51-4f07-9c8f-2f8a75b65763';
