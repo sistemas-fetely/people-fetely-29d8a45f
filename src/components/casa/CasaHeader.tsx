@@ -8,6 +8,7 @@ import { CasaSearchDock } from "./CasaSearchDock";
 import { CasaThemeToggle } from "./CasaThemeToggle";
 import { CasaAvatarMenu } from "./CasaAvatarMenu";
 import { CasaFalaFetelyButton } from "./CasaFalaFetelyButton";
+import { CasaConfigButton } from "./CasaConfigButton";
 import { useCasaApp } from "@/hooks/useCasaApp";
 
 export function CasaHeader() {
@@ -59,6 +60,7 @@ export function CasaHeader() {
         {/* Utilitários */}
         <div className="flex items-center gap-1 ml-auto lg:ml-4">
           <CasaFalaFetelyButton />
+          <CasaConfigButton />
           <CasaThemeToggle />
           <CasaAvatarMenu />
         </div>
