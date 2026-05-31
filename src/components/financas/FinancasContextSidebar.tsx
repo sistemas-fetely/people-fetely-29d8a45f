@@ -41,10 +41,10 @@ export function FinancasContextSidebar() {
         </div>
       </SidebarHeader>
 
-      <SidebarContent className="pt-3">
+      <SidebarContent className="pt-4 gap-0">
         {/* Item raiz */}
-        <SidebarGroup>
-          <SidebarGroupLabel className="px-2 py-2 text-[13px] uppercase tracking-[2px] text-muted-foreground h-auto">Tudo à Vista</SidebarGroupLabel>
+        <SidebarGroup className="pb-3">
+          <SidebarGroupLabel className="px-3 py-2 text-[11px] uppercase tracking-[2px] text-muted-foreground h-auto">Tudo à Vista</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               <FinancasSidebarItem
@@ -58,7 +58,7 @@ export function FinancasContextSidebar() {
         </SidebarGroup>
 
         {/* CPR */}
-        <SidebarGroup>
+        <SidebarGroup className="border-t border-gold/10 py-3">
           <SidebarGroupContent>
             <FinancasSidebarSection title="CPR" variant="primary">
               <FinancasSidebarItem to="/administrativo/contas-pagar" icon={ArrowDownCircle} label="Contas a Pagar" />
@@ -70,7 +70,7 @@ export function FinancasContextSidebar() {
         </SidebarGroup>
 
         {/* BANCO */}
-        <SidebarGroup>
+        <SidebarGroup className="border-t border-gold/10 py-3">
           <SidebarGroupContent>
             <FinancasSidebarSection title="Banco" variant="primary">
               <FinancasSidebarItem to="/administrativo/faturas-cartao" icon={CreditCard} label="Faturas de Cartão" />
@@ -83,9 +83,8 @@ export function FinancasContextSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-
         {/* ESTRUTURA */}
-        <SidebarGroup>
+        <SidebarGroup className="border-t border-gold/10 py-3">
           <SidebarGroupContent>
             <FinancasSidebarSection title="Estrutura" variant="primary">
               <FinancasSidebarItem to="/administrativo/plano-contas" icon={FolderTree} label="Plano de Contas" />
