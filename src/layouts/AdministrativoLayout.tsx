@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AdministrativoSidebar } from "@/components/AdministrativoSidebar";
 import { useTrackPageVisit } from "@/hooks/useTrackPageVisit";
@@ -9,10 +9,13 @@ import { CommandPaletteProvider } from "@/components/navegacao/CommandPalettePro
 export default function AdministrativoLayout() {
   useTrackPageVisit();
   usePrefetchTelas();
+  const { pathname } = useLocation();
+  const semSidebar = pathname === "/administrativo-fetely/parceiros";
+
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-background">
-        <AdministrativoSidebar />
+        {!semSidebar && <AdministrativoSidebar />}
         <div className="flex-1 flex flex-col">
           <main className="flex-1 overflow-auto relative">
             <Suspense fallback={
