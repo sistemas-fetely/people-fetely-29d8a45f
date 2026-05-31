@@ -44,7 +44,7 @@ export function FinancasContextSidebar() {
       <SidebarContent className="pt-3">
         {/* Item raiz */}
         <SidebarGroup>
-          <SidebarGroupLabel>Tudo à Vista</SidebarGroupLabel>
+          <SidebarGroupLabel className="font-serif text-lg text-foreground normal-case tracking-normal h-auto px-2 py-1.5">Tudo à Vista</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               <FinancasSidebarItem
