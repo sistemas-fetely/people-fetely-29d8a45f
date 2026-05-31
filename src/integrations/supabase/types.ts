@@ -11968,6 +11968,7 @@ export type Database = {
           id: string
           justificativa_renegociacao: string | null
           modalidade_renegociacao: number | null
+          movimentacao_baixa_id: string | null
           nf_id: string | null
           numero_parcela: number
           numero_titulo: string
@@ -12009,6 +12010,7 @@ export type Database = {
           id?: string
           justificativa_renegociacao?: string | null
           modalidade_renegociacao?: number | null
+          movimentacao_baixa_id?: string | null
           nf_id?: string | null
           numero_parcela?: number
           numero_titulo: string
@@ -12050,6 +12052,7 @@ export type Database = {
           id?: string
           justificativa_renegociacao?: string | null
           modalidade_renegociacao?: number | null
+          movimentacao_baixa_id?: string | null
           nf_id?: string | null
           numero_parcela?: number
           numero_titulo?: string
@@ -12098,6 +12101,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_credito_resumo_financeiro"
             referencedColumns: ["parceiro_id"]
+          },
+          {
+            foreignKeyName: "titulo_a_receber_movimentacao_baixa_id_fkey"
+            columns: ["movimentacao_baixa_id"]
+            isOneToOne: false
+            referencedRelation: "movimentacoes_bancarias"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "titulo_a_receber_nf_id_fkey"
@@ -13966,6 +13976,14 @@ export type Database = {
         Args: { p_motivo: string; p_parceiro_id: string }
         Returns: Json
       }
+      baixar_titulo_conciliacao: {
+        Args: {
+          p_data_pagamento?: string
+          p_movimentacao_id: string
+          p_titulo_id: string
+        }
+        Returns: Json
+      }
       buscar_docs_pagamento: {
         Args: { p_cpr_id: string }
         Returns: {
@@ -15123,6 +15141,19 @@ export type Database = {
           score: number
           status: string
           valor: number
+        }[]
+      }
+      sugerir_titulos_para_credito: {
+        Args: { p_janela_dias?: number; p_movimentacao_id: string }
+        Returns: {
+          cliente: string
+          data_vencimento_atual: string
+          dias_distancia: number
+          diff_valor: number
+          numero_titulo: string
+          status: string
+          titulo_id: string
+          valor_atual: number
         }[]
       }
       tem_consentimento_ativo: {
