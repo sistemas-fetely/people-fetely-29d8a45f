@@ -381,6 +381,7 @@ Deno.serve(async (req) => {
         email,
         vinculo_tipo: vinculo_tipo || null,
         grupos_atribuidos: grupo_ids?.length || 0,
+        link_primeiro_acesso: linkPrimeiroAcesso,
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
