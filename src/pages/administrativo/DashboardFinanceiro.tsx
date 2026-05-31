@@ -335,6 +335,53 @@ export default function DashboardFinanceiro() {
     },
   });
 
+  const { data: formasData } = useQuery({
+    queryKey: ["dashboard-formas-fetely"],
+    queryFn: async () => {
+      const hoje = new Date();
+      const ini = new Date(hoje.getFullYear(), hoje.getMonth(), 1).toISOString().split("T")[0];
+      const fim = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0).toISOString().split("T")[0];
+      const { data } = await (supabase as any)
+        .from("pedidos")
+        .select("forma_solicitada, valor_liquido, tipo_pagamento")
+        .gte("data_pedido", ini)
+        .lte("data_pedido", fim);
+      const rows = data ?? [];
+      const total = rows.reduce((s: number, p: any) => s + Number(p.valor_liquido ?? 0), 0);
+      const porForma = new Map<string, number>();
+      let aVista = 0, aPrazo = 0;
+      for (const p of rows) {
+        const f = p.forma_solicitada ?? "outro";
+        porForma.set(f, (porForma.get(f) ?? 0) + Number(p.valor_liquido ?? 0));
+        if (p.tipo_pagamento === "a_vista") aVista += Number(p.valor_liquido ?? 0);
+        else if (p.tipo_pagamento === "a_prazo") aPrazo += Number(p.valor_liquido ?? 0);
+      }
+      const formas = Array.from(porForma.entries())
+        .map(([forma, valor]) => ({ forma, valor, pct: total > 0 ? (valor / total) * 100 : 0 }))
+        .sort((a, b) => b.valor - a.valor);
+      return { formas, total, aVista, aPrazo };
+    },
+  });
+
+  const { data: dsoData } = useQuery({
+    queryKey: ["dashboard-dso-fetely"],
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from("titulo_a_receber")
+        .select("data_emissao_nf, data_pagamento")
+        .in("status", ["pago", "pago_com_atraso", "pago_judicial"])
+        .not("data_pagamento", "is", null)
+        .not("data_emissao_nf", "is", null);
+      const rows = data ?? [];
+      if (rows.length === 0) return { dias: null as number | null, amostra: 0 };
+      const soma = rows.reduce((s: number, t: any) => {
+        const d = (new Date(t.data_pagamento).getTime() - new Date(t.data_emissao_nf).getTime()) / 86_400_000;
+        return s + Math.max(0, d);
+      }, 0);
+      return { dias: Math.round(soma / rows.length), amostra: rows.length };
+    },
+  });
+
   const metrics = useMemo(() => {
     const hoje = new Date();
     const iniMesAtual = inicioMes(hoje);
