@@ -35,7 +35,6 @@ const financeiroItems: MenuItem[] = [
   { title: "Contas a Pagar", url: "/administrativo/contas-pagar", icon: ArrowUpFromLine },
   { title: "Faturas de Cartão", url: "/administrativo/faturas-cartao", icon: CreditCard },
   { title: "Contas a Receber", url: "/administrativo/contas-receber", icon: ArrowDownToLine },
-  { title: "Recebimentos a conciliar", url: "/administrativo/recebimentos-conciliar", icon: ArrowDownToLine },
   { title: "Fluxo de Caixa", url: "/administrativo/fluxo-caixa", icon: TrendingUp },
 ];
 
@@ -48,6 +47,7 @@ const caixaBancoItems: MenuItem[] = [
 ];
 
 const configFinanceiroItems: MenuItem[] = [
+  { title: "Recebimentos a conciliar", url: "/administrativo/recebimentos-conciliar", icon: ArrowDownToLine },
   { title: "Plano de Contas", url: "/administrativo/plano-contas", icon: ListTree },
   { title: "Conciliação", url: "/administrativo/conciliacao", icon: CheckSquare },
 ];

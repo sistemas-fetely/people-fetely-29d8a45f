@@ -63,7 +63,6 @@ export function FinancasContextSidebar() {
             <FinancasSidebarSection title="CPR" variant="primary">
               <FinancasSidebarItem to="/administrativo/contas-pagar" icon={ArrowDownCircle} label="Contas a Pagar" />
               <FinancasSidebarItem to="/administrativo/contas-receber" icon={ArrowUpCircle} label="Contas a Receber" />
-              <FinancasSidebarItem to="/administrativo/recebimentos-conciliar" icon={ArrowUpCircle} label="Recebimentos a conciliar" />
               <FinancasSidebarItem to="/administrativo/caixa-banco" icon={ArrowLeftRight} label="Movimentações" end />
               <FinancasSidebarItem to="/administrativo/fluxo-caixa" icon={LineChart} label="Fluxo de Caixa" />
             </FinancasSidebarSection>
@@ -88,6 +87,7 @@ export function FinancasContextSidebar() {
         <SidebarGroup className="border-t border-gold/10 py-3">
           <SidebarGroupContent>
             <FinancasSidebarSection title="Estrutura" variant="primary">
+              <FinancasSidebarItem to="/administrativo/recebimentos-conciliar" icon={ArrowUpCircle} label="Recebimentos a conciliar" />
               <FinancasSidebarItem to="/administrativo/plano-contas" icon={FolderTree} label="Plano de Contas" />
               <FinancasSidebarItem to="/administrativo/conciliacao" icon={CheckCheck} label="Conciliação" />
             </FinancasSidebarSection>
