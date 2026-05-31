@@ -19,14 +19,6 @@ export default function CreditoIndex() {
   const tabAtiva = tabParam && TABS_VALIDAS.includes(tabParam) ? tabParam : "entrada";
 
   const handleTabChange = (v: string) => {
-    if (v === "cobranca") {
-      navigate("/credito/cobranca");
-      return;
-    }
-    if (v === "aguardando_pagamento") {
-      navigate("/credito/aguardando-pagamento");
-      return;
-    }
     setSearchParams({ tab: v });
   };
 
