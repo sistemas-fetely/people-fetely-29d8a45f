@@ -241,16 +241,9 @@ export default function DashboardFinanceiro() {
     queryFn: async () => {
       const { data: contratos } = await (supabase as any)
         .from("pasta_contratos")
-        .select("id, ciclo_pagamento, valor_parcela, status")
+        .select("id, status")
         .eq("status", "vigente");
-      const vigentes = contratos ?? [];
-      const mrr = vigentes.reduce((s: number, c: any) => {
-        const v = Number(c.valor_parcela);
-        if (c.ciclo_pagamento === "mensal") return s + v;
-        if (c.ciclo_pagamento === "trimestral") return s + v / 3;
-        if (c.ciclo_pagamento === "anual") return s + v / 12;
-        return s;
-      }, 0);
+      const vigentesCount = (contratos ?? []).length;
 
       const em12m = new Date(Date.now() + 365 * 86_400_000).toISOString().split("T")[0];
       const hoje = new Date().toISOString().split("T")[0];
@@ -261,7 +254,82 @@ export default function DashboardFinanceiro() {
         .lte("data_vencimento", em12m);
       const compromisso12m = (parcelas ?? []).reduce((s: number, p: any) => s + Number(p.valor), 0);
 
-      return { mrr, vigentesCount: vigentes.length, compromisso12m };
+      return { vigentesCount, compromisso12m };
+    },
+  });
+
+  const { data: pedidosData } = useQuery({
+    queryKey: ["dashboard-pedidos-fetely"],
+    queryFn: async () => {
+      const hoje = new Date();
+      const iniAtual = inicioMes(hoje).toISOString();
+      const fimAtual = fimMes(hoje).toISOString();
+      const iniAnt = inicioMes(new Date(hoje.getFullYear(), hoje.getMonth() - 1)).toISOString();
+      const fimAnt = fimMes(new Date(hoje.getFullYear(), hoje.getMonth() - 1)).toISOString();
+      const iniAtualDate = inicioMes(hoje).toISOString().split("T")[0];
+      const fimAtualDate = fimMes(hoje).toISOString().split("T")[0];
+
+      const { data: fatAtual } = await (supabase as any)
+        .from("pedidos")
+        .select("valor_liquido")
+        .gte("faturado_em", iniAtual)
+        .lte("faturado_em", fimAtual);
+      const { data: fatAnt } = await (supabase as any)
+        .from("pedidos")
+        .select("valor_liquido")
+        .gte("faturado_em", iniAnt)
+        .lte("faturado_em", fimAnt);
+      const { data: pipeline } = await (supabase as any)
+        .from("pedidos")
+        .select("valor_liquido")
+        .is("faturado_em", null)
+        .in("estagio", ["em_analise_credito", "pre_faturado"]);
+      const { data: descMes } = await (supabase as any)
+        .from("pedidos")
+        .select("desconto_pct")
+        .gte("data_pedido", iniAtualDate)
+        .lte("data_pedido", fimAtualDate)
+        .not("desconto_pct", "is", null);
+
+      const faturamentoMes = (fatAtual ?? []).reduce((s: number, p: any) => s + Number(p.valor_liquido ?? 0), 0);
+      const faturamentoMesAnterior = (fatAnt ?? []).reduce((s: number, p: any) => s + Number(p.valor_liquido ?? 0), 0);
+      const pedidosFaturadosMes = (fatAtual ?? []).length;
+      const ticketMedio = pedidosFaturadosMes > 0 ? faturamentoMes / pedidosFaturadosMes : 0;
+      const pipelineCount = (pipeline ?? []).length;
+      const pipelineValor = (pipeline ?? []).reduce((s: number, p: any) => s + Number(p.valor_liquido ?? 0), 0);
+      const descs = (descMes ?? []).map((d: any) => Number(d.desconto_pct));
+      const descontoMedioMes = descs.length > 0 ? descs.reduce((a: number, b: number) => a + b, 0) / descs.length : 0;
+
+      return {
+        faturamentoMes, faturamentoMesAnterior, pedidosFaturadosMes, ticketMedio,
+        pipelineCount, pipelineValor, descontoMedioMes,
+      };
+    },
+  });
+
+  const { data: recebiveisData } = useQuery({
+    queryKey: ["dashboard-recebiveis-fetely"],
+    queryFn: async () => {
+      const hoje = new Date().toISOString().split("T")[0];
+      const { data: abertos } = await (supabase as any)
+        .from("titulo_a_receber")
+        .select("valor_atual, valor_bruto, data_vencimento_atual, flag_bandeira_amarela")
+        .is("data_pagamento", null)
+        .neq("status", "pago");
+
+      let valorAReceberAVencer = 0;
+      let valorEmAtraso = 0;
+      let qtdBandeiraAmarela = 0;
+      for (const t of abertos ?? []) {
+        const v = Number(t.valor_atual ?? t.valor_bruto ?? 0);
+        if (t.data_vencimento_atual && t.data_vencimento_atual < hoje) valorEmAtraso += v;
+        else valorAReceberAVencer += v;
+        if (t.flag_bandeira_amarela) qtdBandeiraAmarela += 1;
+      }
+      const totalEmAberto = valorAReceberAVencer + valorEmAtraso;
+      const inadimplenciaPct = totalEmAberto > 0 ? (valorEmAtraso / totalEmAberto) * 100 : 0;
+
+      return { valorAReceberAVencer, valorEmAtraso, totalEmAberto, inadimplenciaPct, qtdBandeiraAmarela };
     },
   });
 
@@ -289,11 +357,14 @@ export default function DashboardFinanceiro() {
       .reduce((s: number, c: any) => s + Number(c.valor), 0);
 
     const tresMesesAtras = new Date(hoje.getFullYear(), hoje.getMonth() - 3, 1);
-    const pagasUltimosTresMeses = realizadas
-      .filter((c: any) => c.tipo === "pagar" && new Date(c.data_pagamento) >= tresMesesAtras && new Date(c.data_pagamento) < iniMesAtual)
-      .reduce((s: number, c: any) => s + Number(c.valor), 0);
+    const pagasUltimosTresMesesArr = realizadas
+      .filter((c: any) => c.tipo === "pagar" && new Date(c.data_pagamento) >= tresMesesAtras && new Date(c.data_pagamento) < iniMesAtual);
+    const pagasUltimosTresMeses = pagasUltimosTresMesesArr.reduce((s: number, c: any) => s + Number(c.valor), 0);
+    const mesesComBurn = new Set(
+      pagasUltimosTresMesesArr.map((c: any) => String(c.data_pagamento).slice(0, 7))
+    ).size;
     const burnMedio = pagasUltimosTresMeses / 3;
-    const runway = burnMedio > 0 ? saldoBancario / burnMedio : null;
+    const runway = burnMedio > 0 && mesesComBurn >= 3 ? saldoBancario / burnMedio : null;
 
     const aVencer = cprData?.aVencer ?? [];
     const aVencerPagar = aVencer.filter((c: any) => c.tipo === "pagar");
@@ -393,75 +464,81 @@ export default function DashboardFinanceiro() {
         status={metrics.status}
       />
 
-      {/* Linha 1 — Saúde do Mês */}
+      {/* Linha 1 — NEGÓCIO */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <MetricCard
-          label="Pago no mês"
-          value={formatBRL(metrics.pagoMes)}
+          label="Faturamento do mês"
+          value={formatBRL(pedidosData?.faturamentoMes ?? 0)}
           delta={
-            metrics.pagoMesAnt > 0
-              ? { valor: deltaPercent(metrics.pagoMes, metrics.pagoMesAnt) ?? 0, rotulo: "vs. mês anterior" }
+            (pedidosData?.faturamentoMesAnterior ?? 0) > 0
+              ? { valor: deltaPercent(pedidosData?.faturamentoMes ?? 0, pedidosData?.faturamentoMesAnterior ?? 0) ?? 0, rotulo: "vs. mês anterior" }
               : null
           }
-          icon={ArrowDownRight}
-          accent={ROSA}
+          icon={TrendingUp}
+          accent={VERDE}
         />
         <MetricCard
-          label="A vencer (30d)"
-          value={formatBRL(metrics.aVencerValor)}
-          sub={`${metrics.aVencerCount} compromissos`}
-          icon={Calendar}
+          label="Pedidos faturados"
+          value={String(pedidosData?.pedidosFaturadosMes ?? 0)}
+          sub={`Ticket médio ${formatBRL(pedidosData?.ticketMedio ?? 0)}`}
+          icon={CheckCircle2}
+          accent={VERDE}
+        />
+        <MetricCard
+          label="Pipeline em aberto"
+          value={formatBRL(pedidosData?.pipelineValor ?? 0)}
+          sub={`${pedidosData?.pipelineCount ?? 0} pedidos no funil`}
+          icon={Activity}
           accent={AZUL}
         />
         <MetricCard
-          label="Em atraso"
-          value={formatBRL(metrics.atrasadasValor)}
-          sub={`${metrics.atrasadasCount} contas vencidas`}
-          icon={AlertTriangle}
+          label="Desconto médio"
+          value={`${(pedidosData?.descontoMedioMes ?? 0).toFixed(1)}%`}
+          sub="Concedido nos pedidos do mês"
+          icon={ArrowDownRight}
           accent={AMBAR}
-          alert={metrics.atrasadasCount > 0}
+        />
+      </div>
+
+      {/* Linha 2 — CAIXA & RECEBÍVEIS */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <MetricCard
+          label="A receber (a vencer)"
+          value={formatBRL(recebiveisData?.valorAReceberAVencer ?? 0)}
+          sub="Títulos em aberto"
+          icon={Calendar}
+          accent={VERDE}
         />
         <MetricCard
-          label="Runway"
+          label="Inadimplência"
+          value={`${(recebiveisData?.inadimplenciaPct ?? 0).toFixed(1)}%`}
+          sub={
+            `${formatBRL(recebiveisData?.valorEmAtraso ?? 0)} em atraso` +
+            ((recebiveisData?.qtdBandeiraAmarela ?? 0) > 0
+              ? ` · ${recebiveisData?.qtdBandeiraAmarela} bandeira amarela`
+              : "")
+          }
+          icon={AlertTriangle}
+          accent={ROSA}
+          alert={(recebiveisData?.inadimplenciaPct ?? 0) > 10}
+        />
+        <MetricCard
+          label="A pagar (30d)"
+          value={formatBRL(metrics.aVencerValor)}
+          sub={`${metrics.aVencerCount} compromissos`}
+          icon={Clock}
+          accent={AMBAR}
+        />
+        <MetricCard
+          label="Fôlego de Caixa"
           value={metrics.runway === null ? "—" : `${metrics.runway.toFixed(1)} meses`}
-          sub={metrics.burnMedio > 0 ? `Burn médio: ${formatBRL(metrics.burnMedio)}` : "Sem histórico"}
+          sub={metrics.runway === null ? "Sem histórico suficiente" : `Burn médio: ${formatBRL(metrics.burnMedio)}`}
           icon={Activity}
           accent={VERDE}
           alert={metrics.runway !== null && metrics.runway < 6}
         />
       </div>
 
-      {/* Linha 2 — Recorrência */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <MetricCard
-          label="MRR"
-          value={formatBRL(recorrenciaData?.mrr ?? 0)}
-          sub="Receita recorrente mensal"
-          icon={Zap}
-          accent={VERDE}
-        />
-        <MetricCard
-          label="ARR"
-          value={formatBRL((recorrenciaData?.mrr ?? 0) * 12)}
-          sub="Projeção anualizada"
-          icon={TrendingUp}
-          accent={VERDE_MED}
-        />
-        <MetricCard
-          label="Compromisso 12m"
-          value={formatBRL(recorrenciaData?.compromisso12m ?? 0)}
-          sub="Parcelas a vencer"
-          icon={Target}
-          accent={AZUL}
-        />
-        <MetricCard
-          label="Contratos vigentes"
-          value={String(recorrenciaData?.vigentesCount ?? 0)}
-          sub="Em execução"
-          icon={Users}
-          accent={ROSA}
-        />
-      </div>
 
       {/* Evolução 6 meses */}
       <ChartCard
@@ -612,14 +689,6 @@ export default function DashboardFinanceiro() {
               tipo="info"
               titulo={`${metrics.aVencerCount} compromissos nos próximos 30 dias`}
               descricao={`Total de ${formatBRL(metrics.aVencerValor)} a desembolsar.`}
-            />
-          )}
-          {(recorrenciaData?.mrr ?? 0) > 0 && (
-            <Insight
-              icon={Zap}
-              tipo="sucesso"
-              titulo={`MRR de ${formatBRL(recorrenciaData?.mrr ?? 0)}`}
-              descricao={`ARR projetado: ${formatBRL((recorrenciaData?.mrr ?? 0) * 12)}.`}
             />
           )}
           {metrics.atrasadasCount === 0 && metrics.aVencerCount === 0 && (
