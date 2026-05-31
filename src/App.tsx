@@ -120,6 +120,8 @@ const FluxoFuturoInvestimento = lazy(() => import("@/pages/administrativo/FluxoF
 const CreditoIndex = lazy(() => import("@/pages/Credito/CreditoIndex"));
 const AnaliseDetalhe = lazy(() => import("@/pages/Credito/AnaliseDetalhe"));
 const ClienteDetalhe = lazy(() => import("@/pages/Credito/ClienteDetalhe"));
+const CobrancaFila = lazy(() => import("@/pages/Credito/CobrancaFila"));
+const CobrancaDetalhe = lazy(() => import("@/pages/Credito/CobrancaDetalhe"));
 const PedidosIndex = lazy(() => import("@/pages/Pedidos/PedidosIndex"));
 const PedidoDetalhe = lazy(() => import("@/pages/Pedidos/PedidoDetalhe"));
 const ParceiroDetalhe = lazy(() => import("@/pages/Parceiros/ParceiroDetalhe"));
