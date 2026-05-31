@@ -57,12 +57,6 @@ export default function CreditoIndex() {
         <Tabs value={tabAtiva} onValueChange={handleTabChange} className="space-y-4">
           <TabsList className="bg-transparent border-b border-border rounded-none w-full justify-start h-auto p-0 gap-6">
             <TabsTrigger
-              value="entrada"
-              className="rounded-none border-b-2 border-transparent bg-transparent px-1 pb-3 pt-1 text-muted-foreground data-[state=active]:text-gold data-[state=active]:border-gold data-[state=active]:shadow-none data-[state=active]:bg-transparent"
-            >
-              Entrada
-            </TabsTrigger>
-            <TabsTrigger
               value="analise"
               className="rounded-none border-b-2 border-transparent bg-transparent px-1 pb-3 pt-1 text-muted-foreground data-[state=active]:text-gold data-[state=active]:border-gold data-[state=active]:shadow-none data-[state=active]:bg-transparent"
             >
@@ -81,7 +75,6 @@ export default function CreditoIndex() {
               Decididas
             </TabsTrigger>
           </TabsList>
-          <TabsContent value="entrada"><FilaPorEstagio estagio="entrada" /></TabsContent>
           <TabsContent value="analise"><FilaPorEstagio estagio="analise" /></TabsContent>
           <TabsContent value="decisao"><FilaPorEstagio estagio="decisao" /></TabsContent>
           <TabsContent value="decididas"><FilaPorEstagio estagio="decididas" /></TabsContent>
