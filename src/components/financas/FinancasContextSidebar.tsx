@@ -4,6 +4,7 @@ import {
   ArrowDownCircle,
   ArrowUpCircle,
   Calendar,
+  ArrowLeftRight,
   CreditCard,
   CheckCheck,
   Upload,
