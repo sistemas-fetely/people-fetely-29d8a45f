@@ -14,8 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Link } from "react-router-dom";
-import { ArrowDownToLine, Search, Upload } from "lucide-react";
+import { ArrowDownToLine, Search, Inbox } from "lucide-react";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
 
 // KPI CANDIDATO: Prazo médio de recebimento (dias entre emissão e recebimento)
@@ -24,80 +23,136 @@ import { formatBRL, formatDateBR } from "@/lib/format-currency";
 // KPI CANDIDATO: Ticket médio por cliente
 // KPI CANDIDATO: Inadimplência (% atrasado / a receber)
 
-type Conta = {
+type Titulo = {
   id: string;
-  tipo: string;
-  descricao: string;
-  valor: number;
-  data_vencimento: string | null;
+  numero_titulo: string | null;
+  data_vencimento_atual: string | null;
   data_pagamento: string | null;
+  valor_atual: number | null;
   status: string;
-  fornecedor_cliente: string | null;
-  parceiro_id: string | null;
-  plano_contas_id: string | null;
-  plano_contas?: { nome: string } | null;
-  parceiros_comerciais?: { razao_social: string | null } | null;
+  numero_parcela: number | null;
+  total_parcelas: number | null;
+  conta_id: string | null;
+  cliente?: { razao_social: string | null } | null;
 };
 
-const STATUS_STYLES: Record<string, string> = {
-  aberto: "bg-blue-100 text-blue-800 hover:bg-blue-100",
-  atrasado: "bg-red-100 text-red-800 hover:bg-red-100",
-  enviado_para_pagamento: "bg-green-100 text-green-800 hover:bg-green-100",
+type StatusGrupo = "a_receber" | "vencido" | "pago" | "cancelado";
+type FiltroGrupo = "todos" | StatusGrupo;
+
+const GRUPO_DE_STATUS: Record<string, StatusGrupo> = {
+  // a_receber
+  aguardando_pagamento: "a_receber",
+  aguardando_envio_bling: "a_receber",
+  aguardando_emissao_nf: "a_receber",
+  vigente: "a_receber",
+  vigente_parcial: "a_receber",
+  renegociado: "a_receber",
+  // vencido
+  vencido: "vencido",
+  vencido_suspenso: "vencido",
+  em_juridico: "vencido",
+  // pago
+  pago: "pago",
+  pago_com_atraso: "pago",
+  pago_judicial: "pago",
+  // cancelado
+  cancelado: "cancelado",
+  cancelado_recuperacao: "cancelado",
+  baixado_por_perda: "cancelado",
+};
+
+const GRUPO_LABEL: Record<StatusGrupo, string> = {
+  a_receber: "A receber",
+  vencido: "Vencido",
+  pago: "Pago",
+  cancelado: "Cancelado",
+};
+
+const GRUPO_BADGE: Record<StatusGrupo, string> = {
+  a_receber: "bg-blue-100 text-blue-800 hover:bg-blue-100",
+  vencido: "bg-red-100 text-red-800 hover:bg-red-100",
+  pago: "bg-green-100 text-green-800 hover:bg-green-100",
   cancelado: "bg-gray-100 text-gray-700 hover:bg-gray-100",
 };
+
+const FILTRO_LABEL: Record<FiltroGrupo, string> = {
+  todos: "Todos",
+  a_receber: "A receber",
+  vencido: "Vencido",
+  pago: "Pago",
+  cancelado: "Cancelado",
+};
+
+const grupoDe = (status: string): StatusGrupo | null =>
+  GRUPO_DE_STATUS[status] ?? null;
 
 const PAGE_SIZE = 20;
 
 export default function ContasReceber() {
-  const [statusFilter, setStatusFilter] = useState<string>("todos");
+  const [statusFilter, setStatusFilter] = useState<FiltroGrupo>("todos");
   const [busca, setBusca] = useState("");
   const [dataDe, setDataDe] = useState("");
   const [dataAte, setDataAte] = useState("");
   const [page, setPage] = useState(1);
 
   const { data, isLoading } = useQuery({
-    queryKey: ["contas-receber"],
+    queryKey: ["contas-receber-titulos"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("contas_pagar_receber")
-        .select("*, plano_contas:plano_contas_id(nome), parceiros_comerciais:parceiro_id(razao_social)")
-        .eq("tipo", "receber")
-        .order("data_vencimento", { ascending: true });
+        .from("titulo_a_receber")
+        .select(
+          "id, numero_titulo, data_vencimento_atual, data_pagamento, valor_atual, status, numero_parcela, total_parcelas, conta_id, cliente:titulo_a_receber_conta_id_fkey(razao_social)"
+        )
+        .order("data_vencimento_atual", { ascending: true });
       if (error) throw error;
-      return data as unknown as Conta[];
+      return data as unknown as Titulo[];
     },
   });
 
   const filtered = useMemo(() => {
     let list = data || [];
-    if (statusFilter !== "todos") list = list.filter((c) => c.status === statusFilter);
+    if (statusFilter !== "todos") {
+      list = list.filter((t) => grupoDe(t.status) === statusFilter);
+    }
     if (busca.trim()) {
-      const t = busca.toLowerCase();
+      const q = busca.toLowerCase();
       list = list.filter(
-        (c) =>
-          c.descricao?.toLowerCase().includes(t) ||
-          c.fornecedor_cliente?.toLowerCase().includes(t) ||
-          c.parceiros_comerciais?.razao_social?.toLowerCase().includes(t)
+        (t) =>
+          t.numero_titulo?.toLowerCase().includes(q) ||
+          t.cliente?.razao_social?.toLowerCase().includes(q)
       );
     }
-    if (dataDe) list = list.filter((c) => (c.data_vencimento || "") >= dataDe);
-    if (dataAte) list = list.filter((c) => (c.data_vencimento || "") <= dataAte);
+    if (dataDe) list = list.filter((t) => (t.data_vencimento_atual || "") >= dataDe);
+    if (dataAte) list = list.filter((t) => (t.data_vencimento_atual || "") <= dataAte);
     return list;
   }, [data, statusFilter, busca, dataDe, dataAte]);
 
   const totals = useMemo(() => {
     const all = data || [];
+    const valor = (t: Titulo) => Number(t.valor_atual || 0);
+
     const aReceber = all
-      .filter((c) => c.status === "aberto" || c.status === "atrasado")
-      .reduce((s, c) => s + Number(c.valor || 0), 0);
-    const atrasado = all
-      .filter((c) => c.status === "atrasado")
-      .reduce((s, c) => s + Number(c.valor || 0), 0);
-    const recebidoPeriodo = (filtered || [])
-      .filter((c) => c.status === "enviado_para_pagamento")
-      .reduce((s, c) => s + Number(c.valor || 0), 0);
-    return { aReceber, atrasado, recebidoPeriodo };
-  }, [data, filtered]);
+      .filter((t) => {
+        const g = grupoDe(t.status);
+        return g === "a_receber" || g === "vencido";
+      })
+      .reduce((s, t) => s + valor(t), 0);
+
+    const vencido = all
+      .filter((t) => grupoDe(t.status) === "vencido")
+      .reduce((s, t) => s + valor(t), 0);
+
+    const pagosNoPeriodo = all.filter((t) => {
+      if (grupoDe(t.status) !== "pago") return false;
+      const ref = t.data_pagamento || t.data_vencimento_atual || "";
+      if (dataDe && ref < dataDe) return false;
+      if (dataAte && ref > dataAte) return false;
+      return true;
+    });
+    const recebidoPeriodo = pagosNoPeriodo.reduce((s, t) => s + valor(t), 0);
+
+    return { aReceber, vencido, recebidoPeriodo };
+  }, [data, dataDe, dataAte]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const pageData = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
@@ -125,10 +180,10 @@ export default function ContasReceber() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-normal text-muted-foreground">Total atrasado</CardTitle>
+            <CardTitle className="text-sm font-normal text-muted-foreground">Total vencido</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-700">{formatBRL(totals.atrasado)}</div>
+            <div className="text-2xl font-bold text-red-700">{formatBRL(totals.vencido)}</div>
           </CardContent>
         </Card>
         <Card>
@@ -147,7 +202,7 @@ export default function ContasReceber() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Buscar descrição ou cliente..."
+                placeholder="Buscar número do título ou cliente..."
                 value={busca}
                 onChange={(e) => {
                   setBusca(e.target.value);
@@ -175,7 +230,7 @@ export default function ContasReceber() {
               className="w-full lg:w-44"
             />
             <div className="flex flex-wrap gap-1">
-              {(["todos", "aberto", "atrasado", "enviado_para_pagamento", "cancelado"] as const).map((s) => (
+              {(["todos", "a_receber", "vencido", "pago", "cancelado"] as const).map((s) => (
                 <Button
                   key={s}
                   size="sm"
@@ -184,9 +239,8 @@ export default function ContasReceber() {
                     setStatusFilter(s);
                     setPage(1);
                   }}
-                  className="capitalize"
                 >
-                  {s}
+                  {FILTRO_LABEL[s]}
                 </Button>
               ))}
             </div>
@@ -202,18 +256,12 @@ export default function ContasReceber() {
           ) : (data || []).length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 gap-4 text-center">
               <div className="flex h-16 w-16 items-center justify-center rounded-full bg-admin-muted">
-                <Upload className="h-8 w-8 text-admin" />
+                <Inbox className="h-8 w-8 text-admin" />
               </div>
-              <p className="text-lg font-semibold">Sem contas a receber importadas</p>
+              <p className="text-lg font-semibold">Nenhum título a receber ainda</p>
               <p className="text-sm text-muted-foreground max-w-md">
-                Sincronize com o Bling para importar contas a receber.
+                Os títulos a receber nascem automaticamente quando um pedido é faturado. Assim que o primeiro pedido fechar o ciclo, ele aparece aqui.
               </p>
-              <Button asChild className="bg-admin hover:bg-admin-accent text-admin-foreground">
-                <Link to="/administrativo/importar">
-                  <Upload className="h-4 w-4 mr-2" />
-                  Ir para importação
-                </Link>
-              </Button>
             </div>
           ) : pageData.length === 0 ? (
             <div className="py-12 text-center text-sm text-muted-foreground">
@@ -226,32 +274,35 @@ export default function ContasReceber() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Vencimento</TableHead>
-                      <TableHead>Descrição</TableHead>
+                      <TableHead>Título</TableHead>
                       <TableHead>Cliente</TableHead>
-                      <TableHead>Categoria</TableHead>
+                      <TableHead>Parcela</TableHead>
                       <TableHead className="text-right">Valor</TableHead>
                       <TableHead>Status</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {pageData.map((c) => (
-                      <TableRow key={c.id}>
-                        <TableCell className="whitespace-nowrap">{formatDateBR(c.data_vencimento)}</TableCell>
-                        <TableCell className="max-w-xs truncate" title={c.descricao}>{c.descricao}</TableCell>
-                        <TableCell>{c.parceiros_comerciais?.razao_social || c.fornecedor_cliente || "—"}</TableCell>
-                        <TableCell className="text-muted-foreground text-xs">
-                          {c.plano_contas?.nome || "—"}
-                        </TableCell>
-                        <TableCell className="text-right font-mono whitespace-nowrap">
-                          {formatBRL(c.valor)}
-                        </TableCell>
-                        <TableCell>
-                          <Badge className={STATUS_STYLES[c.status] || "bg-muted"}>
-                            {c.status}
-                          </Badge>
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                    {pageData.map((t) => {
+                      const grupo = grupoDe(t.status);
+                      return (
+                        <TableRow key={t.id}>
+                          <TableCell className="whitespace-nowrap">{formatDateBR(t.data_vencimento_atual)}</TableCell>
+                          <TableCell className="font-mono text-xs">{t.numero_titulo || "—"}</TableCell>
+                          <TableCell>{t.cliente?.razao_social || "—"}</TableCell>
+                          <TableCell className="text-muted-foreground text-xs whitespace-nowrap">
+                            {t.numero_parcela ?? "—"}/{t.total_parcelas ?? "—"}
+                          </TableCell>
+                          <TableCell className="text-right font-mono whitespace-nowrap">
+                            {formatBRL(Number(t.valor_atual || 0))}
+                          </TableCell>
+                          <TableCell>
+                            <Badge className={grupo ? GRUPO_BADGE[grupo] : "bg-muted"}>
+                              {grupo ? GRUPO_LABEL[grupo] : t.status}
+                            </Badge>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
               </div>
