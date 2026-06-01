@@ -17,6 +17,8 @@ export interface CasaApp {
   hiddenFromTopNav?: boolean;
   /** Visível apenas para super_admin / admin_rh */
   requireAdminRole?: boolean;
+  /** Slug de tela para checagem de permissão por grupo (null = só super_admin) */
+  tela_slug: string | null;
 }
 
 export const CASA_APPS: CasaApp[] = [
