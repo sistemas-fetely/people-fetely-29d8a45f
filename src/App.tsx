@@ -34,6 +34,7 @@ const Organograma = lazy(() => import("@/pages/Organograma"));
 const Login = lazy(() => import("@/pages/Login"));
 const RecuperarSenha = lazy(() => import("@/pages/RecuperarSenha"));
 const ResetPassword = lazy(() => import("@/pages/ResetPassword"));
+const DefinirSenha = lazy(() => import("@/pages/DefinirSenha"));
 const SemPermissao = lazy(() => import("@/pages/SemPermissao"));
 const AguardandoAprovacao = lazy(() => import("@/pages/AguardandoAprovacao"));
 const GerenciarUsuarios = lazy(() => import("@/pages/GerenciarUsuarios"));
@@ -193,6 +194,7 @@ const App = () => (
               <Route path="/login" element={<Login />} />
               <Route path="/recuperar-senha" element={<RecuperarSenha />} />
               <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/definir-senha" element={<DefinirSenha />} />
               <Route path="/sem-permissao" element={<SemPermissao />} />
               <Route path="/aguardando-aprovacao" element={<AguardandoAprovacao />} />
               <Route path="/cadastro/:token" element={<CadastroPublico />} />
