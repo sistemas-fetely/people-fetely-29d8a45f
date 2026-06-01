@@ -669,7 +669,10 @@ export default function GerenciarUsuarios() {
           <TabsTrigger value="usuarios" className="gap-2"><Users className="h-4 w-4" /> Usuários</TabsTrigger>
           <TabsTrigger value="grupos" className="gap-2"><ShieldCheck className="h-4 w-4" /> Grupos de Acesso</TabsTrigger>
           {(isSuperAdmin || isAdminRH) && (
-            <TabsTrigger value="matriz" className="gap-2"><ShieldCheck className="h-4 w-4" /> Matriz de Permissões</TabsTrigger>
+            <TabsTrigger value="matriz" className="gap-2">
+              <ShieldCheck className="h-4 w-4" /> Matriz de Permissões
+              <Badge variant="outline" className="ml-2 text-[10px] py-0">Em breve</Badge>
+            </TabsTrigger>
           )}
         </TabsList>
 
