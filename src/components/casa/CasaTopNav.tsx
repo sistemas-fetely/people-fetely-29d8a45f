@@ -1,11 +1,23 @@
 import { NavLink } from "react-router-dom";
 import { useCasaApp } from "@/hooks/useCasaApp";
+import { useAuth } from "@/contexts/AuthContext";
+import { usePermissoesDoUsuario, TELAS_PUBLICAS } from "@/hooks/usePermissoesDoUsuario";
 import { CASA_APPS } from "./CasaApps";
 import { cn } from "@/lib/utils";
 
 export function CasaTopNav({ className }: { className?: string }) {
   const activeApp = useCasaApp();
-  const visibleApps = CASA_APPS.filter((a) => !a.hiddenFromTopNav);
+  const { roles } = useAuth();
+  const isSuperAdmin = (roles ?? []).includes("super_admin");
+  const { data: permitidas } = usePermissoesDoUsuario();
+
+  const visibleApps = CASA_APPS.filter((a) => {
+    if (a.hiddenFromTopNav) return false;
+    if (isSuperAdmin) return true;
+    if (!a.tela_slug) return false;
+    if (TELAS_PUBLICAS.has(a.tela_slug)) return true;
+    return permitidas?.has(a.tela_slug) ?? false;
+  });
 
   return (
     <nav className={cn("flex items-center gap-2", className)} aria-label="Apps da Casa Fetély">
