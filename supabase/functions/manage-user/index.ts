@@ -930,6 +930,7 @@ Deno.serve(async (req) => {
           success: true,
           tipo: ehPrimeiroAcesso ? "primeiro_acesso" : "reset_senha",
           email: targetEmail,
+          link_primeiro_acesso: linkPrimeiroAcesso,
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
