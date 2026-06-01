@@ -1,4 +1,5 @@
 import { createRoot } from "react-dom/client";
+import { Component, type ErrorInfo, type ReactNode } from "react";
 import App from "./App.tsx";
 import "./index.css";
 import "./styles/sidebar-fetely.css";
@@ -29,5 +30,30 @@ window.addEventListener("unhandledrejection", (e) => {
   if (isChunkLoadError(msg)) tryReload();
 });
 
-createRoot(document.getElementById("root")!).render(<App />);
+class ChunkErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
+  state = { hasError: false };
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, _errorInfo: ErrorInfo) {
+    if (isChunkLoadError(error?.message ?? String(error ?? ""))) {
+      tryReload();
+    } else {
+      console.error(error);
+    }
+  }
+
+  render() {
+    if (this.state.hasError) return null;
+    return this.props.children;
+  }
+}
+
+createRoot(document.getElementById("root")!).render(
+  <ChunkErrorBoundary>
+    <App />
+  </ChunkErrorBoundary>
+);
 
