@@ -692,11 +692,10 @@ export default function GerenciarUsuarios() {
                   <TableRow>
                     <TableHead>Nome</TableHead>
                     <TableHead>Tipo</TableHead>
-                    <TableHead>Perfis</TableHead>
                     <TableHead>Grupo</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Último acesso</TableHead>
-                    <TableHead>Criado em</TableHead>
+                    <TableHead className="text-xs font-normal text-muted-foreground">Último acesso</TableHead>
+                    <TableHead className="text-xs font-normal text-muted-foreground">Criado em</TableHead>
                     <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
