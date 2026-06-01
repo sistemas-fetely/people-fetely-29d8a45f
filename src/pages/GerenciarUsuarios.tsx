@@ -38,6 +38,7 @@ import { HubDaPessoaDialog } from "@/components/gerenciar-usuarios/HubDaPessoaDi
 import { GrupoCell } from "@/components/gerenciar-usuarios/GrupoCell";
 import NovoUsuarioDialog from "@/components/gerenciar-usuarios/NovoUsuarioDialog";
 import { ReenviarLinkAcessoButton } from "@/components/auth/ReenviarLinkAcessoButton";
+import { DefinirSenhaButton } from "@/components/gerenciar-usuarios/DefinirSenhaButton";
 import { useUnidades } from "@/hooks/useUnidades";
 import { useTemplates } from "@/hooks/useTemplates";
 import { useDepartamentoInfo } from "@/hooks/useEstruturaOrganizacional";
@@ -809,6 +810,12 @@ export default function GerenciarUsuarios() {
                                 </TooltipTrigger>
                                 <TooltipContent>Reenviar link de acesso</TooltipContent>
                               </Tooltip>
+
+                              <DefinirSenhaButton
+                                userId={profile.user_id}
+                                nome={profile.full_name || "Usuário"}
+                              />
+
 
                               <Tooltip>
                                 <TooltipTrigger asChild>
