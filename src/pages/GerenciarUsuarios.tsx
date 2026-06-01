@@ -29,7 +29,7 @@ import {
 import {
   CheckCircle2, XCircle, UserCheck, UserX, Users, UserPlus,
   Shield, ShieldCheck, ShieldAlert, Pencil, Trash2, Link2, LinkIcon, Unlink,
-  ChevronDown, ChevronRight, FileText, Sparkles, Check,
+  ChevronDown, ChevronRight, FileText, Sparkles, Check, Eye,
 } from "lucide-react";
 import { toast } from "sonner";
 import { ConfirmacaoDupla } from "@/components/ConfirmacaoDupla";
@@ -37,12 +37,10 @@ import { DrawerUsuario } from "@/components/DrawerUsuario";
 import { HubDaPessoaDialog } from "@/components/gerenciar-usuarios/HubDaPessoaDialog";
 import { GrupoCell } from "@/components/gerenciar-usuarios/GrupoCell";
 import NovoUsuarioDialog from "@/components/gerenciar-usuarios/NovoUsuarioDialog";
-import { usePerfisV2 } from "@/hooks/usePerfisV2";
 import { useUnidades } from "@/hooks/useUnidades";
 import { useTemplates } from "@/hooks/useTemplates";
 import { useDepartamentoInfo } from "@/hooks/useEstruturaOrganizacional";
 import { SelectDepartamentoHierarquico } from "@/components/shared/SelectDepartamentoHierarquico";
-import { NIVEL_LABELS_V2 } from "@/types/permissoes-v2";
 import type { Database } from "@/integrations/supabase/types";
 
 type AppRole = Database["public"]["Enums"]["app_role"];
@@ -117,55 +115,6 @@ async function callManageUser(action: string, payload: Record<string, unknown>) 
   return data;
 }
 
-function renderAtribuicoesV2(
-  userId: string,
-  atribuicoes: Array<{ user_id: string; perfil_id: string; unidade_id: string | null; nivel: string | null }>,
-  perfis: Array<{ id: string; nome: string; tipo: string }>,
-  unidades: Array<{ id: string; nome: string }>
-) {
-  const doUser = atribuicoes.filter((a) => a.user_id === userId);
-  if (doUser.length === 0) {
-    return <span className="text-xs text-muted-foreground italic">Sem perfis</span>;
-  }
-
-  const agrupado = new Map<
-    string,
-    { perfil: { id: string; nome: string; tipo: string }; nivel: string | null; unidades: string[] }
-  >();
-  for (const a of doUser) {
-    const perfil = perfis.find((p) => p.id === a.perfil_id);
-    if (!perfil) continue;
-    const key = `${a.perfil_id}::${a.nivel || ""}`;
-    if (!agrupado.has(key)) {
-      agrupado.set(key, { perfil, nivel: a.nivel, unidades: [] });
-    }
-    if (a.unidade_id) {
-      const u = unidades.find((x) => x.id === a.unidade_id);
-      if (u) agrupado.get(key)!.unidades.push(u.nome);
-    }
-  }
-
-  const nivelLabel = (n: string | null) => {
-    if (!n) return null;
-    return (NIVEL_LABELS_V2 as Record<string, string>)[n] || n;
-  };
-
-  return (
-    <div className="flex flex-col gap-1">
-      {Array.from(agrupado.values()).map((g, i) => (
-        <Badge key={i} variant="secondary" className="text-xs font-normal w-fit max-w-full">
-          <span className="font-medium">{g.perfil.nome}</span>
-          {g.nivel && <span className="ml-1 opacity-70">· {nivelLabel(g.nivel)}</span>}
-          {g.unidades.length > 0 && (
-            <span className="ml-1 text-[10px] opacity-60 truncate">
-              [{g.unidades.join(", ")}]
-            </span>
-          )}
-        </Badge>
-      ))}
-    </div>
-  );
-}
 
 export default function GerenciarUsuarios() {
   const navigate = useNavigate();
@@ -235,20 +184,8 @@ export default function GerenciarUsuarios() {
     },
   });
 
-  const { data: perfisV2 = [] } = usePerfisV2();
   const { data: unidadesV2 = [] } = useUnidades();
 
-  const { data: atribuicoesV2 = [] } = useQuery({
-    queryKey: ["atribuicoes-todas-v2"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("user_atribuicoes")
-        .select("user_id, perfil_id, unidade_id, nivel");
-      if (error) throw error;
-      return data || [];
-    },
-    staleTime: 30 * 1000,
-  });
 
   const { data: unlinkedCLT = [] } = useQuery({
     queryKey: ["unlinked-clt"],
@@ -732,7 +669,10 @@ export default function GerenciarUsuarios() {
           <TabsTrigger value="usuarios" className="gap-2"><Users className="h-4 w-4" /> Usuários</TabsTrigger>
           <TabsTrigger value="grupos" className="gap-2"><ShieldCheck className="h-4 w-4" /> Grupos de Acesso</TabsTrigger>
           {(isSuperAdmin || isAdminRH) && (
-            <TabsTrigger value="matriz" className="gap-2"><ShieldCheck className="h-4 w-4" /> Matriz de Permissões</TabsTrigger>
+            <TabsTrigger value="matriz" className="gap-2">
+              <ShieldCheck className="h-4 w-4" /> Matriz de Permissões
+              <Badge variant="outline" className="ml-2 text-[10px] py-0">Em breve</Badge>
+            </TabsTrigger>
           )}
         </TabsList>
 
@@ -752,11 +692,10 @@ export default function GerenciarUsuarios() {
                   <TableRow>
                     <TableHead>Nome</TableHead>
                     <TableHead>Tipo</TableHead>
-                    <TableHead>Perfis</TableHead>
                     <TableHead>Grupo</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Último acesso</TableHead>
-                    <TableHead>Criado em</TableHead>
+                    <TableHead className="text-xs font-normal text-muted-foreground">Último acesso</TableHead>
+                    <TableHead className="text-xs font-normal text-muted-foreground">Criado em</TableHead>
                     <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -809,9 +748,6 @@ export default function GerenciarUsuarios() {
                           })()}
                         </TableCell>
                         <TableCell>
-                          {renderAtribuicoesV2(profile.user_id, atribuicoesV2, perfisV2, unidadesV2)}
-                        </TableCell>
-                        <TableCell>
                           <GrupoCell userId={profile.user_id} />
                         </TableCell>
                         <TableCell>
@@ -832,7 +768,7 @@ export default function GerenciarUsuarios() {
                             </Badge>
                           )}
                         </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
+                        <TableCell className="text-xs text-muted-foreground">
                           {authUser?.last_sign_in_at
                             ? new Date(authUser.last_sign_in_at).toLocaleDateString("pt-BR", {
                                 day: "2-digit", month: "2-digit", year: "2-digit",
@@ -840,7 +776,7 @@ export default function GerenciarUsuarios() {
                               })
                             : "Nunca"}
                         </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
+                        <TableCell className="text-xs text-muted-foreground">
                           {new Date(profile.created_at).toLocaleDateString("pt-BR")}
                         </TableCell>
                         <TableCell className="text-right">
@@ -851,8 +787,8 @@ export default function GerenciarUsuarios() {
                               className="gap-1"
                               onClick={() => openRolesDialog(profile.user_id, profile.full_name || "Usuário")}
                             >
-                              <Pencil className="h-3.5 w-3.5" />
-                              Perfis
+                              <Eye className="h-3.5 w-3.5" />
+                              Ver
                             </Button>
                             <Button
                                size="sm"
@@ -944,7 +880,7 @@ export default function GerenciarUsuarios() {
                   })}
                   {profiles.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+                      <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
                         Nenhum usuário encontrado
                       </TableCell>
                     </TableRow>
