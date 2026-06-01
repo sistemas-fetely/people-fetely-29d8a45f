@@ -20,7 +20,8 @@ function tryReload() {
 }
 
 window.addEventListener("error", (e) => {
-  if (isChunkLoadError(e.message ?? "")) tryReload();
+  const msg = [e.message, e.error?.message, String(e.error ?? "")].filter(Boolean).join(" ");
+  if (isChunkLoadError(msg)) tryReload();
 });
 
 window.addEventListener("unhandledrejection", (e) => {
