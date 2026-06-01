@@ -90,8 +90,30 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: "Parceiro não encontrado" }, 404);
     }
 
+    // FAIL-LOUD: grava o motivo da falha no proprio parceiro (contexto_bureau),
+    // pra ficar visivel sem precisar garimpar net._http_response.
+    const registrarFalha = async (motivo: string) => {
+      try {
+        await supa
+          .from("parceiros_comerciais")
+          .update({
+            contexto_bureau: {
+              ...(parceiro.contexto_bureau || {}),
+              enriquecimento_falha: {
+                motivo,
+                tentado_em: new Date().toISOString(),
+              },
+            },
+          })
+          .eq("id", parceiro_id);
+      } catch (e) {
+        console.error("Falha ao registrar motivo de enriquecimento:", e);
+      }
+    };
+
     const cnpj = String(parceiro.cnpj ?? "").replace(/\D/g, "");
     if (cnpj.length !== 14) {
+      await registrarFalha("cnpj_invalido");
       return jsonResponse({ enriquecido: false, motivo: "cnpj_invalido" });
     }
 
@@ -103,18 +125,22 @@ Deno.serve(async (req) => {
     // 400/422 = CNPJ malformado/DV inválido (BrasilAPI rejeita validação)
     // Todos tratados como "não encontrado" pra UX graceful
     if (resp.status === 404 || resp.status === 400 || resp.status === 422) {
+      await registrarFalha("cnpj_nao_encontrado");
       return jsonResponse({ enriquecido: false, motivo: "cnpj_nao_encontrado" });
     }
 
     if (!resp.ok) {
       const txt = await resp.text().catch(() => "");
       console.error("BrasilAPI erro", resp.status, txt);
+      await registrarFalha("brasilapi_indisponivel");
       return jsonResponse({ enriquecido: false, motivo: "brasilapi_indisponivel" }, 200);
     }
 
     const dataApi = await resp.json();
 
-    const contextoExistente = parceiro.contexto_bureau || {};
+    // Descarta marca de falha anterior (se enriqueceu agora, falha antiga nao vale)
+    const { enriquecimento_falha: _falhaAnterior, ...contextoExistente } =
+      (parceiro.contexto_bureau || {}) as Record<string, unknown>;
     const novoContexto = {
       ...contextoExistente,
       brasilapi: {
