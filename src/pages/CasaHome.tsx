@@ -3,6 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, Receipt, CheckSquare, Wallet } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePermissoesDoUsuario } from "@/hooks/usePermissoesDoUsuario";
+
 
 const saudacao = () => {
   const h = new Date().getHours();
