@@ -7,6 +7,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { RotaGate } from "@/components/RotaGate";
+import { PrimeiroAcessoOverlay } from "@/components/PrimeiroAcessoOverlay";
 
 // Layouts — importados diretamente (não lazy) para evitar Suspense na raiz e soluço de navegação.
 // Layouts são pequenos (~30-80L cada) e não justificam code-splitting.
