@@ -748,9 +748,6 @@ export default function GerenciarUsuarios() {
                           })()}
                         </TableCell>
                         <TableCell>
-                          {renderAtribuicoesV2(profile.user_id, atribuicoesV2, perfisV2, unidadesV2)}
-                        </TableCell>
-                        <TableCell>
                           <GrupoCell userId={profile.user_id} />
                         </TableCell>
                         <TableCell>
