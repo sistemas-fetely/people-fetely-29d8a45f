@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Loader2, Send } from "lucide-react";
+import { Copy, Key, Loader2, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -12,6 +12,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -26,12 +27,18 @@ interface Props {
 
 /**
  * Botão de RH para reenviar link de acesso (primeiro acesso ou reset de senha).
- * O endpoint detecta automaticamente se o colaborador já ativou ou não o acesso.
+ * Gera o link e mostra para o admin copiar (envio por email é best-effort).
  */
 export function ReenviarLinkAcessoButton({ userId, nome, variant = "button", onSuccess }: Props) {
   const [open, setOpen] = useState(false);
   const [motivo, setMotivo] = useState("");
   const [enviando, setEnviando] = useState(false);
+  const [linkGerado, setLinkGerado] = useState<string | null>(null);
+
+  function resetState() {
+    setLinkGerado(null);
+    setMotivo("");
+  }
 
   async function handleConfirmar() {
     setEnviando(true);
@@ -46,15 +53,11 @@ export function ReenviarLinkAcessoButton({ userId, nome, variant = "button", onS
       if (error || (data as any)?.error) {
         throw new Error(error?.message || (data as any)?.error);
       }
-      const tipo = (data as any)?.tipo;
-      const emailEnviado = (data as any)?.email;
-      toast.success(
-        tipo === "primeiro_acesso"
-          ? `Link de primeiro acesso reenviado para ${emailEnviado}.`
-          : `Link de redefinição de senha reenviado para ${emailEnviado}.`,
-      );
-      setOpen(false);
-      setMotivo("");
+      const link = (data as any)?.link_primeiro_acesso || null;
+      setLinkGerado(link);
+      if (!link) {
+        toast.warning("Link não retornado pelo servidor.");
+      }
       onSuccess?.();
     } catch (err: any) {
       toast.error(err.message || "Erro ao reenviar link");
@@ -63,11 +66,21 @@ export function ReenviarLinkAcessoButton({ userId, nome, variant = "button", onS
     }
   }
 
+  async function handleCopiar() {
+    if (!linkGerado) return;
+    try {
+      await navigator.clipboard.writeText(linkGerado);
+      toast.success("Link copiado!");
+    } catch {
+      toast.error("Não foi possível copiar. Selecione manualmente.");
+    }
+  }
+
   return (
     <>
       {variant === "button" ? (
         <Button variant="outline" size="sm" onClick={() => setOpen(true)} className="gap-2">
-          <Send className="h-4 w-4" /> Reenviar link de acesso
+          <Key className="h-4 w-4" /> Link
         </Button>
       ) : (
         <button
@@ -79,48 +92,94 @@ export function ReenviarLinkAcessoButton({ userId, nome, variant = "button", onS
         </button>
       )}
 
-      <AlertDialog open={open} onOpenChange={setOpen}>
+      <AlertDialog
+        open={open}
+        onOpenChange={(v) => {
+          if (!v) resetState();
+          setOpen(v);
+        }}
+      >
         <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Reenviar link de acesso</AlertDialogTitle>
-            <AlertDialogDescription>
-              {nome ? (
-                <>
-                  Será enviado novo link para <strong>{nome}</strong>.{" "}
-                </>
-              ) : null}
-              O sistema identifica automaticamente se é primeiro acesso ou redefinição de senha e
-              dispara o email adequado. Link anterior (se houver) deixa de ser válido.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
+          {linkGerado === null ? (
+            <>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Reenviar link de acesso</AlertDialogTitle>
+                <AlertDialogDescription>
+                  {nome ? (
+                    <>
+                      Será gerado um novo link para <strong>{nome}</strong>.{" "}
+                    </>
+                  ) : null}
+                  O sistema identifica automaticamente se é primeiro acesso ou redefinição de senha.
+                  Link anterior (se houver) deixa de ser válido.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
 
-          <div className="space-y-2">
-            <Label htmlFor="motivo-reenvio" className="text-xs">
-              Motivo (opcional — fica no log de auditoria)
-            </Label>
-            <Textarea
-              id="motivo-reenvio"
-              value={motivo}
-              onChange={(e) => setMotivo(e.target.value)}
-              rows={2}
-              className="text-sm"
-              placeholder="Ex: link expirou, colaborador presencial pediu reenvio…"
-            />
-          </div>
+              <div className="space-y-2">
+                <Label htmlFor="motivo-reenvio" className="text-xs">
+                  Motivo (opcional — fica no log de auditoria)
+                </Label>
+                <Textarea
+                  id="motivo-reenvio"
+                  value={motivo}
+                  onChange={(e) => setMotivo(e.target.value)}
+                  rows={2}
+                  className="text-sm"
+                  placeholder="Ex: link expirou, colaborador presencial pediu reenvio…"
+                />
+              </div>
 
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={enviando}>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={(e) => {
-                e.preventDefault();
-                handleConfirmar();
-              }}
-              disabled={enviando}
-            >
-              {enviando && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              Reenviar link
-            </AlertDialogAction>
-          </AlertDialogFooter>
+              <AlertDialogFooter>
+                <AlertDialogCancel disabled={enviando}>Cancelar</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleConfirmar();
+                  }}
+                  disabled={enviando}
+                >
+                  {enviando && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                  Reenviar link
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </>
+          ) : (
+            <>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Link gerado</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Copie e envie para a pessoa via WhatsApp. O link expira — use logo.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+
+              <div className="space-y-2">
+                <Input
+                  readOnly
+                  value={linkGerado}
+                  onClick={(e) => (e.target as HTMLInputElement).select()}
+                  className="text-xs font-mono"
+                />
+                <Button onClick={handleCopiar} className="w-full gap-2">
+                  <Copy className="h-4 w-4" /> Copiar link
+                </Button>
+                <p className="text-xs text-muted-foreground">
+                  Se o e-mail estiver configurado, a pessoa também recebe por e-mail.
+                </p>
+              </div>
+
+              <AlertDialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    resetState();
+                    setOpen(false);
+                  }}
+                >
+                  Fechar
+                </Button>
+              </AlertDialogFooter>
+            </>
+          )}
         </AlertDialogContent>
       </AlertDialog>
     </>

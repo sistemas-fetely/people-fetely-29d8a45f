@@ -37,6 +37,7 @@ import { DrawerUsuario } from "@/components/DrawerUsuario";
 import { HubDaPessoaDialog } from "@/components/gerenciar-usuarios/HubDaPessoaDialog";
 import { GrupoCell } from "@/components/gerenciar-usuarios/GrupoCell";
 import NovoUsuarioDialog from "@/components/gerenciar-usuarios/NovoUsuarioDialog";
+import { ReenviarLinkAcessoButton } from "@/components/auth/ReenviarLinkAcessoButton";
 import { useUnidades } from "@/hooks/useUnidades";
 import { useTemplates } from "@/hooks/useTemplates";
 import { useDepartamentoInfo } from "@/hooks/useEstruturaOrganizacional";
@@ -790,6 +791,11 @@ export default function GerenciarUsuarios() {
                               <Eye className="h-3.5 w-3.5" />
                               Ver
                             </Button>
+                            <ReenviarLinkAcessoButton
+                              userId={profile.user_id}
+                              nome={profile.full_name || undefined}
+                              variant="button"
+                            />
                             <Button
                                size="sm"
                                variant="outline"

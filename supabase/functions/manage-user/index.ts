@@ -853,8 +853,22 @@ Deno.serve(async (req) => {
       const nome = (profile as any)?.full_name || targetEmail;
 
       // 3. Gerar novo link de recovery
+      let linkPrimeiroAcesso: string | null = null;
       try {
-        await adminClient.auth.admin.generateLink({ type: "recovery", email: targetEmail });
+        const siteUrl = Deno.env.get("SITE_URL") || "https://people-fetely.lovable.app";
+        const { data: linkData, error: linkErr } = await adminClient.auth.admin.generateLink({
+          type: "recovery",
+          email: targetEmail,
+          options: { redirectTo: `${siteUrl}/definir-senha` },
+        });
+        if (linkErr) {
+          console.error("[reenviar_link_acesso] Erro ao gerar link:", linkErr);
+          return new Response(JSON.stringify({ error: "Falha ao gerar link. Tente novamente." }), {
+            status: 500,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        linkPrimeiroAcesso = linkData?.properties?.action_link ?? null;
       } catch (e) {
         console.error("[reenviar_link_acesso] Erro ao gerar link:", e);
         return new Response(JSON.stringify({ error: "Falha ao gerar link. Tente novamente." }), {
@@ -880,17 +894,9 @@ Deno.serve(async (req) => {
         });
         if (!r.ok) {
           console.error("[reenviar_link_acesso] Falha em send-transactional-email:", r.status, r.body);
-          return new Response(
-            JSON.stringify({ error: `Link gerado mas falha ao enviar email (${r.status}).` }),
-            { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-          );
         }
       } catch (e) {
         console.error("[reenviar_link_acesso] Falha ao enviar email:", e);
-        return new Response(JSON.stringify({ error: "Link gerado mas falha ao enviar email." }), {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
       }
 
       // 5. Log de auditoria
@@ -924,6 +930,7 @@ Deno.serve(async (req) => {
           success: true,
           tipo: ehPrimeiroAcesso ? "primeiro_acesso" : "reset_senha",
           email: targetEmail,
+          link_primeiro_acesso: linkPrimeiroAcesso,
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
