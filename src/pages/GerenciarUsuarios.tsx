@@ -811,6 +811,12 @@ export default function GerenciarUsuarios() {
                                 <TooltipContent>Reenviar link de acesso</TooltipContent>
                               </Tooltip>
 
+                              <DefinirSenhaButton
+                                userId={profile.user_id}
+                                nome={profile.full_name || "Usuário"}
+                              />
+
+
                               <Tooltip>
                                 <TooltipTrigger asChild>
                                   <Button
