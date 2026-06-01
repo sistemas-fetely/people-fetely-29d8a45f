@@ -344,13 +344,9 @@ Deno.serve(async (req) => {
 
       let linkPrimeiroAcesso: string | null = null;
       try {
-        const siteUrl = Deno.env.get("SITE_URL") || "https://people-fetely.lovable.app";
         const { data: linkData, error: linkErr } = await adminClient.auth.admin.generateLink({
           type: "recovery",
           email,
-          options: {
-            redirectTo: `${siteUrl}/reset-password`,
-          },
         });
         if (linkErr) {
           console.error("Erro ao gerar link de recuperação:", linkErr);
@@ -855,11 +851,9 @@ Deno.serve(async (req) => {
       // 3. Gerar novo link de recovery
       let linkPrimeiroAcesso: string | null = null;
       try {
-        const siteUrl = Deno.env.get("SITE_URL") || "https://people-fetely.lovable.app";
         const { data: linkData, error: linkErr } = await adminClient.auth.admin.generateLink({
           type: "recovery",
           email: targetEmail,
-          options: { redirectTo: `${siteUrl}/reset-password` },
         });
         if (linkErr) {
           console.error("[reenviar_link_acesso] Erro ao gerar link:", linkErr);
