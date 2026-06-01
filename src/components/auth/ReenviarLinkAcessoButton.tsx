@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { forwardRef, useState } from "react";
 import { Copy, Key, Loader2, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,8 +20,8 @@ import { toast } from "sonner";
 interface Props {
   userId: string;
   nome?: string;
-  /** "button" = standalone outline button; "inline" = compact item to nest in a DropdownMenuItem */
-  variant?: "button" | "inline";
+  /** "button" = standalone outline button; "inline" = compact item to nest in a DropdownMenuItem; "icon" = icon-only ghost button (luxury) */
+  variant?: "button" | "inline" | "icon";
   onSuccess?: () => void;
 }
 
