@@ -17,6 +17,8 @@ export interface CasaApp {
   hiddenFromTopNav?: boolean;
   /** Visível apenas para super_admin / admin_rh */
   requireAdminRole?: boolean;
+  /** Slug de tela para checagem de permissão por grupo (null = só super_admin) */
+  tela_slug: string | null;
 }
 
 export const CASA_APPS: CasaApp[] = [
@@ -27,6 +29,7 @@ export const CASA_APPS: CasaApp[] = [
     routeMatchers: ["/"],
     icon: Home,
     permModule: null,
+    tela_slug: "tela.home",
   },
   {
     id: "pessoas",
@@ -53,6 +56,7 @@ export const CASA_APPS: CasaApp[] = [
     ],
     icon: Users,
     permModule: null,
+    tela_slug: null,
   },
   {
     id: "financas",
@@ -61,6 +65,7 @@ export const CASA_APPS: CasaApp[] = [
     routeMatchers: ["/administrativo"],
     icon: Wallet,
     permModule: null,
+    tela_slug: "tela.financeiro",
   },
   {
     id: "marca",
@@ -69,6 +74,7 @@ export const CASA_APPS: CasaApp[] = [
     routeMatchers: ["/administrativo-fetely"],
     icon: Sparkles,
     permModule: null,
+    tela_slug: "tela.admin_fetely",
   },
   {
     id: "credito",
@@ -77,6 +83,7 @@ export const CASA_APPS: CasaApp[] = [
     routeMatchers: ["/credito"],
     icon: CreditCard,
     permModule: null,
+    tela_slug: "tela.credito",
   },
   {
     id: "recebimento",
@@ -85,6 +92,7 @@ export const CASA_APPS: CasaApp[] = [
     routeMatchers: ["/recebimento", "/pedidos", "/administrativo-fetely/parceiros"],
     icon: HandCoins,
     permModule: null,
+    tela_slug: "tela.pedidos",
   },
   {
     id: "acervo",
@@ -103,6 +111,7 @@ export const CASA_APPS: CasaApp[] = [
     ],
     icon: BookOpen,
     permModule: null,
+    tela_slug: "tela.sncf",
   },
   {
     id: "mesa",
@@ -111,6 +120,7 @@ export const CASA_APPS: CasaApp[] = [
     routeMatchers: ["/admin", "/ti"],
     icon: Shield,
     permModule: null,
+    tela_slug: null,
     hiddenFromTopNav: true,
     requireAdminRole: true,
   },
