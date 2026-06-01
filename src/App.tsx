@@ -34,6 +34,7 @@ const Organograma = lazy(() => import("@/pages/Organograma"));
 const Login = lazy(() => import("@/pages/Login"));
 const RecuperarSenha = lazy(() => import("@/pages/RecuperarSenha"));
 const ResetPassword = lazy(() => import("@/pages/ResetPassword"));
+const DefinirSenha = lazy(() => import("@/pages/DefinirSenha"));
 const SemPermissao = lazy(() => import("@/pages/SemPermissao"));
 const AguardandoAprovacao = lazy(() => import("@/pages/AguardandoAprovacao"));
 const GerenciarUsuarios = lazy(() => import("@/pages/GerenciarUsuarios"));
