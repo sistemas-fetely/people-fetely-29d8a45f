@@ -344,9 +344,13 @@ Deno.serve(async (req) => {
 
       let linkPrimeiroAcesso: string | null = null;
       try {
+        const siteUrl = Deno.env.get("SITE_URL") || "https://people-fetely.lovable.app";
         const { data: linkData, error: linkErr } = await adminClient.auth.admin.generateLink({
           type: "recovery",
           email,
+          options: {
+            redirectTo: `${siteUrl}/definir-senha`,
+          },
         });
         if (linkErr) {
           console.error("Erro ao gerar link de recuperação:", linkErr);
