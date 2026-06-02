@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePedidosPipeline } from "@/hooks/pedidos/usePedidosPipeline";
 import { ESTAGIO_LABELS_CURTO, PIPELINE_PRINCIPAL } from "@/types/pedido";
+import { ESTAGIO_CORES } from "@/components/pedidos/BadgesPedido";
 import type { EstagioPedido } from "@/types/pedido";
 import {
   AlertTriangle, Inbox, Shield, CheckCircle2, Receipt,
@@ -22,6 +23,38 @@ const ESTAGIO_ICONES: Record<EstagioPedido, JSX.Element> = {
   entregue:             <PackageCheck className="h-4 w-4" />,
   cancelado:            <AlertTriangle className="h-4 w-4" />,
   recuperacao_venda:    <AlertTriangle className="h-4 w-4" />,
+};
+
+// Fundo suave — tom claro da cor do estágio
+const ESTAGIO_BG_SUAVE: Record<EstagioPedido, string> = {
+  recebido:             "bg-slate-100 dark:bg-slate-800/40",
+  em_analise_credito:   "bg-blue-50 dark:bg-blue-900/30",
+  credito_aprovado:     "bg-emerald-50 dark:bg-emerald-900/30",
+  cobranca:             "bg-violet-50 dark:bg-violet-900/30",
+  aguardando_pagamento: "bg-amber-50 dark:bg-amber-900/30",
+  pre_faturado:         "bg-orange-50 dark:bg-orange-900/30",
+  em_separacao:         "bg-sky-50 dark:bg-sky-900/30",
+  faturado:             "bg-sky-100 dark:bg-sky-900/40",
+  em_transporte:        "bg-indigo-50 dark:bg-indigo-900/30",
+  entregue:             "bg-green-50 dark:bg-green-900/30",
+  cancelado:            "bg-red-50 dark:bg-red-900/30",
+  recuperacao_venda:    "bg-orange-50 dark:bg-orange-900/30",
+};
+
+// Cor do número e ícone — tom médio da cor do estágio
+const ESTAGIO_TEXT_COR: Record<EstagioPedido, string> = {
+  recebido:             "text-slate-600 dark:text-slate-400",
+  em_analise_credito:   "text-blue-600 dark:text-blue-400",
+  credito_aprovado:     "text-emerald-600 dark:text-emerald-400",
+  cobranca:             "text-violet-600 dark:text-violet-400",
+  aguardando_pagamento: "text-amber-600 dark:text-amber-400",
+  pre_faturado:         "text-orange-600 dark:text-orange-400",
+  em_separacao:         "text-sky-600 dark:text-sky-400",
+  faturado:             "text-sky-700 dark:text-sky-400",
+  em_transporte:        "text-indigo-600 dark:text-indigo-400",
+  entregue:             "text-green-600 dark:text-green-400",
+  cancelado:            "text-red-600 dark:text-red-400",
+  recuperacao_venda:    "text-orange-600 dark:text-orange-400",
 };
 
 interface Props {
@@ -51,9 +84,8 @@ export function PipelineHorizontal({ onClickEstagio, onLimparFiltro, estagioAtiv
   const fases = estagios.filter(
     (e) => !["entregue", "cancelado", "recuperacao_venda"].includes(e.estagio)
   );
-
-  const totalSla = estagios.reduce((acc, e) => acc + e.sla, 0);
   const totalQtd = estagios.reduce((acc, e) => acc + e.qtd, 0);
+  const totalSla = estagios.reduce((acc, e) => acc + e.sla, 0);
 
   if (isLoading) {
     return (
@@ -96,6 +128,9 @@ export function PipelineHorizontal({ onClickEstagio, onLimparFiltro, estagioAtiv
         {fases.map(({ estagio, qtd, sla }) => {
           const isAtivo = estagioAtivo === estagio;
           const temPedidos = qtd > 0;
+          const bgSuave = ESTAGIO_BG_SUAVE[estagio] || "bg-card";
+          const textCor = ESTAGIO_TEXT_COR[estagio] || "text-foreground";
+
           return (
             <button
               key={estagio}
@@ -108,19 +143,34 @@ export function PipelineHorizontal({ onClickEstagio, onLimparFiltro, estagioAtiv
                 isAtivo
                   ? "gold-border bg-gold-soft shadow-sm"
                   : temPedidos
-                  ? "border-border bg-card"
-                  : "border-border bg-card opacity-40"
+                  ? `${bgSuave} border-transparent`
+                  : `${bgSuave} border-transparent opacity-40`
               )}
             >
-              <span className="text-muted-foreground">
+              {/* Borda superior colorida */}
+              <div
+                className={cn(
+                  "absolute top-0 left-0 right-0 h-0.5 rounded-t-md",
+                  ESTAGIO_CORES[estagio]
+                )}
+              />
+
+              {/* Ícone */}
+              <span className={cn("mb-0.5", textCor)}>
                 {ESTAGIO_ICONES[estagio]}
               </span>
+
+              {/* Label */}
               <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide truncate max-w-full">
                 {ESTAGIO_LABELS_CURTO[estagio]}
               </span>
-              <span className="text-lg font-semibold tabular-nums">
+
+              {/* Número */}
+              <span className={cn("text-lg font-semibold tabular-nums", textCor)}>
                 {qtd}
               </span>
+
+              {/* SLA */}
               {sla > 0 && (
                 <span className="absolute top-1 right-1 inline-flex items-center gap-0.5 rounded-full bg-destructive/10 text-destructive text-[10px] font-medium px-1.5 py-0.5">
                   <AlertTriangle className="h-2.5 w-2.5" />
