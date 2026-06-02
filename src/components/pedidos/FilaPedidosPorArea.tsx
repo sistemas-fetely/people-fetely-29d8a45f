@@ -19,7 +19,7 @@ import { ConfirmarPagamentoDialog } from "@/components/pedidos/dialogs/Confirmar
 import { Button } from "@/components/ui/button";
 import { useEnviarBling } from "@/hooks/pedidos/useEnviarBling";
 import {
-  EstagioBadge, BadgesContextuaisPedido, FormatoIdade,
+  EstagioBadge, FormatoIdade,
 } from "./BadgesPedido";
 import { BadgePriorizacao } from "./BadgePriorizacao";
 import {
@@ -181,7 +181,6 @@ export function FilaPedidosPorArea({
               <TableHead>Cliente</TableHead>
               <TableHead>Valor</TableHead>
               <TableHead>Estágio</TableHead>
-              <TableHead>Sinais</TableHead>
               <TableHead>Idade</TableHead>
               <TableHead>Próxima ação</TableHead>
               <TableHead className="text-right">Ações</TableHead>
@@ -190,14 +189,14 @@ export function FilaPedidosPorArea({
           <TableBody>
             {isLoading && (
               <TableRow>
-                <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                   Carregando…
                 </TableCell>
               </TableRow>
             )}
             {!isLoading && (!linhas || linhas.length === 0) && (
               <TableRow>
-                <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                   Nenhum pedido neste filtro.
                 </TableCell>
               </TableRow>
@@ -248,9 +247,6 @@ export function FilaPedidosPorArea({
                         </Badge>
                       )}
                     </div>
-                  </TableCell>
-                  <TableCell>
-                    <BadgesContextuaisPedido p={p} />
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
                     <FormatoIdade minutos={p.idade_minutos} />
