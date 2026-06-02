@@ -11,7 +11,7 @@ export const ESTAGIO_CORES: Record<EstagioPedido, string> = {
   credito_aprovado: "bg-emerald-500",
   cobranca: "bg-violet-500",
   aguardando_pagamento: "bg-amber-500",
-  pre_faturado: "bg-amber-600",
+  pre_faturado: "bg-orange-500",
   em_separacao: "bg-sky-600",
   faturado: "bg-sky-700",
   em_transporte: "bg-indigo-500",
