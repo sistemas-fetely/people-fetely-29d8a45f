@@ -33,6 +33,22 @@ export const ESTAGIO_LABELS: Record<EstagioPedido, string> = {
   recuperacao_venda: "Recuperação de venda",
 };
 
+/** Labels curtos — usados no stepper, pipeline cards e tabs. Mesma comunicação em todo lugar. */
+export const ESTAGIO_LABELS_CURTO: Record<EstagioPedido, string> = {
+  recebido: "Recebido",
+  em_analise_credito: "Em Análise",
+  credito_aprovado: "Aprovado",
+  cobranca: "Cobrança",
+  aguardando_pagamento: "Aguardando pgto",
+  pre_faturado: "Pré-faturamento",
+  em_separacao: "No Bling",
+  faturado: "Faturado",
+  em_transporte: "Em transporte",
+  entregue: "Entregues",
+  cancelado: "Cancelados",
+  recuperacao_venda: "Recuperação",
+};
+
 export const AREA_LABELS: Record<AreaPedido, string> = {
   sops: "SOps",
   credito: "Crédito",
