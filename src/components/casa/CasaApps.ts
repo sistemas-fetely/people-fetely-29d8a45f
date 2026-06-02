@@ -1,8 +1,8 @@
-import { Home, Users, Wallet, Sparkles, CreditCard, HandCoins, BookOpen, Shield, LucideIcon } from "lucide-react";
+import { Home, Users, Wallet, Sparkles, CreditCard, HandCoins, BookOpen, Shield, Boxes, LucideIcon } from "lucide-react";
 
 export interface CasaApp {
   /** Identificador interno */
-  id: "casa" | "pessoas" | "financas" | "marca" | "credito" | "recebimento" | "acervo" | "mesa";
+  id: "casa" | "pessoas" | "financas" | "marca" | "credito" | "recebimento" | "comercial" | "acervo" | "mesa";
   /** Label exibido no top nav */
   label: string;
   /** Rota default ao clicar no app */
@@ -93,6 +93,15 @@ export const CASA_APPS: CasaApp[] = [
     icon: HandCoins,
     permModule: null,
     tela_slug: "tela.pedidos",
+  },
+  {
+    id: "comercial",
+    label: "Comercial",
+    defaultRoute: "/comercial/estoque-virtual",
+    routeMatchers: ["/comercial"],
+    icon: Boxes,
+    permModule: null,
+    tela_slug: "tela.comercial",
   },
   {
     id: "acervo",

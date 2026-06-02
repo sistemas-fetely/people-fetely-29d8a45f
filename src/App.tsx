@@ -135,6 +135,7 @@ const RegrasCadencia = lazy(() => import("@/pages/Credito/RegrasCadencia"));
 const PedidosIndex = lazy(() => import("@/pages/Pedidos/PedidosIndex"));
 const PedidoDetalhe = lazy(() => import("@/pages/Pedidos/PedidoDetalhe"));
 const ParceiroDetalhe = lazy(() => import("@/pages/Parceiros/ParceiroDetalhe"));
+const EstoqueVirtual = lazy(() => import("@/pages/Comercial/EstoqueVirtual"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -239,6 +240,12 @@ const App = () => (
               <Route path="/pedidos" element={<PedidosIndex />} />
               <Route path="/pedidos/:id" element={<PedidoDetalhe />} />
               <Route path="/parceiros/:id" element={<ParceiroDetalhe />} />
+
+              {/* ═══════════════════════════════════════════════
+                  App Comercial — App Simples (CASA-2, sem sidebar)
+                  ═══════════════════════════════════════════════ */}
+              <Route path="/comercial/estoque-virtual" element={<EstoqueVirtual />} />
+
 
               {/* SNCF — Portal + transversais (Tarefas, Templates, Usuários) */}
               <Route element={<SNCFLayout />}>
