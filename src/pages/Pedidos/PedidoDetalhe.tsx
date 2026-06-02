@@ -262,6 +262,9 @@ export default function PedidoDetalhe() {
         </span>
       </div>
 
+      <PedidoStepper estagioAtual={estagio} />
+
+
       {/* Liberar pra análise de crédito (etapa SOps — mora aqui agora) */}
       {analiseCredito?.estagio_atual === "entrada" && (
         <Card className="border-amber-500/60 bg-amber-50/50 dark:bg-amber-950/20">
