@@ -43,8 +43,6 @@ export default function PedidosIndex() {
         </p>
       </div>
 
-      <PedidosStatsCards />
-
       <PipelineHorizontal
         onClickEstagio={handlePipelineClick}
         estagioAtivo={estagioParam}
