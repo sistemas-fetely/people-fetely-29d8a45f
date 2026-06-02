@@ -29,6 +29,17 @@ export default function PedidosIndex() {
         <p className="text-sm text-muted-foreground">
           Portal único de pedidos B2B — recebimento, triagem, crédito, cobrança, faturamento.
         </p>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="gap-1.5 text-muted-foreground"
+            onClick={() => navigate("/administrativo-fetely/parceiros")}
+          >
+            <Users className="h-4 w-4" />
+            Parceiros Comerciais
+          </Button>
+        </div>
       </div>
 
       {/* Pipeline sticky */}
