@@ -4,6 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Wand2 } from "lucide-react";
 import { CurrencyInput } from "./CurrencyInput";
 import type { PerfilCredito, FormaPagamento, SugestaoIA } from "@/types/credito";
@@ -184,15 +185,42 @@ export function FormDecisaoCredito({ valores, sugestaoIA, onChange, disabled }: 
           </div>
         </div>
 
-        {sugestaoIA?.perfil_aplicado && (
-          <div className="text-xs text-muted-foreground pt-2 border-t">
-            📊 Cliente será classificado automaticamente como:{" "}
-            <span className="font-medium text-foreground capitalize">
-              {sugestaoIA.perfil_aplicado.replace(/_/g, " ")}
-            </span>{" "}
-            (dedução da IA)
+        <div className="space-y-1.5 pt-2 border-t">
+          <div className="flex items-center justify-between">
+            <Label className="text-xs">Perfil de crédito</Label>
+            <MarcadorDelta
+              alterado={
+                !!sugestaoIA &&
+                diferente(sugestaoIA.perfil_aplicado, valores.perfil_aplicado)
+              }
+            />
           </div>
-        )}
+          <Select
+            value={valores.perfil_aplicado}
+            onValueChange={(v) => onChange({ ...valores, perfil_aplicado: v as PerfilCredito })}
+            disabled={disabled}
+          >
+            <SelectTrigger className="w-full md:w-[320px]">
+              <SelectValue placeholder="Selecione o perfil" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="novo_entrada">Novo (entrada)</SelectItem>
+              <SelectItem value="novo_qualificado">Novo qualificado</SelectItem>
+              <SelectItem value="recorrente_bom_pagador">Recorrente bom pagador</SelectItem>
+              <SelectItem value="premium">Premium</SelectItem>
+              <SelectItem value="bandeira_vermelha">Bandeira vermelha</SelectItem>
+            </SelectContent>
+          </Select>
+          {sugestaoIA?.perfil_aplicado && sugestaoIA.perfil_aplicado !== valores.perfil_aplicado && (
+            <p className="text-[11px] text-muted-foreground flex items-center gap-1">
+              <Wand2 className="h-3 w-3 text-blue-600" />
+              Sugestão IA: {" "}
+              <span className="font-medium capitalize">
+                {sugestaoIA.perfil_aplicado.replace(/_/g, " ")}
+              </span>
+            </p>
+          )}
+        </div>
       </CardContent>
     </Card>
   );
