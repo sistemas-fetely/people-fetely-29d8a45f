@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import type { EstagioPedido } from "@/types/pedido";
 
 export default function PedidosIndex() {
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const estagioParam = searchParams.get("estagio") as EstagioPedido | null;
 
