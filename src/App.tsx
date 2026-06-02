@@ -241,6 +241,12 @@ const App = () => (
               <Route path="/pedidos/:id" element={<PedidoDetalhe />} />
               <Route path="/parceiros/:id" element={<ParceiroDetalhe />} />
 
+              {/* ═══════════════════════════════════════════════
+                  App Comercial — App Simples (CASA-2, sem sidebar)
+                  ═══════════════════════════════════════════════ */}
+              <Route path="/comercial/estoque-virtual" element={<EstoqueVirtual />} />
+
+
               {/* SNCF — Portal + transversais (Tarefas, Templates, Usuários) */}
               <Route element={<SNCFLayout />}>
               <Route path="/sncf" element={<PortalSNCF />} />
