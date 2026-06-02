@@ -39,6 +39,7 @@ import { BadgePriorizacao } from "@/components/pedidos/BadgePriorizacao";
 import { usePedidoPriorizado } from "@/hooks/pedidos/useFilaPedidosPriorizada";
 import { useAtualizarUrgencia } from "@/hooks/pedidos/useAtualizarUrgencia";
 import { cn } from "@/lib/utils";
+import { PedidoStepper } from "@/components/pedidos/PedidoStepper";
 
 const fmtBRL = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 const fmtDate = (s: string | null | undefined) =>
