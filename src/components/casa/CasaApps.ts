@@ -95,6 +95,15 @@ export const CASA_APPS: CasaApp[] = [
     tela_slug: "tela.pedidos",
   },
   {
+    id: "comercial",
+    label: "Comercial",
+    defaultRoute: "/comercial/estoque-virtual",
+    routeMatchers: ["/comercial"],
+    icon: Boxes,
+    permModule: null,
+    tela_slug: "tela.comercial",
+  },
+  {
     id: "acervo",
     label: "Acervo",
     defaultRoute: "/documentacao",
