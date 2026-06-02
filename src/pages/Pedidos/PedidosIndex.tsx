@@ -58,7 +58,7 @@ export default function PedidosIndex() {
           </TabsTrigger>
           <TabsTrigger value="recebido" className="gap-1.5">
             <Inbox className="h-4 w-4" />
-            Recebidos
+            Recebido
           </TabsTrigger>
           <TabsTrigger value="analise" className="gap-1.5">
             <Shield className="h-4 w-4" />

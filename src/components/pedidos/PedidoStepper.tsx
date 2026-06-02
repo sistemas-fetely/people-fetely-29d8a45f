@@ -1,7 +1,7 @@
 import { Check, AlertTriangle, RotateCcw } from "lucide-react";
 import {
   PIPELINE_PRINCIPAL,
-  ESTAGIO_LABELS,
+  ESTAGIO_LABELS_CURTO,
 } from "@/types/pedido";
 import { ESTAGIO_CORES } from "@/components/pedidos/BadgesPedido";
 import { cn } from "@/lib/utils";
@@ -94,9 +94,9 @@ export function PedidoStepper({ estagioAtual }: Props) {
                     ? "text-foreground/80"
                     : "text-muted-foreground"
                 )}
-                title={ESTAGIO_LABELS[e]}
+                title={ESTAGIO_LABELS_CURTO[e]}
               >
-                {ESTAGIO_LABELS[e]}
+                {ESTAGIO_LABELS_CURTO[e]}
               </span>
             </div>
           );
@@ -142,7 +142,7 @@ export function PedidoStepper({ estagioAtual }: Props) {
                         atual ? "font-bold" : "text-muted-foreground"
                       )}
                     >
-                      {ESTAGIO_LABELS[e]}
+                      {ESTAGIO_LABELS_CURTO[e]}
                     </span>
                   </div>
                 );

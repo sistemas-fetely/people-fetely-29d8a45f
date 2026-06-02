@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePedidosPipeline } from "@/hooks/pedidos/usePedidosPipeline";
-import { ESTAGIO_LABELS, PIPELINE_PRINCIPAL } from "@/types/pedido";
+import { ESTAGIO_LABELS_CURTO, PIPELINE_PRINCIPAL } from "@/types/pedido";
 import { ESTAGIO_CORES } from "@/components/pedidos/BadgesPedido";
 import type { EstagioPedido } from "@/types/pedido";
 import { AlertTriangle } from "lucide-react";
@@ -110,7 +110,7 @@ export function PipelineHorizontal({ onClickEstagio, estagioAtivo }: Props) {
                 <div className="pl-2 space-y-2">
                   {/* Estágio */}
                   <div className="text-xs text-muted-foreground font-medium truncate">
-                    {ESTAGIO_LABELS[estagio]}
+                    {ESTAGIO_LABELS_CURTO[estagio]}
                   </div>
 
                   {/* Quantidade — destaque principal */}
