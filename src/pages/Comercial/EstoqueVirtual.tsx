@@ -39,7 +39,20 @@ const STATUS_CLASS: Record<string, string> = {
   indisponivel: "bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/20",
 };
 
-const PAGE_SIZE = 100;
+const PAGE_SIZE_OPTIONS = [50, 100, 200, 500] as const;
+const DEFAULT_PAGE_SIZE = 100;
+
+function buildPageRange(current: number, total: number): (number | "…")[] {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+  const pages: (number | "…")[] = [1];
+  const start = Math.max(2, current - 1);
+  const end = Math.min(total - 1, current + 1);
+  if (start > 2) pages.push("…");
+  for (let i = start; i <= end; i++) pages.push(i);
+  if (end < total - 1) pages.push("…");
+  pages.push(total);
+  return pages;
+}
 
 function formatNum(n: number | null | undefined) {
   const v = Number(n ?? 0);
