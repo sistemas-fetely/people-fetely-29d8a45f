@@ -290,15 +290,20 @@ export default function EstoqueVirtual() {
           <div className="hidden sm:flex items-center gap-1.5">
             <span>Por página:</span>
             <Select
-              value={String(pageSize)}
-              onValueChange={(v) => { setPageSize(Number(v)); setPagina(1); }}
+              value={String(pageSizeOpt)}
+              onValueChange={(v) => {
+                setPageSizeOpt(v === "auto" ? "auto" : (Number(v) as PageSizeOption));
+                setPagina(1);
+              }}
             >
-              <FilterSelectTrigger className="h-8 w-[80px]">
+              <FilterSelectTrigger className="h-8 w-[110px]">
                 <SelectValue />
               </FilterSelectTrigger>
               <SelectContent>
                 {PAGE_SIZE_OPTIONS.map((n) => (
-                  <SelectItem key={n} value={String(n)}>{n}</SelectItem>
+                  <SelectItem key={n} value={String(n)}>
+                    {n === "auto" ? `Auto (${autoPageSize})` : n}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
