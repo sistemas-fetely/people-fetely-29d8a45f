@@ -214,9 +214,9 @@ export default function EstoqueVirtual() {
         </span>
       </div>
 
-      <div className="rounded-md border bg-card">
+      <div ref={tableWrapperRef} className="rounded-md border bg-card">
         <Table>
-          <TableHeader>
+          <TableHeader className="[&_th]:sticky [&_th]:top-0 [&_th]:z-10 [&_th]:bg-card [&_th]:shadow-[inset_0_-1px_0_hsl(var(--border))]">
             <TableRow>
               <SortableTableHead column="codigo" sort={sort} onSort={setSort} className="w-[120px]">
                 Código
