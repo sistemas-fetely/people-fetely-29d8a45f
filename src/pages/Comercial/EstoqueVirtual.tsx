@@ -128,12 +128,15 @@ export default function EstoqueVirtual() {
     });
   }, [produtosQuery.data, busca, statusFiltro, sort]);
 
-  const totalPaginas = Math.max(1, Math.ceil(filtrados.length / PAGE_SIZE));
+  const totalPaginas = Math.max(1, Math.ceil(filtrados.length / pageSize));
   const paginaAtual = Math.min(pagina, totalPaginas);
   const pageItems = filtrados.slice(
-    (paginaAtual - 1) * PAGE_SIZE,
-    paginaAtual * PAGE_SIZE,
+    (paginaAtual - 1) * pageSize,
+    paginaAtual * pageSize,
   );
+  const inicioRange = filtrados.length === 0 ? 0 : (paginaAtual - 1) * pageSize + 1;
+  const fimRange = Math.min(paginaAtual * pageSize, filtrados.length);
+  const pageRange = buildPageRange(paginaAtual, totalPaginas);
 
   function handleAtualizar() {
     produtosQuery.refetch();
