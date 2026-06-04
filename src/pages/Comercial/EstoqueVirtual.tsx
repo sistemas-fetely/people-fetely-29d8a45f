@@ -11,7 +11,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { SortableTableHead, type SortState, ordenarPor } from "@/components/shared/SortableTableHead";
-import { RefreshCw, Search } from "lucide-react";
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, RefreshCw, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ProdutoEstoqueVirtual {
