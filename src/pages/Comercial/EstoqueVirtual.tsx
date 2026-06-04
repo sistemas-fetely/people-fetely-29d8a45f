@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { CasaPageHeader } from "@/components/casa/CasaPageHeader";
@@ -39,8 +39,11 @@ const STATUS_CLASS: Record<string, string> = {
   indisponivel: "bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/20",
 };
 
-const PAGE_SIZE_OPTIONS = [50, 100, 200, 500] as const;
-const DEFAULT_PAGE_SIZE = 100;
+const PAGE_SIZE_OPTIONS = ["auto", 50, 100, 200, 500] as const;
+type PageSizeOption = (typeof PAGE_SIZE_OPTIONS)[number];
+const DEFAULT_PAGE_SIZE: PageSizeOption = "auto";
+const ROW_HEIGHT = 53; // px aprox (p-4 + linha)
+const FOOTER_RESERVE = 80; // espaço pra rodapé de paginação
 
 function buildPageRange(current: number, total: number): (number | "…")[] {
   if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
@@ -77,7 +80,25 @@ export default function EstoqueVirtual() {
     direction: "asc",
   });
   const [pagina, setPagina] = useState(1);
-  const [pageSize, setPageSize] = useState<number>(DEFAULT_PAGE_SIZE);
+  const [pageSizeOpt, setPageSizeOpt] = useState<PageSizeOption>(DEFAULT_PAGE_SIZE);
+  const [autoPageSize, setAutoPageSize] = useState<number>(20);
+  const tableWrapperRef = useRef<HTMLDivElement | null>(null);
+  const pageSize = pageSizeOpt === "auto" ? autoPageSize : pageSizeOpt;
+
+  useLayoutEffect(() => {
+    function recompute() {
+      const el = tableWrapperRef.current;
+      if (!el) return;
+      const top = el.getBoundingClientRect().top;
+      const available = window.innerHeight - top - FOOTER_RESERVE;
+      // ~48px do header da tabela
+      const rows = Math.max(5, Math.floor((available - 48) / ROW_HEIGHT));
+      setAutoPageSize(rows);
+    }
+    recompute();
+    window.addEventListener("resize", recompute);
+    return () => window.removeEventListener("resize", recompute);
+  }, []);
 
   const produtosQuery = useQuery({
     queryKey: ["vw_produtos_estoque_virtual"],
@@ -193,9 +214,9 @@ export default function EstoqueVirtual() {
         </span>
       </div>
 
-      <div className="rounded-md border bg-card">
+      <div ref={tableWrapperRef} className="rounded-md border bg-card">
         <Table>
-          <TableHeader>
+          <TableHeader className="[&_th]:sticky [&_th]:top-0 [&_th]:z-10 [&_th]:bg-card [&_th]:shadow-[inset_0_-1px_0_hsl(var(--border))]">
             <TableRow>
               <SortableTableHead column="codigo" sort={sort} onSort={setSort} className="w-[120px]">
                 Código
@@ -269,15 +290,20 @@ export default function EstoqueVirtual() {
           <div className="hidden sm:flex items-center gap-1.5">
             <span>Por página:</span>
             <Select
-              value={String(pageSize)}
-              onValueChange={(v) => { setPageSize(Number(v)); setPagina(1); }}
+              value={String(pageSizeOpt)}
+              onValueChange={(v) => {
+                setPageSizeOpt(v === "auto" ? "auto" : (Number(v) as PageSizeOption));
+                setPagina(1);
+              }}
             >
-              <FilterSelectTrigger className="h-8 w-[80px]">
+              <FilterSelectTrigger className="h-8 w-[110px]">
                 <SelectValue />
               </FilterSelectTrigger>
               <SelectContent>
                 {PAGE_SIZE_OPTIONS.map((n) => (
-                  <SelectItem key={n} value={String(n)}>{n}</SelectItem>
+                  <SelectItem key={n} value={String(n)}>
+                    {n === "auto" ? `Auto (${autoPageSize})` : n}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
