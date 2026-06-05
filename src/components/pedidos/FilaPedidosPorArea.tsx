@@ -249,7 +249,7 @@ export function FilaPedidosPorArea({
         </p>
       )}
 
-      <div className="rounded-md border border-border overflow-hidden">
+      <div ref={tableWrapperRef} className="rounded-md border border-border overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow>
