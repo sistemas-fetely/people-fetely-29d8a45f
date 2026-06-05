@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useLayoutEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,7 +13,8 @@ import {
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Send, Loader2, Sparkles, ExternalLink } from "lucide-react";
+import { Search, Send, Loader2, Sparkles, ExternalLink, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { TriarPedidoDialog } from "@/components/pedidos/dialogs/TriarPedidoDialog";
 import { ConfirmarPagamentoDialog } from "@/components/pedidos/dialogs/ConfirmarPagamentoDialog";
 import { Button } from "@/components/ui/button";
@@ -30,6 +31,24 @@ import {
 import type { AreaPedido, EstagioPedido, PedidoFilaItem, ScoreBreakdown } from "@/types/pedido";
 
 const fmtBRL = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
+
+const PAGE_SIZE_OPTIONS = ["auto", 50, 100, 200, 500] as const;
+type PageSizeOption = (typeof PAGE_SIZE_OPTIONS)[number];
+const DEFAULT_PAGE_SIZE: PageSizeOption = "auto";
+const ROW_HEIGHT = 73; // px aprox (linhas mais altas com 2 linhas de texto)
+const FOOTER_RESERVE = 120;
+
+function buildPageRange(current: number, total: number): (number | "…")[] {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+  const pages: (number | "…")[] = [1];
+  const start = Math.max(2, current - 1);
+  const end = Math.min(total - 1, current + 1);
+  if (start > 2) pages.push("…");
+  for (let i = start; i <= end; i++) pages.push(i);
+  if (end < total - 1) pages.push("…");
+  pages.push(total);
+  return pages;
+}
 
 interface Props {
   area: AreaPedido | "todas";
@@ -58,8 +77,31 @@ export function FilaPedidosPorArea({
   const [estagioFilter, setEstagioFilter] = useState<EstagioPedido | "todos">(estagioInicial);
   const [marcacaoFilter, setMarcacaoFilter] = useState<string>("todas");
   const [ordenacao, setOrdenacao] = useState<OrdenacaoFila>("cronologico");
+  const [pagina, setPagina] = useState(1);
+  const [pageSizeOpt, setPageSizeOpt] = useState<PageSizeOption>(DEFAULT_PAGE_SIZE);
+  const [autoPageSize, setAutoPageSize] = useState<number>(20);
+  const tableWrapperRef = useRef<HTMLDivElement | null>(null);
+  const pageSize = pageSizeOpt === "auto" ? autoPageSize : pageSizeOpt;
   const navigate = useNavigate();
   const enviarBling = useEnviarBling();
+
+  useLayoutEffect(() => {
+    function recompute() {
+      const el = tableWrapperRef.current;
+      if (!el) return;
+      const top = el.getBoundingClientRect().top;
+      const available = window.innerHeight - top - FOOTER_RESERVE;
+      const rows = Math.max(5, Math.floor((available - 48) / ROW_HEIGHT));
+      setAutoPageSize(rows);
+    }
+    recompute();
+    window.addEventListener("resize", recompute);
+    return () => window.removeEventListener("resize", recompute);
+  }, []);
+
+  useEffect(() => {
+    setPagina(1);
+  }, [busca, estagioFilter, marcacaoFilter, ordenacao, estagios, area]);
 
   const usarEstagiosMultiplos = !!(estagios && estagios.length > 0);
 
@@ -137,6 +179,17 @@ export function FilaPedidosPorArea({
     },
   });
 
+  const totalLinhas = linhas?.length ?? 0;
+  const totalPaginas = Math.max(1, Math.ceil(totalLinhas / pageSize));
+  const paginaAtual = Math.min(pagina, totalPaginas);
+  const pageItems = (linhas || []).slice(
+    (paginaAtual - 1) * pageSize,
+    paginaAtual * pageSize,
+  );
+  const inicioRange = totalLinhas === 0 ? 0 : (paginaAtual - 1) * pageSize + 1;
+  const fimRange = Math.min(paginaAtual * pageSize, totalLinhas);
+  const pageRange = buildPageRange(paginaAtual, totalPaginas);
+
   return (
     <div className="space-y-3">
       <div className="flex flex-col sm:flex-row gap-2">
@@ -196,7 +249,7 @@ export function FilaPedidosPorArea({
         </p>
       )}
 
-      <div className="rounded-md border border-border overflow-hidden">
+      <div ref={tableWrapperRef} className="rounded-md border border-border overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow>
@@ -225,7 +278,7 @@ export function FilaPedidosPorArea({
                 </TableCell>
               </TableRow>
             )}
-            {linhas?.map((p) => {
+            {pageItems.map((p) => {
               const sc = scoreMap.get(p.id);
               return (
                 <TableRow
@@ -344,11 +397,103 @@ export function FilaPedidosPorArea({
         </Table>
       </div>
 
-      {linhas && linhas.length > 0 && (
-        <p className="text-xs text-muted-foreground text-right">
-          {linhas.length} pedido{linhas.length !== 1 ? "s" : ""}
-        </p>
-      )}
+      <div className="flex flex-wrap items-center justify-between gap-3 mt-4 text-sm">
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <span>
+            {totalLinhas === 0
+              ? "Nenhum resultado"
+              : <>Mostrando <span className="font-medium text-foreground tabular-nums">{inicioRange}</span>–<span className="font-medium text-foreground tabular-nums">{fimRange}</span> de <span className="font-medium text-foreground tabular-nums">{totalLinhas}</span></>}
+          </span>
+          <span className="hidden sm:inline">·</span>
+          <div className="hidden sm:flex items-center gap-1.5">
+            <span>Por página:</span>
+            <Select
+              value={String(pageSizeOpt)}
+              onValueChange={(v) => {
+                setPageSizeOpt(v === "auto" ? "auto" : (Number(v) as PageSizeOption));
+                setPagina(1);
+              }}
+            >
+              <SelectTrigger className="h-8 w-[110px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PAGE_SIZE_OPTIONS.map((n) => (
+                  <SelectItem key={n} value={String(n)}>
+                    {n === "auto" ? `Auto (${autoPageSize})` : n}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        {totalPaginas > 1 && (
+          <div className="flex items-center gap-1">
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8"
+              disabled={paginaAtual <= 1}
+              onClick={() => setPagina(1)}
+              aria-label="Primeira página"
+            >
+              <ChevronsLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8"
+              disabled={paginaAtual <= 1}
+              onClick={() => setPagina((p) => Math.max(1, p - 1))}
+              aria-label="Página anterior"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+
+            {pageRange.map((p, idx) =>
+              p === "…" ? (
+                <span key={`e-${idx}`} className="px-2 text-muted-foreground select-none">…</span>
+              ) : (
+                <Button
+                  key={p}
+                  variant={p === paginaAtual ? "default" : "outline"}
+                  size="sm"
+                  className={cn(
+                    "h-8 min-w-8 px-2 tabular-nums",
+                    p === paginaAtual && "pointer-events-none",
+                  )}
+                  onClick={() => setPagina(p)}
+                  aria-current={p === paginaAtual ? "page" : undefined}
+                >
+                  {p}
+                </Button>
+              ),
+            )}
+
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8"
+              disabled={paginaAtual >= totalPaginas}
+              onClick={() => setPagina((p) => Math.min(totalPaginas, p + 1))}
+              aria-label="Próxima página"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8"
+              disabled={paginaAtual >= totalPaginas}
+              onClick={() => setPagina(totalPaginas)}
+              aria-label="Última página"
+            >
+              <ChevronsRight className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
