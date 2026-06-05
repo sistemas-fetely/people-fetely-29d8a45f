@@ -165,6 +165,19 @@ export function FilaPedidosPorArea({
             </SelectContent>
           </Select>
         )}
+        <Select value={marcacaoFilter} onValueChange={setMarcacaoFilter}>
+          <SelectTrigger className="w-full sm:w-48">
+            <SelectValue placeholder="Marcação" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="todas">Marcação: Todas</SelectItem>
+            <SelectItem value="sem">Sem marcação</SelectItem>
+            <SelectItem value="com">Com marcação</SelectItem>
+            {marcacoesDisponiveis.length > 0 && marcacoesDisponiveis.map((m) => (
+              <SelectItem key={m} value={m}>{m}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <Select value={ordenacao} onValueChange={(v) => setOrdenacao(v as OrdenacaoFila)}>
           <SelectTrigger className="w-full sm:w-52">
             <SelectValue />
