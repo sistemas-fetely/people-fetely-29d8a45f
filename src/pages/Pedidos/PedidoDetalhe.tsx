@@ -250,6 +250,36 @@ export default function PedidoDetalhe() {
               <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-2">Cliente</p>
               <Linha label="Razão social" value={parceiro?.razao_social} />
               <Linha label="CNPJ" value={parceiro?.cnpj} />
+              {(() => {
+                const emails: { label: string; email: string }[] = [];
+                const push = (label: string, email?: string | null) => {
+                  const e = (email || "").trim();
+                  if (e && !emails.some((x) => x.email.toLowerCase() === e.toLowerCase())) emails.push({ label, email: e });
+                };
+                push("Principal", parceiro?.email);
+                const c = parceiro?.contatos;
+                if (c && typeof c === "object" && !Array.isArray(c)) {
+                  push("Contato", c?.contato?.email);
+                  push("Financeiro", c?.financeiro?.email);
+                  push("Fiscal", c?.fiscal?.email);
+                } else if (Array.isArray(c)) {
+                  c.forEach((it: any, i: number) => push(it?.tipo || it?.nome || `Contato ${i + 1}`, it?.email));
+                }
+                if (emails.length === 0) return <Linha label="E-mail" value="—" />;
+                return (
+                  <div className="py-1.5">
+                    <p className="text-xs text-muted-foreground mb-1">E-mails cadastrados</p>
+                    <div className="space-y-1">
+                      {emails.map((e) => (
+                        <div key={e.email} className="flex items-center justify-between gap-2 text-xs">
+                          <span className="text-muted-foreground shrink-0">{e.label}</span>
+                          <a href={`mailto:${e.email}`} className="font-medium text-primary hover:underline truncate" title={e.email}>{e.email}</a>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
               {parceiro?.id && <div className="py-2"><EditarProgramaInline parceiro_id={parceiro.id} nivel_atual={parceiro.nivel_programa || "convive"} categoria_ka_atual={parceiro.categoria_ka ?? null} /></div>}
               <Button variant="outline" size="sm" className="w-full gap-2 mt-2" onClick={() => parceiro?.id && navigate(`/parceiros/${parceiro.id}`, { state: { from: location.pathname } })}>
                 <ExternalLink className="h-3.5 w-3.5" />Ver perfil completo
