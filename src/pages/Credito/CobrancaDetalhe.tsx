@@ -16,7 +16,7 @@ import {
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
-import { ArrowLeft, Loader2, RefreshCcw, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Loader2, RefreshCcw, AlertTriangle, Copy, Check } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { usePropostaCobranca } from "@/hooks/credito/usePropostaCobranca";
 import { useMaterializarCobranca } from "@/hooks/credito/useMaterializarCobranca";
@@ -38,7 +38,7 @@ function usePedidoMinimo(pedidoId: string | undefined) {
         .from("pedidos")
         .select(`
           id, id_externo, estagio, data_pedido, valor_liquido, condicao_solicitada,
-          parceiro:parceiros_comerciais(razao_social, cnpj)
+          parceiro:parceiros_comerciais(razao_social, nome_fantasia, cnpj, cpf, email, telefone, cep, logradouro, numero, endereco_complemento, bairro, cidade, uf)
         `)
         .eq("id", pedidoId)
         .maybeSingle();
@@ -46,6 +46,35 @@ function usePedidoMinimo(pedidoId: string | undefined) {
       return data;
     },
   });
+}
+
+function LinhaInfo({ label, value, copiavel }: { label: string; value: string; copiavel?: string }) {
+  const [copiado, setCopiado] = useState(false);
+  function copiar() {
+    if (!copiavel) return;
+    navigator.clipboard.writeText(copiavel).then(() => {
+      setCopiado(true);
+      setTimeout(() => setCopiado(false), 1400);
+    });
+  }
+  return (
+    <div className="flex justify-between gap-3 text-xs py-1 border-b border-border/40 last:border-0">
+      <span className="text-muted-foreground shrink-0">{label}</span>
+      <span className="text-right flex items-center gap-1.5 font-medium">
+        {value}
+        {copiavel && (
+          <button
+            type="button"
+            onClick={copiar}
+            className="text-muted-foreground hover:text-foreground transition-colors"
+            title="Copiar"
+          >
+            {copiado ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+          </button>
+        )}
+      </span>
+    </div>
+  );
 }
 
 export default function CobrancaDetalhe() {
@@ -211,12 +240,45 @@ export default function CobrancaDetalhe() {
           <CardTitle className="text-base">Resumo do pedido</CardTitle>
         </CardHeader>
         <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-          <div>
-            <p className="text-muted-foreground text-xs">Cliente</p>
-            <p className="font-medium">{pedido.parceiro?.razao_social ?? "—"}</p>
-            <p className="text-xs text-muted-foreground">
-              {pedido.parceiro?.cnpj ? formatCNPJ(pedido.parceiro.cnpj) : ""}
-            </p>
+          <div className="md:col-span-2">
+            <p className="text-muted-foreground text-xs mb-1">Cliente</p>
+            {pedido.parceiro?.razao_social && (
+              <LinhaInfo label="Razão social" value={pedido.parceiro.razao_social} copiavel={pedido.parceiro.razao_social} />
+            )}
+            {pedido.parceiro?.nome_fantasia && pedido.parceiro.nome_fantasia !== pedido.parceiro.razao_social && (
+              <LinhaInfo label="Nome fantasia" value={pedido.parceiro.nome_fantasia} copiavel={pedido.parceiro.nome_fantasia} />
+            )}
+            {pedido.parceiro?.cnpj && (
+              <LinhaInfo label="CNPJ" value={formatCNPJ(pedido.parceiro.cnpj)} copiavel={pedido.parceiro.cnpj} />
+            )}
+            {pedido.parceiro?.cpf && (
+              <LinhaInfo label="CPF" value={pedido.parceiro.cpf} copiavel={pedido.parceiro.cpf} />
+            )}
+            {pedido.parceiro?.email && (
+              <LinhaInfo label="E-mail" value={pedido.parceiro.email} copiavel={pedido.parceiro.email} />
+            )}
+            {pedido.parceiro?.telefone && (
+              <LinhaInfo label="Telefone" value={pedido.parceiro.telefone} copiavel={pedido.parceiro.telefone} />
+            )}
+            {pedido.parceiro?.cep && (
+              <LinhaInfo label="CEP" value={pedido.parceiro.cep} copiavel={pedido.parceiro.cep} />
+            )}
+            {(pedido.parceiro?.logradouro || pedido.parceiro?.numero) && (
+              <LinhaInfo
+                label="Logradouro"
+                value={[pedido.parceiro?.logradouro, pedido.parceiro?.numero, pedido.parceiro?.endereco_complemento].filter(Boolean).join(", ")}
+                copiavel={[pedido.parceiro?.logradouro, pedido.parceiro?.numero, pedido.parceiro?.endereco_complemento].filter(Boolean).join(", ")}
+              />
+            )}
+            {pedido.parceiro?.bairro && (
+              <LinhaInfo label="Bairro" value={pedido.parceiro.bairro} copiavel={pedido.parceiro.bairro} />
+            )}
+            {pedido.parceiro?.cidade && (
+              <LinhaInfo label="Cidade" value={pedido.parceiro.cidade} copiavel={pedido.parceiro.cidade} />
+            )}
+            {pedido.parceiro?.uf && (
+              <LinhaInfo label="UF" value={pedido.parceiro.uf} copiavel={pedido.parceiro.uf} />
+            )}
           </div>
           <div>
             <p className="text-muted-foreground text-xs">Valor total</p>
