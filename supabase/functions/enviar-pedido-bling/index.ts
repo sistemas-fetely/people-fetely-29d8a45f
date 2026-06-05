@@ -104,11 +104,12 @@ serve(async (req) => {
       return err("Pedido sem títulos gerados — engine F-2 deveria ter gerado em pre_faturado", 409);
     }
 
-    // 5. Contagem de itens (para descrição)
-    const { count: totalItens } = await supabase
+    // 5. Itens individuais do pedido
+    const { data: itens } = await supabase
       .from("pedido_itens")
-      .select("id", { count: "exact", head: true })
-      .eq("pedido_id", pedido_id);
+      .select("descricao, sku, quantidade, valor_unitario")
+      .eq("pedido_id", pedido_id)
+      .order("ordem");
 
     // 6. Config Bling + cliente
     const { data: cfg } = await supabase
@@ -191,29 +192,56 @@ serve(async (req) => {
       blingParcelas.reduce((s, p) => s + p.valor, 0).toFixed(2),
     );
 
-    // 9. Item único: sum(itens) = sum(parcelas) = total por definição.
-    // Bling valida sum(item.valor × qtd) == sum(parcelas) — se enviássemos itens
-    // individuais com preços pré-desconto a soma divergiria (code 22).
-    const nItens = totalItens ?? 0;
-    const blingItens = [{
-      descricao: nItens > 0
-        ? `Pedido FOP #${pedido.id_externo} (${nItens} ${nItens === 1 ? "item" : "itens"})`
-        : `Pedido FOP #${pedido.id_externo}`,
+    // 9. Monta itens individuais para o Bling
+    // - Sem "codigo": evita code 27 (Bling tentaria criar produto no catálogo)
+    // - Sem sufixo "(Xun.)" na descrição: evita poluir catálogo com variantes por qtd
+    // - Preços pré-desconto (valor_unitario original do FOP)
+    const stripQtdSuffix = (d: string) =>
+      (d || "").replace(/\s*\(\d+\s*un\.?\)\s*$/i, "").trim();
+
+    const rawItens = (itens && itens.length > 0)
+      ? itens.map((it: any) => ({
+          descricao: stripQtdSuffix(it.descricao),
+          quantidade: Number(it.quantidade),
+          valor: parseFloat(Number(it.valor_unitario).toFixed(2)),
+        }))
+      : null;
+
+    // totalProdutos = sum de cada linha (qtd × valor), arredondado por linha
+    const totalProdutosCalc = rawItens
+      ? parseFloat(
+          rawItens
+            .reduce((s, it) => s + parseFloat((it.valor * it.quantidade).toFixed(2)), 0)
+            .toFixed(2),
+        )
+      : totalExato;
+
+    // descontoValor = diferença entre preços originais e total real das parcelas
+    // Garante por construção: totalProdutos - desconto = totalExato = sum(parcelas)
+    const descontoValor = parseFloat((totalProdutosCalc - totalExato).toFixed(2));
+
+    const blingItens = rawItens ?? [{
+      descricao: `Pedido FOP #${pedido.id_externo}`,
       quantidade: 1,
       valor: totalExato,
     }];
 
     // 10. Payload final
-    const payload = {
+    const payload: Record<string, any> = {
       numeroLoja: pedido.id_externo,
       data: pedido.data_pedido,
       contato: { id: Number(parceiro.bling_id) },
       itens: blingItens,
       parcelas: blingParcelas,
-      totalProdutos: totalExato,
+      totalProdutos: rawItens ? totalProdutosCalc : totalExato,
       total: totalExato,
       observacoes: pedido.contexto_anotacoes || `Pedido ${pedido.id_externo} via SNCF`,
     };
+
+    // Adiciona desconto só se houver diferença real (pedidos com desconto de pedido)
+    if (descontoValor >= 0.01) {
+      payload.desconto = { tipo: "VALOR", valor: descontoValor };
+    }
 
     // 10. POST Bling
     let blingId: number | null = null;
