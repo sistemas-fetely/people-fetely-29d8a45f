@@ -179,6 +179,17 @@ export function FilaPedidosPorArea({
     },
   });
 
+  const totalLinhas = linhas?.length ?? 0;
+  const totalPaginas = Math.max(1, Math.ceil(totalLinhas / pageSize));
+  const paginaAtual = Math.min(pagina, totalPaginas);
+  const pageItems = (linhas || []).slice(
+    (paginaAtual - 1) * pageSize,
+    paginaAtual * pageSize,
+  );
+  const inicioRange = totalLinhas === 0 ? 0 : (paginaAtual - 1) * pageSize + 1;
+  const fimRange = Math.min(paginaAtual * pageSize, totalLinhas);
+  const pageRange = buildPageRange(paginaAtual, totalPaginas);
+
   return (
     <div className="space-y-3">
       <div className="flex flex-col sm:flex-row gap-2">
