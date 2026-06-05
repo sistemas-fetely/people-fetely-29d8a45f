@@ -56,6 +56,7 @@ export function FilaPedidosPorArea({
 }: Props) {
   const [busca, setBusca] = useState("");
   const [estagioFilter, setEstagioFilter] = useState<EstagioPedido | "todos">(estagioInicial);
+  const [marcacaoFilter, setMarcacaoFilter] = useState<string>("todas");
   const [ordenacao, setOrdenacao] = useState<OrdenacaoFila>("cronologico");
   const navigate = useNavigate();
   const enviarBling = useEnviarBling();
