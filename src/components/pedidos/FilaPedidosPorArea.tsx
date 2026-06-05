@@ -77,8 +77,31 @@ export function FilaPedidosPorArea({
   const [estagioFilter, setEstagioFilter] = useState<EstagioPedido | "todos">(estagioInicial);
   const [marcacaoFilter, setMarcacaoFilter] = useState<string>("todas");
   const [ordenacao, setOrdenacao] = useState<OrdenacaoFila>("cronologico");
+  const [pagina, setPagina] = useState(1);
+  const [pageSizeOpt, setPageSizeOpt] = useState<PageSizeOption>(DEFAULT_PAGE_SIZE);
+  const [autoPageSize, setAutoPageSize] = useState<number>(20);
+  const tableWrapperRef = useRef<HTMLDivElement | null>(null);
+  const pageSize = pageSizeOpt === "auto" ? autoPageSize : pageSizeOpt;
   const navigate = useNavigate();
   const enviarBling = useEnviarBling();
+
+  useLayoutEffect(() => {
+    function recompute() {
+      const el = tableWrapperRef.current;
+      if (!el) return;
+      const top = el.getBoundingClientRect().top;
+      const available = window.innerHeight - top - FOOTER_RESERVE;
+      const rows = Math.max(5, Math.floor((available - 48) / ROW_HEIGHT));
+      setAutoPageSize(rows);
+    }
+    recompute();
+    window.addEventListener("resize", recompute);
+    return () => window.removeEventListener("resize", recompute);
+  }, []);
+
+  useEffect(() => {
+    setPagina(1);
+  }, [busca, estagioFilter, marcacaoFilter, ordenacao, estagios, area]);
 
   const usarEstagiosMultiplos = !!(estagios && estagios.length > 0);
 
