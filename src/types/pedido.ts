@@ -247,3 +247,18 @@ export interface TituloAReceber {
   subestado_atraso: string;
   flag_bandeira_amarela: boolean;
 }
+
+export interface OrderMeta {
+  cliente: string | undefined;
+  nomeFantasia: string | undefined;
+  cnpj: string | undefined;
+  email: string | undefined;
+  telefone: string | undefined;
+  cep: string | undefined;
+  logradouro: string | undefined;
+  numero: string | undefined;
+  complemento: string | undefined;
+  bairro: string | undefined;
+  municipio: string | undefined;
+  uf: string | undefined;
+}
