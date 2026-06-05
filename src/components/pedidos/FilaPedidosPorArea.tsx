@@ -281,6 +281,8 @@ export function FilaPedidosPorArea({
                   </TableCell>
                   <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                     <div className="flex justify-end gap-1.5">
+                      <MarcacaoPedido pedidoId={p.id} marcacao={p.marcacao} iconOnly />
+
                       {p.estagio === "recebido" && (
                         <TriarPedidoDialog
                           pedido_id={p.id}
