@@ -270,6 +270,7 @@ export function FilaPedidosPorArea({
                           Em análise
                         </Badge>
                       )}
+                      <MarcacaoBadge marcacao={p.marcacao} />
                     </div>
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
