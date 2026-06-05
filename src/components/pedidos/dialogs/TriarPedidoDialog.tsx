@@ -122,9 +122,11 @@ export function TriarPedidoDialog({
                     icone={<Zap className="h-5 w-5 text-emerald-600" />}
                     titulo="Pular Análise (perfil dispensa)"
                     descricao={
-                      podePular
-                        ? `Perfil ${perfil_credito} dispensa análise — aprovação direta.`
-                        : "Disponível pra perfis Premium e Recorrente Bom Pagador."
+                      aVista
+                        ? "À vista (pix/cartão) — sem crédito a analisar, segue direto."
+                        : podePularAnaliseCredito(perfil_credito)
+                          ? `Perfil ${perfil_credito} dispensa análise — aprovação direta.`
+                          : "Disponível pra perfis Premium e Recorrente Bom Pagador."
                     }
                   />
                 </div>
