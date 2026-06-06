@@ -3,26 +3,24 @@ import type { EstagioPedido } from "@/types/pedido";
 /**
  * Matriz de transições válidas POR INICIATIVA HUMANA.
  *
- * Transições silenciosas (via trigger do banco) NÃO estão aqui:
- *   - credito_aprovado → cobranca  (trigger fn_tg_pedido_avanca_para_cobranca)
- *   - cobranca → aguardando_pagamento OU pre_faturado  (RPC materializar_cobranca)
- *   - aguardando_pagamento → pre_faturado  (trigger fn_tg_titulo_pago_avanca_pedido)
- *   - analise.status_final = 'aprovado' → credito_aprovado  (trigger)
- *   - sync Bling → em_separacao/faturado/em_transporte/entregue (futuro)
+ * Fluxo novo (sem credito_aprovado):
+ *   recebido → [em_analise_credito (boleto a prazo), cobranca (à vista), cancelado]
+ *   em_analise_credito → cobranca (silencioso: trigger ao aprovar análise) | cancelado
+ *   cobranca → aguardando_pagamento OU pre_faturado (silencioso: RPC materializar_cobranca)
+ *   aguardando_pagamento → pre_faturado (silencioso: trigger ao pagar título)
+ *   sync Bling → em_separacao/faturado/em_transporte/entregue (futuro)
+ *
+ * A liberação inteligente (à vista vs. boleto a prazo) usa a RPC rotear_pedido.
  */
 export const TRANSICOES_VALIDAS: Record<EstagioPedido, EstagioPedido[]> = {
   recebido: [
-    "em_analise_credito",   // SOps encaminha pra crédito (boleto)
-    "credito_aprovado",     // SOps pula análise (PIX/cartão — sem crédito a avaliar)
+    "em_analise_credito",   // SOps encaminha pra crédito (boleto a prazo)
+    "cobranca",             // SOps libera direto (à vista — sem crédito a avaliar)
     "cancelado",
   ],
   em_analise_credito: [
     "cancelado",
-    // credito_aprovado é silencioso (trigger quando análise vira aprovada)
-  ],
-  credito_aprovado: [
-    "cancelado",
-    // cobranca é automático (trigger fn_tg_pedido_avanca_para_cobranca)
+    // cobranca é silencioso (trigger quando análise vira aprovada)
   ],
   cobranca: [
     "cancelado",

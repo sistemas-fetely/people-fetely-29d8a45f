@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 export const ESTAGIO_CORES: Record<EstagioPedido, string> = {
   recebido: "bg-slate-500",
   em_analise_credito: "bg-blue-500",
-  credito_aprovado: "bg-emerald-500",
+  
   cobranca: "bg-violet-500",
   aguardando_pagamento: "bg-amber-500",
   pre_faturado: "bg-orange-500",
