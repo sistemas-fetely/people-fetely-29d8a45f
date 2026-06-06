@@ -272,8 +272,15 @@ serve(async (req) => {
             preco: parseFloat(Number(it.valor_unitario).toFixed(2)),
             situacao: "A",
           });
-          blingId = created?.data?.id ?? created?.id ?? null;
-        } catch (_) { /* produto não criado — item seguirá como avulso */ }
+          // Parseia resposta defensivamente (Bling v3: {data:{id}} ou {data:number} ou {id})
+          const d = created?.data;
+          blingId = d?.id ?? (typeof d === "number" ? d : null) ?? created?.id ?? null;
+          if (!blingId) {
+            console.error(`[produto-sync] POST /produtos ok mas sem id: sku=${it.sku} resp=${JSON.stringify(created).slice(0,200)}`);
+          }
+        } catch (e) {
+          console.error(`[produto-sync] POST /produtos falhou: sku=${it.sku} err=${(e as Error).message?.slice(0,200)}`);
+        }
       }
 
       if (blingId) {
