@@ -73,7 +73,7 @@ serve(async (req) => {
       return err(`Pedido já enviado pro Bling (id ${pedido.bling_id_destino})`, 409);
     }
 
-    // 2. Parceiro
+    // 2. Parceiro (cliente)
     const { data: parceiro } = await supabase
       .from("parceiros_comerciais")
       .select("id, bling_id, razao_social, cnpj")
@@ -81,6 +81,17 @@ serve(async (req) => {
       .maybeSingle();
     if (!parceiro?.bling_id) {
       return err("Parceiro sem bling_id — sincronize o parceiro no Bling antes", 409);
+    }
+
+    // 2b. Transportadora (opcional — só se selecionada no Pré-faturamento)
+    let blingTransportadoraId: number | null = null;
+    if (pedido.transportadora_id) {
+      const { data: transp } = await supabase
+        .from("parceiros_comerciais")
+        .select("bling_id, razao_social")
+        .eq("id", pedido.transportadora_id)
+        .maybeSingle();
+      if (transp?.bling_id) blingTransportadoraId = Number(transp.bling_id);
     }
 
     // 3. Forma de pagamento
@@ -359,6 +370,8 @@ serve(async (req) => {
     }];
 
     // 10. Payload final
+    const valorFrete = Number(pedido.valor_frete ?? 0);
+
     const payload: Record<string, any> = {
       numeroLoja: pedido.id_externo,
       data: pedido.data_pedido,
@@ -367,6 +380,7 @@ serve(async (req) => {
       itens: blingItens,
       parcelas: blingParcelas,
       totalProdutos: rawItens ? totalProdutosCalc : totalExato,
+      ...(valorFrete > 0 ? { frete: valorFrete } : {}),
       total: totalExato,
       observacoes: pedido.contexto_anotacoes || `Pedido ${pedido.id_externo} via SNCF`,
     };
@@ -374,6 +388,17 @@ serve(async (req) => {
     // Desconto residual (centavos de arredondamento por item) — normalmente < R$0,01
     if (descontoValor >= 0.01) {
       payload.desconto = { tipo: "VALOR", valor: descontoValor };
+    }
+
+    // Bloco transporte — FOB sempre (padrão fiscal Fetely)
+    if (blingTransportadoraId || valorFrete > 0 || Number(pedido.peso_bruto_total ?? 0) > 0) {
+      payload.transporte = {
+        tipo: 1, // 1 = FOB (destinatário paga) — NF sempre FOB na Fetely
+        ...(blingTransportadoraId ? { transportadora: { id: blingTransportadoraId } } : {}),
+        ...(Number(pedido.peso_bruto_total ?? 0) > 0
+          ? { pesoBruto: Number(pedido.peso_bruto_total) }
+          : {}),
+      };
     }
 
     // 10. POST Bling
