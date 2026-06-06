@@ -105,6 +105,18 @@ type Receita = {
   conta_bancaria_id: string;
   origem: string | null;
 };
+
+type TituloAReceber = {
+  id: string;
+  numero_titulo: string | null;
+  data_vencimento_atual: string | null;
+  valor_atual: number | null;
+  valor_bruto: number | null;
+  boleto_status: string | null;
+  tipo_pagamento: string | null;
+  conta: { parceiro: { razao_social: string | null } | null } | null;
+};
+
 type FiltroQualidade =
   | "todos"
   | "doc_tem" | "doc_falta"
