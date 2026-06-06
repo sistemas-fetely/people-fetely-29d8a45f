@@ -127,6 +127,7 @@ export interface PedidoFilaItem {
   sla_estourado: boolean;
   analise_credito_id: string | null;
   marcacao: string | null;
+  bling_id_destino?: string | null;
 }
 
 export interface PipelineItem {
