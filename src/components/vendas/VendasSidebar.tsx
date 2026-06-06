@@ -25,7 +25,7 @@ export function VendasSidebar() {
         <SidebarGroup className="pb-3">
           <SidebarGroupContent>
             <SidebarMenu>
-              <FinancasSidebarItem to="/pedidos" icon={ShoppingCart} label="Pedidos" end />
+              <FinancasSidebarItem to="/pedidos" icon={ShoppingCart} label="Pedidos FOP" end />
               <FinancasSidebarItem to="/recebimento/cobranca" icon={Receipt} label="Cobrança" />
               <FinancasSidebarItem to="/vendas/nfs" icon={FileText} label="NFs de Venda" />
               <FinancasSidebarItem to="/administrativo-fetely/parceiros" icon={Building2} label="Parceiros" />
