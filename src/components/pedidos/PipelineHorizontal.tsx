@@ -13,7 +13,7 @@ import {
 const ESTAGIO_ICONES: Record<EstagioPedido, JSX.Element> = {
   recebido:             <Inbox className="h-4 w-4" />,
   em_analise_credito:   <Shield className="h-4 w-4" />,
-  credito_aprovado:     <CheckCircle2 className="h-4 w-4" />,
+  
   cobranca:             <Receipt className="h-4 w-4" />,
   aguardando_pagamento: <Clock className="h-4 w-4" />,
   pre_faturado:         <FileClock className="h-4 w-4" />,
@@ -29,7 +29,7 @@ const ESTAGIO_ICONES: Record<EstagioPedido, JSX.Element> = {
 const ESTAGIO_BG_SUAVE: Record<EstagioPedido, string> = {
   recebido:             "bg-slate-100 dark:bg-slate-800/40",
   em_analise_credito:   "bg-blue-50 dark:bg-blue-900/30",
-  credito_aprovado:     "bg-emerald-50 dark:bg-emerald-900/30",
+  
   cobranca:             "bg-violet-50 dark:bg-violet-900/30",
   aguardando_pagamento: "bg-amber-50 dark:bg-amber-900/30",
   pre_faturado:         "bg-orange-50 dark:bg-orange-900/30",
@@ -45,7 +45,7 @@ const ESTAGIO_BG_SUAVE: Record<EstagioPedido, string> = {
 const ESTAGIO_TEXT_COR: Record<EstagioPedido, string> = {
   recebido:             "text-slate-600 dark:text-slate-400",
   em_analise_credito:   "text-blue-600 dark:text-blue-400",
-  credito_aprovado:     "text-emerald-600 dark:text-emerald-400",
+  
   cobranca:             "text-violet-600 dark:text-violet-400",
   aguardando_pagamento: "text-amber-600 dark:text-amber-400",
   pre_faturado:         "text-orange-600 dark:text-orange-400",

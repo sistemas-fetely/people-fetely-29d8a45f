@@ -3,7 +3,6 @@
 export type EstagioPedido =
   | "recebido"               // veio do FOP, aguarda triagem SOps
   | "em_analise_credito"     // análise em andamento (módulo Crédito)
-  | "credito_aprovado"       // análise aprovou — trigger avança pra cobranca
   | "cobranca"               // SOps materializa proposta de cobrança
   | "aguardando_pagamento"   // aguarda 1ª parcela/link pago (PIX, cartão, boleto c/ entrada)
   | "pre_faturado"           // títulos gerados, aguarda envio Bling
@@ -21,7 +20,7 @@ export type TipoPagamento = "a_prazo" | "a_vista";
 export const ESTAGIO_LABELS: Record<EstagioPedido, string> = {
   recebido: "Recebido",
   em_analise_credito: "Em análise crédito",
-  credito_aprovado: "Crédito aprovado",
+  
   cobranca: "Cobrança",
   aguardando_pagamento: "Aguardando pagamento",
   pre_faturado: "Pré-faturamento",
@@ -37,7 +36,7 @@ export const ESTAGIO_LABELS: Record<EstagioPedido, string> = {
 export const ESTAGIO_LABELS_CURTO: Record<EstagioPedido, string> = {
   recebido: "Recebido",
   em_analise_credito: "Em Análise",
-  credito_aprovado: "Aprovado",
+  
   cobranca: "Cobrança",
   aguardando_pagamento: "Aguardando PG",
   pre_faturado: "Pré-Faturado",
@@ -61,7 +60,7 @@ export const AREA_LABELS: Record<AreaPedido, string> = {
 export const PIPELINE_PRINCIPAL: readonly EstagioPedido[] = [
   "recebido",
   "em_analise_credito",
-  "credito_aprovado",
+  
   "cobranca",
   "aguardando_pagamento",
   "pre_faturado",
@@ -85,7 +84,7 @@ export const ESTAGIOS_RECUPERAVEIS: readonly EstagioPedido[] = [
 export const ESTAGIO_AREA: Record<EstagioPedido, AreaPedido> = {
   recebido: "sistema",
   em_analise_credito: "credito",
-  credito_aprovado: "sops",
+  
   cobranca: "sops",
   aguardando_pagamento: "sops",
   pre_faturado: "sops",
