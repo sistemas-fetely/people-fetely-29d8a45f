@@ -280,7 +280,8 @@ serve(async (req) => {
             console.error(`[produto-sync] POST /produtos ok mas sem id: sku=${it.sku} resp=${JSON.stringify(created).slice(0,500)}`);
           }
         } catch (e) {
-          console.error(`[produto-sync] POST /produtos falhou: sku=${it.sku} err=${(e as Error).message?.slice(0,500)}`);
+          const errClean = ((e as Error).message || "").replace(/[\n\r]/g, " ").slice(0, 800);
+          console.error(`[produto-sync] POST /produtos falhou: sku=${it.sku} err=${errClean}`);
         }
       }
 
