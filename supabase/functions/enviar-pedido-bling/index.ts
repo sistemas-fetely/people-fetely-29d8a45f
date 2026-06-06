@@ -387,12 +387,13 @@ serve(async (req) => {
     });
 
     if (sucesso) {
-      // 12. Carimba pedido
+      // 12. Carimba pedido e avança estágio
       await supabase.from("pedidos").update({
         bling_id_destino: blingId,
         bling_enviado_em: new Date().toISOString(),
         bling_enviado_por: userId,
         bling_envio_erro: null,
+        estagio: "em_separacao",
       }).eq("id", pedido_id);
 
       return ok({
