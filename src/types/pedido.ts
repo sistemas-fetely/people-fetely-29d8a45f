@@ -3,7 +3,6 @@
 export type EstagioPedido =
   | "recebido"               // veio do FOP, aguarda triagem SOps
   | "em_analise_credito"     // análise em andamento (módulo Crédito)
-  | "credito_aprovado"       // análise aprovou — trigger avança pra cobranca
   | "cobranca"               // SOps materializa proposta de cobrança
   | "aguardando_pagamento"   // aguarda 1ª parcela/link pago (PIX, cartão, boleto c/ entrada)
   | "pre_faturado"           // títulos gerados, aguarda envio Bling
