@@ -12411,6 +12411,7 @@ export type Database = {
           movimentacao_baixa_id: string | null
           nf_id: string | null
           nosso_numero_safra: string | null
+          nosso_numero_seq: string | null
           numero_parcela: number
           numero_titulo: string
           pausa_regua_automatica: boolean
@@ -12459,6 +12460,7 @@ export type Database = {
           movimentacao_baixa_id?: string | null
           nf_id?: string | null
           nosso_numero_safra?: string | null
+          nosso_numero_seq?: string | null
           numero_parcela?: number
           numero_titulo: string
           pausa_regua_automatica?: boolean
@@ -12507,6 +12509,7 @@ export type Database = {
           movimentacao_baixa_id?: string | null
           nf_id?: string | null
           nosso_numero_safra?: string | null
+          nosso_numero_seq?: string | null
           numero_parcela?: number
           numero_titulo?: string
           pausa_regua_automatica?: boolean
