@@ -91,7 +91,7 @@ export function FilaPedidosPorArea({
       if (!el) return;
       const top = el.getBoundingClientRect().top;
       const available = window.innerHeight - top - FOOTER_RESERVE;
-      const rows = Math.max(5, Math.floor((available - 48) / ROW_HEIGHT));
+      const rows = Math.max(3, Math.floor((available - 48) / ROW_HEIGHT) - 1);
       setAutoPageSize(rows);
     }
     recompute();
