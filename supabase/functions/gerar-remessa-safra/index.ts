@@ -6,34 +6,115 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// ─── Helpers CNAB ───────────────────────────────────────────────────────────
+
 function zeroLeft(val: string | number, length: number): string {
   return String(val).replace(/\D/g, "").padStart(length, "0").slice(-length);
 }
 
 function spaceRight(val: string, length: number): string {
-  return val
-    .toUpperCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .padEnd(length, " ")
-    .slice(0, length);
+  return val.toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").padEnd(length, " ").slice(0, length);
 }
 
-function blanks(n: number): string {
-  return " ".repeat(n);
-}
+function blanks(n: number): string { return " ".repeat(n); }
 
 function fmtDDMMAA(iso: string): string {
   const d = new Date(iso + (iso.length === 10 ? "T00:00:00" : ""));
-  const dd = String(d.getDate()).padStart(2, "0");
-  const mm = String(d.getMonth() + 1).padStart(2, "0");
-  const aa = String(d.getFullYear()).slice(-2);
-  return `${dd}${mm}${aa}`;
+  return String(d.getDate()).padStart(2,"0") + String(d.getMonth()+1).padStart(2,"0") + String(d.getFullYear()).slice(-2);
 }
 
 function fmtValor(valor: number, length: number): string {
-  const centavos = Math.round(valor * 100);
-  return String(centavos).padStart(length, "0").slice(-length);
+  return String(Math.round(valor * 100)).padStart(length, "0").slice(-length);
+}
+
+// ─── Helpers linha digitável / código de barras ──────────────────────────────
+
+function dvMod10(numero: string): number {
+  let soma = 0, mult = 2;
+  for (const d of [...numero].reverse()) {
+    const v = parseInt(d) * mult;
+    soma += Math.floor(v / 10) + (v % 10);
+    mult = mult === 2 ? 1 : 2;
+  }
+  return (10 - soma % 10) % 10;
+}
+
+function dvGeralMod11(barras43: string): number {
+  let soma = 0, mult = 2;
+  for (const d of [...barras43].reverse()) {
+    soma += parseInt(d) * mult;
+    mult = mult < 9 ? mult + 1 : 2;
+  }
+  const resto = soma % 11;
+  return resto <= 1 ? 1 : 11 - resto;
+}
+
+function fatorVencimento(vencimentoIso: string): number {
+  const base = new Date("2022-05-29T00:00:00");
+  const venc = new Date(vencimentoIso + "T00:00:00");
+  return Math.round((venc.getTime() - base.getTime()) / 86400000);
+}
+
+function montarLinhaDigitavel(
+  nossoNumero: string,
+  vencimentoIso: string,
+  valorCents: number,
+  params: Record<string, string>
+): { linha: string; barras: string } {
+  const agencia   = params.agencia ?? "0005";
+  const conta7d   = (params.conta_com_dv ?? "000050058044406").slice(5, 12);
+  const c1Base    = params.campo1_fixo ?? "422970050";
+  const sufixoC3  = params.sufixo_campo3 ?? "2";
+
+  const contaMeio = conta7d.slice(1, -1);
+  const contaDv   = conta7d.slice(-1);
+
+  const c2Base = agencia + contaMeio + contaDv;
+  const c3Base = nossoNumero + sufixoC3;
+
+  const dv1 = dvMod10(c1Base);
+  const dv2 = dvMod10(c2Base);
+  const dv3 = dvMod10(c3Base);
+
+  const fator     = fatorVencimento(vencimentoIso);
+  const fatorStr  = String(fator).padStart(4, "0");
+  const valorStr  = String(valorCents).padStart(10, "0");
+  const campoLivre = c1Base.slice(4) + c2Base + c3Base;
+
+  const barras43  = "4229" + fatorStr + valorStr + campoLivre;
+  const dvGeral   = dvGeralMod11(barras43);
+  const barras    = barras43.slice(0, 4) + dvGeral + barras43.slice(4);
+
+  const linha = (
+    `${c1Base.slice(0,5)}.${c1Base.slice(5)}${dv1} ` +
+    `${c2Base.slice(0,5)}.${c2Base.slice(5)}${dv2} ` +
+    `${c3Base.slice(0,5)}.${c3Base.slice(5)}${dv3} ` +
+    `${dvGeral} ${fatorStr}${valorStr}`
+  );
+
+  return { linha, barras };
+}
+
+// ─── Sequencial do nosso número ──────────────────────────────────────────────
+
+async function alocarNossoNumero(sb: ReturnType<typeof createClient>): Promise<string> {
+  const { data, error } = await sb
+    .from("parametros_remessa_safra")
+    .select("valor")
+    .eq("chave", "nosso_numero_proximo")
+    .single();
+  if (error || !data) throw new Error("Parâmetro nosso_numero_proximo não encontrado");
+
+  const atual = parseInt((data as { valor: string }).valor, 10);
+  const proximo = atual + 1;
+
+  const { error: updErr } = await sb
+    .from("parametros_remessa_safra")
+    .update({ valor: String(proximo) })
+    .eq("chave", "nosso_numero_proximo");
+  if (updErr) throw new Error(`Erro ao incrementar nosso número: ${updErr.message}`);
+
+  return String(atual);
 }
 
 async function proximoSequencial(sb: ReturnType<typeof createClient>): Promise<number> {
@@ -46,13 +127,11 @@ async function proximoSequencial(sb: ReturnType<typeof createClient>): Promise<n
   return ((data as { nro_sequencial: number } | null)?.nro_sequencial ?? 0) + 1;
 }
 
+// ─── Montagem CNAB ────────────────────────────────────────────────────────────
+
 function gerarHeader(params: Record<string, string>, nroSeq: number, hoje: string): string {
   let h = "";
-  h += "0";
-  h += "1";
-  h += "REMESSA";
-  h += "01";
-  h += "COBRANCA";
+  h += "0"; h += "1"; h += "REMESSA"; h += "01"; h += "COBRANCA";
   h += blanks(7);
   h += params.conta_com_dv;
   h += blanks(6);
@@ -64,12 +143,12 @@ function gerarHeader(params: Record<string, string>, nroSeq: number, hoje: strin
   h += blanks(291);
   h += zeroLeft(nroSeq, 3);
   h += "000001";
-  if (h.length !== 400) throw new Error(`Header com ${h.length} chars (esperado 400)`);
+  if (h.length !== 400) throw new Error(`Header com ${h.length} chars`);
   return h;
 }
 
 // deno-lint-ignore no-explicit-any
-function gerarDetalhe(titulo: any, params: Record<string, string>, nroSeq: number, nroReg: number): string {
+function gerarDetalhe(titulo: any, nossoNumero: string, params: Record<string, string>, nroSeq: number, nroReg: number): string {
   const parceiro = titulo.parceiro;
   const docPagador = (parceiro.cnpj ?? parceiro.cpf ?? "").replace(/\D/g, "");
   const tipoInscricaoPagador = docPagador.length === 14 ? "02" : "01";
@@ -93,11 +172,9 @@ function gerarDetalhe(titulo: any, params: Record<string, string>, nroSeq: numbe
   d += params.conta_com_dv;
   d += blanks(6);
   d += usoLivre;
-  d += "000000000";
+  d += nossoNumero.padStart(9, "0");
   d += blanks(30);
-  d += "0";
-  d += "00";
-  d += " ";
+  d += "0"; d += "00"; d += " ";
   d += zeroLeft(params.dias_protesto ?? "00", 2);
   d += (params.tipo_carteira ?? "1");
   d += "01";
@@ -109,15 +186,10 @@ function gerarDetalhe(titulo: any, params: Record<string, string>, nroSeq: numbe
   d += (params.especie_titulo ?? "01");
   d += "N";
   d += fmtDDMMAA(new Date().toISOString().slice(0, 10));
-  d += instrucao1;
-  d += instrucao2;
+  d += instrucao1; d += instrucao2;
   d += jurosDia;
-  d += "000000";
-  d += "0000000000000";
-  d += "0000000000000";
-  d += dataMulta;
-  d += multaPct;
-  d += "000";
+  d += "000000"; d += "0000000000000"; d += "0000000000000";
+  d += dataMulta; d += multaPct; d += "000";
   d += tipoInscricaoPagador;
   d += zeroLeft(docPagador, 14);
   d += spaceRight(parceiro.razao_social ?? "", 40);
@@ -127,31 +199,29 @@ function gerarDetalhe(titulo: any, params: Record<string, string>, nroSeq: numbe
   d += zeroLeft(parceiro.cep ?? "", 8);
   d += spaceRight(parceiro.cidade ?? "", 15);
   d += spaceRight(parceiro.uf ?? "", 2);
-  d += blanks(30);
-  d += blanks(7);
+  d += blanks(30); d += blanks(7);
   d += "422";
   d += zeroLeft(nroSeq, 3);
   d += zeroLeft(nroReg, 6);
-  if (d.length !== 400) throw new Error(`Detalhe ${titulo.numero_titulo} com ${d.length} chars (esperado 400)`);
+  if (d.length !== 400) throw new Error(`Detalhe ${titulo.numero_titulo} com ${d.length} chars`);
   return d;
 }
 
-function gerarTrailer(nroSeq: number, qtdTitulos: number, valorTotal: number, nroRegFinal: number): string {
-  let t = "";
-  t += "9";
+function gerarTrailer(nroSeq: number, qtd: number, total: number, nroRegFinal: number): string {
+  let t = "9";
   t += blanks(367);
-  t += zeroLeft(qtdTitulos, 8);
-  t += fmtValor(valorTotal, 15);
+  t += zeroLeft(qtd, 8);
+  t += fmtValor(total, 15);
   t += zeroLeft(nroSeq, 3);
   t += zeroLeft(nroRegFinal, 6);
-  if (t.length !== 400) throw new Error(`Trailer com ${t.length} chars (esperado 400)`);
+  if (t.length !== 400) throw new Error(`Trailer com ${t.length} chars`);
   return t;
 }
 
+// ─── Handler ──────────────────────────────────────────────────────────────────
+
 serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
-  }
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
@@ -160,19 +230,12 @@ serve(async (req) => {
 
     const authHeader = req.headers.get("Authorization") ?? "";
     if (!authHeader.startsWith("Bearer ")) {
-      return new Response(JSON.stringify({ ok: false, erro: "Unauthorized" }), {
-        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return new Response(JSON.stringify({ ok: false, erro: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
-
-    const sbUser = createClient(supabaseUrl, anonKey, {
-      global: { headers: { Authorization: authHeader } },
-    });
+    const sbUser = createClient(supabaseUrl, anonKey, { global: { headers: { Authorization: authHeader } } });
     const { data: userData, error: userErr } = await sbUser.auth.getUser();
     if (userErr || !userData?.user) {
-      return new Response(JSON.stringify({ ok: false, erro: "Unauthorized" }), {
-        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return new Response(JSON.stringify({ ok: false, erro: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
     const callerId = userData.user.id;
     const sb = createClient(supabaseUrl, serviceKey);
@@ -180,56 +243,37 @@ serve(async (req) => {
     const body = await req.json();
     const tituloIds: string[] = Array.isArray(body.titulo_ids) ? body.titulo_ids : [];
     if (tituloIds.length === 0) {
-      return new Response(JSON.stringify({ ok: false, erro: "titulo_ids não pode ser vazio" }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return new Response(JSON.stringify({ ok: false, erro: "titulo_ids não pode ser vazio" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    const { data: paramRows, error: paramErr } = await sb
-      .from("parametros_remessa_safra")
-      .select("chave, valor");
+    const { data: paramRows, error: paramErr } = await sb.from("parametros_remessa_safra").select("chave, valor");
     if (paramErr) throw new Error(`Erro ao carregar parâmetros: ${paramErr.message}`);
     const params: Record<string, string> = {};
-    for (const row of (paramRows ?? []) as { chave: string; valor: string }[]) {
-      params[row.chave] = row.valor;
-    }
+    for (const row of (paramRows ?? []) as { chave: string; valor: string }[]) params[row.chave] = row.valor;
 
     const { data: titulos, error: titulosErr } = await sb
       .from("titulo_a_receber")
-      .select(`
-        id, numero_titulo, numero_parcela, total_parcelas,
-        valor_bruto, data_vencimento_atual, boleto_status, tipo_pagamento,
-        conta:contas_pagar_receber(
-          parceiro:parceiros_comerciais(
-            id, razao_social, cnpj, cpf, email,
-            cadastro_incompleto, logradouro, numero,
-            bairro, cep, cidade, uf
-          )
-        )
-      `)
+      .select(`id, numero_titulo, numero_parcela, total_parcelas, valor_bruto, data_vencimento_atual, boleto_status, tipo_pagamento,
+        conta:contas_pagar_receber(parceiro:parceiros_comerciais(id, razao_social, cnpj, cpf, email, cadastro_incompleto, logradouro, numero, bairro, cep, cidade, uf))`)
       .in("id", tituloIds);
     if (titulosErr) throw new Error(`Erro ao buscar títulos: ${titulosErr.message}`);
     if (!titulos || titulos.length === 0) {
-      return new Response(JSON.stringify({ ok: false, erro: "Nenhum título encontrado" }), {
-        status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return new Response(JSON.stringify({ ok: false, erro: "Nenhum título encontrado" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     const erros: Array<{ titulo_id: string; numero_titulo: string; motivo: string }> = [];
     for (const t of titulos as any[]) {
-      const parceiro = t.conta?.parceiro;
-      if (!parceiro) { erros.push({ titulo_id: t.id, numero_titulo: t.numero_titulo, motivo: "Parceiro não encontrado" }); continue; }
-      if (parceiro.cadastro_incompleto) erros.push({ titulo_id: t.id, numero_titulo: t.numero_titulo, motivo: "Cadastro incompleto" });
-      if (!parceiro.email) erros.push({ titulo_id: t.id, numero_titulo: t.numero_titulo, motivo: "E-mail não cadastrado" });
+      const p = t.conta?.parceiro;
+      if (!p) { erros.push({ titulo_id: t.id, numero_titulo: t.numero_titulo, motivo: "Parceiro não encontrado" }); continue; }
+      if (p.cadastro_incompleto) erros.push({ titulo_id: t.id, numero_titulo: t.numero_titulo, motivo: "Cadastro incompleto" });
+      if (!p.email) erros.push({ titulo_id: t.id, numero_titulo: t.numero_titulo, motivo: "E-mail não cadastrado" });
       if (Number(t.valor_bruto) <= 0) erros.push({ titulo_id: t.id, numero_titulo: t.numero_titulo, motivo: "Valor inválido" });
       if (new Date(t.data_vencimento_atual + "T00:00:00") < new Date(new Date().toDateString())) erros.push({ titulo_id: t.id, numero_titulo: t.numero_titulo, motivo: "Vencimento no passado" });
       if (t.tipo_pagamento !== "boleto") erros.push({ titulo_id: t.id, numero_titulo: t.numero_titulo, motivo: "Não é boleto" });
       if (t.boleto_status !== "pendente") erros.push({ titulo_id: t.id, numero_titulo: t.numero_titulo, motivo: `Status inválido: ${t.boleto_status}` });
     }
     if (erros.length > 0) {
-      return new Response(JSON.stringify({ ok: false, erro: "Títulos com bloqueios", erros }), {
-        status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return new Response(JSON.stringify({ ok: false, erro: "Títulos com bloqueios", erros }), { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     const nroSeq = await proximoSequencial(sb);
@@ -239,55 +283,52 @@ serve(async (req) => {
 
     let nroReg = 2;
     let valorTotal = 0;
+
+    const titulosComNN: Array<{ id: string; nossoNumero: string; linhaDigitavel: string; codigoBarras: string }> = [];
+
     for (const t of titulos as any[]) {
-      linhas.push(gerarDetalhe({ ...t, parceiro: t.conta?.parceiro }, params, nroSeq, nroReg));
+      const nossoNumero = await alocarNossoNumero(sb);
+      const valorCents  = Math.round(Number(t.valor_bruto) * 100);
+      const { linha, barras } = montarLinhaDigitavel(nossoNumero, t.data_vencimento_atual, valorCents, params);
+
+      titulosComNN.push({ id: t.id, nossoNumero, linhaDigitavel: linha, codigoBarras: barras });
+      linhas.push(gerarDetalhe({ ...t, parceiro: t.conta?.parceiro }, nossoNumero, params, nroSeq, nroReg));
       valorTotal += Number(t.valor_bruto);
       nroReg++;
     }
-    linhas.push(gerarTrailer(nroSeq, titulos.length, valorTotal, nroReg));
 
+    linhas.push(gerarTrailer(nroSeq, titulos.length, valorTotal, nroReg));
     const arquivoConteudo = linhas.join("\r\n") + "\r\n";
     const seqFormatado = String(nroSeq).padStart(3, "0");
     const arquivoNome = `FETELY_REMESSA_SAFRA_${hoje.replace(/-/g, "")}_${seqFormatado}.txt`;
 
     const { data: remessa, error: remessaErr } = await sb
       .from("remessas_safra")
-      .insert({
-        nro_sequencial: nroSeq,
-        gerado_por:     callerId,
-        qtd_titulos:    titulos.length,
-        valor_total:    valorTotal,
-        status:         "gerada",
-        arquivo_nome:   arquivoNome,
-      })
-      .select("id")
-      .single();
+      .insert({ nro_sequencial: nroSeq, gerado_por: callerId, qtd_titulos: titulos.length, valor_total: valorTotal, status: "gerada", arquivo_nome: arquivoNome })
+      .select("id").single();
     if (remessaErr || !remessa) throw new Error(`Erro ao gravar remessa: ${remessaErr?.message}`);
 
-    const { error: updErr } = await sb
-      .from("titulo_a_receber")
-      .update({ remessa_safra_id: remessa.id, boleto_status: "remessa_gerada" })
-      .in("id", tituloIds);
-    if (updErr) throw new Error(`Erro ao atualizar títulos: ${updErr.message}`);
+    for (const item of titulosComNN) {
+      const { error: updErr } = await sb
+        .from("titulo_a_receber")
+        .update({
+          remessa_safra_id: remessa.id,
+          boleto_status:    "remessa_gerada",
+          nosso_numero_seq: item.nossoNumero,
+          linha_digitavel:  item.linhaDigitavel,
+          codigo_barras_boleto: item.codigoBarras,
+        })
+        .eq("id", item.id);
+      if (updErr) throw new Error(`Erro ao atualizar título ${item.id}: ${updErr.message}`);
+    }
 
     return new Response(
-      JSON.stringify({
-        ok:               true,
-        arquivo_conteudo: arquivoConteudo,
-        arquivo_nome:     arquivoNome,
-        remessa_id:       remessa.id,
-        nro_sequencial:   nroSeq,
-        qtd_titulos:      titulos.length,
-        valor_total:      valorTotal,
-      }),
+      JSON.stringify({ ok: true, arquivo_conteudo: arquivoConteudo, arquivo_nome: arquivoNome, remessa_id: remessa.id, nro_sequencial: nroSeq, qtd_titulos: titulos.length, valor_total: valorTotal }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
 
   } catch (e) {
     console.error("gerar-remessa-safra erro fatal", e);
-    return new Response(
-      JSON.stringify({ ok: false, erro: e instanceof Error ? e.message : String(e) }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return new Response(JSON.stringify({ ok: false, erro: e instanceof Error ? e.message : String(e) }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
 });
