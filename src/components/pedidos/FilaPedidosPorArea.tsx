@@ -36,7 +36,7 @@ const PAGE_SIZE_OPTIONS = ["auto", 50, 100, 200, 500] as const;
 type PageSizeOption = (typeof PAGE_SIZE_OPTIONS)[number];
 const DEFAULT_PAGE_SIZE: PageSizeOption = "auto";
 const ROW_HEIGHT = 80; // px aprox (linhas com 2 linhas de texto)
-const FOOTER_RESERVE = 120;
+const FOOTER_RESERVE = 80;
 
 function buildPageRange(current: number, total: number): (number | "…")[] {
   if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
@@ -91,7 +91,7 @@ export function FilaPedidosPorArea({
       if (!el) return;
       const top = el.getBoundingClientRect().top;
       const available = window.innerHeight - top - FOOTER_RESERVE;
-      const rows = Math.max(3, Math.floor((available - 48) / ROW_HEIGHT) - 1);
+      const rows = Math.max(3, Math.floor(available / ROW_HEIGHT));
       setAutoPageSize(rows);
     }
     recompute();
@@ -397,7 +397,7 @@ export function FilaPedidosPorArea({
         </Table>
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-3 text-sm bg-background border-t border-border">
+      <div className="sticky bottom-0 z-30 flex flex-wrap items-center justify-between gap-3 px-6 py-3 text-sm bg-background border-t border-border shadow-[0_-2px_8px_-4px_hsl(var(--foreground)/0.1)]">
         <div className="flex items-center gap-2 text-muted-foreground">
           <span>
             {totalLinhas === 0
