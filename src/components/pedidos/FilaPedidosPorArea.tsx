@@ -365,7 +365,7 @@ export function FilaPedidosPorArea({
                         />
                       )}
 
-                      {p.estagio === "pre_faturado" && (
+                      {p.estagio === "pre_faturado" && !p.bling_id_destino && (
                         <Button
                           variant="outline"
                           size="sm"
