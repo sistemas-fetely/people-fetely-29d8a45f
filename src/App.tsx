@@ -230,23 +230,26 @@ const App = () => (
                 <Route index element={<Navigate to="/pedidos" replace />} />
                 <Route path="aguardando-pagamento" element={<AguardandoPagamentoFila />} />
               </Route>
-              <Route path="/recebimento/cobranca" element={<CobrancaFila />} />
               <Route path="/recebimento/cobranca/:pedidoId" element={<CobrancaDetalhe />} />
               <Route path="/recebimento/aguardando-pagamento/:pedidoId" element={<AguardandoPagamentoDetalhe />} />
               <Route path="/credito/regras-cadencia" element={<RegrasCadencia />} />
 
-              {/* ═══════════════════════════════════════════════
-                  App Pedidos — App Simples (sem sidebar lateral)
-                  Doutrina CASA-2: 1 tela + 5 tabs internas + querystring.
-                  ═══════════════════════════════════════════════ */}
-              <Route path="/pedidos" element={<PedidosIndex />} />
+              {/* Detail routes (sem sidebar) */}
               <Route path="/pedidos/:id" element={<PedidoDetalhe />} />
               <Route path="/parceiros/:id" element={<ParceiroDetalhe />} />
 
               {/* ═══════════════════════════════════════════════
-                  App Comercial — App Simples (CASA-2, sem sidebar)
+                  App Vendas — com sidebar lateral
+                  Absorve: Pedidos, Cobrança, NFs, Parceiros, Estoque Virtual
                   ═══════════════════════════════════════════════ */}
-              <Route path="/comercial/estoque-virtual" element={<EstoqueVirtual />} />
+              <Route element={<VendasLayout />}>
+                <Route path="/pedidos" element={<PedidosIndex />} />
+                <Route path="/recebimento/cobranca" element={<CobrancaFila />} />
+                <Route path="/vendas/nfs" element={<NfsDeVenda />} />
+                <Route path="/administrativo-fetely/parceiros" element={<Parceiros />} />
+                <Route path="/comercial/estoque-virtual" element={<EstoqueVirtual />} />
+              </Route>
+
 
 
               {/* SNCF — Portal + transversais (Tarefas, Templates, Usuários) */}
