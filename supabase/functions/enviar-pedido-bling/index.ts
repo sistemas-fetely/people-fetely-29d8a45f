@@ -170,6 +170,24 @@ serve(async (req) => {
       );
     }
 
+    // 7.5 Loja Fetely — lookup uma vez, cacheia em integracoes_config.config.loja_bling_id
+    let blingLojaId: number | null = (cfg.config as any)?.loja_bling_id ?? null;
+    if (!blingLojaId) {
+      try {
+        const lojas = await client.get("/lojas");
+        const loja = (lojas?.data || []).find(
+          (l: any) => (l.descricao || l.nome || "").toLowerCase().includes("fetely")
+        );
+        if (loja?.id) {
+          blingLojaId = loja.id;
+          const newConfig = { ...((cfg.config as any) || {}), loja_bling_id: loja.id };
+          await supabase.from("integracoes_config")
+            .update({ config: newConfig })
+            .eq("id", cfg.id);
+        }
+      } catch (_) { /* segue sem loja se GET /lojas falhar */ }
+    }
+
     // 8. Parcelas (uma por título)
     // Arredonda para 2 casas antes de somar (valor_bruto pode ter mais casas no banco).
     const blingParcelas = titulos.map((t: any) => ({
@@ -301,6 +319,12 @@ serve(async (req) => {
     }
 
     // 9d. Monta itens com produto.id (catálogo) ou fallback avulso
+    // Aplica desconto por linha para NF fiscal correta (imposto sobre valor líquido)
+    const descontoFator =
+      pedido.valor_bruto > 0 && pedido.valor_liquido < pedido.valor_bruto
+        ? pedido.valor_liquido / pedido.valor_bruto
+        : 1;
+
     const rawItens = (itens && itens.length > 0)
       ? itens.map((it: any) => {
           const blingProdId = it.sku ? cacheMap[it.sku] : null;
@@ -311,7 +335,7 @@ serve(async (req) => {
               : {}),                               // sync falhou → avulso (sem codigo, evita code 27)
             unidade: "UN",
             quantidade: Number(it.quantidade),
-            valor: parseFloat(Number(it.valor_unitario).toFixed(2)),
+            valor: parseFloat((Number(it.valor_unitario) * descontoFator).toFixed(2)),
           };
         })
       : null;
@@ -339,6 +363,7 @@ serve(async (req) => {
       numeroLoja: pedido.id_externo,
       data: pedido.data_pedido,
       contato: { id: Number(parceiro.bling_id) },
+      ...(blingLojaId ? { loja: { id: blingLojaId } } : {}),
       itens: blingItens,
       parcelas: blingParcelas,
       totalProdutos: rawItens ? totalProdutosCalc : totalExato,
@@ -346,6 +371,7 @@ serve(async (req) => {
       observacoes: pedido.contexto_anotacoes || `Pedido ${pedido.id_externo} via SNCF`,
     };
 
+    // Desconto residual (centavos de arredondamento por item) — normalmente < R$0,01
     if (descontoValor >= 0.01) {
       payload.desconto = { tipo: "VALOR", valor: descontoValor };
     }
@@ -387,13 +413,12 @@ serve(async (req) => {
     });
 
     if (sucesso) {
-      // 12. Carimba pedido e avança estágio
+      // 12. Carimba pedido
       await supabase.from("pedidos").update({
         bling_id_destino: blingId,
         bling_enviado_em: new Date().toISOString(),
         bling_enviado_por: userId,
         bling_envio_erro: null,
-        estagio: "em_separacao",
       }).eq("id", pedido_id);
 
       return ok({
