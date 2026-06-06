@@ -105,6 +105,18 @@ type Receita = {
   conta_bancaria_id: string;
   origem: string | null;
 };
+
+type TituloAReceber = {
+  id: string;
+  numero_titulo: string | null;
+  data_vencimento_atual: string | null;
+  valor_atual: number | null;
+  valor_bruto: number | null;
+  boleto_status: string | null;
+  tipo_pagamento: string | null;
+  conta: { parceiro: { razao_social: string | null } | null } | null;
+};
+
 type FiltroQualidade =
   | "todos"
   | "doc_tem" | "doc_falta"
@@ -135,6 +147,7 @@ export default function CaixaBanco() {
   const [buscarNFValor, setBuscarNFValor] = useState(0);
   const [filaIAOpen, setFilaIAOpen] = useState(false);
   const [filtroQual, setFiltroQual] = useState<FiltroQualidade>("todos");
+  const [receitaSubView, setReceitaSubView] = useState<"a_receber" | "recebido">("a_receber");
   const [modalDocNfId, setModalDocNfId] = useState<string | null>(null);
   const [modalDocOpen, setModalDocOpen] = useState(false);
   const [sort, setSort] = useState<SortState<
@@ -197,6 +210,43 @@ export default function CaixaBanco() {
     const t = busca.toLowerCase();
     return receitas.filter((r) => (r.descricao || "").toLowerCase().includes(t));
   }, [receitas, busca]);
+
+  // A receber — títulos em aberto (sem FK conta_bancaria — filtro de banco não se aplica aqui)
+  const { data: titulosAReceber = [] } = useQuery<TituloAReceber[]>({
+    queryKey: ["titulos-a-receber-caixa"],
+    enabled: tipoParam === "receitas" && receitaSubView === "a_receber",
+    queryFn: async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase as any)
+        .from("titulo_a_receber")
+        .select(`
+          id, numero_titulo, data_vencimento_atual, valor_atual, valor_bruto,
+          boleto_status, tipo_pagamento,
+          conta:contas_pagar_receber(
+            parceiro:parceiros_comerciais(razao_social)
+          )
+        `)
+        .not("status", "in", "(pago,pago_com_atraso,pago_judicial,cancelado,cancelado_recuperacao,baixado_por_perda)")
+        .order("data_vencimento_atual", { ascending: true });
+      if (error) throw error;
+      return (data || []) as TituloAReceber[];
+    },
+  });
+
+  const titulosFiltrados = useMemo(() => {
+    if (!busca.trim()) return titulosAReceber;
+    const q = busca.toLowerCase();
+    return titulosAReceber.filter(
+      (t) =>
+        (t.numero_titulo || "").toLowerCase().includes(q) ||
+        (t.conta?.parceiro?.razao_social || "").toLowerCase().includes(q),
+    );
+  }, [titulosAReceber, busca]);
+
+  const totalAReceber = useMemo(
+    () => titulosFiltrados.reduce((s, t) => s + Number(t.valor_atual ?? t.valor_bruto ?? 0), 0),
+    [titulosFiltrados],
+  );
 
   const totalReceitas = useMemo(
     () => receitasFiltradas.reduce((acc, r) => acc + Number(r.valor || 0), 0),
@@ -717,59 +767,163 @@ export default function CaixaBanco() {
         </div>
         )}
 
-        {/* Tabela de Receitas */}
+        {/* Aba Receitas — A receber + Recebido */}
         {tipoParam === "receitas" && (
           <div className="space-y-3">
-            <div className="flex items-baseline justify-between">
-              <h2 className="text-sm font-medium">
-                Receitas do período
-                <span className="ml-2 text-xs text-muted-foreground">
-                  ({receitasFiltradas.length} {receitasFiltradas.length === 1 ? "lançamento" : "lançamentos"})
-                </span>
-              </h2>
-              <div className="text-sm font-mono text-emerald-700">
-                Total: {formatBRL(totalReceitas)}
-              </div>
+            {/* Sub-pills */}
+            <div className="flex gap-2">
+              {(["a_receber", "recebido"] as const).map((v) => (
+                <button
+                  key={v}
+                  onClick={() => setReceitaSubView(v)}
+                  className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                    receitaSubView === v
+                      ? "bg-emerald-600 text-white"
+                      : "bg-muted text-muted-foreground hover:bg-muted/70"
+                  }`}
+                >
+                  {v === "a_receber" ? "A receber" : "Recebido"}
+                </button>
+              ))}
             </div>
 
-            {receitasFiltradas.length === 0 ? (
-              <div className="py-12 text-center text-sm text-muted-foreground">
-                Nenhuma receita no período/filtros atuais.
-              </div>
-            ) : (
-              <div className="border rounded-md overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Data</TableHead>
-                      <TableHead>Descrição</TableHead>
-                      <TableHead>Categoria</TableHead>
-                      <TableHead>Conta Bancária</TableHead>
-                      <TableHead className="text-right">Valor</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {receitasFiltradas.map((r) => {
-                      const cat = (categorias || []).find((c) => c.id === r.plano_contas_id);
-                      const cb = (contasBancarias || []).find((b) => b.id === r.conta_bancaria_id);
-                      return (
-                        <TableRow key={r.id}>
-                          <TableCell className="whitespace-nowrap text-xs">
-                            {new Date(r.data_transacao + "T00:00:00").toLocaleDateString("pt-BR")}
-                          </TableCell>
-                          <TableCell className="text-xs">{r.descricao || "—"}</TableCell>
-                          <TableCell className="text-xs">
-                            {cat ? cat.nome : <span className="text-muted-foreground">— sem categoria</span>}
-                          </TableCell>
-                          <TableCell className="text-xs">{cb?.nome_exibicao || "—"}</TableCell>
-                          <TableCell className="text-right font-mono whitespace-nowrap text-emerald-700">
-                            +{formatBRL(Number(r.valor))}
-                          </TableCell>
+            {/* Sub-view: A receber */}
+            {receitaSubView === "a_receber" && (
+              <div className="space-y-3">
+                <div className="flex items-baseline justify-between">
+                  <h2 className="text-sm font-medium">
+                    A receber
+                    <span className="ml-2 text-xs text-muted-foreground">
+                      ({titulosFiltrados.length} {titulosFiltrados.length === 1 ? "título" : "títulos"})
+                    </span>
+                  </h2>
+                  <div className="text-sm font-mono text-emerald-700">
+                    Total: {formatBRL(totalAReceber)}
+                  </div>
+                </div>
+
+                {titulosFiltrados.length === 0 ? (
+                  <div className="py-12 text-center text-sm text-muted-foreground">
+                    Nenhum título a receber com os filtros atuais.
+                  </div>
+                ) : (
+                  <div className="border rounded-md overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Vencimento</TableHead>
+                          <TableHead>Título</TableHead>
+                          <TableHead>Cliente</TableHead>
+                          <TableHead>Forma</TableHead>
+                          <TableHead>Boleto</TableHead>
+                          <TableHead className="text-right">Valor</TableHead>
                         </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
+                      </TableHeader>
+                      <TableBody>
+                        {titulosFiltrados.map((t) => {
+                          const hoje = new Date().toISOString().slice(0, 10);
+                          const venceu = (t.data_vencimento_atual ?? "9999") < hoje;
+                          const bsCfg: Record<string, { label: string; cls: string }> = {
+                            pendente:       { label: "Pendente",       cls: "bg-gray-100 text-gray-600" },
+                            remessa_gerada: { label: "Remessa gerada", cls: "bg-yellow-100 text-yellow-800" },
+                            registrado:     { label: "Registrado",     cls: "bg-blue-100 text-blue-800" },
+                            pago_manual:    { label: "Pago (manual)",  cls: "bg-emerald-100 text-emerald-800" },
+                            pago_banco:     { label: "Pago (Safra)",   cls: "bg-green-700 text-white" },
+                            rejeitado:      { label: "Rejeitado",      cls: "bg-red-100 text-red-800" },
+                            vencido:        { label: "Vencido",        cls: "bg-orange-100 text-orange-800" },
+                          };
+                          const bs = t.boleto_status ? bsCfg[t.boleto_status] : null;
+                          return (
+                            <TableRow key={t.id}>
+                              <TableCell className="whitespace-nowrap text-xs">
+                                {t.data_vencimento_atual
+                                  ? new Date(t.data_vencimento_atual + "T00:00:00").toLocaleDateString("pt-BR")
+                                  : "—"}
+                              </TableCell>
+                              <TableCell className="text-xs">{t.numero_titulo ?? "—"}</TableCell>
+                              <TableCell className="text-xs">
+                                {t.conta?.parceiro?.razao_social ?? "—"}
+                              </TableCell>
+                              <TableCell className="text-xs">
+                                {t.tipo_pagamento?.replace("_", " ") ?? "—"}
+                              </TableCell>
+                              <TableCell className="text-xs">
+                                {bs ? (
+                                  <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-medium ${bs.cls}`}>
+                                    {bs.label}
+                                  </span>
+                                ) : (
+                                  "—"
+                                )}
+                              </TableCell>
+                              <TableCell className="text-right font-mono whitespace-nowrap text-emerald-700">
+                                {formatBRL(Number(t.valor_atual ?? t.valor_bruto ?? 0))}
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Sub-view: Recebido */}
+            {receitaSubView === "recebido" && (
+              <div className="space-y-3">
+                <div className="flex items-baseline justify-between">
+                  <h2 className="text-sm font-medium">
+                    Recebido
+                    <span className="ml-2 text-xs text-muted-foreground">
+                      ({receitasFiltradas.length} {receitasFiltradas.length === 1 ? "lançamento" : "lançamentos"})
+                    </span>
+                  </h2>
+                  <div className="text-sm font-mono text-emerald-700">
+                    Total: {formatBRL(totalReceitas)}
+                  </div>
+                </div>
+
+                {receitasFiltradas.length === 0 ? (
+                  <div className="py-12 text-center text-sm text-muted-foreground">
+                    Nenhuma receita recebida no período/filtros atuais.
+                  </div>
+                ) : (
+                  <div className="border rounded-md overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Data</TableHead>
+                          <TableHead>Descrição</TableHead>
+                          <TableHead>Categoria</TableHead>
+                          <TableHead>Conta Bancária</TableHead>
+                          <TableHead className="text-right">Valor</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {receitasFiltradas.map((r) => {
+                          const cat = (categorias || []).find((c) => c.id === r.plano_contas_id);
+                          const cb = (contasBancarias || []).find((b) => b.id === r.conta_bancaria_id);
+                          return (
+                            <TableRow key={r.id}>
+                              <TableCell className="whitespace-nowrap text-xs">
+                                {new Date(r.data_transacao + "T00:00:00").toLocaleDateString("pt-BR")}
+                              </TableCell>
+                              <TableCell className="text-xs">{r.descricao || "—"}</TableCell>
+                              <TableCell className="text-xs">
+                                {cat ? cat.nome : <span className="text-muted-foreground">— sem categoria</span>}
+                              </TableCell>
+                              <TableCell className="text-xs">{cb?.nome_exibicao || "—"}</TableCell>
+                              <TableCell className="text-right font-mono whitespace-nowrap text-emerald-700">
+                                +{formatBRL(Number(r.valor))}
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
               </div>
             )}
           </div>
