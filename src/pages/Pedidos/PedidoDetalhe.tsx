@@ -144,6 +144,16 @@ export default function PedidoDetalhe() {
   const transportadoras = useTransportadoras();
   const salvarDadosEnvio = useSalvarDadosEnvio();
 
+  const pesoBrutoNum = parseFloat(pesoBruto) || Number(data?.pedido?.peso_bruto_total) || 0;
+  const cubagemTotal = Number(data?.pedido?.cubagem_total) || 0;
+  const pesoCobradoEst = cubagemTotal > 0 ? Math.max(pesoBrutoNum, cubagemTotal * 300) : pesoBrutoNum;
+  const cepEstimativa = data?.pedido?.endereco_entrega?.cep ?? data?.parceiro?.cep ?? null;
+  const freteEst = useFreteEstimado(
+    transportadoraId || null,
+    cepEstimativa,
+    pesoCobradoEst > 0 ? pesoCobradoEst : null
+  );
+
   useEffect(() => {
     if (priorizado) {
       setUrgencia(priorizado.urgencia_declarada || "normal");
