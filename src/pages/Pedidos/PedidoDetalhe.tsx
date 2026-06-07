@@ -256,6 +256,11 @@ export default function PedidoDetalhe() {
             <div>
               <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-2">Pedido</p>
               <Linha label="ID externo" value={pedido.id_externo} />
+              {parceiro?.id && (
+                <div className="py-1">
+                  <EditarProgramaInline parceiro_id={parceiro.id} nivel_atual={parceiro.nivel_programa || "convive"} categoria_ka_atual={parceiro.categoria_ka ?? null} />
+                </div>
+              )}
               <Linha label="Data" value={fmtDate(pedido.data_pedido)} />
               <Linha label="Recebido em" value={fmtDateTime(pedido.recebido_em)} />
               <Linha label="Via" value={pedido.recebido_via} />
