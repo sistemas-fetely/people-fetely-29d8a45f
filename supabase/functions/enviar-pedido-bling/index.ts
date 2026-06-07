@@ -338,13 +338,29 @@ serve(async (req) => {
     }
 
     // 9d. Monta itens com produto.id (catálogo) ou fallback avulso
-    // Aplica desconto por TOTAL DE LINHA (não por preço unitário)
-    // lineTotal = round(val_unit × qty × fator, 2) → erro máx ±0,005/linha
-    // vs round(val_unit × fator, 2) × qty → erro máx ±0,005×qty/linha (R$0,77 no SHOP FEST)
-    const descontoFator =
+    // CIF (cliente paga frete embutido no valor_liquido):
+    //   totalProdutos = valor_liquido - valor_frete
+    //   frete_bling   = valor_frete
+    //   total         = valor_liquido = sum(parcelas) → sem code 22
+    //   NF: produtos separados do frete, tributação correta
+    //
+    // FOB (Fetely absorve frete como benefício comercial):
+    //   totalProdutos = valor_liquido
+    //   frete_bling   = 0
+    //   total         = valor_liquido = sum(parcelas) → sem code 22
+    const isCIF = (pedido.frete_tipo === "CIF") && (Number(pedido.valor_frete ?? 0) > 0);
+    const valorFrete = isCIF ? Number(pedido.valor_frete) : 0;
+
+    // Fator de desconto por modalidade
+    const baseDescontoFator =
       pedido.valor_bruto > 0 && pedido.valor_liquido < pedido.valor_bruto
         ? pedido.valor_liquido / pedido.valor_bruto
         : 1;
+
+    // CIF: retira frete do base de itens → itens somam (valor_liquido - valor_frete)
+    const descontoFator = isCIF && pedido.valor_bruto > 0
+      ? (pedido.valor_liquido - valorFrete) / pedido.valor_bruto
+      : baseDescontoFator;
 
     const rawItens = (itens && itens.length > 0)
       ? itens.map((it: any) => {
@@ -353,17 +369,15 @@ serve(async (req) => {
           const lineTotal = parseFloat((Number(it.valor_unitario) * qty * descontoFator).toFixed(2));
           return {
             descricao: stripQtdSuffix(it.descricao),
-            ...(blingProdId
-              ? { produto: { id: blingProdId } }
-              : {}),
+            ...(blingProdId ? { produto: { id: blingProdId } } : {}),
             unidade: "UN",
             quantidade: qty,
-            valor: parseFloat((lineTotal / qty).toFixed(4)), // 4 casas p/ Bling recalcular corretamente
+            valor: parseFloat((lineTotal / qty).toFixed(4)),
           };
         })
       : null;
 
-    // totalProdutos = sum dos lineTotals (base de arredondamento correta)
+    // totalProdutosCalc: CIF → valor_liquido - valor_frete; FOB → valor_liquido
     const totalProdutosCalc = rawItens
       ? parseFloat(
           rawItens
@@ -372,21 +386,17 @@ serve(async (req) => {
         )
       : totalExato;
 
-    // descontoValor: garante totalProdutos - desconto = totalExato = sum(parcelas)
-    const descontoValor = parseFloat((totalProdutosCalc - totalExato).toFixed(2));
+    // Residual de arredondamento por linha (esperado ≤ R$0,10 com método de lineTotal)
+    const descontoValorCalc = parseFloat((totalProdutosCalc - (totalExato - valorFrete)).toFixed(2));
 
-    // Itens já com preços descontados. Residual de arredondamento vai para `desconto` global.
-    // Bling valida: total = totalProdutos - desconto → sum(parcelas). Essa é a única forma
-    // garantida quando qty arbitrária impede ajuste exato de último item.
     const blingItens = rawItens ?? [{
       descricao: `Pedido FOP #${pedido.id_externo}`,
       quantidade: 1,
-      valor: totalExato,
+      valor: isCIF ? (totalExato - valorFrete) : totalExato,
     }];
 
     // 10. Payload final
-    const valorFrete = Number(pedido.valor_frete ?? 0);
-
+    // total = totalProdutos + frete_bling - desconto = totalExato = sum(parcelas) ✓
     const payload: Record<string, any> = {
       numeroLoja: pedido.id_externo,
       data: pedido.data_pedido,
@@ -394,19 +404,19 @@ serve(async (req) => {
       ...(blingLojaId ? { loja: { id: blingLojaId }, canal: { id: blingLojaId } } : {}),
       itens: blingItens,
       parcelas: blingParcelas,
-      totalProdutos: rawItens ? totalProdutosCalc : totalExato,
+      totalProdutos: rawItens ? totalProdutosCalc : (isCIF ? totalExato - valorFrete : totalExato),
+      ...(valorFrete > 0 ? { frete: valorFrete } : {}),
       total: totalExato,
       observacoes: pedido.contexto_anotacoes || `Pedido ${pedido.id_externo} via SNCF`,
     };
 
-    // Desconto residual de arredondamento por item — normalmente poucos centavos
-    // Itens saem com preço líquido (desconto já embutido); residual é inevitável
-    if (descontoValor >= 0.01) {
-      payload.desconto = { tipo: "VALOR", valor: descontoValor };
+    // Desconto residual de arredondamento (esperado zero ou centavos)
+    if (descontoValorCalc >= 0.01) {
+      payload.desconto = { tipo: "VALOR", valor: descontoValorCalc };
     }
 
-    // Fix 4: tipo FOB (1) sempre que há frete; sem frete = sem ocorrência (9)
-    const tipoFrete = valorFrete > 0 ? 1 : 9;
+    // Frete por conta: CIF → FOB (destinatário/cliente paga frete); FOB → sem ocorrência
+    const tipoFrete = isCIF ? 1 : 9;
     const pesoReal = Number(pedido.peso_bruto_total ?? 0);
 
     // Fix 5: pesoBruto na NF = peso REAL (não peso cubagem)
