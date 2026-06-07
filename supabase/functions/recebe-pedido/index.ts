@@ -124,11 +124,19 @@ Deno.serve(async (req) => {
     }
 
     // Persiste frete (RPC não tem esses params — UPDATE direto pós-inserção)
-    if (data?.pedido_id && (body.valor_frete != null || body.frete_tipo != null)) {
-      await supabase.from("pedidos").update({
-        valor_frete: body.valor_frete ?? 0,
-        frete_tipo:  body.frete_tipo  ?? null,
-      }).eq("id", data.pedido_id);
+    // Regra Fetely: se valor_frete = 0, calcula 5% do valor_bruto (frete CIF padrão)
+    if (data?.pedido_id) {
+      const valorFreteBruto = Number(body.valor_frete ?? 0);
+      const valorFreteFinal = valorFreteBruto > 0
+        ? valorFreteBruto
+        : parseFloat((Number(body.valor_bruto ?? 0) * 0.05).toFixed(2));
+
+      if (body.frete_tipo != null || valorFreteFinal > 0) {
+        await supabase.from("pedidos").update({
+          valor_frete: valorFreteFinal,
+          frete_tipo:  body.frete_tipo ?? null,
+        }).eq("id", data.pedido_id);
+      }
     }
 
     console.log("[recebe-pedido] Sucesso", {
