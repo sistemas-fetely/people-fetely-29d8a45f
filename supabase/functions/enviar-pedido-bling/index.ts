@@ -351,18 +351,25 @@ serve(async (req) => {
     const temFrete = Number(pedido.valor_frete ?? 0) > 0;
     const valorFrete = temFrete ? Number(pedido.valor_frete) : 0;
 
-    // Itens ao preço de lista (sem desconto por item).
-    // O desconto real (valor_bruto - valor_liquido) vai no campo payload.desconto.
-    // Validação Bling: sum(itens) - desconto == sum(parcelas) == totalExato ✓
+    // Fator de desconto aplicado por linha — garante sum(itens) == sum(parcelas) (validação Bling).
+    // Bling não subtrai o campo desconto na validação: itens devem chegar já com preço líquido.
+    const descontoFator =
+      pedido.valor_bruto > 0 && pedido.valor_liquido < pedido.valor_bruto
+        ? pedido.valor_liquido / pedido.valor_bruto
+        : 1;
+
     const rawItens = (itens && itens.length > 0)
       ? itens.map((it: any) => {
           const blingProdId = it.sku ? cacheMap[it.sku] : null;
+          const qty = Number(it.quantidade);
+          // Total da linha com desconto proporcional (evita acúmulo de erro por unidade)
+          const lineTotal = parseFloat((Number(it.valor_unitario) * qty * descontoFator).toFixed(2));
           return {
             descricao: stripQtdSuffix(it.descricao),
             ...(blingProdId ? { produto: { id: blingProdId } } : {}),
             unidade: "UN",
-            quantidade: Number(it.quantidade),
-            valor: parseFloat(Number(it.valor_unitario).toFixed(4)),
+            quantidade: qty,
+            valor: parseFloat((lineTotal / qty).toFixed(4)),
           };
         })
       : null;
