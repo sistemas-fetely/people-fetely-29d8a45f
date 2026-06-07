@@ -426,24 +426,40 @@ export default function PedidoDetalhe() {
 
           <Separator />
 
-          {/* Itens */}
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-sm font-semibold">Itens do pedido</p>
-              <span className="text-xs text-muted-foreground">{itens.length} {itens.length === 1 ? "item" : "itens"}</span>
-            </div>
-            {itens.length === 0
-              ? <p className="text-sm text-muted-foreground text-center py-6">Itens ainda não importados.</p>
-              : itens.map((item: any) => (
-                <div key={item.id} className="flex justify-between items-center gap-3 py-2.5 border-b border-border/40 last:border-0">
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium truncate">{item.descricao}</p>
-                    <p className="text-xs text-muted-foreground">{item.sku && `SKU ${item.sku} · `}{item.quantidade} × {fmtBRL.format(item.valor_unitario)}{item.desconto_pct > 0 && ` · ${item.desconto_pct}% desc`}</p>
+          {/* Itens + Tabs lado a lado */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-sm font-semibold">Itens do pedido</p>
+                <span className="text-xs text-muted-foreground">{itens.length} {itens.length === 1 ? "item" : "itens"}</span>
+              </div>
+              {itens.length === 0
+                ? <p className="text-sm text-muted-foreground text-center py-6">Itens ainda não importados.</p>
+                : itens.map((item: any) => (
+                  <div key={item.id} className="flex justify-between items-center gap-3 py-2.5 border-b border-border/40 last:border-0">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium truncate">{item.descricao}</p>
+                      <p className="text-xs text-muted-foreground">{item.sku && `SKU ${item.sku} · `}{item.quantidade} × {fmtBRL.format(item.valor_unitario)}{item.desconto_pct > 0 && ` · ${item.desconto_pct}% desc`}</p>
+                    </div>
+                    <p className="text-sm font-semibold shrink-0">{fmtBRL.format(item.subtotal || 0)}</p>
                   </div>
-                  <p className="text-sm font-semibold shrink-0">{fmtBRL.format(item.subtotal || 0)}</p>
-                </div>
-              ))
-            }
+                ))
+              }
+            </div>
+
+            <Tabs defaultValue="parcelas" className="space-y-3">
+              <TabsList>
+                <TabsTrigger value="parcelas">Parcelas</TabsTrigger>
+                <TabsTrigger value="analise">Análise IA</TabsTrigger>
+                <TabsTrigger value="timeline">Histórico</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="parcelas"><ParcelasTab pedidoId={pedido.id} /></TabsContent>
+              <TabsContent value="analise">
+                <CardAnalisePedido pedido_id={pedido.id} status={pedido.analise_pedido_status ?? null} motivo={pedido.analise_pedido_motivo ?? null} detalhes={pedido.analise_pedido_detalhes ?? null} executada_em={pedido.analise_pedido_executada_em ?? null} />
+              </TabsContent>
+              <TabsContent value="timeline"><PedidoTimeline eventos={eventos} /></TabsContent>
+            </Tabs>
           </div>
 
           {/* Urgência */}
@@ -474,19 +490,6 @@ export default function PedidoDetalhe() {
             </Button>
           </div>
 
-          <Tabs defaultValue="parcelas" className="space-y-3">
-            <TabsList>
-              <TabsTrigger value="parcelas">Parcelas</TabsTrigger>
-              <TabsTrigger value="analise">Análise IA</TabsTrigger>
-              <TabsTrigger value="timeline">Histórico</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="parcelas"><ParcelasTab pedidoId={pedido.id} /></TabsContent>
-            <TabsContent value="analise">
-              <CardAnalisePedido pedido_id={pedido.id} status={pedido.analise_pedido_status ?? null} motivo={pedido.analise_pedido_motivo ?? null} detalhes={pedido.analise_pedido_detalhes ?? null} executada_em={pedido.analise_pedido_executada_em ?? null} />
-            </TabsContent>
-            <TabsContent value="timeline"><PedidoTimeline eventos={eventos} /></TabsContent>
-          </Tabs>
 
           {estagioFinal && (
             <div className={cn("rounded-lg border p-4 text-sm", pedido.estagio === "cancelado" ? "border-destructive/30 bg-destructive/5 text-destructive" : "border-emerald-500/30 bg-emerald-500/5 text-emerald-700")}>
