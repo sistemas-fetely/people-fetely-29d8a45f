@@ -344,12 +344,10 @@ serve(async (req) => {
     //   total         = valor_liquido = sum(parcelas) → sem code 22
     //   NF: produtos separados do frete, tributação correta
     //
-    // FOB (Fetely absorve frete como benefício comercial):
-    //   totalProdutos = valor_liquido
-    //   frete_bling   = 0
-    //   total         = valor_liquido = sum(parcelas) → sem code 22
-    const isCIF = (pedido.frete_tipo === "CIF") && (Number(pedido.valor_frete ?? 0) > 0);
-    const valorFrete = isCIF ? Number(pedido.valor_frete) : 0;
+    // FOB = cliente paga frete (Free On Board — destinatário) → frete entra no total NF
+    // CIF = Fetely absorve frete (Cost Insurance Freight — remetente) → sem frete no total
+    const isFreteCliente = (pedido.frete_tipo === "FOB") && (Number(pedido.valor_frete ?? 0) > 0);
+    const valorFrete = isFreteCliente ? Number(pedido.valor_frete) : 0;
 
     // Fator de desconto por modalidade
     const baseDescontoFator =
@@ -357,8 +355,8 @@ serve(async (req) => {
         ? pedido.valor_liquido / pedido.valor_bruto
         : 1;
 
-    // CIF: retira frete do base de itens → itens somam (valor_liquido - valor_frete)
-    const descontoFator = isCIF && pedido.valor_bruto > 0
+    // FOB: retira frete do base de itens → itens somam (valor_liquido - valor_frete)
+    const descontoFator = isFreteCliente && pedido.valor_bruto > 0
       ? (pedido.valor_liquido - valorFrete) / pedido.valor_bruto
       : baseDescontoFator;
 
@@ -395,11 +393,10 @@ serve(async (req) => {
     const blingItens = rawItens ?? [{
       descricao: `Pedido FOP #${pedido.id_externo}`,
       quantidade: 1,
-      valor: isCIF ? (totalExato - valorFrete) : totalExato,
+      valor: isFreteCliente ? (totalExato - valorFrete) : totalExato,
     }];
 
     // 10. Payload final
-    // total = totalProdutos + frete_bling - desconto = totalExato = sum(parcelas) ✓
     const payload: Record<string, any> = {
       numeroLoja: pedido.id_externo,
       data: pedido.data_pedido,
@@ -407,19 +404,18 @@ serve(async (req) => {
       ...(blingLojaId ? { loja: { id: blingLojaId }, canal: { id: blingLojaId } } : {}),
       itens: blingItens,
       parcelas: blingParcelas,
-      totalProdutos: rawItens ? totalProdutosCalc : (isCIF ? totalExato - valorFrete : totalExato),
+      totalProdutos: rawItens ? totalProdutosCalc : (isFreteCliente ? totalExato - valorFrete : totalExato),
       ...(valorFrete > 0 ? { frete: valorFrete } : {}),
       total: totalExato,
       observacoes: pedido.contexto_anotacoes || `Pedido ${pedido.id_externo} via SNCF`,
     };
 
-    // Desconto residual de arredondamento (esperado zero ou centavos)
     if (descontoValorCalc >= 0.01) {
       payload.desconto = { tipo: "VALOR", valor: descontoValorCalc };
     }
 
-    // Frete por conta: CIF → FOB (destinatário/cliente paga frete); FOB → sem ocorrência
-    const tipoFrete = isCIF ? 1 : 9;
+    // FOB (cliente paga) → fretePorConta = 1 (destinatário); CIF (Fetely absorve) → 9 (sem ocorrência)
+    const tipoFrete = isFreteCliente ? 1 : 9;
     const pesoReal = Number(pedido.peso_bruto_total ?? 0);
 
     // Fix 5: pesoBruto na NF = peso REAL (não peso cubagem)
