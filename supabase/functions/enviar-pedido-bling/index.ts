@@ -427,6 +427,7 @@ serve(async (req) => {
       payload.transporte = {
         fretePorConta: tipoFrete,
         ...(blingTransportadoraId ? { transportadora: blingTransportadoraId } : transpNome ? { transportadora: { nome: transpNome } } : {}),
+        ...(valorFrete > 0 ? { frete: parseFloat(valorFrete.toFixed(2)) } : {}),
         ...(pesoReal > 0 ? { pesoBruto: parseFloat(pesoReal.toFixed(3)) } : {}),
         ...(pesoReal > 0 ? { pesoLiquido: parseFloat(pesoReal.toFixed(3)) } : {}),
       };
