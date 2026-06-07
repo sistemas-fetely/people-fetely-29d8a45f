@@ -314,7 +314,7 @@ export default function PedidoDetalhe() {
                   )}
                 </span>
               </div>
-              {parceiro?.id && <div className="py-2"><EditarProgramaInline parceiro_id={parceiro.id} nivel_atual={parceiro.nivel_programa || "convive"} categoria_ka_atual={parceiro.categoria_ka ?? null} /></div>}
+              
               <Button variant="outline" size="sm" className="w-full gap-2 mt-2" onClick={() => parceiro?.id && navigate(`/parceiros/${parceiro.id}`, { state: { from: location.pathname } })}>
                 <ExternalLink className="h-3.5 w-3.5" />Ver perfil completo
               </Button>
