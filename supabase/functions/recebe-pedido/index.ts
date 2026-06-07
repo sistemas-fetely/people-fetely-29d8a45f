@@ -123,6 +123,14 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Persiste frete (RPC não tem esses params — UPDATE direto pós-inserção)
+    if (data?.pedido_id && (body.valor_frete != null || body.frete_tipo != null)) {
+      await supabase.from("pedidos").update({
+        valor_frete: body.valor_frete ?? 0,
+        frete_tipo:  body.frete_tipo  ?? null,
+      }).eq("id", data.pedido_id);
+    }
+
     console.log("[recebe-pedido] Sucesso", {
       id_externo: body.id_externo,
       pedido_id: data?.pedido_id,
