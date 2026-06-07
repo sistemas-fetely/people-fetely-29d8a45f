@@ -7,18 +7,20 @@ interface DadosEnvio {
   transportadoraId: string | null;
   pesoBrutoTotal: number;
   freteTipo: string | null;
+  valorFrete: number | null;
 }
 
 export function useSalvarDadosEnvio() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ pedidoId, transportadoraId, pesoBrutoTotal, freteTipo }: DadosEnvio) => {
+    mutationFn: async ({ pedidoId, transportadoraId, pesoBrutoTotal, freteTipo, valorFrete }: DadosEnvio) => {
       const { error } = await (supabase as any)
         .from("pedidos")
         .update({
           transportadora_id: transportadoraId || null,
           peso_bruto_total: pesoBrutoTotal,
           frete_tipo: freteTipo || null,
+          valor_frete: valorFrete ?? null,
         })
         .eq("id", pedidoId);
       if (error) throw error;
