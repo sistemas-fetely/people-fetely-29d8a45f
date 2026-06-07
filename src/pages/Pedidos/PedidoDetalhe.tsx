@@ -292,7 +292,7 @@ export default function PedidoDetalhe() {
               )}
               {pedido.bling_id_destino && <Linha label="Bling ID" value={`#${pedido.bling_id_destino}`} />}
             </div>
-            <div>
+            {/* <div>
               <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-2">Cliente</p>
               <Linha label="Razão social" value={parceiro?.razao_social} />
               <div className="flex justify-between gap-3 text-sm py-1.5 border-b border-border/40">
@@ -319,7 +319,7 @@ export default function PedidoDetalhe() {
                 <ExternalLink className="h-3.5 w-3.5" />Ver perfil completo
               </Button>
               
-            </div>
+            </div> */}
           </div>
 
           {estagio === "pre_faturado" && (
