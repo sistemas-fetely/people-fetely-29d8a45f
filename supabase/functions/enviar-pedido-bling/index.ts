@@ -185,25 +185,25 @@ serve(async (req) => {
       );
     }
 
-    // 7.5 Loja Fetely — lookup uma vez, cacheia em integracoes_config.config.loja_bling_id
+    // 7.5 Canal/Loja Fetely — Bling v3 pode usar "canal" ou "loja" — tenta os dois endpoints
     let blingLojaId: number | null = (cfg.config as any)?.loja_bling_id ?? null;
     if (!blingLojaId) {
-      try {
-        const lojas = await client.get("/lojas");
-        const lista = lojas?.data ?? lojas?.items ?? lojas ?? [];
-        console.log("[loja-lookup] total:", Array.isArray(lista) ? lista.length : "não-array", JSON.stringify(lista).slice(0, 300));
-        const loja = Array.isArray(lista)
-          ? lista.find((l: any) =>
-              (l.descricao || l.nome || l.nome_fantasia || "").toLowerCase().includes("fetely")
-            )
-          : null;
-        if (loja?.id) {
-          blingLojaId = loja.id;
-          const newConfig = { ...((cfg.config as any) || {}), loja_bling_id: loja.id };
-          await supabase.from("integracoes_config").update({ config: newConfig }).eq("id", cfg.id);
-        }
-      } catch (e) {
-        console.log("[loja-lookup] erro:", e);
+      for (const endpoint of ["/canais-venda", "/lojas"]) {
+        try {
+          const resp = await client.get(endpoint);
+          const lista = resp?.data ?? resp?.items ?? (Array.isArray(resp) ? resp : []);
+          const found = Array.isArray(lista)
+            ? lista.find((l: any) =>
+                (l.descricao || l.nome || l.situacao || "").toLowerCase().includes("fetely")
+              )
+            : null;
+          if (found?.id) {
+            blingLojaId = found.id;
+            const newConfig = { ...((cfg.config as any) || {}), loja_bling_id: found.id };
+            await supabase.from("integracoes_config").update({ config: newConfig }).eq("id", cfg.id);
+            break;
+          }
+        } catch (_) { /* tenta próximo endpoint */ }
       }
     }
 
@@ -387,7 +387,7 @@ serve(async (req) => {
       numeroLoja: pedido.id_externo,
       data: pedido.data_pedido,
       contato: { id: Number(parceiro.bling_id) },
-      ...(blingLojaId ? { loja: { id: blingLojaId } } : {}),
+      ...(blingLojaId ? { loja: { id: blingLojaId }, canal: { id: blingLojaId } } : {}),
       itens: blingItens,
       parcelas: blingParcelas,
       totalProdutos: rawItens ? totalProdutosCalc : totalExato,
