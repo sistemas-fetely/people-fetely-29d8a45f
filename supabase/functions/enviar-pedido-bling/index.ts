@@ -365,19 +365,21 @@ serve(async (req) => {
     const rawItens = (itens && itens.length > 0)
       ? itens.map((it: any) => {
           const blingProdId = it.sku ? cacheMap[it.sku] : null;
-          const qty       = Number(it.quantidade);
+          const qty = Number(it.quantidade);
+          // 2dp obrigatório: Bling arredonda internamente antes de × qty
+          // lineTotal garante base de arredondamento por LINHA (não por unitário)
           const lineTotal = parseFloat((Number(it.valor_unitario) * qty * descontoFator).toFixed(2));
           return {
             descricao: stripQtdSuffix(it.descricao),
             ...(blingProdId ? { produto: { id: blingProdId } } : {}),
             unidade: "UN",
             quantidade: qty,
-            valor: parseFloat((lineTotal / qty).toFixed(4)),
+            valor: parseFloat((lineTotal / qty).toFixed(2)), // 2dp — Bling multiplica de volta corretamente
           };
         })
       : null;
 
-    // totalProdutosCalc: CIF → valor_liquido - valor_frete; FOB → valor_liquido
+    // totalProdutosCalc com valores já em 2dp (= o que Bling vai computar)
     const totalProdutosCalc = rawItens
       ? parseFloat(
           rawItens
@@ -386,8 +388,10 @@ serve(async (req) => {
         )
       : totalExato;
 
-    // Residual de arredondamento por linha (esperado ≤ R$0,10 com método de lineTotal)
-    const descontoValorCalc = parseFloat((totalProdutosCalc - (totalExato - valorFrete)).toFixed(2));
+    // Residual CIF: totalProdutos + frete - desconto = totalExato = sum(parcelas) → sem code 22
+    // Residual FOB: totalProdutos - desconto = totalExato → sem code 22
+    const expectedProd = totalExato - valorFrete; // CIF: prod+frete=total; FOB: expectedProd=total
+    const descontoValorCalc = parseFloat((totalProdutosCalc - expectedProd).toFixed(2));
 
     const blingItens = rawItens ?? [{
       descricao: `Pedido FOP #${pedido.id_externo}`,
