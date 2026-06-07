@@ -35,6 +35,7 @@ import { ArrowLeft, AlertCircle, ExternalLink, Receipt, Loader2, Sparkles, Clock
 import { toast } from "@/hooks/use-toast";
 import { useTransportadoras } from "@/hooks/pedidos/useTransportadoras";
 import { useSalvarDadosEnvio } from "@/hooks/pedidos/useSalvarDadosEnvio";
+import { useFreteEstimado } from "@/hooks/transportadoras/useFreteEstimado";
 
 const fmtBRL = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 const fmtDate = (s: string | null | undefined) => s ? new Date(s + (s.length === 10 ? "T00:00:00" : "")).toLocaleDateString("pt-BR") : "—";
