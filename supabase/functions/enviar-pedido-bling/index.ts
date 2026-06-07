@@ -408,20 +408,19 @@ serve(async (req) => {
     // Fix 5: pesoBruto na NF = peso REAL (não peso cubagem)
     // peso cubagem serve só para calcular custo do frete, não vai na NF
     if (blingTransportadoraId || transpCnpj || valorFrete > 0 || pesoReal > 0) {
-      // Fix 3: se sem bling_id, envia CNPJ no campo nome (padrão Fetely)
       const transpBlock: Record<string, any> = {};
       if (blingTransportadoraId) {
         transpBlock.transportadora = { id: blingTransportadoraId };
       } else if (transpCnpj) {
-        transpBlock.transportadora = { nome: transpCnpj };
+        // Sem bling_id: tenta enviar dados básicos — Bling pode ignorar sem id válido
+        transpBlock.transportadora = { id: 0, nome: transpNome, cpfCnpj: transpCnpj };
       }
 
       payload.transporte = {
-        tipo: tipoFrete,
+        fretePorConta: tipoFrete,   // campo correto Bling v3 (era "tipo" — erro de nomenclatura)
         ...transpBlock,
         ...(pesoReal > 0 ? { pesoBruto: parseFloat(pesoReal.toFixed(3)) } : {}),
         ...(pesoReal > 0 ? { pesoLiquido: parseFloat(pesoReal.toFixed(3)) } : {}),
-        // frete NÃO vai aqui — Bling soma ao total e quebra sum(parcelas) ≠ total
       };
     }
 
