@@ -85,13 +85,17 @@ serve(async (req) => {
 
     // 2b. Transportadora (opcional — só se selecionada no Pré-faturamento)
     let blingTransportadoraId: number | null = null;
+    let transpCnpj: string | null = null;
+    let transpNome: string | null = null;
     if (pedido.transportadora_id) {
       const { data: transp } = await supabase
         .from("parceiros_comerciais")
-        .select("bling_id, razao_social")
+        .select("bling_id, razao_social, cnpj")
         .eq("id", pedido.transportadora_id)
         .maybeSingle();
       if (transp?.bling_id) blingTransportadoraId = Number(transp.bling_id);
+      transpCnpj = transp?.cnpj ?? null;
+      transpNome = transp?.razao_social ?? null;
     }
 
     // 3. Forma de pagamento
@@ -186,17 +190,21 @@ serve(async (req) => {
     if (!blingLojaId) {
       try {
         const lojas = await client.get("/lojas");
-        const loja = (lojas?.data || []).find(
-          (l: any) => (l.descricao || l.nome || "").toLowerCase().includes("fetely")
-        );
+        const lista = lojas?.data ?? lojas?.items ?? lojas ?? [];
+        console.log("[loja-lookup] total:", Array.isArray(lista) ? lista.length : "não-array", JSON.stringify(lista).slice(0, 300));
+        const loja = Array.isArray(lista)
+          ? lista.find((l: any) =>
+              (l.descricao || l.nome || l.nome_fantasia || "").toLowerCase().includes("fetely")
+            )
+          : null;
         if (loja?.id) {
           blingLojaId = loja.id;
           const newConfig = { ...((cfg.config as any) || {}), loja_bling_id: loja.id };
-          await supabase.from("integracoes_config")
-            .update({ config: newConfig })
-            .eq("id", cfg.id);
+          await supabase.from("integracoes_config").update({ config: newConfig }).eq("id", cfg.id);
         }
-      } catch (_) { /* segue sem loja se GET /lojas falhar */ }
+      } catch (e) {
+        console.log("[loja-lookup] erro:", e);
+      }
     }
 
     // 8. Parcelas (uma por título)
@@ -363,11 +371,27 @@ serve(async (req) => {
     // descontoValor: garante totalProdutos - desconto = totalExato = sum(parcelas)
     const descontoValor = parseFloat((totalProdutosCalc - totalExato).toFixed(2));
 
-    const blingItens = rawItens ?? [{
+    // Fix 2: eliminar desconto residual ajustando o valor do último item
+    // em vez de enviar global `desconto` (que aparece errado no Bling)
+    let blingItens = rawItens ?? [{
       descricao: `Pedido FOP #${pedido.id_externo}`,
       quantidade: 1,
       valor: totalExato,
     }];
+
+    if (rawItens && descontoValor >= 0.01) {
+      // Ajusta o último item para que sum(valor×qty) = totalExato exatamente
+      const lastIdx = blingItens.length - 1;
+      const sumSemUltimo = blingItens
+        .slice(0, lastIdx)
+        .reduce((s, it) => s + parseFloat((it.valor * it.quantidade).toFixed(2)), 0);
+      const lastQty = blingItens[lastIdx].quantidade;
+      const lastValorAjustado = parseFloat(((totalExato - sumSemUltimo) / lastQty).toFixed(2));
+      blingItens = [
+        ...blingItens.slice(0, lastIdx),
+        { ...blingItens[lastIdx], valor: lastValorAjustado },
+      ];
+    }
 
     // 10. Payload final
     const valorFrete = Number(pedido.valor_frete ?? 0);
@@ -379,31 +403,33 @@ serve(async (req) => {
       ...(blingLojaId ? { loja: { id: blingLojaId } } : {}),
       itens: blingItens,
       parcelas: blingParcelas,
-      totalProdutos: rawItens ? totalProdutosCalc : totalExato,
-      ...(valorFrete > 0 ? { frete: valorFrete } : {}),
+      totalProdutos: totalExato,  // itens já ajustados → sum = totalExato, sem desconto global
       total: totalExato,
       observacoes: pedido.contexto_anotacoes || `Pedido ${pedido.id_externo} via SNCF`,
     };
 
-    // Desconto residual (centavos de arredondamento por item) — normalmente < R$0,01
-    if (descontoValor >= 0.01) {
-      payload.desconto = { tipo: "VALOR", valor: descontoValor };
-    }
-
-    // Bloco transporte — tipo baseado no valor do frete:
-    // 1 = FOB (destinatário paga) quando há valor de frete cobrado
-    // 9 = Sem ocorrência de transporte quando frete = 0
+    // Fix 4: tipo FOB (1) sempre que há frete; sem frete = sem ocorrência (9)
+    // Fetely sempre contrata e paga a transportadora — NF sai como FOB
     const tipoFrete = valorFrete > 0 ? 1 : 9;
     const pesoReal = Number(pedido.peso_bruto_total ?? 0);
-    const pesoCubagem = Number(pedido.cubagem_total ?? 0) * 300; // m³ × 300 = kg
-    const pesoCobrado = Math.max(pesoReal, pesoCubagem);         // transportadora cobra o maior
 
-    if (blingTransportadoraId || valorFrete > 0 || pesoCobrado > 0) {
+    // Fix 5: pesoBruto na NF = peso REAL (não peso cubagem)
+    // peso cubagem serve só para calcular custo do frete, não vai na NF
+    if (blingTransportadoraId || transpCnpj || valorFrete > 0 || pesoReal > 0) {
+      // Fix 3: se sem bling_id, envia CNPJ no campo nome (padrão Fetely)
+      const transpBlock: Record<string, any> = {};
+      if (blingTransportadoraId) {
+        transpBlock.transportadora = { id: blingTransportadoraId };
+      } else if (transpCnpj) {
+        transpBlock.transportadora = { nome: transpCnpj };
+      }
+
       payload.transporte = {
         tipo: tipoFrete,
-        ...(blingTransportadoraId ? { transportadora: { id: blingTransportadoraId } } : {}),
-        ...(pesoCobrado > 0 ? { pesoBruto: parseFloat(pesoCobrado.toFixed(3)) } : {}),
+        ...transpBlock,
+        ...(pesoReal > 0 ? { pesoBruto: parseFloat(pesoReal.toFixed(3)) } : {}),
         ...(pesoReal > 0 ? { pesoLiquido: parseFloat(pesoReal.toFixed(3)) } : {}),
+        ...(valorFrete > 0 ? { frete: valorFrete } : {}),
       };
     }
 
