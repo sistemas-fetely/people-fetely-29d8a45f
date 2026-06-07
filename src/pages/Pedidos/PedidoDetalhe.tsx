@@ -141,6 +141,7 @@ export default function PedidoDetalhe() {
   const [obsUrgencia, setObsUrgencia] = useState("");
   const [transportadoraId, setTransportadoraId] = useState("");
   const [pesoBruto, setPesoBruto] = useState("");
+  const [freteTipo, setFreteTipo] = useState("");
   const transportadoras = useTransportadoras();
   const salvarDadosEnvio = useSalvarDadosEnvio();
 
@@ -165,6 +166,7 @@ export default function PedidoDetalhe() {
     if (data?.pedido) {
       setTransportadoraId(data.pedido.transportadora_id ?? "");
       setPesoBruto(String(data.pedido.peso_bruto_total ?? ""));
+      setFreteTipo(data.pedido.frete_tipo ?? "");
     }
   }, [data?.pedido]);
 
@@ -377,6 +379,7 @@ export default function PedidoDetalhe() {
                         pedidoId: id,
                         transportadoraId: transportadoraId || null,
                         pesoBrutoTotal: parseFloat(pesoBruto) || 0,
+                        freteTipo: freteTipo || null,
                       })
                     }
                   >
@@ -418,9 +421,17 @@ export default function PedidoDetalhe() {
 
 
     <div className="grid grid-cols-2 gap-2 pt-1 border-t border-border/40">
-      <div>
-        <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Tipo frete</p>
-        <p className="text-sm font-medium">{pedido.frete_tipo ?? "—"}</p>
+      <div className="col-span-2">
+        <label className="text-[10px] text-muted-foreground uppercase tracking-wide">Tipo frete</label>
+        <Select value={freteTipo} onValueChange={setFreteTipo}>
+          <SelectTrigger className="h-8 text-sm mt-0.5">
+            <SelectValue placeholder="Selecionar..." />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="CIF">CIF — Frete cobrado do cliente</SelectItem>
+            <SelectItem value="FOB">FOB — Benefício comercial (Fetely absorve)</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
       <div>
         <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Valor frete</p>
