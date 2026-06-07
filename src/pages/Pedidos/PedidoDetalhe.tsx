@@ -142,6 +142,7 @@ export default function PedidoDetalhe() {
   const [transportadoraId, setTransportadoraId] = useState("");
   const [pesoBruto, setPesoBruto] = useState("");
   const [freteTipo, setFreteTipo] = useState("");
+  const [valorFrete, setValorFrete] = useState("");
   const transportadoras = useTransportadoras();
   const salvarDadosEnvio = useSalvarDadosEnvio();
 
@@ -167,6 +168,7 @@ export default function PedidoDetalhe() {
       setTransportadoraId(data.pedido.transportadora_id ?? "");
       setPesoBruto(String(data.pedido.peso_bruto_total ?? ""));
       setFreteTipo(data.pedido.frete_tipo ?? "");
+      setValorFrete(String(data.pedido.valor_frete ?? ""));
     }
   }, [data?.pedido]);
 
@@ -292,7 +294,7 @@ export default function PedidoDetalhe() {
               )}
               {pedido.bling_id_destino && <Linha label="Bling ID" value={`#${pedido.bling_id_destino}`} />}
             </div>
-            {estagio === "pre_faturado" && (
+            {estagio !== "cancelado" && (
               <Card className="border-border/60">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm font-semibold flex items-center gap-2">
@@ -334,13 +336,14 @@ export default function PedidoDetalhe() {
                     <Button
                       size="sm"
                       className="h-9"
-                      disabled={salvarDadosEnvio.isPending}
+                      disabled={salvarDadosEnvio.isPending || !!pedido.bling_id_destino}
                       onClick={() =>
                         id && salvarDadosEnvio.mutate({
                           pedidoId: id,
                           transportadoraId: transportadoraId || null,
                           pesoBrutoTotal: parseFloat(pesoBruto) || 0,
                           freteTipo: freteTipo || null,
+                          valorFrete: parseFloat(valorFrete) || null,
                         })
                       }
                     >
@@ -395,12 +398,16 @@ export default function PedidoDetalhe() {
           </Select>
         </div>
         <div>
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Valor frete</p>
-          <p className="text-sm font-medium">
-            {pedido.valor_frete > 0
-              ? `R$ ${Number(pedido.valor_frete).toFixed(2).replace(".", ",")}`
-              : "—"}
-          </p>
+          <label className="text-[10px] text-muted-foreground uppercase tracking-wide">Valor frete (R$)</label>
+          <input
+            type="number"
+            step="0.01"
+            min="0"
+            value={valorFrete}
+            onChange={(e) => setValorFrete(e.target.value)}
+            placeholder="0,00"
+            className="w-full h-8 text-sm rounded-md border border-input bg-background px-3 mt-0.5 focus:outline-none focus:ring-1 focus:ring-ring"
+          />
         </div>
         <div>
           <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Cubagem</p>
