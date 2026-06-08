@@ -11505,30 +11505,39 @@ export type Database = {
       }
       sncf_produtos: {
         Row: {
+          altura_cm: number | null
           ativo: boolean
           atualizado_em: string
+          largura_cm: number | null
           multiplos: number
           nome_comercial: string
           peso_g: number
           preco_atacado: number
+          profundidade_cm: number | null
           sku: string
         }
         Insert: {
+          altura_cm?: number | null
           ativo?: boolean
           atualizado_em?: string
+          largura_cm?: number | null
           multiplos?: number
           nome_comercial: string
           peso_g?: number
           preco_atacado?: number
+          profundidade_cm?: number | null
           sku: string
         }
         Update: {
+          altura_cm?: number | null
           ativo?: boolean
           atualizado_em?: string
+          largura_cm?: number | null
           multiplos?: number
           nome_comercial?: string
           peso_g?: number
           preco_atacado?: number
+          profundidade_cm?: number | null
           sku?: string
         }
         Relationships: []
@@ -14886,7 +14895,7 @@ export type Database = {
         Returns: Json
       }
       calcular_docs_status: { Args: { p_conta_id: string }; Returns: string }
-      calcular_peso_pedido: { Args: { p_pedido_id: string }; Returns: number }
+      calcular_peso_pedido: { Args: { p_pedido_id: string }; Returns: Json }
       cancelar_conta_pagar: { Args: { p_conta_id: string }; Returns: Json }
       cancelar_item_pedido: {
         Args: { p_item_id: string; p_motivo: string }

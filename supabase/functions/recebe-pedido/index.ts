@@ -60,13 +60,16 @@ Deno.serve(async (req) => {
         .from("sncf_produtos")
         .upsert(
           body.produtos.map((p: any) => ({
-            sku:            p.sku,
-            nome_comercial: p.nome_comercial,
-            preco_atacado:  p.preco_atacado,
-            peso_g:         p.peso_g,
-            multiplos:      p.multiplos,
-            ativo:          p.ativo,
-            atualizado_em:  new Date().toISOString(),
+            sku:             p.sku,
+            nome_comercial:  p.nome_comercial,
+            preco_atacado:   p.preco_atacado,
+            peso_g:          p.peso_g,
+            multiplos:       p.multiplos,
+            ativo:           p.ativo,
+            altura_cm:       p.altura_cm       ?? null,
+            largura_cm:      p.largura_cm      ?? null,
+            profundidade_cm: p.profundidade_cm ?? null,
+            atualizado_em:   new Date().toISOString(),
           })),
           { onConflict: "sku" }
         );
