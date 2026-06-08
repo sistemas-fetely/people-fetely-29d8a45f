@@ -613,7 +613,9 @@ function RemessasSafraTab() {
               <TableHead className="text-right">Valor total</TableHead>
               <TableHead>Retorno processado</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead className="text-right">Ações</TableHead>
             </TableRow>
+
           </TableHeader>
           <TableBody>
             {isLoading && (
