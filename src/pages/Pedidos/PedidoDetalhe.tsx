@@ -2,6 +2,7 @@ import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 
 import { usePedidoDetalhe } from "@/hooks/pedidos/usePedidoDetalhe";
+import { supabase } from "@/integrations/supabase/client";
 import { usePedidoTitulos } from "@/hooks/pedidos/usePedidoTitulos";
 import { usePedidoPriorizado } from "@/hooks/pedidos/useFilaPedidosPriorizada";
 import { useAtualizarUrgencia } from "@/hooks/pedidos/useAtualizarUrgencia";
