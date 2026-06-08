@@ -363,7 +363,7 @@ export default function PedidoDetalhe() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid gap-4 md:grid-cols-[1fr_180px_auto] md:items-end">
+                  <div className="grid gap-4 md:grid-cols-[1fr_220px_auto] md:items-end">
                     <div className="space-y-1.5">
                       <label className="text-[10px] uppercase tracking-widest text-muted-foreground">Transportadora</label>
                       <Select value={transportadoraId || "__none__"} onValueChange={(v) => setTransportadoraId(v === "__none__" ? "" : v)}>
@@ -390,7 +390,7 @@ export default function PedidoDetalhe() {
                           value={pesoBruto}
                           onChange={(e) => setPesoBruto(e.target.value)}
                           placeholder="0.000"
-                          className="flex-1 h-9 text-sm rounded-md border border-input bg-background px-3 focus:outline-none focus:ring-1 focus:ring-ring"
+                          className="flex-1 min-w-0 h-9 text-sm rounded-md border border-input bg-background px-3 focus:outline-none focus:ring-1 focus:ring-ring"
                         />
                         <Button
                           type="button"
