@@ -15184,6 +15184,18 @@ export type Database = {
         }
         Returns: Json
       }
+      criar_split_pedido: {
+        Args: {
+          p_data_entrega_prevista_02?: string
+          p_itens_01: Json
+          p_itens_02: Json
+          p_observacao?: string
+          p_pedido_id: string
+          p_valor_01: number
+          p_valor_02: number
+        }
+        Returns: Json
+      }
       criar_tarefa_aprovacao_nf_pj: {
         Args: { _nota_id: string }
         Returns: string
