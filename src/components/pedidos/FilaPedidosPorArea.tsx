@@ -103,7 +103,7 @@ export function FilaPedidosPorArea({
 
   useEffect(() => {
     setPagina(1);
-  }, [busca, estagioFilter, marcacaoFilter, ordenacao, estagios, area]);
+  }, [busca, estagioFilter, marcacaoFilter, formaPgtoFilter, ordenacao, estagios, area]);
 
   const usarEstagiosMultiplos = !!(estagios && estagios.length > 0);
 
