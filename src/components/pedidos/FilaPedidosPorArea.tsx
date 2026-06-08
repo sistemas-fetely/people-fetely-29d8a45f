@@ -229,6 +229,22 @@ export function FilaPedidosPorArea({
             </SelectContent>
           </Select>
         )}
+        <Select value={formaPgtoFilter} onValueChange={setFormaPgtoFilter}>
+          <SelectTrigger className="w-full sm:w-44">
+            <SelectValue placeholder="Pagamento" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="todas">Pagamento: Todos</SelectItem>
+            <SelectItem value="boleto">Boleto</SelectItem>
+            <SelectItem value="pix">PIX</SelectItem>
+            <SelectItem value="cartao">Cartão</SelectItem>
+            {formasPgtoDisponiveis
+              .filter((f) => !["boleto", "pix", "cartao"].includes(f))
+              .map((f) => (
+                <SelectItem key={f} value={f}>{f}</SelectItem>
+              ))}
+          </SelectContent>
+        </Select>
         <Select value={marcacaoFilter} onValueChange={setMarcacaoFilter}>
           <SelectTrigger className="w-full sm:w-48">
             <SelectValue placeholder="Marcação" />
