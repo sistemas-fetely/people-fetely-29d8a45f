@@ -390,7 +390,7 @@ export default function PedidoDetalhe() {
                           value={pesoBruto}
                           onChange={(e) => setPesoBruto(e.target.value)}
                           placeholder="0.000"
-                          className="flex-1 h-9 text-sm rounded-md border border-input bg-background px-3 focus:outline-none focus:ring-1 focus:ring-ring"
+                          className="flex-1 min-w-0 h-9 text-sm rounded-md border border-input bg-background px-3 focus:outline-none focus:ring-1 focus:ring-ring"
                         />
                         <Button
                           type="button"
