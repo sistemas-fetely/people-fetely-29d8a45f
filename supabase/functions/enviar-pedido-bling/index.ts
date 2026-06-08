@@ -148,6 +148,7 @@ serve(async (req) => {
       transferencia:  ["transferência", "transferencia", "ted", "doc"],
       cartao_credito: ["crédito", "credito"],
       cartao_debito:  ["débito", "debito"],
+      cartao:         ["crédito", "credito"],
       deposito:       ["depósito", "deposito"],
       dinheiro:       ["dinheiro"],
       cheque:         ["cheque"],
