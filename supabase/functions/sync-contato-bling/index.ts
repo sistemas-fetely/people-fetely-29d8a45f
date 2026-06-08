@@ -56,13 +56,19 @@ const PARCEIRO_COLS =
 
 function montarPayload(p: any, documento: string) {
   const tipo = p.tipo_pessoa === "PJ" ? "J" : "F";
-  const indicadorIe = p.inscricao_estadual ? 1 : (p.isento_ie ? 2 : 9);
+  // IE defensiva: valida se tem entre 8 e 14 dígitos; se inválida, omite e usa não-contribuinte
+  const ieDigitos = soDigitos(p.inscricao_estadual);
+  const ieValida  = ieDigitos.length >= 8 && ieDigitos.length <= 14;
+  const indicadorIe = ieValida ? 1 : (p.isento_ie ? 2 : 9);
+  const iePayload   = ieValida
+    ? p.inscricao_estadual!.trim()
+    : (p.isento_ie ? "ISENTO" : undefined);
   return {
     nome: p.razao_social,
     fantasia: p.nome_fantasia || undefined,
     tipo,
     numeroDocumento: documento,
-    ie: p.inscricao_estadual || (p.isento_ie ? "ISENTO" : undefined),
+    ie: iePayload,
     indicadorIe,
     email: p.email || undefined,
     telefone: primeiroFone(p.telefone),
