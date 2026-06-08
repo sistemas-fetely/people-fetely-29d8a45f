@@ -77,6 +77,7 @@ export function FilaPedidosPorArea({
   const [busca, setBusca] = useState("");
   const [estagioFilter, setEstagioFilter] = useState<EstagioPedido | "todos">(estagioInicial);
   const [marcacaoFilter, setMarcacaoFilter] = useState<string>("todas");
+  const [formaPgtoFilter, setFormaPgtoFilter] = useState<string>("todas");
   const [ordenacao, setOrdenacao] = useState<OrdenacaoFila>("cronologico");
   const [pagina, setPagina] = useState(1);
   const [pageSizeOpt, setPageSizeOpt] = useState<PageSizeOption>(DEFAULT_PAGE_SIZE);
@@ -102,7 +103,7 @@ export function FilaPedidosPorArea({
 
   useEffect(() => {
     setPagina(1);
-  }, [busca, estagioFilter, marcacaoFilter, ordenacao, estagios, area]);
+  }, [busca, estagioFilter, marcacaoFilter, formaPgtoFilter, ordenacao, estagios, area]);
 
   const usarEstagiosMultiplos = !!(estagios && estagios.length > 0);
 
@@ -141,6 +142,9 @@ export function FilaPedidosPorArea({
     if (marcacaoFilter === "sem") base = base.filter((p) => !p.marcacao);
     else if (marcacaoFilter === "com") base = base.filter((p) => !!p.marcacao);
     else if (marcacaoFilter !== "todas") base = base.filter((p) => p.marcacao === marcacaoFilter);
+    if (formaPgtoFilter !== "todas") {
+      base = base.filter((p) => (p.forma_solicitada || "").toLowerCase() === formaPgtoFilter);
+    }
     if (ordenacao !== "prioridade_ia") return base;
     return [...base].sort((a, b) => {
       const sa = scoreMap.get(a.id)?.score ?? -1;
@@ -148,7 +152,13 @@ export function FilaPedidosPorArea({
       if (sb !== sa) return sb - sa;
       return new Date(a.recebido_em).getTime() - new Date(b.recebido_em).getTime();
     });
-  }, [data, ordenacao, scoreMap, marcacaoFilter]);
+  }, [data, ordenacao, scoreMap, marcacaoFilter, formaPgtoFilter]);
+
+  const formasPgtoDisponiveis = useMemo(() => {
+    const set = new Set<string>();
+    (data || []).forEach((p) => { if (p.forma_solicitada) set.add(p.forma_solicitada.toLowerCase()); });
+    return Array.from(set).sort();
+  }, [data]);
 
   const marcacoesDisponiveis = useMemo(() => {
     const set = new Set<string>();
@@ -219,6 +229,22 @@ export function FilaPedidosPorArea({
             </SelectContent>
           </Select>
         )}
+        <Select value={formaPgtoFilter} onValueChange={setFormaPgtoFilter}>
+          <SelectTrigger className="w-full sm:w-44">
+            <SelectValue placeholder="Pagamento" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="todas">Pagamento: Todos</SelectItem>
+            <SelectItem value="boleto">Boleto</SelectItem>
+            <SelectItem value="pix">PIX</SelectItem>
+            <SelectItem value="cartao">Cartão</SelectItem>
+            {formasPgtoDisponiveis
+              .filter((f) => !["boleto", "pix", "cartao"].includes(f))
+              .map((f) => (
+                <SelectItem key={f} value={f}>{f}</SelectItem>
+              ))}
+          </SelectContent>
+        </Select>
         <Select value={marcacaoFilter} onValueChange={setMarcacaoFilter}>
           <SelectTrigger className="w-full sm:w-48">
             <SelectValue placeholder="Marcação" />
