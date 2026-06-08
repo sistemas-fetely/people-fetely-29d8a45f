@@ -1,5 +1,6 @@
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { usePedidoDetalhe } from "@/hooks/pedidos/usePedidoDetalhe";
 import { supabase } from "@/integrations/supabase/client";
@@ -136,6 +137,7 @@ export default function PedidoDetalhe() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const location = useLocation();
+  const queryClient = useQueryClient();
   const { data, isLoading } = usePedidoDetalhe(id);
   const { data: priorizado } = usePedidoPriorizado(id);
   const atualizarUrgencia = useAtualizarUrgencia();
@@ -157,7 +159,9 @@ export default function PedidoDetalhe() {
         p_pedido_id: id,
       });
       if (!error && data != null) {
-        setPesoBruto(String(data));
+        setPesoBruto(String(data.peso ?? data));
+        // Invalida a query do pedido para que cubagem_total seja atualizado na tela
+        queryClient.invalidateQueries({ queryKey: ["pedido", id] });
       }
     } finally {
       setRecalculandoPeso(false);
