@@ -132,7 +132,18 @@ async function syncOne(supabase: any, client: any, p: any, origem: string, acion
       respStatus = 200;
       sucesso = true;
     } else {
-      const criado = await client.post("/contatos", payload);
+      let criado = await client.post("/contatos", payload);
+
+      // Retry sem IE se o Bling rejeitar por inscrição estadual inválida
+      if (
+        criado?.error &&
+        JSON.stringify(criado.error).toLowerCase().includes("inscri")
+      ) {
+        console.warn("[sync-contato-bling] IE rejeitada pelo Bling — retry sem IE");
+        const payloadSemIE = { ...payload, ie: undefined, indicadorIe: 9 };
+        criado = await client.post("/contatos", payloadSemIE);
+      }
+
       respBody = criado;
       const idCriado = criado?.data?.id ?? criado?.id ?? null;
       blingId = idCriado != null ? String(idCriado) : null;
