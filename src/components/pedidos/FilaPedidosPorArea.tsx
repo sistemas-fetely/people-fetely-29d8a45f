@@ -16,9 +16,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Search, Send, Loader2, Sparkles, ExternalLink, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TriarPedidoDialog } from "@/components/pedidos/dialogs/TriarPedidoDialog";
+import { EnviarBlingDialog } from "@/components/pedidos/dialogs/EnviarBlingDialog";
 import { ConfirmarPagamentoDialog } from "@/components/pedidos/dialogs/ConfirmarPagamentoDialog";
 import { Button } from "@/components/ui/button";
-import { useEnviarBling } from "@/hooks/pedidos/useEnviarBling";
+
 import {
   EstagioBadge, FormatoIdade,
 } from "./BadgesPedido";
@@ -83,7 +84,7 @@ export function FilaPedidosPorArea({
   const tableWrapperRef = useRef<HTMLDivElement | null>(null);
   const pageSize = pageSizeOpt === "auto" ? autoPageSize : pageSizeOpt;
   const navigate = useNavigate();
-  const enviarBling = useEnviarBling();
+  
 
   useLayoutEffect(() => {
     function recompute() {
@@ -366,27 +367,13 @@ export function FilaPedidosPorArea({
                       )}
 
                       {p.estagio === "pre_faturado" && !p.bling_id_destino && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          disabled={enviarBling.isPending && enviarBling.variables === p.id}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            enviarBling.mutate(p.id);
-                          }}
-                        >
-                          {enviarBling.isPending && enviarBling.variables === p.id ? (
-                            <>
-                              <Loader2 className="h-3 w-3 animate-spin mr-1" />
-                              Enviando…
-                            </>
-                          ) : (
-                            <>
-                              <Send className="h-3 w-3 mr-1" />
-                              Enviar Bling
-                            </>
-                          )}
-                        </Button>
+                        <EnviarBlingDialog
+                          pedido_id={p.id}
+                          parceiro_id={p.parceiro_id}
+                          id_externo={p.id_externo}
+                          valor_liquido={p.valor_liquido}
+                          forma_solicitada={p.forma_solicitada}
+                        />
                       )}
                     </div>
                   </TableCell>
