@@ -692,7 +692,10 @@ export default function BancoSafra() {
                             {formatBRL(Number(b.valor_bruto || 0))}
                           </TableCell>
                           <TableCell>
-                            <BotaoEmailBoleto boleto={b} />
+                            <div className="flex items-center gap-1">
+                              <BotaoBaixarBoletoPdf boleto={b} />
+                              <BotaoEmailBoleto boleto={b} />
+                            </div>
                           </TableCell>
                         </TableRow>
                       );
