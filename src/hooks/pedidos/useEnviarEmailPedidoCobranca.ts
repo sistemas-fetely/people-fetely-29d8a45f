@@ -50,7 +50,7 @@ export function useEnviarEmailPedidoCobranca() {
       const pdfBase64 = gerarPedidoPdf({
         id_externo: pedido.id_externo,
         data_pedido: fmtDate(pedido.data_pedido),
-        parceiro_nome: parceiro.razao_social,
+        parceiro_nome: parceiro?.razao_social,
         forma_pagamento: pedido.forma_solicitada ?? "",
         condicao_pagamento: pedido.condicao_solicitada ?? undefined,
         valor_bruto: Number(pedido.valor_bruto ?? 0),
@@ -63,7 +63,7 @@ export function useEnviarEmailPedidoCobranca() {
       const descontoValor =
         Number(pedido.valor_bruto ?? 0) * (Number(pedido.desconto_pct ?? 0) / 100);
       const templateData: Record<string, any> = {
-        parceiro_nome: parceiro.razao_social,
+        parceiro_nome: parceiro?.razao_social,
         pedido_id_externo: pedido.id_externo,
         data_pedido: fmtDate(pedido.data_pedido),
         forma_pagamento: pedido.forma_solicitada ?? "",
