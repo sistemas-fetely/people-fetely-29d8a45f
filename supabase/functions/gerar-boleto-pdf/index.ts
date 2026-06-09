@@ -37,11 +37,9 @@ function dvMod10(numero: string): number {
   return (10 - (soma % 10)) % 10;
 }
 
-/** Formata nosso número para exibição: "60/000915566942-DV" */
-function formatNossoNumero(carteira: string, seq: string): string {
-  const padded = seq.padStart(9, "0");
-  const dv = dvMod10(carteira + padded);
-  return `${carteira}/${padded}-${dv}`;
+/** Nosso número: 9 dígitos idêntico ao enviado na remessa */
+function formatNossoNumero(_carteira: string, seq: string): string {
+  return seq.padStart(9, "0");
 }
 
 // ─── Código de barras I25 ─────────────────────────────────────────────────────
@@ -167,7 +165,7 @@ async function buildPdf(dados: DadosBoleto): Promise<Uint8Array> {
 
     // ROW 1: Local de pagamento | Vencimento
     const r1H = 22, vencW = 95;
-    cell(mx, y - r1H, lw - vencW, "Local de Pagamento", "Pagavel em qualquer agencia bancaria ate o vencimento");
+    cell(mx, y - r1H, lw - vencW, "Local de Pagamento", "Pagavel em qualquer Banco do sistema de compensacao");
     vline(mx + lw - vencW, y - r1H, r1H);
     cell(mx + lw - vencW, y - r1H, vencW, "Vencimento", fmtDateBR(dados.data_vencimento));
     page.drawLine({ start: { x: mx, y: y - r1H }, end: { x: mx + lw, y: y - r1H }, thickness: 0.5, color: PRETO });
@@ -267,7 +265,7 @@ async function buildPdf(dados: DadosBoleto): Promise<Uint8Array> {
   page.drawText("Ficha de Compensacao", { x: mx + lw - 86, y: fichaTop + 4, size: 6.5, font, color: CINZA });
   const fichaBottom = drawSection(fichaTop);
 
-  page.drawText("Sacador/Avalista:",    { x: mx + 2,        y: fichaBottom - 9, size: 6, font, color: CINZA });
+  page.drawText("Beneficiario Final:",  { x: mx + 2,        y: fichaBottom - 9, size: 6, font, color: CINZA });
   page.drawText("Autenticacao Mecanica",{ x: mx + lw - 88,  y: fichaBottom - 9, size: 7, font, color: CINZA });
   page.drawLine({ start: { x: mx, y: fichaBottom - 16 }, end: { x: mx + lw, y: fichaBottom - 16 }, thickness: 0.5, color: PRETO });
 
@@ -340,7 +338,7 @@ serve(async (req) => {
 
     const agencia        = params.agencia  ?? "0005";
     const conta7d        = params.conta_7d ?? "5804446";
-    const agenciaCedente = `${agencia}/${conta7d}`;
+    const agenciaCedente = `${agencia.padStart(5, "0")}/${conta7d.padStart(9, "0")}`;
 
     const enderecoPagador = [
       parceiro?.logradouro, parceiro?.numero,
