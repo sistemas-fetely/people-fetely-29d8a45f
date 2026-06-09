@@ -34,7 +34,7 @@ const COLUNAS: { key: string; label: string }[] = [
   { key: "nome_completo",       label: "Nome Completo" },
   { key: "cor_nome",            label: "Cor (Nome)" },
   { key: "tamanho_numero",      label: "Tamanho (N°)" },
-  { key: "descricao_produto",   label: "Descrição" },
+  { key: "descricao_produto",   label: "Descrição Produto" },
   { key: "tipo_embalagem",      label: "Tipo Embalagem" },
   { key: "material_descritivo", label: "Material" },
 ];
