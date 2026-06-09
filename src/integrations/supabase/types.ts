@@ -12578,6 +12578,7 @@ export type Database = {
           data_vencimento_atual: string
           data_vencimento_original: string
           eh_entrada: boolean
+          email_cobranca_enviado_em: string | null
           flag_bandeira_amarela: boolean
           flag_grupo_economico_inadimplente: boolean
           id: string
@@ -12629,6 +12630,7 @@ export type Database = {
           data_vencimento_atual: string
           data_vencimento_original: string
           eh_entrada?: boolean
+          email_cobranca_enviado_em?: string | null
           flag_bandeira_amarela?: boolean
           flag_grupo_economico_inadimplente?: boolean
           id?: string
@@ -12680,6 +12682,7 @@ export type Database = {
           data_vencimento_atual?: string
           data_vencimento_original?: string
           eh_entrada?: boolean
+          email_cobranca_enviado_em?: string | null
           flag_bandeira_amarela?: boolean
           flag_grupo_economico_inadimplente?: boolean
           id?: string
