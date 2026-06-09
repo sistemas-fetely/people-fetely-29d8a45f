@@ -303,7 +303,11 @@ export default function PedidoDetalhe() {
               <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Próxima ação</p>
               {pedido.proxima_acao && <p className="text-xs text-muted-foreground italic">{pedido.proxima_acao}</p>}
               <AcaoPrimaria pedido={pedido} parceiro={parceiro} estagio={estagio} />
-              <CancelarPedidoDialog pedido_id={pedido.id} />
+              <CancelarPedidoDialog
+                pedido_id={pedido.id}
+                id_externo={pedido.id_externo}
+                estagio={estagio}
+              />
             </div>
           )}
         </div>
