@@ -12,7 +12,7 @@ export function useEnviarEmailPedidoCobranca() {
   const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async (pedido_id: string) => {
+    mutationFn: async ({ pedido_id, emails }: { pedido_id: string; emails: string[] }) => {
       const { data: pedido, error: errP } = await (supabase as any)
         .from("pedidos")
         .select("*")
@@ -26,7 +26,7 @@ export function useEnviarEmailPedidoCobranca() {
         .select("razao_social, email")
         .eq("id", pedido.parceiro_id)
         .maybeSingle();
-      if (!parceiro?.email) throw new Error("Parceiro sem email cadastrado");
+
 
       const { data: itens } = await (supabase as any)
         .from("pedido_itens")
