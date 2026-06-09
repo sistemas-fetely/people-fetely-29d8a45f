@@ -30,9 +30,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowDownToLine, Copy, CheckCheck, Inbox } from "lucide-react";
+import { ArrowDownToLine, Copy, CheckCheck, Inbox, Mail, MailCheck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatBRL, formatDateBR } from "@/lib/format-currency";
+import { useEnviarEmailCobranca } from "@/hooks/credito/useEnviarEmailCobranca";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 type Titulo = {
   id: string;
