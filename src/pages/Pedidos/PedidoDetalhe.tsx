@@ -41,11 +41,12 @@ import { useAuth } from "@/contexts/AuthContext";
 
 import { AREA_LABELS, STATUS_TITULO_LABELS, URGENCIA_LABELS } from "@/types/pedido";
 import type { AreaPedido, EstagioPedido, StatusTitulo, TipoTituloPagamento, TituloAReceber, UrgenciaDeclarada } from "@/types/pedido";
-import { ArrowLeft, AlertCircle, ExternalLink, Receipt, Loader2, Sparkles, Clock, CheckCircle2, ArrowRight, Package, Copy, Truck, RefreshCw, Scissors } from "lucide-react";
+import { ArrowLeft, AlertCircle, ExternalLink, Receipt, Loader2, Sparkles, Clock, CheckCircle2, ArrowRight, Package, Copy, Truck, RefreshCw, Scissors, Mail } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useTransportadoras } from "@/hooks/pedidos/useTransportadoras";
 import { useSalvarDadosEnvio } from "@/hooks/pedidos/useSalvarDadosEnvio";
 import { useFreteEstimado } from "@/hooks/transportadoras/useFreteEstimado";
+import { useEnviarEmailPedidoCobranca } from "@/hooks/pedidos/useEnviarEmailPedidoCobranca";
 
 const fmtBRL = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 const fmtDate = (s: string | null | undefined) => s ? new Date(s + (s.length === 10 ? "T00:00:00" : "")).toLocaleDateString("pt-BR") : "—";
@@ -143,15 +144,37 @@ function AcoesPedidoPreFaturado({ pedido, parceiro }: { pedido: any; parceiro: a
   );
 }
 
+function BotaoEmailCobrancaPedido({ pedido_id }: { pedido_id: string }) {
+  const enviar = useEnviarEmailPedidoCobranca();
+  return (
+    <Button
+      size="sm"
+      variant="outline"
+      className="w-full gap-1.5"
+      disabled={enviar.isPending}
+      onClick={() => enviar.mutate(pedido_id)}
+    >
+      {enviar.isPending ? (
+        <><Loader2 className="h-4 w-4 animate-spin" />Enviando…</>
+      ) : (
+        <><Mail className="h-4 w-4" />Enviar cobrança</>
+      )}
+    </Button>
+  );
+}
+
 function AcaoPrimaria({ pedido, parceiro, estagio }: { pedido: any; parceiro: any; estagio: EstagioPedido }) {
   const navigate = useNavigate();
   if (estagio === "recebido") return (
     <TriarPedidoDialog pedido_id={pedido.id} perfil_credito={parceiro?.perfil_credito} estagio_atual={estagio} forma_solicitada={pedido.forma_solicitada} triggerLabel="Encaminhar pedido" triggerVariant="default" />
   );
   if (estagio === "cobranca") return (
-    <Button className="w-full gap-2" onClick={() => navigate(`/recebimento/cobranca/${pedido.id}`)}>
-      <Package className="h-4 w-4" />Operacionar cobrança
-    </Button>
+    <div className="space-y-2">
+      <Button className="w-full gap-2" onClick={() => navigate(`/recebimento/cobranca/${pedido.id}`)}>
+        <Package className="h-4 w-4" />Operacionar cobrança
+      </Button>
+      <BotaoEmailCobrancaPedido pedido_id={pedido.id} />
+    </div>
   );
   if (estagio === "aguardando_pagamento") return <ConfirmarPagamentoDialog pedido_id={pedido.id} valor_pedido={pedido.valor_liquido} />;
   if (estagio === "pre_faturado" && !pedido.bling_id_destino) {
