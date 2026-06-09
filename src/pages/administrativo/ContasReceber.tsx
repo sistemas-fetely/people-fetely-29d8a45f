@@ -612,6 +612,7 @@ export default function ContasReceber() {
                                 )}
                               </Button>
                             )}
+                            <BotaoEmailCobranca titulo={t} />
                           </div>
                         </TableCell>
                       </TableRow>
