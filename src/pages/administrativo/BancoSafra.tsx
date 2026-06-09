@@ -71,7 +71,7 @@ function BotaoBaixarBoletoPdf({ boleto }: { boleto: any }) {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
 
-  if (boleto.boleto_status !== "registrado") return null;
+  if (!["registrado", "remessa_gerada"].includes(boleto.boleto_status)) return null;
 
   async function baixar() {
     setLoading(true);
