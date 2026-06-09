@@ -44,4 +44,5 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'pagamento-solicitacao': pagamentoSolicitacao,
   'pacote-fiscal-contador': pacoteFiscalContador,
   'boleto-safra': boletoSafra,
+  'link-cobranca': linkCobranca,
 }
