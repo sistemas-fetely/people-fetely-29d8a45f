@@ -33,6 +33,7 @@ import { EditarItensDialog } from "@/components/pedidos/dialogs/EditarItensDialo
 import { ConfirmarPagamentoDialog } from "@/components/pedidos/dialogs/ConfirmarPagamentoDialog";
 import { RemessasSection } from "@/components/pedidos/RemessasSection";
 import { SplitPedidoDialog } from "@/components/pedidos/dialogs/SplitPedidoDialog";
+import { ComplementarSection } from "@/components/pedidos/ComplementarSection";
 import { useRemessas } from "@/hooks/pedidos/useRemessas";
 import { usePermissoesDoUsuario } from "@/hooks/usePermissoesDoUsuario";
 import { useAuth } from "@/contexts/AuthContext";
@@ -325,6 +326,11 @@ export default function PedidoDetalhe() {
               <Linha label="Forma" value={pedido.forma_solicitada} />
               {pedido.bling_id_destino && <Linha label="Bling ID" value={`#${pedido.bling_id_destino}`} />}
               <RemessasSection pedido_id={pedido.id} parceiro_id={pedido.parceiro_id} id_externo={pedido.id_externo} />
+              <ComplementarSection
+                pedido_id={pedido.id}
+                pedido_origem_id={pedido.pedido_origem_id ?? null}
+                id_externo={pedido.id_externo}
+              />
 
               {/* Resumo financeiro agrupado */}
               {(() => {
