@@ -6,10 +6,11 @@ import { useUploadBureauPDF } from "@/hooks/credito/useUploadBureauPDF";
 
 interface Props {
   analise_id: string;
+  parceiro_id: string;
   disabled?: boolean;
 }
 
-export function UploadBureauZone({ analise_id, disabled }: Props) {
+export function UploadBureauZone({ analise_id, parceiro_id, disabled }: Props) {
   const [dragOver, setDragOver] = useState(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const upload = useUploadBureauPDF();
@@ -23,7 +24,7 @@ export function UploadBureauZone({ analise_id, disabled }: Props) {
       alert("Arquivo grande demais (máximo 10 MB)");
       return;
     }
-    await upload.mutateAsync({ analise_id, file });
+    await upload.mutateAsync({ analise_id, parceiro_id, file });
   };
 
   return (

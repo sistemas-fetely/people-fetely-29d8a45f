@@ -10,7 +10,8 @@ import { AnaliseIaCard } from "./AnaliseIaCard";
 import { EncaminharParaDecisaoDialog } from "./dialogs/EncaminharParaDecisaoDialog";
 import { DevolverParaEntradaDialog } from "./dialogs/DevolverParaEntradaDialog";
 import { BoxDevolucaoRecente } from "./BoxDevolucaoRecente";
-import { Sparkles, Loader2 } from "lucide-react";
+import { Sparkles, Loader2, FileSearch } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { CasaPageHeader } from "@/components/casa/CasaPageHeader";
@@ -60,7 +61,9 @@ export function AnaliseDetalheAnalise({ analiseId }: Props) {
     kpisFinanceiros,
     kpisGrupo,
     analisesAnteriores,
-  } = data;
+    scoresHistoricoCount,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } = data as any;
 
   const iaJson = (analise.analise_ia_json as AnaliseIaJson | null) ?? null;
   const iaProcessada = !!analise.analise_ia_processada_em;
@@ -112,6 +115,17 @@ export function AnaliseDetalheAnalise({ analiseId }: Props) {
           valorPedido={pedido?.valor_liquido}
         />
       </div>
+
+      {/* B-82: Banner bureaus históricos */}
+      {scoresHistoricoCount > 0 && (
+        <Alert>
+          <FileSearch className="h-4 w-4" />
+          <AlertDescription>
+            Este cliente tem <strong>{scoresHistoricoCount}</strong> bureau{scoresHistoricoCount > 1 ? "s" : ""}{" "}
+            em análises anteriores. Consulte o histórico de análises abaixo para acessá-los.
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Pré-aprovação (Joseph confirma 1-clique) */}
       {analise.pre_aprovado_regra_id && !analise.status_final && (
@@ -204,7 +218,7 @@ export function AnaliseDetalheAnalise({ analiseId }: Props) {
 
         {/* Centro + direita — operação */}
         <div className="lg:col-span-2 space-y-6">
-          <UploadBureauZone analise_id={analise.id} />
+          <UploadBureauZone analise_id={analise.id} parceiro_id={parceiro?.id} />
           <ScoresAnexados scores={scores} analiseId={analiseId} />
           <div className="rounded-lg bg-gold-soft gold-border p-1">
             <AnaliseIaCard
