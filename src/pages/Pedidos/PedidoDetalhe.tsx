@@ -323,6 +323,31 @@ export default function PedidoDetalhe() {
         {/* COLUNA ESQUERDA */}
         <div className="flex-1 min-w-0 px-6 py-5 space-y-6">
 
+          {analiseCredito?.status_final && analiseCredito.status_final !== "aprovado" && (
+            <Alert className={cn(
+              analiseCredito.status_final === "reprovado"
+                ? "border-red-300 bg-red-50 dark:bg-red-950/30 dark:border-red-800"
+                : "border-amber-300 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800"
+            )}>
+              <ShieldAlert className={cn(
+                "h-4 w-4",
+                analiseCredito.status_final === "reprovado" ? "text-red-600" : "text-amber-600"
+              )} />
+              <AlertDescription className={cn(
+                analiseCredito.status_final === "reprovado"
+                  ? "text-red-900 dark:text-red-200"
+                  : "text-amber-900 dark:text-amber-200"
+              )}>
+                <p className="font-semibold mb-0.5">
+                  {analiseCredito.status_final === "reprovado"
+                    ? "Crédito reprovado"
+                    : "Crédito aprovado com ressalva"}
+                </p>
+                <p className="text-sm">{analiseCredito.ressalva || "Consulte a aba Crédito para detalhes."}</p>
+              </AlertDescription>
+            </Alert>
+          )}
+
           {estagio === "recebido" && (
             <div className="rounded-lg border border-primary/30 bg-primary/5 p-4 space-y-3">
               <div className="flex items-center gap-2">
