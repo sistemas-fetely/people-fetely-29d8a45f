@@ -4,6 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 
 interface UploadBureauArgs {
   analise_id: string;
+  parceiro_id: string;
   file: File;
   storage_path?: string;
 }
@@ -22,23 +23,75 @@ export function useUploadBureauPDF() {
   const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async ({ analise_id, file, storage_path }: UploadBureauArgs): Promise<UploadBureauResponse> => {
-      const path = storage_path ||
+    mutationFn: async ({
+      analise_id,
+      parceiro_id,
+      file,
+      storage_path,
+    }: UploadBureauArgs): Promise<UploadBureauResponse> => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const sb = supabase as any;
+
+      const path =
+        storage_path ||
         `credito/${analise_id}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
 
-      const { error: upErr } = await supabase.storage.from("ged").upload(path, file, {
-        contentType: "application/pdf",
-        upsert: false,
-      });
+      const { error: upErr } = await sb.storage
+        .from("ged")
+        .upload(path, file, { contentType: "application/pdf", upsert: false });
       if (upErr) throw upErr;
 
-      const { data, error: fnErr } = await supabase.functions.invoke("parse-bureau-pdf", {
+      const { data, error: fnErr } = await sb.functions.invoke("parse-bureau-pdf", {
         body: { analise_id, documento_storage_path: path },
       });
       if (fnErr) throw fnErr;
       if (data?.error) throw new Error(data.error);
 
-      return data as UploadBureauResponse;
+      const result = data as UploadBureauResponse;
+
+      // Indexação GED (best-effort)
+      try {
+        const { data: pastaExistente } = await sb
+          .from("ged_pastas")
+          .select("id")
+          .eq("parceiro_id", parceiro_id)
+          .ilike("nome", "crédito%")
+          .maybeSingle();
+
+        let pasta_id: string | null = pastaExistente?.id ?? null;
+
+        if (!pasta_id) {
+          const { data: novaPasta } = await sb
+            .from("ged_pastas")
+            .insert({
+              nome: "Crédito",
+              parceiro_id,
+              area: "credito",
+              tipo: "cliente",
+            })
+            .select("id")
+            .single();
+          pasta_id = novaPasta?.id ?? null;
+        }
+
+        const dataConsulta = new Date().toLocaleDateString("pt-BR");
+        await sb.from("ged_documentos").insert({
+          pasta_id,
+          parceiro_id,
+          nome: `${String(result.fonte).toUpperCase()} — ${dataConsulta}`,
+          arquivo_original: file.name,
+          storage_path: path,
+          tipo_documento: "bureau_credito",
+          mime_type: "application/pdf",
+          tamanho_bytes: file.size,
+          tags: [result.fonte, "bureau", "credito"],
+          origem_porta: "credito",
+        });
+      } catch (gedErr) {
+        console.error("[useUploadBureauPDF] GED indexation failed (non-blocking):", gedErr);
+      }
+
+      return result;
     },
     onSuccess: (data, vars) => {
       qc.invalidateQueries({ queryKey: ["analise-detalhe", vars.analise_id] });

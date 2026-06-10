@@ -16,7 +16,7 @@ export function useAnaliseDetalhe(analiseId: string | undefined) {
     queryKey: ["analise-detalhe", analiseId],
     enabled: !!analiseId,
     staleTime: 10 * 1000,
-    queryFn: async (): Promise<AnaliseDetalheCompleto> => {
+    queryFn: async (): Promise<AnaliseDetalheCompleto & { scoresHistoricoCount: number }> => {
       if (!analiseId) throw new Error("analiseId obrigatório");
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -85,9 +85,13 @@ export function useAnaliseDetalhe(analiseId: string | undefined) {
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const anteriores: AnaliseListItem[] = (anterioresData || []).map((r: any) => ({
-        id: r.id, pedido_id: r.pedido_id, parceiro_id: r.parceiro_id,
-        estagio_atual: r.estagio_atual, status_final: r.status_final,
-        criado_em: r.criado_em, decidido_em: r.decidido_em,
+        id: r.id,
+        pedido_id: r.pedido_id,
+        parceiro_id: r.parceiro_id,
+        estagio_atual: r.estagio_atual,
+        status_final: r.status_final,
+        criado_em: r.criado_em,
+        decidido_em: r.decidido_em,
         parceiro_cnpj: r.parceiro?.cnpj ?? null,
         parceiro_razao: r.parceiro?.razao_social ?? null,
         pedido_valor_liquido: Number(r.pedido?.valor_liquido ?? 0),
@@ -104,6 +108,14 @@ export function useAnaliseDetalhe(analiseId: string | undefined) {
         .order("criado_em", { ascending: false })
         .limit(50);
 
+      // B-82: bureaus históricos
+      const { count: scoresHistoricoCount } = await sb
+        .from("analise_credito_scores")
+        .select("id", { count: "exact", head: true })
+        .eq("parceiro_id", parceiroId)
+        .neq("analise_id", analiseId)
+        .not("documento_storage_path", "is", null);
+
       return {
         analise: analiseData,
         pedido: analiseData.pedido,
@@ -115,6 +127,7 @@ export function useAnaliseDetalhe(analiseId: string | undefined) {
         kpisGrupo,
         analisesAnteriores: anteriores,
         marcos: (marcosData || []) as ParceiroMarco[],
+        scoresHistoricoCount: scoresHistoricoCount ?? 0,
       };
     },
   });
