@@ -215,6 +215,7 @@ Deno.serve(async (req) => {
           'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
         },
         ...(attachments.length > 0 && { attachments }),
+        ...(cc.length > 0 && { cc }),
       }),
     })
 
