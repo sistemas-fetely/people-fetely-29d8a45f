@@ -32,7 +32,6 @@ const CobrancaPedidoEmail = ({
   valor_frete,
   valor_liquido,
   link_pagamento,
-  itens = [],
 }: CobrancaPedidoProps) => (
   <Html lang="pt-BR" dir="ltr">
     <Head />
