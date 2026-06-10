@@ -95,39 +95,8 @@ const CobrancaPedidoEmail = ({
             )}
           </Section>
 
-          {/* Itens do pedido */}
-          {itens.length > 0 && (
-            <Section style={{ marginBottom: '24px' }}>
-              <Text style={sectionTitle}>Itens do Pedido</Text>
-              <table style={tableStyle}>
-                <thead>
-                  <tr>
-                    <th style={{ ...thStyle, width: '60%' }}>Produto</th>
-                    <th style={{ ...thStyle, width: '15%', textAlign: 'center' }}>Qtd</th>
-                    <th style={{ ...thStyle, width: '25%', textAlign: 'right' }}>Subtotal</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {itens.slice(0, 10).map((it, i) => (
-                    <tr key={i} style={i % 2 === 0 ? trEvenStyle : trOddStyle}>
-                      <td style={{ ...tdStyle, width: '60%' }}>{it.descricao}</td>
-                      <td style={{ ...tdStyle, width: '15%', textAlign: 'center' }}>{it.quantidade}</td>
-                      <td style={{ ...tdStyle, width: '25%', textAlign: 'right' }}>
-                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(it.subtotal)}
-                      </td>
-                    </tr>
-                  ))}
-                  {itens.length > 10 && (
-                    <tr style={trOddStyle}>
-                      <td colSpan={3} style={{ ...tdStyle, textAlign: 'center', fontStyle: 'italic', color: '#888' }}>
-                        + {itens.length - 10} outros itens (ver PDF em anexo)
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </Section>
-          )}
+
+
 
           {/* Resumo financeiro */}
           <Section style={resumoSection}>
