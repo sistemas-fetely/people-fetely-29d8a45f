@@ -1,6 +1,6 @@
 import * as React from 'npm:react@18.3.1'
 import {
-  Body, Button, Container, Head, Html, Preview, Text, Hr, Section, Row, Column, Heading,
+  Body, Button, Container, Head, Html, Preview, Text, Hr, Section, Row, Column, Heading, Link,
 } from 'npm:@react-email/components@0.0.22'
 import type { TemplateEntry } from './registry.ts'
 
